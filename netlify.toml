@@ -1,6 +1,6 @@
 [build]
-  publish = "dist"
-  command = "vite build"
+  publish = "dist/public"
+  command = "npm install && vite build"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -9,3 +9,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[build.processing]
+  skip_processing = false
