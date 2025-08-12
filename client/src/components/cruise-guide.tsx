@@ -1108,7 +1108,7 @@ export default function CruiseGuide() {
                 />
               </div>
               <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-                Greek Isles Cruise Guide
+                Greek Cruise Fan Guide
               </h1>
               <p className="text-white/80 text-base">
                 August 21-31, 2025
