@@ -1,0 +1,731 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CalendarDays, MapPin, PartyPopper, Clock, Search, Images, Music, Info, X, ChevronRight, Link as LinkIcon } from "lucide-react";
+
+/**
+ * Atlantis Events – Greek Isles, Istanbul, & Pyramids Cruise
+ * Virgin Resilient Lady (Aug 21–31, 2025)
+ * Webapp V5 (restored single-file)
+ *
+ * Tabs: Itinerary • Entertainment Lineup • Entertainers • Parties • Info
+ * Features: Global 12h/24h toggle, All Aboard (depart - 1h), timelines, bios modal, PDF link
+ */
+
+/* ----------------------------
+   Utilities & Hooks
+----------------------------- */
+const cn = (...c) => c.filter(Boolean).join(" ");
+
+const useLocalStore = (key, initial) => {
+  const [state, setState] = useState(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : initial;
+    } catch {
+      return initial;
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch {}
+  }, [key, state]);
+  return [state, setState];
+};
+
+function parseAmPm(t) {
+  if (!t || t === "—" || /overnight/i.test(t)) return null;
+  const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let [_, hh, mm, ap] = m;
+  let h = parseInt(hh, 10) % 12;
+  if (/pm/i.test(ap)) h += 12;
+  return { h, m: parseInt(mm, 10) };
+}
+function parseTimeAny(t) {
+  if (!t || t === "—" || /overnight/i.test(t)) return null;
+  const m24 = t.match(/^(\d{1,2}):(\d{2})$/);
+  if (m24) return { h: parseInt(m24[1],10), m: parseInt(m24[2],10) };
+  return parseAmPm(t);
+}
+function to12h({h,m}) {
+  const ap = h >= 12 ? "PM" : "AM";
+  const h12 = ((h + 11) % 12) + 1;
+  const mm = String(m).padStart(2, "0");
+  return `${h12}:${mm} ${ap}`;
+}
+function to24h({h,m}) {
+  const hh = String(h).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+function fmtTime(t, mode) {
+  const p = parseTimeAny(t);
+  if (!p) return t; // keep "—" or "Overnight"
+  return mode === '24' ? to24h(p) : to12h(p);
+}
+function formatAllAboard(depStr, mode) {
+  const p = parseAmPm(depStr);
+  if (!p) return depStr; // "—" or Overnight
+  let h = p.h - 1, m = p.m;
+  if (h < 0) h += 24;
+  return mode === '24' ? to24h({h,m}) : to12h({h,m});
+}
+
+/* ----------------------------
+   Data – Itinerary & Schedules
+----------------------------- */
+const ITINERARY = [
+  { key: "2025-08-21", date: "Thu, Aug 21", port: "Athens, Greece", arrive: "—", depart: "6:00 PM" },
+  { key: "2025-08-22", date: "Fri, Aug 22", port: "Santorini, Greece", arrive: "9:00 AM", depart: "10:00 PM" },
+  { key: "2025-08-23", date: "Sat, Aug 23", port: "Kuşadası, Turkey", arrive: "8:00 AM", depart: "3:00 PM" },
+  { key: "2025-08-24", date: "Sun, Aug 24", port: "Istanbul, Turkey", arrive: "1:00 PM", depart: "Overnight" },
+  { key: "2025-08-25", date: "Mon, Aug 25", port: "Istanbul, Turkey", arrive: "—", depart: "2:00 PM" },
+  { key: "2025-08-26", date: "Tue, Aug 26", port: "Day at Sea", arrive: "—", depart: "—" },
+  { key: "2025-08-27", date: "Wed, Aug 27", port: "Alexandria (Cairo), Egypt", arrive: "7:00 AM", depart: "12:00 AM" },
+  { key: "2025-08-28", date: "Thu, Aug 28", port: "Day at Sea", arrive: "—", depart: "—" },
+  { key: "2025-08-29", date: "Fri, Aug 29", port: "Mykonos, Greece", arrive: "9:00 AM", depart: "2:00 AM" },
+  { key: "2025-08-30", date: "Sat, Aug 30", port: "Iraklion, Crete", arrive: "11:00 AM", depart: "6:00 PM" },
+  { key: "2025-08-31", date: "Sun, Aug 31", port: "Athens, Greece", arrive: "7:00 AM", depart: "—" },
+];
+const ITINERARY_MAP = Object.fromEntries(ITINERARY.map(i => [i.key, i]));
+
+const PARTY_THEMES = [
+  { key: "Dog Tag T-Dance", desc: "Signature afternoon party with dog tags & uniform vibes." },
+  { key: "UNITE", desc: "Celebrate our global community – wear your country colors." },
+  { key: "Empires", desc: "Glam nods from Greece to Rome to Egypt." },
+  { key: "Greek Isles: Here We Go Again", desc: "Mamma Mia energy – blue & white sparkle." },
+  { key: "Lost At Sea", desc: "Nautical silliness – pirates, creatures, myths." },
+  { key: "Neon Playground", desc: "Laser-bright late-night in the Red Room." },
+  { key: "Think Pink T-Dance", desc: "Every shade of pink – campy & fun." },
+  { key: "Virgin White", desc: "The pinnacle white party." },
+  { key: "Revival! Classic Disco T-Dance", desc: "70s disco magic." },
+  { key: "Atlantis Classics", desc: "Three decades of anthems & divas." },
+  { key: "Off-White After party", desc: "Late-late afters post-White." },
+  { key: "Last Dance", desc: "One last boogie into Athens." },
+  { key: "Welcome Party", desc: "First night under the stars." },
+  { key: "Sail-Away Party", desc: "Top-deck vibes as we depart." },
+];
+
+const DAILY = [
+  { key: "2025-08-21", items: [
+    { type: "party", time: "18:00", title: "Sail-Away Party", venue: "Aquatic Club" },
+    { type: "show", time: "19:00", title: "First Time Cruisers Orientation", venue: "Red Room" },
+    { type: "show", time: "19:30", title: "Monét X Change", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "Monét X Change", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Rob Houchen", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Gay Comedy Stars (Brad Loekle, Rachel Scanlon, Daniel Webb)", venue: "The Manor" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with Brian Nash", venue: "On the Rocks" },
+    { type: "party", time: "23:00", title: "Welcome Party", venue: "Aquatic Club" },
+  ]},
+  { key: "2025-08-22", items: [
+    { type: "dining", time: "17:00", title: "Another Rose (Dinner show)", venue: "The Manor" },
+    { type: "show", time: "22:00", title: "Monét X Change", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Alyssa Wray", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
+    { type: "party", time: "23:00", title: "UNITE", venue: "Aquatic Club" },
+  ]},
+  { key: "2025-08-23", items: [
+    { type: "party", time: "17:00", title: "Dog Tag T-Dance", venue: "Aquatic Club" },
+    { type: "show", time: "19:00", title: "Alexis Michelle", venue: "The Manor" },
+    { type: "show", time: "19:30", title: "AirOtic", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "AirOtic", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Rob Houchen", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Gay Comedy (Rachel & Daniel)", venue: "The Manor" },
+    { type: "party", time: "23:00", title: "Lost At Sea", venue: "Aquatic Club" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
+  ]},
+  { key: "2025-08-24", items: [
+    { type: "show", time: "22:00", title: "AirOtic", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Leona Winter", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Rob Houchen", venue: "The Manor" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with Brandon James Gwinn", venue: "On the Rocks" },
+    { type: "club", time: "23:00", title: "Atlantis Night Club", venue: "On the Rocks" },
+  ]},
+  { key: "2025-08-25", items: [
+    { type: "dining", time: "17:00", title: "Another Rose (Dinner show)", venue: "The Manor" },
+    { type: "show", time: "19:30", title: "Persephone", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "Persephone", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Alyssa Wray", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Alexis Michelle", venue: "The Manor" },
+    { type: "party", time: "23:00", title: "Empires", venue: "Aquatic Club" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with Brian Nash", venue: "On the Rocks" },
+  ]},
+  { key: "2025-08-26", items: [
+    { type: "fun", time: "14:00", title: "Bingo with The Diva", venue: "Red Room" },
+    { type: "party", time: "17:00", title: "Think Pink! T-Dance", venue: "Aquatic Club" },
+    { type: "show", time: "19:30", title: "Reuben Kaye", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "Reuben Kaye", venue: "Red Room" },
+    { type: "show", time: "19:00", title: "Leona Winter", venue: "The Manor" },
+    { type: "show", time: "21:00", title: "Comedy All-Stars", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
+    { type: "party", time: "00:30", title: "Neon Playground", venue: "Red Room" },
+  ]},
+  { key: "2025-08-27", items: [
+    { type: "show", time: "22:00", title: "Persephone", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Comedy All-Stars", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
+    { type: "party", time: "23:00", title: "Greek Isles: Here We Go Again!", venue: "Aquatic Club" },
+  ]},
+  { key: "2025-08-28", items: [
+    { type: "dining", time: "17:00", title: "Another Rose (Dinner show)", venue: "The Manor" },
+    { type: "show", time: "17:00", title: "Surprise Guest", venue: "Red Room" },
+    { type: "show", time: "20:00", title: "Surprise Guest", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "Surprise Guest", venue: "Red Room" },
+    { type: "show", time: "21:00", title: "Leona Winter", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Alyssa Wray", venue: "The Manor" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
+    { type: "party", time: "23:00", title: "Atlantis Classics", venue: "Aquatic Club" },
+  ]},
+  { key: "2025-08-29", items: [
+    { type: "dining", time: "19:00", title: "Another Rose (Dinner show)", venue: "The Manor" },
+    { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with Brandon James Gwinn", venue: "On the Rocks" },
+    { type: "party", time: "24:00", title: "Virgin White Party", venue: "Aquatic Club" },
+    { type: "after", time: "05:00", title: "Off-White After party", venue: "The Manor" },
+  ]},
+  { key: "2025-08-30", items: [
+    { type: "party", time: "17:00", title: "Revival! Classic Disco T-Dance", venue: "Aquatic Club" },
+    { type: "show", time: "19:00", title: "Alexis Michelle", venue: "The Manor" },
+    { type: "show", time: "21:00", title: "Alyssa Wray", venue: "The Manor" },
+    { type: "show", time: "19:30", title: "Brad’s Last Laugh (Brad Loekle)", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "Brad’s Last Laugh (Brad Loekle)", venue: "Red Room" },
+    { type: "lounge", time: "23:00", title: "Piano Bar with Brian Nash", venue: "On the Rocks" },
+    { type: "party", time: "23:00", title: "Last Dance", venue: "The Manor" },
+  ]},
+  { key: "2025-08-31", items: []},
+];
+
+/* ----------------------------
+   Entertainer roster (inlined from corrected_talent_roster.js)
+----------------------------- */
+const TALENT = [
+  { 
+    name: "Monét X Change", 
+    cat: "Drag & Variety", 
+    role: "Drag icon & comic", 
+    knownFor: "RPDR All Stars 4 winner", 
+    bio: "Born in New York City, Monét is a classically trained ...lor inducted into the Hall of Fame after winning All-Stars 4.", 
+    img: "https://www.billboard.com/wp-content/uploads/media/03-2-Monet-X-Change-rupauls-drag-race-s10-billboard-a-1548.jpg"
+  },
+  { 
+    name: "Alexis Michelle", 
+    cat: "Drag & Variety", 
+    role: "Singer & RPDR favorite", 
+    knownFor: "Glam cabaret", 
+    bio: "Broadway-trained drag performer who placed 5th on RuPa...arly performs at Feinstein's/54 Below with her cabaret shows.", 
+    img: "https://i.redd.it/azxnlnbuql9b1.jpg"
+  },
+  { 
+    name: "Leona Winter", 
+    cat: "Vocalists", 
+    role: "Vocalist", 
+    knownFor: "Queen of the Universe", 
+    bio: "French drag queen and countertenor baritone with a thre...he Voice France in 2019.", 
+    img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39"
+  },
+  { 
+    name: "Sherry Vine", 
+    cat: "Drag & Variety", 
+    role: "Comedy & vocals", 
+    knownFor: "Parody legend", 
+    bio: "Legendary NYC drag icon with over 35 years in entertain... been a fixture of NYC nightlife since the 1990s.", 
+    img: "http://static1.squarespace.com/static/5e2256cf72c72a5f12f1fdfe/t/63cc50edf5765a4e44b610f1/1580806649356/sherry-web-social.png?format=1500w"
+  },
+  { 
+    name: "Reuben Kaye", 
+    cat: "Drag & Variety", 
+    role: "Comic performer", 
+    knownFor: "Cabaret provocateur", 
+    bio: "Award-winning Australian comedian, cabaret host, and wri...nominated for Best Show at the 2024 Edinburgh Comedy Awards.", 
+    img: "https://encoremelbourne.com/wp-content/uploads/2024/09/Reuben-Kaye-c-Alan-Moyle-scaled-e1727080187482.jpg"
+  },
+  { 
+    name: "Rob Houchen", 
+    cat: "Vocalists", 
+    role: "West End star", 
+    knownFor: "Les Misérables, Titanique", 
+    bio: "British stage actor and producer best known for playing ... in musicals including Titanique, South Pacific, and The Light in the Piazza.", 
+    img: "http://www.digitaljournal.com/wp-content/uploads/2024/10/Rob-Houchen-Photo-e1728160861225.jpg"
+  },
+  { 
+    name: "Alyssa Wray", 
+    cat: "Vocalists", 
+    role: "Vocalist", 
+    knownFor: "American Idol Top 9", 
+    bio: "Singer and performer from Kentucky who made it to the To... called her a 'once in a generation' performer.", 
+    img: "https://s.yimg.com/ny/api/res/1.2/B32A9JNeo3IpS.FKxuffIQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD02NzY7Y2Y9d2VicA--/https://s.yimg.com/os/creatr-uploaded-images/2021-03/1a562ab0-7ee4-11eb-afce-ac7a09171992"
+  },
+  { 
+    name: "Brad Loekle", 
+    cat: "Comedy", 
+    role: "Comedian", 
+    knownFor: "Atlantis favorite", 
+    bio: "American stand-up comedian from Upstate New York who was...hips and circuit events.", 
+    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1701816763654-IG6NG6UERJXYU354L1ZU/brad-loekle-web.jpg?format=2500w"
+  },
+  { 
+    name: "Rachel Scanlon", 
+    cat: "Comedy", 
+    role: "Comedian", 
+    knownFor: "Two Dykes and a Mic", 
+    bio: "LA-based stand-up comedian and co-host of the popular po...nd is known for her sharp queer humor and sex-positive comedy.", 
+    img: "https://www.empirecomedyme.com/img/comedians/Rachel-Scanlon-Primary-Headshot-da5f117a-main-image.png"
+  },
+  { 
+    name: "Daniel Webb", 
+    cat: "Comedy", 
+    role: "Comedian", 
+    knownFor: "Opened for Margaret Cho", 
+    bio: "Texas-born LA-based comedian who currently tours as the ...He was featured in the documentary 'Queer Riot' and released his hour-long special 'Hoe's Parade: Live at the Rose Bowl' in 2021.", 
+    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1668557899908-6Z03ZHA1FY8Y9ANSKMJ9/daniel-webb-web.jpg?format=2500w"
+  },
+  { 
+    name: "AirOtic", 
+    cat: "Productions", 
+    role: "Acrobatic spectacle", 
+    knownFor: "Les Farfadais production", 
+    bio: "High-energy circus cabaret show created by Les Farfadai...ng costumes.", 
+    img: "https://airoticcirquesoiree.com/assets/img/info/info_love-3.6a496b70.webp"
+  },
+  { 
+    name: "Another Rose", 
+    cat: "Productions", 
+    role: "Immersive dinner show", 
+    knownFor: "Interactive feast", 
+    bio: "Virgin Voyages' premium dinner theater experience featur... immersive setting.", 
+    img: "https://s3.amazonaws.com/a-us.storyblok.com/f/1005231/594cc18563/virgin-voyages_resilient-lady_persepone-and-hades_entertainment_kyle-valenta_18913661.jpg"
+  },
+  { 
+    name: "Persephone", 
+    cat: "Productions", 
+    role: "Virgin production", 
+    knownFor: "High-energy acrobatics", 
+    bio: "Virgin Voyages' signature acrobatic production show feat...adult-oriented entertainment experience.", 
+    img: "https://i0.wp.com/thehoteljournal.com/wp-content/uploads/2024/05/Virgin-Voyages-Cruise-Review-Show.jpg?resize=798%2C599&ssl=1"
+  },
+  { 
+    name: "The Diva (Bingo)", 
+    cat: "Productions", 
+    role: "Host", 
+    knownFor: "Camp bingo chaos", 
+    bio: "Virgin Voyages' drag bingo experience featuring outrageo... prizes in a uniquely entertaining format.", 
+    img: "https://attractionsmagazine.com/wp-content/uploads/2025/01/IMG_8480-3-1.jpeg"
+  },
+  { 
+    name: "Abel", 
+    cat: "DJs", 
+    role: "DJ", 
+    knownFor: "Miami sound", 
+    bio: "Grammy-nominated DJ and producer from Miami, half of the...for Madonna, Rihanna, and Jennifer Lopez.", 
+    img: "https://bosphilly.com/wp-content/uploads/2023/01/ABEL-SPINNING-scaled-1.jpg"
+  },
+  { 
+    name: "Dan Slater", 
+    cat: "DJs", 
+    role: "DJ", 
+    knownFor: "Sydney to global", 
+    bio: "Australian DJ and producer based in the United States, w... major artists.", 
+    img: "https://chicago.gopride.com/c/I/52051-156158.jpg"
+  },
+  { 
+    name: "DJ Suri", 
+    cat: "DJs", 
+    role: "DJ", 
+    knownFor: "Madrid", 
+    bio: "Valencia-born DJ specializing in electronic and house mu...us for his ability to blend various electronic music subgenres.", 
+    img: "https://jceventsinternational.com/wp-content/uploads/2018/12/DJ-profile-pic_0002_DJSuri.jpg"
+  },
+  { 
+    name: "GSP", 
+    cat: "DJs", 
+    role: "DJ", 
+    knownFor: "Athens/Atlanta", 
+    bio: "Greek-born international DJ and producer George Spiliopo... performed in over 30 countries and produced remixes for Ariana Grande and Lil Nas X.", 
+    img: "https://geo-media.beatport.com/image_size/590x404/b4e28817-74b7-4868-9d60-34d0e944fe01.jpg"
+  },
+  { 
+    name: "William TN Hall", 
+    cat: "Piano Bar", 
+    role: "Piano entertainer", 
+    knownFor: "Showtunes & pop", 
+    bio: "NYC-based composer, arranger, and piano entertainer who ... worked with artists including Sharon Needles and the late Joan Rivers.", 
+    img: "https://shows.donttellmamanyc.com/images/performers/William_TN_Hallnew.jpg"
+  },
+  { 
+    name: "Brian Nash", 
+    cat: "Piano Bar", 
+    role: "Piano entertainer", 
+    knownFor: "Musical director", 
+    bio: "Award-winning pianist, singer, and musical director from...ainment coordinator and resident MD for Atlantis Events worldwide.", 
+    img: "https://cdn1.sixthman.net/2025/broadway/images/artists/brian_nash_-_brd_-_1500x1000_982140.jpg"
+  },
+  { 
+    name: "Brandon James Gwinn", 
+    cat: "Piano Bar", 
+    role: "Piano entertainer", 
+    knownFor: "Late night fun", 
+    bio: "Piano bar entertainer and vocalist known for his late-... audience requests for an engaging experience.", 
+    img: "https://eghcszbxego.exactdn.com/wp-content/uploads/2025/07/Brandon-James-Gwinn-photo-by-Michael-Hull.jpg"
+  }
+];
+
+/* ----------------------------
+   UI Primitives
+----------------------------- */
+const Pill = ({ label }) => (
+  <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-100 border border-blue-300/30">{label}</span>
+);
+const Card = ({ children, className }) => (
+  <div className={cn("rounded-2xl bg-gradient-to-b from-slate-800/70 to-slate-900/70 border border-white/10 shadow-xl p-4", className)}>{children}</div>
+);
+const Section = ({ title, icon: Icon, actions, children }) => (
+  <section className="space-y-3">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">{Icon && <Icon className="h-5 w-5 text-blue-300" />}<h2 className="text-lg font-semibold text-slate-100">{title}</h2></div>
+      <div className="flex items-center gap-2">{actions}</div>
+    </div>
+    {children}
+  </section>
+);
+
+/* ----------------------------
+   Timelines
+----------------------------- */
+function DayHeader({ dayKey, timeMode }) {
+  const i = ITINERARY_MAP[dayKey];
+  const isSea = /sea/i.test(i?.port || "");
+  const depart = i?.depart || "—";
+  const headerRight = !isSea && depart !== "—" ? `Depart: ${fmtTime(depart, timeMode)}` : isSea ? "Sea Day" : "";
+  return (
+    <div className="sticky top-0 z-10 -mx-4 px-4 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-slate-900/65">
+      <div className="text-xs tracking-wider text-blue-100">{i?.date} • {i?.port}{headerRight ? ` • ${headerRight}`: ""}</div>
+    </div>
+  );
+}
+
+function findTalentInTitle(title) {
+  const hits = [];
+  for (const t of TALENT) {
+    if (title.toLowerCase().includes(t.name.toLowerCase())) hits.push(t.name);
+  }
+  return hits;
+}
+
+function TimelineList({ events, timeMode, onTalentClick }) {
+  return (
+    <ol className="relative border-l border-blue-800/40 ml-2">
+      {events.sort((a,b)=>a.time.localeCompare(b.time)).map((e, idx) => {
+        const clickableNames = findTalentInTitle(e.title);
+        const titleParts = clickableNames.length ? (
+          <span>
+            {e.title.split(new RegExp(`(${clickableNames.join('|')})`, 'i')).map((part, i) => {
+              const match = clickableNames.find(n => n.toLowerCase() === part.toLowerCase());
+              if (match) return <button key={i} onClick={() => onTalentClick(match)} className="underline underline-offset-2 decoration-blue-300 hover:text-blue-200">{part}</button>;
+              return <span key={i}>{part}</span>;
+            })}
+          </span>
+        ) : e.title;
+        return (
+          <motion.li key={e.title+e.time+idx} initial={{opacity:0, y:8}} animate={{opacity:1,y:0}} transition={{duration:0.25, delay: idx*0.02}} className="mb-5 ml-4">
+            <span className="absolute -left-1.5 mt-1 flex h-3 w-3 items-center justify-center">
+              <span className="h-3 w-3 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 shadow" />
+            </span>
+            <Card>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-100"><Clock className="h-4 w-4 text-blue-300" /><span className="text-sm">{fmtTime(e.time, timeMode)}</span></div>
+                <Pill label={e.venue} />
+              </div>
+              <h4 className="mt-2 text-slate-100 font-semibold">{titleParts}</h4>
+              {e.themeDesc && <p className="text-xs text-slate-200/90 mt-1">{e.themeDesc}</p>}
+            </Card>
+          </motion.li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/* ----------------------------
+   Views
+----------------------------- */
+function ItineraryTimeline({ timeMode }) {
+  return (
+    <div className="space-y-6">
+      <Section title="Sailing Itinerary" icon={MapPin}>
+        <ol className="relative border-l border-blue-800/40 ml-2">
+          {ITINERARY.map((s, idx) => {
+            const allAboard = formatAllAboard(s.depart, timeMode);
+            const isSea = /sea/i.test(s.port);
+            return (
+              <motion.li key={s.key} initial={{opacity:0, y:8}} animate={{opacity:1,y:0}} transition={{duration:0.25, delay: idx*0.03}} className="mb-6 ml-4">
+                <span className="absolute -left-1.5 mt-1 flex h-3 w-3 items-center justify-center">
+                  <span className="h-3 w-3 rounded-full bg-gradient-to-br from-blue-400 to indigo-600 shadow" />
+                </span>
+                <Card className="p-4">
+                  <div className="text-xs text-blue-100">{s.date}</div>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <h3 className="text-slate-100 font-semibold">{s.port}</h3>
+                    {!isSea && s.depart !== "—" && !/overnight/i.test(s.depart) && <Pill label={`All Aboard: ${allAboard}`} />}
+                  </div>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-200">
+                    <div>Arrive: {fmtTime(s.arrive, timeMode)}</div>
+                    <div>Depart: {fmtTime(s.depart, timeMode)}</div>
+                    <div className="sm:text-right">{isSea ? "Sea Day" : "Port Day"}</div>
+                  </div>
+                </Card>
+              </motion.li>
+            );
+          })}
+        </ol>
+      </Section>
+    </div>
+  );
+}
+
+function PartiesView({ query, setQuery, timeMode, onTalentClick }) {
+  const byDay = useMemo(() => {
+    const map = {};
+    for (const d of DAILY) {
+      const items = d.items.filter(i => i.type === 'party' || i.type === 'after');
+      if (!items.length) continue;
+      map[d.key] = items.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))
+        .map(i => ({ time: i.time, title: i.title, venue: i.venue, themeDesc: (PARTY_THEMES.find(p => i.title.startsWith(p.key)) || PARTY_THEMES.find(p => p.key === i.title))?.desc }));
+    }
+    return map;
+  }, [query]);
+
+  const keys = Object.keys(byDay).sort();
+
+  return (
+    <div className="space-y-6">
+      <Section title="Party Schedule" icon={PartyPopper} actions={
+        <div className="relative"><Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" /><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search parties…" className="bg-white/5 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50" /></div>
+      }>
+        <div className="space-y-6">
+          {keys.map((dayKey) => (
+            <div key={dayKey} className="space-y-2">
+              <DayHeader dayKey={dayKey} timeMode={timeMode} />
+              <TimelineList events={byDay[dayKey]} timeMode={timeMode} onTalentClick={onTalentClick} />
+            </div>
+          ))}
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function computeAppearances(name) {
+  const rows = [];
+  for (const d of DAILY) {
+    for (const it of d.items) {
+      if (it.title.toLowerCase().includes(name.toLowerCase())) {
+        rows.push({ dateKey: d.key, dateLabel: ITINERARY_MAP[d.key]?.date, time: it.time, venue: it.venue, title: it.title });
+      }
+    }
+  }
+  return rows.sort((a,b)=> (a.dateKey+a.time).localeCompare(b.dateKey+b.time));
+}
+
+function EntertainersView({ onTalentClick }) {
+  const [search, setSearch] = useState("");
+
+  const grouped = useMemo(() => {
+    const pool = TALENT
+      .filter(t => !search || [t.name, t.role, t.knownFor, t.cat].join(" ").toLowerCase().includes(search.toLowerCase()));
+    return pool.reduce((acc, p) => { (acc[p.cat] ||= []).push(p); return acc; }, {});
+  }, [search]);
+
+  return (
+    <div className="space-y-6">
+      <Section title="Entertainers" icon={Music} actions={
+        <div className="relative"><Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" /><input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search by name, category…" className="bg-white/5 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50" /></div>
+      }>
+        <div className="space-y-8">
+          {Object.entries(grouped).map(([cat, people]) => (
+            <div key={cat} className="space-y-3">
+              <h3 className="text-sm uppercase tracking-wider text-blue-200">{cat}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {people.map((p, idx) => (
+                  <motion.button key={p.name} onClick={()=>onTalentClick(p)} initial={{opacity:0, y:8}} animate={{opacity:1,y:0}} transition={{duration:0.25, delay: idx*0.02}} className="text-left">
+                    <Card className="overflow-hidden p-0 hover:ring-2 hover:ring-blue-500/40">
+                      <div className="relative h-40 w-full bg-gradient-to-br from-blue-800/40 to-indigo-900/50 flex items-center justify-center">
+                        {p.img ? (<img src={p.img} alt={p.name} className="h-full w-full object-cover" />) : (<Images className="h-10 w-10 text-blue-300" />)}
+                      </div>
+                      <div className="p-4 space-y-1">
+                        <div className="text-xs text-blue-200">{p.role}</div>
+                        <div className="flex items-center justify-between gap-3"><h4 className="text-slate-100 font-semibold">{p.name}</h4><ChevronRight className="h-4 w-4 text-slate-400" /></div>
+                        <p className="text-xs text-slate-300">{p.knownFor}</p>
+                      </div>
+                    </Card>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function LineupView({ timeMode, onTalentClick }) {
+  return (
+    <div className="space-y-6">
+      <Section title="Entertainment Lineup" icon={CalendarDays}>
+        <div className="space-y-6">
+          {DAILY.map((d) => (
+            <div key={d.key} className="space-y-2">
+              <DayHeader dayKey={d.key} timeMode={timeMode} />
+              <TimelineList
+                events={d.items.filter(i => i.type !== 'party' && i.type !== 'after').map(i => ({ time: i.time, title: i.title, venue: i.venue }))}
+                timeMode={timeMode}
+                onTalentClick={(name) => {
+                  const t = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
+                  if (t) onTalentClick(t);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function TalentModal({ active, onClose, timeMode }) {
+  if (!active) return null;
+  const apps = computeAppearances(active.name);
+  return (
+    <AnimatePresence>
+      {active && (
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4">
+          <motion.div initial={{y:40, opacity:0}} animate={{y:0, opacity:1}} exit={{y:40, opacity:0}} className="w-full max-w-2xl rounded-2xl bg-slate-950 border border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div><div className="text-xs text-blue-200">{active.role} • {active.cat}</div><h4 className="text-slate-100 font-semibold text-lg">{active.name}</h4></div>
+              <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl"><X className="h-5 w-5 text-slate-300"/></button>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-1">
+                <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-gradient-to-br from-blue-900/50 to-indigo-950/70 flex items-center justify-center">{active.img ? (<img src={active.img} alt={active.name} className="h-full w-full object-cover" />) : (<Images className="h-10 w-10 text-blue-300" />)}</div>
+              </div>
+              <div className="sm:col-span-2 space-y-4">
+                <div><h5 className="text-slate-100 font-semibold">Bio</h5><p className="text-sm text-slate-300 whitespace-pre-wrap">{active.bio}</p></div>
+                <div><h5 className="text-slate-100 font-semibold">Appearances on This Cruise</h5><ul className="mt-2 space-y-2">{apps.length === 0 && (<li className="text-sm text-slate-400">No direct listings found.</li>)}{apps.map((a, i) => (<li key={i} className="text-sm text-slate-300"><span className="text-blue-200">{a.dateLabel}</span> • {fmtTime(a.time, timeMode)} @ {a.venue} — <span className="text-slate-200">{a.title}</span></li>))}</ul></div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ----------------------------
+   App Shell
+----------------------------- */
+const TABS = [
+  { key: "itinerary", label: "Itinerary", icon: MapPin },
+  { key: "lineup", label: "Events", icon: CalendarDays },
+  { key: "entertainers", label: "Entertainers", icon: Music },
+  { key: "parties", label: "Parties", icon: PartyPopper },
+  { key: "info", label: "Info", icon: Info },
+];
+
+export default function App() {
+  const [tab, setTab] = useLocalStore("ar25_tab", "itinerary");
+  const [partyQuery, setPartyQuery] = useState("");
+  const [timeMode, setTimeMode] = useLocalStore("ar25_time_mode", '12'); // '12' | '24'
+  const [activeTalent, setActiveTalent] = useState(null);
+
+  useEffect(() => { document.documentElement.classList.add('bg-slate-950'); }, []);
+
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#0b1a3a] via-[#0a1530] to-[#071226] text-slate-100">
+      <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60 border-b border-white/10">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg" />
+            <div>
+              <h1 className="text-sm sm:text-base font-semibold text-slate-100">Atlantis Greek Isles Cruise</h1>
+              <p className="text-[11px] text-blue-100">Virgin Resilient Lady • Aug 21–31, 2025</p>
+            </div>
+          </div>
+          <nav className="hidden md:flex items-center gap-2">
+            {TABS.map(t => (
+              <button key={t.key} onClick={()=>setTab(t.key)} className={cn("inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm border", tab===t.key ? "border-blue-400/40 bg-blue-500/10 text-blue-100" : "border-white/10 hover:bg-white/5 text-slate-200")}> 
+                <t.icon className="h-4 w-4" /> {t.label}
+              </button>
+            ))}
+            {/* Time mode selector */}
+            <div className="ml-3 inline-flex items-center rounded-xl border border-white/10 overflow-hidden text-xs">
+              <button onClick={()=>setTimeMode('12')} className={cn("px-2 py-1", timeMode==='12' ? "bg-white/10 text-blue-100" : "text-slate-300 hover:bg-white/5")}>12h</button>
+              <button onClick={()=>setTimeMode('24')} className={cn("px-2 py-1", timeMode==='24' ? "bg-white/10 text-blue-100" : "text-slate-300 hover:bg-white/5")}>24h</button>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-6 space-y-8">
+        <div className="md:hidden grid grid-cols-5 gap-2">
+          {TABS.map(t => (
+            <button key={t.key} onClick={()=>setTab(t.key)} className={cn("flex flex-col items-center justify-center rounded-xl px-2 py-3 text-[11px] border", tab===t.key ? "border-blue-400/40 bg-blue-500/10 text-blue-100" : "border-white/10 text-slate-300")}>
+              <t.icon className="h-4 w-4 mb-1" /> {t.label}
+            </button>
+          ))}
+          {/* Time selector on mobile */}
+          <div className="col-span-5 flex items-center justify-center gap-2">
+            <span className="text-[11px] text-slate-300">Time:</span>
+            <div className="inline-flex items-center rounded-xl border border-white/10 overflow-hidden text-[11px]">
+              <button onClick={()=>setTimeMode('12')} className={cn("px-2 py-1", timeMode==='12' ? "bg-white/10 text-blue-100" : "text-slate-300 hover:bg-white/5")}>12h</button>
+              <button onClick={()=>setTimeMode('24')} className={cn("px-2 py-1", timeMode==='24' ? "bg-white/10 text-blue-100" : "text-slate-300 hover:bg-white/5")}>24h</button>
+            </div>
+          </div>
+        </div>
+
+        {tab === 'itinerary' && <ItineraryTimeline timeMode={timeMode} />}
+        {tab === 'lineup' && <LineupView timeMode={timeMode} onTalentClick={setActiveTalent} />}
+        {tab === 'entertainers' && <EntertainersView onTalentClick={setActiveTalent} />}
+        {tab === 'parties' && <PartiesView query={partyQuery} setQuery={setPartyQuery} timeMode={timeMode} onTalentClick={setActiveTalent} />}
+        {tab === 'info' && <InfoView />}
+      </main>
+
+      <footer className="mt-10 border-t border-white/10">
+        <div className="mx-auto max-w-6xl px-4 py-6 text-xs text-slate-300 flex items-center justify-between">
+          <span>© 2025 Atlantis Events (fan-made guide UI)</span>
+          <span className="hidden sm:block">Theme: Dark Blue • Modern • Mobile-first</span>
+        </div>
+      </footer>
+
+      <TalentModal
+        active={activeTalent}
+        onClose={()=>setActiveTalent(null)}
+        timeMode={timeMode}
+      />
+    </div>
+  );
+}
+
+function InfoView() {
+  return (
+    <div className="space-y-4">
+      <Section title="About This Guide" icon={Info}>
+        <Card>
+          <p className="text-sm text-slate-200">This interactive guide is based on the “Atlantis Cruise Vacation Guide – Virgin Resilient Lady, Aug 21–31, 2025.” Schedules are subject to change; always verify in the Virgin Voyages App onboard.</p>
+          <ul className="mt-3 list-disc pl-5 text-sm text-slate-200 space-y-1">
+            <li>Use the 12h/24h switch in the header to change all times across the app.</li>
+            <li>Tap any entertainer name in the Lineup or Entertainers tabs to see a bio and appearances.</li>
+            <li>All Aboard is calculated as one hour before the listed port departure (when provided).</li>
+          </ul>
+        </Card>
+      </Section>
+
+      <Section title="Official Cruise Guide PDF" icon={LinkIcon}>
+        <Card>
+          <a href="https://atlantisevents.com/wp-content/uploads/ar25-cruise-vacation-guide-final.pdf?utm_source=exacttarget&utm_medium=email&utm_campaign=email" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-blue-100 hover:bg-white/10">
+            <LinkIcon className="h-4 w-4" /> Open the Atlantis Cruise Vacation Guide (PDF)
+          </a>
+        </Card>
+      </Section>
+    </div>
+  );
+}
