@@ -34,6 +34,7 @@ export interface PartyTheme {
 }
 
 export const ITINERARY: ItineraryStop[] = [
+  { key: "2025-08-20", date: "Wed, Aug 20", port: "Athens, Greece", arrive: "Pre-Cruise", depart: "—" },
   { key: "2025-08-21", date: "Thu, Aug 21", port: "Athens, Greece", arrive: "—", depart: "6:00 PM" },
   { key: "2025-08-22", date: "Fri, Aug 22", port: "Santorini, Greece", arrive: "9:00 AM", depart: "10:00 PM" },
   { key: "2025-08-23", date: "Sat, Aug 23", port: "Kuşadası, Turkey", arrive: "8:00 AM", depart: "3:00 PM" },
@@ -121,6 +122,9 @@ export const PARTY_THEMES: PartyTheme[] = [
 ];
 
 export const DAILY: DailySchedule[] = [
+  { key: "2025-08-20", items: [
+    { type: "social", time: "17:00", title: "Pre-Cruise Happy Hour by KGay Travel", venue: "Academias Hotel RoofTop Bar" },
+  ]},
   { key: "2025-08-21", items: [
     { type: "party", time: "18:00", title: "Sail-Away Party", venue: "Aquatic Club" },
     { type: "show", time: "19:00", title: "First Time Cruisers Orientation", venue: "Red Room" },

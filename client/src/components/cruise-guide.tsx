@@ -230,21 +230,30 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
             </motion.span>
             <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200 min-h-24 flex items-center">
               <div className="flex items-center gap-3 w-full">
-                {/* Artist Thumbnail */}
-                {clickableNames.length > 0 && (
+                {/* Artist Thumbnail or KGay Logo */}
+                {(clickableNames.length > 0 || event.title.includes("KGay Travel")) && (
                   <div className="flex-shrink-0">
-                    {clickableNames.map((name) => {
-                      const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
-                      return talent ? (
-                        <img
-                          key={name}
-                          src={talent.img}
-                          alt={talent.name}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 cursor-pointer hover:border-ocean-400 transition-colors"
-                          onClick={() => onTalentClick(name)}
-                        />
-                      ) : null;
-                    }).filter(Boolean)[0]}
+                    {event.title.includes("KGay Travel") ? (
+                      <img
+                        src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg"
+                        alt="KGay Travel"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 cursor-pointer hover:border-ocean-400 transition-colors"
+                        title="Pre-Cruise Happy Hour by KGay Travel"
+                      />
+                    ) : (
+                      clickableNames.map((name) => {
+                        const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
+                        return talent ? (
+                          <img
+                            key={name}
+                            src={talent.img}
+                            alt={talent.name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 cursor-pointer hover:border-ocean-400 transition-colors"
+                            onClick={() => onTalentClick(name)}
+                          />
+                        ) : null;
+                      }).filter(Boolean)[0]
+                    )}
                   </div>
                 )}
                 
@@ -288,6 +297,14 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
                     <p className="text-xs text-gray-600">
                       {PARTY_THEMES.find(p => event.title.includes(p.key))?.shortDesc}
                     </p>
+                  )}
+                  {event.title.includes("KGay Travel") && (
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Join us for our Pre-Cruise Meet and Greet!</strong></p>
+                      <p>📍 38 Akadimias, Omirou Street, Athens</p>
+                      <p>💰 €25 entrance - unlimited cocktails, beer, wine, soft drinks</p>
+                      <p>⏰ 5:00 PM - 8:00 PM • Limited capacity - arrive early!</p>
+                    </div>
                   )}
                 </div>
               </div>
