@@ -1031,11 +1031,13 @@ function InfoTab() {
       {/* KGay Travel Sponsorship Card */}
       <Card className="p-8 bg-white border-0 shadow-xl">
         <div className="flex flex-col items-center text-center mb-6">
-          <img 
-            src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
-            alt="KGay Travel" 
-            className="h-20 w-auto mb-4"
-          />
+          <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
+            <img 
+              src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
+              alt="KGay Travel" 
+              className="h-20 w-auto mb-4 hover:opacity-80 transition-opacity cursor-pointer"
+            />
+          </a>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">This Guide Sponsored by KGay Travel</h2>
         </div>
         
@@ -1045,7 +1047,7 @@ function InfoTab() {
             <p className="text-gray-700 text-sm leading-relaxed mb-4">
               KGay Travel is an outstanding gay travel specialist led by Steven Krumholz (Steven K). With expertise and passion for LGBTQ+ travel, 
               Steven curates unforgettable experiences with personalized service and extensive knowledge of LGBTQ+ friendly destinations. 
-              Six-time winner of the San Diego Awards for Travel Agency and 2024 San Diego Business Hall of Fame qualifier.
+              Seven-time winner of the San Diego Awards for Travel Agency and 2024 San Diego Business Hall of Fame qualifier.
             </p>
             <p className="text-gray-700 text-sm leading-relaxed font-medium">
               **WE NEVER CHARGE YOU FOR OUR SERVICE!** Let a professional with connections help you plan your next vacation!
