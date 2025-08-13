@@ -29,7 +29,9 @@ import {
   Music2,
   Palette,
   Flag,
-  Ship
+  Ship,
+  ChevronUp,
+  Mail
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -216,7 +218,7 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: idx * 0.02 }}
-            className="mb-5 ml-4 relative"
+            className="mb-3 ml-4 relative"
           >
             <motion.span 
               className="absolute -left-5 top-1/2 -translate-y-1/2 flex h-3 w-3 items-center justify-center z-10"
@@ -226,8 +228,8 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
             >
               <span className={`h-3 w-3 rounded-full bg-gradient-to-br ${getEventColor(event.type)} shadow-md border border-white`} />
             </motion.span>
-            <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200">
-              <div className="flex items-start gap-3">
+            <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200 min-h-24 flex items-center">
+              <div className="flex items-center gap-3 w-full">
                 {/* Artist Thumbnail */}
                 {clickableNames.length > 0 && (
                   <div className="flex-shrink-0">
@@ -248,7 +250,7 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
                 
                 {/* Event Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-ocean-700">
                       <Clock className="h-4 w-4" />
                       <span className="text-sm font-medium">{formatTime(event.time, timeMode)}</span>
@@ -262,24 +264,28 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
                       <Badge variant="secondary" className="bg-ocean-100 text-ocean-700">
                         {event.venue}
                       </Badge>
-                      {clickableNames.length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {clickableNames.map((name, idx) => {
-                            const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
-                            return talent ? (
-                              <span key={name}>
-                                {talent.cat}
-                                {idx < clickableNames.length - 1 && ', '}
-                              </span>
-                            ) : null;
-                          }).filter(Boolean)}
-                        </div>
-                      )}
                     </div>
                   </div>
-                  <h4 className="text-gray-900 font-semibold">{titleElement}</h4>
-                  {PARTY_THEMES.find(p => event.title.includes(p.key))?.shortDesc && (
-                    <p className="text-xs text-gray-600 mt-1">
+                  <div className="mb-2">
+                    <h3 className="text-base font-bold text-gray-900 leading-tight mb-1">
+                      {titleElement}
+                    </h3>
+                    {clickableNames.length > 0 && (
+                      <div className="text-xs text-gray-500">
+                        {clickableNames.map((name, idx) => {
+                          const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
+                          return talent ? (
+                            <span key={name}>
+                              {talent.cat}
+                              {idx < clickableNames.length - 1 && ', '}
+                            </span>
+                          ) : null;
+                        }).filter(Boolean)}
+                      </div>
+                    )}
+                  </div>
+                  {event.type === 'party' && (
+                    <p className="text-xs text-gray-600">
                       {PARTY_THEMES.find(p => event.title.includes(p.key))?.shortDesc}
                     </p>
                   )}
@@ -299,7 +305,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
     const portImages = {
       "Athens, Greece": "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
       "Santorini, Greece": "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200", 
-      "Kuşadası, Turkey": "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
+      "Kuşadası, Turkey": "https://www.spotblue.com/app/uploads/2024/12/what-makes-Kusadasi-in-Turkey-special.jpg",
       "Alexandria (Cairo), Egypt": "https://cdn.mos.cms.futurecdn.net/7YrobQvFFzw8aWsAUtoYXB.jpg",
       "Mykonos, Greece": "https://images.unsplash.com/photo-1533105079780-92b9be482077?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
       "Iraklion, Crete": "https://www.oreotravel.com/blog/wp-content/uploads/2024/08/heraklion-old-town.jpg"
@@ -583,6 +589,50 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
           );
         })}
       </div>
+
+      {/* Venue Guide at bottom of Events page */}
+      <Card className="p-6 bg-white hover:shadow-xl transition-all duration-300 border-0 mt-8">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-10 h-10 bg-ocean-100 rounded-xl flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-ocean-600" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">Venue Guide</h3>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-coral/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Music className="w-8 h-8 text-coral" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Red Room</h4>
+            <p className="text-sm text-gray-600 mb-1">Main theater for major shows and performances</p>
+            <Badge variant="outline" className="text-xs">Deck 5</Badge>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Wine className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">The Manor</h4>
+            <p className="text-sm text-gray-600 mb-1">Intimate venue for cabaret and comedy shows</p>
+            <Badge variant="outline" className="text-xs">Deck 7</Badge>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-ocean-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Waves className="w-8 h-8 text-ocean-700" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Aquatic Club</h4>
+            <p className="text-sm text-gray-600 mb-1">Pool deck parties and T-Dance events</p>
+            <Badge variant="outline" className="text-xs">Deck 16</Badge>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Piano className="w-8 h-8 text-purple-700" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">On the Rocks</h4>
+            <p className="text-sm text-gray-600 mb-1">Mixology bar with aged whiskies</p>
+            <Badge variant="outline" className="text-xs">Deck 6</Badge>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -754,30 +804,32 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: idx * 0.1 }}
                 >
-                  <Card className="bg-white p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 overflow-hidden relative">
-                    <div className="relative z-10">
-                      <div className="flex items-start justify-between mb-4">
+                  <Card className="bg-white p-4 hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 overflow-hidden relative h-48 flex flex-col">
+                    <div className="relative z-10 flex flex-col h-full">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
-                          <div className="w-14 h-14 bg-ocean-100 rounded-xl flex items-center justify-center border border-ocean-200 shadow-lg">
-                            {React.cloneElement(getPartyIcon(party.title), { className: "w-7 h-7 text-ocean-600" })}
+                          <div className="w-12 h-12 bg-ocean-100 rounded-xl flex items-center justify-center border border-ocean-200 shadow-lg">
+                            {React.cloneElement(getPartyIcon(party.title), { className: "w-6 h-6 text-ocean-600" })}
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold leading-tight text-gray-900">{party.title}</h3>
+                            <h3 className="text-lg font-bold leading-tight text-gray-900">{party.title}</h3>
                           </div>
                         </div>
                       </div>
                       
-                      {party.themeDesc && (
-                        <p className="text-gray-600 mb-5 text-sm leading-relaxed italic">{party.themeDesc}</p>
-                      )}
+                      <div className="flex-1 mb-3">
+                        {party.themeDesc && (
+                          <p className="text-gray-600 text-xs leading-relaxed italic line-clamp-3">{party.themeDesc}</p>
+                        )}
+                      </div>
                       
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-3 py-1.5 font-medium">
-                          <Clock className="w-3 h-3 mr-1.5" />
+                      <div className="flex flex-wrap gap-2 mt-auto">
+                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
+                          <Clock className="w-3 h-3 mr-1" />
                           {formatTime(party.time, timeMode)}
                         </Badge>
-                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-3 py-1.5 font-medium">
-                          <MapPin className="w-3 h-3 mr-1.5" />
+                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
+                          <MapPin className="w-3 h-3 mr-1" />
                           {party.venue}
                         </Badge>
                       </div>
@@ -860,21 +912,21 @@ function InfoTab() {
           </div>
           <div className="space-y-3">
             <Button variant="outline" className="w-full justify-start" asChild>
-              <a href="#" className="flex items-center">
+              <a href="https://atlantisevents.com/wp-content/uploads/ar25-cruise-vacation-guide-final.pdf?utm_source=exacttarget&utm_medium=email&utm_campaign=email" target="_blank" rel="noopener noreferrer" className="flex items-center">
                 <FileText className="w-5 h-5 text-ocean-700 mr-3" />
                 <span className="text-ocean-700">Cruise Guide PDF</span>
               </a>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <a href="#" className="flex items-center">
+              <a href="https://www.planetcruise.com/en/resilient-lady/deck-plans" target="_blank" rel="noopener noreferrer" className="flex items-center">
                 <Map className="w-5 h-5 text-ocean-700 mr-3" />
                 <span className="text-ocean-700">Deck Plans</span>
               </a>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <a href="#" className="flex items-center">
+              <a href="https://atlantisevents.com/vacation/greek-isles-istanbul-and-pyramids-cruise/" target="_blank" rel="noopener noreferrer" className="flex items-center">
                 <Phone className="w-5 h-5 text-ocean-700 mr-3" />
-                <span className="text-ocean-700">Emergency Contacts</span>
+                <span className="text-ocean-700">Atlantis Cruise Page</span>
               </a>
             </Button>
             </div>
@@ -976,41 +1028,54 @@ function InfoTab() {
         </Card>
       </div>
 
-      <Card className="p-6 bg-white hover:shadow-xl transition-all duration-300 border-0">
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 bg-ocean-100 rounded-xl flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-ocean-600" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900">Venue Guide</h3>
+      {/* KGay Travel Sponsorship Card */}
+      <Card className="p-8 bg-white border-0 shadow-xl">
+        <div className="flex flex-col items-center text-center mb-6">
+          <img 
+            src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
+            alt="KGay Travel" 
+            className="h-20 w-auto mb-4"
+          />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">This Guide Sponsored by KGay Travel</h2>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-coral/20 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Music className="w-8 h-8 text-coral" />
-            </div>
-            <h4 className="font-semibold text-gray-900 mb-2">Red Room</h4>
-            <p className="text-sm text-gray-600">Main theater for major shows and performances</p>
+        
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 mb-3">About KGay Travel</h4>
+            <p className="text-gray-700 text-sm leading-relaxed mb-4">
+              KGay Travel is an outstanding gay travel specialist led by Steven Krumholz (Steven K). With expertise and passion for LGBTQ+ travel, 
+              Steven curates unforgettable experiences with personalized service and extensive knowledge of LGBTQ+ friendly destinations. 
+              Six-time winner of the San Diego Awards for Travel Agency and 2024 San Diego Business Hall of Fame qualifier.
+            </p>
+            <p className="text-gray-700 text-sm leading-relaxed font-medium">
+              **WE NEVER CHARGE YOU FOR OUR SERVICE!** Let a professional with connections help you plan your next vacation!
+            </p>
           </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Wine className="w-8 h-8 text-yellow-600" />
+          
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-ocean-600" />
+                <a href="tel:3105609887" className="text-ocean-600 hover:text-ocean-700 font-medium">310.560.9887</a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-ocean-600" />
+                <a href="mailto:steven@kgaytravel.com" className="text-ocean-600 hover:text-ocean-700 font-medium">steven@kgaytravel.com</a>
+              </div>
+              <div className="flex items-start gap-2 mt-3">
+                <MapPin className="w-4 h-4 text-ocean-600 mt-0.5" />
+                <div className="text-gray-700">
+                  <div>3245 University Ave #1111</div>
+                  <div>San Diego, CA 92104</div>
+                </div>
+              </div>
             </div>
-            <h4 className="font-semibold text-gray-900 mb-2">The Manor</h4>
-            <p className="text-sm text-gray-600">Intimate venue for cabaret and comedy shows</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-ocean-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Waves className="w-8 h-8 text-ocean-700" />
+            
+            <div className="mt-4 pt-3 border-t border-gray-200">
+              <p className="text-xs text-gray-500">CST #2089491-50</p>
+              <p className="text-xs text-gray-600 mt-1">Specializing in Atlantis Events, Brand G, Vacaya, and luxury LGBTQ+ travel worldwide</p>
             </div>
-            <h4 className="font-semibold text-gray-900 mb-2">Aquatic Club</h4>
-            <p className="text-sm text-gray-600">Pool deck parties and T-Dance events</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Piano className="w-8 h-8 text-purple-700" />
-            </div>
-            <h4 className="font-semibold text-gray-900 mb-2">On the Rocks</h4>
-            <p className="text-sm text-gray-600">Piano bar and late-night lounge</p>
           </div>
         </div>
       </Card>
@@ -1091,6 +1156,23 @@ export default function CruiseGuide() {
   const [timeMode, setTimeMode] = useLocalStorage<"12h" | "24h">("cruise_time_mode", "12h");
   const [activeTab, setActiveTab] = useState("itinerary");
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 200);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
@@ -1100,15 +1182,22 @@ export default function CruiseGuide() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1"></div>
             <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
+              <div className="flex items-center justify-center gap-6 mb-2">
                 <img 
                   src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
                   alt="Atlantis Events" 
                   className="h-9 w-auto brightness-0 invert"
                 />
+                <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
+                  <img 
+                    src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
+                    alt="KGay Travel" 
+                    className="h-16 w-auto hover:opacity-80 transition-opacity"
+                  />
+                </a>
               </div>
               <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-                Greek Cruise Fan Guide
+                Greek Isles Cruise Guide
               </h1>
               <p className="text-white/80 text-base">
                 August 21-31, 2025
@@ -1186,7 +1275,7 @@ export default function CruiseGuide() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8 pt-[20px]">
+      <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
         {activeTab === "itinerary" && <ItineraryTab timeMode={timeMode} onTalentClick={setSelectedTalent} />}
         {activeTab === "entertainment" && <EntertainmentTab timeMode={timeMode} onTalentClick={setSelectedTalent} />}
         {activeTab === "entertainers" && <EntertainersTab onTalentClick={setSelectedTalent} />}
@@ -1212,7 +1301,7 @@ export default function CruiseGuide() {
             Virgin Resilient Lady • August 21-31, 2025
           </p>
           <p className="text-sm font-bold text-white/90">
-            Unofficial Fan Page based on Official Cruise Guide
+            This guide was sponsored by KGay Travel
           </p>
         </div>
       </footer>
@@ -1222,6 +1311,27 @@ export default function CruiseGuide() {
         isOpen={!!selectedTalent}
         onClose={() => setSelectedTalent(null)}
       />
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 right-6 z-50"
+          >
+            <Button
+              onClick={scrollToTop}
+              size="lg"
+              className="w-12 h-12 rounded-full bg-ocean-600 hover:bg-ocean-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/20"
+            >
+              <ChevronUp className="w-5 h-5" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

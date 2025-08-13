@@ -50,48 +50,48 @@ export const ITINERARY: ItineraryStop[] = [
 export const PARTY_THEMES: PartyTheme[] = [
   { 
     key: "Dog Tag T-Dance", 
-    desc: "The troops come home for Atlantis' longest running signature afternoon party. Show your creative strength at our first big outdoor party inspired by the joys of men in (small) uniforms. We'll provide dog tags; you do the rest.",
-    shortDesc: "Signature afternoon party with dog tags & uniform vibes."
+    desc: "Longest-running afternoon party with military uniform inspiration. We provide souvenir dog tags; you bring the strength and style.",
+    shortDesc: "Military uniform vibes with souvenir dog tags provided."
   },
   { 
     key: "UNITE", 
-    desc: "We're one big global community, with over 60 nations represented onboard Atlantis for this amazing voyage! Tonight show off the colors of your home country – any way that suits you. We'll all unite in the spirit of fun, frolic, and friends.",
-    shortDesc: "Celebrate our global community – wear your country colors."
+    desc: "Global community celebration with 60+ nations represented. Show off your country's colors and unite in fun, frolic, and friendship.",
+    shortDesc: "Celebrate global unity wearing your country's colors."
   },
   { 
     key: "Empires", 
-    desc: "Step into the grandeur of ancient worlds for a magical night at sea. Channel the opulence of Greece's gods, the mystique of Egyptian pharaohs, the decadence of Roman emperors, and the bold flair of Ottoman sultans. Whether you're wrapped in golden togas, draped in silks, or dazzling like Cleopatra herself, this is your chance to rule the dance floor in legendary style.",
-    shortDesc: "Ancient world glamour – Greece, Egypt, Rome & Ottoman."
+    desc: "Ancient world glamour featuring Greece, Egypt, Rome, and Ottoman empires. Golden togas, silks, and Cleopatra-level dazzle welcome.",
+    shortDesc: "Ancient empire glamour from Greece to Ottoman sultans."
   },
   { 
     key: "Greek Isles: Here We Go Again!", 
-    desc: "My my! Slip on your white linen and platform boots—tonight live out your Mamma Mia fantasy under the stars of the Aegean! It's a mashup of Greek island chic with ABBA disco dreams. Think blue & white anything, dazzling sequins, and a little drama.",
-    shortDesc: "Mamma Mia energy – blue & white sparkle with ABBA vibes."
+    desc: "Mamma Mia fantasy with Greek island chic meets ABBA disco. Blue & white, sequins, platform boots, and Mediterranean drama.",
+    shortDesc: "Mamma Mia meets Greek islands with ABBA disco energy."
   },
   { 
     key: "Lost At Sea", 
-    desc: "As we head deep into uncharted waters, the creatures above and below the water line come together for a night of nautical silliness. Colorful sea creatures meet marauding pirates alongside a few mythical characters.",
-    shortDesc: "Nautical silliness – pirates, sea creatures & myths."
+    desc: "Nautical silliness with sea creatures, pirates, and mythical characters. Cruise passengers and TV escapees welcome too.",
+    shortDesc: "Nautical chaos with pirates, sea creatures, and myths."
   },
   { 
     key: "Neon Playground", 
-    desc: "Fast, flashy, bright, and silly! We're turning the Red Room into a musical playground bathed in laser light and filled with bouncy sounds to make you smile.",
-    shortDesc: "Laser-bright playground in the Red Room."
+    desc: "Fast, flashy, bright musical playground in the Red Room. Neon, sparkles, lights, and bouncy sounds that make you smile.",
+    shortDesc: "Laser-bright neon playground with bouncy party vibes."
   },
   { 
     key: "Think Pink T-Dance", 
-    desc: "Pink is in! It's everywhere and hotter than ever. From Barbie butch to fluffy fantastic, throw on your favorite interpretation for a hot afternoon of frivolous, dolled-up fun.",
-    shortDesc: "Every shade of pink – Barbie to fluffy fantastic."
+    desc: "Pink is in! It's everywhere and brings out the playful in all of us. From Barbie butch to fluffy fantastic, throw on your favorite interpretation for a hot afternoon of frivolous dolled up fun.",
+    shortDesc: "Pink paradise - from Barbie butch to fluffy fantastic fun!"
   },
   { 
     key: "Virgin White", 
-    desc: "Let your imagination run wild at Atlantis' pinnacle party. Sizzle at the moment, dress up or down in a straightforward color that everyone looks good in.",
-    shortDesc: "The pinnacle white party – dress up or down."
+    desc: "Atlantis' pinnacle party in one perfect color. Be creative, sexy, irreverent, or simple in your favorite white outfit.",
+    shortDesc: "The ultimate white party under Mediterranean stars."
   },
   { 
     key: "Revival! Classic Disco T-Dance", 
-    desc: "Disco lives on as we take you back to the glory days of the 70s with an afternoon of pure musical magic on the dance floor.",
-    shortDesc: "70s disco glory days on the dance floor."
+    desc: "Glory days of 70s disco with pure musical magic. Artificial fabrics, facial hair, oversized shoes, and obnoxious accessories welcome.",
+    shortDesc: "70s disco revival with retro fabrics and accessories."
   },
   { 
     key: "Atlantis Classics", 
@@ -166,7 +166,7 @@ export const DAILY: DailySchedule[] = [
   ]},
   { key: "2025-08-26", items: [
     { type: "fun", time: "14:00", title: "Bingo with The Diva", venue: "Red Room" },
-    { type: "party", time: "17:00", title: "Think Pink! T-Dance", venue: "Aquatic Club" },
+    { type: "party", time: "17:00", title: "Think Pink T-Dance", venue: "Aquatic Club" },
     { type: "show", time: "19:30", title: "Reuben Kaye", venue: "Red Room" },
     { type: "show", time: "22:00", title: "Reuben Kaye", venue: "Red Room" },
     { type: "show", time: "19:00", title: "Leona Winter", venue: "The Manor" },

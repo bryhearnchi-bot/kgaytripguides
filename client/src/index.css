@@ -51,6 +51,17 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
   
+  /* Text truncation utilities */
+}
+
+.line-clamp-4 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+:root {
   /* Atlantis Events Brand Colors */
   --atlantis-blue-50: hsl(207, 73%, 96%);
   --atlantis-blue-100: hsl(206, 69%, 90%);
