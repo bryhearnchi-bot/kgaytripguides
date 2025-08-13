@@ -347,6 +347,11 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
       return "https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png?crop=1498,844,x0,y139&width=1498&height=749&format=pjpg&auto=webp";
     }
 
+    // Handle Athens with special labels
+    if (port.includes("Athens, Greece")) {
+      return portImages["Athens, Greece"];
+    }
+    
     return portImages[port as keyof typeof portImages];
   };
 

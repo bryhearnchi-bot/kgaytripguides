@@ -35,7 +35,7 @@ export interface PartyTheme {
 
 export const ITINERARY: ItineraryStop[] = [
   { key: "2025-08-20", date: "Wed, Aug 20", port: "Athens, Greece", arrive: "Pre-Cruise", depart: "—" },
-  { key: "2025-08-21", date: "Thu, Aug 21", port: "Athens, Greece", arrive: "—", depart: "6:00 PM" },
+  { key: "2025-08-21", date: "Thu, Aug 21", port: "Athens, Greece (Embarkation Day)", arrive: "—", depart: "6:00 PM" },
   { key: "2025-08-22", date: "Fri, Aug 22", port: "Santorini, Greece", arrive: "9:00 AM", depart: "10:00 PM" },
   { key: "2025-08-23", date: "Sat, Aug 23", port: "Kuşadası, Turkey", arrive: "8:00 AM", depart: "3:00 PM" },
   { key: "2025-08-24", date: "Sun, Aug 24", port: "Istanbul, Turkey", arrive: "1:00 PM", depart: "Overnight" },
@@ -45,7 +45,7 @@ export const ITINERARY: ItineraryStop[] = [
   { key: "2025-08-28", date: "Thu, Aug 28", port: "Day at Sea", arrive: "—", depart: "—" },
   { key: "2025-08-29", date: "Fri, Aug 29", port: "Mykonos, Greece", arrive: "9:00 AM", depart: "2:00 AM" },
   { key: "2025-08-30", date: "Sat, Aug 30", port: "Iraklion, Crete", arrive: "11:00 AM", depart: "6:00 PM" },
-  { key: "2025-08-31", date: "Sun, Aug 31", port: "Athens, Greece", arrive: "7:00 AM", depart: "—" },
+  { key: "2025-08-31", date: "Sun, Aug 31", port: "Athens, Greece (Disembarkation Day)", arrive: "7:00 AM", depart: "—" },
 ];
 
 export const PARTY_THEMES: PartyTheme[] = [
