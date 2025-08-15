@@ -533,7 +533,7 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
           
           <div className="mt-2 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
             <p className="text-xs text-white/80 leading-relaxed">
-              <span className="font-medium">Disclaimer:</span> This is the information from the Atlantis Cruise Guide, once on the ship, be sure to check the Virgin app for most update schedule.
+              <span className="font-medium">Disclaimer:</span> This is the information from the Atlantis Cruise Guide, once on the ship, be sure to check the Virgin app for most updated schedule.
             </p>
           </div>
           
