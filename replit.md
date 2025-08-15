@@ -12,6 +12,7 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - Added comprehensive "Things to Do" functionality with attraction guides for all ports
 - Integrated clickable Google Maps addresses for all gay bars and venues
 - Added Virgin onboard time confirmation disclaimer for all "All Aboard" times
+- Fixed Crete "Things to Do" button matching logic for proper display
 - Optimized build configuration and deployment setup for production export
 
 # User Preferences

@@ -2,14 +2,15 @@
 
 **Export Date:** August 15, 2025  
 **Build Status:** ✅ Successfully Built  
-**Bundle Size:** 477KB JS + 77KB CSS (minified & gzipped)
+**Bundle Size:** 477KB JS + 77KB CSS (minified & gzipped)  
+**Last Update:** Fixed Crete "Things to Do" matching logic
 
 ## Export Contents
 
 ### Production Files (Ready for Deployment)
 - `dist/public/index.html` - Main application entry point
 - `dist/public/assets/index-CbwuFmq-.css` - Minified stylesheet (77KB)
-- `dist/public/assets/index-DUcnxPnI.js` - Minified JavaScript bundle (477KB)
+- `dist/public/assets/index-CqLjLSfz.js` - Minified JavaScript bundle (477KB)
 - `dist/index.js` - Express server bundle (optional)
 
 ### Configuration Files

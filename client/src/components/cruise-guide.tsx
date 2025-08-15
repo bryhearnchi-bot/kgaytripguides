@@ -454,7 +454,10 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                           stop.port.replace(/\s*\(.*?\)/, '');
                         const cityData = CITY_ATTRACTIONS.find(city => 
                           city.city.toLowerCase().includes(cityName.toLowerCase()) ||
-                          cityName.toLowerCase().includes(city.city.toLowerCase())
+                          cityName.toLowerCase().includes(city.city.toLowerCase()) ||
+                          // Special handling for Crete/Iraklion
+                          (cityName.toLowerCase().includes("iraklion") && city.city.toLowerCase().includes("iraklion")) ||
+                          (cityName.toLowerCase().includes("crete") && city.city.toLowerCase().includes("crete"))
                         );
                         return cityData ? (
                           <Button
