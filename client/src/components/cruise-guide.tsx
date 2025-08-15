@@ -40,7 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeToggle } from "@/components/ui/time-toggle";
-import { ITINERARY, DAILY, TALENT, PARTY_THEMES, type Talent, type DailyEvent } from "@/data/cruise-data";
+import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction } from "@/data/cruise-data";
 
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
@@ -318,6 +318,7 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
 
 function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
     const portImages = {
       "Athens, Greece": "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
@@ -434,15 +435,37 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                       </div>
                     )}
                     
-                    <Button
-                      onClick={() => setSelectedDay(stop.key)}
-                      variant="outline"
-                      size="sm"
-                      className="mt-4 w-full md:w-auto border-ocean-300 text-ocean-700 hover:bg-ocean-50"
-                    >
-                      <CalendarDays className="w-4 h-4 mr-2" />
-                      View Events
-                    </Button>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        onClick={() => setSelectedDay(stop.key)}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 md:flex-none border-ocean-300 text-ocean-700 hover:bg-ocean-50"
+                      >
+                        <CalendarDays className="w-4 h-4 mr-2" />
+                        View Events
+                      </Button>
+                      {!isSea && (() => {
+                        const cityName = stop.port.includes("(") ? 
+                          stop.port.split("(")[0].trim() : 
+                          stop.port.replace(/\s*\(.*?\)/, '');
+                        const cityData = CITY_ATTRACTIONS.find(city => 
+                          city.city.toLowerCase().includes(cityName.toLowerCase()) ||
+                          cityName.toLowerCase().includes(city.city.toLowerCase())
+                        );
+                        return cityData ? (
+                          <Button
+                            onClick={() => setSelectedCity(cityData)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 md:flex-none border-ocean-300 text-ocean-700 hover:bg-ocean-50"
+                          >
+                            <MapPin className="w-4 h-4 mr-2" />
+                            Things to Do
+                          </Button>
+                        ) : null;
+                      })()}
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -482,6 +505,94 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                   <p className="text-gray-500 italic text-center py-8">No events scheduled for this day.</p>
                 );
               })()}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {/* Things to Do Modal */}
+      {selectedCity && (
+        <Dialog open={!!selectedCity} onOpenChange={(open) => !open && setSelectedCity(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-coral-600" />
+                Things to Do in {selectedCity.city}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4 space-y-6">
+              {/* Top Attractions */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-gold" />
+                  {selectedCity.city.includes("Alexandria") ? "Top 3 Attractions besides the Pyramids" : "Top 3 Attractions"}
+                </h3>
+                <div className="grid gap-3">
+                  {selectedCity.topAttractions.map((attraction, idx) => (
+                    <div key={idx} className="p-3 bg-gold/10 rounded-lg border border-gold/20">
+                      <p className="font-medium text-gray-800">{attraction}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Other Things to Do */}
+              {selectedCity.otherThingsToDo.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-ocean-600" />
+                    Other Things to Do
+                  </h3>
+                  <div className="grid gap-2">
+                    {selectedCity.otherThingsToDo.map((activity, idx) => (
+                      <div key={idx} className="p-3 bg-ocean-50 rounded-lg border border-ocean-100">
+                        <p className="text-gray-700">{activity}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Gay Bars/Clubs */}
+              {selectedCity.gayBars.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-coral" />
+                    Gay Bars & Clubs
+                  </h3>
+                  <div className="grid gap-2">
+                    {selectedCity.gayBars.map((bar, idx) => {
+                      // Check if the bar entry contains an address (has a colon)
+                      const hasAddress = bar.includes(': ');
+                      if (hasAddress) {
+                        const [name, address] = bar.split(': ');
+                        return (
+                          <div key={idx} className="p-3 bg-coral/10 rounded-lg border border-coral/20">
+                            <div className="text-gray-700">
+                              <span className="font-medium">{name}</span>
+                              <br />
+                              <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-ocean-600 hover:text-ocean-800 underline text-sm"
+                              >
+                                {address}
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div key={idx} className="p-3 bg-coral/10 rounded-lg border border-coral/20">
+                            <p className="text-gray-700">{bar}</p>
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>

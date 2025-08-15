@@ -33,6 +33,13 @@ export interface PartyTheme {
   shortDesc: string;
 }
 
+export interface CityAttraction {
+  city: string;
+  topAttractions: string[];
+  otherThingsToDo: string[];
+  gayBars: string[];
+}
+
 export const ITINERARY: ItineraryStop[] = [
   { key: "2025-08-20", date: "Wed, Aug 20", port: "Athens, Greece", arrive: "Pre-Cruise", depart: "—" },
   { key: "2025-08-21", date: "Thu, Aug 21", port: "Athens, Greece (Embarkation Day)", arrive: "—", depart: "6:00 PM" },
@@ -382,5 +389,132 @@ export const TALENT: Talent[] = [
     knownFor: "Late night fun", 
     bio: "Piano bar entertainer and vocalist known for his late-night performances and ability to take audience requests for an engaging experience.", 
     img: "https://eghcszbxego.exactdn.com/wp-content/uploads/2025/07/Brandon-James-Gwinn-photo-by-Michael-Hull.jpg"
+  }
+];
+
+export const CITY_ATTRACTIONS: CityAttraction[] = [
+  {
+    city: "Athens, Greece",
+    topAttractions: [
+      "Acropolis & Parthenon",
+      "Acropolis Museum", 
+      "Plaka District"
+    ],
+    otherThingsToDo: [
+      "Panathenaic Stadium",
+      "Mount Lycabettus",
+      "Local tavernas in Monastiraki"
+    ],
+    gayBars: [
+      "Sodade2: Triptolemou 10, Athens 11854, Greece",
+      "Big Bar: Falaisias 12, Gazi, Athens 11854, Greece",
+      "Del Sol Cafe: Voutadon 44, Athens 11854, Greece",
+      "Rooster Cafe: Plateia Agias Eirinis 4, Athens 10560, Greece"
+    ]
+  },
+  {
+    city: "Santorini, Greece",
+    topAttractions: [
+      "Oia Village (sunsets & blue domes)",
+      "Akrotiri Archaeological Site",
+      "Red Beach"
+    ],
+    otherThingsToDo: [
+      "Boat trip to the volcano",
+      "Wine tasting tours",
+      "Hike from Fira to Oia"
+    ],
+    gayBars: [
+      "Tropical Bar: Fira, Santorini 84700, Greece",
+      "Murphy's Bar: Erithrou Stavrou, Fira, Santorini 84700, Greece", 
+      "Crystal Cocktail Bar: Fira, Santorini 84700, Greece"
+    ]
+  },
+  {
+    city: "Kuşadası, Turkey",
+    topAttractions: [
+      "Ancient City of Ephesus",
+      "Pigeon Island (Kusadasi Castle)",
+      "Ladies Beach"
+    ],
+    otherThingsToDo: [
+      "Priene archaeological site",
+      "Dilek Peninsula National Park",
+      "Bazaar shopping"
+    ],
+    gayBars: [
+      "Love Sensation Club: Sakarya Sokak No:22, Kaleici (Old Town), Kusadasi 09400, Turkey",
+      "Fistik Bar: Camikebir Mah., Sakarya Sokak No:15, Kusadasi 09400, Turkey",
+      "Roof Lounge Bar: Turkmen Mahallesi, Ataturk Bulvari No:40/13, Kusadasi 09400, Turkey"
+    ]
+  },
+  {
+    city: "Istanbul, Turkey",
+    topAttractions: [
+      "Hagia Sophia",
+      "Blue Mosque",
+      "Topkapi Palace"
+    ],
+    otherThingsToDo: [
+      "Grand Bazaar shopping",
+      "Spice Market",
+      "Bosphorus cruise"
+    ],
+    gayBars: [
+      "Tekyön Club: Sıraselviler Cd. No:63/1, Beyoğlu, Istanbul 34250, Turkey",
+      "Love Dance Point: Ergenekon Mah. Cumhuriyet Cad., Hastane Sok. No:349 D:1, Şişli, Istanbul 34250, Turkey",
+      "SuperFabric Club: Harbiye Mah., Cumhuriyet Cad. No:42 Elmadağ, Şişli, Istanbul 34367, Turkey"
+    ]
+  },
+  {
+    city: "Alexandria (Cairo), Egypt",
+    topAttractions: [
+      "Bibliotheca Alexandrina (Library of Alexandria)",
+      "Citadel of Qaitbay",
+      "Alexandria Corniche"
+    ],
+    otherThingsToDo: [
+      "Roman Amphitheatre",
+      "Montazah Palace & Gardens",
+      "Local seafood restaurants"
+    ],
+    gayBars: []
+  },
+  {
+    city: "Mykonos, Greece",
+    topAttractions: [
+      "Little Venice",
+      "Windmills of Mykonos (Kato Mili)",
+      "Delos Island (day trip)"
+    ],
+    otherThingsToDo: [
+      "Elia Beach",
+      "Paraportiani Church",
+      "Nightlife & sunset bars"
+    ],
+    gayBars: [
+      "Jackie O' Town Bar: Paraportiani Waterfront, Mykonos 84600, Greece",
+      "Porta Bar: Chora (Porta Aigialou area), Mykonos 84600, Greece",
+      "Lola Bar: Zanni Pitaraki 4, Mykonos Town 84600, Greece",
+      "Jackie O' Beach Club: Super Paradise Beach, Mykonos 84600, Greece (Evening Drag Shows from 6pm)"
+    ]
+  },
+  {
+    city: "Iraklion (Heraklion), Crete",
+    topAttractions: [
+      "Palace of Knossos",
+      "Heraklion Archaeological Museum",
+      "Koules Fortress (Castello del Molo)"
+    ],
+    otherThingsToDo: [
+      "Matala Beach (famous caves)",
+      "Local winery tours",
+      "Explore the Old Town & Venetian fountains"
+    ],
+    gayBars: [
+      "La Brasserie: Korai 15, Heraklion 71202, Crete, Greece",
+      "YOLO Bar: Limani, Kastroy 1, Hersonissos 70014, Crete, Greece",
+      "Klik Bar: Sourmelis 2, Chania 73132, Crete, Greece"
+    ]
   }
 ];
