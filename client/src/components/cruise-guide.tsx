@@ -302,7 +302,7 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
                     <div className="text-xs text-gray-600 space-y-1">
                       <p><strong>Join us for our Pre-Cruise Meet and Greet!</strong></p>
                       <p>📍 38 Akadimias, Omirou Street, Athens</p>
-                      <p>💰 €25 entrance - unlimited cocktails, beer, wine, soft drinks</p>
+                      <p>💰 €25 entrance for unlimited consumption on cocktails (Aperol, Porn Star Martini and Paloma), beers, wine, soft drinks</p>
                       <p>⏰ 5:00 PM - 8:00 PM • Limited capacity - arrive early!</p>
                     </div>
                   )}
