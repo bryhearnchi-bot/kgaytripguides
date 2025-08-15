@@ -1,9 +1,10 @@
 [build]
   publish = "dist/public"
-  command = "npm install && vite build"
+  command = "npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
+  NPM_VERSION = "10"
 
 [[redirects]]
   from = "/*"
@@ -12,3 +13,18 @@
 
 [build.processing]
   skip_processing = false
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"

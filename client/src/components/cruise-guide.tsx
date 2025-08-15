@@ -418,6 +418,9 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                         <p className="text-sm font-semibold text-yellow-600">
                           {formatAllAboard(stop.depart, timeMode)}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1 italic">
+                          *Please confirm with official Virgin announcements on board
+                        </p>
                       </div>
                     )}
                     

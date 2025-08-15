@@ -9,6 +9,10 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - Fixed dialog close behavior to work with single click
 - Moved time toggle to navigation bar area for better layout
 - Standardized all card backgrounds to white for visual consistency
+- Added comprehensive "Things to Do" functionality with attraction guides for all ports
+- Integrated clickable Google Maps addresses for all gay bars and venues
+- Added Virgin onboard time confirmation disclaimer for all "All Aboard" times
+- Optimized build configuration and deployment setup for production export
 
 # User Preferences
 
@@ -82,3 +86,26 @@ Preferred communication style: Simple, everyday language.
 - **wouter**: Lightweight routing library for React applications
 - **class-variance-authority**: Utility for creating variant-based component APIs
 - **clsx**: Utility for constructing className strings conditionally
+
+# Deployment Configuration
+
+## Build Process
+- **Production Build**: `npm run build` creates optimized static files in `dist/public/`
+- **Bundle Size**: ~477KB JavaScript, ~77KB CSS with minification and compression
+- **Static Assets**: All assets are versioned and cached with long-term cache headers
+- **Build Time**: ~10 seconds with 2066+ modules transformed
+- **Last Updated**: August 15, 2025 - includes Virgin onboard time disclaimers
+
+## Deployment Targets
+- **Netlify**: Configured with `netlify.toml` for static hosting with SPA redirects
+- **Manual Export**: Built files can be served from any static hosting provider
+- **Performance**: Assets are cached for 1 year, CSS/JS minified for optimal loading
+
+## File Structure (Post-Build)
+```
+dist/
+├── index.js          # Express server bundle (optional)
+└── public/           # Static frontend files (deployment target)
+    ├── index.html    # Main HTML with SEO meta tags
+    └── assets/       # Versioned CSS, JS bundles
+```
