@@ -31,8 +31,11 @@ import {
   Flag,
   Ship,
   ChevronUp,
-  Mail
+  Mail,
+  Plus
 } from "lucide-react";
+import { FaInstagram, FaTwitter, FaTiktok, FaYoutube, FaLinkedin, FaGlobe } from "react-icons/fa";
+import { SiLinktree } from "react-icons/si";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,79 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeToggle } from "@/components/ui/time-toggle";
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction } from "@/data/cruise-data";
 
+
+// Calendar helper functions
+function createGoogleCalendarUrl(title: string, date: string, time: string, location?: string): string {
+  const startDateTime = formatCalendarDateTime(date, time);
+  const endDateTime = formatCalendarDateTime(date, time, 60); // Add 1 hour duration
+  
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${startDateTime}/${endDateTime}`,
+    details: `Atlantis Greek Isles Cruise Event`,
+    location: location || 'Virgin Resilient Lady'
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+function createAppleCalendarUrl(title: string, date: string, time: string, location?: string): string {
+  const startDateTime = formatCalendarDateTime(date, time);
+  const endDateTime = formatCalendarDateTime(date, time, 60); // Add 1 hour duration
+  
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    startdt: startDateTime,
+    enddt: endDateTime,
+    summary: title,
+    description: `Atlantis Greek Isles Cruise Event`,
+    location: location || 'Virgin Resilient Lady'
+  });
+  
+  return `data:text/calendar;charset=utf8,BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+URL:${window.location.href}
+DTSTART:${startDateTime}
+DTEND:${endDateTime}
+SUMMARY:${title}
+DESCRIPTION:Atlantis Greek Isles Cruise Event
+LOCATION:${location || 'Virgin Resilient Lady'}
+END:VEVENT
+END:VCALENDAR`;
+}
+
+function formatCalendarDateTime(dateStr: string, timeStr: string, addMinutes = 0): string {
+  // Parse date from format like "Wed, Aug 20"
+  const year = '2025';
+  const monthMap: { [key: string]: string } = {
+    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+  };
+  
+  const dateMatch = dateStr.match(/(\w+),?\s+(\w+)\s+(\d+)/);
+  if (!dateMatch) return '';
+  
+  const [, , monthName, day] = dateMatch;
+  const month = monthMap[monthName] || '08';
+  const paddedDay = day.padStart(2, '0');
+  
+  // Parse time
+  const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+  if (!timeMatch) return `${year}${month}${paddedDay}T120000Z`;
+  
+  let hours = parseInt(timeMatch[1], 10);
+  const minutes = parseInt(timeMatch[2], 10) + addMinutes;
+  
+  // Convert to UTC (assuming ship timezone)
+  const totalMinutes = hours * 60 + minutes;
+  const finalHours = Math.floor(totalMinutes / 60) % 24;
+  const finalMinutes = totalMinutes % 60;
+  
+  return `${year}${month}${paddedDay}T${finalHours.toString().padStart(2, '0')}${finalMinutes.toString().padStart(2, '0')}00Z`;
+}
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -154,9 +230,76 @@ interface TimelineListProps {
   events: DailyEvent[];
   timeMode: "12h" | "24h";
   onTalentClick: (name: string) => void;
+  eventDate?: string;
 }
 
-function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
+function CalendarButton({ event, eventDate }: { event: DailyEvent; eventDate?: string }) {
+  const [showOptions, setShowOptions] = useState(false);
+
+  const handleGoogleCalendar = () => {
+    const url = createGoogleCalendarUrl(event.title, eventDate || '', event.time, event.venue);
+    window.open(url, '_blank');
+    setShowOptions(false);
+  };
+
+  const handleAppleCalendar = () => {
+    const url = createAppleCalendarUrl(event.title, eventDate || '', event.time, event.venue);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setShowOptions(false);
+  };
+
+  return (
+    <div className="absolute bottom-2 right-2 z-10">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setShowOptions(!showOptions)}
+        className="h-8 w-8 rounded-full bg-white border-ocean-300 text-ocean-700 hover:bg-ocean-50 p-0 shadow-sm"
+        title="Add to Calendar"
+      >
+        <Plus className="w-4 h-4" />
+      </Button>
+      
+      {showOptions && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowOptions(false)}
+          />
+          <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 min-w-[160px]">
+            <button
+              onClick={handleGoogleCalendar}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
+            >
+              <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
+                <span className="text-white text-xs font-bold">G</span>
+              </div>
+              Google Calendar
+            </button>
+            <button
+              onClick={handleAppleCalendar}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
+            >
+              <div className="w-4 h-4 bg-gray-800 rounded-sm flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+              </div>
+              Apple Calendar
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineListProps) {
   const sortedEvents = events.sort((a, b) => a.time.localeCompare(b.time));
 
   return (
@@ -258,7 +401,7 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
                 )}
                 
                 {/* Event Content */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-10">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-ocean-700">
                       <Clock className="h-4 w-4" />
@@ -308,6 +451,7 @@ function TimelineList({ events, timeMode, onTalentClick }: TimelineListProps) {
                   )}
                 </div>
               </div>
+            <CalendarButton event={event} eventDate={eventDate} />
             </Card>
           </motion.div>
         );
@@ -521,6 +665,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                     events={dayEvents.items} 
                     timeMode={timeMode} 
                     onTalentClick={handleTalentClick}
+                    eventDate={ITINERARY.find(i => i.key === selectedDay)?.date}
                   />
                 ) : (
                   <p className="text-gray-500 italic text-center py-8">No events scheduled for this day.</p>
@@ -750,6 +895,7 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
                   events={allEvents} 
                   timeMode={timeMode} 
                   onTalentClick={handleTalentClick}
+                  eventDate={selectedDate === "all" ? undefined : dates.find(d => d.key === selectedDate)?.label}
                 />
               ) : (
                 <p className="text-gray-500 italic">No entertainment scheduled for this day.</p>
@@ -1033,6 +1179,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                         </Badge>
                       </div>
                     </div>
+                    <CalendarButton event={party} eventDate={dayData.date} />
                   </Card>
                 </motion.div>
               ))}
@@ -1299,6 +1446,72 @@ function InfoTab() {
   );
 }
 
+function TalentCalendarButton({ appearance }: { appearance: { date: string; time: string; venue: string; title: string } }) {
+  const [showOptions, setShowOptions] = useState(false);
+
+  const handleGoogleCalendar = () => {
+    const url = createGoogleCalendarUrl(appearance.title, appearance.date, appearance.time, appearance.venue);
+    window.open(url, '_blank');
+    setShowOptions(false);
+  };
+
+  const handleAppleCalendar = () => {
+    const url = createAppleCalendarUrl(appearance.title, appearance.date, appearance.time, appearance.venue);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${appearance.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setShowOptions(false);
+  };
+
+  return (
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setShowOptions(!showOptions)}
+        className="h-6 w-6 rounded-full bg-white border-ocean-300 text-ocean-700 hover:bg-ocean-50 p-0 shadow-sm"
+        title="Add to Calendar"
+      >
+        <Plus className="w-3 h-3" />
+      </Button>
+      
+      {showOptions && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowOptions(false)}
+          />
+          <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 min-w-[160px]">
+            <button
+              onClick={handleGoogleCalendar}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
+            >
+              <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
+                <span className="text-white text-xs font-bold">G</span>
+              </div>
+              Google Calendar
+            </button>
+            <button
+              onClick={handleAppleCalendar}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
+            >
+              <div className="w-4 h-4 bg-gray-800 rounded-sm flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+              </div>
+              Apple Calendar
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpen: boolean; onClose: () => void }) {
   if (!talent) return null;
 
@@ -1345,6 +1558,71 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
               <h5 className="text-gray-900 font-semibold mb-2">Bio</h5>
               <p className="text-sm text-gray-700 leading-relaxed">{talent.bio}</p>
             </div>
+
+            {/* Social Media Links */}
+            {talent.social && Object.keys(talent.social).length > 0 && (
+              <div>
+                <h5 className="text-gray-900 font-semibold mb-2">Follow {talent.name}</h5>
+                <div className="flex flex-wrap gap-2">
+                  {talent.social.instagram && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <FaInstagram className="h-4 w-4 text-pink-500" />
+                        Instagram
+                      </a>
+                    </Button>
+                  )}
+                  {talent.social.twitter && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <FaTwitter className="h-4 w-4 text-blue-500" />
+                        Twitter
+                      </a>
+                    </Button>
+                  )}
+                  {talent.social.tiktok && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <FaTiktok className="h-4 w-4 text-black" />
+                        TikTok
+                      </a>
+                    </Button>
+                  )}
+                  {talent.social.youtube && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <FaYoutube className="h-4 w-4 text-red-500" />
+                        YouTube
+                      </a>
+                    </Button>
+                  )}
+                  {talent.social.linkedin && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <FaLinkedin className="h-4 w-4 text-blue-600" />
+                        LinkedIn
+                      </a>
+                    </Button>
+                  )}
+                  {talent.social.website && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <FaGlobe className="h-4 w-4 text-gray-600" />
+                        Website
+                      </a>
+                    </Button>
+                  )}
+                  {talent.social.linktree && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={talent.social.linktree} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <SiLinktree className="h-4 w-4 text-green-500" />
+                        Linktree
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             
             <div>
               <h5 className="text-gray-900 font-semibold mb-2">Appearances on This Cruise</h5>
@@ -1353,9 +1631,12 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
               ) : (
                 <div className="space-y-2">
                   {appearances.map((app, i) => (
-                    <div key={i} className="text-sm text-gray-700 p-2 bg-gray-50 rounded">
-                      <span className="text-ocean-600 font-medium">{app.date}</span> • {app.time} @ {app.venue}
-                      <div className="text-gray-600">{app.title}</div>
+                    <div key={i} className="text-sm text-gray-700 p-2 bg-gray-50 rounded flex items-start justify-between">
+                      <div className="flex-1">
+                        <span className="text-ocean-600 font-medium">{app.date}</span> • {app.time} @ {app.venue}
+                        <div className="text-gray-600">{app.title}</div>
+                      </div>
+                      <TalentCalendarButton appearance={app} />
                     </div>
                   ))}
                 </div>

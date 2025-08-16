@@ -16,6 +16,9 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - Standardized disclaimers across all tabs (Itinerary, Events, Entertainers, Parties, Info)
 - Removed "Atlantis Events" text from footer while keeping logo and tagline
 - Optimized build configuration and deployment setup for production export
+- **August 16, 2025**: Added comprehensive social media integration with official links for all 18 entertainers
+- **August 16, 2025**: Fixed text wrapping issues on Events page to prevent overlap with calendar buttons
+- **August 16, 2025**: Enhanced talent modals with social media buttons (Instagram, Twitter, TikTok, YouTube, LinkedIn, Website, Linktree)
 
 # User Preferences
 
@@ -53,8 +56,9 @@ Preferred communication style: Simple, everyday language.
 ## Component Design Patterns
 - **Compound Components**: Extensive use of Radix UI compound component patterns
 - **Custom Hooks**: useLocalStorage for persistent user preferences, useIsMobile for responsive behavior
-- **Type Safety**: Comprehensive TypeScript interfaces for cruise data (Talent, DailyEvent, ItineraryStop)
+- **Type Safety**: Comprehensive TypeScript interfaces for cruise data (Talent, DailyEvent, ItineraryStop, SocialLinks)
 - **Responsive Design**: Mobile-first approach with adaptive layouts
+- **Social Integration**: Dynamic social media link rendering with platform-specific icons and external link handling
 
 ## Code Organization
 - **Monorepo Structure**: Shared schema between client and server in `/shared` directory
@@ -72,6 +76,7 @@ Preferred communication style: Simple, everyday language.
 - **Radix UI**: Comprehensive set of unstyled, accessible UI primitives
 - **Tailwind CSS**: Utility-first CSS framework with custom theme configuration
 - **Lucide React**: Icon library for consistent iconography
+- **React Icons**: Social media and platform icons for external link integration
 - **Framer Motion**: Animation library for enhanced user interactions
 
 ## Development Tools

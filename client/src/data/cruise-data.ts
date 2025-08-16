@@ -6,6 +6,16 @@ export interface ItineraryStop {
   depart: string;
 }
 
+export interface SocialLinks {
+  instagram?: string;
+  twitter?: string;
+  tiktok?: string;
+  website?: string;
+  youtube?: string;
+  linkedin?: string;
+  linktree?: string;
+}
+
 export interface Talent {
   name: string;
   cat: string;
@@ -13,6 +23,7 @@ export interface Talent {
   knownFor: string;
   bio: string;
   img: string;
+  social?: SocialLinks;
 }
 
 export interface DailyEvent {
@@ -228,7 +239,12 @@ export const TALENT: Talent[] = [
     role: "Drag icon & comic", 
     knownFor: "RPDR All Stars 4 winner", 
     bio: "Born in New York City, Monét is a classically trained performer who won RuPaul's Drag Race All Stars 4. With her signature wit and powerful vocals, she's become a beloved figure in drag culture and comedy.", 
-    img: "https://www.billboard.com/wp-content/uploads/media/03-2-Monet-X-Change-rupauls-drag-race-s10-billboard-a-1548.jpg"
+    img: "https://www.billboard.com/wp-content/uploads/media/03-2-Monet-X-Change-rupauls-drag-race-s10-billboard-a-1548.jpg",
+    social: {
+      instagram: "https://www.instagram.com/monetxchange",
+      twitter: "https://x.com/monetxchange",
+      website: "https://www.monetxchange.com"
+    }
   },
   { 
     name: "Alexis Michelle", 
@@ -236,7 +252,11 @@ export const TALENT: Talent[] = [
     role: "Singer & RPDR favorite", 
     knownFor: "Glam cabaret", 
     bio: "Broadway-trained drag performer who placed 5th on RuPaul's Drag Race Season 9. Known for her theatrical performances and cabaret shows at venues like Feinstein's/54 Below.", 
-    img: "https://i.redd.it/azxnlnbuql9b1.jpg"
+    img: "https://i.redd.it/azxnlnbuql9b1.jpg",
+    social: {
+      instagram: "https://www.instagram.com/alexismichelle",
+      tiktok: "https://www.tiktok.com/@alexismichelleofficial"
+    }
   },
   { 
     name: "Leona Winter", 
@@ -244,7 +264,12 @@ export const TALENT: Talent[] = [
     role: "Vocalist", 
     knownFor: "Queen of the Universe", 
     bio: "French drag queen and countertenor baritone with a three-octave range. Known for her appearances on Queen of the Universe and The Voice France in 2019.", 
-    img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39"
+    img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39",
+    social: {
+      instagram: "https://www.instagram.com/leonawinterofficiel",
+      tiktok: "https://www.tiktok.com/@leonawinterofficiel",
+      twitter: "https://x.com/officielleona"
+    }
   },
   { 
     name: "Sherry Vine", 
@@ -252,7 +277,10 @@ export const TALENT: Talent[] = [
     role: "Comedy & vocals", 
     knownFor: "Parody legend", 
     bio: "Legendary NYC drag icon with over 35 years in entertainment. Known for her hilarious parody songs and has been a fixture of NYC nightlife since the 1990s.", 
-    img: "http://static1.squarespace.com/static/5e2256cf72c72a5f12f1fdfe/t/63cc50edf5765a4e44b610f1/1580806649356/sherry-web-social.png?format=1500w"
+    img: "http://static1.squarespace.com/static/5e2256cf72c72a5f12f1fdfe/t/63cc50edf5765a4e44b610f1/1580806649356/sherry-web-social.png?format=1500w",
+    social: {
+      instagram: "https://www.instagram.com/misssherryvine"
+    }
   },
   { 
     name: "Reuben Kaye", 
@@ -260,7 +288,11 @@ export const TALENT: Talent[] = [
     role: "Comic performer", 
     knownFor: "Cabaret provocateur", 
     bio: "Award-winning Australian comedian, cabaret host, and writer known for pushing boundaries. Nominated for Best Show at the 2024 Edinburgh Comedy Awards.", 
-    img: "https://encoremelbourne.com/wp-content/uploads/2024/09/Reuben-Kaye-c-Alan-Moyle-scaled-e1727080187482.jpg"
+    img: "https://encoremelbourne.com/wp-content/uploads/2024/09/Reuben-Kaye-c-Alan-Moyle-scaled-e1727080187482.jpg",
+    social: {
+      twitter: "https://x.com/reubenkaye",
+      website: "https://www.reubenkaye.com/about"
+    }
   },
   { 
     name: "Rob Houchen", 
@@ -268,7 +300,10 @@ export const TALENT: Talent[] = [
     role: "West End star", 
     knownFor: "Les Misérables, Titanique", 
     bio: "British stage actor and producer best known for playing Marius in Les Misérables. Also starred in musicals including Titanique, South Pacific, and The Light in the Piazza.", 
-    img: "http://www.digitaljournal.com/wp-content/uploads/2024/10/Rob-Houchen-Photo-e1728160861225.jpg"
+    img: "http://www.digitaljournal.com/wp-content/uploads/2024/10/Rob-Houchen-Photo-e1728160861225.jpg",
+    social: {
+      instagram: "https://www.instagram.com/robhouchen"
+    }
   },
   { 
     name: "Alyssa Wray", 
@@ -276,7 +311,10 @@ export const TALENT: Talent[] = [
     role: "Vocalist", 
     knownFor: "American Idol Top 9", 
     bio: "Singer and performer from Kentucky who made it to the Top 9 on American Idol. Katy Perry called her a 'once in a generation' performer.", 
-    img: "https://s.yimg.com/ny/api/res/1.2/B32A9JNeo3IpS.FKxuffIQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD02NzY7Y2Y9d2VicA--/https://s.yimg.com/os/creatr-uploaded-images/2021-03/1a562ab0-7ee4-11eb-afce-ac7a09171992"
+    img: "https://s.yimg.com/ny/api/res/1.2/B32A9JNeo3IpS.FKxuffIQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD02NzY7Y2Y9d2VicA--/https://s.yimg.com/os/creatr-uploaded-images/2021-03/1a562ab0-7ee4-11eb-afce-ac7a09171992",
+    social: {
+      instagram: "https://www.instagram.com/itsalyssawray"
+    }
   },
   { 
     name: "Brad Loekle", 
@@ -284,7 +322,11 @@ export const TALENT: Talent[] = [
     role: "Comedian", 
     knownFor: "Atlantis favorite", 
     bio: "American stand-up comedian from Upstate New York who was a regular on premium cable comedy shows. Known for his appearances at Pride events, circuit parties, and cruise ships.", 
-    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1701816763654-IG6NG6UERJXYU354L1ZU/brad-loekle-web.jpg?format=2500w"
+    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1701816763654-IG6NG6UERJXYU354L1ZU/brad-loekle-web.jpg?format=2500w",
+    social: {
+      instagram: "https://www.instagram.com/bradloekle",
+      website: "https://www.bradloekle.com"
+    }
   },
   { 
     name: "Rachel Scanlon", 
@@ -292,7 +334,11 @@ export const TALENT: Talent[] = [
     role: "Comedian", 
     knownFor: "Two Dykes and a Mic", 
     bio: "LA-based stand-up comedian and co-host of the popular podcast 'Two Dykes and a Mic'. Known for her sharp queer humor and sex-positive comedy.", 
-    img: "https://www.empirecomedyme.com/img/comedians/Rachel-Scanlon-Primary-Headshot-da5f117a-main-image.png"
+    img: "https://www.empirecomedyme.com/img/comedians/Rachel-Scanlon-Primary-Headshot-da5f117a-main-image.png",
+    social: {
+      instagram: "https://www.instagram.com/rachelscanloncomedy",
+      linktree: "https://linktr.ee/rachelscanlon"
+    }
   },
   { 
     name: "Daniel Webb", 
@@ -300,7 +346,12 @@ export const TALENT: Talent[] = [
     role: "Comedian", 
     knownFor: "Opened for Margaret Cho", 
     bio: "Texas-born LA-based comedian who currently tours as the opening act for Margaret Cho. Featured in the documentary 'Queer Riot' and released his hour-long special 'Hoe's Parade: Live at the Rose Bowl' in 2021.", 
-    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1668557899908-6Z03ZHA1FY8Y9ANSKMJ9/daniel-webb-web.jpg?format=2500w"
+    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1668557899908-6Z03ZHA1FY8Y9ANSKMJ9/daniel-webb-web.jpg?format=2500w",
+    social: {
+      instagram: "https://www.instagram.com/the_danielwebb",
+      twitter: "https://twitter.com/thedanielwebb",
+      website: "https://www.thedanielwebb.com"
+    }
   },
   { 
     name: "AirOtic", 
@@ -308,7 +359,10 @@ export const TALENT: Talent[] = [
     role: "Acrobatic spectacle", 
     knownFor: "Les Farfadais production", 
     bio: "High-energy circus cabaret show created by Les Farfadais featuring aerial acrobatics, dance, and stunning costumes.", 
-    img: "https://airoticcirquesoiree.com/assets/img/info/info_love-3.6a496b70.webp"
+    img: "https://airoticcirquesoiree.com/assets/img/info/info_love-3.6a496b70.webp",
+    social: {
+      instagram: "https://www.instagram.com/airoticshow/"
+    }
   },
   { 
     name: "Another Rose", 
@@ -340,7 +394,10 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Miami sound", 
     bio: "Grammy-nominated DJ and producer from Miami, half of the electronic duo Abel. Known for producing tracks for Madonna, Rihanna, and Jennifer Lopez.", 
-    img: "https://bosphilly.com/wp-content/uploads/2023/01/ABEL-SPINNING-scaled-1.jpg"
+    img: "https://bosphilly.com/wp-content/uploads/2023/01/ABEL-SPINNING-scaled-1.jpg",
+    social: {
+      instagram: "https://www.instagram.com/_abel_dj"
+    }
   },
   { 
     name: "Dan Slater", 
@@ -348,7 +405,11 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Sydney to global", 
     bio: "Australian DJ and producer based in the United States, with a career spanning over two decades and collaborations with major artists.", 
-    img: "https://chicago.gopride.com/c/I/52051-156158.jpg"
+    img: "https://chicago.gopride.com/c/I/52051-156158.jpg",
+    social: {
+      linkedin: "https://www.linkedin.com/in/dancenowdanslater",
+      website: "https://www.djdanSlater.com"
+    }
   },
   { 
     name: "DJ Suri", 
@@ -356,7 +417,10 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Madrid", 
     bio: "Valencia-born DJ specializing in electronic and house music. Known for his performances at major clubs worldwide and his ability to blend various electronic music subgenres.", 
-    img: "https://jceventsinternational.com/wp-content/uploads/2018/12/DJ-profile-pic_0002_DJSuri.jpg"
+    img: "https://jceventsinternational.com/wp-content/uploads/2018/12/DJ-profile-pic_0002_DJSuri.jpg",
+    social: {
+      youtube: "https://www.youtube.com/suridj"
+    }
   },
   { 
     name: "GSP", 
@@ -364,7 +428,10 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Athens/Atlanta", 
     bio: "Greek-born international DJ and producer George Spiliopoulos. Has performed in over 30 countries and produced remixes for Ariana Grande and Lil Nas X.", 
-    img: "https://geo-media.beatport.com/image_size/590x404/b4e28817-74b7-4868-9d60-34d0e944fe01.jpg"
+    img: "https://geo-media.beatport.com/image_size/590x404/b4e28817-74b7-4868-9d60-34d0e944fe01.jpg",
+    social: {
+      instagram: "https://www.instagram.com/gspdj/"
+    }
   },
   { 
     name: "William TN Hall", 
@@ -372,7 +439,10 @@ export const TALENT: Talent[] = [
     role: "Piano entertainer", 
     knownFor: "Showtunes & pop", 
     bio: "NYC-based composer, arranger, and piano entertainer who specializes in Broadway music and pop standards. Has worked with artists including Sharon Needles and the late Joan Rivers.", 
-    img: "https://shows.donttellmamanyc.com/images/performers/William_TN_Hallnew.jpg"
+    img: "https://shows.donttellmamanyc.com/images/performers/William_TN_Hallnew.jpg",
+    social: {
+      twitter: "https://x.com/williamtnhall"
+    }
   },
   { 
     name: "Brian Nash", 
@@ -380,7 +450,10 @@ export const TALENT: Talent[] = [
     role: "Piano entertainer", 
     knownFor: "Musical director", 
     bio: "Award-winning pianist, singer, and musical director from Nashville. Serves as entertainment coordinator and resident MD for Atlantis Events worldwide.", 
-    img: "https://cdn1.sixthman.net/2025/broadway/images/artists/brian_nash_-_brd_-_1500x1000_982140.jpg"
+    img: "https://cdn1.sixthman.net/2025/broadway/images/artists/brian_nash_-_brd_-_1500x1000_982140.jpg",
+    social: {
+      instagram: "https://www.instagram.com/brianjnash/"
+    }
   },
   { 
     name: "Brandon James Gwinn", 
@@ -388,7 +461,12 @@ export const TALENT: Talent[] = [
     role: "Piano entertainer", 
     knownFor: "Late night fun", 
     bio: "Piano bar entertainer and vocalist known for his late-night performances and ability to take audience requests for an engaging experience.", 
-    img: "https://eghcszbxego.exactdn.com/wp-content/uploads/2025/07/Brandon-James-Gwinn-photo-by-Michael-Hull.jpg"
+    img: "https://eghcszbxego.exactdn.com/wp-content/uploads/2025/07/Brandon-James-Gwinn-photo-by-Michael-Hull.jpg",
+    social: {
+      instagram: "https://www.instagram.com/brandonjamesg",
+      twitter: "https://x.com/brandonjamesg",
+      website: "https://www.brandonjamesgwinn.com"
+    }
   }
 ];
 
