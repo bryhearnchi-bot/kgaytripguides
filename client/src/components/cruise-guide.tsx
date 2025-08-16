@@ -358,6 +358,21 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
 
   return (
     <div className="space-y-6">
+      {/* Disclaimer Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-blue-800 text-sm font-medium">
+              The information listed is based on the official cruise guide from Atlantis. Be sure to check the Virgin app for any possible changes.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="grid gap-6">
         {ITINERARY.map((stop, idx) => {
           const isSea = /sea/i.test(stop.port);
@@ -627,6 +642,21 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
 
   return (
     <div className="space-y-6">
+      {/* Disclaimer Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-blue-800 text-sm font-medium">
+              The information listed is based on the official cruise guide from Atlantis. Be sure to check the Virgin app for any possible changes.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="space-y-4 mb-6">
         <div>
           <Button
@@ -647,12 +677,6 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
               </span>
             </div>
           </Button>
-          
-          <div className="mt-2 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-            <p className="text-xs text-white/80 leading-relaxed">
-              <span className="font-medium">Disclaimer:</span> This is the information from the Atlantis Cruise Guide, once on the ship, be sure to check the Virgin app for most updated schedule.
-            </p>
-          </div>
           
           {isFilterOpen && (
             <motion.div
@@ -800,6 +824,21 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
 
   return (
     <div className="space-y-6">
+      {/* Disclaimer Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-blue-800 text-sm font-medium">
+              The information listed is based on the official cruise guide from Atlantis. Be sure to check the Virgin app for any possible changes.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="mb-6">
         <div className="flex flex-wrap gap-2">
           {categories.map(category => (
@@ -916,6 +955,21 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
 
   return (
     <div className="space-y-6">
+      {/* Disclaimer Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-blue-800 text-sm font-medium">
+              The information listed is based on the official cruise guide from Atlantis. Be sure to check the Virgin app for any possible changes.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="space-y-8">
         {Object.entries(partyEventsByDay).map(([dayKey, dayData]) => (
           <div key={dayKey} className="space-y-4">
@@ -993,6 +1047,21 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
 function InfoTab() {
   return (
     <div className="space-y-8">
+      {/* Disclaimer Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-blue-800 text-sm font-medium">
+              The information listed is based on the official cruise guide from Atlantis. Be sure to check the Virgin app for any possible changes.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-6 bg-white hover:shadow-xl transition-all duration-300 border-0">
           <div className="flex items-center space-x-3 mb-4">
@@ -1440,7 +1509,6 @@ export default function CruiseGuide() {
               className="h-8 w-auto mr-3 brightness-0 invert"
             />
             <div className="text-left">
-              <h3 className="text-lg font-semibold">Atlantis Events</h3>
               <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
             </div>
           </div>

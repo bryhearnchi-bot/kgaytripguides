@@ -12,7 +12,9 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - Added comprehensive "Things to Do" functionality with attraction guides for all ports
 - Integrated clickable Google Maps addresses for all gay bars and venues
 - Added Virgin onboard time confirmation disclaimer for all "All Aboard" times
-- Fixed Crete "Things to Do" button matching logic for proper display
+- Fixed Crete "Things to Do" button matching logic for proper display  
+- Standardized disclaimers across all tabs (Itinerary, Events, Entertainers, Parties, Info)
+- Removed "Atlantis Events" text from footer while keeping logo and tagline
 - Optimized build configuration and deployment setup for production export
 
 # User Preferences
@@ -94,8 +96,8 @@ Preferred communication style: Simple, everyday language.
 - **Production Build**: `npm run build` creates optimized static files in `dist/public/`
 - **Bundle Size**: ~477KB JavaScript, ~77KB CSS with minification and compression
 - **Static Assets**: All assets are versioned and cached with long-term cache headers
-- **Build Time**: ~10 seconds with 2066+ modules transformed
-- **Last Updated**: August 15, 2025 - includes Virgin onboard time disclaimers
+- **Build Time**: ~15 seconds with 2066+ modules transformed  
+- **Last Updated**: August 15, 2025 - includes standardized disclaimers across all tabs
 
 ## Deployment Targets
 - **Netlify**: Configured with `netlify.toml` for static hosting with SPA redirects
