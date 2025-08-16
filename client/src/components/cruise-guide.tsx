@@ -31,8 +31,7 @@ import {
   Flag,
   Ship,
   ChevronUp,
-  Mail,
-  Plus
+  Mail
 } from "lucide-react";
 import { FaInstagram, FaTwitter, FaTiktok, FaYoutube, FaLinkedin, FaGlobe } from "react-icons/fa";
 import { SiLinktree } from "react-icons/si";
@@ -46,124 +45,10 @@ import { TimeToggle } from "@/components/ui/time-toggle";
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction } from "@/data/cruise-data";
 
 
-// Calendar helper functions
-function createGoogleCalendarUrl(title: string, date: string, time: string, location?: string): string {
-  const startDateTime = formatCalendarDateTime(date, time);
-  const endDateTime = formatCalendarDateTime(date, time, 60); // Add 1 hour duration
-  
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: title,
-    dates: `${startDateTime}/${endDateTime}`,
-    details: `Atlantis Greek Isles Cruise Event`,
-    location: location || 'Virgin Resilient Lady'
-  });
-  
-  return `https://calendar.google.com/calendar/render?${params}`;
-}
-
-function handleAppleCalendarClick(title: string, date: string, time: string, location?: string) {
-  const startDateTime = formatCalendarDateTime(date, time);
-  const endDateTime = formatCalendarDateTime(date, time, 60);
-  
-  const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Atlantis Events//Greek Isles Cruise//EN
-BEGIN:VEVENT
-UID:${Date.now()}@atlantis-cruise.com
-DTSTART:${startDateTime}
-DTEND:${endDateTime}
-SUMMARY:${title}
-DESCRIPTION:Atlantis Greek Isles Cruise Event
-LOCATION:${location || 'Virgin Resilient Lady'}
-END:VEVENT
-END:VCALENDAR`;
-
-  // Simple, reliable approach that works across all browsers
-  const filename = `${title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.ics`;
-  
-  // Create a blob and use URL.createObjectURL - most compatible method
-  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  
-  // Create temporary link
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.style.display = 'none';
-  
-  // Add to DOM and trigger download
-  document.body.appendChild(link);
-  link.click();
-  
-  // Clean up
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(url), 100);
-}
 
 
-function formatCalendarDateTime(dateStr: string, timeStr: string, addMinutes = 0): string {
-  // Parse date from format like "Wed, Aug 20" or "August 20"
-  const year = '2025';
-  const monthMap: { [key: string]: string } = {
-    'Jan': '01', 'January': '01', 'Feb': '02', 'February': '02', 'Mar': '03', 'March': '03', 
-    'Apr': '04', 'April': '04', 'May': '05', 'Jun': '06', 'June': '06',
-    'Jul': '07', 'July': '07', 'Aug': '08', 'August': '08', 'Sep': '09', 'September': '09', 
-    'Oct': '10', 'October': '10', 'Nov': '11', 'November': '11', 'Dec': '12', 'December': '12'
-  };
-  
-  // Try multiple date formats
-  let dateMatch = dateStr.match(/(\w+),?\s+(\w+)\s+(\d+)/); // "Wed, Aug 20"
-  if (!dateMatch) {
-    dateMatch = dateStr.match(/(\w+)\s+(\d+)/); // "August 20"
-    if (dateMatch) {
-      dateMatch = [dateMatch[0], '', dateMatch[1], dateMatch[2]]; // Adjust for consistent indexing
-    }
-  }
-  
-  if (!dateMatch) {
-    console.warn('Could not parse date:', dateStr, 'defaulting to Aug 20, 2025');
-    return `20250820T120000Z`;
-  }
-  
-  const monthName = dateMatch[2] || dateMatch[1];
-  const day = dateMatch[3] || dateMatch[2];
-  const month = monthMap[monthName];
-  
-  if (!month) {
-    console.warn('Could not parse month:', monthName, 'defaulting to August');
-    return `20250820T120000Z`;
-  }
-  
-  const paddedDay = day.padStart(2, '0');
-  
-  // Parse time - handle both 12-hour and 24-hour formats
-  let timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  if (!timeMatch) {
-    console.warn('Could not parse time:', timeStr, 'defaulting to 12:00');
-    return `${year}${month}${paddedDay}T120000Z`;
-  }
-  
-  let hours = parseInt(timeMatch[1], 10);
-  let minutes = parseInt(timeMatch[2], 10);
-  const ampm = timeMatch[3];
-  
-  // Convert to 24-hour format
-  if (ampm) {
-    if (ampm.toUpperCase() === 'PM' && hours !== 12) {
-      hours += 12;
-    } else if (ampm.toUpperCase() === 'AM' && hours === 12) {
-      hours = 0;
-    }
-  }
-  
-  // Add duration minutes
-  const totalMinutes = hours * 60 + minutes + addMinutes;
-  const finalHours = Math.floor(totalMinutes / 60) % 24;
-  const finalMinutes = totalMinutes % 60;
-  
-  return `${year}${month}${paddedDay}T${finalHours.toString().padStart(2, '0')}${finalMinutes.toString().padStart(2, '0')}00Z`;
-}
+
+
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -279,65 +164,7 @@ interface TimelineListProps {
   eventDate?: string;
 }
 
-function CalendarButton({ event, eventDate }: { event: DailyEvent; eventDate?: string }) {
-  const [showOptions, setShowOptions] = useState(false);
 
-  const handleGoogleCalendar = () => {
-    const url = createGoogleCalendarUrl(event.title, eventDate || '', event.time, event.venue);
-    window.open(url, '_blank');
-    setShowOptions(false);
-  };
-
-  const handleAppleCalendar = () => {
-    handleAppleCalendarClick(event.title, eventDate || '', event.time, event.venue);
-    setShowOptions(false);
-  };
-
-  return (
-    <div className="absolute bottom-2 right-2 z-10">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setShowOptions(!showOptions)}
-        className="h-8 w-8 rounded-full bg-white border-ocean-300 text-ocean-700 hover:bg-ocean-50 p-0 shadow-sm"
-        title="Add to Calendar"
-      >
-        <Plus className="w-4 h-4" />
-      </Button>
-      
-      {showOptions && (
-        <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setShowOptions(false)}
-          />
-          <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 min-w-[160px]">
-            <button
-              onClick={handleGoogleCalendar}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
-            >
-              <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
-                <span className="text-white text-xs font-bold">G</span>
-              </div>
-              Google Calendar
-            </button>
-            <button
-              onClick={handleAppleCalendar}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
-            >
-              <div className="w-4 h-4 bg-gray-800 rounded-sm flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                </svg>
-              </div>
-              Apple Calendar
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineListProps) {
   const sortedEvents = events.sort((a, b) => a.time.localeCompare(b.time));
@@ -491,7 +318,6 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                   )}
                 </div>
               </div>
-            <CalendarButton event={event} eventDate={eventDate} />
             </Card>
           </motion.div>
         );
@@ -1219,7 +1045,6 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                         </Badge>
                       </div>
                     </div>
-                    <CalendarButton event={party} eventDate={dayData.date} />
                   </Card>
                 </motion.div>
               ))}
@@ -1486,65 +1311,7 @@ function InfoTab() {
   );
 }
 
-function TalentCalendarButton({ appearance }: { appearance: { date: string; time: string; venue: string; title: string } }) {
-  const [showOptions, setShowOptions] = useState(false);
 
-  const handleGoogleCalendar = () => {
-    const url = createGoogleCalendarUrl(appearance.title, appearance.date, appearance.time, appearance.venue);
-    window.open(url, '_blank');
-    setShowOptions(false);
-  };
-
-  const handleAppleCalendar = () => {
-    handleAppleCalendarClick(appearance.title, appearance.date, appearance.time, appearance.venue);
-    setShowOptions(false);
-  };
-
-  return (
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setShowOptions(!showOptions)}
-        className="h-6 w-6 rounded-full bg-white border-ocean-300 text-ocean-700 hover:bg-ocean-50 p-0 shadow-sm"
-        title="Add to Calendar"
-      >
-        <Plus className="w-3 h-3" />
-      </Button>
-      
-      {showOptions && (
-        <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setShowOptions(false)}
-          />
-          <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 min-w-[160px]">
-            <button
-              onClick={handleGoogleCalendar}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
-            >
-              <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
-                <span className="text-white text-xs font-bold">G</span>
-              </div>
-              Google Calendar
-            </button>
-            <button
-              onClick={handleAppleCalendar}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md flex items-center gap-2"
-            >
-              <div className="w-4 h-4 bg-gray-800 rounded-sm flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                </svg>
-              </div>
-              Apple Calendar
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpen: boolean; onClose: () => void }) {
   if (!talent) return null;
@@ -1670,7 +1437,6 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
                         <span className="text-ocean-600 font-medium">{app.date}</span> • {app.time} @ {app.venue}
                         <div className="text-gray-600">{app.title}</div>
                       </div>
-                      <TalentCalendarButton appearance={app} />
                     </div>
                   ))}
                 </div>

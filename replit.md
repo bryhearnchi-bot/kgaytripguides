@@ -25,6 +25,7 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - **August 16, 2025**: Fixed critical calendar date parsing bug causing events to default to January 1, 2000 - now correctly parses 2025 cruise dates
 - **August 16, 2025**: Enhanced calendar time parsing to support both 12-hour (AM/PM) and 24-hour formats for accurate event scheduling
 - **August 16, 2025**: Simplified Apple Calendar download method using reliable blob URLs for consistent Safari compatibility
+- **August 16, 2025**: Removed all calendar functionality per user request - eliminated Google Calendar and Apple Calendar integration buttons from Events and Parties tabs
 
 # User Preferences
 
@@ -65,7 +66,7 @@ Preferred communication style: Simple, everyday language.
 - **Type Safety**: Comprehensive TypeScript interfaces for cruise data (Talent, DailyEvent, ItineraryStop, SocialLinks)
 - **Responsive Design**: Mobile-first approach with adaptive layouts
 - **Social Integration**: Dynamic social media link rendering with platform-specific icons and external link handling
-- **Cross-Platform Calendar Integration**: Safari-compatible ICS file handling with device-specific optimizations for iOS, macOS, and other platforms
+- **Simplified Event Display**: Streamlined event cards focusing on essential information without external calendar integration
 
 ## Code Organization
 - **Monorepo Structure**: Shared schema between client and server in `/shared` directory
@@ -109,7 +110,7 @@ Preferred communication style: Simple, everyday language.
 - **Bundle Size**: ~477KB JavaScript, ~77KB CSS with minification and compression
 - **Static Assets**: All assets are versioned and cached with long-term cache headers
 - **Build Time**: ~15 seconds with 2066+ modules transformed  
-- **Last Updated**: August 15, 2025 - includes standardized disclaimers across all tabs
+- **Last Updated**: August 16, 2025 - removed calendar functionality and streamlined event display
 
 ## Deployment Targets
 - **Netlify**: Configured with `netlify.toml` for static hosting with SPA redirects
