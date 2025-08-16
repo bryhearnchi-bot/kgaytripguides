@@ -62,24 +62,15 @@ function createGoogleCalendarUrl(title: string, date: string, time: string, loca
   return `https://calendar.google.com/calendar/render?${params}`;
 }
 
-function createAppleCalendarUrl(title: string, date: string, time: string, location?: string): string {
+function handleAppleCalendarClick(title: string, date: string, time: string, location?: string) {
   const startDateTime = formatCalendarDateTime(date, time);
-  const endDateTime = formatCalendarDateTime(date, time, 60); // Add 1 hour duration
+  const endDateTime = formatCalendarDateTime(date, time, 60);
   
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: title,
-    startdt: startDateTime,
-    enddt: endDateTime,
-    summary: title,
-    description: `Atlantis Greek Isles Cruise Event`,
-    location: location || 'Virgin Resilient Lady'
-  });
-  
-  return `data:text/calendar;charset=utf8,BEGIN:VCALENDAR
+  const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
+PRODID:-//Atlantis Events//Greek Isles Cruise//EN
 BEGIN:VEVENT
-URL:${window.location.href}
+UID:${Date.now()}@atlantis-cruise.com
 DTSTART:${startDateTime}
 DTEND:${endDateTime}
 SUMMARY:${title}
@@ -87,7 +78,32 @@ DESCRIPTION:Atlantis Greek Isles Cruise Event
 LOCATION:${location || 'Virgin Resilient Lady'}
 END:VEVENT
 END:VCALENDAR`;
+
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    // For iOS, create a blob and open it
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } else {
+    // For desktop, use data URL
+    const dataUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }
+
 
 function formatCalendarDateTime(dateStr: string, timeStr: string, addMinutes = 0): string {
   // Parse date from format like "Wed, Aug 20"
@@ -243,13 +259,7 @@ function CalendarButton({ event, eventDate }: { event: DailyEvent; eventDate?: s
   };
 
   const handleAppleCalendar = () => {
-    const url = createAppleCalendarUrl(event.title, eventDate || '', event.time, event.venue);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    handleAppleCalendarClick(event.title, eventDate || '', event.time, event.venue);
     setShowOptions(false);
   };
 
@@ -1456,13 +1466,7 @@ function TalentCalendarButton({ appearance }: { appearance: { date: string; time
   };
 
   const handleAppleCalendar = () => {
-    const url = createAppleCalendarUrl(appearance.title, appearance.date, appearance.time, appearance.venue);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${appearance.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    handleAppleCalendarClick(appearance.title, appearance.date, appearance.time, appearance.venue);
     setShowOptions(false);
   };
 
