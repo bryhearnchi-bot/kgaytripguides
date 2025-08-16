@@ -79,59 +79,86 @@ LOCATION:${location || 'Virgin Resilient Lady'}
 END:VEVENT
 END:VCALENDAR`;
 
-  // Use data URL which works more reliably across all browsers
-  const dataUrl = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
+  // Simple, reliable approach that works across all browsers
+  const filename = `${title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.ics`;
   
-  // Create download link
+  // Create a blob and use URL.createObjectURL - most compatible method
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  
+  // Create temporary link
   const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '_').replace(/\s+/g, '_')}.ics`;
+  link.href = url;
+  link.download = filename;
   link.style.display = 'none';
   
-  // Add to DOM, click, and remove
+  // Add to DOM and trigger download
   document.body.appendChild(link);
+  link.click();
   
-  // For Safari, we need to trigger a click event differently
-  if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-    // Safari-specific handling
-    const event = new MouseEvent('click', {
-      view: window,
-      bubbles: true,
-      cancelable: true
-    });
-    link.dispatchEvent(event);
-  } else {
-    link.click();
-  }
-  
+  // Clean up
   document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 
 function formatCalendarDateTime(dateStr: string, timeStr: string, addMinutes = 0): string {
-  // Parse date from format like "Wed, Aug 20"
+  // Parse date from format like "Wed, Aug 20" or "August 20"
   const year = '2025';
   const monthMap: { [key: string]: string } = {
-    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
-    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+    'Jan': '01', 'January': '01', 'Feb': '02', 'February': '02', 'Mar': '03', 'March': '03', 
+    'Apr': '04', 'April': '04', 'May': '05', 'Jun': '06', 'June': '06',
+    'Jul': '07', 'July': '07', 'Aug': '08', 'August': '08', 'Sep': '09', 'September': '09', 
+    'Oct': '10', 'October': '10', 'Nov': '11', 'November': '11', 'Dec': '12', 'December': '12'
   };
   
-  const dateMatch = dateStr.match(/(\w+),?\s+(\w+)\s+(\d+)/);
-  if (!dateMatch) return '';
+  // Try multiple date formats
+  let dateMatch = dateStr.match(/(\w+),?\s+(\w+)\s+(\d+)/); // "Wed, Aug 20"
+  if (!dateMatch) {
+    dateMatch = dateStr.match(/(\w+)\s+(\d+)/); // "August 20"
+    if (dateMatch) {
+      dateMatch = [dateMatch[0], '', dateMatch[1], dateMatch[2]]; // Adjust for consistent indexing
+    }
+  }
   
-  const [, , monthName, day] = dateMatch;
-  const month = monthMap[monthName] || '08';
+  if (!dateMatch) {
+    console.warn('Could not parse date:', dateStr, 'defaulting to Aug 20, 2025');
+    return `20250820T120000Z`;
+  }
+  
+  const monthName = dateMatch[2] || dateMatch[1];
+  const day = dateMatch[3] || dateMatch[2];
+  const month = monthMap[monthName];
+  
+  if (!month) {
+    console.warn('Could not parse month:', monthName, 'defaulting to August');
+    return `20250820T120000Z`;
+  }
+  
   const paddedDay = day.padStart(2, '0');
   
-  // Parse time
-  const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
-  if (!timeMatch) return `${year}${month}${paddedDay}T120000Z`;
+  // Parse time - handle both 12-hour and 24-hour formats
+  let timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!timeMatch) {
+    console.warn('Could not parse time:', timeStr, 'defaulting to 12:00');
+    return `${year}${month}${paddedDay}T120000Z`;
+  }
   
   let hours = parseInt(timeMatch[1], 10);
-  const minutes = parseInt(timeMatch[2], 10) + addMinutes;
+  let minutes = parseInt(timeMatch[2], 10);
+  const ampm = timeMatch[3];
   
-  // Convert to UTC (assuming ship timezone)
-  const totalMinutes = hours * 60 + minutes;
+  // Convert to 24-hour format
+  if (ampm) {
+    if (ampm.toUpperCase() === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (ampm.toUpperCase() === 'AM' && hours === 12) {
+      hours = 0;
+    }
+  }
+  
+  // Add duration minutes
+  const totalMinutes = hours * 60 + minutes + addMinutes;
   const finalHours = Math.floor(totalMinutes / 60) % 24;
   const finalMinutes = totalMinutes % 60;
   

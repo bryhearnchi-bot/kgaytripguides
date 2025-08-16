@@ -22,6 +22,9 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - **August 16, 2025**: Fixed Apple Calendar integration for iOS devices - replaced problematic data URLs with proper ICS file downloads that trigger native Calendar app
 - **August 16, 2025**: Enhanced Apple Calendar support for macOS with hybrid approach (direct open + download fallback)
 - **August 16, 2025**: Resolved Safari download errors across all Apple devices with improved data URL handling and Safari-specific event dispatching
+- **August 16, 2025**: Fixed critical calendar date parsing bug causing events to default to January 1, 2000 - now correctly parses 2025 cruise dates
+- **August 16, 2025**: Enhanced calendar time parsing to support both 12-hour (AM/PM) and 24-hour formats for accurate event scheduling
+- **August 16, 2025**: Simplified Apple Calendar download method using reliable blob URLs for consistent Safari compatibility
 
 # User Preferences
 
