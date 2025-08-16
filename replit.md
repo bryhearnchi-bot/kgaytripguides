@@ -20,6 +20,8 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - **August 16, 2025**: Fixed text wrapping issues on Events page to prevent overlap with calendar buttons
 - **August 16, 2025**: Enhanced talent modals with social media buttons (Instagram, Twitter, TikTok, YouTube, LinkedIn, Website, Linktree)
 - **August 16, 2025**: Fixed Apple Calendar integration for iOS devices - replaced problematic data URLs with proper ICS file downloads that trigger native Calendar app
+- **August 16, 2025**: Enhanced Apple Calendar support for macOS with hybrid approach (direct open + download fallback)
+- **August 16, 2025**: Resolved Safari download errors across all Apple devices with improved data URL handling and Safari-specific event dispatching
 
 # User Preferences
 
@@ -60,7 +62,7 @@ Preferred communication style: Simple, everyday language.
 - **Type Safety**: Comprehensive TypeScript interfaces for cruise data (Talent, DailyEvent, ItineraryStop, SocialLinks)
 - **Responsive Design**: Mobile-first approach with adaptive layouts
 - **Social Integration**: Dynamic social media link rendering with platform-specific icons and external link handling
-- **iOS Calendar Integration**: Device-specific ICS file handling for seamless Apple Calendar integration on mobile devices
+- **Cross-Platform Calendar Integration**: Safari-compatible ICS file handling with device-specific optimizations for iOS, macOS, and other platforms
 
 ## Code Organization
 - **Monorepo Structure**: Shared schema between client and server in `/shared` directory

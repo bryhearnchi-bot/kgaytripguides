@@ -79,29 +79,32 @@ LOCATION:${location || 'Virgin Resilient Lady'}
 END:VEVENT
 END:VCALENDAR`;
 
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    // For iOS, create a blob and open it
-    const blob = new Blob([icsContent], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  // Use data URL which works more reliably across all browsers
+  const dataUrl = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
+  
+  // Create download link
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '_').replace(/\s+/g, '_')}.ics`;
+  link.style.display = 'none';
+  
+  // Add to DOM, click, and remove
+  document.body.appendChild(link);
+  
+  // For Safari, we need to trigger a click event differently
+  if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+    // Safari-specific handling
+    const event = new MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true
+    });
+    link.dispatchEvent(event);
   } else {
-    // For desktop, use data URL
-    const dataUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   }
+  
+  document.body.removeChild(link);
 }
 
 
