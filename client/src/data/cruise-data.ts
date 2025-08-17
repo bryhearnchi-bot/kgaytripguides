@@ -441,6 +441,7 @@ export const TALENT: Talent[] = [
     bio: "NYC-based composer, arranger, and piano entertainer who specializes in Broadway music and pop standards. Has worked with artists including Sharon Needles and the late Joan Rivers.", 
     img: "https://shows.donttellmamanyc.com/images/performers/William_TN_Hallnew.jpg",
     social: {
+      instagram: "https://www.instagram.com/williamtnhall?igsh=MXJjZnR1aGl0MmpxMQ==",
       twitter: "https://x.com/williamtnhall"
     }
   },
