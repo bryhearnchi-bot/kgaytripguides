@@ -1673,6 +1673,10 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
     return events;
   }, [talent]);
 
+  if (!talent) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
