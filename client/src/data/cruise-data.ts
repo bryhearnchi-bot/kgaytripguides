@@ -241,7 +241,7 @@ export const TALENT: Talent[] = [
     bio: "Born in New York City, Monét is a classically trained performer who won RuPaul's Drag Race All Stars 4. With her signature wit and powerful vocals, she's become a beloved figure in drag culture and comedy.", 
     img: "https://www.billboard.com/wp-content/uploads/media/03-2-Monet-X-Change-rupauls-drag-race-s10-billboard-a-1548.jpg",
     social: {
-      instagram: "https://www.instagram.com/monetxchange",
+      instagram: "https://www.instagram.com/monetxchange/",
       twitter: "https://x.com/monetxchange",
       website: "https://www.monetxchange.com"
     }
@@ -254,7 +254,7 @@ export const TALENT: Talent[] = [
     bio: "Broadway-trained drag performer who placed 5th on RuPaul's Drag Race Season 9. Known for her theatrical performances and cabaret shows at venues like Feinstein's/54 Below.", 
     img: "https://i.redd.it/azxnlnbuql9b1.jpg",
     social: {
-      instagram: "https://www.instagram.com/alexismichelle",
+      instagram: "https://www.instagram.com/alexismichelleofficial/",
       tiktok: "https://www.tiktok.com/@alexismichelleofficial"
     }
   },
@@ -266,7 +266,7 @@ export const TALENT: Talent[] = [
     bio: "French drag queen and countertenor baritone with a three-octave range. Known for her appearances on Queen of the Universe and The Voice France in 2019.", 
     img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39",
     social: {
-      instagram: "https://www.instagram.com/leonawinterofficiel",
+      instagram: "https://www.instagram.com/leonawinter16/",
       tiktok: "https://www.tiktok.com/@leonawinterofficiel",
       twitter: "https://x.com/officielleona"
     }
@@ -279,7 +279,7 @@ export const TALENT: Talent[] = [
     bio: "Legendary NYC drag icon with over 35 years in entertainment. Known for her hilarious parody songs and has been a fixture of NYC nightlife since the 1990s.", 
     img: "http://static1.squarespace.com/static/5e2256cf72c72a5f12f1fdfe/t/63cc50edf5765a4e44b610f1/1580806649356/sherry-web-social.png?format=1500w",
     social: {
-      instagram: "https://www.instagram.com/misssherryvine"
+      instagram: "https://www.instagram.com/misssherryvine/"
     }
   },
   { 
@@ -290,6 +290,7 @@ export const TALENT: Talent[] = [
     bio: "Award-winning Australian comedian, cabaret host, and writer known for pushing boundaries. Nominated for Best Show at the 2024 Edinburgh Comedy Awards.", 
     img: "https://encoremelbourne.com/wp-content/uploads/2024/09/Reuben-Kaye-c-Alan-Moyle-scaled-e1727080187482.jpg",
     social: {
+      instagram: "https://www.instagram.com/reubenkayeofficial/",
       twitter: "https://x.com/reubenkaye",
       website: "https://www.reubenkaye.com/about"
     }
@@ -302,7 +303,7 @@ export const TALENT: Talent[] = [
     bio: "British stage actor and producer best known for playing Marius in Les Misérables. Also starred in musicals including Titanique, South Pacific, and The Light in the Piazza.", 
     img: "http://www.digitaljournal.com/wp-content/uploads/2024/10/Rob-Houchen-Photo-e1728160861225.jpg",
     social: {
-      instagram: "https://www.instagram.com/robhouchen"
+      instagram: "https://www.instagram.com/robhouchen/"
     }
   },
   { 
@@ -313,7 +314,7 @@ export const TALENT: Talent[] = [
     bio: "Singer and performer from Kentucky who made it to the Top 9 on American Idol. Katy Perry called her a 'once in a generation' performer.", 
     img: "https://s.yimg.com/ny/api/res/1.2/B32A9JNeo3IpS.FKxuffIQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD02NzY7Y2Y9d2VicA--/https://s.yimg.com/os/creatr-uploaded-images/2021-03/1a562ab0-7ee4-11eb-afce-ac7a09171992",
     social: {
-      instagram: "https://www.instagram.com/itsalyssawray"
+      instagram: "https://www.instagram.com/itsalyssawray/"
     }
   },
   { 
@@ -324,7 +325,7 @@ export const TALENT: Talent[] = [
     bio: "American stand-up comedian from Upstate New York who was a regular on premium cable comedy shows. Known for his appearances at Pride events, circuit parties, and cruise ships.", 
     img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1701816763654-IG6NG6UERJXYU354L1ZU/brad-loekle-web.jpg?format=2500w",
     social: {
-      instagram: "https://www.instagram.com/bradloekle",
+      instagram: "https://www.instagram.com/bradloekle/",
       website: "https://www.bradloekle.com"
     }
   },
@@ -336,7 +337,7 @@ export const TALENT: Talent[] = [
     bio: "LA-based stand-up comedian and co-host of the popular podcast 'Two Dykes and a Mic'. Known for her sharp queer humor and sex-positive comedy.", 
     img: "https://www.empirecomedyme.com/img/comedians/Rachel-Scanlon-Primary-Headshot-da5f117a-main-image.png",
     social: {
-      instagram: "https://www.instagram.com/rachelscanloncomedy",
+      instagram: "https://www.instagram.com/rachelscanloncomedy/",
       linktree: "https://linktr.ee/rachelscanlon"
     }
   },
@@ -348,7 +349,7 @@ export const TALENT: Talent[] = [
     bio: "Texas-born LA-based comedian who currently tours as the opening act for Margaret Cho. Featured in the documentary 'Queer Riot' and released his hour-long special 'Hoe's Parade: Live at the Rose Bowl' in 2021.", 
     img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1668557899908-6Z03ZHA1FY8Y9ANSKMJ9/daniel-webb-web.jpg?format=2500w",
     social: {
-      instagram: "https://www.instagram.com/the_danielwebb",
+      instagram: "https://www.instagram.com/the_danielwebb/",
       twitter: "https://twitter.com/thedanielwebb",
       website: "https://www.thedanielwebb.com"
     }
@@ -396,7 +397,7 @@ export const TALENT: Talent[] = [
     bio: "Grammy-nominated DJ and producer from Miami, half of the electronic duo Abel. Known for producing tracks for Madonna, Rihanna, and Jennifer Lopez.", 
     img: "https://bosphilly.com/wp-content/uploads/2023/01/ABEL-SPINNING-scaled-1.jpg",
     social: {
-      instagram: "https://www.instagram.com/_abel_dj"
+      instagram: "https://www.instagram.com/djabelaguilera/"
     }
   },
   { 
@@ -407,6 +408,7 @@ export const TALENT: Talent[] = [
     bio: "Australian DJ and producer based in the United States, with a career spanning over two decades and collaborations with major artists.", 
     img: "https://chicago.gopride.com/c/I/52051-156158.jpg",
     social: {
+      instagram: "https://www.instagram.com/danielsl8r/",
       linkedin: "https://www.linkedin.com/in/dancenowdanslater",
       website: "https://www.djdanSlater.com"
     }
@@ -419,6 +421,7 @@ export const TALENT: Talent[] = [
     bio: "Valencia-born DJ specializing in electronic and house music. Known for his performances at major clubs worldwide and his ability to blend various electronic music subgenres.", 
     img: "https://jceventsinternational.com/wp-content/uploads/2018/12/DJ-profile-pic_0002_DJSuri.jpg",
     social: {
+      instagram: "https://www.instagram.com/djsurimusic/",
       youtube: "https://www.youtube.com/suridj"
     }
   },

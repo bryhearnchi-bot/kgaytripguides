@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  CalendarDays, 
-  MapPin, 
-  PartyPopper, 
-  Clock, 
-  Search, 
-  Images, 
-  Music, 
-  Info, 
-  X, 
+import {
+  CalendarDays,
+  MapPin,
+  PartyPopper,
+  Clock,
+  Search,
+  Images,
+  Music,
+  Info,
+  X,
   ChevronRight,
   ChevronDown,
   Anchor,
@@ -34,10 +34,12 @@ import {
   Mail,
   ExternalLink as FaExternalLinkAlt, // Renamed for clarity
   Plus,
-  Download
+  Download,
+  Instagram,
+  Twitter,
+  Youtube,
+  Linkedin
 } from "lucide-react";
-import { FaInstagram, FaTwitter, FaTiktok, FaYoutube, FaLinkedin, FaGlobe } from "react-icons/fa";
-import { SiLinktree } from "react-icons/si";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -149,7 +151,7 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
   if (!dateMatch) {
     throw new Error('Invalid date format');
   }
-  
+
   const [, , monthStr, dayStr] = dateMatch;
   const year = 2025;
   const monthMap: { [key: string]: number } = {
@@ -157,24 +159,24 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
   };
   const month = monthMap[monthStr] ?? 7; // Default to August
   const day = parseInt(dayStr, 10);
-  
+
   // Parse the event time
   const timeData = parseTime(event.time);
   if (!timeData) {
     throw new Error('Invalid time format');
   }
-  
+
   // Get timezone offset for the port location
   const portTimezoneOffset = getPortTimezoneOffset(eventDate);
-  
+
   // Create date in UTC and adjust for port timezone
   const utcDate = new Date(Date.UTC(year, month, day, timeData.h, timeData.m));
   const startDate = new Date(utcDate.getTime() - (portTimezoneOffset * 60 * 60 * 1000));
-  
+
   // Set duration based on event type - KGay Travel pre-cruise party is 3 hours, others are 1 hour
   const duration = event.title.includes("KGay Travel") ? 3 : 1;
   const endDate = new Date(startDate.getTime() + (duration * 60 * 60 * 1000));
-  
+
   return {
     title: event.title,
     startDate,
@@ -194,17 +196,17 @@ function getPortTimezoneOffset(eventDate: string): number {
     'Santorini': 3,      // UTC+3 (EEST in August)
     'Sea Day': 2,        // Default to ship timezone (likely Mediterranean time)
   };
-  
+
   // Extract location from date string or determine based on itinerary
   let location = 'Sea Day'; // Default
-  
+
   // Check if it's a sea day or specific port
   if (eventDate.includes('Mykonos')) location = 'Mykonos';
   else if (eventDate.includes('Kusadasi')) location = 'Kusadasi';
   else if (eventDate.includes('Crete')) location = 'Crete';
   else if (eventDate.includes('Santorini')) location = 'Santorini';
   else if (eventDate.includes('Barcelona')) location = 'Barcelona';
-  
+
   return portTimezones[location] || 2; // Default to UTC+2 if location not found
 }
 
@@ -216,7 +218,7 @@ function generateICSContent(eventData: ReturnType<typeof createCalendarEvent>): 
   const startDate = formatDateForCalendar(eventData.startDate);
   const endDate = formatDateForCalendar(eventData.endDate);
   const now = formatDateForCalendar(new Date());
-  
+
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -237,7 +239,7 @@ function generateICSContent(eventData: ReturnType<typeof createCalendarEvent>): 
 function addToGoogleCalendar(eventData: ReturnType<typeof createCalendarEvent>) {
   const startDate = eventData.startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   const endDate = eventData.endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  
+
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: eventData.title,
@@ -245,7 +247,7 @@ function addToGoogleCalendar(eventData: ReturnType<typeof createCalendarEvent>) 
     details: eventData.description,
     location: eventData.location
   });
-  
+
   window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
 }
 
@@ -253,24 +255,24 @@ function addToAppleCalendar(eventData: ReturnType<typeof createCalendarEvent>) {
   const icsContent = generateICSContent(eventData);
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  
+
   // Try to open with webcal protocol first (for macOS)
   const webcalUrl = url.replace('blob:', 'webcal://');
-  
+
   // Create a temporary link to trigger download/open
   const link = document.createElement('a');
   link.href = url;
   link.download = `${eventData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
-  
+
   // For iOS devices, try to open with calendar app
   if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
     link.href = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
   }
-  
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+
   // Clean up the blob URL
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
@@ -279,14 +281,14 @@ function downloadICS(eventData: ReturnType<typeof createCalendarEvent>) {
   const icsContent = generateICSContent(eventData);
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   link.download = `${eventData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+
   URL.revokeObjectURL(url);
 }
 
@@ -324,7 +326,7 @@ function AddToCalendarButton({ event, eventDate }: AddToCalendarButtonProps) {
   const handleAddToCalendar = (type: 'google' | 'apple' | 'ics') => {
     try {
       const eventData = createCalendarEvent(event, eventDate);
-      
+
       switch (type) {
         case 'google':
           addToGoogleCalendar(eventData);
@@ -353,7 +355,7 @@ function AddToCalendarButton({ event, eventDate }: AddToCalendarButtonProps) {
       >
         <Plus className="w-4 h-4" />
       </Button>
-      
+
       {showDropdown && (
         <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
           <button
@@ -575,7 +577,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
       "Santorini, Greece": "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200", 
       "Kuşadası, Turkey": "https://www.spotblue.com/app/uploads/2024/12/what-makes-Kusadasi-in-Turkey-special.jpg",
       "Alexandria (Cairo), Egypt": "https://cdn.mos.cms.futurecdn.net/7YrobQvFFzw8aWsAUtoYXB.jpg",
-      "Mykonos, Greece": "https://images.unsplash.com/photo-1533105079780-92b9be482077?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
+      "Mykonos, Greece": "https://images.unsplash.com/photo-153310507977?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
       "Iraklion, Crete": "https://www.oreotravel.com/blog/wp-content/uploads/2024/08/heraklion-old-town.jpg"
     };
 
@@ -635,7 +637,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.1 }}
             >
-              <Card className="p-6 hover:shadow-xl transition-shadow duration-200 bg-white/90 backdrop-blur-sm">
+              <Card className="p-6 bg-white hover:shadow-xl transition-shadow duration-200 border-2 border-gray-200 min-h-24 relative">
                 <div className="flex flex-col md:flex-row md:items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-4">
@@ -1140,6 +1142,24 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
                       ) : (
                         <Images className="h-10 w-10 text-ocean-300" />
                       )}
+                      {talent.social?.instagram && (
+                        <div className="absolute top-2 right-2">
+                          <Button
+                            size="sm"
+                            className="w-8 h-8 p-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                            asChild
+                          >
+                            <a 
+                              href={talent.social.instagram} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Instagram className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="p-4 space-y-2">
                       <div className="flex items-center justify-between">
@@ -1556,25 +1576,100 @@ function InfoTab() {
   );
 }
 
+function SocialMediaButton({ platform, url }: { platform: string; url: string }) {
+  const getIcon = () => {
+    switch (platform) {
+      case 'instagram':
+        return <Instagram className="w-4 h-4" />;
+      case 'twitter':
+        return <Twitter className="w-4 h-4" />;
+      case 'youtube':
+        return <Youtube className="w-4 h-4" />;
+      case 'linkedin':
+        return <Linkedin className="w-4 h-4" />;
+      case 'website':
+      case 'linktree':
+        return <Globe className="w-4 h-4" />;
+      default:
+        return <ExternalLink className="w-4 h-4" />;
+    }
+  };
 
+  const getColor = () => {
+    switch (platform) {
+      case 'instagram':
+        return 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600';
+      case 'twitter':
+        return 'bg-sky-500 hover:bg-sky-600';
+      case 'youtube':
+        return 'bg-red-500 hover:bg-red-600';
+      case 'linkedin':
+        return 'bg-blue-600 hover:bg-blue-700';
+      case 'website':
+      case 'linktree':
+        return 'bg-gray-600 hover:bg-gray-700';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  return (
+    <Button
+      size="sm"
+      className={`text-white border-0 ${getColor()}`}
+      asChild
+    >
+      <a 
+        href={url} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center gap-1"
+      >
+        {getIcon()}
+        <span className="capitalize">{platform === 'linktree' ? 'Links' : platform}</span>
+      </a>
+    </Button>
+  );
+}
 
 function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpen: boolean; onClose: () => void }) {
-  if (!talent) return null;
+  const appearances = useMemo(() => {
+    const events: Array<{ date: string; time: string; venue: string; title: string }> = [];
 
-  const appearances = DAILY.reduce((acc, day) => {
-    day.items.forEach(item => {
-      if (item.title.toLowerCase().includes(talent.name.toLowerCase())) {
-        const itinerary = ITINERARY.find(i => i.key === day.key);
-        acc.push({
-          date: itinerary?.date || day.key,
-          time: item.time,
-          venue: item.venue,
-          title: item.title
-        });
-      }
+    DAILY.forEach(day => {
+      day.items.forEach(event => {
+        if (event.title.toLowerCase().includes(talent.name.toLowerCase()) || 
+            (talent.name === "Monét X Change" && event.title.toLowerCase().includes("monet")) ||
+            (talent.name === "Sherry Vine" && event.title.toLowerCase().includes("sherry")) ||
+            (talent.name === "Alexis Michelle" && event.title.toLowerCase().includes("alexis")) ||
+            (talent.name === "Reuben Kaye" && event.title.toLowerCase().includes("reuben")) ||
+            (talent.name === "Rob Houchen" && event.title.toLowerCase().includes("rob")) ||
+            (talent.name === "Alyssa Wray" && event.title.toLowerCase().includes("alyssa")) ||
+            (talent.name === "Brad Loekle" && event.title.toLowerCase().includes("brad")) ||
+            (talent.name === "Rachel Scanlon" && event.title.toLowerCase().includes("rachel")) ||
+            (talent.name === "Daniel Webb" && event.title.toLowerCase().includes("daniel")) ||
+            (talent.name === "Leona Winter" && event.title.toLowerCase().includes("leona")) ||
+            (talent.name === "AirOtic" && event.title.toLowerCase().includes("airotic")) ||
+            (talent.name === "Another Rose" && event.title.toLowerCase().includes("another rose")) ||
+            (talent.name === "Persephone" && event.title.toLowerCase().includes("persephone")) ||
+            (talent.name === "The Diva (Bingo)" && event.title.toLowerCase().includes("bingo")) ||
+            (talent.name === "William TN Hall" && event.title.toLowerCase().includes("william")) ||
+            (talent.name === "Brian Nash" && event.title.toLowerCase().includes("brian")) ||
+            (talent.name === "Brandon James Gwinn" && event.title.toLowerCase().includes("brandon"))) {
+
+          const dayData = ITINERARY.find(itineraryDay => itineraryDay.key === day.key);
+          events.push({
+            date: dayData?.date || day.key,
+            time: event.time,
+            venue: event.venue,
+            title: event.title
+          });
+        }
+      });
     });
-    return acc;
-  }, [] as Array<{ date: string; time: string; venue: string; title: string }>);
+
+    return events;
+  }, [talent.name]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -1590,11 +1685,11 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
               {talent.img ? (
                 <img 
                   src={talent.img} 
-                  alt={talent.name} 
-                  className="h-full w-full object-cover" 
+                  alt={talent.name}
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <Images className="h-10 w-10 text-ocean-300" />
+                <User className="h-10 w-10 text-ocean-300" />
               )}
             </div>
           </div>
@@ -1605,18 +1700,27 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
               <p className="text-sm text-gray-700 leading-relaxed">{talent.bio}</p>
             </div>
 
+            {talent.social && Object.keys(talent.social).length > 0 && (
+              <div>
+                <h5 className="text-gray-900 font-semibold mb-2">Follow {talent.name}</h5>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(talent.social).map(([platform, url]) => (
+                    <SocialMediaButton key={platform} platform={platform} url={url} />
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <h5 className="text-gray-900 font-semibold mb-2">Appearances on This Cruise</h5>
               {appearances.length === 0 ? (
                 <p className="text-sm text-gray-500">No direct listings found.</p>
               ) : (
                 <div className="space-y-2">
-                  {appearances.map((app, i) => (
-                    <div key={i} className="text-sm text-gray-700 p-2 bg-gray-50 rounded flex items-start justify-between">
-                      <div className="flex-1">
-                        <span className="text-ocean-600 font-medium">{app.date}</span> • {app.time} @ {app.venue}
-                        <div className="text-gray-600">{app.title}</div>
-                      </div>
+                  {appearances.map((appearance, index) => (
+                    <div key={index} className="text-sm text-gray-700 p-2 bg-gray-50 rounded">
+                      <span className="text-ocean-600 font-medium">{appearance.date}</span> • {appearance.time} @ {appearance.venue}
+                      <div className="text-gray-600">{appearance.title}</div>
                     </div>
                   ))}
                 </div>
