@@ -32,7 +32,7 @@ import {
   Ship,
   ChevronUp,
   Mail,
-  ExternalLink as FaExternalLinkAlt, // Renamed for clarity
+  ExternalLink, // For social media links
   Plus,
   Download,
   Instagram,
