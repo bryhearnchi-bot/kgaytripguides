@@ -267,8 +267,7 @@ export const TALENT: Talent[] = [
     img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39",
     social: {
       instagram: "https://www.instagram.com/leonawinter16/",
-      tiktok: "https://www.tiktok.com/@leonawinterofficiel",
-      twitter: "https://x.com/officielleona"
+      tiktok: "https://www.tiktok.com/@leonawinterofficiel"
     }
   },
   { 
@@ -350,7 +349,6 @@ export const TALENT: Talent[] = [
     img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1668557899908-6Z03ZHA1FY8Y9ANSKMJ9/daniel-webb-web.jpg?format=2500w",
     social: {
       instagram: "https://www.instagram.com/the_danielwebb/",
-      twitter: "https://twitter.com/thedanielwebb",
       website: "https://www.thedanielwebb.com"
     }
   },
@@ -409,7 +407,6 @@ export const TALENT: Talent[] = [
     img: "https://chicago.gopride.com/c/I/52051-156158.jpg",
     social: {
       instagram: "https://www.instagram.com/danielsl8r/",
-      linkedin: "https://www.linkedin.com/in/dancenowdanslater",
       website: "https://www.djdanSlater.com"
     }
   },
