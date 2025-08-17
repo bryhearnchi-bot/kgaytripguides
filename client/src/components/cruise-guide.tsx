@@ -31,7 +31,8 @@ import {
   Flag,
   Ship,
   ChevronUp,
-  Mail
+  Mail,
+  ExternalLink as FaExternalLinkAlt // Renamed for clarity
 } from "lucide-react";
 import { FaInstagram, FaTwitter, FaTiktok, FaYoutube, FaLinkedin, FaGlobe } from "react-icons/fa";
 import { SiLinktree } from "react-icons/si";
@@ -74,36 +75,36 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => voi
 
 function parseTime(timeStr: string): { h: number; m: number } | null {
   if (!timeStr || timeStr === "—" || /overnight/i.test(timeStr)) return null;
-  
+
   // Handle 24h format (HH:mm)
   const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
   if (match24) {
     return { h: parseInt(match24[1], 10), m: parseInt(match24[2], 10) };
   }
-  
+
   // Handle 12h format (H:mm AM/PM)
   const match12 = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (match12) {
     let h = parseInt(match12[1], 10);
     const m = parseInt(match12[2], 10);
     const isPM = /pm/i.test(match12[3]);
-    
+
     if (h === 12) h = 0;
     if (isPM) h += 12;
-    
+
     return { h, m };
   }
-  
+
   return null;
 }
 
 function formatTime(timeStr: string, mode: "12h" | "24h"): string {
   const parsed = parseTime(timeStr);
   if (!parsed) return timeStr;
-  
+
   const { h, m } = parsed;
   const mm = String(m).padStart(2, "0");
-  
+
   if (mode === "24h") {
     const hh = String(h).padStart(2, "0");
     return `${hh}:${mm}`;
@@ -117,13 +118,13 @@ function formatTime(timeStr: string, mode: "12h" | "24h"): string {
 function formatAllAboard(departTime: string, mode: "12h" | "24h"): string {
   const parsed = parseTime(departTime);
   if (!parsed) return departTime;
-  
+
   let { h, m } = parsed;
   h = h - 1;
   if (h < 0) h = 23;
-  
+
   const mm = String(m).padStart(2, "0");
-  
+
   if (mode === "24h") {
     const hh = String(h).padStart(2, "0");
     return `${hh}:${mm}`;
@@ -173,7 +174,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
     <div className="relative border-l border-ocean-300/40 ml-2">
       {sortedEvents.map((event, idx) => {
         const clickableNames = findTalentInTitle(event.title);
-        
+
         const titleElement = clickableNames.length > 0 ? (
           <span>
             {event.title.split(new RegExp(`(${clickableNames.join('|')})`, 'i')).map((part, i) => {
@@ -266,7 +267,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                     )}
                   </div>
                 )}
-                
+
                 {/* Event Content */}
                 <div className="flex-1 min-w-0 pr-10">
                   <div className="flex items-center justify-between mb-2">
@@ -362,7 +363,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
     if (port.includes("Athens, Greece")) {
       return portImages["Athens, Greece"];
     }
-    
+
     return portImages[port as keyof typeof portImages];
   };
 
@@ -387,7 +388,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
         {ITINERARY.map((stop, idx) => {
           const isSea = /sea/i.test(stop.port);
           const isOvernight = /overnight/i.test(stop.depart);
-          
+
           return (
             <motion.div
               key={stop.key}
@@ -407,7 +408,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                         <p className="text-sm text-gray-500">{stop.date}</p>
                       </div>
                     </div>
-                    
+
                     {getPortImage(stop.port, stop.date) && (
                       <img 
                         src={getPortImage(stop.port, stop.date)} 
@@ -420,7 +421,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                       />
                     )}
                   </div>
-                  
+
                   <div className="md:ml-6 md:text-right">
                     <div className="grid grid-cols-2 gap-4 md:gap-6 mb-4">
                       <div>
@@ -436,7 +437,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                         </p>
                       </div>
                     </div>
-                    
+
                     {!isSea && stop.depart !== "—" && !isOvernight && (
                       <div className="p-3 bg-gold/10 rounded-lg">
                         <p className="text-xs text-gray-600 uppercase tracking-wide">All Aboard</p>
@@ -448,21 +449,21 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                         </p>
                       </div>
                     )}
-                    
+
                     {isOvernight && (
                       <div className="p-3 bg-coral/10 rounded-lg">
                         <p className="text-xs text-gray-600 uppercase tracking-wide">Extended Port</p>
                         <p className="text-sm font-semibold text-coral">Overnight Stay</p>
                       </div>
                     )}
-                    
+
                     {isSea && (
                       <div className="p-3 bg-ocean-50 rounded-lg">
                         <p className="text-xs text-gray-600 uppercase tracking-wide">Sea Day</p>
                         <p className="text-sm font-semibold text-ocean-600">Relax & Enjoy</p>
                       </div>
                     )}
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button
                         onClick={() => setSelectedDay(stop.key)}
@@ -504,7 +505,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
           );
         })}
       </div>
-      
+
       {/* Events Modal */}
       {selectedDay && (
         <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
@@ -525,7 +526,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                     onTalentClick(talent);
                   }
                 };
-                
+
                 return dayEvents && dayEvents.items.length > 0 ? (
                   <TimelineList 
                     events={dayEvents.items} 
@@ -541,7 +542,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
           </DialogContent>
         </Dialog>
       )}
-      
+
       {/* Things to Do Modal */}
       {selectedCity && (
         <Dialog open={!!selectedCity} onOpenChange={(open) => !open && setSelectedCity(null)}>
@@ -636,7 +637,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
 function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
-  
+
   const dates = DAILY.filter(d => d.items.length > 0).map(d => ({
     key: d.key,
     label: ITINERARY.find(i => i.key === d.key)?.date.split(', ')[1] || d.key.split('-')[2]
@@ -688,7 +689,7 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
               </span>
             </div>
           </Button>
-          
+
           {isFilterOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -722,12 +723,12 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
           )}
         </div>
       </div>
-      
+
       <div className="space-y-8">
         {filteredDaysWithEvents.map((day) => {
           const itinerary = ITINERARY.find(i => i.key === day.key);
           const allEvents = day.items;
-          
+
           return (
             <div key={day.key} className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
@@ -755,7 +756,7 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
                   )}
                 </div>
               </div>
-              
+
               {allEvents.length > 0 ? (
                 <TimelineList 
                   events={allEvents} 
@@ -866,7 +867,7 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
           ))}
         </div>
       </div>
-      
+
       <div className="space-y-8">
         {Object.entries(groupedTalent).map(([category, talents]) => (
           <div key={category} className="space-y-6">
@@ -937,7 +938,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
         depart: itinerary?.depart,
         themeDesc: PARTY_THEMES.find(p => item.title.includes(p.key))?.desc
       }));
-    
+
     if (parties.length > 0) {
       acc[day.key] = {
         date: itinerary?.date || day.key,
@@ -1006,7 +1007,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                 )}
               </div>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-6">
               {dayData.parties.map((party, idx) => (
                 <motion.div
@@ -1027,13 +1028,13 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 mb-3">
                         {party.themeDesc && (
                           <p className="text-gray-600 text-xs leading-relaxed italic line-clamp-3">{party.themeDesc}</p>
                         )}
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2 mt-auto">
                         <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
                           <Clock className="w-3 h-3 mr-1" />
@@ -1266,7 +1267,7 @@ function InfoTab() {
           </a>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">This Guide Sponsored by KGay Travel</h2>
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-8">
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-3">About KGay Travel</h4>
@@ -1279,7 +1280,7 @@ function InfoTab() {
               **WE NEVER CHARGE YOU FOR OUR SERVICE!** Let a professional with connections help you plan your next vacation!
             </p>
           </div>
-          
+
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h4>
             <div className="space-y-2 text-sm">
@@ -1299,7 +1300,7 @@ function InfoTab() {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-4 pt-3 border-t border-gray-200">
               <p className="text-xs text-gray-500">CST #2089491-50</p>
               <p className="text-xs text-gray-600 mt-1">Specializing in Atlantis Events, Brand G, Vacaya, and luxury LGBTQ+ travel worldwide</p>
@@ -1338,7 +1339,7 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
           <DialogTitle className="text-2xl">{talent.name}</DialogTitle>
           <p className="text-ocean-600 font-medium">{talent.role} • {talent.cat}</p>
         </DialogHeader>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           <div className="sm:col-span-1">
             <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-gradient-to-br from-ocean-900/50 to-indigo-950/70 flex items-center justify-center">
@@ -1353,78 +1354,13 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
               )}
             </div>
           </div>
-          
+
           <div className="sm:col-span-2 space-y-4">
             <div>
               <h5 className="text-gray-900 font-semibold mb-2">Bio</h5>
               <p className="text-sm text-gray-700 leading-relaxed">{talent.bio}</p>
             </div>
 
-            {/* Social Media Links */}
-            {talent.social && Object.keys(talent.social).length > 0 && (
-              <div>
-                <h5 className="text-gray-900 font-semibold mb-2">Follow {talent.name}</h5>
-                <div className="flex flex-wrap gap-2">
-                  {talent.social.instagram && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <FaInstagram className="h-4 w-4 text-pink-500" />
-                        Instagram
-                      </a>
-                    </Button>
-                  )}
-                  {talent.social.twitter && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <FaTwitter className="h-4 w-4 text-blue-500" />
-                        Twitter
-                      </a>
-                    </Button>
-                  )}
-                  {talent.social.tiktok && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <FaTiktok className="h-4 w-4 text-black" />
-                        TikTok
-                      </a>
-                    </Button>
-                  )}
-                  {talent.social.youtube && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <FaYoutube className="h-4 w-4 text-red-500" />
-                        YouTube
-                      </a>
-                    </Button>
-                  )}
-                  {talent.social.linkedin && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <FaLinkedin className="h-4 w-4 text-blue-600" />
-                        LinkedIn
-                      </a>
-                    </Button>
-                  )}
-                  {talent.social.website && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <FaGlobe className="h-4 w-4 text-gray-600" />
-                        Website
-                      </a>
-                    </Button>
-                  )}
-                  {talent.social.linktree && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={talent.social.linktree} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                        <SiLinktree className="h-4 w-4 text-green-500" />
-                        Linktree
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-            
             <div>
               <h5 className="text-gray-900 font-semibold mb-2">Appearances on This Cruise</h5>
               {appearances.length === 0 ? (
@@ -1502,7 +1438,7 @@ export default function CruiseGuide() {
             </div>
             <div className="flex-1"></div>
           </div>
-          
+
           {/* Navigation Tabs */}
           <div className="flex justify-center items-center gap-4">
             <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
