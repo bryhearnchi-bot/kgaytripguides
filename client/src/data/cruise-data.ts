@@ -239,7 +239,7 @@ export const TALENT: Talent[] = [
     role: "Mystery entertainer", 
     knownFor: "Surprise appearances", 
     bio: "A surprise guest performer will be announced during the cruise. This special entertainer will bring an unexpected element of excitement to our Mediterranean journey.", 
-    img: "",
+    img: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAhFBMVEX/AAD/////SUn/9vb/8/P/+/v/6+v/7u7/5ub/4uL/3d3/2dn/1tb/zMz/yMj/w8P/vb3/ubn/srL/rq7/p6f/oaH/nJz/lZX/i4v/hIT/fn7/dXX/bW3/Y2P/WVn/T0//RUX/Ozv/MjL/KSn/Hx//FhT/DAr/BQP/+vr/8PD/6Oj/3t7/1NT/x8f/tbX/qqr/mpr/kJD/iYn/gYH/eXn/b2//ZGT/Wlr/UVH/SEj/Pj7/NTX/LCz/IiL/GRn/EBD/Bgb/AQH///7//v7//f3//Pz/+fn/9/f/9fX/8vL/7+//7Oz/6en/5+f/5OT/4OD/3Nz/2tr/19f/09P/0dH/z8//zc3/ysr/yMj/xsb/w8P/wMD/vr7/u7v/ubm/t7f/tLT/sbH/r6//rKz/qan/p6f/pKT/oqL/n5//nZ3/mpq/mJj/lJT/kpL/j4//jY3/ior/h4f/hYX/goL/f3//fX3/e3v/eHj/dnd/c3P/cXH/bm7/a2v/aGj/ZWX/YmL/X1//XFz/Wlr/V1f/VFT/UlL/T0//TU3/Skr/R0f/RET/QkL/Pz//PDz/Ojo/Njb/MzP/MTH/Ly//LCz/Kir/KCj/JSX/IiL/Hx//HBz/Ghr/Fxf/FBT/ERH/Dw//DAz/CQn/Bwf/BAT/AQL/AAD///8=",
     social: {}
   },
   { 
