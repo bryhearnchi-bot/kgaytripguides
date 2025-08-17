@@ -294,9 +294,35 @@ function downloadICS(eventData: ReturnType<typeof createCalendarEvent>) {
 
 function findTalentInTitle(title: string): string[] {
   return TALENT
-    .filter(t => title.toLowerCase().includes(t.name.toLowerCase()) || 
-                 (t.name === "Special Guest" && title.toLowerCase().includes("surprise guest")) ||
-                 (t.name === "The Diva (Bingo)" && title.toLowerCase().includes("bingo")))
+    .filter(t => {
+      const titleLower = title.toLowerCase();
+      const nameLower = t.name.toLowerCase();
+      
+      // Check for exact name matches first
+      if (titleLower.includes(nameLower)) return true;
+      
+      // Special cases for specific performers
+      if (t.name === "Special Guest" && titleLower.includes("surprise guest")) return true;
+      if (t.name === "The Diva (Bingo)" && titleLower.includes("bingo")) return true;
+      if (t.name === "Monét X Change" && titleLower.includes("monet")) return true;
+      if (t.name === "Sherry Vine" && titleLower.includes("sherry")) return true;
+      if (t.name === "Alexis Michelle" && titleLower.includes("alexis")) return true;
+      if (t.name === "Reuben Kaye" && titleLower.includes("reuben")) return true;
+      if (t.name === "Rob Houchen" && titleLower.includes("rob")) return true;
+      if (t.name === "Alyssa Wray" && titleLower.includes("alyssa")) return true;
+      if (t.name === "Brad Loekle" && titleLower.includes("brad")) return true;
+      if (t.name === "Rachel Scanlon" && titleLower.includes("rachel")) return true;
+      if (t.name === "Daniel Webb" && titleLower.includes("daniel")) return true;
+      if (t.name === "Leona Winter" && titleLower.includes("leona")) return true;
+      if (t.name === "AirOtic" && titleLower.includes("airotic")) return true;
+      if (t.name === "Another Rose" && titleLower.includes("another rose")) return true;
+      if (t.name === "Persephone" && titleLower.includes("persephone")) return true;
+      if (t.name === "William TN Hall" && titleLower.includes("william")) return true;
+      if (t.name === "Brian Nash" && titleLower.includes("brian")) return true;
+      if (t.name === "Brandon James Gwinn" && titleLower.includes("brandon")) return true;
+      
+      return false;
+    })
     .map(t => t.name);
 }
 
@@ -1653,26 +1679,30 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
 
     DAILY.forEach(day => {
       day.items.forEach(event => {
-        if (event.title.toLowerCase().includes(talent.name.toLowerCase()) || 
-            (talent.name === "Special Guest" && event.title.toLowerCase().includes("surprise guest")) ||
-            (talent.name === "The Diva (Bingo)" && event.title.toLowerCase().includes("bingo")) ||
-            (talent.name === "Monét X Change" && event.title.toLowerCase().includes("monet")) ||
-            (talent.name === "Sherry Vine" && event.title.toLowerCase().includes("sherry")) ||
-            (talent.name === "Alexis Michelle" && event.title.toLowerCase().includes("alexis")) ||
-            (talent.name === "Reuben Kaye" && event.title.toLowerCase().includes("reuben")) ||
-            (talent.name === "Rob Houchen" && event.title.toLowerCase().includes("rob")) ||
-            (talent.name === "Alyssa Wray" && event.title.toLowerCase().includes("alyssa")) ||
-            (talent.name === "Brad Loekle" && event.title.toLowerCase().includes("brad")) ||
-            (talent.name === "Rachel Scanlon" && event.title.toLowerCase().includes("rachel")) ||
-            (talent.name === "Daniel Webb" && event.title.toLowerCase().includes("daniel")) ||
-            (talent.name === "Leona Winter" && event.title.toLowerCase().includes("leona")) ||
-            (talent.name === "AirOtic" && event.title.toLowerCase().includes("airotic")) ||
-            (talent.name === "Another Rose" && event.title.toLowerCase().includes("another rose")) ||
-            (talent.name === "Persephone" && event.title.toLowerCase().includes("persephone")) ||
-            (talent.name === "The Diva (Bingo)" && event.title.toLowerCase().includes("bingo")) ||
-            (talent.name === "William TN Hall" && event.title.toLowerCase().includes("william")) ||
-            (talent.name === "Brian Nash" && event.title.toLowerCase().includes("brian")) ||
-            (talent.name === "Brandon James Gwinn" && event.title.toLowerCase().includes("brandon"))) {
+        const titleLower = event.title.toLowerCase();
+        const nameLower = talent.name.toLowerCase();
+        
+        const isMatch = titleLower.includes(nameLower) ||
+          (talent.name === "Special Guest" && titleLower.includes("surprise guest")) ||
+          (talent.name === "The Diva (Bingo)" && titleLower.includes("bingo")) ||
+          (talent.name === "Monét X Change" && titleLower.includes("monet")) ||
+          (talent.name === "Sherry Vine" && titleLower.includes("sherry")) ||
+          (talent.name === "Alexis Michelle" && titleLower.includes("alexis")) ||
+          (talent.name === "Reuben Kaye" && titleLower.includes("reuben")) ||
+          (talent.name === "Rob Houchen" && titleLower.includes("rob")) ||
+          (talent.name === "Alyssa Wray" && titleLower.includes("alyssa")) ||
+          (talent.name === "Brad Loekle" && titleLower.includes("brad")) ||
+          (talent.name === "Rachel Scanlon" && titleLower.includes("rachel")) ||
+          (talent.name === "Daniel Webb" && titleLower.includes("daniel")) ||
+          (talent.name === "Leona Winter" && titleLower.includes("leona")) ||
+          (talent.name === "AirOtic" && titleLower.includes("airotic")) ||
+          (talent.name === "Another Rose" && titleLower.includes("another rose")) ||
+          (talent.name === "Persephone" && titleLower.includes("persephone")) ||
+          (talent.name === "William TN Hall" && titleLower.includes("william")) ||
+          (talent.name === "Brian Nash" && titleLower.includes("brian")) ||
+          (talent.name === "Brandon James Gwinn" && titleLower.includes("brandon"));
+          
+        if (isMatch) {
 
           const dayData = ITINERARY.find(itineraryDay => itineraryDay.key === day.key);
           events.push({
