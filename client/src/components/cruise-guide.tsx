@@ -476,8 +476,8 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
             </motion.span>
             <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200 min-h-24 relative">
               <div className="flex items-center gap-3 w-full pr-10">
-                {/* Artist Thumbnail or KGay Logo */}
-                {(clickableNames.length > 0 || event.title.includes("KGay Travel")) && (
+                {/* Artist Thumbnail, Party Thumbnail, or KGay Logo */}
+                {(clickableNames.length > 0 || event.title.includes("KGay Travel") || event.type === 'party' || event.type === 'after') && (
                   <div className="flex-shrink-0">
                     {event.title.includes("KGay Travel") ? (
                       <img
@@ -486,7 +486,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                         className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 cursor-pointer hover:border-ocean-400 transition-colors"
                         title="Pre-Cruise Happy Hour by KGay Travel"
                       />
-                    ) : (
+                    ) : clickableNames.length > 0 ? (
                       clickableNames.map((name) => {
                         const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
                         return talent ? (
@@ -499,7 +499,11 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                           />
                         ) : null;
                       }).filter(Boolean)[0]
-                    )}
+                    ) : (event.type === 'party' || event.type === 'after') ? (
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-ocean-200 bg-gradient-to-br from-coral to-pink-500 shadow-md">
+                        {React.cloneElement(getPartyIcon(event.title), { className: "w-6 h-6 text-white" })}
+                      </div>
+                    ) : null}
                   </div>
                 )}
 
