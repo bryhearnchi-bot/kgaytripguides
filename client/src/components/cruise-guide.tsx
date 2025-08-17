@@ -294,7 +294,8 @@ function downloadICS(eventData: ReturnType<typeof createCalendarEvent>) {
 
 function findTalentInTitle(title: string): string[] {
   return TALENT
-    .filter(t => title.toLowerCase().includes(t.name.toLowerCase()))
+    .filter(t => title.toLowerCase().includes(t.name.toLowerCase()) || 
+                 (t.name === "Special Guest" && title.toLowerCase().includes("surprise guest")))
     .map(t => t.name);
 }
 
