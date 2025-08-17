@@ -32,7 +32,9 @@ import {
   Ship,
   ChevronUp,
   Mail,
-  ExternalLink as FaExternalLinkAlt // Renamed for clarity
+  ExternalLink as FaExternalLinkAlt, // Renamed for clarity
+  Plus,
+  Download
 } from "lucide-react";
 import { FaInstagram, FaTwitter, FaTiktok, FaYoutube, FaLinkedin, FaGlobe } from "react-icons/fa";
 import { SiLinktree } from "react-icons/si";
@@ -135,6 +137,127 @@ function formatAllAboard(departTime: string, mode: "12h" | "24h"): string {
   }
 }
 
+function createCalendarEvent(event: DailyEvent, eventDate: string): {
+  title: string;
+  startDate: Date;
+  endDate: Date;
+  location: string;
+  description: string;
+} {
+  // Parse the event date to get the year, month, day
+  const dateMatch = eventDate.match(/(\w+),\s*(\w+)\s*(\d+)/);
+  if (!dateMatch) {
+    throw new Error('Invalid date format');
+  }
+  
+  const [, , monthStr, dayStr] = dateMatch;
+  const year = 2025;
+  const monthMap: { [key: string]: number } = {
+    'Aug': 7, 'August': 7  // JavaScript months are 0-indexed
+  };
+  const month = monthMap[monthStr] ?? 7; // Default to August
+  const day = parseInt(dayStr, 10);
+  
+  // Parse the event time
+  const timeData = parseTime(event.time);
+  if (!timeData) {
+    throw new Error('Invalid time format');
+  }
+  
+  const startDate = new Date(year, month, day, timeData.h, timeData.m);
+  const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours
+  
+  return {
+    title: event.title,
+    startDate,
+    endDate,
+    location: event.venue,
+    description: `${event.title} at ${event.venue}`
+  };
+}
+
+function formatDateForCalendar(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function generateICSContent(eventData: ReturnType<typeof createCalendarEvent>): string {
+  const startDate = formatDateForCalendar(eventData.startDate);
+  const endDate = formatDateForCalendar(eventData.endDate);
+  const now = formatDateForCalendar(new Date());
+  
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Atlantis Cruise Guide//Event//EN',
+    'BEGIN:VEVENT',
+    `UID:${Date.now()}@cruise-guide.com`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${startDate}`,
+    `DTEND:${endDate}`,
+    `SUMMARY:${eventData.title}`,
+    `DESCRIPTION:${eventData.description}`,
+    `LOCATION:${eventData.location}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function addToGoogleCalendar(eventData: ReturnType<typeof createCalendarEvent>) {
+  const startDate = eventData.startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const endDate = eventData.endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: eventData.title,
+    dates: `${startDate}/${endDate}`,
+    details: eventData.description,
+    location: eventData.location
+  });
+  
+  window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
+}
+
+function addToAppleCalendar(eventData: ReturnType<typeof createCalendarEvent>) {
+  const icsContent = generateICSContent(eventData);
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  
+  // Try to open with webcal protocol first (for macOS)
+  const webcalUrl = url.replace('blob:', 'webcal://');
+  
+  // Create a temporary link to trigger download/open
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${eventData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+  
+  // For iOS devices, try to open with calendar app
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    link.href = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
+  }
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Clean up the blob URL
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+function downloadICS(eventData: ReturnType<typeof createCalendarEvent>) {
+  const icsContent = generateICSContent(eventData);
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${eventData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  URL.revokeObjectURL(url);
+}
+
 function findTalentInTitle(title: string): string[] {
   return TALENT
     .filter(t => title.toLowerCase().includes(t.name.toLowerCase()))
@@ -156,6 +279,77 @@ function getPartyIcon(title: string) {
   if (title.includes("Last Dance")) return <Music className="w-4 h-4" />;
   if (title.includes("Welcome") || title.includes("Sail-Away")) return <PartyPopper className="w-4 h-4" />;
   return <PartyPopper className="w-4 h-4" />;
+}
+
+interface AddToCalendarButtonProps {
+  event: DailyEvent;
+  eventDate: string;
+}
+
+function AddToCalendarButton({ event, eventDate }: AddToCalendarButtonProps) {
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleAddToCalendar = (type: 'google' | 'apple' | 'ics') => {
+    try {
+      const eventData = createCalendarEvent(event, eventDate);
+      
+      switch (type) {
+        case 'google':
+          addToGoogleCalendar(eventData);
+          break;
+        case 'apple':
+          addToAppleCalendar(eventData);
+          break;
+        case 'ics':
+          downloadICS(eventData);
+          break;
+      }
+      setShowDropdown(false);
+    } catch (error) {
+      console.error('Error adding to calendar:', error);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="border-ocean-300 text-ocean-700 hover:bg-ocean-50"
+      >
+        <Plus className="w-3 h-3 mr-1" />
+        Add to Calendar
+        <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+      </Button>
+      
+      {showDropdown && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+          <button
+            onClick={() => handleAddToCalendar('google')}
+            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-t-lg flex items-center"
+          >
+            <div className="w-4 h-4 mr-2 bg-blue-600 rounded"></div>
+            Google Calendar
+          </button>
+          <button
+            onClick={() => handleAddToCalendar('apple')}
+            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center"
+          >
+            <div className="w-4 h-4 mr-2 bg-gray-800 rounded"></div>
+            Apple Calendar
+          </button>
+          <button
+            onClick={() => handleAddToCalendar('ics')}
+            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-b-lg flex items-center"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download ICS
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface TimelineListProps {
@@ -269,7 +463,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                 )}
 
                 {/* Event Content */}
-                <div className="flex-1 min-w-0 pr-10">
+                <div className="flex-1 min-w-0 pr-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-ocean-700">
                       <Clock className="h-4 w-4" />
@@ -318,6 +512,13 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                     </div>
                   )}
                 </div>
+
+                {/* Calendar Button */}
+                {eventDate && (
+                  <div className="flex-shrink-0 ml-2">
+                    <AddToCalendarButton event={event} eventDate={eventDate} />
+                  </div>
+                )}
               </div>
             </Card>
           </motion.div>
@@ -532,7 +733,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                     events={dayEvents.items} 
                     timeMode={timeMode} 
                     onTalentClick={handleTalentClick}
-                    eventDate={ITINERARY.find(i => i.key === selectedDay)?.date}
+                    eventDate={ITINERARY.find(i => i.key === selectedDay)?.date || ''}
                   />
                 ) : (
                   <p className="text-gray-500 italic text-center py-8">No events scheduled for this day.</p>
@@ -762,7 +963,7 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
                   events={allEvents} 
                   timeMode={timeMode} 
                   onTalentClick={handleTalentClick}
-                  eventDate={selectedDate === "all" ? undefined : dates.find(d => d.key === selectedDate)?.label}
+                  eventDate={itinerary?.date || ''}
                 />
               ) : (
                 <p className="text-gray-500 italic">No entertainment scheduled for this day.</p>
@@ -1016,7 +1217,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: idx * 0.1 }}
                 >
-                  <Card className="bg-white p-4 hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 overflow-hidden relative h-48 flex flex-col">
+                  <Card className="bg-white p-4 hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 overflow-hidden relative min-h-52 flex flex-col">
                     <div className="relative z-10 flex flex-col h-full">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
@@ -1035,15 +1236,20 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-2 mt-auto">
-                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(party.time, timeMode)}
-                        </Badge>
-                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
-                          <MapPin className="w-3 h-3 mr-1" />
-                          {party.venue}
-                        </Badge>
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {formatTime(party.time, timeMode)}
+                          </Badge>
+                          <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            {party.venue}
+                          </Badge>
+                        </div>
+                        <div className="ml-2">
+                          <AddToCalendarButton event={party} eventDate={dayData.date} />
+                        </div>
                       </div>
                     </div>
                   </Card>
