@@ -1591,7 +1591,7 @@ function SocialMediaButton({ platform, url }: { platform: string; url: string })
       case 'linktree':
         return <Globe className="w-4 h-4" />;
       default:
-        return <ExternalLink className="w-4 h-4" />;
+        return <FaExternalLinkAlt className="w-4 h-4" />;
     }
   };
 
