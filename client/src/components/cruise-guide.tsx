@@ -1642,6 +1642,7 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
     DAILY.forEach(day => {
       day.items.forEach(event => {
         if (event.title.toLowerCase().includes(talent.name.toLowerCase()) || 
+            (talent.name === "Special Guest" && event.title.toLowerCase().includes("surprise guest")) ||
             (talent.name === "Monét X Change" && event.title.toLowerCase().includes("monet")) ||
             (talent.name === "Sherry Vine" && event.title.toLowerCase().includes("sherry")) ||
             (talent.name === "Alexis Michelle" && event.title.toLowerCase().includes("alexis")) ||
