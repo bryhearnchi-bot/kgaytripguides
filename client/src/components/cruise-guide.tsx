@@ -295,7 +295,8 @@ function downloadICS(eventData: ReturnType<typeof createCalendarEvent>) {
 function findTalentInTitle(title: string): string[] {
   return TALENT
     .filter(t => title.toLowerCase().includes(t.name.toLowerCase()) || 
-                 (t.name === "Special Guest" && title.toLowerCase().includes("surprise guest")))
+                 (t.name === "Special Guest" && title.toLowerCase().includes("surprise guest")) ||
+                 (t.name === "The Diva (Bingo)" && title.toLowerCase().includes("bingo")))
     .map(t => t.name);
 }
 
@@ -313,6 +314,7 @@ function getPartyIcon(title: string) {
   if (title.includes("Off-White")) return <Palette className="w-4 h-4" />;
   if (title.includes("Last Dance")) return <Music className="w-4 h-4" />;
   if (title.includes("Welcome") || title.includes("Sail-Away")) return <PartyPopper className="w-4 h-4" />;
+  if (title.toLowerCase().includes("bingo")) return <img src="https://img.freepik.com/premium-vector/bingo-pop-art-cartoon-comic-background-design-template_393879-5344.jpg" alt="Bingo" className="w-4 h-4 rounded object-cover" />;
   return <PartyPopper className="w-4 h-4" />;
 }
 
@@ -476,8 +478,8 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
             </motion.span>
             <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200 min-h-24 relative">
               <div className="flex items-center gap-3 w-full pr-10">
-                {/* Artist Thumbnail, Party Thumbnail, or KGay Logo */}
-                {(clickableNames.length > 0 || event.title.includes("KGay Travel") || event.type === 'party' || event.type === 'after') && (
+                {/* Artist Thumbnail, Party Thumbnail, Bingo Thumbnail, or KGay Logo */}
+                {(clickableNames.length > 0 || event.title.includes("KGay Travel") || event.type === 'party' || event.type === 'after' || event.title.toLowerCase().includes("bingo")) && (
                   <div className="flex-shrink-0">
                     {event.title.includes("KGay Travel") ? (
                       <img
@@ -499,6 +501,12 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                           />
                         ) : null;
                       }).filter(Boolean)[0]
+                    ) : event.title.toLowerCase().includes("bingo") ? (
+                      <img
+                        src="https://img.freepik.com/premium-vector/bingo-pop-art-cartoon-comic-background-design-template_393879-5344.jpg"
+                        alt="Bingo"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 shadow-md"
+                      />
                     ) : (event.type === 'party' || event.type === 'after') ? (
                       <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-ocean-200 bg-gradient-to-br from-coral to-pink-500 shadow-md">
                         {React.cloneElement(getPartyIcon(event.title), { className: "w-6 h-6 text-white" })}
@@ -1647,6 +1655,7 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
       day.items.forEach(event => {
         if (event.title.toLowerCase().includes(talent.name.toLowerCase()) || 
             (talent.name === "Special Guest" && event.title.toLowerCase().includes("surprise guest")) ||
+            (talent.name === "The Diva (Bingo)" && event.title.toLowerCase().includes("bingo")) ||
             (talent.name === "Monét X Change" && event.title.toLowerCase().includes("monet")) ||
             (talent.name === "Sherry Vine" && event.title.toLowerCase().includes("sherry")) ||
             (talent.name === "Alexis Michelle" && event.title.toLowerCase().includes("alexis")) ||
