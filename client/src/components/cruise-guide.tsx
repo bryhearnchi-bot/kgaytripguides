@@ -170,7 +170,10 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
   // Create date in UTC and adjust for port timezone
   const utcDate = new Date(Date.UTC(year, month, day, timeData.h, timeData.m));
   const startDate = new Date(utcDate.getTime() - (portTimezoneOffset * 60 * 60 * 1000));
-  const endDate = new Date(startDate.getTime() + (1 * 60 * 60 * 1000)); // Add 1 hour
+  
+  // Set duration based on event type - KGay Travel pre-cruise party is 3 hours, others are 1 hour
+  const duration = event.title.includes("KGay Travel") ? 3 : 1;
+  const endDate = new Date(startDate.getTime() + (duration * 60 * 60 * 1000));
   
   return {
     title: event.title,
