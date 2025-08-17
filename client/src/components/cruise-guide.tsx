@@ -164,8 +164,13 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
     throw new Error('Invalid time format');
   }
   
-  const startDate = new Date(year, month, day, timeData.h, timeData.m);
-  const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours
+  // Get timezone offset for the port location
+  const portTimezoneOffset = getPortTimezoneOffset(eventDate);
+  
+  // Create date in UTC and adjust for port timezone
+  const utcDate = new Date(Date.UTC(year, month, day, timeData.h, timeData.m));
+  const startDate = new Date(utcDate.getTime() - (portTimezoneOffset * 60 * 60 * 1000));
+  const endDate = new Date(startDate.getTime() + (1 * 60 * 60 * 1000)); // Add 1 hour
   
   return {
     title: event.title,
@@ -174,6 +179,30 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
     location: event.venue,
     description: `${event.title} at ${event.venue}`
   };
+}
+
+function getPortTimezoneOffset(eventDate: string): number {
+  // Map of port locations to their timezone offsets from UTC
+  const portTimezones: { [key: string]: number } = {
+    'Barcelona': 2,      // UTC+2 (CEST in August)
+    'Mykonos': 3,        // UTC+3 (EEST in August)
+    'Kusadasi': 3,       // UTC+3 (TRT in August)
+    'Crete': 3,          // UTC+3 (EEST in August)
+    'Santorini': 3,      // UTC+3 (EEST in August)
+    'Sea Day': 2,        // Default to ship timezone (likely Mediterranean time)
+  };
+  
+  // Extract location from date string or determine based on itinerary
+  let location = 'Sea Day'; // Default
+  
+  // Check if it's a sea day or specific port
+  if (eventDate.includes('Mykonos')) location = 'Mykonos';
+  else if (eventDate.includes('Kusadasi')) location = 'Kusadasi';
+  else if (eventDate.includes('Crete')) location = 'Crete';
+  else if (eventDate.includes('Santorini')) location = 'Santorini';
+  else if (eventDate.includes('Barcelona')) location = 'Barcelona';
+  
+  return portTimezones[location] || 2; // Default to UTC+2 if location not found
 }
 
 function formatDateForCalendar(date: Date): string {
