@@ -1634,6 +1634,8 @@ function SocialMediaButton({ platform, url }: { platform: string; url: string })
 
 function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpen: boolean; onClose: () => void }) {
   const appearances = useMemo(() => {
+    if (!talent) return [];
+    
     const events: Array<{ date: string; time: string; venue: string; title: string }> = [];
 
     DAILY.forEach(day => {
@@ -1669,7 +1671,7 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
     });
 
     return events;
-  }, [talent.name]);
+  }, [talent]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
