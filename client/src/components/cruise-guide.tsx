@@ -316,15 +316,14 @@ function AddToCalendarButton({ event, eventDate }: AddToCalendarButtonProps) {
         size="sm"
         variant="outline"
         onClick={() => setShowDropdown(!showDropdown)}
-        className="border-ocean-300 text-ocean-700 hover:bg-ocean-50"
+        className="w-8 h-8 p-0 rounded-full border-ocean-300 text-ocean-700 hover:bg-ocean-50 flex items-center justify-center"
+        title="Add to Calendar"
       >
-        <Plus className="w-3 h-3 mr-1" />
-        Add to Calendar
-        <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+        <Plus className="w-4 h-4" />
       </Button>
       
       {showDropdown && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+        <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
           <button
             onClick={() => handleAddToCalendar('google')}
             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-t-lg flex items-center"
@@ -433,8 +432,8 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
             >
               <span className={`h-3 w-3 rounded-full bg-gradient-to-br ${getEventColor(event.type)} shadow-md border border-white`} />
             </motion.span>
-            <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200 min-h-24 flex items-center">
-              <div className="flex items-center gap-3 w-full">
+            <Card className="p-4 bg-white hover:shadow-lg transition-all duration-300 border-2 border-gray-200 min-h-24 relative">
+              <div className="flex items-center gap-3 w-full pr-10">
                 {/* Artist Thumbnail or KGay Logo */}
                 {(clickableNames.length > 0 || event.title.includes("KGay Travel")) && (
                   <div className="flex-shrink-0">
@@ -463,7 +462,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                 )}
 
                 {/* Event Content */}
-                <div className="flex-1 min-w-0 pr-2">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-ocean-700">
                       <Clock className="h-4 w-4" />
@@ -512,14 +511,14 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                     </div>
                   )}
                 </div>
-
-                {/* Calendar Button */}
-                {eventDate && (
-                  <div className="flex-shrink-0 ml-2">
-                    <AddToCalendarButton event={event} eventDate={eventDate} />
-                  </div>
-                )}
               </div>
+
+              {/* Calendar Button - positioned in bottom right corner */}
+              {eventDate && (
+                <div className="absolute bottom-2 right-2">
+                  <AddToCalendarButton event={event} eventDate={eventDate} />
+                </div>
+              )}
             </Card>
           </motion.div>
         );
@@ -1218,7 +1217,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                   transition={{ duration: 0.3, delay: idx * 0.1 }}
                 >
                   <Card className="bg-white p-4 hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 overflow-hidden relative min-h-52 flex flex-col">
-                    <div className="relative z-10 flex flex-col h-full">
+                    <div className="relative z-10 flex flex-col h-full pb-10">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-ocean-100 rounded-xl flex items-center justify-center border border-ocean-200 shadow-lg">
@@ -1236,21 +1235,21 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between mt-auto">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {formatTime(party.time, timeMode)}
-                          </Badge>
-                          <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {party.venue}
-                          </Badge>
-                        </div>
-                        <div className="ml-2">
-                          <AddToCalendarButton event={party} eventDate={dayData.date} />
-                        </div>
+                      <div className="flex flex-wrap gap-2 mt-auto">
+                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {formatTime(party.time, timeMode)}
+                        </Badge>
+                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {party.venue}
+                        </Badge>
                       </div>
+                    </div>
+
+                    {/* Calendar Button - positioned in bottom right corner */}
+                    <div className="absolute bottom-2 right-2">
+                      <AddToCalendarButton event={party} eventDate={dayData.date} />
                     </div>
                   </Card>
                 </motion.div>
