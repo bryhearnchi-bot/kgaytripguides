@@ -440,21 +440,61 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
 
         const titleElement = clickableNames.length > 0 ? (
           <span>
-            {event.title.split(new RegExp(`(${clickableNames.join('|')})`, 'i')).map((part, i) => {
-              const match = clickableNames.find(n => n.toLowerCase() === part.toLowerCase());
-              if (match) {
-                return (
-                  <button
-                    key={i}
-                    onClick={() => onTalentClick(match)}
-                    className="underline underline-offset-2 decoration-ocean-500 hover:text-ocean-600 transition-colors"
-                  >
-                    {part}
-                  </button>
-                );
+            {(() => {
+              // Special handling for specific events that need custom linking
+              if (event.title.toLowerCase().includes("surprise guest") && clickableNames.includes("Special Guest")) {
+                const parts = event.title.split(/(\bSurprise Guest\b)/i);
+                return parts.map((part, i) => {
+                  if (/surprise guest/i.test(part)) {
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => onTalentClick("Special Guest")}
+                        className="underline underline-offset-2 decoration-ocean-500 hover:text-ocean-600 transition-colors"
+                      >
+                        {part}
+                      </button>
+                    );
+                  }
+                  return <span key={i}>{part}</span>;
+                });
               }
-              return <span key={i}>{part}</span>;
-            })}
+              
+              if (event.title.toLowerCase().includes("bingo") && clickableNames.includes("The Diva (Bingo)")) {
+                const parts = event.title.split(/(\bbingo\b)/i);
+                return parts.map((part, i) => {
+                  if (/bingo/i.test(part)) {
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => onTalentClick("The Diva (Bingo)")}
+                        className="underline underline-offset-2 decoration-ocean-500 hover:text-ocean-600 transition-colors"
+                      >
+                        {part}
+                      </button>
+                    );
+                  }
+                  return <span key={i}>{part}</span>;
+                });
+              }
+              
+              // Default behavior for other performers
+              return event.title.split(new RegExp(`(${clickableNames.join('|')})`, 'i')).map((part, i) => {
+                const match = clickableNames.find(n => n.toLowerCase() === part.toLowerCase());
+                if (match) {
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => onTalentClick(match)}
+                      className="underline underline-offset-2 decoration-ocean-500 hover:text-ocean-600 transition-colors"
+                    >
+                      {part}
+                    </button>
+                  );
+                }
+                return <span key={i}>{part}</span>;
+              });
+            })()}
           </span>
         ) : (
           event.title
