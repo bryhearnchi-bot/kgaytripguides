@@ -234,6 +234,15 @@ export const DAILY: DailySchedule[] = [
 
 export const TALENT: Talent[] = [
   { 
+    name: "Special Guest", 
+    cat: "Surprise Performance", 
+    role: "Mystery entertainer", 
+    knownFor: "Surprise appearances", 
+    bio: "A surprise guest performer will be announced during the cruise. This special entertainer will bring an unexpected element of excitement to our Mediterranean journey.", 
+    img: "",
+    social: {}
+  },
+  { 
     name: "Monét X Change", 
     cat: "Drag & Variety", 
     role: "Drag icon & comic", 
@@ -468,15 +477,6 @@ export const TALENT: Talent[] = [
       twitter: "https://x.com/brandonjamesg",
       website: "https://www.brandonjamesgwinn.com"
     }
-  },
-  { 
-    name: "Special Guest", 
-    cat: "Surprise Performance", 
-    role: "Mystery entertainer", 
-    knownFor: "Surprise appearances", 
-    bio: "A surprise guest performer will be announced during the cruise. This special entertainer will bring an unexpected element of excitement to our Mediterranean journey.", 
-    img: "",
-    social: {}
   }
 ];
 
