@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown, ChevronUp, CalendarDays, MapPin, PartyPopper, Clock, Search, Images, Music, Info, X, ChevronRight, ChevronDown, Anchor, FileText, Map, Phone, Wine, Waves, Piano, Crown, Zap, Heart, Globe, Star, Sparkles, Disc, Music2, Palette, Flag, Ship, ChevronUp, Mail, ExternalLink, Plus, Download, Instagram, Twitter, Youtube, Linkedin, User, FaExternalLinkAlt, RefreshCw
+  ChevronDown, ChevronUp, CalendarDays, MapPin, PartyPopper, Clock, Search, Images, Music, Info, X, ChevronRight, Anchor, FileText, Map, Phone, Wine, Waves, Piano, Crown, Zap, Heart, Globe, Star, Sparkles, Disc, Music2, Palette, Flag, Ship, Mail, ExternalLink, Plus, Download, Instagram, Twitter, Youtube, Linkedin, User, RefreshCw
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
