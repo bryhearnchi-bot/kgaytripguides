@@ -1298,7 +1298,7 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
 function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
   const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
-    const parties = day.items
+    let parties = day.items
       .filter(item => item.type === 'party' || item.type === 'after')
       .map(item => ({
         ...item,
@@ -1309,6 +1309,28 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
         depart: itinerary?.depart,
         themeDesc: PARTY_THEMES.find(p => item.title.includes(p.key))?.desc
       }));
+
+    // Special case: if viewing Tuesday (2025-08-26), include Neon Playground from Wednesday
+    if (day.key === "2025-08-26") {
+      const wednesdayEvents = DAILY.find(d => d.key === "2025-08-27");
+      const neonPlayground = wednesdayEvents?.items.find(item => item.title === "Neon Playground");
+      if (neonPlayground) {
+        parties = [...parties, {
+          ...neonPlayground,
+          date: itinerary?.date || day.key,
+          dayKey: day.key,
+          port: itinerary?.port,
+          arrive: itinerary?.arrive,
+          depart: itinerary?.depart,
+          themeDesc: PARTY_THEMES.find(p => neonPlayground.title.includes(p.key))?.desc
+        }];
+      }
+    }
+
+    // Special case: if viewing Wednesday (2025-08-27), exclude Neon Playground since it shows on Tuesday
+    if (day.key === "2025-08-27") {
+      parties = parties.filter(item => item.title !== "Neon Playground");
+    }
 
     if (parties.length > 0) {
       acc[day.key] = {
@@ -1380,7 +1402,14 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {dayData.parties.map((party, idx) => (
+              {dayData.parties.sort((a, b) => {
+                // Special case: if this is Tuesday and we have Neon Playground, put it last
+                if (dayKey === "2025-08-26") {
+                  if (a.title === "Neon Playground") return 1;
+                  if (b.title === "Neon Playground") return -1;
+                }
+                return a.time.localeCompare(b.time);
+              }).map((party, idx) => (
                 <motion.div
                   key={`${party.title}-${party.time}-${idx}`}
                   initial={{ opacity: 0, scale: 0.95 }}
