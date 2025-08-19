@@ -433,7 +433,14 @@ interface TimelineListProps {
 
 
 function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineListProps) {
-  const sortedEvents = events.sort((a, b) => a.time.localeCompare(b.time));
+  const sortedEvents = events.sort((a, b) => {
+    // Special case: if this is Tuesday and we have Neon Playground, put it last
+    if (eventDate?.includes("Aug 26")) {
+      if (a.title === "Neon Playground") return 1;
+      if (b.title === "Neon Playground") return -1;
+    }
+    return a.time.localeCompare(b.time);
+  });
 
   return (
     <div className="relative border-l border-ocean-300/40 ml-2">
@@ -1059,7 +1066,21 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
       <div className="space-y-8">
         {filteredDaysWithEvents.map((day) => {
           const itinerary = ITINERARY.find(i => i.key === day.key);
-          const allEvents = day.items;
+          let allEvents = [...day.items];
+
+          // Special case: if viewing Tuesday (2025-08-26), include Neon Playground from Wednesday
+          if (day.key === "2025-08-26") {
+            const wednesdayEvents = DAILY.find(d => d.key === "2025-08-27");
+            const neonPlayground = wednesdayEvents?.items.find(item => item.title === "Neon Playground");
+            if (neonPlayground) {
+              allEvents = [...allEvents, neonPlayground];
+            }
+          }
+
+          // Special case: if viewing Wednesday (2025-08-27), exclude Neon Playground since it shows on Tuesday
+          if (day.key === "2025-08-27") {
+            allEvents = allEvents.filter(item => item.title !== "Neon Playground");
+          }
 
           return (
             <div key={day.key} className="space-y-4">
