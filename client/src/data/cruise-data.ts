@@ -94,8 +94,8 @@ export const PARTY_THEMES: PartyTheme[] = [
   },
   { 
     key: "Neon Playground", 
-    desc: "Fast, flashy, bright musical playground in the Red Room. Neon, sparkles, lights, and bouncy sounds that make you smile.",
-    shortDesc: "Laser-bright neon playground with bouncy party vibes."
+    desc: "Fast, flashy, bright musical playground in the Red Room. Neon, sparkles, lights, and bouncy sounds that make you smile. This event happens at 12:30am on the day at sea before we get to Egypt.",
+    shortDesc: "Laser-bright neon playground with bouncy party vibes at 12:30am."
   },
   { 
     key: "Think Pink T-Dance", 
@@ -189,13 +189,13 @@ export const DAILY: DailySchedule[] = [
   { key: "2025-08-26", items: [
     { type: "fun", time: "14:00", title: "Bingo with The Diva", venue: "Red Room" },
     { type: "party", time: "17:00", title: "Think Pink T-Dance", venue: "Aquatic Club" },
+    { type: "party", time: "00:30", title: "Neon Playground", venue: "Red Room" },
     { type: "show", time: "19:30", title: "Reuben Kaye", venue: "Red Room" },
     { type: "show", time: "22:00", title: "Reuben Kaye", venue: "Red Room" },
     { type: "show", time: "19:00", title: "Leona Winter", venue: "The Manor" },
     { type: "show", time: "21:00", title: "Comedy All-Stars (Brad Loekle, Rachel Scanlon, Daniel Webb)", venue: "The Manor" },
     { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
     { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
-    { type: "party", time: "00:30", title: "Neon Playground", venue: "Red Room" },
   ]},
   { key: "2025-08-27", items: [
     { type: "show", time: "22:00", title: "Persephone", venue: "Red Room" },
