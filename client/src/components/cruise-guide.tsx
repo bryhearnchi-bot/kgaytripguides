@@ -1,46 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarDays,
-  MapPin,
-  PartyPopper,
-  Clock,
-  Search,
-  Images,
-  Music,
-  Info,
-  X,
-  ChevronRight,
-  ChevronDown,
-  Anchor,
-  FileText,
-  Map,
-  Phone,
-  Wine,
-  Waves,
-  Piano,
-  Crown,
-  Zap,
-  Heart,
-  Globe,
-  Star,
-  Sparkles,
-  Disc,
-  Music2,
-  Palette,
-  Flag,
-  Ship,
-  ChevronUp,
-  Mail,
-  ExternalLink,
-  Plus,
-  Download,
-  Instagram,
-  Twitter,
-  Youtube,
-  Linkedin,
-  User,
-  FaExternalLinkAlt
+  ChevronDown, ChevronUp, CalendarDays, MapPin, PartyPopper, Clock, Search, Images, Music, Info, X, ChevronRight, ChevronDown, Anchor, FileText, Map, Phone, Wine, Waves, Piano, Crown, Zap, Heart, Globe, Star, Sparkles, Disc, Music2, Palette, Flag, Ship, ChevronUp, Mail, ExternalLink, Plus, Download, Instagram, Twitter, Youtube, Linkedin, User, FaExternalLinkAlt, RefreshCw
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1832,11 +1793,69 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
   );
 }
 
+function SocialMediaButton({ platform, url }: { platform: string; url: string }) {
+  let icon;
+  let colorClass;
+
+  switch (platform.toLowerCase()) {
+    case 'instagram':
+      icon = <Instagram className="h-4 w-4" />;
+      colorClass = 'from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600';
+      break;
+    case 'twitter':
+      icon = <Twitter className="h-4 w-4" />;
+      colorClass = 'from-blue-400 to-blue-500 hover:from-blue-500 to-blue-600';
+      break;
+    case 'youtube':
+      icon = <Youtube className="h-4 w-4" />;
+      colorClass = 'from-red-500 to-red-600 hover:from-red-600 to-red-700';
+      break;
+    case 'linkedin':
+      icon = <Linkedin className="h-4 w-4" />;
+      colorClass = 'from-blue-700 to-blue-800 hover:from-blue-800 to-blue-900';
+      break;
+    default:
+      return null;
+  }
+
+  return (
+    <Button
+      size="sm"
+      className={`w-8 h-8 p-0 bg-gradient-to-r text-white border-0 rounded-full ${colorClass}`}
+      asChild
+    >
+      <a href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+        {icon}
+      </a>
+    </Button>
+  );
+}
+
 export default function CruiseGuide() {
   const [timeMode, setTimeMode] = useLocalStorage<"12h" | "24h">("cruise_time_mode", "12h");
   const [activeTab, setActiveTab] = useState("itinerary");
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    // In a real app, you would fetch fresh data here.
+    // For this example, we'll just update the timestamp.
+    setTimeout(() => {
+      setLastRefresh(new Date());
+      setIsRefreshing(false);
+    }, 500); // Simulate a refresh action
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastRefresh(new Date());
+    }, 3 * 60 * 60 * 1000); // Refresh every 3 hours
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1879,9 +1898,21 @@ export default function CruiseGuide() {
               <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
                 Greek Isles Cruise Guide
               </h1>
-              <p className="text-white/80 text-base">
-                August 21-31, 2025
-              </p>
+              <p className="text-white/80 text-base">August 21-31, 2025</p>
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <p className="text-white/60 text-xs">
+                  Last updated: {lastRefresh.toLocaleTimeString()}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </div>
             <div className="flex-1"></div>
           </div>
