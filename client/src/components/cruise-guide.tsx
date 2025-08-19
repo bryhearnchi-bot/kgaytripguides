@@ -38,7 +38,9 @@ import {
   Instagram,
   Twitter,
   Youtube,
-  Linkedin
+  Linkedin,
+  User,
+  FaExternalLinkAlt
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -297,10 +299,10 @@ function findTalentInTitle(title: string): string[] {
     .filter(t => {
       const titleLower = title.toLowerCase();
       const nameLower = t.name.toLowerCase();
-      
+
       // Check for exact name matches first
       if (titleLower.includes(nameLower)) return true;
-      
+
       // Special cases for specific performers
       if (t.name === "Special Guest" && titleLower.includes("surprise guest")) return true;
       if (t.name === "The Diva (Bingo)" && titleLower.includes("bingo")) return true;
@@ -320,7 +322,7 @@ function findTalentInTitle(title: string): string[] {
       if (t.name === "William TN Hall" && titleLower.includes("william")) return true;
       if (t.name === "Brian Nash" && titleLower.includes("brian")) return true;
       if (t.name === "Brandon James Gwinn" && titleLower.includes("brandon")) return true;
-      
+
       return false;
     })
     .map(t => t.name);
@@ -459,7 +461,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                   return <span key={i}>{part}</span>;
                 });
               }
-              
+
               if (event.title.toLowerCase().includes("bingo") && clickableNames.includes("The Diva (Bingo)")) {
                 const parts = event.title.split(/(\bbingo\b)/i);
                 return parts.map((part, i) => {
@@ -477,7 +479,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                   return <span key={i}>{part}</span>;
                 });
               }
-              
+
               // Default behavior for other performers
               return event.title.split(new RegExp(`(${clickableNames.join('|')})`, 'i')).map((part, i) => {
                 const match = clickableNames.find(n => n.toLowerCase() === part.toLowerCase());
@@ -838,7 +840,17 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
             </DialogHeader>
             <div className="mt-4">
               {(() => {
-                const dayEvents = DAILY.find(d => d.key === selectedDay);
+                let allEvents = ITINERARY.find(i => i.key === selectedDay)?.key ? (DAILY.find(d => d.key === ITINERARY.find(i => i.key === selectedDay)?.key)?.items || []) : [];
+
+                // Special case: if viewing Tuesday (2025-08-26), include Neon Playground from Wednesday
+                if (ITINERARY.find(i => i.key === selectedDay)?.key === "2025-08-26") {
+                  const wednesdayEvents = DAILY.find(d => d.key === "2025-08-27");
+                  const neonPlayground = wednesdayEvents?.items.find(item => item.title === "Neon Playground");
+                  if (neonPlayground) {
+                    allEvents = [...allEvents, neonPlayground];
+                  }
+                }
+
                 const handleTalentClick = (name: string) => {
                   const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
                   if (talent) {
@@ -847,9 +859,9 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                   }
                 };
 
-                return dayEvents && dayEvents.items.length > 0 ? (
+                return allEvents.length > 0 ? (
                   <TimelineList 
-                    events={dayEvents.items} 
+                    events={allEvents} 
                     timeMode={timeMode} 
                     onTalentClick={handleTalentClick}
                     eventDate={ITINERARY.find(i => i.key === selectedDay)?.date || ''}
@@ -1655,73 +1667,17 @@ function InfoTab() {
   );
 }
 
-function SocialMediaButton({ platform, url }: { platform: string; url: string }) {
-  const getIcon = () => {
-    switch (platform) {
-      case 'instagram':
-        return <Instagram className="w-4 h-4" />;
-      case 'twitter':
-        return <Twitter className="w-4 h-4" />;
-      case 'youtube':
-        return <Youtube className="w-4 h-4" />;
-      case 'linkedin':
-        return <Linkedin className="w-4 h-4" />;
-      case 'website':
-      case 'linktree':
-        return <Globe className="w-4 h-4" />;
-      default:
-        return <FaExternalLinkAlt className="w-4 h-4" />;
-    }
-  };
-
-  const getColor = () => {
-    switch (platform) {
-      case 'instagram':
-        return 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600';
-      case 'twitter':
-        return 'bg-sky-500 hover:bg-sky-600';
-      case 'youtube':
-        return 'bg-red-500 hover:bg-red-600';
-      case 'linkedin':
-        return 'bg-blue-600 hover:bg-blue-700';
-      case 'website':
-      case 'linktree':
-        return 'bg-gray-600 hover:bg-gray-700';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
-  };
-
-  return (
-    <Button
-      size="sm"
-      className={`text-white border-0 ${getColor()}`}
-      asChild
-    >
-      <a 
-        href={url} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="flex items-center gap-1"
-      >
-        {getIcon()}
-        <span className="capitalize">{platform === 'linktree' ? 'Links' : platform}</span>
-      </a>
-    </Button>
-  );
-}
-
 function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpen: boolean; onClose: () => void }) {
   const appearances = useMemo(() => {
     if (!talent) return [];
-    
+
     const events: Array<{ date: string; time: string; venue: string; title: string }> = [];
 
     DAILY.forEach(day => {
       day.items.forEach(event => {
         const titleLower = event.title.toLowerCase();
         const nameLower = talent.name.toLowerCase();
-        
+
         const isMatch = titleLower.includes(nameLower) ||
           (talent.name === "Special Guest" && titleLower.includes("surprise guest")) ||
           (talent.name === "The Diva (Bingo)" && titleLower.includes("bingo")) ||
@@ -1741,7 +1697,7 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
           (talent.name === "William TN Hall" && titleLower.includes("william")) ||
           (talent.name === "Brian Nash" && titleLower.includes("brian")) ||
           (talent.name === "Brandon James Gwinn" && titleLower.includes("brandon"));
-          
+
         if (isMatch) {
 
           const dayData = ITINERARY.find(itineraryDay => itineraryDay.key === day.key);
@@ -1849,7 +1805,7 @@ export default function CruiseGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Header */}
-      <header className="cruise-gradient wave-pattern text-white shadow-xl fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
+      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1"></div>
