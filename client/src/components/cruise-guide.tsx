@@ -1431,7 +1431,9 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
 
                       <div className="flex-1 mb-3">
                         {party.themeDesc && (
-                          <p className="text-gray-600 text-xs leading-relaxed italic line-clamp-3">{party.themeDesc}</p>
+                          <p className={`text-gray-600 text-xs leading-relaxed italic ${party.title === "Neon Playground" ? "" : "line-clamp-3"}`}>
+                            {party.themeDesc}
+                          </p>
                         )}
                       </div>
 
