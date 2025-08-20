@@ -2022,7 +2022,6 @@ export default function CruiseGuide() {
                   Virgin Voyages App Registration
                 </h3>
                 <div className="space-y-2 text-gray-700">
-                  <p><strong>Booking Number:</strong> {IMPORTANT_INFO.virginApp.bookingNumber}</p>
                   <p className="text-sm">• {IMPORTANT_INFO.virginApp.registrationSteps} step registration process</p>
                   <p className="text-sm">• {IMPORTANT_INFO.virginApp.note}</p>
                 </div>

@@ -612,7 +612,6 @@ export const CRUISE_INFO = {
   dates: "September 7-14, 2025",
   ports: ["Athens", "Santorini", "Kuşadası", "Istanbul", "Alexandria", "Mykonos", "Heraklion"],
   theme: "Greek Isles Adventure",
-  virginBookingNumber: "1951615",
   departureInfo: {
     port: "Terminal C, Piraeus",
     pierOpens: "1:30 PM",
@@ -642,7 +641,6 @@ export const IMPORTANT_INFO = {
     "Luggage takes time to arrive - pack carry-on essentials"
   ],
   virginApp: {
-    bookingNumber: "1951615",
     registrationSteps: 6,
     note: "Must register in app - cannot register online"
   }
