@@ -49,12 +49,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeToggle } from "@/components/ui/time-toggle";
-import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction } from "@/data/cruise-data";
+import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction, IMPORTANT_INFO, CRUISE_INFO } from "@/data/cruise-data";
 
-
-
-
-
+// Placeholder for PortsGuide component if it's defined elsewhere
+// If not, this might need to be implemented or removed depending on its usage
+const PortsGuide = () => (
+  <div className="text-center text-gray-500 italic">Ports Guide content would go here.</div>
+);
 
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
@@ -1959,63 +1960,33 @@ export default function CruiseGuide() {
           {/* Navigation Tabs */}
           <div className="flex justify-center items-center gap-4">
             <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
-              <div className="grid grid-cols-5 gap-1">
-                <Button
-                  variant={activeTab === "itinerary" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("itinerary")}
-                  className={`flex items-center gap-2 px-4 py-2 ${
-                    activeTab === "itinerary" ? "bg-ocean-700 text-white hover:bg-ocean-800" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <MapPin className="w-4 h-4" />
+              {/* TabsList adapted from EntertainmentTab for consistent navigation */}
+              <TabsList className="grid grid-cols-6 w-full">
+                <TabsTrigger value="itinerary" className="flex items-center gap-2">
+                  <Anchor className="w-4 h-4" />
                   <span className="hidden sm:inline">Itinerary</span>
-                </Button>
-                <Button
-                  variant={activeTab === "entertainment" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("entertainment")}
-                  className={`flex items-center gap-2 px-4 py-2 ${
-                    activeTab === "entertainment" ? "bg-ocean-700 text-white hover:bg-ocean-800" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <CalendarDays className="w-4 h-4" />
-                  <span className="hidden sm:inline">Events</span>
-                </Button>
-                <Button
-                  variant={activeTab === "entertainers" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("entertainers")}
-                  className={`flex items-center gap-2 px-4 py-2 ${
-                    activeTab === "entertainers" ? "bg-ocean-700 text-white hover:bg-ocean-800" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
+                </TabsTrigger>
+                <TabsTrigger value="entertainment" className="flex items-center gap-2">
                   <Music className="w-4 h-4" />
-                  <span className="hidden sm:inline">Entertainers</span>
-                </Button>
-                <Button
-                  variant={activeTab === "parties" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("parties")}
-                  className={`flex items-center gap-2 px-4 py-2 ${
-                    activeTab === "parties" ? "bg-ocean-700 text-white hover:bg-ocean-800" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
+                  <span className="hidden sm:inline">Shows</span>
+                </TabsTrigger>
+                <TabsTrigger value="talent" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">Talent</span>
+                </TabsTrigger>
+                <TabsTrigger value="parties" className="flex items-center gap-2">
                   <PartyPopper className="w-4 h-4" />
                   <span className="hidden sm:inline">Parties</span>
-                </Button>
-                <Button
-                  variant={activeTab === "info" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("info")}
-                  className={`flex items-center gap-2 px-4 py-2 ${
-                    activeTab === "info" ? "bg-ocean-700 text-white hover:bg-ocean-800" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
+                </TabsTrigger>
+                <TabsTrigger value="ports" className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  <span className="hidden sm:inline">Ports</span>
+                </TabsTrigger>
+                <TabsTrigger value="info" className="flex items-center gap-2">
                   <Info className="w-4 h-4" />
                   <span className="hidden sm:inline">Info</span>
-                </Button>
-              </div>
+                </TabsTrigger>
+              </TabsList>
             </div>
             <div className="ml-4">
               <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
@@ -2026,11 +1997,98 @@ export default function CruiseGuide() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
-        {activeTab === "itinerary" && <ItineraryTab timeMode={timeMode} onTalentClick={setSelectedTalent} />}
-        {activeTab === "entertainment" && <EntertainmentTab timeMode={timeMode} onTalentClick={setSelectedTalent} />}
-        {activeTab === "entertainers" && <EntertainersTab onTalentClick={setSelectedTalent} />}
-        {activeTab === "parties" && <PartiesTab timeMode={timeMode} onTalentClick={setSelectedTalent} />}
-        {activeTab === "info" && <InfoTab />}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsContent value="itinerary">
+            <ItineraryTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
+          </TabsContent>
+          <TabsContent value="entertainment">
+            <EntertainmentTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
+          </TabsContent>
+          <TabsContent value="talent">
+            <EntertainersTab onTalentClick={setSelectedTalent} />
+          </TabsContent>
+          <TabsContent value="parties">
+            <PartiesTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
+          </TabsContent>
+          <TabsContent value="ports" className="mt-4">
+            <PortsGuide />
+          </TabsContent>
+          <TabsContent value="info" className="mt-4">
+            <div className="space-y-6">
+              {/* Virgin Voyages App Info */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-ocean-600" />
+                  Virgin Voyages App Registration
+                </h3>
+                <div className="space-y-2 text-gray-700">
+                  <p><strong>Booking Number:</strong> {IMPORTANT_INFO.virginApp.bookingNumber}</p>
+                  <p className="text-sm">• {IMPORTANT_INFO.virginApp.registrationSteps} step registration process</p>
+                  <p className="text-sm">• {IMPORTANT_INFO.virginApp.note}</p>
+                </div>
+              </Card>
+
+              {/* Departure Information */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Ship className="w-5 h-5 text-ocean-600" />
+                  Departure Information
+                </h3>
+                <div className="space-y-2 text-gray-700">
+                  <p><strong>Port:</strong> {CRUISE_INFO.departureInfo.port}</p>
+                  <p><strong>Pier Opens:</strong> {CRUISE_INFO.departureInfo.pierOpens}</p>
+                  <p><strong>Luggage Drop-off:</strong> {CRUISE_INFO.departureInfo.luggageDropOff}</p>
+                  <p><strong>Sailaway Party:</strong> {CRUISE_INFO.departureInfo.sailawayParty}</p>
+                  <p><strong>Latest Arrival:</strong> {CRUISE_INFO.departureInfo.latestArrival}</p>
+                </div>
+              </Card>
+
+              {/* Entertainment Booking */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Music className="w-5 h-5 text-coral" />
+                  Entertainment Booking
+                </h3>
+                <div className="space-y-2 text-gray-700">
+                  <p><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
+                  <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.entertainment.walkIns}</p>
+                  <p><strong>Standby Release:</strong> {IMPORTANT_INFO.entertainment.standbyRelease}</p>
+                  <p><strong>Rockstar Suites:</strong> {IMPORTANT_INFO.entertainment.rockstarSuites}</p>
+                </div>
+              </Card>
+
+              {/* Dining Information */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Wine className="w-5 h-5 text-coral" />
+                  Dining Information
+                </h3>
+                <div className="space-y-2 text-gray-700">
+                  <p><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>
+                  <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.dining.walkIns}</p>
+                  <p><strong>Cost:</strong> {IMPORTANT_INFO.dining.included}</p>
+                  <p><strong>Late Night:</strong> {IMPORTANT_INFO.dining.lateNight}</p>
+                </div>
+              </Card>
+
+              {/* First Day Tips */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-coral" />
+                  First Day Tips
+                </h3>
+                <ul className="space-y-2 text-gray-700">
+                  {IMPORTANT_INFO.firstDayTips.map((tip, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-coral rounded-full mt-2 flex-shrink-0"></span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Footer */}

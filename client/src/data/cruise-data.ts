@@ -272,7 +272,7 @@ export const TALENT: Talent[] = [
     cat: "Vocalists", 
     role: "Vocalist", 
     knownFor: "Queen of the Universe", 
-    bio: "French drag queen and countertenor baritone with a three-octave range. Known for her appearances on Queen of the Universe and The Voice France in 2019.", 
+    bio: "French drag queen and countertenor baritone with a three-octave range. Known for her appearances at Queen of the Universe and The Voice France in 2019.", 
     img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39",
     social: {
       instagram: "https://www.instagram.com/leonawinter16/",
@@ -606,3 +606,46 @@ export const CITY_ATTRACTIONS: CityAttraction[] = [
     ]
   }
 ];
+
+export const CRUISE_INFO = {
+  ship: "Resilient Lady",
+  dates: "September 7-14, 2025",
+  ports: ["Athens", "Santorini", "Kuşadası", "Istanbul", "Alexandria", "Mykonos", "Heraklion"],
+  theme: "Greek Isles Adventure",
+  virginBookingNumber: "1951615",
+  departureInfo: {
+    port: "Terminal C, Piraeus",
+    pierOpens: "1:30 PM",
+    luggageDropOff: "9:00 AM onwards",
+    sailawayParty: "6:00 PM on pool deck",
+    latestArrival: "5:00 PM"
+  }
+};
+
+export const IMPORTANT_INFO = {
+  entertainment: {
+    bookingStart: "5:00 PM Thursday in Virgin Voyages App",
+    walkIns: "Available - 'Sold out' only means no reservations available",
+    standbyRelease: "10 minutes before showtime",
+    rockstarSuites: "Reserved space held until 10 minutes before showtime"
+  },
+  dining: {
+    reservations: "Limited but not necessary",
+    walkIns: "40% of tables reserved for walk-ins after 7 PM",
+    included: "All restaurants included in cruise fare",
+    lateNight: "Several late-night options available"
+  },
+  firstDayTips: [
+    "Look for Atlantis team members in polo shirts with name badges",
+    "Use meal times to meet other guests at shared seating",
+    "Don't try to do everything on day 1 - pace yourself",
+    "Luggage takes time to arrive - pack carry-on essentials"
+  ],
+  virginApp: {
+    bookingNumber: "1951615",
+    registrationSteps: 6,
+    note: "Must register in app - cannot register online"
+  }
+};
+
+export const PARTIES = [
