@@ -1914,90 +1914,90 @@ export default function CruiseGuide() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-      {/* Header */}
-      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1"></div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-6 mb-2">
-                <img 
-                  src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-                  alt="Atlantis Events" 
-                  className="h-9 w-auto brightness-0 invert"
-                />
-                <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
+        {/* Header */}
+        <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1"></div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-6 mb-2">
                   <img 
-                    src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
-                    alt="KGay Travel" 
-                    className="h-16 w-auto hover:opacity-80 transition-opacity"
+                    src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
+                    alt="Atlantis Events" 
+                    className="h-9 w-auto brightness-0 invert"
                   />
-                </a>
+                  <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
+                    <img 
+                      src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
+                      alt="KGay Travel" 
+                      className="h-16 w-auto hover:opacity-80 transition-opacity"
+                    />
+                  </a>
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
+                  Greek Isles Cruise Guide
+                </h1>
+                <p className="text-white/80 text-base">August 21-31, 2025</p>
+                <div className="flex items-center justify-center gap-4 mt-2">
+                  <p className="text-white/60 text-xs">
+                    Last updated: {lastRefresh.toLocaleTimeString()}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
               </div>
-              <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-                Greek Isles Cruise Guide
-              </h1>
-              <p className="text-white/80 text-base">August 21-31, 2025</p>
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-white/60 text-xs">
-                  Last updated: {lastRefresh.toLocaleTimeString()}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
-                  className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </Button>
+              <div className="flex-1"></div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex justify-center items-center gap-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
+                {/* TabsList adapted from EntertainmentTab for consistent navigation */}
+                <TabsList className="grid grid-cols-6 w-full">
+                  <TabsTrigger value="itinerary" className="flex items-center gap-2">
+                    <Anchor className="w-4 h-4" />
+                    <span className="hidden sm:inline">Itinerary</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="entertainment" className="flex items-center gap-2">
+                    <Music className="w-4 h-4" />
+                    <span className="hidden sm:inline">Shows</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="talent" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">Talent</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="parties" className="flex items-center gap-2">
+                    <PartyPopper className="w-4 h-4" />
+                    <span className="hidden sm:inline">Parties</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="ports" className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span className="hidden sm:inline">Ports</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="info" className="flex items-center gap-2">
+                    <Info className="w-4 h-4" />
+                    <span className="hidden sm:inline">Info</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="ml-4">
+                <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
               </div>
             </div>
-            <div className="flex-1"></div>
           </div>
+        </header>
 
-          {/* Navigation Tabs */}
-          <div className="flex justify-center items-center gap-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
-              {/* TabsList adapted from EntertainmentTab for consistent navigation */}
-              <TabsList className="grid grid-cols-6 w-full">
-                <TabsTrigger value="itinerary" className="flex items-center gap-2">
-                  <Anchor className="w-4 h-4" />
-                  <span className="hidden sm:inline">Itinerary</span>
-                </TabsTrigger>
-                <TabsTrigger value="entertainment" className="flex items-center gap-2">
-                  <Music className="w-4 h-4" />
-                  <span className="hidden sm:inline">Shows</span>
-                </TabsTrigger>
-                <TabsTrigger value="talent" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">Talent</span>
-                </TabsTrigger>
-                <TabsTrigger value="parties" className="flex items-center gap-2">
-                  <PartyPopper className="w-4 h-4" />
-                  <span className="hidden sm:inline">Parties</span>
-                </TabsTrigger>
-                <TabsTrigger value="ports" className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span className="hidden sm:inline">Ports</span>
-                </TabsTrigger>
-                <TabsTrigger value="info" className="flex items-center gap-2">
-                  <Info className="w-4 h-4" />
-                  <span className="hidden sm:inline">Info</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <div className="ml-4">
-              <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
           <TabsContent value="itinerary">
             <ItineraryTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
           </TabsContent>
@@ -2087,57 +2087,58 @@ export default function CruiseGuide() {
               </Card>
             </div>
           </TabsContent>
-        </Tabs>
-      </main>
 
-      {/* Footer */}
-      <footer className="atlantis-gradient wave-pattern text-white py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <img 
-              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-              alt="Atlantis Events" 
-              className="h-8 w-auto mr-3 brightness-0 invert"
-            />
-            <div className="text-left">
-              <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
+        </main>
+
+        {/* Footer */}
+        <footer className="atlantis-gradient wave-pattern text-white py-8 mt-16">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <img 
+                src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
+                alt="Atlantis Events" 
+                className="h-8 w-auto mr-3 brightness-0 invert"
+              />
+              <div className="text-left">
+                <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
+              </div>
             </div>
+            <p className="text-sm text-white/80 mb-2">
+              Virgin Resilient Lady • August 21-31, 2025
+            </p>
+            <p className="text-sm font-bold text-white/90">
+              This guide was sponsored by KGay Travel
+            </p>
           </div>
-          <p className="text-sm text-white/80 mb-2">
-            Virgin Resilient Lady • August 21-31, 2025
-          </p>
-          <p className="text-sm font-bold text-white/90">
-            This guide was sponsored by KGay Travel
-          </p>
-        </div>
-      </footer>
+        </footer>
 
-      <TalentModal
-        talent={selectedTalent}
-        isOpen={!!selectedTalent}
-        onClose={() => setSelectedTalent(null)}
-      />
+        <TalentModal
+          talent={selectedTalent}
+          isOpen={!!selectedTalent}
+          onClose={() => setSelectedTalent(null)}
+        />
 
-      {/* Scroll to Top Button */}
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 z-50"
-          >
-            <Button
-              onClick={scrollToTop}
-              size="lg"
-              className="w-12 h-12 rounded-full bg-ocean-600 hover:bg-ocean-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/20"
+        {/* Scroll to Top Button */}
+        <AnimatePresence>
+          {showScrollTop && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="fixed bottom-6 right-6 z-50"
             >
-              <ChevronUp className="w-5 h-5" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+              <Button
+                onClick={scrollToTop}
+                size="lg"
+                className="w-12 h-12 rounded-full bg-ocean-600 hover:bg-ocean-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/20"
+              >
+                <ChevronUp className="w-5 h-5" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Tabs>
   );
 }
