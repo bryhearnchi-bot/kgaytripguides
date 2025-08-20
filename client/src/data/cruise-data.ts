@@ -646,4 +646,5 @@ export const IMPORTANT_INFO = {
   }
 };
 
-export const PARTIES = [
+// Re-export party themes for backwards compatibility
+export const PARTIES = PARTY_THEMES;
