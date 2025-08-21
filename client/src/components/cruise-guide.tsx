@@ -1695,11 +1695,55 @@ function InfoTab() {
             <Wine className="w-5 h-5 text-coral" />
             Dining Information
           </h3>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>
-            <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.dining.walkIns}</p>
-            <p><strong>Cost:</strong> {IMPORTANT_INFO.dining.included}</p>
-            <p><strong>Late Night:</strong> {IMPORTANT_INFO.dining.lateNight}</p>
+          <div className="space-y-3 text-gray-700">
+            <div className="bg-green-50 p-3 rounded-lg">
+              <p className="text-green-700 text-sm font-medium"><strong>Good News:</strong> All restaurants are included in your cruise fare - no extra charges!</p>
+            </div>
+            
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">Reservations & Walk-ins</p>
+              <p className="text-sm mb-1"><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>
+              <p className="text-sm mb-1"><strong>Walk-ins:</strong> {IMPORTANT_INFO.dining.walkIns}</p>
+              <p className="text-sm text-gray-600 italic">Pro tip: Even "sold out" restaurants accept walk-ins - this just means no more reservations available</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">Dining Times</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-gray-50 p-2 rounded">
+                  <p className="font-medium">Breakfast</p>
+                  <p>7:00 AM - 11:30 AM</p>
+                </div>
+                <div className="bg-gray-50 p-2 rounded">
+                  <p className="font-medium">Lunch</p>
+                  <p>12:00 PM - 3:30 PM</p>
+                </div>
+                <div className="bg-gray-50 p-2 rounded">
+                  <p className="font-medium">Dinner</p>
+                  <p>6:00 PM - 10:30 PM</p>
+                </div>
+                <div className="bg-gray-50 p-2 rounded">
+                  <p className="font-medium">Late Night</p>
+                  <p>11:00 PM - 2:00 AM</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">Restaurant Highlights</p>
+              <div className="space-y-1 text-sm">
+                <p><strong>The Wake:</strong> Fine dining with sea views</p>
+                <p><strong>Pink Agave:</strong> Mexican cuisine & cocktails</p>
+                <p><strong>Razzle Dazzle:</strong> Vegetarian fine dining</p>
+                <p><strong>The Galley:</strong> Food court with multiple options</p>
+                <p><strong>The Pizza Place:</strong> 24/7 pizza counter</p>
+                <p><strong>Gunpowder:</strong> Indian street food</p>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-blue-700 text-sm"><strong>Room Service:</strong> Available 24/7 with no delivery fee. Perfect for those late-night cravings!</p>
+            </div>
           </div>
         </Card>
 
