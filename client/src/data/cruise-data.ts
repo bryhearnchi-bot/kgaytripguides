@@ -195,6 +195,7 @@ export const DAILY: DailySchedule[] = [
     { type: "show", time: "21:00", title: "Comedy All-Stars (Brad Loekle, Rachel Scanlon, Daniel Webb)", venue: "The Manor" },
     { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
     { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
+    { type: "party", time: "23:00", title: "Atlantis Classics", venue: "Aquatic Club" },
   ]},
   { key: "2025-08-27", items: [
     { type: "show", time: "22:00", title: "Persephone", venue: "Red Room" },
@@ -210,7 +211,6 @@ export const DAILY: DailySchedule[] = [
     { type: "show", time: "21:00", title: "Leona Winter", venue: "The Manor" },
     { type: "show", time: "23:00", title: "Alyssa Wray", venue: "The Manor" },
     { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
-    { type: "party", time: "23:00", title: "Atlantis Classics", venue: "Aquatic Club" },
   ]},
   { key: "2025-08-29", items: [
     { type: "party", time: "00:30", title: "Neon Playground", venue: "Red Room" },
