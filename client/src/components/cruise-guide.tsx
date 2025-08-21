@@ -1701,13 +1701,23 @@ function InfoTab() {
         <Card className="p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <Music className="w-5 h-5 text-coral" />
-            Entertainment Booking
+            Entertainment Information
           </h3>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
-            <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.entertainment.walkIns}</p>
-            <p><strong>Standby Release:</strong> {IMPORTANT_INFO.entertainment.standbyRelease}</p>
-            <p><strong>Rockstar Suites:</strong> {IMPORTANT_INFO.entertainment.rockstarSuites}</p>
+          <div className="space-y-3 text-gray-700">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <p className="text-amber-800 text-sm font-medium mb-2"><strong>Important Update:</strong></p>
+              <p className="text-amber-700 text-sm mb-2">We have changed the times and dates of several of our shows and parties since the Vacation Guide was published. Please refer to the times listed in the App as well as on the "Glance at a Day" printed program that you'll find in your room today.</p>
+              <p className="text-amber-700 text-sm mb-2">The "Glance at a Day" program is only delivered on day One – after that you can find a copy at Sailor Services, Grounds Club, or The Galley. It's the same information as on the App.</p>
+              <p className="text-amber-700 text-sm">And yes, we moved Neon Playground to a new night, next Thursday, for a better experience for all.</p>
+            </div>
+            
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">Booking Information</p>
+              <p className="text-sm mb-1"><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
+              <p className="text-sm mb-1"><strong>Walk-ins:</strong> {IMPORTANT_INFO.entertainment.walkIns}</p>
+              <p className="text-sm mb-1"><strong>Standby Release:</strong> {IMPORTANT_INFO.entertainment.standbyRelease}</p>
+              <p className="text-sm"><strong>Rockstar Suites:</strong> {IMPORTANT_INFO.entertainment.rockstarSuites}</p>
+            </div>
           </div>
         </Card>
 
