@@ -1754,7 +1754,6 @@ function InfoTab() {
                 <p><strong>Razzle Dazzle:</strong> Vegetarian fine dining</p>
                 <p><strong>The Galley:</strong> Food court with multiple options</p>
                 <p><strong>The Pizza Place:</strong> 24/7 pizza counter</p>
-                <p><strong>Gunpowder:</strong> Indian street food</p>
               </div>
             </div>
 
