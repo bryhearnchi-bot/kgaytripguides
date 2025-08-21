@@ -1663,6 +1663,79 @@ function InfoTab() {
         </Card>
       </div>
 
+      <div className="space-y-6">
+        {/* Virgin Voyages App Info */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Phone className="w-5 h-5 text-ocean-600" />
+            Virgin Voyages App Registration
+          </h3>
+          <div className="space-y-2 text-gray-700">
+            <p className="text-sm">• {IMPORTANT_INFO.virginApp.registrationSteps} step registration process</p>
+            <p className="text-sm">• {IMPORTANT_INFO.virginApp.note}</p>
+          </div>
+        </Card>
+
+        {/* Departure Information */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Ship className="w-5 h-5 text-ocean-600" />
+            Departure Information
+          </h3>
+          <div className="space-y-2 text-gray-700">
+            <p><strong>Port:</strong> {CRUISE_INFO.departureInfo.port}</p>
+            <p><strong>Pier Opens:</strong> {CRUISE_INFO.departureInfo.pierOpens}</p>
+            <p><strong>Luggage Drop-off:</strong> {CRUISE_INFO.departureInfo.luggageDropOff}</p>
+            <p><strong>Sailaway Party:</strong> {CRUISE_INFO.departureInfo.sailawayParty}</p>
+            <p><strong>Latest Arrival:</strong> {CRUISE_INFO.departureInfo.latestArrival}</p>
+          </div>
+        </Card>
+
+        {/* Entertainment Booking */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Music className="w-5 h-5 text-coral" />
+            Entertainment Booking
+          </h3>
+          <div className="space-y-2 text-gray-700">
+            <p><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
+            <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.entertainment.walkIns}</p>
+            <p><strong>Standby Release:</strong> {IMPORTANT_INFO.entertainment.standbyRelease}</p>
+            <p><strong>Rockstar Suites:</strong> {IMPORTANT_INFO.entertainment.rockstarSuites}</p>
+          </div>
+        </Card>
+
+        {/* Dining Information */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Wine className="w-5 h-5 text-coral" />
+            Dining Information
+          </h3>
+          <div className="space-y-2 text-gray-700">
+            <p><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>
+            <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.dining.walkIns}</p>
+            <p><strong>Cost:</strong> {IMPORTANT_INFO.dining.included}</p>
+            <p><strong>Late Night:</strong> {IMPORTANT_INFO.dining.lateNight}</p>
+          </div>
+        </Card>
+
+        {/* First Day Tips */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Star className="w-5 h-5 text-coral" />
+            First Day Tips
+          </h3>
+          <ul className="space-y-2 text-gray-700">
+            {IMPORTANT_INFO.firstDayTips.map((tip, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-coral rounded-full mt-2 flex-shrink-0"></span>
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+
       {/* KGay Travel Sponsorship Card */}
       <Card className="p-8 bg-white border-0 shadow-xl">
         <div className="flex flex-col items-center text-center mb-6">
@@ -2015,83 +2088,12 @@ export default function CruiseGuide() {
             <PortsGuide />
           </TabsContent>
           <TabsContent value="info" className="mt-4">
-            <div className="space-y-6">
-              {/* Virgin Voyages App Info */}
-              <Card className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Phone className="w-5 h-5 text-ocean-600" />
-                  Virgin Voyages App Registration
-                </h3>
-                <div className="space-y-2 text-gray-700">
-                  <p className="text-sm">• {IMPORTANT_INFO.virginApp.registrationSteps} step registration process</p>
-                  <p className="text-sm">• {IMPORTANT_INFO.virginApp.note}</p>
-                </div>
-              </Card>
-
-              {/* Departure Information */}
-              <Card className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Ship className="w-5 h-5 text-ocean-600" />
-                  Departure Information
-                </h3>
-                <div className="space-y-2 text-gray-700">
-                  <p><strong>Port:</strong> {CRUISE_INFO.departureInfo.port}</p>
-                  <p><strong>Pier Opens:</strong> {CRUISE_INFO.departureInfo.pierOpens}</p>
-                  <p><strong>Luggage Drop-off:</strong> {CRUISE_INFO.departureInfo.luggageDropOff}</p>
-                  <p><strong>Sailaway Party:</strong> {CRUISE_INFO.departureInfo.sailawayParty}</p>
-                  <p><strong>Latest Arrival:</strong> {CRUISE_INFO.departureInfo.latestArrival}</p>
-                </div>
-              </Card>
-
-              {/* Entertainment Booking */}
-              <Card className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Music className="w-5 h-5 text-coral" />
-                  Entertainment Booking
-                </h3>
-                <div className="space-y-2 text-gray-700">
-                  <p><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
-                  <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.entertainment.walkIns}</p>
-                  <p><strong>Standby Release:</strong> {IMPORTANT_INFO.entertainment.standbyRelease}</p>
-                  <p><strong>Rockstar Suites:</strong> {IMPORTANT_INFO.entertainment.rockstarSuites}</p>
-                </div>
-              </Card>
-
-              {/* Dining Information */}
-              <Card className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Wine className="w-5 h-5 text-coral" />
-                  Dining Information
-                </h3>
-                <div className="space-y-2 text-gray-700">
-                  <p><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>
-                  <p><strong>Walk-ins:</strong> {IMPORTANT_INFO.dining.walkIns}</p>
-                  <p><strong>Cost:</strong> {IMPORTANT_INFO.dining.included}</p>
-                  <p><strong>Late Night:</strong> {IMPORTANT_INFO.dining.lateNight}</p>
-                </div>
-              </Card>
-
-              {/* First Day Tips */}
-              <Card className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-coral" />
-                  First Day Tips
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  {IMPORTANT_INFO.firstDayTips.map((tip, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-coral rounded-full mt-2 flex-shrink-0"></span>
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </div>
+            <InfoTab />
           </TabsContent>
         </main>
       </Tabs>
 
-      {/* Footer */}
+        {/* Footer */}
         <footer className="atlantis-gradient wave-pattern text-white py-8 mt-16">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <div className="flex items-center justify-center mb-4">
