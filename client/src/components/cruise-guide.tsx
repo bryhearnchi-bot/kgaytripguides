@@ -1660,18 +1660,6 @@ function InfoTab() {
       </div>
 
       <div className="space-y-6">
-        {/* Virgin Voyages App Info */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <Phone className="w-5 h-5 text-ocean-600" />
-            Virgin Voyages App Registration
-          </h3>
-          <div className="space-y-2 text-gray-700">
-            <p className="text-sm">• {IMPORTANT_INFO.virginApp.registrationSteps} step registration process</p>
-            <p className="text-sm">• {IMPORTANT_INFO.virginApp.note}</p>
-          </div>
-        </Card>
-
         {/* Departure Information */}
         <Card className="p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
