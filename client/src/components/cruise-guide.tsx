@@ -51,11 +51,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeToggle } from "@/components/ui/time-toggle";
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction, IMPORTANT_INFO, CRUISE_INFO } from "@/data/cruise-data";
 
-// Placeholder for PortsGuide component if it's defined elsewhere
-// If not, this might need to be implemented or removed depending on its usage
-const PortsGuide = () => (
-  <div className="text-center text-gray-500 italic">Ports Guide content would go here.</div>
-);
+
 
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
@@ -2034,7 +2030,7 @@ export default function CruiseGuide() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="flex justify-center items-center gap-4">
               <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
-                <TabsList className="grid grid-cols-6 w-full">
+                <TabsList className="grid grid-cols-5 w-full">
                   <TabsTrigger value="itinerary" className="flex items-center gap-2">
                     <Anchor className="w-4 h-4" />
                     <span className="hidden sm:inline">Itinerary</span>
@@ -2050,10 +2046,6 @@ export default function CruiseGuide() {
                   <TabsTrigger value="parties" className="flex items-center gap-2">
                     <PartyPopper className="w-4 h-4" />
                     <span className="hidden sm:inline">Parties</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="ports" className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span className="hidden sm:inline">Ports</span>
                   </TabsTrigger>
                   <TabsTrigger value="info" className="flex items-center gap-2">
                     <Info className="w-4 h-4" />
@@ -2083,9 +2075,6 @@ export default function CruiseGuide() {
           </TabsContent>
           <TabsContent value="parties">
             <PartiesTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
-          </TabsContent>
-          <TabsContent value="ports" className="mt-4">
-            <PortsGuide />
           </TabsContent>
           <TabsContent value="info" className="mt-4">
             <InfoTab />
