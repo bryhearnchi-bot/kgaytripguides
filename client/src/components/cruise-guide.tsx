@@ -1481,7 +1481,7 @@ function InfoTab() {
       </div>
 
       {/* First Day Tips - Moved to top */}
-      <Card className="p-6 bg-gradient-to-r from-coral/10 to-pink-50 border-coral/20">
+      <Card className="p-6 bg-white hover:shadow-xl transition-all duration-300 border-0">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Star className="w-6 h-6 text-coral" />
           First Day Tips
