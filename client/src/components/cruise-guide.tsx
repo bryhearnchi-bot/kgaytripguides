@@ -1616,6 +1616,11 @@ function InfoTab() {
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-blue-700 text-xs"><strong>Required:</strong> Valid passport expiring no earlier than March 3rd, 2026</p>
             </div>
+            <div className="bg-yellow-50 p-3 rounded-lg">
+              <p className="text-yellow-800 text-xs mb-2"><strong>Passport Collection Process:</strong></p>
+              <p className="text-yellow-700 text-xs mb-2">In order to clear all sailors for these ports, Virgin will collect all passports after you check in and before you embark the ship. Passports will be returned to you on the sea day before we arrive in Alexandria, with details on how to collect them provided onboard.</p>
+              <p className="text-yellow-700 text-xs">Guests from certain Restricted Nationalities will also have to present themselves for face-to-face pre-arrival clearance in Mykonos. A letter will be delivered to all impacted Sailors indicating the process.</p>
+            </div>
             <div>
               <p className="text-gray-600 mb-1"><strong>No visa required for:</strong></p>
               <p className="text-gray-600 text-xs">USA, Canada, UK, or EU passport holders visiting Turkey and Egypt</p>
