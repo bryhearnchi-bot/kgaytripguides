@@ -1307,10 +1307,10 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
         themeDesc: PARTY_THEMES.find(p => item.title.includes(p.key))?.desc
       }));
 
-    // Special case: if viewing Tuesday (2025-08-26), include Neon Playground from Wednesday
-    if (day.key === "2025-08-26") {
-      const wednesdayEvents = DAILY.find(d => d.key === "2025-08-27");
-      const neonPlayground = wednesdayEvents?.items.find(item => item.title === "Neon Playground");
+    // Special case: if viewing Thursday (2025-08-28), include Neon Playground from Friday
+    if (day.key === "2025-08-28") {
+      const fridayEvents = DAILY.find(d => d.key === "2025-08-29");
+      const neonPlayground = fridayEvents?.items.find(item => item.title === "Neon Playground");
       if (neonPlayground) {
         parties = [...parties, {
           ...neonPlayground,
@@ -1324,8 +1324,8 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
       }
     }
 
-    // Special case: if viewing Wednesday (2025-08-27), exclude Neon Playground since it shows on Tuesday
-    if (day.key === "2025-08-27") {
+    // Special case: if viewing Friday (2025-08-29), exclude Neon Playground since it shows on Thursday
+    if (day.key === "2025-08-29") {
       parties = parties.filter(item => item.title !== "Neon Playground");
     }
 
@@ -1400,8 +1400,8 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
 
             <div className="grid md:grid-cols-2 gap-6">
               {dayData.parties.sort((a, b) => {
-                // Special case: if this is Tuesday and we have Neon Playground, put it last
-                if (dayKey === "2025-08-26") {
+                // Special case: if this is Thursday and we have Neon Playground, put it last
+                if (dayKey === "2025-08-28") {
                   if (a.title === "Neon Playground") return 1;
                   if (b.title === "Neon Playground") return -1;
                 }
@@ -1688,7 +1688,7 @@ function InfoTab() {
             <Ship className="w-5 h-5 text-ocean-600" />
             Departure Information
           </h3>
-          <div className="space-y-2 text-gray-700">
+          <div className="space-y-3 text-gray-700">
             <p><strong>Port:</strong> {CRUISE_INFO.departureInfo.port}</p>
             <p><strong>Pier Opens:</strong> {CRUISE_INFO.departureInfo.pierOpens}</p>
             <p><strong>Luggage Drop-off:</strong> {CRUISE_INFO.departureInfo.luggageDropOff}</p>
@@ -1707,10 +1707,10 @@ function InfoTab() {
             <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
               <p className="text-amber-800 text-sm font-medium mb-2"><strong>Important Update:</strong></p>
               <p className="text-amber-700 text-sm mb-2">We have changed the times and dates of several of our shows and parties since the Vacation Guide was published. Please refer to the times listed in the App as well as on the "Glance at a Day" printed program that you'll find in your room today.</p>
-              <p className="text-amber-700 text-sm mb-2">The "Glance at a Day" program is only delivered on day One – after that you can find a copy at Sailor Services, Grounds Club, or The Galley. It's the same information as on the App.</p>
+              <p className="text-amber-700 text-sm">The "Glance at a Day" program is only delivered on day One – after that you can find a copy at Sailor Services, Grounds Club, or The Galley. It's the same information as on the App.</p>
               <p className="text-amber-700 text-sm">And yes, we moved Neon Playground to a new night, next Thursday, for a better experience for all.</p>
             </div>
-            
+
             <div>
               <p className="font-semibold text-gray-900 mb-2">Booking Information</p>
               <p className="text-sm mb-1"><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
@@ -1731,7 +1731,7 @@ function InfoTab() {
             <div className="bg-green-50 p-3 rounded-lg">
               <p className="text-green-700 text-sm font-medium"><strong>Good News:</strong> All restaurants are included in your cruise fare - no extra charges!</p>
             </div>
-            
+
             <div>
               <p className="font-semibold text-gray-900 mb-2">Reservations & Walk-ins</p>
               <p className="text-sm mb-1"><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>

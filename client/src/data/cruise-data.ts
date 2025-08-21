@@ -94,7 +94,7 @@ export const PARTY_THEMES: PartyTheme[] = [
   },
   { 
     key: "Neon Playground", 
-    desc: "Fast, flashy, bright musical playground in the Red Room. Neon, sparkles, lights, and bouncy sounds that make you smile. This event happens at 12:30am on the day at sea before we get to Egypt.",
+    desc: "Fast, flashy, bright musical playground in the Red Room. Neon, sparkles, lights, and bouncy sounds that make you smile. This event happens at 12:30am on Friday morning.",
     shortDesc: "Laser-bright neon playground with bouncy party vibes at 12:30am."
   },
   { 
@@ -197,7 +197,6 @@ export const DAILY: DailySchedule[] = [
     { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },
   ]},
   { key: "2025-08-27", items: [
-    { type: "party", time: "00:30", title: "Neon Playground", venue: "Red Room" },
     { type: "show", time: "22:00", title: "Persephone", venue: "Red Room" },
     { type: "show", time: "21:00", title: "Comedy All-Stars (Brad Loekle, Rachel Scanlon, Daniel Webb)", venue: "The Manor" },
     { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
@@ -214,6 +213,7 @@ export const DAILY: DailySchedule[] = [
     { type: "party", time: "23:00", title: "Atlantis Classics", venue: "Aquatic Club" },
   ]},
   { key: "2025-08-29", items: [
+    { type: "party", time: "00:30", title: "Neon Playground", venue: "Red Room" },
     { type: "dining", time: "19:00", title: "Another Rose (Dinner show)", venue: "The Manor" },
     { type: "show", time: "23:00", title: "Sherry Vine", venue: "The Manor" },
     { type: "lounge", time: "23:00", title: "Piano Bar with Brandon James Gwinn", venue: "On the Rocks" },
