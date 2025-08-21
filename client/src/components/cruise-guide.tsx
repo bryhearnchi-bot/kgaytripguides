@@ -1914,54 +1914,53 @@ export default function CruiseGuide() {
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-        {/* Header */}
-        <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1"></div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-6 mb-2">
+    <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
+      {/* Header */}
+      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1"></div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-6 mb-2">
+                <img 
+                  src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
+                  alt="Atlantis Events" 
+                  className="h-9 w-auto brightness-0 invert"
+                />
+                <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
                   <img 
-                    src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-                    alt="Atlantis Events" 
-                    className="h-9 w-auto brightness-0 invert"
+                    src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
+                    alt="KGay Travel" 
+                    className="h-16 w-auto hover:opacity-80 transition-opacity"
                   />
-                  <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
-                    <img 
-                      src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
-                      alt="KGay Travel" 
-                      className="h-16 w-auto hover:opacity-80 transition-opacity"
-                    />
-                  </a>
-                </div>
-                <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-                  Greek Isles Cruise Guide
-                </h1>
-                <p className="text-white/80 text-base">August 21-31, 2025</p>
-                <div className="flex items-center justify-center gap-4 mt-2">
-                  <p className="text-white/60 text-xs">
-                    Last updated: {lastRefresh.toLocaleTimeString()}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleManualRefresh}
-                    disabled={isRefreshing}
-                    className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
-                  >
-                    <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
+                </a>
               </div>
-              <div className="flex-1"></div>
+              <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
+                Greek Isles Cruise Guide
+              </h1>
+              <p className="text-white/80 text-base">August 21-31, 2025</p>
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <p className="text-white/60 text-xs">
+                  Last updated: {lastRefresh.toLocaleTimeString()}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </div>
+            <div className="flex-1"></div>
+          </div>
 
-            {/* Navigation Tabs */}
+          {/* Navigation Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="flex justify-center items-center gap-4">
               <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
-                {/* TabsList adapted from EntertainmentTab for consistent navigation */}
                 <TabsList className="grid grid-cols-6 w-full">
                   <TabsTrigger value="itinerary" className="flex items-center gap-2">
                     <Anchor className="w-4 h-4" />
@@ -1993,10 +1992,12 @@ export default function CruiseGuide() {
                 <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
               </div>
             </div>
-          </div>
-        </header>
+          </Tabs>
+        </div>
+      </header>
 
         {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
           <TabsContent value="itinerary">
             <ItineraryTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
@@ -2087,10 +2088,10 @@ export default function CruiseGuide() {
               </Card>
             </div>
           </TabsContent>
-
         </main>
+      </Tabs>
 
-        {/* Footer */}
+      {/* Footer */}
         <footer className="atlantis-gradient wave-pattern text-white py-8 mt-16">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <div className="flex items-center justify-center mb-4">
@@ -2138,7 +2139,6 @@ export default function CruiseGuide() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </Tabs>
+    </div>
   );
 }
