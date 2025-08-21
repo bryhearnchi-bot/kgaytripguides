@@ -1479,6 +1479,23 @@ function InfoTab() {
           </div>
         </div>
       </div>
+
+      {/* First Day Tips - Moved to top */}
+      <Card className="p-6 bg-gradient-to-r from-coral/10 to-pink-50 border-coral/20">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Star className="w-6 h-6 text-coral" />
+          First Day Tips
+        </h3>
+        <ul className="space-y-3 text-gray-700">
+          {IMPORTANT_INFO.firstDayTips.map((tip, index) => (
+            <li key={index} className="flex items-start gap-3">
+              <span className="w-2 h-2 bg-coral rounded-full mt-2 flex-shrink-0"></span>
+              <span className="text-sm leading-relaxed">{tip}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-6 bg-white hover:shadow-xl transition-all duration-300 border-0">
           <div className="flex items-center space-x-3 mb-4">
@@ -1747,22 +1764,7 @@ function InfoTab() {
           </div>
         </Card>
 
-        {/* First Day Tips */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <Star className="w-5 h-5 text-coral" />
-            First Day Tips
-          </h3>
-          <ul className="space-y-2 text-gray-700">
-            {IMPORTANT_INFO.firstDayTips.map((tip, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 bg-coral rounded-full mt-2 flex-shrink-0"></span>
-                {tip}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+        </div>
 
       {/* KGay Travel Sponsorship Card */}
       <Card className="p-8 bg-white border-0 shadow-xl">
