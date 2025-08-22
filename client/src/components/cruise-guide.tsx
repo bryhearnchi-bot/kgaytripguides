@@ -141,11 +141,11 @@ function formatAllAboard(departTime: string, mode: "12h" | "24h"): string {
 function isDateInPast(dateKey: string): boolean {
   const today = new Date();
   const cruiseDate = new Date(dateKey);
-  
+
   // Set both dates to start of day for comparison
   today.setHours(0, 0, 0, 0);
   cruiseDate.setHours(0, 0, 0, 0);
-  
+
   return cruiseDate < today;
 }
 
