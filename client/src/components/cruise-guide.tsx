@@ -138,6 +138,17 @@ function formatAllAboard(departTime: string, mode: "12h" | "24h"): string {
   }
 }
 
+function isDateInPast(dateKey: string): boolean {
+  const today = new Date();
+  const cruiseDate = new Date(dateKey);
+  
+  // Set both dates to start of day for comparison
+  today.setHours(0, 0, 0, 0);
+  cruiseDate.setHours(0, 0, 0, 0);
+  
+  return cruiseDate < today;
+}
+
 function createCalendarEvent(event: DailyEvent, eventDate: string): {
   title: string;
   startDate: Date;
@@ -711,7 +722,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
         </div>
       </div>
       <div className="grid gap-6">
-        {ITINERARY.map((stop, idx) => {
+        {ITINERARY.filter(stop => !isDateInPast(stop.key)).map((stop, idx) => {
           const isSea = /sea/i.test(stop.port);
           const isOvernight = /overnight/i.test(stop.depart);
 
@@ -770,6 +781,11 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                         <p className="text-sm font-semibold text-yellow-600">
                           {formatAllAboard(stop.depart, timeMode)}
                         </p>
+                        {stop.port.includes("Santorini") && (
+                          <p className="text-xs text-yellow-700 mt-1 font-medium">
+                            Last tender: 9:00 PM
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500 mt-1 italic">
                           *Please confirm with official Virgin announcements on board
                         </p>
@@ -974,14 +990,14 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
-  const dates = DAILY.filter(d => d.items.length > 0).map(d => ({
+  const dates = DAILY.filter(d => d.items.length > 0 && !isDateInPast(d.key)).map(d => ({
     key: d.key,
     label: ITINERARY.find(i => i.key === d.key)?.date.split(', ')[1] || d.key.split('-')[2]
   }));
 
   const filteredDaysWithEvents = selectedDate === "all" 
-    ? DAILY.filter(d => d.items.length > 0)
-    : DAILY.filter(d => d.key === selectedDate && d.items.length > 0);
+    ? DAILY.filter(d => d.items.length > 0 && !isDateInPast(d.key))
+    : DAILY.filter(d => d.key === selectedDate && d.items.length > 0 && !isDateInPast(d.key));
 
   const handleTalentClick = (name: string) => {
     const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
@@ -1293,7 +1309,7 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
 }
 
 function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
-  const partyEventsByDay = DAILY.reduce((acc, day) => {
+  const partyEventsByDay = DAILY.filter(day => !isDateInPast(day.key)).reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
       .filter(item => item.type === 'party' || item.type === 'after')
@@ -1843,7 +1859,7 @@ function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpe
 
     const events: Array<{ date: string; time: string; venue: string; title: string }> = [];
 
-    DAILY.forEach(day => {
+    DAILY.filter(day => !isDateInPast(day.key)).forEach(day => {
       day.items.forEach(event => {
         const titleLower = event.title.toLowerCase();
         const nameLower = talent.name.toLowerCase();
