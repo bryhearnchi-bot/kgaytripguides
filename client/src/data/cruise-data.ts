@@ -205,9 +205,9 @@ export const DAILY: DailySchedule[] = [
   ]},
   { key: "2025-08-28", items: [
     { type: "dining", time: "17:00", title: "Another Rose (Dinner show)", venue: "The Manor" },
-    { type: "show", time: "17:00", title: "Surprise Guest", venue: "Red Room" },
-    { type: "show", time: "20:00", title: "Surprise Guest", venue: "Red Room" },
-    { type: "show", time: "22:00", title: "Surprise Guest", venue: "Red Room" },
+    { type: "show", time: "17:00", title: "Audra McDonald", venue: "Red Room" },
+    { type: "show", time: "20:00", title: "Audra McDonald", venue: "Red Room" },
+    { type: "show", time: "22:00", title: "Audra McDonald", venue: "Red Room" },
     { type: "show", time: "21:00", title: "Leona Winter", venue: "The Manor" },
     { type: "show", time: "23:00", title: "Alyssa Wray", venue: "The Manor" },
     { type: "lounge", time: "23:00", title: "Piano Bar with William TN Hall", venue: "On the Rocks" },

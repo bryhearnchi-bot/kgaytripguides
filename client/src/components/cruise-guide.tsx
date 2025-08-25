@@ -312,7 +312,7 @@ function findTalentInTitle(title: string): string[] {
       if (titleLower.includes(nameLower)) return true;
 
       // Special cases for specific performers
-      if (t.name === "Special Guest" && titleLower.includes("surprise guest")) return true;
+      if (t.name === "Audra McDonald" && titleLower.includes("audra mcdonald")) return true;
       if (t.name === "The Diva (Bingo)" && titleLower.includes("bingo")) return true;
       if (t.name === "Monét X Change" && titleLower.includes("monet")) return true;
       if (t.name === "Sherry Vine" && titleLower.includes("sherry")) return true;
@@ -459,14 +459,14 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
           <span>
             {(() => {
               // Special handling for specific events that need custom linking
-              if (event.title.toLowerCase().includes("surprise guest") && clickableNames.includes("Special Guest")) {
-                const parts = event.title.split(/(\bSurprise Guest\b)/i);
+              if (event.title.toLowerCase().includes("audra mcdonald") && clickableNames.includes("Audra McDonald")) {
+                const parts = event.title.split(/(\bAudra McDonald\b)/i);
                 return parts.map((part, i) => {
-                  if (/surprise guest/i.test(part)) {
+                  if (/audra mcdonald/i.test(part)) {
                     return (
                       <button
                         key={i}
-                        onClick={() => onTalentClick("Special Guest")}
+                        onClick={() => onTalentClick("Audra McDonald")}
                         className="underline underline-offset-2 decoration-ocean-500 hover:text-ocean-600 transition-colors"
                       >
                         {part}
