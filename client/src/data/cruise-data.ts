@@ -234,13 +234,16 @@ export const DAILY: DailySchedule[] = [
 
 export const TALENT: Talent[] = [
   { 
-    name: "Special Guest", 
-    cat: "Surprise Performance", 
-    role: "Mystery entertainer", 
-    knownFor: "Surprise appearances", 
-    bio: "A surprise guest performer will be announced during the cruise. This special entertainer will bring an unexpected element of excitement to our Mediterranean journey.", 
-    img: "https://sharedimages.bpsecure.com/CMTool_FileUpload/support/cmt/0326/cf8c3b7ddad738d88fae9d72f71af4dc533326d8.png",
-    social: {}
+    name: "Audra McDonald", 
+    cat: "Broadway Legend", 
+    role: "Six-time Tony winner", 
+    knownFor: "Broadway's leading lady", 
+    bio: "Six-time Tony Award winner and Grammy Award recipient, Audra McDonald is one of Broadway's most celebrated performers. Known for her powerful voice and versatility across musical theater, opera, and television, she has starred in productions like Ragtime, Carousel, and Lady Day at Emerson's Bar & Grill.", 
+    img: "https://www.theatermania.com/wp-content/uploads/sites/4/2023/03/audra-mcdonald-will-swenson-logo-50940-1.jpeg?w=640",
+    social: {
+      instagram: "https://www.instagram.com/audramcdonald/",
+      twitter: "https://x.com/AudraEqualityMc"
+    }
   },
   { 
     name: "Monét X Change", 
