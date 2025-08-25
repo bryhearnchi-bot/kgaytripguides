@@ -273,7 +273,7 @@ export const TALENT: Talent[] = [
     role: "Vocalist", 
     knownFor: "Queen of the Universe", 
     bio: "French drag queen and countertenor baritone with a three-octave range. Known for her appearances at Queen of the Universe and The Voice France in 2019.", 
-    img: "https://www.out.com/media-library/image.jpg?id=34885895&width=1200&height=600&coordinates=0%2C39%2C0%2C39",
+    img: "https://static.wikia.nocookie.net/logosrupaulsdragrace/images/a/a9/LeonaWinterQOTU1.jpg/revision/latest/smart/width/300/height/300?cb=20211110220137",
     social: {
       instagram: "https://www.instagram.com/leonawinter16/",
       tiktok: "https://www.tiktok.com/@leonawinterofficiel"
