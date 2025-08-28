@@ -862,10 +862,10 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
               {(() => {
                 let allEvents = ITINERARY.find(i => i.key === selectedDay)?.key ? (DAILY.find(d => d.key === ITINERARY.find(i => i.key === selectedDay)?.key)?.items || []) : [];
 
-                // Special case: if viewing Tuesday (2025-08-26), include Neon Playground from Wednesday
-                if (ITINERARY.find(i => i.key === selectedDay)?.key === "2025-08-26") {
-                  const wednesdayEvents = DAILY.find(d => d.key === "2025-08-27");
-                  const neonPlayground = wednesdayEvents?.items.find(item => item.title === "Neon Playground");
+                // Special case: if viewing Thursday (2025-08-28), include Neon Playground from Friday
+                if (ITINERARY.find(i => i.key === selectedDay)?.key === "2025-08-28") {
+                  const fridayEvents = DAILY.find(d => d.key === "2025-08-29");
+                  const neonPlayground = fridayEvents?.items.find(item => item.title === "Neon Playground");
                   if (neonPlayground) {
                     allEvents = [...allEvents, neonPlayground];
                   }
