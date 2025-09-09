@@ -722,7 +722,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
         </div>
       </div>
       <div className="grid gap-6">
-        {ITINERARY.filter(stop => !isDateInPast(stop.key)).map((stop, idx) => {
+        {ITINERARY.map((stop, idx) => {
           const isSea = /sea/i.test(stop.port);
           const isOvernight = /overnight/i.test(stop.depart);
 
@@ -990,14 +990,14 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
-  const dates = DAILY.filter(d => d.items.length > 0 && !isDateInPast(d.key)).map(d => ({
+  const dates = DAILY.filter(d => d.items.length > 0).map(d => ({
     key: d.key,
     label: ITINERARY.find(i => i.key === d.key)?.date.split(', ')[1] || d.key.split('-')[2]
   }));
 
   const filteredDaysWithEvents = selectedDate === "all" 
-    ? DAILY.filter(d => d.items.length > 0 && !isDateInPast(d.key))
-    : DAILY.filter(d => d.key === selectedDate && d.items.length > 0 && !isDateInPast(d.key));
+    ? DAILY.filter(d => d.items.length > 0)
+    : DAILY.filter(d => d.key === selectedDate && d.items.length > 0);
 
   const handleTalentClick = (name: string) => {
     const talent = TALENT.find(t => t.name.toLowerCase() === name.toLowerCase());
@@ -1309,7 +1309,7 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
 }
 
 function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
-  const partyEventsByDay = DAILY.filter(day => !isDateInPast(day.key)).reduce((acc, day) => {
+  const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
       .filter(item => item.type === 'party' || item.type === 'after')
