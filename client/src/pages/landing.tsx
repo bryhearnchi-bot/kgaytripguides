@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Ship, MapPin, Users } from "lucide-react";
+import { CalendarDays, Ship, MapPin, Anchor } from "lucide-react";
 import { format } from "date-fns";
 
 interface Cruise {
@@ -26,10 +26,10 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
   const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60">
       <div className="relative overflow-hidden">
         <img
-          src={cruise.heroImageUrl || "/images/cruises/default-hero.jpg"}
+          src={cruise.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
           alt={cruise.name}
           className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={(e) => {
@@ -37,29 +37,29 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
           }}
         />
         <div className="absolute top-4 left-4">
-          <Badge variant="secondary" className="bg-white/90 text-gray-900">
+          <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200">
             {cruise.status === "upcoming" ? "Upcoming" : cruise.status}
           </Badge>
         </div>
       </div>
       
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+        <CardTitle className="text-xl font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
           {cruise.name}
         </CardTitle>
-        <CardDescription className="text-gray-600">
+        <CardDescription className="text-ocean-600">
           {cruise.description}
         </CardDescription>
       </CardHeader>
       
       <CardContent className="pt-0">
         <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-ocean-700">
             <Ship className="h-4 w-4" />
             <span>{cruise.shipName} • {cruise.cruiseLine}</span>
           </div>
           
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-ocean-700">
             <CalendarDays className="h-4 w-4" />
             <span>
               {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {duration} days
@@ -67,7 +67,7 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
           </div>
           
           {cruise.highlights && cruise.highlights.length > 0 && (
-            <div className="flex items-start gap-2 text-sm text-gray-600">
+            <div className="flex items-start gap-2 text-sm text-ocean-700">
               <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span className="line-clamp-2">{cruise.highlights[0]}</span>
             </div>
@@ -75,7 +75,7 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
         </div>
         
         <Link href={`/cruise/${cruise.slug}`}>
-          <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+          <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white">
             View Cruise Guide
           </Button>
         </Link>
@@ -100,10 +100,10 @@ export default function LandingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading amazing cruises...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-xl">Loading cruise guides...</p>
         </div>
       </div>
     );
@@ -111,10 +111,17 @@ export default function LandingPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Failed to load cruises</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
+      <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 flex items-center justify-center">
+        <div className="text-center text-white">
+          <Ship className="h-16 w-16 mx-auto mb-4 text-red-400" />
+          <h2 className="text-2xl font-bold mb-2">Unable to load cruise guides</h2>
+          <p className="text-lg mb-4">Please try refreshing the page</p>
+          <Button 
+            onClick={() => window.location.reload()}
+            className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -125,37 +132,27 @@ export default function LandingPage() {
   const pastCruises = cruises?.filter(cruise => cruise.status === "past") || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-900 via-purple-900 to-pink-900 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 py-20 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <img src="/images/atlantis-logo.png" alt="Atlantis Events" className="h-12" />
-          </div>
-          <h1 className="text-5xl font-bold mb-6">
-            Epic Gay Cruise Adventures
-          </h1>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Join thousands of men from around the world for unforgettable cruise experiences. 
-            From the Mediterranean to the Caribbean, discover your next amazing adventure.
-          </p>
-          <div className="flex items-center justify-center gap-6 text-blue-200">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <span>All-Gay Experience</span>
+    <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
+      {/* Header */}
+      <header className="cruise-gradient wave-pattern text-white">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-6 mb-6">
+              <img 
+                src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
+                alt="Atlantis Events" 
+                className="h-12 w-auto brightness-0 invert"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Ship className="h-5 w-5" />
-              <span>Luxury Ships</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              <span>Amazing Destinations</span>
-            </div>
+            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
+              Atlantis Cruise Guides
+            </h1>
+            <p className="text-white/80 text-xl max-w-3xl mx-auto">
+              Your complete guide to unforgettable cruise experiences with thousands of gay men from around the world
+            </p>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -163,8 +160,11 @@ export default function LandingPage() {
         {upcomingCruises.length > 0 && (
           <section className="mb-16">
             <div className="text-center mb-10">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Upcoming Cruises</h2>
-              <p className="text-lg text-gray-600">Book your next adventure today</p>
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Anchor className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-4">Upcoming Cruises</h2>
+              <p className="text-lg text-white/80">Access your cruise guide and plan your adventure</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -179,8 +179,11 @@ export default function LandingPage() {
         {pastCruises.length > 0 && (
           <section>
             <div className="text-center mb-10">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Past Adventures</h2>
-              <p className="text-lg text-gray-600">Relive the memories</p>
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Ship className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-4">Past Adventures</h2>
+              <p className="text-lg text-white/80">Relive the memories and revisit your cruise guides</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -194,21 +197,30 @@ export default function LandingPage() {
         {/* Empty State */}
         {!cruises || cruises.length === 0 && (
           <div className="text-center py-20">
-            <Ship className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">No Cruises Available</h2>
-            <p className="text-gray-600">Check back soon for exciting new cruise announcements!</p>
+            <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-6">
+              <Ship className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-4">No Cruise Guides Available</h2>
+            <p className="text-white/80 text-lg">Check back soon for new cruise guide announcements!</p>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="atlantis-gradient wave-pattern text-white py-12 mt-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <img src="/images/atlantis-logo.png" alt="Atlantis Events" className="h-8" />
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
+              alt="Atlantis Events" 
+              className="h-8 w-auto mr-3 brightness-0 invert"
+            />
+            <div className="text-left">
+              <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
+            </div>
           </div>
-          <p className="text-gray-400">
-            Creating unforgettable experiences for the LGBTQ+ community worldwide
+          <p className="text-sm text-white/80">
+            Your ultimate resource for cruise information and planning
           </p>
         </div>
       </footer>
