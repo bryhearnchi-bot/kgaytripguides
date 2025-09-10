@@ -988,7 +988,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
   );
 }
 
-function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; TALENT: any[]; ITINERARY: any[] }) {
+function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY, PARTY_THEMES }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; TALENT: any[]; ITINERARY: any[]; PARTY_THEMES: any[] }) {
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
@@ -2174,7 +2174,7 @@ export default function CruiseGuide() {
             <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="entertainment">
-            <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} ITINERARY={ITINERARY} />
+            <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} ITINERARY={ITINERARY} PARTY_THEMES={PARTY_THEMES} />
           </TabsContent>
           <TabsContent value="talent">
             <EntertainersTab onTalentClick={setSelectedTalent} TALENT={TALENT} />
