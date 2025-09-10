@@ -53,12 +53,14 @@ interface SetupAndItineraryTabProps {
   cruise?: any;
   isEditing: boolean;
   onDataChange: () => void;
+  onSave?: (data: any) => void;
 }
 
 export default function SetupAndItineraryTab({ 
   cruise, 
   isEditing, 
-  onDataChange 
+  onDataChange,
+  onSave 
 }: SetupAndItineraryTabProps) {
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
   const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
@@ -66,17 +68,36 @@ export default function SetupAndItineraryTab({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     setValue,
     watch,
+    reset,
   } = useForm<SetupFormData>({
     resolver: zodResolver(setupSchema),
-    defaultValues: cruise || {
+    defaultValues: {
       status: 'upcoming',
     },
   });
 
-  // Auto-generate slug from name
+  // Populate form when cruise data loads
+  useEffect(() => {
+    if (cruise && isEditing) {
+      const formData = {
+        name: cruise.name || '',
+        slug: cruise.slug || '',
+        shipName: cruise.shipName || '',
+        cruiseLine: cruise.cruiseLine || '',
+        startDate: cruise.startDate ? cruise.startDate.split('T')[0] : '',
+        endDate: cruise.endDate ? cruise.endDate.split('T')[0] : '',
+        status: cruise.status || 'upcoming',
+        description: cruise.description || '',
+        heroImageUrl: cruise.heroImageUrl || '',
+      };
+      reset(formData);
+    }
+  }, [cruise, isEditing, reset]);
+
+  // Auto-generate slug from name (only for new cruises)
   const watchedName = watch('name');
   useEffect(() => {
     if (watchedName && !isEditing) {
@@ -88,10 +109,27 @@ export default function SetupAndItineraryTab({
     }
   }, [watchedName, isEditing, setValue]);
 
+  // Track form changes for unsaved changes detection
+  useEffect(() => {
+    if (isDirty) {
+      onDataChange();
+    }
+  }, [isDirty, onDataChange]);
+
   const onSubmit = (data: SetupFormData) => {
     console.log('Setup form submitted:', data);
-    onDataChange();
+    if (onSave) {
+      onSave(data);
+    }
   };
+
+  // Provide current form data to parent for header save
+  useEffect(() => {
+    const getCurrentData = () => {
+      return watch();
+    };
+    // This would need to be passed up to parent - for now, rely on form submit
+  }, [watch]);
 
   const addItineraryDay = () => {
     const newDay: ItineraryDay = {
@@ -247,8 +285,12 @@ export default function SetupAndItineraryTab({
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Save Cruise Details
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={!isDirty && isEditing}
+            >
+              {isEditing ? 'Save Changes' : 'Create Cruise'}
             </Button>
           </form>
         </CardContent>

@@ -421,6 +421,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ PARTY TEMPLATES ROUTES ============
+  
+  // Get all party templates
+  app.get("/api/party-templates", async (req, res) => {
+    try {
+      // TODO: Implement party template storage
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching party templates:', error);
+      res.status(500).json({ error: 'Failed to fetch party templates' });
+    }
+  });
+
+  // Search party templates
+  app.get("/api/party-templates/search", async (req, res) => {
+    try {
+      const { q } = req.query;
+      // TODO: Implement party template search
+      res.json([]);
+    } catch (error) {
+      console.error('Error searching party templates:', error);
+      res.status(500).json({ error: 'Failed to search party templates' });
+    }
+  });
+
+  // ============ CRUISE INFO SECTIONS ROUTES ============
+  
+  // Get info sections for a cruise
+  app.get("/api/cruises/:cruiseId/info-sections", async (req, res) => {
+    try {
+      // TODO: Implement cruise info sections storage
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching info sections:', error);
+      res.status(500).json({ error: 'Failed to fetch info sections' });
+    }
+  });
+
+  // Create info section (protected route)
+  app.post("/api/cruises/:cruiseId/info-sections", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      // TODO: Implement info section creation
+      const section = { id: Date.now(), ...req.body, cruiseId: parseInt(req.params.cruiseId) };
+      res.status(201).json(section);
+    } catch (error) {
+      console.error('Error creating info section:', error);
+      res.status(500).json({ error: 'Failed to create info section' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

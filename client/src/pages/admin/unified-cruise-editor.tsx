@@ -30,12 +30,13 @@ interface UnifiedCruiseEditorProps {
   cruiseId?: number;
 }
 
-export default function UnifiedCruiseEditor({ cruiseId }: UnifiedCruiseEditorProps) {
+export default function UnifiedCruiseEditor({ cruiseId: initialCruiseId }: UnifiedCruiseEditorProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("setup");
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [cruiseId, setCruiseId] = useState(initialCruiseId);
 
   const queryClient = useQueryClient();
   const isEditing = !!cruiseId;
@@ -45,7 +46,7 @@ export default function UnifiedCruiseEditor({ cruiseId }: UnifiedCruiseEditorPro
     queryKey: ['cruise', cruiseId],
     queryFn: async () => {
       if (!cruiseId) return null;
-      const response = await fetch(`/api/cruises/${cruiseId}`, {
+      const response = await fetch(`/api/cruises/id/${cruiseId}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch cruise');
@@ -93,13 +94,94 @@ export default function UnifiedCruiseEditor({ cruiseId }: UnifiedCruiseEditorPro
     setActiveTab(newTab);
   };
 
-  const handleSave = async () => {
-    // TODO: Implement save logic based on active tab
-    setHasUnsavedChanges(false);
-    toast({
-      title: "Changes Saved",
-      description: "Your cruise updates have been saved successfully.",
-    });
+  // Create cruise mutation
+  const createCruiseMutation = useMutation({
+    mutationFn: async (cruiseData: any) => {
+      const response = await fetch('/api/cruises', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(cruiseData),
+      });
+      if (!response.ok) throw new Error('Failed to create cruise');
+      return response.json();
+    },
+    onSuccess: (newCruise) => {
+      setCruiseId(newCruise.id);
+      queryClient.invalidateQueries({ queryKey: ['cruises'] });
+      toast({
+        title: "Cruise Created",
+        description: "Your cruise has been created successfully. You can now add events and information.",
+      });
+      setHasUnsavedChanges(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create cruise. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update cruise mutation
+  const updateCruiseMutation = useMutation({
+    mutationFn: async (cruiseData: any) => {
+      const response = await fetch(`/api/cruises/${cruiseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(cruiseData),
+      });
+      if (!response.ok) throw new Error('Failed to update cruise');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cruise', cruiseId] });
+      queryClient.invalidateQueries({ queryKey: ['cruises'] });
+      toast({
+        title: "Changes Saved",
+        description: "Your cruise updates have been saved successfully.",
+      });
+      setHasUnsavedChanges(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Ref to get current form data from active tab
+  const [getCurrentFormData, setGetCurrentFormData] = useState<(() => any) | null>(null);
+
+  const handleSave = async (data?: any) => {
+    try {
+      // If no data provided, try to get current form data from active tab
+      let saveData = data;
+      if (!saveData && getCurrentFormData) {
+        saveData = getCurrentFormData();
+      }
+      
+      if (!saveData) {
+        toast({
+          title: "Error",
+          description: "No data to save. Please fill out the form.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isEditing) {
+        updateCruiseMutation.mutate(saveData);
+      } else {
+        createCruiseMutation.mutate(saveData);
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+    }
   };
 
   if (isLoading) {
@@ -159,9 +241,31 @@ export default function UnifiedCruiseEditor({ cruiseId }: UnifiedCruiseEditorPro
                 AI Assist
               </Button>
               
-              <Button onClick={handleSave} disabled={!hasUnsavedChanges}>
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
+              <Button 
+                onClick={() => {
+                  if (activeTab === 'setup') {
+                    // For setup tab, disable header save and let form handle it
+                    toast({
+                      title: "Use Form Save",
+                      description: "Please use the 'Save Cruise Details' button in the form below.",
+                    });
+                  } else {
+                    handleSave();
+                  }
+                }} 
+                disabled={!hasUnsavedChanges || createCruiseMutation.isPending || updateCruiseMutation.isPending}
+              >
+                {(createCruiseMutation.isPending || updateCruiseMutation.isPending) ? (
+                  <>
+                    <Ship className="w-4 h-4 mr-2 animate-pulse" />
+                    {isEditing ? 'Saving...' : 'Creating...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {isEditing ? 'Save Changes' : 'Create Cruise'}
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -225,6 +329,7 @@ export default function UnifiedCruiseEditor({ cruiseId }: UnifiedCruiseEditorPro
                       cruise={cruise}
                       isEditing={isEditing}
                       onDataChange={() => setHasUnsavedChanges(true)}
+                      onSave={handleSave}
                     />
                   </TabsContent>
 
