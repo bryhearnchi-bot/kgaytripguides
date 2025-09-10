@@ -1,4 +1,5 @@
 import { db, cruises, itinerary, events, talent, cruiseTalent } from './storage';
+import { eq } from 'drizzle-orm';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../client/src/data/mock-data';
 
@@ -17,6 +18,14 @@ async function seedDatabase() {
   console.log(useMockData ? '🧪 Using mock data for testing' : '🚢 Using production Greek Isles cruise data');
 
   try {
+    // Check if Greek cruise already exists
+    const existingCruise = await db.select().from(cruises).where(eq(cruises.slug, useMockData ? 'mock-cruise-2024' : 'greek-isles-2025'));
+    
+    if (existingCruise.length > 0) {
+      console.log('✅ Cruise already exists, skipping seed...');
+      console.log(`Found existing cruise: ${existingCruise[0].name} (ID: ${existingCruise[0].id})`);
+      return;
+    }
     // Create the cruise
     console.log(useMockData ? 'Creating mock test cruise...' : 'Creating Greek Isles cruise...');
     const [cruise] = await db.insert(cruises).values({
