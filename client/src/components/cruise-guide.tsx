@@ -884,6 +884,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY }: { o
                     events={allEvents} 
                     onTalentClick={handleTalentClick}
                     eventDate={ITINERARY.find(i => i.key === selectedDay)?.date || ''}
+                    TALENT={TALENT}
                   />
                 ) : (
                   <p className="text-gray-500 italic text-center py-8">No events scheduled for this day.</p>
@@ -1127,6 +1128,7 @@ function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY }: { onTalen
                   events={allEvents} 
                   onTalentClick={handleTalentClick}
                   eventDate={itinerary?.date || ''}
+                  TALENT={TALENT}
                 />
               ) : (
                 <p className="text-gray-500 italic">No entertainment scheduled for this day.</p>
