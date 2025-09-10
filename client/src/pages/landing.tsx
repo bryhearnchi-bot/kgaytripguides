@@ -255,7 +255,7 @@ export default function LandingPage() {
 
                 {/* Current Cruises Section */}
                 {groupedCruises.current.length > 0 && (
-                  <div className="mb-16">
+                  <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
                       <h3 className="text-lg font-semibold text-white">Currently Sailing</h3>
@@ -271,7 +271,7 @@ export default function LandingPage() {
 
                 {/* Upcoming Cruises Section */}
                 {groupedCruises.upcoming.length > 0 && (
-                  <div className="mb-16">
+                  <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <Calendar className="w-4 h-4 text-blue-400" />
                       <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
@@ -287,7 +287,7 @@ export default function LandingPage() {
 
                 {/* Past Cruises Section */}
                 {groupedCruises.past.length > 0 && (
-                  <div className="mb-16">
+                  <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <History className="w-4 h-4 text-amber-400" />
                       <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
