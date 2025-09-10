@@ -1323,7 +1323,7 @@ function EntertainersTab({ onTalentClick, TALENT }: { onTalentClick: (talent: Ta
   );
 }
 
-function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; PARTY_THEMES: any[]; ITINERARY: any[] }) {
+function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY, TALENT }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; PARTY_THEMES: any[]; ITINERARY: any[]; TALENT: any[] }) {
   const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
@@ -1870,7 +1870,7 @@ function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_
   );
 }
 
-function TalentModal({ talent, isOpen, onClose, DAILY }: { talent: Talent | null; isOpen: boolean; onClose: () => void; DAILY: any[] }) {
+function TalentModal({ talent, isOpen, onClose, DAILY, ITINERARY }: { talent: Talent | null; isOpen: boolean; onClose: () => void; DAILY: any[]; ITINERARY: any[] }) {
   const appearances = useMemo(() => {
     if (!talent) return [];
 
@@ -2183,7 +2183,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
             <EntertainersTab onTalentClick={setSelectedTalent} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="parties">
-            <PartiesTab onTalentClick={setSelectedTalent} DAILY={DAILY} PARTY_THEMES={PARTY_THEMES} ITINERARY={ITINERARY} />
+            <PartiesTab onTalentClick={setSelectedTalent} DAILY={DAILY} PARTY_THEMES={PARTY_THEMES} ITINERARY={ITINERARY} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="info" className="mt-4">
             <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} CRUISE_INFO={CRUISE_INFO} />
@@ -2218,6 +2218,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
           isOpen={!!selectedTalent}
           onClose={() => setSelectedTalent(null)}
           DAILY={DAILY}
+          ITINERARY={ITINERARY}
         />
 
         {/* Scroll to Top Button */}

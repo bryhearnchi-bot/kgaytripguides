@@ -1,5 +1,6 @@
 import { db, cruises, itinerary, events, talent, cruiseTalent } from './storage';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
+import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../client/src/data/mock-data';
 
 async function seedDatabase() {
   console.log('🌱 Starting database seed...');
