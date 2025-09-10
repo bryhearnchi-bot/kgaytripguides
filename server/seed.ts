@@ -4,19 +4,30 @@ import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../c
 
 async function seedDatabase() {
   console.log('🌱 Starting database seed...');
+  
+  // Use mock data only in development when explicitly enabled
+  const isProduction = process.env.NODE_ENV === 'production';
+  const useMockData = process.env.USE_MOCK_DATA === 'true' && !isProduction;
+  
+  const selectedItinerary = useMockData ? MOCK_ITINERARY : ITINERARY;
+  const selectedDaily = useMockData ? MOCK_DAILY : DAILY;
+  const selectedTalent = useMockData ? MOCK_TALENT : TALENT;
+  const selectedPartyThemes = useMockData ? MOCK_PARTY_THEMES : PARTY_THEMES;
+  
+  console.log(useMockData ? '🧪 Using mock data for testing' : '🚢 Using production Greek Isles cruise data');
 
   try {
-    // Create the Greek Isles cruise
-    console.log('Creating Greek Isles cruise...');
-    const [greekIslesCruise] = await db.insert(cruises).values({
-      name: 'Greek Isles Atlantis Cruise',
-      slug: 'greek-isles-2025',
-      shipName: 'Virgin Resilient Lady',
-      cruiseLine: 'Virgin Voyages',
-      startDate: new Date('2025-08-21'),
-      endDate: new Date('2025-08-31'),
+    // Create the cruise
+    console.log(useMockData ? 'Creating mock test cruise...' : 'Creating Greek Isles cruise...');
+    const [cruise] = await db.insert(cruises).values({
+      name: useMockData ? 'Mock Test Cruise' : 'Greek Isles Atlantis Cruise',
+      slug: useMockData ? 'mock-cruise-2024' : 'greek-isles-2025',
+      shipName: useMockData ? 'Test Ship' : 'Virgin Resilient Lady',
+      cruiseLine: useMockData ? 'Test Line' : 'Virgin Voyages',
+      startDate: useMockData ? new Date('2024-01-01') : new Date('2025-08-21'),
+      endDate: useMockData ? new Date('2024-01-03') : new Date('2025-08-31'),
       status: 'upcoming',
-      description: 'Join us for an unforgettable journey through the Greek Isles aboard the Virgin Resilient Lady. Experience ancient wonders, stunning beaches, and legendary Atlantis parties.',
+      description: useMockData ? 'Mock test cruise for development and testing purposes.' : 'Join us for an unforgettable journey through the Greek Isles aboard the Virgin Resilient Lady. Experience ancient wonders, stunning beaches, and legendary Atlantis parties.',
       heroImageUrl: 'https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png',
       highlights: [
         'Visit iconic Greek islands including Mykonos and Santorini',
@@ -45,12 +56,12 @@ async function seedDatabase() {
 
     // Seed itinerary
     console.log('Creating itinerary stops...');
-    const itineraryPromises = ITINERARY.map(async (stop, index) => {
+    const itineraryPromises = selectedItinerary.map(async (stop, index) => {
       const [year, month, day] = stop.key.split('-').map(Number);
       const stopDate = new Date(year, month - 1, day);
 
       return db.insert(itinerary).values({
-        cruiseId: greekIslesCruise.id,
+        cruiseId: cruise.id,
         date: stopDate,
         day: index + 1,
         portName: stop.port,
@@ -78,7 +89,7 @@ async function seedDatabase() {
     console.log('Creating talent...');
     const talentMap = new Map();
     
-    for (const t of TALENT) {
+    for (const t of selectedTalent) {
       const [talentRecord] = await db.insert(talent).values({
         name: t.name,
         category: t.cat,
@@ -93,7 +104,7 @@ async function seedDatabase() {
 
       // Link talent to cruise
       await db.insert(cruiseTalent).values({
-        cruiseId: greekIslesCruise.id,
+        cruiseId: cruise.id,
         talentId: talentRecord.id,
         role: t.cat === 'Broadway' ? 'Headliner' : 
               t.cat === 'Drag' ? 'Special Guest' : 
@@ -103,7 +114,7 @@ async function seedDatabase() {
 
     // Seed events
     console.log('Creating events...');
-    for (const daily of DAILY) {
+    for (const daily of selectedDaily) {
       const [year, month, day] = daily.key.split('-').map(Number);
       const eventDate = new Date(year, month - 1, day);
 
@@ -120,12 +131,12 @@ async function seedDatabase() {
         // Find party theme description
         let themeDesc = null;
         if (item.type === 'party' || item.type === 'after') {
-          const theme = PARTY_THEMES.find(p => item.title.includes(p.key));
+          const theme = selectedPartyThemes.find(p => item.title.includes(p.key));
           themeDesc = theme?.desc || null;
         }
 
         await db.insert(events).values({
-          cruiseId: greekIslesCruise.id,
+          cruiseId: cruise.id,
           date: eventDate,
           time: item.time,
           title: item.title,
@@ -140,10 +151,10 @@ async function seedDatabase() {
     }
 
     console.log('✅ Database seeded successfully!');
-    console.log(`Created cruise: ${greekIslesCruise.name} (ID: ${greekIslesCruise.id})`);
-    console.log(`- ${ITINERARY.length} itinerary stops`);
-    console.log(`- ${TALENT.length} talent members`);
-    console.log(`- ${DAILY.reduce((acc, d) => acc + d.items.length, 0)} events`);
+    console.log(`Created cruise: ${cruise.name} (ID: ${cruise.id})`);
+    console.log(`- ${selectedItinerary.length} itinerary stops`);
+    console.log(`- ${selectedTalent.length} talent members`);
+    console.log(`- ${selectedDaily.reduce((acc, d) => acc + d.items.length, 0)} events`);
 
   } catch (error) {
     console.error('❌ Error seeding database:', error);
