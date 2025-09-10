@@ -27,21 +27,23 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60">
-      <div className="relative overflow-hidden">
-        <img
-          src={cruise.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
-          alt={cruise.name}
-          className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = "/images/ships/resilient-lady-hero.jpg";
-          }}
-        />
-        <div className="absolute top-4 left-4">
-          <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200">
-            {cruise.status === "upcoming" ? "Upcoming" : cruise.status}
-          </Badge>
+      <Link href={`/cruise/${cruise.slug}`}>
+        <div className="relative overflow-hidden cursor-pointer">
+          <img
+            src={cruise.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
+            alt={cruise.name}
+            className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              e.currentTarget.src = "/images/ships/resilient-lady-hero.jpg";
+            }}
+          />
+          <div className="absolute top-4 left-4">
+            <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200">
+              {cruise.status === "upcoming" ? "Upcoming" : cruise.status}
+            </Badge>
+          </div>
         </div>
-      </div>
+      </Link>
       
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
