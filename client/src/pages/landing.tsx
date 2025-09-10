@@ -191,7 +191,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 py-1">
           <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-              Atlantis Cruise Guides
+              Atlantis Cruise / Events Guides
             </h1>
             <p className="text-white/80 text-base">
               Your complete guide to unforgettable cruise experiences
