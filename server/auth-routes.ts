@@ -169,10 +169,10 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Get current user data
-      const users = await storage.db
+      const userResults = await storage.db
         .select()
-        .from(storage.users)
-        .where(eq(storage.users.id, payload.userId))
+        .from(users)
+        .where(eq(users.id, payload.userId))
         .limit(1);
 
       const user = userResults[0];
