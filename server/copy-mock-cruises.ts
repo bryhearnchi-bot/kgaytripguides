@@ -27,7 +27,7 @@ async function copyMockCruisesToProduction() {
         endDate: new Date('2025-09-18'),
         status: 'upcoming' as const,
         description: 'Currently sailing through the beautiful Mediterranean',
-        heroImageUrl: '/cruise-images/virgin-resilient-lady.jpg',
+        heroImageUrl: '/cruise-images/mediterranean-dreams.png',
         highlights: ['Santorini', 'Mykonos', 'Crete']
       },
       {
@@ -39,7 +39,7 @@ async function copyMockCruisesToProduction() {
         endDate: new Date('2025-12-25'),
         status: 'upcoming' as const,
         description: 'Upcoming tropical paradise adventure',
-        heroImageUrl: '/cruise-images/virgin-resilient-lady.jpg',
+        heroImageUrl: '/cruise-images/caribbean-adventure.png',
         highlights: ['Barbados', 'St. Lucia', 'Martinique']
       },
       {
@@ -51,7 +51,7 @@ async function copyMockCruisesToProduction() {
         endDate: new Date('2025-07-11'),
         status: 'upcoming' as const,
         description: 'Completed journey through the Last Frontier',
-        heroImageUrl: '/cruise-images/virgin-resilient-lady.jpg',
+        heroImageUrl: '/cruise-images/alaska-wilderness.png',
         highlights: ['Juneau', 'Ketchikan', 'Glacier Bay']
       }
     ];
