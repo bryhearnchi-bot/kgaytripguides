@@ -2020,7 +2020,11 @@ function SocialMediaButton({ platform, url }: { platform: string; url: string })
   );
 }
 
-export default function CruiseGuide() {
+interface CruiseGuideProps {
+  slug?: string;
+}
+
+export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuideProps) {
   const [activeTab, setActiveTab] = useState("itinerary");
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -2028,7 +2032,7 @@ export default function CruiseGuide() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch cruise data from the database
-  const { data: cruiseData, isLoading, error } = useCruiseData('greek-isles-2025');
+  const { data: cruiseData, isLoading, error } = useCruiseData(slug);
   
   // Transform the data to match our existing format
   const transformedData = cruiseData ? transformCruiseData(cruiseData) : null;
