@@ -130,7 +130,7 @@ async function seedDatabase() {
       for (const item of daily.items) {
         // Find talent IDs mentioned in the event
         const talentIds = [];
-        for (const [talentName, talentId] of talentMap.entries()) {
+        for (const [talentName, talentId] of Array.from(talentMap.entries())) {
           if (item.title.toLowerCase().includes(talentName.toLowerCase()) ||
               (talentName === 'The Diva (Bingo)' && item.title.toLowerCase().includes('bingo'))) {
             talentIds.push(talentId);
