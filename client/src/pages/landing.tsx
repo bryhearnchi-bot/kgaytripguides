@@ -3,8 +3,10 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Ship, MapPin, Anchor } from "lucide-react";
+import { CalendarDays, Ship, MapPin, Anchor, Clock, Calendar, History } from "lucide-react";
 import { format } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 
 interface Cruise {
   id: number;
@@ -39,7 +41,9 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
           />
           <div className="absolute top-4 left-4">
             <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200">
-              {cruise.status === "upcoming" ? "Upcoming" : cruise.status}
+              {cruise.status === 'upcoming' && 'Upcoming'}
+              {cruise.status === 'current' && 'Current'}
+              {cruise.status === 'past' && 'Past'}
             </Badge>
           </div>
         </div>
@@ -86,7 +90,24 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
   );
 }
 
+// Function to determine cruise status based on dates
+function getCruiseStatus(startDate: string, endDate: string): 'upcoming' | 'current' | 'past' {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  if (now < start) {
+    return 'upcoming';
+  } else if (now >= start && now <= end) {
+    return 'current';
+  } else {
+    return 'past';
+  }
+}
+
 export default function LandingPage() {
+  const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
+  
   const { data: cruises, isLoading, error } = useQuery<Cruise[]>({
     queryKey: ["cruises"],
     queryFn: async () => {
@@ -94,7 +115,12 @@ export default function LandingPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch cruises");
       }
-      return response.json();
+      const data = await response.json();
+      // Calculate status for each cruise based on dates
+      return data.map((cruise: Cruise) => ({
+        ...cruise,
+        status: getCruiseStatus(cruise.startDate, cruise.endDate)
+      }));
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -129,9 +155,8 @@ export default function LandingPage() {
     );
   }
 
-  // Separate upcoming and past cruises
-  const upcomingCruises = cruises?.filter(cruise => cruise.status === "upcoming") || [];
-  const pastCruises = cruises?.filter(cruise => cruise.status === "past") || [];
+  // Filter cruises based on active filter
+  const filteredCruises = cruises?.filter(cruise => cruise.status === activeFilter) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
@@ -151,59 +176,77 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-          {/* Empty space to match cruise guide header height with tabs */}
-          <div className="h-[48px]"></div>
+          
+          {/* Navigation Tabs */}
+          <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as 'upcoming' | 'current' | 'past')}>
+            <div className="flex justify-center">
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
+                <TabsList className="grid grid-cols-3 w-full">
+                  <TabsTrigger value="upcoming" className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span className="hidden sm:inline">Upcoming</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="current" className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span className="hidden sm:inline">Current</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="past" className="flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    <span className="hidden sm:inline">Past</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
+          </Tabs>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-[180px] pb-12">
-        {/* Upcoming Cruises */}
-        {upcomingCruises.length > 0 && (
-          <section className="mb-16">
-            <div className="text-center mb-10">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Anchor className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-4xl font-bold text-white mb-4">Upcoming Cruises</h2>
-              <p className="text-lg text-white/80">Access your cruise guide and plan your adventure</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {upcomingCruises.map((cruise) => (
-                <CruiseCard key={cruise.id} cruise={cruise} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Past Cruises */}
-        {pastCruises.length > 0 && (
+        {/* Filtered Cruises */}
+        {filteredCruises.length > 0 ? (
           <section>
             <div className="text-center mb-10">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Ship className="w-6 h-6 text-white" />
+                {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white" />}
+                {activeFilter === 'current' && <Clock className="w-6 h-6 text-white" />}
+                {activeFilter === 'past' && <History className="w-6 h-6 text-white" />}
               </div>
-              <h2 className="text-4xl font-bold text-white mb-4">Past Adventures</h2>
-              <p className="text-lg text-white/80">Relive the memories and revisit your cruise guides</p>
+              <h2 className="text-4xl font-bold text-white mb-4">
+                {activeFilter === 'upcoming' && 'Upcoming Cruises'}
+                {activeFilter === 'current' && 'Current Cruises'}
+                {activeFilter === 'past' && 'Past Adventures'}
+              </h2>
+              <p className="text-lg text-white/80">
+                {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
+                {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
+                {activeFilter === 'past' && 'Relive the memories and revisit your cruise guides'}
+              </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {pastCruises.map((cruise) => (
+              {filteredCruises.map((cruise) => (
                 <CruiseCard key={cruise.id} cruise={cruise} />
               ))}
             </div>
           </section>
-        )}
-
-        {/* Empty State */}
-        {!cruises || cruises.length === 0 && (
+        ) : (
           <div className="text-center py-20">
             <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-              <Ship className="h-8 w-8 text-white" />
+              {activeFilter === 'upcoming' && <Calendar className="h-8 w-8 text-white" />}
+              {activeFilter === 'current' && <Clock className="h-8 w-8 text-white" />}
+              {activeFilter === 'past' && <History className="h-8 w-8 text-white" />}
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">No Cruise Guides Available</h2>
-            <p className="text-white/80 text-lg">Check back soon for new cruise guide announcements!</p>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              {activeFilter === 'upcoming' && 'No Upcoming Cruises'}
+              {activeFilter === 'current' && 'No Current Cruises'}
+              {activeFilter === 'past' && 'No Past Cruises'}
+            </h2>
+            <p className="text-white/80 text-lg">
+              {activeFilter === 'upcoming' && 'Check back soon for new cruise announcements!'}
+              {activeFilter === 'current' && 'No cruises are currently sailing'}
+              {activeFilter === 'past' && 'No past cruise guides available'}
+            </p>
           </div>
         )}
       </div>
