@@ -302,7 +302,7 @@ function downloadICS(eventData: ReturnType<typeof createCalendarEvent>) {
   URL.revokeObjectURL(url);
 }
 
-function findTalentInTitle(title: string): string[] {
+function findTalentInTitle(title: string, TALENT: any[]): string[] {
   return TALENT
     .filter(t => {
       const titleLower = title.toLowerCase();
@@ -453,7 +453,7 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT }: TimelineList
   return (
     <div className="relative border-l border-ocean-300/40 ml-2">
       {sortedEvents.map((event, idx) => {
-        const clickableNames = findTalentInTitle(event.title);
+        const clickableNames = findTalentInTitle(event.title, TALENT);
 
         const titleElement = clickableNames.length > 0 ? (
           <span>
