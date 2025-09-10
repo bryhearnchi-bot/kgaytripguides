@@ -20,14 +20,6 @@ export default function NavigationBanner() {
             />
           </a>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <span className="text-sm text-white/80 hover:text-white transition-colors cursor-pointer">
-              All Cruise Guides
-            </span>
-          </Link>
-        </div>
       </div>
     </div>
   );
