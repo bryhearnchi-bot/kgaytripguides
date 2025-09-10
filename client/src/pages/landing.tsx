@@ -236,30 +236,25 @@ export default function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 pt-[180px] pb-12">
+      <div className="max-w-7xl mx-auto px-4 pt-[180px] pb-[24px]">
         {/* Filtered Cruises */}
         {filteredCruises.length > 0 ? (
           <section>
             {activeFilter === 'all' ? (
               // Sectioned view for "All" filter
               <div>
-                <div className="text-center mb-12">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <Grid3X3 className="w-6 h-6 text-white" />
-                  </div>
-                  <h2 className="text-4xl font-bold text-white mb-4">All Cruise Guides</h2>
-                  <p className="text-lg text-white/80">Explore all available cruise guides and experiences</p>
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-semibold text-white mb-2">All Cruise Guides</h2>
+                  <p className="text-sm text-white/70">Explore all available cruise guides and experiences</p>
                 </div>
 
                 {/* Current Cruises Section */}
                 {groupedCruises.current.length > 0 && (
                   <div className="mb-16">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-emerald-400 animate-pulse" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-white">Currently Sailing</h3>
-                      <div className="flex-1 h-px bg-white/20"></div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
+                      <h3 className="text-lg font-semibold text-white">Currently Sailing</h3>
+                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {groupedCruises.current.map((cruise) => (
@@ -272,12 +267,10 @@ export default function LandingPage() {
                 {/* Upcoming Cruises Section */}
                 {groupedCruises.upcoming.length > 0 && (
                   <div className="mb-16">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                        <Calendar className="w-5 h-5 text-blue-400" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-white">Upcoming Adventures</h3>
-                      <div className="flex-1 h-px bg-white/20"></div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
+                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {groupedCruises.upcoming.map((cruise) => (
@@ -290,12 +283,10 @@ export default function LandingPage() {
                 {/* Past Cruises Section */}
                 {groupedCruises.past.length > 0 && (
                   <div className="mb-16">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                        <History className="w-5 h-5 text-amber-400" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-white">Past Adventures</h3>
-                      <div className="flex-1 h-px bg-white/20"></div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <History className="w-4 h-4 text-amber-400" />
+                      <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
+                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {groupedCruises.past.map((cruise) => (
@@ -308,18 +299,13 @@ export default function LandingPage() {
             ) : (
               // Single section view for specific filters
               <div>
-                <div className="text-center mb-10">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white" />}
-                    {activeFilter === 'current' && <Clock className="w-6 h-6 text-white" />}
-                    {activeFilter === 'past' && <History className="w-6 h-6 text-white" />}
-                  </div>
-                  <h2 className="text-4xl font-bold text-white mb-4">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-semibold text-white mb-2">
                     {activeFilter === 'upcoming' && 'Upcoming Cruises'}
                     {activeFilter === 'current' && 'Current Cruises'}
                     {activeFilter === 'past' && 'Past Adventures'}
                   </h2>
-                  <p className="text-lg text-white/80">
+                  <p className="text-sm text-white/70">
                     {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
                     {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
                     {activeFilter === 'past' && 'Relive the memories and revisit your cruise guides'}
