@@ -138,19 +138,26 @@ export default function LandingPage() {
       {/* Header */}
       <header className="cruise-gradient wave-pattern text-white fixed top-[56px] left-0 right-0 z-40 bg-ocean-600 opacity-100">
         <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="text-center">
+          <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
               Atlantis Cruise Guides
             </h1>
-            <p className="text-white/80 text-sm">
+            <p className="text-white/80 text-base">
               Your complete guide to unforgettable cruise experiences
             </p>
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <p className="text-white/60 text-xs">
+                Thousands of gay men from around the world
+              </p>
+            </div>
           </div>
+          {/* Empty space to match cruise guide header height with tabs */}
+          <div className="h-[48px]"></div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 pt-[120px] pb-12">
+      <div className="max-w-7xl mx-auto px-4 pt-[180px] pb-12">
         {/* Upcoming Cruises */}
         {upcomingCruises.length > 0 && (
           <section className="mb-16">
