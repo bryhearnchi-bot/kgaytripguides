@@ -2110,7 +2110,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Header */}
-      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-40 bg-ocean-600 opacity-100 pt-[50px]">
+      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-40 bg-ocean-600 opacity-100 pt-[15px]">
         <div className="max-w-7xl mx-auto px-4 py-1">
           <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
