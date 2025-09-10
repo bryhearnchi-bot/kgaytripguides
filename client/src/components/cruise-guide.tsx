@@ -798,9 +798,6 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
                                 Last tender: 9:00 PM
                               </p>
                             )}
-                            <p className="text-xs text-amber-600 mt-1 italic">
-                              *Please confirm with official Virgin announcements on board
-                            </p>
                           </div>
                         )}
 
