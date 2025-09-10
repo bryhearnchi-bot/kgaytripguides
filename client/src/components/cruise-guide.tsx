@@ -734,85 +734,99 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.1 }}
             >
-              <Card className="p-6 bg-white hover:shadow-xl transition-shadow duration-200 border-2 border-gray-200 min-h-24 relative">
-                <div className="flex flex-col md:flex-row md:items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <div className="w-12 h-12 bg-ocean-100 rounded-full flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-ocean-700" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{stop.port}</h3>
-                        <p className="text-sm text-gray-500">{stop.date}</p>
-                      </div>
-                    </div>
-
-                    {getPortImage(stop.port, stop.date) && (
+              <Card className="p-0 bg-white hover:shadow-xl transition-shadow duration-200 border-2 border-gray-200 overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
+                  {/* Image Section - Fixed size */}
+                  <div className="lg:col-span-1">
+                    {getPortImage(stop.port, stop.date) ? (
                       <img 
                         src={getPortImage(stop.port, stop.date)} 
                         alt={stop.port} 
-                        className="w-full h-48 object-cover rounded-lg mb-4 shadow-md"
+                        className="w-full h-48 lg:h-full object-cover"
                         onError={(e) => {
                           // Fallback to a default cruise ship image if the specific image fails
                           (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200";
                         }}
                       />
+                    ) : (
+                      <div className="w-full h-48 lg:h-full bg-gradient-to-br from-ocean-100 to-ocean-200 flex items-center justify-center">
+                        <MapPin className="w-8 h-8 text-ocean-600" />
+                      </div>
                     )}
                   </div>
 
-                  <div className="md:ml-6 md:text-right">
-                    <div className="grid grid-cols-2 gap-4 md:gap-6 mb-4">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Arrive</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {formatTime(stop.arrive, "24h")}
-                        </p>
+                  {/* Content Section - Consistent layout */}
+                  <div className="lg:col-span-2 p-6 flex flex-col justify-between">
+                    {/* Header */}
+                    <div>
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 bg-ocean-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-5 h-5 text-ocean-700" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">{stop.port}</h3>
+                          <p className="text-sm text-gray-600">{stop.date}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Depart</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {formatTime(stop.depart, "24h")}
-                        </p>
+
+                      {/* Times Grid */}
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Arrive</p>
+                          <p className="text-lg font-bold text-gray-900 mt-1">
+                            {formatTime(stop.arrive, "24h")}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Depart</p>
+                          <p className="text-lg font-bold text-gray-900 mt-1">
+                            {formatTime(stop.depart, "24h")}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Status Badge */}
+                      <div className="mb-4">
+                        {!isSea && stop.depart !== "—" && !isOvernight && (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-xs text-amber-800 uppercase tracking-wide font-medium">All Aboard</p>
+                            <p className="text-sm font-bold text-amber-900 mt-1">
+                              {formatAllAboard(stop.depart, "24h")}
+                            </p>
+                            {stop.port.includes("Santorini") && (
+                              <p className="text-xs text-amber-700 mt-1 font-medium">
+                                Last tender: 9:00 PM
+                              </p>
+                            )}
+                            <p className="text-xs text-amber-600 mt-1 italic">
+                              *Please confirm with official Virgin announcements on board
+                            </p>
+                          </div>
+                        )}
+
+                        {isOvernight && (
+                          <div className="p-3 bg-coral-50 border border-coral-200 rounded-lg">
+                            <p className="text-xs text-coral-800 uppercase tracking-wide font-medium">Extended Port</p>
+                            <p className="text-sm font-bold text-coral-900 mt-1">Overnight Stay</p>
+                          </div>
+                        )}
+
+                        {isSea && (
+                          <div className="p-3 bg-ocean-50 border border-ocean-200 rounded-lg">
+                            <p className="text-xs text-ocean-800 uppercase tracking-wide font-medium">Sea Day</p>
+                            <p className="text-sm font-bold text-ocean-900 mt-1">Relax & Enjoy</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {!isSea && stop.depart !== "—" && !isOvernight && (
-                      <div className="p-3 bg-gold/10 rounded-lg">
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">All Aboard</p>
-                        <p className="text-sm font-semibold text-yellow-600">
-                          {formatAllAboard(stop.depart, "24h")}
-                        </p>
-                        {stop.port.includes("Santorini") && (
-                          <p className="text-xs text-yellow-700 mt-1 font-medium">
-                            Last tender: 9:00 PM
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-1 italic">
-                          *Please confirm with official Virgin announcements on board
-                        </p>
-                      </div>
-                    )}
-
-                    {isOvernight && (
-                      <div className="p-3 bg-coral/10 rounded-lg">
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Extended Port</p>
-                        <p className="text-sm font-semibold text-coral">Overnight Stay</p>
-                      </div>
-                    )}
-
-                    {isSea && (
-                      <div className="p-3 bg-ocean-50 rounded-lg">
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Sea Day</p>
-                        <p className="text-sm font-semibold text-ocean-600">Relax & Enjoy</p>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 mt-4">
+                    {/* Buttons - Always at bottom */}
+                    <div className="flex gap-3 mt-auto">
                       <Button
                         onClick={() => setSelectedDay(stop.key)}
                         variant="outline"
                         size="sm"
-                        className="flex-1 md:flex-none border-ocean-300 text-ocean-700 hover:bg-ocean-50"
+                        className="flex-1 border-ocean-300 text-ocean-700 hover:bg-ocean-50 font-medium"
                       >
                         <CalendarDays className="w-4 h-4 mr-2" />
                         View Events
@@ -833,7 +847,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
                             onClick={() => setSelectedCity(cityData)}
                             variant="outline"
                             size="sm"
-                            className="flex-1 md:flex-none border-ocean-300 text-ocean-700 hover:bg-ocean-50"
+                            className="flex-1 border-ocean-300 text-ocean-700 hover:bg-ocean-50 font-medium"
                           >
                             <MapPin className="w-4 h-4 mr-2" />
                             Things to Do
