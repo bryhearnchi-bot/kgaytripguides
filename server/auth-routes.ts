@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { storage } from "./storage";
 import { AuthService, type AuthenticatedRequest } from "./auth";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 export function registerAuthRoutes(app: Express) {
@@ -15,13 +15,13 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Find user by username
-      const users = await storage.db
+      const userResults = await storage.db
         .select()
-        .from(storage.users)
-        .where(eq(storage.users.username, username))
+        .from(users)
+        .where(eq(users.username, username))
         .limit(1);
 
-      const user = users[0];
+      const user = userResults[0];
       if (!user || !user.isActive) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -44,9 +44,9 @@ export function registerAuthRoutes(app: Express) {
 
       // Update last login
       await storage.db
-        .update(storage.users)
+        .update(users)
         .set({ lastLogin: new Date() })
-        .where(eq(storage.users.id, user.id));
+        .where(eq(users.id, user.id));
 
       // Set httpOnly cookies for security
       res.cookie('accessToken', accessToken, {
@@ -94,13 +94,13 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Verify user still exists and is active
-      const users = await storage.db
+      const userResults = await storage.db
         .select()
-        .from(storage.users)
-        .where(eq(storage.users.id, payload.userId))
+        .from(users)
+        .where(eq(users.id, payload.userId))
         .limit(1);
 
-      const user = users[0];
+      const user = userResults[0];
       if (!user || !user.isActive) {
         return res.status(401).json({ error: 'User not found or inactive' });
       }
@@ -175,7 +175,7 @@ export function registerAuthRoutes(app: Express) {
         .where(eq(storage.users.id, payload.userId))
         .limit(1);
 
-      const user = users[0];
+      const user = userResults[0];
       if (!user || !user.isActive) {
         return res.status(401).json({ error: 'User not found or inactive' });
       }
