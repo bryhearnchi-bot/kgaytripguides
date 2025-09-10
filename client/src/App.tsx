@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import NavigationBanner from "@/components/navigation-banner";
 import LandingPage from "@/pages/landing";
 import CruisePage from "@/pages/cruise";
@@ -18,11 +20,11 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/cruise/:slug" component={CruisePage} />
       <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/cruises" component={CruisesManagement} />
-      <Route path="/admin/cruises/new" component={() => <CruiseForm isEditing={false} />} />
-      <Route path="/admin/cruises/:id/edit" component={() => <CruiseForm isEditing={true} />} />
-      <Route path="/admin" component={() => <AdminDashboard />} />
+      <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/cruises" component={() => <ProtectedRoute><CruisesManagement /></ProtectedRoute>} />
+      <Route path="/admin/cruises/new" component={() => <ProtectedRoute><CruiseForm isEditing={false} /></ProtectedRoute>} />
+      <Route path="/admin/cruises/:id/edit" component={() => <ProtectedRoute><CruiseForm isEditing={true} /></ProtectedRoute>} />
+      <Route path="/admin" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -31,11 +33,13 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <NavigationBanner />
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <NavigationBanner />
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

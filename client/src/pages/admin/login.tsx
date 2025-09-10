@@ -23,13 +23,7 @@ export default function AdminLogin() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login({ username, password }, {
-      onSuccess: async () => {
-        // Refresh auth status to ensure state is updated
-        await refresh();
-        // Redirect will happen via useEffect when isAuthenticated becomes true
-      }
-    });
+    login({ username, password });
   };
 
   return (

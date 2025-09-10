@@ -16,21 +16,14 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    setLocation('/admin/login');
-    return null;
-  }
+  // Authentication is handled by ProtectedRoute wrapper
 
   const handleLogout = () => {
-    logout(undefined, {
-      onSuccess: () => {
-        setLocation('/admin/login');
-      }
-    });
+    logout();
+    setLocation('/admin/login');
   };
 
   const getRoleBadgeVariant = (role: string) => {
