@@ -2087,12 +2087,14 @@ export default function CruiseGuide() {
                 </Button>
               </div>
             </div>
-            <div className="flex-1"></div>
+            <div className="flex-1 flex justify-end">
+              <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
+            </div>
           </div>
 
           {/* Navigation Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="flex justify-center items-center gap-4">
+            <div className="flex justify-center">
               <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
                 <TabsList className="grid grid-cols-5 w-full">
                   <TabsTrigger value="itinerary" className="flex items-center gap-2">
@@ -2116,9 +2118,6 @@ export default function CruiseGuide() {
                     <span className="hidden sm:inline">Info</span>
                   </TabsTrigger>
                 </TabsList>
-              </div>
-              <div className="ml-4">
-                <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
               </div>
             </div>
           </Tabs>
