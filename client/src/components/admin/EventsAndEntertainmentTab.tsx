@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Plus, 
   Search, 
@@ -12,6 +13,7 @@ import {
   PartyPopper,
   Clock
 } from 'lucide-react';
+import PartyTemplatesManager from './PartyTemplatesManager';
 
 interface EventsAndEntertainmentTabProps {
   cruise?: any;
@@ -25,6 +27,7 @@ export default function EventsAndEntertainmentTab({
   const [searchTerm, setSearchTerm] = useState('');
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
+  const [showPartyTemplates, setShowPartyTemplates] = useState(false);
 
   const eventTypes = [
     { type: 'party', icon: PartyPopper, label: 'Party', color: 'bg-pink-100 text-pink-800' },
@@ -46,10 +49,20 @@ export default function EventsAndEntertainmentTab({
             <Users className="w-4 h-4 mr-2" />
             Browse Artists
           </Button>
-          <Button variant="outline" size="sm">
-            <PartyPopper className="w-4 h-4 mr-2" />
-            Party Templates
-          </Button>
+          <Dialog open={showPartyTemplates} onOpenChange={setShowPartyTemplates}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <PartyPopper className="w-4 h-4 mr-2" />
+                Party Templates
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Party Templates</DialogTitle>
+              </DialogHeader>
+              <PartyTemplatesManager />
+            </DialogContent>
+          </Dialog>
           <Button size="sm">
             <Plus className="w-4 h-4 mr-2" />
             Add Event
@@ -152,16 +165,36 @@ export default function EventsAndEntertainmentTab({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Search className="w-4 h-4 mr-2" />
-                Browse Templates
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Template
-              </Button>
+              <Dialog open={showPartyTemplates} onOpenChange={setShowPartyTemplates}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Search className="w-4 h-4 mr-2" />
+                    Browse Templates
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Party Templates</DialogTitle>
+                  </DialogHeader>
+                  <PartyTemplatesManager />
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Template
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Party Templates</DialogTitle>
+                  </DialogHeader>
+                  <PartyTemplatesManager />
+                </DialogContent>
+              </Dialog>
               <div className="text-xs text-gray-500 pt-2">
-                0 party templates saved
+                Reusable party themes
               </div>
             </CardContent>
           </Card>

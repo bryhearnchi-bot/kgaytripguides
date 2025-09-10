@@ -10,6 +10,10 @@ import {
 } from "./storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
 import { registerAuthRoutes } from "./auth-routes";
+import { db } from "./db";
+import { partyTemplates, cruiseInfoSections } from "../shared/schema";
+import { eq, ilike, or } from "drizzle-orm";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ AUTHENTICATION ROUTES ============
@@ -423,36 +427,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ PARTY TEMPLATES ROUTES ============
   
-  // Get all party templates
-  app.get("/api/party-templates", async (req, res) => {
+  // Get all party templates with optional search
+  app.get("/api/party-templates", requireAuth, async (req, res) => {
     try {
-      // TODO: Implement party template storage
-      res.json([]);
+      const search = req.query.search as string;
+      let query = db.select().from(partyTemplates).orderBy(partyTemplates.name);
+      
+      if (search) {
+        query = db.select()
+          .from(partyTemplates)
+          .where(
+            or(
+              ilike(partyTemplates.name, `%${search}%`),
+              ilike(partyTemplates.themeDescription, `%${search}%`),
+              ilike(partyTemplates.dressCode, `%${search}%`)
+            )
+          )
+          .orderBy(partyTemplates.name);
+      }
+      
+      const templates = await query;
+      res.json(templates);
     } catch (error) {
       console.error('Error fetching party templates:', error);
       res.status(500).json({ error: 'Failed to fetch party templates' });
     }
   });
 
-  // Search party templates
-  app.get("/api/party-templates/search", async (req, res) => {
+  // Create party template (protected route)
+  app.post("/api/party-templates", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const { q } = req.query;
-      // TODO: Implement party template search
-      res.json([]);
+      const partyTemplateSchema = z.object({
+        name: z.string().min(1, 'Name is required').max(255),
+        themeDescription: z.string().max(1000).optional(),
+        dressCode: z.string().max(255).optional(),
+        defaultImageUrl: z.string().url().optional().or(z.literal('')),
+        tags: z.array(z.string()).optional(),
+        defaults: z.record(z.any()).optional(),
+      });
+
+      const validationResult = partyTemplateSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid input', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const { name, themeDescription, dressCode, defaultImageUrl, tags, defaults } = validationResult.data;
+      
+      const newTemplate = await db.insert(partyTemplates).values({
+        name,
+        themeDescription,
+        dressCode,
+        defaultImageUrl: defaultImageUrl || null,
+        tags,
+        defaults,
+        createdBy: req.user!.id,
+      }).returning();
+      
+      res.status(201).json(newTemplate[0]);
     } catch (error) {
-      console.error('Error searching party templates:', error);
-      res.status(500).json({ error: 'Failed to search party templates' });
+      console.error('Error creating party template:', error);
+      res.status(500).json({ error: 'Failed to create party template' });
+    }
+  });
+
+  // Update party template (protected route)
+  app.put("/api/party-templates/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+
+      const partyTemplateSchema = z.object({
+        name: z.string().min(1, 'Name is required').max(255),
+        themeDescription: z.string().max(1000).optional(),
+        dressCode: z.string().max(255).optional(),
+        defaultImageUrl: z.string().url().optional().or(z.literal('')),
+        tags: z.array(z.string()).optional(),
+        defaults: z.record(z.any()).optional(),
+      });
+
+      const validationResult = partyTemplateSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid input', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const { name, themeDescription, dressCode, defaultImageUrl, tags, defaults } = validationResult.data;
+      
+      const updatedTemplate = await db.update(partyTemplates)
+        .set({
+          name,
+          themeDescription,
+          dressCode,
+          defaultImageUrl: defaultImageUrl || null,
+          tags,
+          defaults,
+          updatedAt: new Date(),
+        })
+        .where(eq(partyTemplates.id, templateId))
+        .returning();
+      
+      if (updatedTemplate.length === 0) {
+        return res.status(404).json({ error: 'Party template not found' });
+      }
+      
+      res.json(updatedTemplate[0]);
+    } catch (error) {
+      console.error('Error updating party template:', error);
+      res.status(500).json({ error: 'Failed to update party template' });
+    }
+  });
+
+  // Delete party template (protected route)
+  app.delete("/api/party-templates/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+      
+      const deletedTemplate = await db.delete(partyTemplates)
+        .where(eq(partyTemplates.id, templateId))
+        .returning();
+      
+      if (deletedTemplate.length === 0) {
+        return res.status(404).json({ error: 'Party template not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting party template:', error);
+      res.status(500).json({ error: 'Failed to delete party template' });
     }
   });
 
   // ============ CRUISE INFO SECTIONS ROUTES ============
   
   // Get info sections for a cruise
-  app.get("/api/cruises/:cruiseId/info-sections", async (req, res) => {
+  app.get("/api/cruises/:cruiseId/info-sections", requireAuth, async (req, res) => {
     try {
-      // TODO: Implement cruise info sections storage
-      res.json([]);
+      const cruiseId = parseInt(req.params.cruiseId);
+      const sections = await db.select()
+        .from(cruiseInfoSections)
+        .where(eq(cruiseInfoSections.cruiseId, cruiseId))
+        .orderBy(cruiseInfoSections.orderIndex);
+      
+      res.json(sections);
     } catch (error) {
       console.error('Error fetching info sections:', error);
       res.status(500).json({ error: 'Failed to fetch info sections' });
@@ -462,12 +588,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create info section (protected route)
   app.post("/api/cruises/:cruiseId/info-sections", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      // TODO: Implement info section creation
-      const section = { id: Date.now(), ...req.body, cruiseId: parseInt(req.params.cruiseId) };
-      res.status(201).json(section);
+      const cruiseId = parseInt(req.params.cruiseId);
+      const { title, content, type, orderIndex, isVisible } = req.body;
+      
+      const newSection = await db.insert(cruiseInfoSections).values({
+        cruiseId,
+        title,
+        content,
+        type,
+        orderIndex: orderIndex || 0,
+        isVisible: isVisible !== false,
+        createdBy: req.user!.id,
+      }).returning();
+      
+      res.status(201).json(newSection[0]);
     } catch (error) {
       console.error('Error creating info section:', error);
       res.status(500).json({ error: 'Failed to create info section' });
+    }
+  });
+
+  // Update info section (protected route)
+  app.put("/api/info-sections/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sectionId = parseInt(req.params.id);
+      const { title, content, type, orderIndex, isVisible } = req.body;
+      
+      const updatedSection = await db.update(cruiseInfoSections)
+        .set({
+          title,
+          content,
+          type,
+          orderIndex,
+          isVisible,
+          updatedAt: new Date(),
+        })
+        .where(eq(cruiseInfoSections.id, sectionId))
+        .returning();
+      
+      if (updatedSection.length === 0) {
+        return res.status(404).json({ error: 'Info section not found' });
+      }
+      
+      res.json(updatedSection[0]);
+    } catch (error) {
+      console.error('Error updating info section:', error);
+      res.status(500).json({ error: 'Failed to update info section' });
+    }
+  });
+
+  // Delete info section (protected route)
+  app.delete("/api/info-sections/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sectionId = parseInt(req.params.id);
+      
+      const deletedSection = await db.delete(cruiseInfoSections)
+        .where(eq(cruiseInfoSections.id, sectionId))
+        .returning();
+      
+      if (deletedSection.length === 0) {
+        return res.status(404).json({ error: 'Info section not found' });
+      }
+      
+      res.json({ message: 'Info section deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting info section:', error);
+      res.status(500).json({ error: 'Failed to delete info section' });
     }
   });
 
