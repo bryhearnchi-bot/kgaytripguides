@@ -39,9 +39,9 @@ export default function AdminDashboard() {
   const managementSections = [
     {
       title: 'Cruise Management',
-      description: 'Create and manage cruise itineraries, dates, and destinations',
+      description: 'Create and manage cruise itineraries, events, and entertainment',
       icon: Ship,
-      path: '/admin/cruises',
+      path: '/admin/cruises/unified/new',
       color: 'bg-blue-500',
       requiresRole: ['super_admin', 'cruise_admin', 'content_editor']
     },
