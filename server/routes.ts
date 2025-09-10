@@ -8,8 +8,13 @@ import {
   talentStorage,
   mediaStorage 
 } from "./storage";
+import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
+import { registerAuthRoutes } from "./auth-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ============ AUTHENTICATION ROUTES ============
+  registerAuthRoutes(app);
+
   // ============ CRUISE ROUTES ============
   
   // Get all cruises
@@ -73,8 +78,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new cruise (protected route - will add auth later)
-  app.post("/api/cruises", async (req, res) => {
+  // Create new cruise (protected route)
+  app.post("/api/cruises", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruise = await cruiseStorage.createCruise(req.body);
       res.status(201).json(cruise);
@@ -84,8 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update cruise (protected route - will add auth later)
-  app.put("/api/cruises/:id", async (req, res) => {
+  // Update cruise (protected route)
+  app.put("/api/cruises/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruise = await cruiseStorage.updateCruise(parseInt(req.params.id), req.body);
       if (!cruise) {
@@ -98,8 +103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete cruise (protected route - will add auth later)
-  app.delete("/api/cruises/:id", async (req, res) => {
+  // Delete cruise (protected route)
+  app.delete("/api/cruises/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       await cruiseStorage.deleteCruise(parseInt(req.params.id));
       res.status(204).send();
@@ -123,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add itinerary stop (protected route)
-  app.post("/api/cruises/:cruiseId/itinerary", async (req, res) => {
+  app.post("/api/cruises/:cruiseId/itinerary", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const stop = await itineraryStorage.createItineraryStop({
         ...req.body,
@@ -137,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update itinerary stop (protected route)
-  app.put("/api/itinerary/:id", async (req, res) => {
+  app.put("/api/itinerary/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const stop = await itineraryStorage.updateItineraryStop(parseInt(req.params.id), req.body);
       if (!stop) {
@@ -151,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete itinerary stop (protected route)
-  app.delete("/api/itinerary/:id", async (req, res) => {
+  app.delete("/api/itinerary/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await itineraryStorage.deleteItineraryStop(parseInt(req.params.id));
       res.status(204).send();
@@ -198,7 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create event (protected route)
-  app.post("/api/cruises/:cruiseId/events", async (req, res) => {
+  app.post("/api/cruises/:cruiseId/events", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const event = await eventStorage.createEvent({
         ...req.body,
@@ -212,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update event (protected route)
-  app.put("/api/events/:id", async (req, res) => {
+  app.put("/api/events/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const event = await eventStorage.updateEvent(parseInt(req.params.id), req.body);
       if (!event) {
@@ -226,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete event (protected route)
-  app.delete("/api/events/:id", async (req, res) => {
+  app.delete("/api/events/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await eventStorage.deleteEvent(parseInt(req.params.id));
       res.status(204).send();
@@ -275,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create talent (protected route)
-  app.post("/api/talent", async (req, res) => {
+  app.post("/api/talent", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const talent = await talentStorage.createTalent(req.body);
       res.status(201).json(talent);
@@ -286,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update talent (protected route)
-  app.put("/api/talent/:id", async (req, res) => {
+  app.put("/api/talent/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const talent = await talentStorage.updateTalent(parseInt(req.params.id), req.body);
       if (!talent) {
@@ -300,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete talent (protected route)
-  app.delete("/api/talent/:id", async (req, res) => {
+  app.delete("/api/talent/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       await talentStorage.deleteTalent(parseInt(req.params.id));
       res.status(204).send();
@@ -311,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assign talent to cruise (protected route)
-  app.post("/api/cruises/:cruiseId/talent/:talentId", async (req, res) => {
+  app.post("/api/cruises/:cruiseId/talent/:talentId", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await talentStorage.assignTalentToCruise(
         parseInt(req.params.cruiseId),
@@ -326,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Remove talent from cruise (protected route)
-  app.delete("/api/cruises/:cruiseId/talent/:talentId", async (req, res) => {
+  app.delete("/api/cruises/:cruiseId/talent/:talentId", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await talentStorage.removeTalentFromCruise(
         parseInt(req.params.cruiseId),
@@ -366,8 +371,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload media (protected route - will implement file upload later)
-  app.post("/api/media", async (req, res) => {
+  // Upload media (protected route)
+  app.post("/api/media", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const media = await mediaStorage.createMedia(req.body);
       res.status(201).json(media);
@@ -378,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete media (protected route)
-  app.delete("/api/media/:id", async (req, res) => {
+  app.delete("/api/media/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await mediaStorage.deleteMedia(parseInt(req.params.id));
       res.status(204).send();
