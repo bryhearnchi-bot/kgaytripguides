@@ -67,6 +67,7 @@ export const itinerary = pgTable("itinerary", {
   description: text("description"),
   highlights: jsonb("highlights"), // Port highlights
   orderIndex: integer("order_index").notNull(), // For sorting
+  segment: text("segment").default("main"), // pre, main, post
 }, (table) => ({
   cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId),
   dateIdx: index("itinerary_date_idx").on(table.date),
@@ -161,6 +162,68 @@ export const userCruises = pgTable("user_cruises", {
   cruiseIdx: index("user_cruises_cruise_idx").on(table.cruiseId),
 }));
 
+// ============ PARTY TEMPLATES TABLE ============
+export const partyTemplates = pgTable("party_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  themeDescription: text("theme_description"),
+  dressCode: text("dress_code"),
+  defaultImageUrl: text("default_image_url"),
+  tags: jsonb("tags"), // Array of tags for searching
+  defaults: jsonb("defaults"), // Default values for events using this template
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("party_templates_name_idx").on(table.name),
+}));
+
+// ============ CRUISE INFO SECTIONS TABLE ============
+export const cruiseInfoSections = pgTable("cruise_info_sections", {
+  id: serial("id").primaryKey(),
+  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  content: text("content"), // Rich text content
+  orderIndex: integer("order_index").notNull(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
+  orderIdx: index("cruise_info_order_idx").on(table.cruiseId, table.orderIndex),
+}));
+
+// ============ AI JOBS TABLE ============
+export const aiJobs = pgTable("ai_jobs", {
+  id: serial("id").primaryKey(),
+  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+  sourceType: text("source_type").notNull(), // pdf, url
+  sourceRef: text("source_ref").notNull(), // URL or file path
+  task: text("task").notNull(), // extract
+  status: text("status").default("queued"), // queued, processing, completed, failed
+  result: jsonb("result"), // Extracted data
+  error: text("error"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  cruiseIdx: index("ai_jobs_cruise_idx").on(table.cruiseId),
+  statusIdx: index("ai_jobs_status_idx").on(table.status),
+}));
+
+// ============ AI DRAFTS TABLE ============
+export const aiDrafts = pgTable("ai_drafts", {
+  id: serial("id").primaryKey(),
+  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+  draftType: text("draft_type").notNull(), // itinerary, events, info
+  payload: jsonb("payload").notNull(), // Draft data to be reviewed
+  createdFromJobId: integer("created_from_job_id").references(() => aiJobs.id),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId),
+  typeIdx: index("ai_drafts_type_idx").on(table.draftType),
+}));
+
 // ============ AUDIT_LOG TABLE ============
 export const auditLog = pgTable("audit_log", {
   id: serial("id").primaryKey(),
@@ -229,6 +292,51 @@ export const userCruisesRelations = relations(userCruises, ({ one }) => ({
   }),
 }));
 
+export const partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
+  creator: one(users, {
+    fields: [partyTemplates.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const cruiseInfoSectionsRelations = relations(cruiseInfoSections, ({ one }) => ({
+  cruise: one(cruises, {
+    fields: [cruiseInfoSections.cruiseId],
+    references: [cruises.id],
+  }),
+  updater: one(users, {
+    fields: [cruiseInfoSections.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
+  cruise: one(cruises, {
+    fields: [aiJobs.cruiseId],
+    references: [cruises.id],
+  }),
+  creator: one(users, {
+    fields: [aiJobs.createdBy],
+    references: [users.id],
+  }),
+  drafts: many(aiDrafts),
+}));
+
+export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
+  cruise: one(cruises, {
+    fields: [aiDrafts.cruiseId],
+    references: [cruises.id],
+  }),
+  job: one(aiJobs, {
+    fields: [aiDrafts.createdFromJobId],
+    references: [aiJobs.id],
+  }),
+  creator: one(users, {
+    fields: [aiDrafts.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // ============ INSERT SCHEMAS ============
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -265,6 +373,28 @@ export const insertMediaSchema = createInsertSchema(media).omit({
   uploadedAt: true,
 });
 
+export const insertPartyTemplateSchema = createInsertSchema(partyTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCruiseInfoSectionSchema = createInsertSchema(cruiseInfoSections).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertAiJobSchema = createInsertSchema(aiJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiDraftSchema = createInsertSchema(aiDrafts).omit({
+  id: true,
+  createdAt: true,
+});
+
 // ============ TYPE EXPORTS ============
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -275,3 +405,7 @@ export type Talent = typeof talent.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type UserCruise = typeof userCruises.$inferSelect;
 export type AuditLog = typeof auditLog.$inferSelect;
+export type PartyTemplate = typeof partyTemplates.$inferSelect;
+export type CruiseInfoSection = typeof cruiseInfoSections.$inferSelect;
+export type AiJob = typeof aiJobs.$inferSelect;
+export type AiDraft = typeof aiDrafts.$inferSelect;
