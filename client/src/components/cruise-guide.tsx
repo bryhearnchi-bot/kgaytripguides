@@ -48,7 +48,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TimeToggle } from "@/components/ui/time-toggle";
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction, IMPORTANT_INFO, CRUISE_INFO } from "@/data/cruise-data";
 
 
@@ -433,14 +432,13 @@ function AddToCalendarButton({ event, eventDate }: AddToCalendarButtonProps) {
 
 interface TimelineListProps {
   events: DailyEvent[];
-  timeMode: "12h" | "24h";
   onTalentClick: (name: string) => void;
   eventDate?: string;
 }
 
 
 
-function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineListProps) {
+function TimelineList({ events, onTalentClick, eventDate }: TimelineListProps) {
   const sortedEvents = events.sort((a, b) => {
     // Special case: if this is Thursday and we have Neon Playground, put it last
     if (eventDate?.includes("Aug 28")) {
@@ -603,7 +601,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-ocean-700">
                       <Clock className="h-4 w-4" />
-                      <span className="text-sm font-medium">{formatTime(event.time, timeMode)}</span>
+                      <span className="text-sm font-medium">{formatTime(event.time, "24h")}</span>
                       {event.type === 'party' && (
                         <div className="ml-2 text-coral">
                           {getPartyIcon(event.title)}
@@ -664,7 +662,7 @@ function TimelineList({ events, timeMode, onTalentClick, eventDate }: TimelineLi
   );
 }
 
-function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
+function ItineraryTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
@@ -764,13 +762,13 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                       <div>
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Arrive</p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {formatTime(stop.arrive, timeMode)}
+                          {formatTime(stop.arrive, "24h")}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Depart</p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {formatTime(stop.depart, timeMode)}
+                          {formatTime(stop.depart, "24h")}
                         </p>
                       </div>
                     </div>
@@ -779,7 +777,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                       <div className="p-3 bg-gold/10 rounded-lg">
                         <p className="text-xs text-gray-600 uppercase tracking-wide">All Aboard</p>
                         <p className="text-sm font-semibold text-yellow-600">
-                          {formatAllAboard(stop.depart, timeMode)}
+                          {formatAllAboard(stop.depart, "24h")}
                         </p>
                         {stop.port.includes("Santorini") && (
                           <p className="text-xs text-yellow-700 mt-1 font-medium">
@@ -882,7 +880,6 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
                 return allEvents.length > 0 ? (
                   <TimelineList 
                     events={allEvents} 
-                    timeMode={timeMode} 
                     onTalentClick={handleTalentClick}
                     eventDate={ITINERARY.find(i => i.key === selectedDay)?.date || ''}
                   />
@@ -986,7 +983,7 @@ function ItineraryTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; on
   );
 }
 
-function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
+function EntertainmentTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
@@ -1112,11 +1109,11 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
                   {itinerary && (itinerary.arrive !== "—" || itinerary.depart !== "—") && (
                     <div className="flex items-center gap-2 text-sm text-white/80 bg-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
                       {itinerary.arrive !== "—" && (
-                        <span>Arrive: {formatTime(itinerary.arrive, timeMode)}</span>
+                        <span>Arrive: {formatTime(itinerary.arrive, "24h")}</span>
                       )}
                       {itinerary.arrive !== "—" && itinerary.depart !== "—" && <span>•</span>}
                       {itinerary.depart !== "—" && (
-                        <span>Depart: {formatTime(itinerary.depart, timeMode)}</span>
+                        <span>Depart: {formatTime(itinerary.depart, "24h")}</span>
                       )}
                     </div>
                   )}
@@ -1126,7 +1123,6 @@ function EntertainmentTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"
               {allEvents.length > 0 ? (
                 <TimelineList 
                   events={allEvents} 
-                  timeMode={timeMode} 
                   onTalentClick={handleTalentClick}
                   eventDate={itinerary?.date || ''}
                 />
@@ -1308,7 +1304,7 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
   );
 }
 
-function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTalentClick: (talent: Talent) => void }) {
+function PartiesTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
   const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
@@ -1408,7 +1404,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                 )}
                 {dayData.depart && dayData.depart !== "—" && (
                   <div className="flex items-center gap-2 text-sm text-white/80 bg-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
-                    <span>Depart: {formatTime(dayData.depart, timeMode)}</span>
+                    <span>Depart: {formatTime(dayData.depart, "24h")}</span>
                   </div>
                 )}
               </div>
@@ -1453,7 +1449,7 @@ function PartiesTab({ timeMode, onTalentClick }: { timeMode: "12h" | "24h"; onTa
                       <div className="flex flex-wrap gap-2 mt-auto">
                         <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
                           <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(party.time, timeMode)}
+                          {formatTime(party.time, "24h")}
                         </Badge>
                         <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
                           <MapPin className="w-3 h-3 mr-1" />
@@ -2005,7 +2001,6 @@ function SocialMediaButton({ platform, url }: { platform: string; url: string })
 }
 
 export default function CruiseGuide() {
-  const [timeMode, setTimeMode] = useLocalStorage<"12h" | "24h">("cruise_time_mode", "12h");
   const [activeTab, setActiveTab] = useState("itinerary");
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -2087,9 +2082,7 @@ export default function CruiseGuide() {
                 </Button>
               </div>
             </div>
-            <div className="flex-1 flex justify-end">
-              <TimeToggle timeMode={timeMode} onToggle={setTimeMode} />
-            </div>
+            <div className="flex-1"></div>
           </div>
 
           {/* Navigation Tabs */}
@@ -2128,16 +2121,16 @@ export default function CruiseGuide() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
           <TabsContent value="itinerary">
-            <ItineraryTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
+            <ItineraryTab onTalentClick={setSelectedTalent} />
           </TabsContent>
           <TabsContent value="entertainment">
-            <EntertainmentTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
+            <EntertainmentTab onTalentClick={setSelectedTalent} />
           </TabsContent>
           <TabsContent value="talent">
             <EntertainersTab onTalentClick={setSelectedTalent} />
           </TabsContent>
           <TabsContent value="parties">
-            <PartiesTab timeMode={timeMode} onTalentClick={setSelectedTalent} />
+            <PartiesTab onTalentClick={setSelectedTalent} />
           </TabsContent>
           <TabsContent value="info" className="mt-4">
             <InfoTab />
