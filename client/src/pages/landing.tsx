@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Ship, MapPin, Anchor, Clock, Calendar, History, Grid3X3 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInCalendarDays } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import React from "react";
+import { dateOnly } from "@/lib/utils";
 
 interface Cruise {
   id: number;
@@ -24,9 +25,9 @@ interface Cruise {
 }
 
 function CruiseCard({ cruise }: { cruise: Cruise }) {
-  const startDate = new Date(cruise.startDate);
-  const endDate = new Date(cruise.endDate);
-  const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const startDate = dateOnly(cruise.startDate);
+  const endDate = dateOnly(cruise.endDate);
+  const duration = differenceInCalendarDays(endDate, startDate);
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60 flex flex-col h-full">
@@ -96,8 +97,9 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
 // Function to determine cruise status based on dates
 function getCruiseStatus(startDate: string, endDate: string): 'upcoming' | 'current' | 'past' {
   const now = new Date();
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  now.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
+  const start = dateOnly(startDate);
+  const end = dateOnly(endDate);
   
   if (now < start) {
     return 'upcoming';
