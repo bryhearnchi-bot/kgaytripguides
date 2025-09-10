@@ -35,13 +35,13 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
           <img
             src={cruise.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
             alt={cruise.name}
-            className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-36 w-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               e.currentTarget.src = "/images/ships/resilient-lady-hero.jpg";
             }}
           />
-          <div className="absolute top-4 left-4">
-            <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200">
+          <div className="absolute top-3 left-3">
+            <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 text-xs">
               {cruise.status === 'upcoming' && 'Upcoming'}
               {cruise.status === 'current' && 'Current'}
               {cruise.status === 'past' && 'Past'}
@@ -50,39 +50,39 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
         </div>
       </Link>
       
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
           {cruise.name}
         </CardTitle>
-        <CardDescription className="text-ocean-600">
+        <CardDescription className="text-ocean-600 text-sm">
           {cruise.description}
         </CardDescription>
       </CardHeader>
       
       <CardContent className="pt-0">
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-2 text-sm text-ocean-700">
-            <Ship className="h-4 w-4" />
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-1.5 text-xs text-ocean-700">
+            <Ship className="h-3.5 w-3.5" />
             <span>{cruise.shipName} • {cruise.cruiseLine}</span>
           </div>
           
-          <div className="flex items-center gap-2 text-sm text-ocean-700">
-            <CalendarDays className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-xs text-ocean-700">
+            <CalendarDays className="h-3.5 w-3.5" />
             <span>
               {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {duration} days
             </span>
           </div>
           
           {cruise.highlights && cruise.highlights.length > 0 && (
-            <div className="flex items-start gap-2 text-sm text-ocean-700">
-              <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-1.5 text-xs text-ocean-700">
+              <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
               <span className="line-clamp-2">{cruise.highlights[0]}</span>
             </div>
           )}
         </div>
         
         <Link href={`/cruise/${cruise.slug}`}>
-          <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white">
+          <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white text-sm py-2">
             View Cruise Guide
           </Button>
         </Link>
