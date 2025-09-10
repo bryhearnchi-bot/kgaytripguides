@@ -29,7 +29,7 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
   const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60">
+    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60 flex flex-col h-full">
       <Link href={`/cruise/${cruise.slug}`}>
         <div className="relative overflow-hidden cursor-pointer">
           <img
@@ -59,7 +59,7 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <Ship className="h-3.5 w-3.5" />
@@ -81,11 +81,13 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
           )}
         </div>
         
-        <Link href={`/cruise/${cruise.slug}`}>
-          <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white text-sm py-2">
-            View Cruise Guide
-          </Button>
-        </Link>
+        <div className="mt-auto">
+          <Link href={`/cruise/${cruise.slug}`}>
+            <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white text-sm py-2">
+              View Cruise Guide
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );
@@ -259,7 +261,7 @@ export default function LandingPage() {
                       <h3 className="text-lg font-semibold text-white">Currently Sailing</h3>
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                       {groupedCruises.current.map((cruise) => (
                         <CruiseCard key={cruise.id} cruise={cruise} />
                       ))}
@@ -275,7 +277,7 @@ export default function LandingPage() {
                       <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                       {groupedCruises.upcoming.map((cruise) => (
                         <CruiseCard key={cruise.id} cruise={cruise} />
                       ))}
@@ -291,7 +293,7 @@ export default function LandingPage() {
                       <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                       {groupedCruises.past.map((cruise) => (
                         <CruiseCard key={cruise.id} cruise={cruise} />
                       ))}
@@ -320,7 +322,7 @@ export default function LandingPage() {
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                   {filteredCruises.map((cruise) => (
                     <CruiseCard key={cruise.id} cruise={cruise} />
                   ))}
