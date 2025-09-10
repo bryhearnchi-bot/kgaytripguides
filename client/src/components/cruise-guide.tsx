@@ -436,11 +436,12 @@ interface TimelineListProps {
   onTalentClick: (name: string) => void;
   eventDate?: string;
   TALENT: any[];
+  PARTY_THEMES?: any[];
 }
 
 
 
-function TimelineList({ events, onTalentClick, eventDate, TALENT }: TimelineListProps) {
+function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES = [] }: TimelineListProps) {
   const sortedEvents = events.sort((a, b) => {
     // Special case: if this is Thursday and we have Neon Playground, put it last
     if (eventDate?.includes("Aug 28")) {
@@ -664,7 +665,7 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT }: TimelineList
   );
 }
 
-function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY }: { onTalentClick: (talent: Talent) => void; ITINERARY: any[]; CITY_ATTRACTIONS: any[]; DAILY: any[] }) {
+function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALENT }: { onTalentClick: (talent: Talent) => void; ITINERARY: any[]; CITY_ATTRACTIONS: any[]; DAILY: any[]; TALENT: any[] }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
@@ -885,6 +886,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY }: { o
                     onTalentClick={handleTalentClick}
                     eventDate={ITINERARY.find(i => i.key === selectedDay)?.date || ''}
                     TALENT={TALENT}
+                    PARTY_THEMES={PARTY_THEMES}
                   />
                 ) : (
                   <p className="text-gray-500 italic text-center py-8">No events scheduled for this day.</p>
@@ -1129,6 +1131,7 @@ function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY }: { onTalen
                   onTalentClick={handleTalentClick}
                   eventDate={itinerary?.date || ''}
                   TALENT={TALENT}
+                  PARTY_THEMES={PARTY_THEMES}
                 />
               ) : (
                 <p className="text-gray-500 italic">No entertainment scheduled for this day.</p>
@@ -1308,7 +1311,7 @@ function EntertainersTab({ onTalentClick, TALENT }: { onTalentClick: (talent: Ta
   );
 }
 
-function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; PARTY_THEMES: any[] }) {
+function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; PARTY_THEMES: any[]; ITINERARY: any[] }) {
   const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
@@ -1503,12 +1506,14 @@ function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_
           First Day Tips
         </h3>
         <ul className="space-y-3 text-gray-700">
-          {IMPORTANT_INFO.firstDayTips.map((tip, index) => (
+          {IMPORTANT_INFO?.firstDayTips?.map((tip, index) => (
             <li key={index} className="flex items-start gap-3">
               <span className="w-2 h-2 bg-coral rounded-full mt-2 flex-shrink-0"></span>
               <span className="text-sm leading-relaxed">{tip}</span>
             </li>
-          ))}
+          )) || (
+            <li className="text-gray-500 italic">First day tips loading...</li>
+          )}
         </ul>
       </Card>
 
@@ -1705,11 +1710,11 @@ function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_
             Departure Information
           </h3>
           <div className="space-y-3 text-gray-700">
-            <p><strong>Port:</strong> {CRUISE_INFO.departureInfo.port}</p>
-            <p><strong>Pier Opens:</strong> {CRUISE_INFO.departureInfo.pierOpens}</p>
-            <p><strong>Luggage Drop-off:</strong> {CRUISE_INFO.departureInfo.luggageDropOff}</p>
-            <p><strong>Sailaway Party:</strong> {CRUISE_INFO.departureInfo.sailawayParty}</p>
-            <p><strong>Latest Arrival:</strong> {CRUISE_INFO.departureInfo.latestArrival}</p>
+            <p><strong>Port:</strong> {CRUISE_INFO?.departureInfo?.port || 'Loading...'}</p>
+            <p><strong>Pier Opens:</strong> {CRUISE_INFO?.departureInfo?.pierOpens || 'Loading...'}</p>
+            <p><strong>Luggage Drop-off:</strong> {CRUISE_INFO?.departureInfo?.luggageDropOff || 'Loading...'}</p>
+            <p><strong>Sailaway Party:</strong> {CRUISE_INFO?.departureInfo?.sailawayParty || 'Loading...'}</p>
+            <p><strong>Latest Arrival:</strong> {CRUISE_INFO?.departureInfo?.latestArrival || 'Loading...'}</p>
           </div>
         </Card>
 
@@ -1729,10 +1734,10 @@ function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_
 
             <div>
               <p className="font-semibold text-gray-900 mb-2">Booking Information</p>
-              <p className="text-sm mb-1"><strong>Booking Opens:</strong> {IMPORTANT_INFO.entertainment.bookingStart}</p>
-              <p className="text-sm mb-1"><strong>Walk-ins:</strong> {IMPORTANT_INFO.entertainment.walkIns}</p>
-              <p className="text-sm mb-1"><strong>Standby Release:</strong> {IMPORTANT_INFO.entertainment.standbyRelease}</p>
-              <p className="text-sm"><strong>Rockstar Suites:</strong> {IMPORTANT_INFO.entertainment.rockstarSuites}</p>
+              <p className="text-sm mb-1"><strong>Booking Opens:</strong> {IMPORTANT_INFO?.entertainment?.bookingStart || 'Loading...'}</p>
+              <p className="text-sm mb-1"><strong>Walk-ins:</strong> {IMPORTANT_INFO?.entertainment?.walkIns || 'Loading...'}</p>
+              <p className="text-sm mb-1"><strong>Standby Release:</strong> {IMPORTANT_INFO?.entertainment?.standbyRelease || 'Loading...'}</p>
+              <p className="text-sm"><strong>Rockstar Suites:</strong> {IMPORTANT_INFO?.entertainment?.rockstarSuites || 'Loading...'}</p>
             </div>
           </div>
         </Card>
@@ -1750,8 +1755,8 @@ function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_
 
             <div>
               <p className="font-semibold text-gray-900 mb-2">Reservations & Walk-ins</p>
-              <p className="text-sm mb-1"><strong>Reservations:</strong> {IMPORTANT_INFO.dining.reservations}</p>
-              <p className="text-sm mb-1"><strong>Walk-ins:</strong> {IMPORTANT_INFO.dining.walkIns}</p>
+              <p className="text-sm mb-1"><strong>Reservations:</strong> {IMPORTANT_INFO?.dining?.reservations || 'Loading...'}</p>
+              <p className="text-sm mb-1"><strong>Walk-ins:</strong> {IMPORTANT_INFO?.dining?.walkIns || 'Loading...'}</p>
               <p className="text-sm text-gray-600 italic">Pro tip: Even "sold out" restaurants accept walk-ins - this just means no more reservations available</p>
             </div>
 
@@ -2166,7 +2171,7 @@ export default function CruiseGuide() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
           <TabsContent value="itinerary">
-            <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} />
+            <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="entertainment">
             <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} ITINERARY={ITINERARY} />
@@ -2175,7 +2180,7 @@ export default function CruiseGuide() {
             <EntertainersTab onTalentClick={setSelectedTalent} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="parties">
-            <PartiesTab onTalentClick={setSelectedTalent} DAILY={DAILY} PARTY_THEMES={PARTY_THEMES} />
+            <PartiesTab onTalentClick={setSelectedTalent} DAILY={DAILY} PARTY_THEMES={PARTY_THEMES} ITINERARY={ITINERARY} />
           </TabsContent>
           <TabsContent value="info" className="mt-4">
             <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} CRUISE_INFO={CRUISE_INFO} />
