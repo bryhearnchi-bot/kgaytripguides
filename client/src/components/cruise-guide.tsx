@@ -48,7 +48,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ITINERARY, DAILY, TALENT, PARTY_THEMES, CITY_ATTRACTIONS, type Talent, type DailyEvent, type CityAttraction, IMPORTANT_INFO, CRUISE_INFO } from "@/data/cruise-data";
+import type { Talent, DailyEvent, CityAttraction } from "@/data/cruise-data";
+import { useCruiseData, transformCruiseData } from "@/hooks/useCruiseData";
 
 
 
@@ -662,7 +663,7 @@ function TimelineList({ events, onTalentClick, eventDate }: TimelineListProps) {
   );
 }
 
-function ItineraryTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
+function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY }: { onTalentClick: (talent: Talent) => void; ITINERARY: any[]; CITY_ATTRACTIONS: any[]; DAILY: any[] }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
@@ -983,7 +984,7 @@ function ItineraryTab({ onTalentClick }: { onTalentClick: (talent: Talent) => vo
   );
 }
 
-function EntertainmentTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
+function EntertainmentTab({ onTalentClick, DAILY, TALENT }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; TALENT: any[] }) {
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
@@ -1181,7 +1182,7 @@ function EntertainmentTab({ onTalentClick }: { onTalentClick: (talent: Talent) =
   );
 }
 
-function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
+function EntertainersTab({ onTalentClick, TALENT }: { onTalentClick: (talent: Talent) => void; TALENT: any[] }) {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const categories = ["all", ...Array.from(new Set(TALENT.map(t => t.cat)))];
@@ -1304,7 +1305,7 @@ function EntertainersTab({ onTalentClick }: { onTalentClick: (talent: Talent) =>
   );
 }
 
-function PartiesTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void }) {
+function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; PARTY_THEMES: any[] }) {
   const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
@@ -1473,7 +1474,7 @@ function PartiesTab({ onTalentClick }: { onTalentClick: (talent: Talent) => void
   );
 }
 
-function InfoTab() {
+function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_INFO: any }) {
   return (
     <div className="space-y-8">
       {/* Disclaimer Banner */}
@@ -2007,6 +2008,21 @@ export default function CruiseGuide() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Fetch cruise data from the database
+  const { data: cruiseData, isLoading, error } = useCruiseData('greek-isles-2025');
+  
+  // Transform the data to match our existing format
+  const transformedData = cruiseData ? transformCruiseData(cruiseData) : null;
+  
+  // Extract the transformed data
+  const ITINERARY = transformedData?.ITINERARY || [];
+  const DAILY = transformedData?.DAILY || [];
+  const TALENT = transformedData?.TALENT || [];
+  const PARTY_THEMES = transformedData?.PARTY_THEMES || [];
+  const CITY_ATTRACTIONS = transformedData?.CITY_ATTRACTIONS || [];
+  const IMPORTANT_INFO = transformedData?.IMPORTANT_INFO || {};
+  const CRUISE_INFO = transformedData?.CRUISE_INFO || {};
+
   const handleManualRefresh = () => {
     setIsRefreshing(true);
     // In a real app, you would fetch fresh data here.
@@ -2014,32 +2030,58 @@ export default function CruiseGuide() {
     setTimeout(() => {
       setLastRefresh(new Date());
       setIsRefreshing(false);
-    }, 500); // Simulate a refresh action
+    }, 1000);
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastRefresh(new Date());
-    }, 3 * 60 * 60 * 1000); // Refresh every 3 hours
-
-    return () => clearInterval(interval);
-  }, []);
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 200);
+      setShowScrollTop(window.pageYOffset > 300);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-teal-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-xl">Loading your cruise guide...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-teal-800 flex items-center justify-center">
+        <div className="text-center text-white">
+          <Ship className="h-16 w-16 mx-auto mb-4 text-red-400" />
+          <h2 className="text-2xl font-bold mb-2">Unable to load cruise data</h2>
+          <p className="text-lg">Please try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!transformedData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-teal-800 flex items-center justify-center">
+        <div className="text-center text-white">
+          <Ship className="h-16 w-16 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold">No cruise data available</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
@@ -2121,19 +2163,19 @@ export default function CruiseGuide() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
           <TabsContent value="itinerary">
-            <ItineraryTab onTalentClick={setSelectedTalent} />
+            <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} />
           </TabsContent>
           <TabsContent value="entertainment">
-            <EntertainmentTab onTalentClick={setSelectedTalent} />
+            <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="talent">
-            <EntertainersTab onTalentClick={setSelectedTalent} />
+            <EntertainersTab onTalentClick={setSelectedTalent} TALENT={TALENT} />
           </TabsContent>
           <TabsContent value="parties">
-            <PartiesTab onTalentClick={setSelectedTalent} />
+            <PartiesTab onTalentClick={setSelectedTalent} DAILY={DAILY} PARTY_THEMES={PARTY_THEMES} />
           </TabsContent>
           <TabsContent value="info" className="mt-4">
-            <InfoTab />
+            <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} CRUISE_INFO={CRUISE_INFO} />
           </TabsContent>
         </main>
       </Tabs>
