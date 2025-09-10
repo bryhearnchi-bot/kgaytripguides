@@ -2173,7 +2173,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
 
         {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <main className="max-w-7xl mx-auto px-4 pt-52 pb-[2px]">
+        <main className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
           <TabsContent value="itinerary">
             <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} TALENT={TALENT} PARTY_THEMES={PARTY_THEMES} />
           </TabsContent>
