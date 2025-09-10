@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { storage } from "./storage";
+import { storage, db } from "./storage";
 import { AuthService, type AuthenticatedRequest } from "./auth";
 import { insertUserSchema, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -15,7 +15,7 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Find user by username
-      const userResults = await storage.db
+      const userResults = await db
         .select()
         .from(users)
         .where(eq(users.username, username))
@@ -43,7 +43,7 @@ export function registerAuthRoutes(app: Express) {
       const refreshToken = AuthService.generateRefreshToken(tokenPayload);
 
       // Update last login
-      await storage.db
+      await db
         .update(users)
         .set({ lastLogin: new Date() })
         .where(eq(users.id, user.id));
@@ -94,7 +94,7 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Verify user still exists and is active
-      const userResults = await storage.db
+      const userResults = await db
         .select()
         .from(users)
         .where(eq(users.id, payload.userId))
@@ -169,7 +169,7 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Get current user data
-      const userResults = await storage.db
+      const userResults = await db
         .select()
         .from(users)
         .where(eq(users.id, payload.userId))
@@ -205,13 +205,13 @@ export function registerAuthRoutes(app: Express) {
       if (token) {
         const payload = AuthService.verifyAccessToken(token);
         if (payload) {
-          const users = await storage.db
+          const userResults = await db
             .select()
-            .from(storage.users)
-            .where(eq(storage.users.id, payload.userId))
+            .from(users)
+            .where(eq(users.id, payload.userId))
             .limit(1);
           
-          const currentUser = users[0];
+          const currentUser = userResults[0];
           if (currentUser?.role !== 'super_admin') {
             return res.status(403).json({ error: 'Only super admins can create users' });
           }
@@ -224,8 +224,8 @@ export function registerAuthRoutes(app: Express) {
       const hashedPassword = await AuthService.hashPassword(userData.password);
       
       // Insert user
-      const newUsers = await storage.db
-        .insert(storage.users)
+      const newUsers = await db
+        .insert(users)
         .values({
           ...userData,
           password: hashedPassword,
