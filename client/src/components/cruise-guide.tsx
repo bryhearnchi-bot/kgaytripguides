@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
 import {
   ChevronDown, 
   ChevronUp, 
@@ -2109,45 +2110,32 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Header */}
-      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-50 bg-ocean-600 opacity-100">
+      <header className="cruise-gradient wave-pattern text-white fixed top-[72px] left-0 right-0 z-40 bg-ocean-600 opacity-100">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1"></div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-6 mb-2">
-                <img 
-                  src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-                  alt="Atlantis Events" 
-                  className="h-9 w-auto brightness-0 invert"
-                />
-                <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
-                  <img 
-                    src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" 
-                    alt="KGay Travel" 
-                    className="h-16 w-auto hover:opacity-80 transition-opacity"
-                  />
-                </a>
-              </div>
-              <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-                Greek Isles Cruise Guide
-              </h1>
-              <p className="text-white/80 text-base">August 21-31, 2025</p>
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-white/60 text-xs">
-                  Last updated: {lastRefresh.toLocaleTimeString()}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
-                  className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
+          <div className="text-center mb-4">
+            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
+              {cruiseData?.cruise.name || 'Cruise Guide'}
+            </h1>
+            <p className="text-white/80 text-base">
+              {cruiseData?.cruise.startDate && cruiseData?.cruise.endDate ? 
+                `${new Date(cruiseData.cruise.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${new Date(cruiseData.cruise.endDate).toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}` :
+                'Your cruise adventure awaits'
+              }
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <p className="text-white/60 text-xs">
+                Last updated: {lastRefresh.toLocaleTimeString()}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="text-white/80 hover:text-white hover:bg-white/10 p-1 h-auto"
+              >
+                <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
-            <div className="flex-1"></div>
           </div>
 
           {/* Navigation Tabs */}
@@ -2184,7 +2172,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
 
         {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
+        <main className="max-w-7xl mx-auto px-4 pt-[240px] pb-[25px]">
           <TabsContent value="itinerary">
             <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} TALENT={TALENT} PARTY_THEMES={PARTY_THEMES} />
           </TabsContent>
