@@ -670,31 +670,31 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
     const portImages = {
-      "Athens, Greece": "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200",
-      "Santorini, Greece": "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200", 
-      "Kuşadası, Turkey": "https://www.spotblue.com/app/uploads/2024/12/what-makes-Kusadasi-in-Turkey-special.jpg",
-      "Alexandria (Cairo), Egypt": "https://cdn.mos.cms.futurecdn.net/7YrobQvFFzw8aWsAUtoYXB.jpg",
-      "Mykonos, Greece": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLQ4RgqnUpFnFbrKJKdMYbH7-QjOyh0IrDNA&s",
-      "Iraklion, Crete": "https://www.oreotravel.com/blog/wp-content/uploads/2024/08/heraklion-old-town.jpg"
+      "Athens, Greece": "/images/ports/athens-greece.jpg",
+      "Santorini, Greece": "/images/ports/santorini-greece.jpg", 
+      "Kuşadası, Turkey": "/images/ports/kusadasi-turkey.jpg",
+      "Alexandria (Cairo), Egypt": "/images/ports/alexandria-egypt.jpg",
+      "Mykonos, Greece": "/images/ports/mykonos-greece.jpg",
+      "Iraklion, Crete": "/images/ports/iraklion-crete.jpg"
     };
 
     // Handle Istanbul's two different days
     if (port === "Istanbul, Turkey") {
       // First day (Aug 24) - Blue Mosque
       if (date === "Sun, Aug 24") {
-        return "https://cdn-imgix.headout.com/media/images/fd89223056e350ae524f6c6120198677-Bluemosqueistanbul.jpg?auto=format&w=1222.3999999999999&h=687.6&q=90&ar=16%3A9&crop=faces&fit=crop";
+        return "/images/ports/istanbul-turkey-day1.jpg";
       }
       // Second day (Aug 25) - Mosque panorama
-      return "https://www.airpano.ru/files/mosques-istanbul-turkey/images/image1.jpg";
+      return "/images/ports/istanbul-turkey-day2.jpg";
     }
 
     if (port === "Day at Sea") {
       // First sea day (Aug 26)
       if (date === "Tue, Aug 26") {
-        return "https://modularassets.cdn.ignitetravel.com/modular_multisite/wp-content/uploads/sites/2/2022/03/04123250/1110x625-2023-08-04T123142.700.png";
+        return "/images/ports/sea-day.jpg";
       }
       // Second sea day (Aug 28) - Virgin Resilient Lady
-      return "https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png?crop=1498,844,x0,y139&width=1498&height=749&format=pjpg&auto=webp";
+      return "/images/ports/sea-day.jpg";
     }
 
     // Handle Athens with special labels
@@ -745,7 +745,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
                         className="w-full h-48 lg:h-full object-cover"
                         onError={(e) => {
                           // Fallback to a default cruise ship image if the specific image fails
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=200";
+                          (e.target as HTMLImageElement).src = "/images/ports/sea-day.jpg";
                         }}
                       />
                     ) : (
