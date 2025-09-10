@@ -160,6 +160,26 @@ export function transformCruiseData(data: CruiseData) {
       date: "Sunday, August 31, 2025",
       time: "Beginning at 8:00 AM",
       location: "Barcelona, Spain"
+    },
+    firstDayTips: [
+      "Download the Virgin Voyages app before boarding - it's your key to everything onboard",
+      "Book dinner reservations and shows early - popular times fill up fast",
+      "Attend the mandatory safety drill at 4:00 PM - it's quick and required for all guests",
+      "Visit Sailor Services on Deck 5 for any questions or assistance",
+      "The Galley food court on Deck 15 is open for lunch when you board",
+      "Set up your onboard account at any bar or restaurant to start charging to your cabin",
+      "Join the Atlantis welcome reception at 5:30 PM in The Manor nightclub"
+    ],
+    entertainment: {
+      bookingStart: "Starting 10:00 AM on embarkation day",
+      walkIns: "Available 15 minutes before showtime if space permits",
+      standbyRelease: "10 minutes before showtime",
+      rockstarSuites: "Rockstar guests get priority booking and reserved seating"
+    },
+    dining: {
+      reservations: "Book via the Virgin Voyages app or at the restaurant host stand",
+      walkIns: "All restaurants accept walk-ins when space is available",
+      included: "All specialty restaurants are included in your cruise fare - no extra charges!"
     }
   };
 
@@ -182,7 +202,14 @@ export function transformCruiseData(data: CruiseData) {
       "Fitness center",
       "Running track",
       "Casino"
-    ]
+    ],
+    departureInfo: {
+      port: "Athens (Piraeus), Greece",
+      pierOpens: "2:00 PM",
+      luggageDropOff: "Available from 12:00 PM",
+      sailawayParty: "6:30 PM on Pool Deck",
+      latestArrival: "5:30 PM (ship departs at 7:00 PM)"
+    }
   };
 
   return {
