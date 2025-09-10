@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { dateOnly } from "@/lib/utils";
 import {
   ChevronDown, 
   ChevronUp, 
@@ -2118,7 +2119,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
             </h1>
             <p className="text-white/80 text-base">
               {cruiseData?.cruise.startDate && cruiseData?.cruise.endDate ? 
-                `${new Date(cruiseData.cruise.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${new Date(cruiseData.cruise.endDate).toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}` :
+                `${dateOnly(cruiseData.cruise.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${dateOnly(cruiseData.cruise.endDate).toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}` :
                 'Your cruise adventure awaits'
               }
             </p>
