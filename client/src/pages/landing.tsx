@@ -3,10 +3,11 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Ship, MapPin, Anchor, Clock, Calendar, History } from "lucide-react";
+import { CalendarDays, Ship, MapPin, Anchor, Clock, Calendar, History, Grid3X3 } from "lucide-react";
 import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import React from "react";
 
 interface Cruise {
   id: number;
@@ -106,7 +107,7 @@ function getCruiseStatus(startDate: string, endDate: string): 'upcoming' | 'curr
 }
 
 export default function LandingPage() {
-  const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
   
   const { data: cruises, isLoading, error } = useQuery<Cruise[]>({
     queryKey: ["cruises"],
@@ -125,6 +126,22 @@ export default function LandingPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
+
+  // Determine if there are current cruises
+  const hasCurrent = cruises?.some(cruise => cruise.status === 'current') || false;
+  const [hasSetDefault, setHasSetDefault] = useState(false);
+
+  // Set default filter when data loads
+  React.useEffect(() => {
+    if (cruises && !hasSetDefault) {
+      if (hasCurrent) {
+        setActiveFilter('current');
+      } else {
+        setActiveFilter('all');
+      }
+      setHasSetDefault(true);
+    }
+  }, [cruises, hasCurrent, hasSetDefault]);
 
   if (isLoading) {
     return (
@@ -156,7 +173,9 @@ export default function LandingPage() {
   }
 
   // Filter cruises based on active filter
-  const filteredCruises = cruises?.filter(cruise => cruise.status === activeFilter) || [];
+  const filteredCruises = cruises?.filter(cruise => 
+    activeFilter === 'all' ? true : cruise.status === activeFilter
+  ) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
@@ -178,17 +197,23 @@ export default function LandingPage() {
           </div>
           
           {/* Navigation Tabs */}
-          <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as 'upcoming' | 'current' | 'past')}>
+          <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as 'all' | 'upcoming' | 'current' | 'past')}>
             <div className="flex justify-center">
               <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
-                <TabsList className="grid grid-cols-3 w-full">
+                <TabsList className={`grid w-full ${hasCurrent ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                  <TabsTrigger value="all" className="flex items-center gap-2">
+                    <Grid3X3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">All</span>
+                  </TabsTrigger>
+                  {hasCurrent && (
+                    <TabsTrigger value="current" className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span className="hidden sm:inline">Current</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger value="upcoming" className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     <span className="hidden sm:inline">Upcoming</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="current" className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span className="hidden sm:inline">Current</span>
                   </TabsTrigger>
                   <TabsTrigger value="past" className="flex items-center gap-2">
                     <History className="w-4 h-4" />
@@ -208,16 +233,19 @@ export default function LandingPage() {
           <section>
             <div className="text-center mb-10">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                {activeFilter === 'all' && <Grid3X3 className="w-6 h-6 text-white" />}
                 {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white" />}
                 {activeFilter === 'current' && <Clock className="w-6 h-6 text-white" />}
                 {activeFilter === 'past' && <History className="w-6 h-6 text-white" />}
               </div>
               <h2 className="text-4xl font-bold text-white mb-4">
+                {activeFilter === 'all' && 'All Cruise Guides'}
                 {activeFilter === 'upcoming' && 'Upcoming Cruises'}
                 {activeFilter === 'current' && 'Current Cruises'}
                 {activeFilter === 'past' && 'Past Adventures'}
               </h2>
               <p className="text-lg text-white/80">
+                {activeFilter === 'all' && 'Explore all available cruise guides and experiences'}
                 {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
                 {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
                 {activeFilter === 'past' && 'Relive the memories and revisit your cruise guides'}
@@ -233,16 +261,19 @@ export default function LandingPage() {
         ) : (
           <div className="text-center py-20">
             <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-6">
+              {activeFilter === 'all' && <Grid3X3 className="h-8 w-8 text-white" />}
               {activeFilter === 'upcoming' && <Calendar className="h-8 w-8 text-white" />}
               {activeFilter === 'current' && <Clock className="h-8 w-8 text-white" />}
               {activeFilter === 'past' && <History className="h-8 w-8 text-white" />}
             </div>
             <h2 className="text-3xl font-bold text-white mb-4">
+              {activeFilter === 'all' && 'No Cruise Guides Available'}
               {activeFilter === 'upcoming' && 'No Upcoming Cruises'}
               {activeFilter === 'current' && 'No Current Cruises'}
               {activeFilter === 'past' && 'No Past Cruises'}
             </h2>
             <p className="text-white/80 text-lg">
+              {activeFilter === 'all' && 'No cruise guides are currently available'}
               {activeFilter === 'upcoming' && 'Check back soon for new cruise announcements!'}
               {activeFilter === 'current' && 'No cruises are currently sailing'}
               {activeFilter === 'past' && 'No past cruise guides available'}
