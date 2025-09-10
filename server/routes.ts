@@ -10,7 +10,7 @@ import {
 } from "./storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
 import { registerAuthRoutes } from "./auth-routes";
-import { db } from "./db";
+import { db } from "./storage";
 import { partyTemplates, cruiseInfoSections } from "../shared/schema";
 import { eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
