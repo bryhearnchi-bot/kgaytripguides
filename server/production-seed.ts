@@ -110,24 +110,35 @@ async function seedProduction() {
     const existingPorts = existingItinerary.map(i => `${i.date?.toISOString().split('T')[0]}-${i.portName}`);
     
     let newItineraryCount = 0;
-    for (const stop of ITINERARY) {
-      const [year, month, day] = stop.date.split('-').map(Number);
+    for (let index = 0; index < ITINERARY.length; index++) {
+      const stop = ITINERARY[index];
+      const [year, month, day] = stop.key.split('-').map(Number);
       const stopDate = new Date(year, month - 1, day);
       const stopKey = `${stopDate.toISOString().split('T')[0]}-${stop.port}`;
       
       if (!existingPorts.includes(stopKey)) {
-        console.log(`➕ Adding new itinerary stop: ${stop.port} on ${stop.date}`);
+        console.log(`➕ Adding new itinerary stop: ${stop.port} on ${stop.key}`);
+        
+        // Calculate day number based on index + 1
+        const dayNumber = index + 1;
+        
+        // Convert all aboard time from departure time (subtract 1 hour typically)
+        let allAboardTime = '';
+        if (stop.depart && stop.depart !== '—' && stop.depart !== 'Overnight') {
+          allAboardTime = stop.depart; // Simplified - use departure time as all aboard
+        }
+        
         await db.insert(itinerary).values({
           cruiseId: cruise.id,
           date: stopDate,
-          day: stop.day,
+          day: dayNumber,
           portName: stop.port,
-          country: stop.country || '',
-          arrivalTime: stop.arrival || '',
-          departureTime: stop.departure || '',
-          allAboardTime: stop.allAboard || '',
-          description: stop.description || '',
-          orderIndex: stop.day - 1
+          country: '', // We'll derive this from port name if needed
+          arrivalTime: stop.arrive === '—' ? '' : stop.arrive,
+          departureTime: stop.depart === '—' ? '' : stop.depart,
+          allAboardTime: allAboardTime,
+          description: stop.port.includes('Sea') ? 'Enjoy a relaxing day at sea with all the ship amenities and Atlantis activities.' : '',
+          orderIndex: index
         });
         newItineraryCount++;
       }
