@@ -10,7 +10,8 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx server/seed.ts",
-    "production:seed": "NODE_ENV=production tsx server/production-seed.ts"
+    "production:seed": "NODE_ENV=production tsx server/production-seed.ts",
+    "copy:mock-cruises": "NODE_ENV=production tsx server/copy-mock-cruises.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
