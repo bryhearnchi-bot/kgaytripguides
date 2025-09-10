@@ -136,28 +136,21 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Header */}
-      <header className="cruise-gradient wave-pattern text-white pt-[56px]">
-        <div className="max-w-7xl mx-auto px-4 py-12">
+      <header className="cruise-gradient wave-pattern text-white fixed top-[56px] left-0 right-0 z-40 bg-ocean-600 opacity-100">
+        <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-6 mb-6">
-              <img 
-                src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-                alt="Atlantis Events" 
-                className="h-12 w-auto brightness-0 invert"
-              />
-            </div>
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
+            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
               Atlantis Cruise Guides
             </h1>
-            <p className="text-white/80 text-xl max-w-3xl mx-auto">
-              Your complete guide to unforgettable cruise experiences with thousands of gay men from around the world
+            <p className="text-white/80 text-sm">
+              Your complete guide to unforgettable cruise experiences
             </p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 pt-[120px] pb-12">
         {/* Upcoming Cruises */}
         {upcomingCruises.length > 0 && (
           <section className="mb-16">
