@@ -177,6 +177,13 @@ export default function LandingPage() {
     activeFilter === 'all' ? true : cruise.status === activeFilter
   ) || [];
 
+  // Group cruises by status for "all" view
+  const groupedCruises = cruises ? {
+    current: cruises.filter(cruise => cruise.status === 'current'),
+    upcoming: cruises.filter(cruise => cruise.status === 'upcoming'),
+    past: cruises.filter(cruise => cruise.status === 'past')
+  } : { current: [], upcoming: [], past: [] };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Header */}
@@ -233,32 +240,99 @@ export default function LandingPage() {
         {/* Filtered Cruises */}
         {filteredCruises.length > 0 ? (
           <section>
-            <div className="text-center mb-10">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                {activeFilter === 'all' && <Grid3X3 className="w-6 h-6 text-white" />}
-                {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white" />}
-                {activeFilter === 'current' && <Clock className="w-6 h-6 text-white" />}
-                {activeFilter === 'past' && <History className="w-6 h-6 text-white" />}
+            {activeFilter === 'all' ? (
+              // Sectioned view for "All" filter
+              <div>
+                <div className="text-center mb-12">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Grid3X3 className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-4xl font-bold text-white mb-4">All Cruise Guides</h2>
+                  <p className="text-lg text-white/80">Explore all available cruise guides and experiences</p>
+                </div>
+
+                {/* Current Cruises Section */}
+                {groupedCruises.current.length > 0 && (
+                  <div className="mb-16">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-emerald-400 animate-pulse" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white">Currently Sailing</h3>
+                      <div className="flex-1 h-px bg-white/20"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {groupedCruises.current.map((cruise) => (
+                        <CruiseCard key={cruise.id} cruise={cruise} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upcoming Cruises Section */}
+                {groupedCruises.upcoming.length > 0 && (
+                  <div className="mb-16">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white">Upcoming Adventures</h3>
+                      <div className="flex-1 h-px bg-white/20"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {groupedCruises.upcoming.map((cruise) => (
+                        <CruiseCard key={cruise.id} cruise={cruise} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Past Cruises Section */}
+                {groupedCruises.past.length > 0 && (
+                  <div className="mb-16">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                        <History className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white">Past Adventures</h3>
+                      <div className="flex-1 h-px bg-white/20"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {groupedCruises.past.map((cruise) => (
+                        <CruiseCard key={cruise.id} cruise={cruise} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <h2 className="text-4xl font-bold text-white mb-4">
-                {activeFilter === 'all' && 'All Cruise Guides'}
-                {activeFilter === 'upcoming' && 'Upcoming Cruises'}
-                {activeFilter === 'current' && 'Current Cruises'}
-                {activeFilter === 'past' && 'Past Adventures'}
-              </h2>
-              <p className="text-lg text-white/80">
-                {activeFilter === 'all' && 'Explore all available cruise guides and experiences'}
-                {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
-                {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
-                {activeFilter === 'past' && 'Relive the memories and revisit your cruise guides'}
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredCruises.map((cruise) => (
-                <CruiseCard key={cruise.id} cruise={cruise} />
-              ))}
-            </div>
+            ) : (
+              // Single section view for specific filters
+              <div>
+                <div className="text-center mb-10">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white" />}
+                    {activeFilter === 'current' && <Clock className="w-6 h-6 text-white" />}
+                    {activeFilter === 'past' && <History className="w-6 h-6 text-white" />}
+                  </div>
+                  <h2 className="text-4xl font-bold text-white mb-4">
+                    {activeFilter === 'upcoming' && 'Upcoming Cruises'}
+                    {activeFilter === 'current' && 'Current Cruises'}
+                    {activeFilter === 'past' && 'Past Adventures'}
+                  </h2>
+                  <p className="text-lg text-white/80">
+                    {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
+                    {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
+                    {activeFilter === 'past' && 'Relive the memories and revisit your cruise guides'}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredCruises.map((cruise) => (
+                    <CruiseCard key={cruise.id} cruise={cruise} />
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         ) : (
           <div className="text-center py-20">
