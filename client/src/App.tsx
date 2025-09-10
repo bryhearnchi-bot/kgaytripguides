@@ -24,7 +24,7 @@ function Router() {
       <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/cruises" component={() => <ProtectedRoute><CruisesManagement /></ProtectedRoute>} />
       <Route path="/admin/cruises/new" component={() => <ProtectedRoute><CruiseForm isEditing={false} /></ProtectedRoute>} />
-      <Route path="/admin/cruises/:id/edit" component={({ params }) => <ProtectedRoute><CruiseForm cruiseId={parseInt(params.id)} isEditing={true} /></ProtectedRoute>} />
+      <Route path="/admin/cruises/:id/edit" component={() => <ProtectedRoute><CruiseForm isEditing={true} /></ProtectedRoute>} />
       <Route path="/admin/cruises/unified/new" component={() => <ProtectedRoute><UnifiedCruiseEditor /></ProtectedRoute>} />
       <Route path="/admin/cruises/:id/unified" component={({ params }) => <ProtectedRoute><UnifiedCruiseEditor cruiseId={parseInt(params.id)} /></ProtectedRoute>} />
       <Route path="/admin" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
