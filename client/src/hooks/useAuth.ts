@@ -76,13 +76,15 @@ export function useAuth() {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setAuthState({
         user: data.user,
         isAuthenticated: true,
         isLoading: false,
       });
       queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Also refresh auth status to ensure cookies are working
+      await checkAuthStatus();
     },
   });
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -12,18 +12,22 @@ export default function AdminLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [, setLocation] = useLocation();
-  const { login, isLoginLoading, loginError, isAuthenticated } = useAuth();
+  const { login, isLoginLoading, loginError, isAuthenticated, refresh } = useAuth();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    setLocation('/admin/dashboard');
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      setLocation('/admin/dashboard');
+    }
+  }, [isAuthenticated, setLocation]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login({ username, password }, {
-      onSuccess: () => {
-        setLocation('/admin/dashboard');
+      onSuccess: async () => {
+        // Refresh auth status to ensure state is updated
+        await refresh();
+        // Redirect will happen via useEffect when isAuthenticated becomes true
       }
     });
   };
