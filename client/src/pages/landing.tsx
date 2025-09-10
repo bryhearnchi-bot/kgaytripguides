@@ -134,7 +134,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Header */}
-      <header className="cruise-gradient wave-pattern text-white pt-[72px]">
+      <header className="cruise-gradient wave-pattern text-white pt-[56px]">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center">
             <div className="flex items-center justify-center gap-6 mb-6">
