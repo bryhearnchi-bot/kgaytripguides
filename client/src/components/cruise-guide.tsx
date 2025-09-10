@@ -665,7 +665,7 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES =
   );
 }
 
-function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALENT }: { onTalentClick: (talent: Talent) => void; ITINERARY: any[]; CITY_ATTRACTIONS: any[]; DAILY: any[]; TALENT: any[] }) {
+function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALENT, PARTY_THEMES }: { onTalentClick: (talent: Talent) => void; ITINERARY: any[]; CITY_ATTRACTIONS: any[]; DAILY: any[]; TALENT: any[]; PARTY_THEMES: any[] }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
@@ -1858,7 +1858,7 @@ function InfoTab({ IMPORTANT_INFO, CRUISE_INFO }: { IMPORTANT_INFO: any; CRUISE_
   );
 }
 
-function TalentModal({ talent, isOpen, onClose }: { talent: Talent | null; isOpen: boolean; onClose: () => void }) {
+function TalentModal({ talent, isOpen, onClose, DAILY }: { talent: Talent | null; isOpen: boolean; onClose: () => void; DAILY: any[] }) {
   const appearances = useMemo(() => {
     if (!talent) return [];
 
@@ -2171,7 +2171,7 @@ export default function CruiseGuide() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <main className="max-w-7xl mx-auto px-4 pt-[25px] pb-[25px]">
           <TabsContent value="itinerary">
-            <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} TALENT={TALENT} />
+            <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} TALENT={TALENT} PARTY_THEMES={PARTY_THEMES} />
           </TabsContent>
           <TabsContent value="entertainment">
             <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} ITINERARY={ITINERARY} PARTY_THEMES={PARTY_THEMES} />
@@ -2214,6 +2214,7 @@ export default function CruiseGuide() {
           talent={selectedTalent}
           isOpen={!!selectedTalent}
           onClose={() => setSelectedTalent(null)}
+          DAILY={DAILY}
         />
 
         {/* Scroll to Top Button */}
