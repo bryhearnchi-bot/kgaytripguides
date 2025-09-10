@@ -189,7 +189,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-40 bg-ocean-600 opacity-100 pt-[15px] pb-[24px]">
         <div className="max-w-7xl mx-auto px-4 py-1">
-          <div className="relative text-center mb-4">
+          <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
               Atlantis Cruise / Events Guides
             </h1>
@@ -200,13 +200,6 @@ export default function LandingPage() {
               <p className="text-white/60 text-xs">
                 Thousands of gay men from around the world
               </p>
-            </div>
-            {/* Filter Icon on Right */}
-            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center">
-              {activeFilter === 'all' && <Grid3X3 className="w-6 h-6 text-white/70" />}
-              {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
-              {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white/70" />}
-              {activeFilter === 'past' && <History className="w-6 h-6 text-white/70" />}
             </div>
           </div>
           
@@ -251,7 +244,10 @@ export default function LandingPage() {
               // Sectioned view for "All" filter
               <div>
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-semibold text-white mb-2">All Cruise Guides</h2>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <Grid3X3 className="w-6 h-6 text-white/70" />
+                    <h2 className="text-2xl font-semibold text-white">All Cruise Guides</h2>
+                  </div>
                   <p className="text-sm text-white/70">Explore all available cruise guides and experiences</p>
                 </div>
 
@@ -307,11 +303,16 @@ export default function LandingPage() {
               // Single section view for specific filters
               <div>
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-semibold text-white mb-2">
-                    {activeFilter === 'upcoming' && 'Upcoming Cruises'}
-                    {activeFilter === 'current' && 'Current Cruises'}
-                    {activeFilter === 'past' && 'Past Adventures'}
-                  </h2>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white/70" />}
+                    {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
+                    {activeFilter === 'past' && <History className="w-6 h-6 text-white/70" />}
+                    <h2 className="text-2xl font-semibold text-white">
+                      {activeFilter === 'upcoming' && 'Upcoming Cruises'}
+                      {activeFilter === 'current' && 'Current Cruises'}
+                      {activeFilter === 'past' && 'Past Adventures'}
+                    </h2>
+                  </div>
                   <p className="text-sm text-white/70">
                     {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
                     {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
