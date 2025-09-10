@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { getCruiseSlug } from '../data/data-service';
 
 export interface CruiseData {
   cruise: {
@@ -234,7 +235,7 @@ function formatDate(date: Date): string {
   return `${dayName}, ${monthName} ${dayNum}`;
 }
 
-export function useCruiseData(slug: string = 'greek-isles-2025') {
+export function useCruiseData(slug: string = getCruiseSlug()) {
   return useQuery<CruiseData>({
     queryKey: ['cruise', slug],
     queryFn: async () => {
