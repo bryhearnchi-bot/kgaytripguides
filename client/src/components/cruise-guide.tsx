@@ -2192,7 +2192,7 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
       </Tabs>
 
         {/* Footer */}
-        <footer className="atlantis-gradient wave-pattern text-white py-8 mt-16">
+        <footer className="atlantis-gradient wave-pattern text-white py-4 mt-16">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <div className="flex items-center justify-center mb-4">
               <img 
