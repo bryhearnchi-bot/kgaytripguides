@@ -435,11 +435,12 @@ interface TimelineListProps {
   events: DailyEvent[];
   onTalentClick: (name: string) => void;
   eventDate?: string;
+  TALENT: any[];
 }
 
 
 
-function TimelineList({ events, onTalentClick, eventDate }: TimelineListProps) {
+function TimelineList({ events, onTalentClick, eventDate, TALENT }: TimelineListProps) {
   const sortedEvents = events.sort((a, b) => {
     // Special case: if this is Thursday and we have Neon Playground, put it last
     if (eventDate?.includes("Aug 28")) {
@@ -984,7 +985,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY }: { o
   );
 }
 
-function EntertainmentTab({ onTalentClick, DAILY, TALENT }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; TALENT: any[] }) {
+function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; TALENT: any[]; ITINERARY: any[] }) {
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
@@ -2166,7 +2167,7 @@ export default function CruiseGuide() {
             <ItineraryTab onTalentClick={setSelectedTalent} ITINERARY={ITINERARY} CITY_ATTRACTIONS={CITY_ATTRACTIONS} DAILY={DAILY} />
           </TabsContent>
           <TabsContent value="entertainment">
-            <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} />
+            <EntertainmentTab onTalentClick={setSelectedTalent} DAILY={DAILY} TALENT={TALENT} ITINERARY={ITINERARY} />
           </TabsContent>
           <TabsContent value="talent">
             <EntertainersTab onTalentClick={setSelectedTalent} TALENT={TALENT} />
