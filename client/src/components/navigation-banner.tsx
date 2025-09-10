@@ -1,4 +1,6 @@
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
 
 export default function NavigationBanner() {
   return (
@@ -19,6 +21,19 @@ export default function NavigationBanner() {
               className="h-8 w-auto hover:opacity-80 transition-opacity"
             />
           </a>
+        </div>
+        
+        <div className="flex items-center">
+          <Link href="/admin/login">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-white border-white hover:bg-white hover:text-ocean-900 transition-colors"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Admin
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
