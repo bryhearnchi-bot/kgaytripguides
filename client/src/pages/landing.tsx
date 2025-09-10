@@ -236,7 +236,7 @@ export default function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 pt-[120px] pb-[24px]">
+      <div className="max-w-7xl mx-auto px-4 pt-[24px] pb-[24px]">
         {/* Filtered Cruises */}
         {filteredCruises.length > 0 ? (
           <section>
