@@ -8,6 +8,8 @@ import LandingPage from "@/pages/landing";
 import CruisePage from "@/pages/cruise";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
+import CruisesManagement from "@/pages/admin/cruises";
+import CruiseForm from "@/pages/admin/cruise-form";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +19,9 @@ function Router() {
       <Route path="/cruise/:slug" component={CruisePage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/cruises" component={CruisesManagement} />
+      <Route path="/admin/cruises/new" component={() => <CruiseForm isEditing={false} />} />
+      <Route path="/admin/cruises/:id/edit" component={() => <CruiseForm isEditing={true} />} />
       <Route path="/admin" component={() => <AdminDashboard />} />
       <Route component={NotFound} />
     </Switch>
