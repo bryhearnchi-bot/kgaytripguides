@@ -206,9 +206,11 @@ export default function LandingPage() {
                     <span className="hidden sm:inline">All</span>
                   </TabsTrigger>
                   {hasCurrent && (
-                    <TabsTrigger value="current" className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span className="hidden sm:inline">Current</span>
+                    <TabsTrigger value="current" className="flex items-center gap-2 relative bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-400/30 shadow-lg">
+                      <Clock className="w-4 h-4 animate-pulse text-emerald-600" />
+                      <span className="hidden sm:inline font-semibold text-emerald-700">Current</span>
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full"></div>
                     </TabsTrigger>
                   )}
                   <TabsTrigger value="upcoming" className="flex items-center gap-2">
