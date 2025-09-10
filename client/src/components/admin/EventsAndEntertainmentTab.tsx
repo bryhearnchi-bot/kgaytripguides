@@ -14,6 +14,7 @@ import {
   Clock
 } from 'lucide-react';
 import PartyTemplatesManager from './PartyTemplatesManager';
+import ArtistDatabaseManager from './ArtistDatabaseManager';
 
 interface EventsAndEntertainmentTabProps {
   cruise?: any;
@@ -28,6 +29,7 @@ export default function EventsAndEntertainmentTab({
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [showPartyTemplates, setShowPartyTemplates] = useState(false);
+  const [showArtistDatabase, setShowArtistDatabase] = useState(false);
 
   const eventTypes = [
     { type: 'party', icon: PartyPopper, label: 'Party', color: 'bg-pink-100 text-pink-800' },
@@ -45,10 +47,49 @@ export default function EventsAndEntertainmentTab({
           <p className="text-gray-600">Manage parties, shows, and entertainment lineup</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm">
-            <Users className="w-4 h-4 mr-2" />
-            Browse Artists
-          </Button>
+          <Dialog open={showArtistDatabase} onOpenChange={setShowArtistDatabase}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Users className="w-4 h-4 mr-2" />
+                Browse Artists
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Select Artist for Cruise</DialogTitle>
+              </DialogHeader>
+              <ArtistDatabaseManager 
+                showSelectMode={true}
+                onSelectArtist={async (artist) => {
+                  if (!cruise?.id) {
+                    alert('Please save the cruise first before adding artists');
+                    return;
+                  }
+                  
+                  try {
+                    const response = await fetch(`/api/cruises/${cruise.id}/talent/${artist.id}`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ role: 'performer' }),
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Failed to associate artist with cruise');
+                    }
+
+                    alert(`Successfully added ${artist.name} to the cruise lineup!`);
+                    setShowArtistDatabase(false);
+                    onDataChange();
+                  } catch (error) {
+                    console.error('Error associating artist:', error);
+                    alert('Failed to add artist to cruise. Please try again.');
+                  }
+                }}
+              />
+            </DialogContent>
+          </Dialog>
           <Dialog open={showPartyTemplates} onOpenChange={setShowPartyTemplates}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -142,16 +183,44 @@ export default function EventsAndEntertainmentTab({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Search className="w-4 h-4 mr-2" />
-                Search Artists
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Artist
-              </Button>
+              <Dialog open={showArtistDatabase} onOpenChange={setShowArtistDatabase}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Search className="w-4 h-4 mr-2" />
+                    Search Artists
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Select Artist for Event</DialogTitle>
+                  </DialogHeader>
+                  <ArtistDatabaseManager 
+                    showSelectMode={true}
+                    onSelectArtist={(artist) => {
+                      console.log('Selected artist:', artist);
+                      // TODO: Associate artist with current cruise/event
+                      setShowArtistDatabase(false);
+                      onDataChange();
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Artist
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Artist Database</DialogTitle>
+                  </DialogHeader>
+                  <ArtistDatabaseManager />
+                </DialogContent>
+              </Dialog>
               <div className="text-xs text-gray-500 pt-2">
-                0 artists in database
+                Reusable performer database
               </div>
             </CardContent>
           </Card>

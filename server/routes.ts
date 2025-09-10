@@ -247,10 +247,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ TALENT ROUTES ============
   
-  // Get all talent
+  // Get all talent with search and filtering
   app.get("/api/talent", async (req, res) => {
     try {
-      const talent = await talentStorage.getAllTalent();
+      const search = req.query.search as string;
+      const performanceType = req.query.type as string;
+      
+      // Use enhanced talent storage with search and filtering
+      const talent = await talentStorage.searchTalent(search, performanceType);
       res.json(talent);
     } catch (error) {
       console.error('Error fetching talent:', error);
@@ -322,12 +326,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assign talent to cruise (protected route)
   app.post("/api/cruises/:cruiseId/talent/:talentId", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      await talentStorage.assignTalentToCruise(
-        parseInt(req.params.cruiseId),
-        parseInt(req.params.talentId),
-        req.body.role
-      );
-      res.status(201).json({ message: 'Talent assigned to cruise' });
+      const cruiseId = parseInt(req.params.cruiseId);
+      const talentId = parseInt(req.params.talentId);
+      const { role } = req.body;
+      
+      if (isNaN(cruiseId) || isNaN(talentId)) {
+        return res.status(400).json({ error: 'Invalid cruise ID or talent ID' });
+      }
+
+      await talentStorage.assignTalentToCruise(cruiseId, talentId, role);
+      res.status(201).json({ message: 'Talent assigned to cruise successfully' });
     } catch (error) {
       console.error('Error assigning talent:', error);
       res.status(500).json({ error: 'Failed to assign talent' });
@@ -337,10 +345,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove talent from cruise (protected route)
   app.delete("/api/cruises/:cruiseId/talent/:talentId", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      await talentStorage.removeTalentFromCruise(
-        parseInt(req.params.cruiseId),
-        parseInt(req.params.talentId)
-      );
+      const cruiseId = parseInt(req.params.cruiseId);
+      const talentId = parseInt(req.params.talentId);
+      
+      if (isNaN(cruiseId) || isNaN(talentId)) {
+        return res.status(400).json({ error: 'Invalid cruise ID or talent ID' });
+      }
+
+      await talentStorage.removeTalentFromCruise(cruiseId, talentId);
       res.status(204).send();
     } catch (error) {
       console.error('Error removing talent:', error);

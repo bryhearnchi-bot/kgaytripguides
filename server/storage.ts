@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, desc, asc } from 'drizzle-orm';
+import { eq, and, desc, asc, ilike, or } from 'drizzle-orm';
 import * as schema from '../shared/schema';
 import type { 
   User, 
@@ -209,6 +209,7 @@ export interface ITalentStorage {
   getAllTalent(): Promise<Talent[]>;
   getTalentById(id: number): Promise<Talent | undefined>;
   getTalentByCruise(cruiseId: number): Promise<Talent[]>;
+  searchTalent(search?: string, performanceType?: string): Promise<Talent[]>;
   createTalent(talent: Omit<Talent, 'id' | 'createdAt' | 'updatedAt'>): Promise<Talent>;
   updateTalent(id: number, talent: Partial<Talent>): Promise<Talent | undefined>;
   deleteTalent(id: number): Promise<void>;
@@ -233,6 +234,33 @@ export class TalentStorage implements ITalentStorage {
       .where(eq(cruiseTalent.cruiseId, cruiseId))
       .orderBy(asc(talent.name));
     return result.map(r => r.talent);
+  }
+
+  async searchTalent(search?: string, performanceType?: string): Promise<Talent[]> {
+    const conditions = [];
+
+    // Add search conditions
+    if (search) {
+      conditions.push(
+        or(
+          ilike(talent.name, `%${search}%`),
+          ilike(talent.bio, `%${search}%`),
+          ilike(talent.knownFor, `%${search}%`)
+        )
+      );
+    }
+
+    // Add performance type filter (using category field)
+    if (performanceType) {
+      conditions.push(eq(talent.category, performanceType));
+    }
+
+    // Build the query with optional conditions
+    const query = conditions.length > 0 
+      ? db.select().from(talent).where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      : db.select().from(talent);
+
+    return await query.orderBy(asc(talent.name));
   }
 
   async createTalent(talentData: Omit<Talent, 'id' | 'createdAt' | 'updatedAt'>): Promise<Talent> {
