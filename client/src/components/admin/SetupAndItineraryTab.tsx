@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { 
   Plus, 
   Edit3, 
@@ -20,6 +29,7 @@ import {
   Ship
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 const setupSchema = z.object({
   name: z.string().min(1, 'Cruise name is required'),
@@ -64,6 +74,8 @@ export default function SetupAndItineraryTab({
 }: SetupAndItineraryTabProps) {
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
   const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -76,6 +88,120 @@ export default function SetupAndItineraryTab({
     resolver: zodResolver(setupSchema),
     defaultValues: {
       status: 'upcoming',
+    },
+  });
+
+  // Fetch existing itinerary data
+  const { data: existingItinerary, isLoading: itineraryLoading } = useQuery({
+    queryKey: ['itinerary', cruise?.id],
+    queryFn: async () => {
+      if (!cruise?.id) return [];
+      const response = await fetch(`/api/cruises/${cruise.id}/itinerary`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch itinerary');
+      return response.json();
+    },
+    enabled: !!cruise?.id && isEditing,
+  });
+
+  // Load existing itinerary data
+  useEffect(() => {
+    if (existingItinerary) {
+      const mappedDays = existingItinerary.map((day: any) => ({
+        id: day.id,
+        date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
+        day: day.day,
+        portName: day.portName || '',
+        country: day.country || '',
+        arrivalTime: day.arrivalTime || '',
+        departureTime: day.departureTime || '',
+        allAboardTime: day.allAboardTime || '',
+        segment: day.segment || 'main',
+        description: day.description || '',
+        orderIndex: day.orderIndex || 0,
+      }));
+      setItineraryDays(mappedDays);
+    }
+  }, [existingItinerary]);
+
+  // Create itinerary day mutation
+  const createItineraryMutation = useMutation({
+    mutationFn: async (dayData: ItineraryDay) => {
+      if (!cruise?.id) throw new Error('No cruise ID');
+      const response = await fetch(`/api/cruises/${cruise.id}/itinerary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...dayData,
+          date: dayData.date ? new Date(dayData.date).toISOString() : null,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to create itinerary day');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['itinerary', cruise?.id] });
+      toast({ title: 'Success', description: 'Itinerary day added successfully' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to add itinerary day. Please try again.',
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  // Update itinerary day mutation
+  const updateItineraryMutation = useMutation({
+    mutationFn: async (dayData: ItineraryDay) => {
+      if (!dayData.id) throw new Error('No day ID');
+      const response = await fetch(`/api/itinerary/${dayData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...dayData,
+          date: dayData.date ? new Date(dayData.date).toISOString() : null,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to update itinerary day');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['itinerary', cruise?.id] });
+      toast({ title: 'Success', description: 'Itinerary day updated successfully' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to update itinerary day. Please try again.',
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  // Delete itinerary day mutation
+  const deleteItineraryMutation = useMutation({
+    mutationFn: async (dayId: number) => {
+      const response = await fetch(`/api/itinerary/${dayId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to delete itinerary day');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['itinerary', cruise?.id] });
+      toast({ title: 'Success', description: 'Itinerary day deleted successfully' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to delete itinerary day. Please try again.',
+        variant: 'destructive' 
+      });
     },
   });
 
@@ -144,21 +270,21 @@ export default function SetupAndItineraryTab({
 
   const saveItineraryDay = (day: ItineraryDay) => {
     if (day.id) {
-      // Update existing
-      setItineraryDays(prev => 
-        prev.map(d => d.id === day.id ? day : d)
-      );
+      // Update existing day via API
+      updateItineraryMutation.mutate(day);
     } else {
-      // Add new
-      setItineraryDays(prev => [...prev, { ...day, id: Date.now() }]);
+      // Add new day via API
+      createItineraryMutation.mutate(day);
     }
     setEditingDay(null);
     onDataChange();
   };
 
   const deleteItineraryDay = (id: number) => {
-    setItineraryDays(prev => prev.filter(d => d.id !== id));
-    onDataChange();
+    if (confirm('Are you sure you want to delete this itinerary day?')) {
+      deleteItineraryMutation.mutate(id);
+      onDataChange();
+    }
   };
 
   const getSegmentBadge = (segment: string) => {
@@ -413,6 +539,162 @@ export default function SetupAndItineraryTab({
           </CardContent>
         </Card>
       </div>
+
+      {/* Itinerary Day Edit Modal */}
+      <Dialog open={editingDay !== null} onOpenChange={() => setEditingDay(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingDay?.id ? 'Edit Itinerary Day' : 'Add New Itinerary Day'}
+            </DialogTitle>
+            <DialogDescription>
+              Configure the details for this day of the cruise.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingDay && <ItineraryDayForm
+            day={editingDay}
+            onSave={saveItineraryDay}
+            onCancel={() => setEditingDay(null)}
+            isLoading={createItineraryMutation.isPending || updateItineraryMutation.isPending}
+          />}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+// Itinerary Day Form Component
+function ItineraryDayForm({ 
+  day, 
+  onSave, 
+  onCancel, 
+  isLoading 
+}: {
+  day: ItineraryDay;
+  onSave: (day: ItineraryDay) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+}) {
+  const [formData, setFormData] = useState(day);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="day">Day Number</Label>
+          <Input
+            id="day"
+            type="number"
+            value={formData.day}
+            onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value) || 1 })}
+            min="1"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="date">Date</Label>
+          <Input
+            id="date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="portName">Port Name</Label>
+        <Input
+          id="portName"
+          value={formData.portName}
+          onChange={(e) => setFormData({ ...formData, portName: e.target.value })}
+          placeholder="e.g. Mykonos, Greece"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="country">Country</Label>
+        <Input
+          id="country"
+          value={formData.country || ''}
+          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+          placeholder="e.g. Greece"
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="arrivalTime">Arrival Time</Label>
+          <Input
+            id="arrivalTime"
+            value={formData.arrivalTime || ''}
+            onChange={(e) => setFormData({ ...formData, arrivalTime: e.target.value })}
+            placeholder="08:00"
+          />
+        </div>
+        <div>
+          <Label htmlFor="departureTime">Departure Time</Label>
+          <Input
+            id="departureTime"
+            value={formData.departureTime || ''}
+            onChange={(e) => setFormData({ ...formData, departureTime: e.target.value })}
+            placeholder="18:00"
+          />
+        </div>
+        <div>
+          <Label htmlFor="allAboardTime">All Aboard</Label>
+          <Input
+            id="allAboardTime"
+            value={formData.allAboardTime || ''}
+            onChange={(e) => setFormData({ ...formData, allAboardTime: e.target.value })}
+            placeholder="17:30"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="segment">Segment</Label>
+        <Select 
+          value={formData.segment} 
+          onValueChange={(value) => setFormData({ ...formData, segment: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pre">Pre-Cruise</SelectItem>
+            <SelectItem value="main">Main Cruise</SelectItem>
+            <SelectItem value="post">Post-Cruise</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Brief description of activities or highlights"
+          rows={2}
+        />
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Day'}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }
