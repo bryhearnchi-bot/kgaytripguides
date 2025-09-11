@@ -10,7 +10,7 @@ export default function TimeFormatToggle() {
       variant="outline"
       size="sm"
       onClick={toggleTimeFormat}
-      className="flex items-center space-x-2 text-white border-white hover:bg-white hover:text-ocean-900 transition-colors"
+      className="flex items-center space-x-2 !text-white !border-white !bg-transparent hover:!bg-white hover:!text-ocean-900 transition-colors"
       title={`Switch to ${timeFormat === '12h' ? '24-hour' : '12-hour'} format`}
     >
       <Clock className="w-4 h-4" />
