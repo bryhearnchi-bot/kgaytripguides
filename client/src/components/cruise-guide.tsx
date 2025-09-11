@@ -52,6 +52,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Talent, DailyEvent, CityAttraction } from "@/data/cruise-data";
 import { useCruiseData, transformCruiseData } from "@/hooks/useCruiseData";
+import { useTimeFormat } from '@/contexts/TimeFormatContext';
+import { formatTime as globalFormatTime, formatAllAboard as globalFormatAllAboard } from '@/lib/timeFormat';
 
 
 
@@ -103,42 +105,7 @@ function parseTime(timeStr: string): { h: number; m: number } | null {
   return null;
 }
 
-function formatTime(timeStr: string, mode: "12h" | "24h"): string {
-  const parsed = parseTime(timeStr);
-  if (!parsed) return timeStr;
-
-  const { h, m } = parsed;
-  const mm = String(m).padStart(2, "0");
-
-  if (mode === "24h") {
-    const hh = String(h).padStart(2, "0");
-    return `${hh}:${mm}`;
-  } else {
-    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    const period = h >= 12 ? "PM" : "AM";
-    return `${h12}:${mm} ${period}`;
-  }
-}
-
-function formatAllAboard(departTime: string, mode: "12h" | "24h"): string {
-  const parsed = parseTime(departTime);
-  if (!parsed) return departTime;
-
-  let { h, m } = parsed;
-  h = h - 1;
-  if (h < 0) h = 23;
-
-  const mm = String(m).padStart(2, "0");
-
-  if (mode === "24h") {
-    const hh = String(h).padStart(2, "0");
-    return `${hh}:${mm}`;
-  } else {
-    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    const period = h >= 12 ? "PM" : "AM";
-    return `${h12}:${mm} ${period}`;
-  }
-}
+// Remove these local functions as they're now imported from global utilities
 
 function isDateInPast(dateKey: string): boolean {
   const today = new Date();
@@ -430,6 +397,7 @@ interface TimelineListProps {
 
 
 function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES = [] }: TimelineListProps) {
+  const { timeFormat } = useTimeFormat();
   const sortedEvents = events.sort((a, b) => {
     // Special case: if this is Thursday and we have Neon Playground, put it last
     if (eventDate?.includes("Aug 28")) {
@@ -592,7 +560,7 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES =
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-ocean-700">
                       <Clock className="h-4 w-4" />
-                      <span className="text-sm font-medium">{formatTime(event.time, "24h")}</span>
+                      <span className="text-sm font-medium">{globalFormatTime(event.time, timeFormat)}</span>
                       {event.type === 'party' && (
                         <div className="ml-2 text-coral">
                           {getPartyIcon(event.title)}
@@ -654,6 +622,7 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES =
 }
 
 function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALENT, PARTY_THEMES }: { onTalentClick: (talent: Talent) => void; ITINERARY: any[]; CITY_ATTRACTIONS: any[]; DAILY: any[]; TALENT: any[]; PARTY_THEMES: any[] }) {
+  const { timeFormat } = useTimeFormat();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
   const getPortImage = (port: string, date: string) => {
@@ -762,13 +731,13 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
                         <div className="text-center">
                           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Arrive</p>
                           <p className="text-lg font-bold text-gray-900 mt-1">
-                            {formatTime(stop.arrive, "24h")}
+                            {globalFormatTime(stop.arrive, timeFormat)}
                           </p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Depart</p>
                           <p className="text-lg font-bold text-gray-900 mt-1">
-                            {formatTime(stop.depart, "24h")}
+                            {globalFormatTime(stop.depart, timeFormat)}
                           </p>
                         </div>
                       </div>
@@ -779,7 +748,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
                           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                             <p className="text-xs text-amber-800 uppercase tracking-wide font-medium">All Aboard</p>
                             <p className="text-sm font-bold text-amber-900 mt-1">
-                              {formatAllAboard(stop.depart, "24h")}
+                              {globalFormatAllAboard(stop.depart, timeFormat)}
                             </p>
                             {stop.port.includes("Santorini") && (
                               <p className="text-xs text-amber-700 mt-1 font-medium">
@@ -988,6 +957,7 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
 }
 
 function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY, PARTY_THEMES }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; TALENT: any[]; ITINERARY: any[]; PARTY_THEMES: any[] }) {
+  const { timeFormat } = useTimeFormat();
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
@@ -1113,11 +1083,11 @@ function EntertainmentTab({ onTalentClick, DAILY, TALENT, ITINERARY, PARTY_THEME
                   {itinerary && (itinerary.arrive !== "—" || itinerary.depart !== "—") && (
                     <div className="flex items-center gap-2 text-sm text-white/80 bg-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
                       {itinerary.arrive !== "—" && (
-                        <span>Arrive: {formatTime(itinerary.arrive, "24h")}</span>
+                        <span>Arrive: {globalFormatTime(itinerary.arrive, timeFormat)}</span>
                       )}
                       {itinerary.arrive !== "—" && itinerary.depart !== "—" && <span>•</span>}
                       {itinerary.depart !== "—" && (
-                        <span>Depart: {formatTime(itinerary.depart, "24h")}</span>
+                        <span>Depart: {globalFormatTime(itinerary.depart, timeFormat)}</span>
                       )}
                     </div>
                   )}
@@ -1311,6 +1281,7 @@ function EntertainersTab({ onTalentClick, TALENT }: { onTalentClick: (talent: Ta
 }
 
 function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY, TALENT }: { onTalentClick: (talent: Talent) => void; DAILY: any[]; PARTY_THEMES: any[]; ITINERARY: any[]; TALENT: any[] }) {
+  const { timeFormat } = useTimeFormat();
   const partyEventsByDay = DAILY.reduce((acc, day) => {
     const itinerary = ITINERARY.find(i => i.key === day.key);
     let parties = day.items
@@ -1410,7 +1381,7 @@ function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY, TALENT }: {
                 )}
                 {dayData.depart && dayData.depart !== "—" && (
                   <div className="flex items-center gap-2 text-sm text-white/80 bg-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
-                    <span>Depart: {formatTime(dayData.depart, "24h")}</span>
+                    <span>Depart: {globalFormatTime(dayData.depart, timeFormat)}</span>
                   </div>
                 )}
               </div>
@@ -1455,7 +1426,7 @@ function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY, TALENT }: {
                       <div className="flex flex-wrap gap-2 mt-auto">
                         <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
                           <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(party.time, "24h")}
+                          {globalFormatTime(party.time, timeFormat)}
                         </Badge>
                         <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 px-2 py-1 font-medium text-xs">
                           <MapPin className="w-3 h-3 mr-1" />
@@ -2018,6 +1989,9 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Get the current time format from context
+  const { timeFormat } = useTimeFormat();
 
   // Fetch cruise data from the database
   const { data: cruiseData, isLoading, error } = useCruiseData(slug);
