@@ -198,36 +198,53 @@ export function registerAuthRoutes(app: Express) {
   // Create admin user (protected - only super_admin can create users)
   app.post("/api/auth/users", async (req: AuthenticatedRequest, res) => {
     try {
-      // Basic auth check - we'll add proper middleware later
+      // Require authentication
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
       
-      if (token) {
-        const payload = AuthService.verifyAccessToken(token);
-        if (payload) {
-          const userResults = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, payload.userId))
-            .limit(1);
-          
-          const currentUser = userResults[0];
-          if (currentUser?.role !== 'super_admin') {
-            return res.status(403).json({ error: 'Only super admins can create users' });
-          }
-        }
+      if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const userData = insertUserSchema.parse(req.body);
+      const payload = AuthService.verifyAccessToken(token);
+      if (!payload) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, payload.userId))
+        .limit(1);
+      
+      const currentUser = userResults[0];
+      if (!currentUser || currentUser?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admins can create users' });
+      }
+
+      // Validate input with allowed roles
+      const allowedRoles = ['viewer', 'media_manager', 'content_editor', 'cruise_admin', 'super_admin'];
+      const userData = req.body;
+      
+      if (!userData.username || !userData.password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+      }
+
+      if (userData.role && !allowedRoles.includes(userData.role)) {
+        return res.status(400).json({ error: 'Invalid role specified' });
+      }
+
+      // Parse with schema validation
+      const validatedData = insertUserSchema.parse(userData);
       
       // Hash password
-      const hashedPassword = await AuthService.hashPassword(userData.password);
+      const hashedPassword = await AuthService.hashPassword(validatedData.password);
       
       // Insert user
       const newUsers = await db
         .insert(users)
         .values({
-          ...userData,
+          ...validatedData,
           password: hashedPassword,
         })
         .returning();
@@ -246,6 +263,195 @@ export function registerAuthRoutes(app: Express) {
     } catch (error) {
       console.error('User creation error:', error);
       res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // Get all users (protected - only super_admin can view users)
+  app.get("/api/auth/users", async (req: AuthenticatedRequest, res) => {
+    try {
+      // Basic auth check
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
+      
+      if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const payload = AuthService.verifyAccessToken(token);
+      if (!payload) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, payload.userId))
+        .limit(1);
+      
+      const currentUser = userResults[0];
+      if (!currentUser || currentUser?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admins can view users' });
+      }
+
+      // Fetch all users
+      const allUsers = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          fullName: users.fullName,
+          role: users.role,
+          isActive: users.isActive,
+          createdAt: users.createdAt,
+          lastLogin: users.lastLogin,
+        })
+        .from(users)
+        .orderBy(users.createdAt);
+
+      res.json(allUsers);
+    } catch (error) {
+      console.error('Get users error:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  // Update user (protected - only super_admin can update users)
+  app.put("/api/auth/users/:id", async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Basic auth check
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
+      
+      if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const payload = AuthService.verifyAccessToken(token);
+      if (!payload) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, payload.userId))
+        .limit(1);
+      
+      const currentUser = userResults[0];
+      if (!currentUser || currentUser?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admins can update users' });
+      }
+
+      const updateData = req.body;
+      
+      // Validate input and restrict updatable fields
+      const allowedRoles = ['viewer', 'media_manager', 'content_editor', 'cruise_admin', 'super_admin'];
+      const allowedFields = ['username', 'email', 'fullName', 'role', 'isActive', 'password'];
+      
+      // Filter to only allowed fields
+      const filteredUpdateData: any = {};
+      for (const field of allowedFields) {
+        if (updateData[field] !== undefined) {
+          filteredUpdateData[field] = updateData[field];
+        }
+      }
+
+      // Validate role if provided
+      if (filteredUpdateData.role && !allowedRoles.includes(filteredUpdateData.role)) {
+        return res.status(400).json({ error: 'Invalid role specified' });
+      }
+
+      // Hash password if provided
+      if (filteredUpdateData.password) {
+        if (filteredUpdateData.password.trim() === '') {
+          delete filteredUpdateData.password; // Remove empty password
+        } else {
+          filteredUpdateData.password = await AuthService.hashPassword(filteredUpdateData.password);
+        }
+      }
+
+      // Update user
+      const updatedUsers = await db
+        .update(users)
+        .set({
+          ...filteredUpdateData,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (updatedUsers.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const updatedUser = updatedUsers[0];
+      
+      res.json({
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          fullName: updatedUser.fullName,
+          role: updatedUser.role,
+          isActive: updatedUser.isActive,
+        },
+      });
+    } catch (error) {
+      console.error('User update error:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
+  // Delete user (protected - only super_admin can delete users)
+  app.delete("/api/auth/users/:id", async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Basic auth check
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
+      
+      if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const payload = AuthService.verifyAccessToken(token);
+      if (!payload) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, payload.userId))
+        .limit(1);
+      
+      const currentUser = userResults[0];
+      if (!currentUser || currentUser?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admins can delete users' });
+      }
+
+      // Prevent self-deletion
+      if (userId === payload.userId) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+      }
+
+      // Delete user
+      const deletedUsers = await db
+        .delete(users)
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (deletedUsers.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('User deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
     }
   });
 }

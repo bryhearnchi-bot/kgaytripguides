@@ -33,6 +33,7 @@ import CruiseDetailsTab from '@/components/admin/CruiseDetailsTab';
 import ItineraryTab from '@/components/admin/ItineraryTab';
 import EventsAndEntertainmentTab from '../../components/admin/EventsAndEntertainmentTab';
 import InfoAndUpdatesTab from '../../components/admin/InfoAndUpdatesTab';
+import UserManagement from '@/components/admin/UserManagement';
 
 interface Cruise {
   id: number;
@@ -386,15 +387,7 @@ export default function AdminDashboard() {
               <p className="text-gray-600">Manage admin users, permissions, and access controls</p>
             </div>
             
-            <Card>
-              <CardContent className="text-center py-12">
-                <UserCog className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">User Management Coming Soon</h3>
-                <p className="text-gray-500">
-                  User management and permission controls will be available in a future update.
-                </p>
-              </CardContent>
-            </Card>
+            <UserManagement />
           </TabsContent>
 
           {/* Settings Tab */}

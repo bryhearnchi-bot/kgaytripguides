@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   fullName: text("full_name"),
   role: text("role").default("viewer"), // super_admin, cruise_admin, content_editor, media_manager, viewer
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
   lastLogin: timestamp("last_login"),
   isActive: boolean("is_active").default(true),
 });
