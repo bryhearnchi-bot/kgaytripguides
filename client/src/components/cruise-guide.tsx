@@ -142,11 +142,12 @@ function formatAllAboard(departTime: string, mode: "12h" | "24h"): string {
 
 function isDateInPast(dateKey: string): boolean {
   const today = new Date();
-  const cruiseDate = new Date(dateKey);
+  // Parse date string directly as local date
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const cruiseDate = new Date(year, month - 1, day, 0, 0, 0, 0);
 
-  // Set both dates to start of day for comparison
+  // Set today to start of day for comparison
   today.setHours(0, 0, 0, 0);
-  cruiseDate.setHours(0, 0, 0, 0);
 
   return cruiseDate < today;
 }
@@ -189,12 +190,8 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
     throw new Error('Invalid time format');
   }
 
-  // Get timezone offset for the port location
-  const portTimezoneOffset = getPortTimezoneOffset(eventDate);
-
-  // Create date in UTC and adjust for port timezone
-  const utcDate = new Date(Date.UTC(year, month, day, timeData.h, timeData.m));
-  const startDate = new Date(utcDate.getTime() - (portTimezoneOffset * 60 * 60 * 1000));
+  // Create date in local timezone (no timezone adjustments)
+  const startDate = new Date(year, month, day, timeData.h, timeData.m, 0, 0);
 
   // Set duration based on event type - KGay Travel pre-cruise party is 3 hours, others are 1 hour
   const duration = event.title.includes("KGay Travel") ? 3 : 1;
@@ -209,29 +206,7 @@ function createCalendarEvent(event: DailyEvent, eventDate: string): {
   };
 }
 
-function getPortTimezoneOffset(eventDate: string): number {
-  // Map of port locations to their timezone offsets from UTC
-  const portTimezones: { [key: string]: number } = {
-    'Barcelona': 2,      // UTC+2 (CEST in August)
-    'Mykonos': 3,        // UTC+3 (EEST in August)
-    'Kusadasi': 3,       // UTC+3 (TRT in August)
-    'Crete': 3,          // UTC+3 (EEST in August)
-    'Santorini': 3,      // UTC+3 (EEST in August)
-    'Sea Day': 2,        // Default to ship timezone (likely Mediterranean time)
-  };
-
-  // Extract location from date string or determine based on itinerary
-  let location = 'Sea Day'; // Default
-
-  // Check if it's a sea day or specific port
-  if (eventDate.includes('Mykonos')) location = 'Mykonos';
-  else if (eventDate.includes('Kusadasi')) location = 'Kusadasi';
-  else if (eventDate.includes('Crete')) location = 'Crete';
-  else if (eventDate.includes('Santorini')) location = 'Santorini';
-  else if (eventDate.includes('Barcelona')) location = 'Barcelona';
-
-  return portTimezones[location] || 2; // Default to UTC+2 if location not found
-}
+// Removed getPortTimezoneOffset function - no longer needed as we don't do timezone adjustments
 
 function formatDateForCalendar(date: Date): string {
   return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';

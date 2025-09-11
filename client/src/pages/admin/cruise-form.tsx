@@ -98,8 +98,8 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
         slug: cruise.slug,
         shipName: cruise.shipName,
         cruiseLine: cruise.cruiseLine || '',
-        startDate: format(new Date(cruise.startDate), 'yyyy-MM-dd'),
-        endDate: format(new Date(cruise.endDate), 'yyyy-MM-dd'),
+        startDate: cruise.startDate ? cruise.startDate.split('T')[0] : '',
+        endDate: cruise.endDate ? cruise.endDate.split('T')[0] : '',
         status: cruise.status,
         description: cruise.description || '',
         heroImageUrl,
@@ -202,8 +202,8 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
         credentials: 'include',
         body: JSON.stringify({
           ...data,
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: new Date(data.endDate).toISOString(),
+          startDate: data.startDate + 'T00:00:00.000Z',
+          endDate: data.endDate + 'T00:00:00.000Z'
         }),
       });
 

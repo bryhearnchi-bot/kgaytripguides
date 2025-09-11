@@ -72,7 +72,7 @@ export interface CruiseData {
 export function transformCruiseData(data: CruiseData) {
   // Transform itinerary
   const itinerary = data.itinerary.map(stop => ({
-    key: dateOnly(stop.date).toISOString().split('T')[0],
+    key: stop.date.split('T')[0],
     date: formatDate(dateOnly(stop.date)),
     port: stop.portName,
     arrive: stop.arrivalTime || '—',
@@ -86,7 +86,7 @@ export function transformCruiseData(data: CruiseData) {
   // Group events by date
   const dailyEvents: Record<string, any[]> = {};
   data.events.forEach(event => {
-    const dateKey = dateOnly(event.date).toISOString().split('T')[0];
+    const dateKey = event.date.split('T')[0];
     if (!dailyEvents[dateKey]) {
       dailyEvents[dateKey] = [];
     }
