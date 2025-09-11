@@ -137,13 +137,21 @@ export class ItineraryStorage implements IItineraryStorage {
   }
 
   async createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary> {
-    const result = await db.insert(itinerary).values(stop).returning();
+    const values = { ...stop };
+    if (stop.date) {
+      values.date = new Date(stop.date);
+    }
+    const result = await db.insert(itinerary).values(values).returning();
     return result[0];
   }
 
   async updateItineraryStop(id: number, stop: Partial<Itinerary>): Promise<Itinerary | undefined> {
+    const updates = { ...stop };
+    if (stop.date) {
+      updates.date = new Date(stop.date);
+    }
     const result = await db.update(itinerary)
-      .set(stop)
+      .set(updates)
       .where(eq(itinerary.id, id))
       .returning();
     return result[0];
