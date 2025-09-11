@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
+import TimeFormatToggle from "@/components/TimeFormatToggle";
 
 export default function NavigationBanner() {
   return (
@@ -23,7 +24,8 @@ export default function NavigationBanner() {
           </a>
         </div>
         
-        <div className="flex items-center">
+        <div className="flex items-center space-x-3">
+          <TimeFormatToggle />
           <Link href="/admin/login">
             <Button 
               variant="outline" 
