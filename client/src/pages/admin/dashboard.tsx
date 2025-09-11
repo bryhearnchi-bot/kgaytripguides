@@ -21,7 +21,9 @@ import {
   Calendar,
   Info,
   X,
-  MapPin
+  MapPin,
+  Settings,
+  UserCog
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -200,7 +202,7 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* Tab Navigation - Responsive */}
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="cruises" className="flex items-center space-x-2">
               <Ship className="w-4 h-4" />
               <span className="hidden sm:inline">Cruise Management</span>
@@ -215,6 +217,16 @@ export default function AdminDashboard() {
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Analytics</span>
               <span className="sm:hidden">Reports</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center space-x-2">
+              <UserCog className="w-4 h-4" />
+              <span className="hidden sm:inline">User Management</span>
+              <span className="sm:hidden">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center space-x-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
+              <span className="sm:hidden">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -362,6 +374,42 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Coming Soon</h3>
                 <p className="text-gray-500">
                   Analytics and reporting features will be available in a future update.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* User Management Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">User Management</h2>
+              <p className="text-gray-600">Manage admin users, permissions, and access controls</p>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <UserCog className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">User Management Coming Soon</h3>
+                <p className="text-gray-500">
+                  User management and permission controls will be available in a future update.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Settings</h2>
+              <p className="text-gray-600">Configure system settings, branding, and preferences</p>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <Settings className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Settings Coming Soon</h3>
+                <p className="text-gray-500">
+                  System configuration and settings panel will be available in a future update.
                 </p>
               </CardContent>
             </Card>
