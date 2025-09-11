@@ -1,7 +1,7 @@
 import * as argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
-import { storage } from './storage';
+import { storage, db, auditLog as auditLogTable } from './storage';
 import type { User } from '@shared/schema';
 
 // JWT secret - in production this should come from environment variables
@@ -106,7 +106,7 @@ export async function auditLog(action: string, tableName: string, recordId?: str
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       if (req.user) {
-        await storage.db.insert(storage.auditLog).values({
+        await db.insert(auditLogTable).values({
           userId: req.user.id,
           action,
           tableName,
