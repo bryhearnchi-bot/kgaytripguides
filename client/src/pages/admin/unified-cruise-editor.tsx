@@ -57,16 +57,8 @@ export default function UnifiedCruiseEditor({ cruiseId: initialCruiseId }: Unifi
 
   // Determine which tabs are accessible based on cruise state
   const getTabAccess = () => {
-    if (!isEditing) {
-      // New cruise - only setup tab initially
-      return {
-        setup: true,
-        events: false,
-        info: false
-      };
-    }
-    
-    // Existing cruise - all tabs accessible
+    // All tabs should be accessible for both new and existing cruises
+    // Users should be able to set up events and info while creating a new cruise
     return {
       setup: true,
       events: true,
