@@ -25,9 +25,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { dateOnly } from '@/lib/utils';
 import ArtistDatabaseManager from '../../components/admin/ArtistDatabaseManager';
-import CruiseDetailsTab from '../../components/admin/CruiseDetailsTab';
-import ItineraryTab from '../../components/admin/ItineraryTab';
+import CruiseDetailsTab from '@/components/admin/CruiseDetailsTab';
+import ItineraryTab from '@/components/admin/ItineraryTab';
 import EventsAndEntertainmentTab from '../../components/admin/EventsAndEntertainmentTab';
 import InfoAndUpdatesTab from '../../components/admin/InfoAndUpdatesTab';
 
@@ -292,7 +293,7 @@ export default function AdminDashboard() {
                             <div className="text-sm text-gray-600 space-y-1">
                               <p><strong>Ship:</strong> {cruise.shipName}</p>
                               {cruise.cruiseLine && <p><strong>Line:</strong> {cruise.cruiseLine}</p>}
-                              <p><strong>Dates:</strong> {format(new Date(cruise.startDate), 'MMM dd, yyyy')} - {format(new Date(cruise.endDate), 'MMM dd, yyyy')}</p>
+                              <p><strong>Dates:</strong> {format(dateOnly(cruise.startDate), 'MMM dd, yyyy')} - {format(dateOnly(cruise.endDate), 'MMM dd, yyyy')}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
