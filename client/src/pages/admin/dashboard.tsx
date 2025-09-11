@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { 
   Ship, 
   Users, 
@@ -16,11 +17,17 @@ import {
   Search,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Calendar,
+  Info,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import ArtistDatabaseManager from '../../components/admin/ArtistDatabaseManager';
+import SetupAndItineraryTab from '../../components/admin/SetupAndItineraryTab';
+import EventsAndEntertainmentTab from '../../components/admin/EventsAndEntertainmentTab';
+import InfoAndUpdatesTab from '../../components/admin/InfoAndUpdatesTab';
 
 interface Cruise {
   id: number;
@@ -46,6 +53,9 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("cruises");
   const [searchTerm, setSearchTerm] = useState('');
+  const [cruiseModalOpen, setCruiseModalOpen] = useState(false);
+  const [editingCruiseId, setEditingCruiseId] = useState<number | null>(null);
+  const [cruiseEditorTab, setCruiseEditorTab] = useState("setup");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -133,6 +143,19 @@ export default function AdminDashboard() {
     }
   };
 
+  const openCruiseModal = (cruiseId?: number) => {
+    setEditingCruiseId(cruiseId || null);
+    setCruiseModalOpen(true);
+  };
+
+  const closeCruiseModal = () => {
+    setCruiseModalOpen(false);
+    setEditingCruiseId(null);
+    setCruiseEditorTab("setup");
+    // Refresh cruises data when modal closes
+    queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -143,25 +166,27 @@ export default function AdminDashboard() {
               <Ship className="w-8 h-8 text-blue-600" />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  Cruise Guide Admin
+                  <span className="hidden sm:inline">Cruise Guide Admin</span>
+                  <span className="sm:hidden">Admin</span>
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 hidden md:block">
                   Atlantis Events Management Dashboard
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
                 <div className="flex items-center space-x-2">
                   <Badge variant={getRoleBadgeVariant(user?.role || '')}>
-                    {user?.role?.replace('_', ' ').toUpperCase()}
+                    <span className="hidden md:inline">{user?.role?.replace('_', ' ').toUpperCase()}</span>
+                    <span className="md:hidden">{user?.role?.split('_')[0].toUpperCase()}</span>
                   </Badge>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline ml-2">Logout</span>
               </Button>
             </div>
           </div>
@@ -171,19 +196,22 @@ export default function AdminDashboard() {
       {/* Main Content with Tabs */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          {/* Tab Navigation */}
+          {/* Tab Navigation - Responsive */}
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="cruises" className="flex items-center space-x-2">
               <Ship className="w-4 h-4" />
-              <span>Cruise Management</span>
+              <span className="hidden sm:inline">Cruise Management</span>
+              <span className="sm:hidden">Cruises</span>
             </TabsTrigger>
             <TabsTrigger value="talent" className="flex items-center space-x-2">
               <Users className="w-4 h-4" />
-              <span>Talent Directory</span>
+              <span className="hidden sm:inline">Talent Directory</span>
+              <span className="sm:hidden">Talent</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center space-x-2">
               <BarChart3 className="w-4 h-4" />
-              <span>Analytics</span>
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">Reports</span>
             </TabsTrigger>
           </TabsList>
 
@@ -195,7 +223,7 @@ export default function AdminDashboard() {
                 <p className="text-gray-600">Create and manage cruise itineraries, events, and entertainment</p>
               </div>
               {canEdit && (
-                <Button onClick={() => setLocation('/admin/cruises/unified/new')}>
+                <Button onClick={() => openCruiseModal()}>
                   <Plus className="w-4 h-4 mr-2" />
                   Create New Cruise
                 </Button>
@@ -242,7 +270,7 @@ export default function AdminDashboard() {
                         {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first cruise.'}
                       </p>
                       {canEdit && !searchTerm && (
-                        <Button onClick={() => setLocation('/admin/cruises/unified/new')}>
+                        <Button onClick={() => openCruiseModal()}>
                           <Plus className="w-4 h-4 mr-2" />
                           Create First Cruise
                         </Button>
@@ -278,7 +306,7 @@ export default function AdminDashboard() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setLocation(`/admin/cruises/${cruise.id}/unified`)}
+                                onClick={() => openCruiseModal(cruise.id)}
                               >
                                 <Edit className="w-4 h-4 mr-1" />
                                 Edit
@@ -337,6 +365,68 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Cruise Editor Modal */}
+      <Dialog open={cruiseModalOpen} onOpenChange={(open) => !open && closeCruiseModal()}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCruiseId ? 'Edit Cruise' : 'Create New Cruise'}
+            </DialogTitle>
+            <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            <Tabs value={cruiseEditorTab} onValueChange={setCruiseEditorTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="setup" className="flex items-center space-x-2">
+                  <Ship className="w-4 h-4" />
+                  <span className="hidden sm:inline">Setup & Itinerary</span>
+                  <span className="sm:hidden">Setup</span>
+                </TabsTrigger>
+                <TabsTrigger value="events" className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4" />
+                  <span className="hidden sm:inline">Events & Entertainment</span>
+                  <span className="sm:hidden">Events</span>
+                </TabsTrigger>
+                <TabsTrigger value="info" className="flex items-center space-x-2">
+                  <Info className="w-4 h-4" />
+                  <span className="hidden sm:inline">Info & Updates</span>
+                  <span className="sm:hidden">Info</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="setup" className="mt-6">
+                <SetupAndItineraryTab 
+                  cruise={editingCruiseId ? { id: editingCruiseId } : null}
+                  isEditing={!!editingCruiseId}
+                />
+              </TabsContent>
+
+              <TabsContent value="events" className="mt-6">
+                <EventsAndEntertainmentTab 
+                  onDataChange={() => {
+                    // Handle events data changes
+                    queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="info" className="mt-6">
+                <InfoAndUpdatesTab 
+                  onDataChange={() => {
+                    // Handle info data changes  
+                    queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

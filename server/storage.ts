@@ -175,28 +175,19 @@ export class ItineraryStorage implements IItineraryStorage {
   async createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary> {
     const values = { ...stop };
     
-    // Debug logging
-    console.log('Creating itinerary stop with data:', stop);
-    console.log('Original date:', stop.date, 'type:', typeof stop.date);
-    
     // Handle date conversion with better error handling  
     if (stop.date && (stop.date as any) !== '' && stop.date !== null) {
       if (typeof stop.date === 'string') {
         values.date = new Date(stop.date);
-        console.log('Converted date:', values.date, 'type:', typeof values.date);
       } else {
         values.date = stop.date;
-        console.log('Date already a Date object:', values.date);
       }
     } else {
       // Remove date field if it's empty/null to avoid sending invalid data
       if ('date' in values) {
         delete (values as any).date;
-        console.log('Removed empty/null date field');
       }
     }
-    
-    console.log('Final values being inserted:', values);
     
     const result = await db.insert(itinerary).values(values).returning();
     return result[0];
@@ -205,28 +196,19 @@ export class ItineraryStorage implements IItineraryStorage {
   async updateItineraryStop(id: number, stop: Partial<Itinerary>): Promise<Itinerary | undefined> {
     const updates = { ...stop };
     
-    // Debug logging
-    console.log('Updating itinerary stop with data:', stop);
-    console.log('Original date:', stop.date, 'type:', typeof stop.date);
-    
     // Handle date conversion with better error handling
     if (stop.date && (stop.date as any) !== '' && stop.date !== null) {
       if (typeof stop.date === 'string') {
         updates.date = new Date(stop.date);
-        console.log('Converted date:', updates.date, 'type:', typeof updates.date);
       } else {
         updates.date = stop.date;
-        console.log('Date already a Date object:', updates.date);
       }
     } else if (stop.hasOwnProperty('date')) {
       // Remove date field if it's explicitly set to empty/null
       if ('date' in updates) {
         delete (updates as any).date;
-        console.log('Removed empty/null date field from updates');
       }
     }
-    
-    console.log('Final updates being applied:', updates);
     
     const result = await db.update(itinerary)
       .set(updates)
