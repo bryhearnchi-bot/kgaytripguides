@@ -20,12 +20,14 @@ import {
   Eye,
   Calendar,
   Info,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import ArtistDatabaseManager from '../../components/admin/ArtistDatabaseManager';
-import SetupAndItineraryTab from '../../components/admin/SetupAndItineraryTab';
+import CruiseDetailsTab from '../../components/admin/CruiseDetailsTab';
+import ItineraryTab from '../../components/admin/ItineraryTab';
 import EventsAndEntertainmentTab from '../../components/admin/EventsAndEntertainmentTab';
 import InfoAndUpdatesTab from '../../components/admin/InfoAndUpdatesTab';
 
@@ -55,7 +57,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [cruiseModalOpen, setCruiseModalOpen] = useState(false);
   const [editingCruiseId, setEditingCruiseId] = useState<number | null>(null);
-  const [cruiseEditorTab, setCruiseEditorTab] = useState("setup");
+  const [cruiseEditorTab, setCruiseEditorTab] = useState("details");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -151,7 +153,7 @@ export default function AdminDashboard() {
   const closeCruiseModal = () => {
     setCruiseModalOpen(false);
     setEditingCruiseId(null);
-    setCruiseEditorTab("setup");
+    setCruiseEditorTab("details");
     // Refresh cruises data when modal closes
     queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
   };
@@ -381,26 +383,36 @@ export default function AdminDashboard() {
           
           <div className="mt-4">
             <Tabs value={cruiseEditorTab} onValueChange={setCruiseEditorTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="setup" className="flex items-center space-x-2">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="details" className="flex items-center space-x-2">
                   <Ship className="w-4 h-4" />
-                  <span className="hidden sm:inline">Setup & Itinerary</span>
-                  <span className="sm:hidden">Setup</span>
+                  <span className="hidden sm:inline">Cruise Details</span>
+                  <span className="sm:hidden">Details</span>
+                </TabsTrigger>
+                <TabsTrigger value="itinerary" className="flex items-center space-x-2">
+                  <MapPin className="w-4 h-4" />
+                  <span className="hidden sm:inline">Itinerary</span>
+                  <span className="sm:hidden">Route</span>
                 </TabsTrigger>
                 <TabsTrigger value="events" className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4" />
-                  <span className="hidden sm:inline">Events & Entertainment</span>
-                  <span className="sm:hidden">Events</span>
+                  <span>Events</span>
                 </TabsTrigger>
                 <TabsTrigger value="info" className="flex items-center space-x-2">
                   <Info className="w-4 h-4" />
-                  <span className="hidden sm:inline">Info & Updates</span>
-                  <span className="sm:hidden">Info</span>
+                  <span>Info</span>
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="setup" className="mt-6">
-                <SetupAndItineraryTab 
+              <TabsContent value="details" className="mt-6">
+                <CruiseDetailsTab 
+                  cruise={editingCruiseId ? { id: editingCruiseId } : null}
+                  isEditing={!!editingCruiseId}
+                />
+              </TabsContent>
+
+              <TabsContent value="itinerary" className="mt-6">
+                <ItineraryTab 
                   cruise={editingCruiseId ? { id: editingCruiseId } : null}
                   isEditing={!!editingCruiseId}
                 />
