@@ -28,7 +28,7 @@ import {
   Clock,
   Ship
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 const setupSchema = z.object({
@@ -110,7 +110,7 @@ export default function SetupAndItineraryTab({
     if (existingItinerary) {
       const mappedDays = existingItinerary.map((day: any) => ({
         id: day.id,
-        date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
+        date: day.date ? (day.date.includes('T') ? day.date.split('T')[0] : day.date) : '',
         day: day.day,
         portName: day.portName || '',
         country: day.country || '',
@@ -135,7 +135,7 @@ export default function SetupAndItineraryTab({
         credentials: 'include',
         body: JSON.stringify({
           ...dayData,
-          date: dayData.date ? new Date(dayData.date).toISOString() : null,
+          date: dayData.date || null,
         }),
       });
       if (!response.ok) throw new Error('Failed to create itinerary day');
@@ -164,7 +164,7 @@ export default function SetupAndItineraryTab({
         credentials: 'include',
         body: JSON.stringify({
           ...dayData,
-          date: dayData.date ? new Date(dayData.date).toISOString() : null,
+          date: dayData.date || null,
         }),
       });
       if (!response.ok) throw new Error('Failed to update itinerary day');
@@ -483,7 +483,7 @@ export default function SetupAndItineraryTab({
                         )}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        {day.date && format(new Date(day.date), 'MMM dd, yyyy')}
+                        {day.date && format(parse(day.date, 'yyyy-MM-dd', new Date()), 'MMM dd, yyyy')}
                         {day.arrivalTime && ` • Arrival: ${day.arrivalTime}`}
                         {day.departureTime && ` • Departure: ${day.departureTime}`}
                       </div>
