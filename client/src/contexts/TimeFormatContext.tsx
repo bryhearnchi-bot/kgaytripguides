@@ -11,15 +11,16 @@ interface TimeFormatContextType {
 const TimeFormatContext = createContext<TimeFormatContextType | undefined>(undefined);
 
 export function TimeFormatProvider({ children }: { children: React.ReactNode }) {
-  const [timeFormat, setTimeFormatState] = useState<TimeFormat>('12h');
-
-  // Load saved preference from localStorage on mount
-  useEffect(() => {
-    const savedFormat = localStorage.getItem('timeFormat') as TimeFormat;
-    if (savedFormat === '12h' || savedFormat === '24h') {
-      setTimeFormatState(savedFormat);
+  // Initialize state from localStorage to prevent flash
+  const [timeFormat, setTimeFormatState] = useState<TimeFormat>(() => {
+    if (typeof window !== 'undefined') {
+      const savedFormat = localStorage.getItem('timeFormat') as TimeFormat;
+      if (savedFormat === '12h' || savedFormat === '24h') {
+        return savedFormat;
+      }
     }
-  }, []);
+    return '12h';
+  });
 
   // Save to localStorage when format changes
   const setTimeFormat = (format: TimeFormat) => {

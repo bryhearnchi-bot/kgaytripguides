@@ -53,7 +53,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Talent, DailyEvent, CityAttraction } from "@/data/cruise-data";
 import { useCruiseData, transformCruiseData } from "@/hooks/useCruiseData";
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
-import { formatTime as globalFormatTime, formatAllAboard as globalFormatAllAboard } from '@/lib/timeFormat';
+import { formatTime as globalFormatTime, formatAllAboard as globalFormatAllAboard, parseTime } from '@/lib/timeFormat';
 
 
 
@@ -80,32 +80,12 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => voi
   return [storedValue, setValue];
 }
 
-function parseTime(timeStr: string): { h: number; m: number } | null {
-  if (!timeStr || timeStr === "—" || /overnight/i.test(timeStr)) return null;
-
-  // Handle 24h format (HH:mm)
-  const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (match24) {
-    return { h: parseInt(match24[1], 10), m: parseInt(match24[2], 10) };
-  }
-
-  // Handle 12h format (H:mm AM/PM)
-  const match12 = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (match12) {
-    let h = parseInt(match12[1], 10);
-    const m = parseInt(match12[2], 10);
-    const isPM = /pm/i.test(match12[3]);
-
-    if (h === 12) h = 0;
-    if (isPM) h += 12;
-
-    return { h, m };
-  }
-
-  return null;
+// Helper function to convert time to minutes since midnight for proper sorting
+function timeToMinutes(timeStr: string): number {
+  const parsed = parseTime(timeStr);
+  if (!parsed) return 9999; // Put unparseable times at the end
+  return parsed.h * 60 + parsed.m;
 }
-
-// Remove these local functions as they're now imported from global utilities
 
 function isDateInPast(dateKey: string): boolean {
   const today = new Date();
@@ -404,7 +384,7 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES =
       if (a.title === "Neon Playground") return 1;
       if (b.title === "Neon Playground") return -1;
     }
-    return a.time.localeCompare(b.time);
+    return timeToMinutes(a.time) - timeToMinutes(b.time);
   });
 
   return (
@@ -1394,7 +1374,7 @@ function PartiesTab({ onTalentClick, DAILY, PARTY_THEMES, ITINERARY, TALENT }: {
                   if (a.title === "Neon Playground") return 1;
                   if (b.title === "Neon Playground") return -1;
                 }
-                return a.time.localeCompare(b.time);
+                return timeToMinutes(a.time) - timeToMinutes(b.time);
               }).map((party, idx) => (
                 <motion.div
                   key={`${party.title}-${party.time}-${idx}`}
