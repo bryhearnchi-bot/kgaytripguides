@@ -30,6 +30,20 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
 });
 
+// ============ PASSWORD RESET TOKENS TABLE ============
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  usedAt: timestamp("used_at"), // null if not used yet
+}, (table) => ({
+  tokenIdx: index("password_reset_token_idx").on(table.token),
+  userIdx: index("password_reset_user_idx").on(table.userId),
+  expiresIdx: index("password_reset_expires_idx").on(table.expiresAt),
+}));
+
 // ============ CRUISES TABLE ============
 export const cruises = pgTable("cruises", {
   id: serial("id").primaryKey(),

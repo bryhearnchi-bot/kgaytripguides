@@ -1,8 +1,10 @@
 import type { Express } from "express";
 import { storage, db } from "./storage";
 import { AuthService, type AuthenticatedRequest } from "./auth";
-import { insertUserSchema, users } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { insertUserSchema, users, passwordResetTokens } from "@shared/schema";
+import { eq, gt } from "drizzle-orm";
+import { sendEmail } from "./utils/replitmail";
+import { randomBytes, createHash } from 'crypto';
 
 export function registerAuthRoutes(app: Express) {
   // Login
@@ -452,6 +454,182 @@ export function registerAuthRoutes(app: Express) {
     } catch (error) {
       console.error('User deletion error:', error);
       res.status(500).json({ error: 'Failed to delete user' });
+    }
+  });
+
+  // Password reset request
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      // Find user by email
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      const user = userResults[0];
+      
+      // Always return success to prevent email enumeration
+      if (!user || !user.isActive) {
+        return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+      }
+
+      // Generate secure random token
+      const resetToken = randomBytes(32).toString('hex');
+      const hashedToken = createHash('sha256').update(resetToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Clean up any existing tokens for this user
+      await db
+        .delete(passwordResetTokens)
+        .where(eq(passwordResetTokens.userId, user.id));
+
+      // Insert new reset token (hashed)
+      await db
+        .insert(passwordResetTokens)
+        .values({
+          userId: user.id,
+          token: hashedToken,
+          expiresAt,
+        });
+
+      // Send email with reset link
+      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/admin/reset-password/${resetToken}`;
+      
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Reset Your Admin Password',
+          html: `
+            <h2>Reset Your Password</h2>
+            <p>Hi ${user.fullName || user.username},</p>
+            <p>You requested a password reset for your admin account. Click the link below to reset your password:</p>
+            <p><a href="${resetUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a></p>
+            <p>Or copy and paste this URL into your browser: ${resetUrl}</p>
+            <p>This link will expire in 1 hour for security reasons.</p>
+            <p>If you didn't request this password reset, you can safely ignore this email.</p>
+            <hr>
+            <p><small>This is an automated message from the Cruise Guide Admin System.</small></p>
+          `,
+          text: `
+            Reset Your Password
+            
+            Hi ${user.fullName || user.username},
+            
+            You requested a password reset for your admin account. Visit the following link to reset your password:
+            
+            ${resetUrl}
+            
+            This link will expire in 1 hour for security reasons.
+            
+            If you didn't request this password reset, you can safely ignore this email.
+            
+            This is an automated message from the Cruise Guide Admin System.
+          `,
+        });
+      } catch (emailError) {
+        console.error('Failed to send reset email:', emailError);
+        // Don't return error to prevent email enumeration - log internally instead
+      }
+
+      res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+    } catch (error) {
+      console.error('Password reset request error:', error);
+      res.status(500).json({ error: 'Failed to process password reset request' });
+    }
+  });
+
+  // Validate reset token
+  app.get("/api/auth/validate-reset-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+      }
+
+      // Hash the provided token to compare with stored hash
+      const hashedToken = createHash('sha256').update(token).digest('hex');
+      
+      // Find valid token
+      const tokenResults = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token, hashedToken))
+        .limit(1);
+
+      const resetToken = tokenResults[0];
+
+      if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+      }
+
+      res.json({ valid: true });
+    } catch (error) {
+      console.error('Token validation error:', error);
+      res.status(500).json({ error: 'Failed to validate token' });
+    }
+  });
+
+  // Reset password with token
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ error: 'Token and password are required' });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      }
+
+      // Hash the provided token to compare with stored hash
+      const hashedToken = createHash('sha256').update(token).digest('hex');
+      
+      // Find valid token
+      const tokenResults = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token, hashedToken))
+        .limit(1);
+
+      const resetToken = tokenResults[0];
+
+      if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+      }
+
+      // Hash new password
+      const hashedPassword = await AuthService.hashPassword(password);
+
+      // Update user password
+      await db
+        .update(users)
+        .set({
+          password: hashedPassword,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, resetToken.userId));
+
+      // Mark token as used
+      await db
+        .update(passwordResetTokens)
+        .set({
+          usedAt: new Date(),
+        })
+        .where(eq(passwordResetTokens.id, resetToken.id));
+
+      res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+      console.error('Password reset error:', error);
+      res.status(500).json({ error: 'Failed to reset password' });
     }
   });
 }

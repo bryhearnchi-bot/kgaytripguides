@@ -10,6 +10,8 @@ import NavigationBanner from "@/components/navigation-banner";
 import LandingPage from "@/pages/landing";
 import CruisePage from "@/pages/cruise";
 import AdminLogin from "@/pages/admin/login";
+import ForgotPassword from "@/pages/admin/forgot-password";
+import ResetPassword from "@/pages/admin/reset-password";
 import AdminDashboard from "@/pages/admin/dashboard";
 import CruisesManagement from "@/pages/admin/cruises";
 import CruiseForm from "@/pages/admin/cruise-form";
@@ -22,6 +24,8 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/cruise/:slug" component={CruisePage} />
       <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/forgot-password" component={ForgotPassword} />
+      <Route path="/admin/reset-password/:token" component={ResetPassword} />
       <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/cruises" component={() => <ProtectedRoute><CruisesManagement /></ProtectedRoute>} />
       <Route path="/admin/cruises/new" component={() => <ProtectedRoute><CruiseForm isEditing={false} /></ProtectedRoute>} />
