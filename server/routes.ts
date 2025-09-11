@@ -96,6 +96,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update cruise (protected route)
   app.put("/api/cruises/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
+      console.log('Cruise update route called with body:', req.body);
+      console.log('startDate type:', typeof req.body.startDate, 'value:', req.body.startDate);
+      console.log('endDate type:', typeof req.body.endDate, 'value:', req.body.endDate);
+      
       const cruise = await cruiseStorage.updateCruise(parseInt(req.params.id), req.body);
       if (!cruise) {
         return res.status(404).json({ error: 'Cruise not found' });

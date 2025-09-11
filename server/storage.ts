@@ -106,11 +106,19 @@ export class CruiseStorage implements ICruiseStorage {
     const values = { ...cruise };
     
     // Convert date strings to Date objects for timestamp fields
-    if (cruise.startDate && typeof cruise.startDate === 'string') {
-      values.startDate = new Date(cruise.startDate);
+    if (cruise.startDate) {
+      if (typeof cruise.startDate === 'string') {
+        values.startDate = new Date(cruise.startDate);
+      } else {
+        values.startDate = cruise.startDate;
+      }
     }
-    if (cruise.endDate && typeof cruise.endDate === 'string') {
-      values.endDate = new Date(cruise.endDate);
+    if (cruise.endDate) {
+      if (typeof cruise.endDate === 'string') {
+        values.endDate = new Date(cruise.endDate);
+      } else {
+        values.endDate = cruise.endDate;
+      }
     }
     
     const result = await db.insert(cruises).values(values).returning();
@@ -121,11 +129,19 @@ export class CruiseStorage implements ICruiseStorage {
     const updates = { ...cruise, updatedAt: new Date() };
     
     // Convert date strings to Date objects for timestamp fields
-    if (cruise.startDate && typeof cruise.startDate === 'string') {
-      updates.startDate = new Date(cruise.startDate);
+    if (cruise.startDate) {
+      if (typeof cruise.startDate === 'string') {
+        updates.startDate = new Date(cruise.startDate);
+      } else {
+        updates.startDate = cruise.startDate;
+      }
     }
-    if (cruise.endDate && typeof cruise.endDate === 'string') {
-      updates.endDate = new Date(cruise.endDate);
+    if (cruise.endDate) {
+      if (typeof cruise.endDate === 'string') {
+        updates.endDate = new Date(cruise.endDate);
+      } else {
+        updates.endDate = cruise.endDate;
+      }
     }
     
     const result = await db.update(cruises)
@@ -163,19 +179,21 @@ export class ItineraryStorage implements IItineraryStorage {
     console.log('Creating itinerary stop with data:', stop);
     console.log('Original date:', stop.date, 'type:', typeof stop.date);
     
-    // Handle date conversion with better error handling
-    if (stop.date && stop.date !== '' && stop.date !== null) {
+    // Handle date conversion with better error handling  
+    if (stop.date && (stop.date as any) !== '' && stop.date !== null) {
       if (typeof stop.date === 'string') {
         values.date = new Date(stop.date);
         console.log('Converted date:', values.date, 'type:', typeof values.date);
-      } else if (stop.date instanceof Date) {
+      } else {
         values.date = stop.date;
         console.log('Date already a Date object:', values.date);
       }
     } else {
       // Remove date field if it's empty/null to avoid sending invalid data
-      delete values.date;
-      console.log('Removed empty/null date field');
+      if ('date' in values) {
+        delete (values as any).date;
+        console.log('Removed empty/null date field');
+      }
     }
     
     console.log('Final values being inserted:', values);
@@ -192,18 +210,20 @@ export class ItineraryStorage implements IItineraryStorage {
     console.log('Original date:', stop.date, 'type:', typeof stop.date);
     
     // Handle date conversion with better error handling
-    if (stop.date && stop.date !== '' && stop.date !== null) {
+    if (stop.date && (stop.date as any) !== '' && stop.date !== null) {
       if (typeof stop.date === 'string') {
         updates.date = new Date(stop.date);
         console.log('Converted date:', updates.date, 'type:', typeof updates.date);
-      } else if (stop.date instanceof Date) {
+      } else {
         updates.date = stop.date;
         console.log('Date already a Date object:', updates.date);
       }
     } else if (stop.hasOwnProperty('date')) {
       // Remove date field if it's explicitly set to empty/null
-      delete updates.date;
-      console.log('Removed empty/null date field from updates');
+      if ('date' in updates) {
+        delete (updates as any).date;
+        console.log('Removed empty/null date field from updates');
+      }
     }
     
     console.log('Final updates being applied:', updates);
