@@ -103,13 +103,33 @@ export class CruiseStorage implements ICruiseStorage {
   }
 
   async createCruise(cruise: Omit<Cruise, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cruise> {
-    const result = await db.insert(cruises).values(cruise).returning();
+    const values = { ...cruise };
+    
+    // Convert date strings to Date objects for timestamp fields
+    if (cruise.startDate && typeof cruise.startDate === 'string') {
+      values.startDate = new Date(cruise.startDate);
+    }
+    if (cruise.endDate && typeof cruise.endDate === 'string') {
+      values.endDate = new Date(cruise.endDate);
+    }
+    
+    const result = await db.insert(cruises).values(values).returning();
     return result[0];
   }
 
   async updateCruise(id: number, cruise: Partial<Cruise>): Promise<Cruise | undefined> {
+    const updates = { ...cruise, updatedAt: new Date() };
+    
+    // Convert date strings to Date objects for timestamp fields
+    if (cruise.startDate && typeof cruise.startDate === 'string') {
+      updates.startDate = new Date(cruise.startDate);
+    }
+    if (cruise.endDate && typeof cruise.endDate === 'string') {
+      updates.endDate = new Date(cruise.endDate);
+    }
+    
     const result = await db.update(cruises)
-      .set({ ...cruise, updatedAt: new Date() })
+      .set(updates)
       .where(eq(cruises.id, id))
       .returning();
     return result[0];
