@@ -149,7 +149,7 @@ function CruisesManagementContent() {
               </div>
             </div>
             {canEdit && (
-              <Button onClick={() => setLocation('/admin/cruises/new')}>
+              <Button onClick={() => setLocation('/admin/cruises/unified/new')}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Cruise
               </Button>
@@ -285,7 +285,7 @@ function CruisesManagementContent() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setLocation(`/admin/cruises/${cruise.id}/edit`)}
+                            onClick={() => setLocation(`/admin/cruises/${cruise.id}/unified`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
