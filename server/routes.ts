@@ -558,19 +558,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const search = req.query.search as string;
       
-      let query = db.select().from(partyTemplates);
+      let templates;
       
       if (search) {
-        query = query.where(
+        templates = await db.select().from(partyTemplates).where(
           or(
             ilike(partyTemplates.name, `%${search}%`),
             ilike(partyTemplates.themeDescription, `%${search}%`),
             ilike(partyTemplates.dressCode, `%${search}%`)
           )
-        );
+        ).orderBy(partyTemplates.name);
+      } else {
+        templates = await db.select().from(partyTemplates).orderBy(partyTemplates.name);
       }
       
-      const templates = await query.orderBy(partyTemplates.name);
       res.json(templates);
     } catch (error) {
       console.error('Error fetching party templates:', error);

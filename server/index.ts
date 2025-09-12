@@ -44,20 +44,16 @@ app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Add HEAD and GET request handlers for the root path for health check probes
-// These handlers are registered before serveStatic to ensure health checks work properly
-// Simplified for fastest possible response times
-app.head('/', (req, res) => {
-  res.status(200).end();
-});
-
-// Add GET handler for Cloud Run/Autoscale health checks - simplified for speed
-app.get('/', (req, res) => {
-  res.status(200).send('OK');
-});
-
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Add HEAD request handler for the root path for lightweight health check probes
+  // This allows health checkers to use HEAD / without interfering with the SPA served at GET /
+  app.head('/', (req, res) => {
+    res.status(200).end();
+  });
+
+  // Note: Use /healthz endpoint for GET-based health checks to avoid overriding SPA root
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -76,20 +72,6 @@ app.get('/', (req, res) => {
     serveStatic(app);
   }
 
-  // Run production seeding BEFORE server starts listening to prevent health check interference
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      const module = await import('./production-seed.ts');
-      if (module.seedProduction) {
-        await module.seedProduction();
-        log('Production seeding completed successfully');
-      }
-    } catch (error) {
-      console.error('Production seeding failed:', error);
-      // Don't block server startup if seeding fails
-    }
-  }
-
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
@@ -99,7 +81,23 @@ app.get('/', (req, res) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
+    
+    // Run production seeding AFTER server starts listening to prevent blocking health checks
+    // This ensures the health check endpoint responds immediately while seeding runs in background
+    if (process.env.NODE_ENV === 'production') {
+      log('Production environment detected - starting background seeding...');
+      try {
+        const module = await import('./production-seed.ts');
+        if (module.seedProduction) {
+          await module.seedProduction();
+          log('Production seeding completed successfully');
+        }
+      } catch (error) {
+        console.error('Production seeding failed:', error);
+        // Don't crash server if seeding fails - just log the error
+      }
+    }
   });
 })();
