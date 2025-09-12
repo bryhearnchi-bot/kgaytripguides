@@ -2230,11 +2230,13 @@ app.head("/health", (req, res) => {
   res.writeHead(200);
   res.end();
 });
-app.get("/", (req, res, next) => {
-  return res.status(200).send("OK");
+app.get("/", (req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
 });
 app.head("/", (req, res) => {
-  res.status(200).end();
+  res.writeHead(200);
+  res.end();
 });
 app.use(express3.json());
 app.use(express3.urlencoded({ extended: false }));
@@ -2297,19 +2299,33 @@ app.head("/api/health", (req, res) => {
       log("\u26A1 Health checks are ready for deployment verification");
     }
   });
-  process.on("SIGTERM", () => {
-    log("SIGTERM received, shutting down gracefully");
+  let isShuttingDown = false;
+  const gracefulShutdown = (signal) => {
+    if (isShuttingDown) {
+      log(`${signal} received but already shutting down, forcing exit`);
+      process.exit(1);
+    }
+    isShuttingDown = true;
+    log(`${signal} received, shutting down gracefully`);
+    const forceExit = setTimeout(() => {
+      log("Graceful shutdown timeout, forcing exit");
+      process.exit(1);
+    }, 1e4);
     server.close(() => {
-      log("Process terminated");
+      clearTimeout(forceExit);
+      log("Process terminated gracefully");
       process.exit(0);
     });
+  };
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+  process.on("uncaughtException", (error) => {
+    log(`Uncaught exception: ${error.message}`);
+    gracefulShutdown("UNCAUGHT_EXCEPTION");
   });
-  process.on("SIGINT", () => {
-    log("SIGINT received, shutting down gracefully");
-    server.close(() => {
-      log("Process terminated");
-      process.exit(0);
-    });
+  process.on("unhandledRejection", (reason, promise) => {
+    log(`Unhandled rejection: ${reason}`);
+    gracefulShutdown("UNHANDLED_REJECTION");
   });
 })().catch((error) => {
   console.error("\u{1F4A5} Failed to start server:", error);

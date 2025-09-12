@@ -26,14 +26,16 @@ app.head('/health', (req, res) => {
   res.end();
 });
 
-// Handle root path - ALWAYS return OK for health checks
-app.get('/', (req, res, next) => {
-  // Always return OK for any GET request to root - deployment health checks need this
-  return res.status(200).send('OK');
+// Handle root path - ALWAYS return OK for health checks  
+app.get('/', (req, res) => {
+  // Fast health check response for deployment verification
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
 });
 
 app.head('/', (req, res) => {
-  res.status(200).end();
+  res.writeHead(200);
+  res.end();
 });
 
 app.use(express.json());
@@ -125,21 +127,43 @@ app.head('/api/health', (req, res) => {
     }
   });
 
-  // Handle graceful shutdown
-  process.on('SIGTERM', () => {
-    log('SIGTERM received, shutting down gracefully');
+  // Handle graceful shutdown and prevent multiple instances
+  let isShuttingDown = false;
+  
+  const gracefulShutdown = (signal: string) => {
+    if (isShuttingDown) {
+      log(`${signal} received but already shutting down, forcing exit`);
+      process.exit(1);
+    }
+    
+    isShuttingDown = true;
+    log(`${signal} received, shutting down gracefully`);
+    
+    // Set a timeout to force exit if graceful shutdown takes too long
+    const forceExit = setTimeout(() => {
+      log('Graceful shutdown timeout, forcing exit');
+      process.exit(1);
+    }, 10000); // 10 seconds timeout
+    
     server.close(() => {
-      log('Process terminated');
+      clearTimeout(forceExit);
+      log('Process terminated gracefully');
       process.exit(0);
     });
-  });
+  };
 
-  process.on('SIGINT', () => {
-    log('SIGINT received, shutting down gracefully');
-    server.close(() => {
-      log('Process terminated');
-      process.exit(0);
-    });
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  
+  // Additional cleanup for unexpected exits
+  process.on('uncaughtException', (error) => {
+    log(`Uncaught exception: ${error.message}`);
+    gracefulShutdown('UNCAUGHT_EXCEPTION');
+  });
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    log(`Unhandled rejection: ${reason}`);
+    gracefulShutdown('UNHANDLED_REJECTION');
   });
 })().catch((error) => {
   console.error('💥 Failed to start server:', error);
