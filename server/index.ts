@@ -26,29 +26,24 @@ app.head('/health', (req, res) => {
   res.end();
 });
 
-// Handle any request to root that looks like a health check IMMEDIATELY
-app.use('/', (req, res, next) => {
-  // Check if this is likely a health check request
+// Handle root path health checks - simplified and more reliable
+app.get('/', (req, res, next) => {
+  // If this is a health check (no specific headers indicating a browser request)
   const userAgent = req.headers['user-agent'] || '';
-  const isHealthCheck = 
-    req.method === 'HEAD' ||
-    req.method === 'GET' && (
-      userAgent.includes('HealthChecker') ||
-      userAgent.includes('kube-probe') ||
-      userAgent.includes('curl') ||
-      userAgent.includes('wget') ||
-      userAgent.includes('Go-http-client') ||
-      userAgent.startsWith('Mozilla') === false ||
-      req.headers.accept === '*/*' ||
-      !req.headers.accept
-    );
-
-  if (isHealthCheck && req.path === '/') {
+  const accept = req.headers.accept || '';
+  
+  // Simple check: if it's not clearly a browser request, treat as health check
+  if (!accept.includes('text/html') || userAgent.includes('curl') || userAgent.includes('wget')) {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     return res.end('OK');
   }
   
   next();
+});
+
+app.head('/', (req, res) => {
+  res.writeHead(200);
+  res.end();
 });
 
 app.use(express.json());
@@ -133,10 +128,10 @@ app.head('/api/health', (req, res) => {
     // Run production seeding asynchronously AFTER server starts listening
     // This ensures health checks can respond immediately
     if (process.env.NODE_ENV === 'production') {
-      log('Production environment detected - starting background seeding...');
+      log('Production environment detected - will seed in background...');
       
-      // Use setTimeout with a longer delay to ensure health checks work first
-      setTimeout(async () => {
+      // Start seeding immediately but don't await it
+      setImmediate(async () => {
         try {
           log('Starting production database seeding...');
           const module = await import('./production-seed.ts');
@@ -149,7 +144,7 @@ app.head('/api/health', (req, res) => {
           console.error('Server will continue running without seeded data');
           // Don't crash server if seeding fails - just log the error
         }
-      }, 2000); // Longer delay to let health checks establish first
+      });
     }
   });
 })();
