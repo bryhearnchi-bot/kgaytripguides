@@ -10,12 +10,13 @@ import {
   mediaStorage 
 } from "./storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
-import { ObjectStorageService } from "./objectStorage";
 import { registerAuthRoutes } from "./auth-routes";
 import { db } from "./storage";
 import { partyTemplates, cruiseInfoSections } from "../shared/schema";
 import { eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
+import { upload, getPublicImageUrl, deleteImage, isValidImageUrl } from "./image-utils";
+import { downloadImageFromUrl } from "./image-migration";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ STATIC FILE SERVING ============
@@ -42,6 +43,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     maxAge: '24h',
     etag: false
   }));
+  
+  // ============ IMAGE MANAGEMENT ROUTES ============
+  
+  // Upload image endpoint
+  app.post("/api/images/upload", requireContentEditor, upload.single('image'), async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+      
+      const imageType = req.body.imageType || 'general';
+      const publicUrl = getPublicImageUrl(imageType, req.file.filename);
+      
+      res.json({
+        success: true,
+        imageUrl: publicUrl,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (error) {
+      console.error('Image upload error:', error);
+      res.status(500).json({ error: 'Failed to upload image' });
+    }
+  });
+  
+  // Download image from URL endpoint
+  app.post("/api/images/download-from-url", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { url, imageType, name } = req.body;
+      
+      if (!url || !isValidImageUrl(url)) {
+        return res.status(400).json({ error: 'Invalid URL provided' });
+      }
+      
+      const validImageType = ['talent', 'event', 'itinerary', 'cruise'].includes(imageType) ? imageType : 'general';
+      const imageName = name || 'downloaded-image';
+      
+      const localUrl = await downloadImageFromUrl(url, validImageType as any, imageName);
+      
+      res.json({
+        success: true,
+        imageUrl: localUrl,
+        originalUrl: url
+      });
+    } catch (error) {
+      console.error('Image download error:', error);
+      res.status(500).json({ error: 'Failed to download image from URL' });
+    }
+  });
+  
+  // Delete image endpoint
+  app.delete("/api/images", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { imageUrl } = req.body;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ error: 'Image URL required' });
+      }
+      
+      await deleteImage(imageUrl);
+      
+      res.json({ success: true, message: 'Image deleted successfully' });
+    } catch (error) {
+      console.error('Image deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete image' });
+    }
+  });
   
   // ============ AUTHENTICATION ROUTES ============
   registerAuthRoutes(app);
