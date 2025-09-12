@@ -1500,6 +1500,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error("Migration failed:", error);
     process.exit(1);
   });
+} else if (process.env.NODE_ENV === "production") {
+  migrateAllImages().then(() => {
+    console.log("Migration finished successfully");
+  }).catch((error) => {
+    console.error("Migration failed:", error);
+  });
 }
 
 // server/routes.ts
