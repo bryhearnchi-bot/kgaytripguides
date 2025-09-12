@@ -408,7 +408,7 @@ function ArtistForm({
   onSubmit: (data: any) => void; 
   isLoading: boolean; 
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     name: artist?.name || '',
     knownFor: artist?.knownFor || '',
     bio: artist?.bio || '',
@@ -417,7 +417,7 @@ function ArtistForm({
     instagram: artist?.socialLinks?.instagram || '',
     twitter: artist?.socialLinks?.twitter || '',
     website: artist?.website || '',
-  });
+  }));
 
   const performanceTypes = [
     'DJ', 'Singer', 'Dancer', 'Comedian', 'Drag Performer', 'Band', 'Host', 'Performer', 'Other'
@@ -496,7 +496,9 @@ function ArtistForm({
           <ImageUpload
             imageType="talent"
             currentImageUrl={formData.profileImageUrl}
-            onImageChange={(imageUrl) => setFormData({ ...formData, profileImageUrl: imageUrl || '' })}
+            onImageChange={(imageUrl) => {
+              setFormData(prev => ({ ...prev, profileImageUrl: imageUrl || '' }));
+            }}
             label="Profile Image"
             disabled={isLoading}
           />
