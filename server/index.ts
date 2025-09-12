@@ -26,27 +26,26 @@ app.head('/health', (req, res) => {
   res.end();
 });
 
-// Handle root path health checks - simplified and more reliable
+// Handle root path - simple and fast health check response
 app.get('/', (req, res, next) => {
-  // If this is a health check (no specific headers indicating a browser request)
   const userAgent = req.headers['user-agent'] || '';
   const accept = req.headers.accept || '';
   
-  // Simple check: if it's not clearly a browser request, treat as health check
-  if (!accept.includes('text/html') || userAgent.includes('curl') || userAgent.includes('wget') || userAgent.includes('HealthChecker')) {
-    res.writeHead(200, { 
-      'Content-Type': 'text/plain',
-      'Cache-Control': 'no-cache, no-store, must-revalidate'
-    });
-    return res.end('OK');
+  // Fast health check response for deployment systems
+  if (!accept.includes('text/html') || 
+      userAgent.includes('curl') || 
+      userAgent.includes('wget') || 
+      userAgent.includes('HealthChecker') ||
+      userAgent.includes('kube-probe') ||
+      userAgent.includes('GoogleHC')) {
+    return res.status(200).send('OK');
   }
   
   next();
 });
 
 app.head('/', (req, res) => {
-  res.writeHead(200);
-  res.end();
+  res.status(200).end();
 });
 
 app.use(express.json());
@@ -131,25 +130,27 @@ app.head('/api/health', (req, res) => {
     log(`✅ Server ready and listening on port ${port}`);
     log(`🚀 Health checks available at /healthz and /health`);
     
-    // Only run seeding in production, and do it completely in background
+    // Only run seeding in production, completely in background without blocking
     if (process.env.NODE_ENV === 'production') {
-      log('Production environment detected - scheduling background seeding...');
+      log('Production environment detected - will seed in background...');
       
-      // Delay seeding to let server fully start first
-      setTimeout(async () => {
-        try {
-          log('Starting production database seeding...');
-          const module = await import('./production-seed.ts');
-          if (module.seedProduction) {
-            await module.seedProduction();
-            log('✅ Production seeding completed successfully');
+      // Start seeding in background immediately without waiting
+      setImmediate(() => {
+        (async () => {
+          try {
+            log('Starting production database seeding...');
+            const module = await import('./production-seed.ts');
+            if (module.seedProduction) {
+              await module.seedProduction();
+              log('✅ Production seeding completed successfully');
+            }
+          } catch (error) {
+            console.error('❌ Production seeding failed:', error);
+            console.error('Server will continue running without seeded data');
+            // Don't crash server if seeding fails - just log the error
           }
-        } catch (error) {
-          console.error('❌ Production seeding failed:', error);
-          console.error('Server will continue running without seeded data');
-          // Don't crash server if seeding fails - just log the error
-        }
-      }, 2000); // Wait 2 seconds before starting seeding
+        })();
+      });
     }
   });
 })().catch((error) => {
