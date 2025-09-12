@@ -5,14 +5,18 @@ run = "npm run dev"
 channel = "stable-25_05"
 
 [deployment]
-run = ["node", "dist/index.js"]
+run = ["npm", "start"]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
+build = ["npm", "install", "&&", "npm", "run", "build"]
 ignoredPaths = ["attached_assets/*.jpeg", "attached_assets/*.jpg", "attached_assets/*.png", "attached_assets/*.pdf"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3000
 
 [[ports]]
 localPort = 38915

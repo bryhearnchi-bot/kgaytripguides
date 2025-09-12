@@ -219,8 +219,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.error('Migration failed:', error);
       process.exit(1);
     });
-} else if (process.env.NODE_ENV === 'production') {
-  // Run migration in background during production startup, but don't exit
+} else if (process.env.NODE_ENV === 'production' && process.env.RUN_MIGRATIONS === 'true') {
+  // Only run migration in production if explicitly enabled via environment variable
+  // This prevents automatic migration during server startup that could cause exits
   migrateAllImages()
     .then(() => {
       console.log('Migration finished successfully');
