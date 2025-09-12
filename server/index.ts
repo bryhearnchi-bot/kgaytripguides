@@ -46,13 +46,14 @@ app.get('/healthz', (req, res) => {
 
 // Add HEAD and GET request handlers for the root path for health check probes
 // These handlers are registered before serveStatic to ensure health checks work properly
+// Simplified for fastest possible response times
 app.head('/', (req, res) => {
   res.status(200).end();
 });
 
-// Add GET handler for Cloud Run/Autoscale health checks
+// Add GET handler for Cloud Run/Autoscale health checks - simplified for speed
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.status(200).send('OK');
 });
 
 (async () => {
@@ -75,6 +76,20 @@ app.get('/', (req, res) => {
     serveStatic(app);
   }
 
+  // Run production seeding BEFORE server starts listening to prevent health check interference
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const module = await import('./production-seed.ts');
+      if (module.seedProduction) {
+        await module.seedProduction();
+        log('Production seeding completed successfully');
+      }
+    } catch (error) {
+      console.error('Production seeding failed:', error);
+      // Don't block server startup if seeding fails
+    }
+  }
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
@@ -87,21 +102,4 @@ app.get('/', (req, res) => {
   }, () => {
     log(`serving on port ${port}`);
   });
-
-  // Run production seeding in the background after all setup is complete
-  // This ensures it doesn't interfere with health checks or server startup
-  if (process.env.NODE_ENV === 'production') {
-    // Use setTimeout to ensure this runs after all synchronous setup is complete
-    setTimeout(() => {
-      import('./production-seed.ts').then((module) => {
-        if (module.seedProduction) {
-          module.seedProduction().catch((error) => {
-            console.error('Background seeding failed:', error);
-          });
-        }
-      }).catch((error) => {
-        console.error('Failed to load production seeding:', error);
-      });
-    }, 1000); // Wait 1 second to ensure server is fully ready
-  }
 })();
