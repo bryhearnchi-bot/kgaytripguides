@@ -2953,7 +2953,7 @@ app.head("/api/health", (req, res) => {
           console.error("\u274C Production seeding failed:", error);
           console.error("Server will continue running without seeded data");
         }
-      }, 100);
+      }, 2e3);
     }
   });
 })();
