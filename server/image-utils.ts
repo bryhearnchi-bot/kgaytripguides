@@ -1,5 +1,6 @@
 import multer from "multer";
 import { promises as fs } from "fs";
+import * as fsSync from "fs";
 import path from "path";
 import { downloadImageFromUrl } from "./image-migration";
 import { randomUUID } from "crypto";
@@ -159,7 +160,7 @@ export function isBinaryFile(filePath: string): boolean {
 
 export function safReadFile(filePath: string): string | Buffer {
   if (isBinaryFile(filePath)) {
-    return fs.readFileSync(filePath);
+    return fsSync.readFileSync(filePath);
   }
-  return fs.readFileSync(filePath, 'utf-8');
+  return fsSync.readFileSync(filePath, 'utf-8');
 }

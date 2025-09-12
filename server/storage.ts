@@ -5,7 +5,8 @@ import * as schema from '../shared/schema';
 import type { 
   User, 
   InsertUser, 
-  Cruise, 
+  Trip,
+  Cruise, // Backward compatibility
   Itinerary,
   Event,
   Talent,
@@ -23,13 +24,16 @@ export const db = drizzle(queryClient, { schema });
 // Export all schema tables for easy access
 export const {
   users,
-  cruises,
+  trips,
+  cruises, // Backward compatibility alias
   itinerary,
   events,
   talent,
-  cruiseTalent,
+  tripTalent,
+  cruiseTalent, // Backward compatibility alias
   media,
-  userCruises,
+  userTrips,
+  userCruises, // Backward compatibility alias
   auditLog,
   settings,
 } = schema;
@@ -63,7 +67,102 @@ export class UserStorage implements IUserStorage {
   }
 }
 
-// ============ CRUISE OPERATIONS ============
+// ============ TRIP OPERATIONS (formerly cruise operations) ============
+export interface ITripStorage {
+  getAllTrips(): Promise<Trip[]>;
+  getTripById(id: number): Promise<Trip | undefined>;
+  getTripBySlug(slug: string): Promise<Trip | undefined>;
+  getUpcomingTrips(): Promise<Trip[]>;
+  getPastTrips(): Promise<Trip[]>;
+  createTrip(trip: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>): Promise<Trip>;
+  updateTrip(id: number, trip: Partial<Trip>): Promise<Trip | undefined>;
+  deleteTrip(id: number): Promise<void>;
+}
+
+export class TripStorage implements ITripStorage {
+  async getAllTrips(): Promise<Trip[]> {
+    return await db.select().from(cruises).orderBy(desc(cruises.startDate));
+  }
+
+  async getTripById(id: number): Promise<Trip | undefined> {
+    const result = await db.select().from(cruises).where(eq(cruises.id, id));
+    return result[0];
+  }
+
+  async getTripBySlug(slug: string): Promise<Trip | undefined> {
+    const result = await db.select().from(cruises).where(eq(cruises.slug, slug));
+    return result[0];
+  }
+
+  async getUpcomingTrips(): Promise<Trip[]> {
+    return await db.select()
+      .from(cruises)
+      .where(eq(cruises.status, 'upcoming'))
+      .orderBy(asc(cruises.startDate));
+  }
+
+  async getPastTrips(): Promise<Trip[]> {
+    return await db.select()
+      .from(cruises)
+      .where(eq(cruises.status, 'past'))
+      .orderBy(desc(cruises.startDate));
+  }
+
+  async createTrip(trip: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>): Promise<Trip> {
+    const values = { ...trip };
+    
+    // Convert date strings to Date objects for timestamp fields
+    if (trip.startDate) {
+      if (typeof trip.startDate === 'string') {
+        values.startDate = new Date(trip.startDate);
+      } else {
+        values.startDate = trip.startDate;
+      }
+    }
+    if (trip.endDate) {
+      if (typeof trip.endDate === 'string') {
+        values.endDate = new Date(trip.endDate);
+      } else {
+        values.endDate = trip.endDate;
+      }
+    }
+    
+    const result = await db.insert(cruises).values(values).returning();
+    return result[0];
+  }
+
+  async updateTrip(id: number, trip: Partial<Trip>): Promise<Trip | undefined> {
+    const updates = { ...trip, updatedAt: new Date() };
+    
+    // Convert date strings to Date objects for timestamp fields
+    if (trip.startDate) {
+      if (typeof trip.startDate === 'string') {
+        updates.startDate = new Date(trip.startDate);
+      } else {
+        updates.startDate = trip.startDate;
+      }
+    }
+    if (trip.endDate) {
+      if (typeof trip.endDate === 'string') {
+        updates.endDate = new Date(trip.endDate);
+      } else {
+        updates.endDate = trip.endDate;
+      }
+    }
+    
+    const result = await db.update(cruises)
+      .set(updates)
+      .where(eq(cruises.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteTrip(id: number): Promise<void> {
+    await db.delete(cruises).where(eq(cruises.id, id));
+  }
+}
+
+// ============ BACKWARD COMPATIBILITY: CRUISE OPERATIONS ============
 export interface ICruiseStorage {
   getAllCruises(): Promise<Cruise[]>;
   getCruiseById(id: number): Promise<Cruise | undefined>;
@@ -76,85 +175,38 @@ export interface ICruiseStorage {
 }
 
 export class CruiseStorage implements ICruiseStorage {
+  private tripStorage = new TripStorage();
+
   async getAllCruises(): Promise<Cruise[]> {
-    return await db.select().from(cruises).orderBy(desc(cruises.startDate));
+    return await this.tripStorage.getAllTrips();
   }
 
   async getCruiseById(id: number): Promise<Cruise | undefined> {
-    const result = await db.select().from(cruises).where(eq(cruises.id, id));
-    return result[0];
+    return await this.tripStorage.getTripById(id);
   }
 
   async getCruiseBySlug(slug: string): Promise<Cruise | undefined> {
-    const result = await db.select().from(cruises).where(eq(cruises.slug, slug));
-    return result[0];
+    return await this.tripStorage.getTripBySlug(slug);
   }
 
   async getUpcomingCruises(): Promise<Cruise[]> {
-    return await db.select()
-      .from(cruises)
-      .where(eq(cruises.status, 'upcoming'))
-      .orderBy(asc(cruises.startDate));
+    return await this.tripStorage.getUpcomingTrips();
   }
 
   async getPastCruises(): Promise<Cruise[]> {
-    return await db.select()
-      .from(cruises)
-      .where(eq(cruises.status, 'past'))
-      .orderBy(desc(cruises.startDate));
+    return await this.tripStorage.getPastTrips();
   }
 
   async createCruise(cruise: Omit<Cruise, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cruise> {
-    const values = { ...cruise };
-    
-    // Convert date strings to Date objects for timestamp fields
-    if (cruise.startDate) {
-      if (typeof cruise.startDate === 'string') {
-        values.startDate = new Date(cruise.startDate);
-      } else {
-        values.startDate = cruise.startDate;
-      }
-    }
-    if (cruise.endDate) {
-      if (typeof cruise.endDate === 'string') {
-        values.endDate = new Date(cruise.endDate);
-      } else {
-        values.endDate = cruise.endDate;
-      }
-    }
-    
-    const result = await db.insert(cruises).values(values).returning();
-    return result[0];
+    return await this.tripStorage.createTrip(cruise);
   }
 
   async updateCruise(id: number, cruise: Partial<Cruise>): Promise<Cruise | undefined> {
-    const updates = { ...cruise, updatedAt: new Date() };
-    
-    // Convert date strings to Date objects for timestamp fields
-    if (cruise.startDate) {
-      if (typeof cruise.startDate === 'string') {
-        updates.startDate = new Date(cruise.startDate);
-      } else {
-        updates.startDate = cruise.startDate;
-      }
-    }
-    if (cruise.endDate) {
-      if (typeof cruise.endDate === 'string') {
-        updates.endDate = new Date(cruise.endDate);
-      } else {
-        updates.endDate = cruise.endDate;
-      }
-    }
-    
-    const result = await db.update(cruises)
-      .set(updates)
-      .where(eq(cruises.id, id))
-      .returning();
-    return result[0];
+    return await this.tripStorage.updateTrip(id, cruise);
   }
 
   async deleteCruise(id: number): Promise<void> {
-    await db.delete(cruises).where(eq(cruises.id, id));
+    return await this.tripStorage.deleteTrip(id);
   }
 }
 
@@ -474,7 +526,8 @@ export class SettingsStorage implements ISettingsStorage {
 
 // Create storage instances
 export const storage = new UserStorage();
-export const cruiseStorage = new CruiseStorage();
+export const tripStorage = new TripStorage();
+export const cruiseStorage = new CruiseStorage(); // Backward compatibility
 export const itineraryStorage = new ItineraryStorage();
 export const eventStorage = new EventStorage();
 export const talentStorage = new TalentStorage();

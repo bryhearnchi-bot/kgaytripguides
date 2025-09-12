@@ -3,7 +3,8 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { 
   storage, 
-  cruiseStorage, 
+  tripStorage,
+  cruiseStorage, // Backward compatibility
   itineraryStorage, 
   eventStorage, 
   talentStorage,
@@ -56,8 +57,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload image endpoint with type parameter
   app.post("/api/images/upload/:type", requireAuth, requireContentEditor, (req, res, next) => {
     const imageType = req.params.type;
-    if (!['talent', 'event', 'itinerary', 'cruise'].includes(imageType)) {
-      return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, cruise' });
+    if (!['talent', 'event', 'itinerary', 'trip', 'cruise'].includes(imageType)) {
+      return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, trip, cruise' });
     }
     
     // Add imageType to request for multer to use
@@ -94,8 +95,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid URL provided' });
       }
       
-      if (!['talent', 'event', 'itinerary', 'cruise'].includes(imageType)) {
-        return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, cruise' });
+      if (!['talent', 'event', 'itinerary', 'trip', 'cruise'].includes(imageType)) {
+        return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, trip, cruise' });
       }
       const validImageType = imageType;
       const imageName = name || 'downloaded-image';
@@ -230,6 +231,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting cruise:', error);
       res.status(500).json({ error: 'Failed to delete cruise' });
+    }
+  });
+
+  // ============ TRIP ROUTES (new trip-based API) ============
+  
+  // Get all trips
+  app.get("/api/trips", async (req, res) => {
+    try {
+      const trips = await tripStorage.getAllTrips();
+      res.json(trips);
+    } catch (error) {
+      console.error('Error fetching trips:', error);
+      res.status(500).json({ error: 'Failed to fetch trips' });
+    }
+  });
+
+  // Get upcoming trips
+  app.get("/api/trips/upcoming", async (req, res) => {
+    try {
+      const trips = await tripStorage.getUpcomingTrips();
+      res.json(trips);
+    } catch (error) {
+      console.error('Error fetching upcoming trips:', error);
+      res.status(500).json({ error: 'Failed to fetch upcoming trips' });
+    }
+  });
+
+  // Get past trips
+  app.get("/api/trips/past", async (req, res) => {
+    try {
+      const trips = await tripStorage.getPastTrips();
+      res.json(trips);
+    } catch (error) {
+      console.error('Error fetching past trips:', error);
+      res.status(500).json({ error: 'Failed to fetch past trips' });
+    }
+  });
+
+  // Get trip by ID
+  app.get("/api/trips/id/:id", async (req, res) => {
+    try {
+      const trip = await tripStorage.getTripById(parseInt(req.params.id));
+      if (!trip) {
+        return res.status(404).json({ error: 'Trip not found' });
+      }
+      res.json(trip);
+    } catch (error) {
+      console.error('Error fetching trip:', error);
+      res.status(500).json({ error: 'Failed to fetch trip' });
+    }
+  });
+
+  // Get trip by slug (for public viewing)
+  app.get("/api/trips/:slug", async (req, res) => {
+    try {
+      const trip = await tripStorage.getTripBySlug(req.params.slug);
+      if (!trip) {
+        return res.status(404).json({ error: 'Trip not found' });
+      }
+      res.json(trip);
+    } catch (error) {
+      console.error('Error fetching trip:', error);
+      res.status(500).json({ error: 'Failed to fetch trip' });
+    }
+  });
+
+  // Create new trip (protected route)
+  app.post("/api/trips", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const trip = await tripStorage.createTrip(req.body);
+      res.status(201).json(trip);
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      res.status(500).json({ error: 'Failed to create trip' });
+    }
+  });
+
+  // Update trip (protected route)
+  app.put("/api/trips/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const trip = await tripStorage.updateTrip(parseInt(req.params.id), req.body);
+      if (!trip) {
+        return res.status(404).json({ error: 'Trip not found' });
+      }
+      res.json(trip);
+    } catch (error) {
+      console.error('Error updating trip:', error);
+      res.status(500).json({ error: 'Failed to update trip' });
+    }
+  });
+
+  // Delete trip (protected route)
+  app.delete("/api/trips/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      await tripStorage.deleteTrip(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      res.status(500).json({ error: 'Failed to delete trip' });
     }
   });
 
@@ -549,6 +649,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching complete cruise data:', error);
       res.status(500).json({ error: 'Failed to fetch cruise data' });
+    }
+  });
+
+  // ============ COMPLETE TRIP DATA ENDPOINT (new trip-based API) ============
+  
+  // Get complete trip data (itinerary, events, talent, media)
+  app.get("/api/trips/:slug/complete", async (req, res) => {
+    try {
+      const trip = await tripStorage.getTripBySlug(req.params.slug);
+      if (!trip) {
+        return res.status(404).json({ error: 'Trip not found' });
+      }
+
+      const [itinerary, events, talent] = await Promise.all([
+        itineraryStorage.getItineraryByCruise(trip.id),
+        eventStorage.getEventsByCruise(trip.id),
+        talentStorage.getTalentByCruise(trip.id)
+      ]);
+
+      res.json({
+        trip,
+        itinerary,
+        events,
+        talent
+      });
+    } catch (error) {
+      console.error('Error fetching complete trip data:', error);
+      res.status(500).json({ error: 'Failed to fetch trip data' });
     }
   });
 
