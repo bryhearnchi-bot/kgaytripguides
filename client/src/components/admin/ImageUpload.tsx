@@ -57,7 +57,7 @@ export function ImageUpload({
       formData.append('image', file);
       formData.append('imageType', imageType);
 
-      const response = await fetch('/api/images/upload', {
+      const response = await fetch(`/api/images/upload/${imageType}`, {
         method: 'POST',
         body: formData,
         credentials: 'include'

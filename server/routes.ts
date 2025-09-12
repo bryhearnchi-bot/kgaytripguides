@@ -52,14 +52,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // ============ IMAGE MANAGEMENT ROUTES ============
   
-  // Upload image endpoint
-  app.post("/api/images/upload", requireContentEditor, upload.single('image'), async (req: AuthenticatedRequest, res) => {
+  // Upload image endpoint with type parameter
+  app.post("/api/images/upload/:type", requireContentEditor, (req, res, next) => {
+    const imageType = req.params.type;
+    if (!['talent', 'event', 'itinerary', 'cruise'].includes(imageType)) {
+      return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, cruise' });
+    }
+    
+    // Add imageType to request for multer to use
+    req.body.imageType = imageType;
+    next();
+  }, upload.single('image'), async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No image file provided' });
       }
       
-      const imageType = req.body.imageType || 'general';
+      const imageType = req.params.type;
       const publicUrl = getPublicImageUrl(imageType, req.file.filename);
       
       res.json({
