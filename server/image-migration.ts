@@ -208,25 +208,5 @@ export async function downloadImageFromUrl(url: string, type: 'talent' | 'event'
   return `${publicPath}/${filename}`;
 }
 
-// Run migration if called directly (not when imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
-  migrateAllImages()
-    .then(() => {
-      console.log('Migration finished successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Migration failed:', error);
-      process.exit(1);
-    });
-} else if (process.env.NODE_ENV === 'production' && process.env.RUN_MIGRATIONS === 'true') {
-  // Only run migration in production if explicitly enabled via environment variable
-  // This prevents automatic migration during server startup that could cause exits
-  migrateAllImages()
-    .then(() => {
-      console.log('Migration finished successfully');
-    })
-    .catch((error) => {
-      console.error('Migration failed:', error);
-    });
-}
+// Migration can be run manually but won't exit the process
+// Removed automatic execution to prevent server exits

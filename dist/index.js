@@ -1,21 +1,12 @@
 var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-
-// server/index.ts
-import express3 from "express";
-import cookieParser from "cookie-parser";
-
-// server/routes.ts
-import express from "express";
-import { createServer } from "http";
-
-// server/storage.ts
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
-import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
 
 // shared/schema.ts
 var schema_exports = {};
@@ -70,622 +61,802 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
-var users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  email: text("email").unique(),
-  fullName: text("full_name"),
-  role: text("role").default("viewer"),
-  // super_admin, cruise_admin, content_editor, media_manager, viewer
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  lastLogin: timestamp("last_login"),
-  isActive: boolean("is_active").default(true)
-});
-var passwordResetTokens = pgTable("password_reset_tokens", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  usedAt: timestamp("used_at")
-  // null if not used yet
-}, (table) => ({
-  tokenIdx: index("password_reset_token_idx").on(table.token),
-  userIdx: index("password_reset_user_idx").on(table.userId),
-  expiresIdx: index("password_reset_expires_idx").on(table.expiresAt)
-}));
-var cruises = pgTable("cruises", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: varchar("slug", { length: 255 }).notNull().unique(),
-  shipName: text("ship_name").notNull(),
-  cruiseLine: text("cruise_line"),
-  // Virgin, Celebrity, etc.
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  status: text("status").default("upcoming"),
-  // upcoming, ongoing, past
-  heroImageUrl: text("hero_image_url"),
-  description: text("description"),
-  highlights: jsonb("highlights"),
-  // Array of highlight strings
-  includesInfo: jsonb("includes_info"),
-  // What's included in the cruise
-  pricing: jsonb("pricing"),
-  // Pricing tiers and info
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  statusIdx: index("cruise_status_idx").on(table.status),
-  slugIdx: index("cruise_slug_idx").on(table.slug)
-}));
-var itinerary = pgTable("itinerary", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  date: timestamp("date").notNull(),
-  day: integer("day").notNull(),
-  // Day number of cruise (1, 2, 3, etc.)
-  portName: text("port_name").notNull(),
-  country: text("country"),
-  arrivalTime: text("arrival_time"),
-  // Stored as text for flexibility (e.g., "08:00", "—")
-  departureTime: text("departure_time"),
-  allAboardTime: text("all_aboard_time"),
-  portImageUrl: text("port_image_url"),
-  description: text("description"),
-  highlights: jsonb("highlights"),
-  // Port highlights
-  orderIndex: integer("order_index").notNull(),
-  // For sorting
-  segment: text("segment").default("main")
-  // pre, main, post
-}, (table) => ({
-  cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId),
-  dateIdx: index("itinerary_date_idx").on(table.date)
-}));
-var events = pgTable("events", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  date: timestamp("date").notNull(),
-  time: text("time").notNull(),
-  // "14:00", "21:30", etc.
-  title: text("title").notNull(),
-  type: text("type").notNull(),
-  // party, show, dining, lounge, fun, club, after
-  venue: text("venue").notNull(),
-  deck: text("deck"),
-  description: text("description"),
-  shortDescription: text("short_description"),
-  imageUrl: text("image_url"),
-  themeDescription: text("theme_description"),
-  // For parties
-  dressCode: text("dress_code"),
-  capacity: integer("capacity"),
-  requiresReservation: boolean("requires_reservation").default(false),
-  talentIds: jsonb("talent_ids"),
-  // Array of talent IDs
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  cruiseIdx: index("events_cruise_idx").on(table.cruiseId),
-  dateIdx: index("events_date_idx").on(table.date),
-  typeIdx: index("events_type_idx").on(table.type)
-}));
-var talent = pgTable("talent", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  category: text("category").notNull(),
-  // Broadway, Drag, Comedy, Music, etc.
-  bio: text("bio"),
-  knownFor: text("known_for"),
-  profileImageUrl: text("profile_image_url"),
-  socialLinks: jsonb("social_links"),
-  // {instagram: "", twitter: "", etc.}
-  website: text("website"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  nameIdx: index("talent_name_idx").on(table.name),
-  categoryIdx: index("talent_category_idx").on(table.category)
-}));
-var cruiseTalent = pgTable("cruise_talent", {
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  talentId: integer("talent_id").notNull().references(() => talent.id, { onDelete: "cascade" }),
-  role: text("role"),
-  // Headliner, Special Guest, Host, etc.
-  performanceCount: integer("performance_count"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow()
-}, (table) => ({
-  pk: primaryKey({ columns: [table.cruiseId, table.talentId] }),
-  cruiseIdx: index("cruise_talent_cruise_idx").on(table.cruiseId),
-  talentIdx: index("cruise_talent_talent_idx").on(table.talentId)
-}));
-var media = pgTable("media", {
-  id: serial("id").primaryKey(),
-  url: text("url").notNull(),
-  thumbnailUrl: text("thumbnail_url"),
-  type: text("type").notNull(),
-  // port, party, talent, cruise, event, gallery
-  associatedType: text("associated_type"),
-  // cruise, event, talent, itinerary
-  associatedId: integer("associated_id"),
-  caption: text("caption"),
-  altText: text("alt_text"),
-  credits: text("credits"),
-  // Photographer/source credits
-  uploadedBy: varchar("uploaded_by").references(() => users.id),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
-  metadata: jsonb("metadata")
-  // Additional metadata like dimensions, file size, etc.
-}, (table) => ({
-  typeIdx: index("media_type_idx").on(table.type),
-  associatedIdx: index("media_associated_idx").on(table.associatedType, table.associatedId)
-}));
-var userCruises = pgTable("user_cruises", {
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  permissionLevel: text("permission_level").notNull(),
-  // admin, editor, viewer
-  assignedBy: varchar("assigned_by").references(() => users.id),
-  assignedAt: timestamp("assigned_at").defaultNow()
-}, (table) => ({
-  pk: primaryKey({ columns: [table.userId, table.cruiseId] }),
-  userIdx: index("user_cruises_user_idx").on(table.userId),
-  cruiseIdx: index("user_cruises_cruise_idx").on(table.cruiseId)
-}));
-var partyTemplates = pgTable("party_templates", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  themeDescription: text("theme_description"),
-  dressCode: text("dress_code"),
-  defaultImageUrl: text("default_image_url"),
-  tags: jsonb("tags"),
-  // Array of tags for searching
-  defaults: jsonb("defaults"),
-  // Default values for events using this template
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  nameIdx: index("party_templates_name_idx").on(table.name)
-}));
-var cruiseInfoSections = pgTable("cruise_info_sections", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  content: text("content"),
-  // Rich text content
-  orderIndex: integer("order_index").notNull(),
-  updatedBy: varchar("updated_by").references(() => users.id),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
-  orderIdx: index("cruise_info_order_idx").on(table.cruiseId, table.orderIndex)
-}));
-var aiJobs = pgTable("ai_jobs", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  sourceType: text("source_type").notNull(),
-  // pdf, url
-  sourceRef: text("source_ref").notNull(),
-  // URL or file path
-  task: text("task").notNull(),
-  // extract
-  status: text("status").default("queued"),
-  // queued, processing, completed, failed
-  result: jsonb("result"),
-  // Extracted data
-  error: text("error"),
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  cruiseIdx: index("ai_jobs_cruise_idx").on(table.cruiseId),
-  statusIdx: index("ai_jobs_status_idx").on(table.status)
-}));
-var aiDrafts = pgTable("ai_drafts", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  draftType: text("draft_type").notNull(),
-  // itinerary, events, info
-  payload: jsonb("payload").notNull(),
-  // Draft data to be reviewed
-  createdFromJobId: integer("created_from_job_id").references(() => aiJobs.id),
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow()
-}, (table) => ({
-  cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId),
-  typeIdx: index("ai_drafts_type_idx").on(table.draftType)
-}));
-var auditLog = pgTable("audit_log", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
-  action: text("action").notNull(),
-  // create, update, delete
-  tableName: text("table_name").notNull(),
-  recordId: text("record_id"),
-  oldValues: jsonb("old_values"),
-  newValues: jsonb("new_values"),
-  timestamp: timestamp("timestamp").defaultNow(),
-  ipAddress: text("ip_address")
-}, (table) => ({
-  userIdx: index("audit_user_idx").on(table.userId),
-  timestampIdx: index("audit_timestamp_idx").on(table.timestamp)
-}));
-var cruisesRelations = relations(cruises, ({ many, one }) => ({
-  itinerary: many(itinerary),
-  events: many(events),
-  cruiseTalent: many(cruiseTalent),
-  userCruises: many(userCruises),
-  creator: one(users, {
-    fields: [cruises.createdBy],
-    references: [users.id]
-  })
-}));
-var itineraryRelations = relations(itinerary, ({ one }) => ({
-  cruise: one(cruises, {
-    fields: [itinerary.cruiseId],
-    references: [cruises.id]
-  })
-}));
-var eventsRelations = relations(events, ({ one }) => ({
-  cruise: one(cruises, {
-    fields: [events.cruiseId],
-    references: [cruises.id]
-  })
-}));
-var talentRelations = relations(talent, ({ many }) => ({
-  cruiseTalent: many(cruiseTalent)
-}));
-var cruiseTalentRelations = relations(cruiseTalent, ({ one }) => ({
-  cruise: one(cruises, {
-    fields: [cruiseTalent.cruiseId],
-    references: [cruises.id]
-  }),
-  talent: one(talent, {
-    fields: [cruiseTalent.talentId],
-    references: [talent.id]
-  })
-}));
-var userCruisesRelations = relations(userCruises, ({ one }) => ({
-  user: one(users, {
-    fields: [userCruises.userId],
-    references: [users.id]
-  }),
-  cruise: one(cruises, {
-    fields: [userCruises.cruiseId],
-    references: [cruises.id]
-  })
-}));
-var partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
-  creator: one(users, {
-    fields: [partyTemplates.createdBy],
-    references: [users.id]
-  })
-}));
-var cruiseInfoSectionsRelations = relations(cruiseInfoSections, ({ one }) => ({
-  cruise: one(cruises, {
-    fields: [cruiseInfoSections.cruiseId],
-    references: [cruises.id]
-  }),
-  updater: one(users, {
-    fields: [cruiseInfoSections.updatedBy],
-    references: [users.id]
-  })
-}));
-var aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
-  cruise: one(cruises, {
-    fields: [aiJobs.cruiseId],
-    references: [cruises.id]
-  }),
-  creator: one(users, {
-    fields: [aiJobs.createdBy],
-    references: [users.id]
-  }),
-  drafts: many(aiDrafts)
-}));
-var aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
-  cruise: one(cruises, {
-    fields: [aiDrafts.cruiseId],
-    references: [cruises.id]
-  }),
-  job: one(aiJobs, {
-    fields: [aiDrafts.createdFromJobId],
-    references: [aiJobs.id]
-  }),
-  creator: one(users, {
-    fields: [aiDrafts.createdBy],
-    references: [users.id]
-  })
-}));
-var insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  email: true,
-  fullName: true,
-  role: true
-});
-var insertCruiseSchema = createInsertSchema(cruises).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var insertItinerarySchema = createInsertSchema(itinerary).omit({
-  id: true
-});
-var insertEventSchema = createInsertSchema(events).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var insertTalentSchema = createInsertSchema(talent).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var insertMediaSchema = createInsertSchema(media).omit({
-  id: true,
-  uploadedAt: true
-});
-var insertPartyTemplateSchema = createInsertSchema(partyTemplates).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var insertCruiseInfoSectionSchema = createInsertSchema(cruiseInfoSections).omit({
-  id: true,
-  updatedAt: true
-});
-var insertAiJobSchema = createInsertSchema(aiJobs).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var insertAiDraftSchema = createInsertSchema(aiDrafts).omit({
-  id: true,
-  createdAt: true
+var users, passwordResetTokens, cruises, itinerary, events, talent, cruiseTalent, media, userCruises, partyTemplates, cruiseInfoSections, aiJobs, aiDrafts, auditLog, cruisesRelations, itineraryRelations, eventsRelations, talentRelations, cruiseTalentRelations, userCruisesRelations, partyTemplatesRelations, cruiseInfoSectionsRelations, aiJobsRelations, aiDraftsRelations, insertUserSchema, insertCruiseSchema, insertItinerarySchema, insertEventSchema, insertTalentSchema, insertMediaSchema, insertPartyTemplateSchema, insertCruiseInfoSectionSchema, insertAiJobSchema, insertAiDraftSchema;
+var init_schema = __esm({
+  "shared/schema.ts"() {
+    "use strict";
+    users = pgTable("users", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      username: text("username").notNull().unique(),
+      password: text("password").notNull(),
+      email: text("email").unique(),
+      fullName: text("full_name"),
+      role: text("role").default("viewer"),
+      // super_admin, cruise_admin, content_editor, media_manager, viewer
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow(),
+      lastLogin: timestamp("last_login"),
+      isActive: boolean("is_active").default(true)
+    });
+    passwordResetTokens = pgTable("password_reset_tokens", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      token: text("token").notNull().unique(),
+      expiresAt: timestamp("expires_at").notNull(),
+      createdAt: timestamp("created_at").defaultNow(),
+      usedAt: timestamp("used_at")
+      // null if not used yet
+    }, (table) => ({
+      tokenIdx: index("password_reset_token_idx").on(table.token),
+      userIdx: index("password_reset_user_idx").on(table.userId),
+      expiresIdx: index("password_reset_expires_idx").on(table.expiresAt)
+    }));
+    cruises = pgTable("cruises", {
+      id: serial("id").primaryKey(),
+      name: text("name").notNull(),
+      slug: varchar("slug", { length: 255 }).notNull().unique(),
+      shipName: text("ship_name").notNull(),
+      cruiseLine: text("cruise_line"),
+      // Virgin, Celebrity, etc.
+      startDate: timestamp("start_date").notNull(),
+      endDate: timestamp("end_date").notNull(),
+      status: text("status").default("upcoming"),
+      // upcoming, ongoing, past
+      heroImageUrl: text("hero_image_url"),
+      description: text("description"),
+      highlights: jsonb("highlights"),
+      // Array of highlight strings
+      includesInfo: jsonb("includes_info"),
+      // What's included in the cruise
+      pricing: jsonb("pricing"),
+      // Pricing tiers and info
+      createdBy: varchar("created_by").references(() => users.id),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      statusIdx: index("cruise_status_idx").on(table.status),
+      slugIdx: index("cruise_slug_idx").on(table.slug)
+    }));
+    itinerary = pgTable("itinerary", {
+      id: serial("id").primaryKey(),
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      date: timestamp("date").notNull(),
+      day: integer("day").notNull(),
+      // Day number of cruise (1, 2, 3, etc.)
+      portName: text("port_name").notNull(),
+      country: text("country"),
+      arrivalTime: text("arrival_time"),
+      // Stored as text for flexibility (e.g., "08:00", "—")
+      departureTime: text("departure_time"),
+      allAboardTime: text("all_aboard_time"),
+      portImageUrl: text("port_image_url"),
+      description: text("description"),
+      highlights: jsonb("highlights"),
+      // Port highlights
+      orderIndex: integer("order_index").notNull(),
+      // For sorting
+      segment: text("segment").default("main")
+      // pre, main, post
+    }, (table) => ({
+      cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId),
+      dateIdx: index("itinerary_date_idx").on(table.date)
+    }));
+    events = pgTable("events", {
+      id: serial("id").primaryKey(),
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      date: timestamp("date").notNull(),
+      time: text("time").notNull(),
+      // "14:00", "21:30", etc.
+      title: text("title").notNull(),
+      type: text("type").notNull(),
+      // party, show, dining, lounge, fun, club, after
+      venue: text("venue").notNull(),
+      deck: text("deck"),
+      description: text("description"),
+      shortDescription: text("short_description"),
+      imageUrl: text("image_url"),
+      themeDescription: text("theme_description"),
+      // For parties
+      dressCode: text("dress_code"),
+      capacity: integer("capacity"),
+      requiresReservation: boolean("requires_reservation").default(false),
+      talentIds: jsonb("talent_ids"),
+      // Array of talent IDs
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      cruiseIdx: index("events_cruise_idx").on(table.cruiseId),
+      dateIdx: index("events_date_idx").on(table.date),
+      typeIdx: index("events_type_idx").on(table.type)
+    }));
+    talent = pgTable("talent", {
+      id: serial("id").primaryKey(),
+      name: text("name").notNull(),
+      category: text("category").notNull(),
+      // Broadway, Drag, Comedy, Music, etc.
+      bio: text("bio"),
+      knownFor: text("known_for"),
+      profileImageUrl: text("profile_image_url"),
+      socialLinks: jsonb("social_links"),
+      // {instagram: "", twitter: "", etc.}
+      website: text("website"),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      nameIdx: index("talent_name_idx").on(table.name),
+      categoryIdx: index("talent_category_idx").on(table.category)
+    }));
+    cruiseTalent = pgTable("cruise_talent", {
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      talentId: integer("talent_id").notNull().references(() => talent.id, { onDelete: "cascade" }),
+      role: text("role"),
+      // Headliner, Special Guest, Host, etc.
+      performanceCount: integer("performance_count"),
+      notes: text("notes"),
+      createdAt: timestamp("created_at").defaultNow()
+    }, (table) => ({
+      pk: primaryKey({ columns: [table.cruiseId, table.talentId] }),
+      cruiseIdx: index("cruise_talent_cruise_idx").on(table.cruiseId),
+      talentIdx: index("cruise_talent_talent_idx").on(table.talentId)
+    }));
+    media = pgTable("media", {
+      id: serial("id").primaryKey(),
+      url: text("url").notNull(),
+      thumbnailUrl: text("thumbnail_url"),
+      type: text("type").notNull(),
+      // port, party, talent, cruise, event, gallery
+      associatedType: text("associated_type"),
+      // cruise, event, talent, itinerary
+      associatedId: integer("associated_id"),
+      caption: text("caption"),
+      altText: text("alt_text"),
+      credits: text("credits"),
+      // Photographer/source credits
+      uploadedBy: varchar("uploaded_by").references(() => users.id),
+      uploadedAt: timestamp("uploaded_at").defaultNow(),
+      metadata: jsonb("metadata")
+      // Additional metadata like dimensions, file size, etc.
+    }, (table) => ({
+      typeIdx: index("media_type_idx").on(table.type),
+      associatedIdx: index("media_associated_idx").on(table.associatedType, table.associatedId)
+    }));
+    userCruises = pgTable("user_cruises", {
+      userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      permissionLevel: text("permission_level").notNull(),
+      // admin, editor, viewer
+      assignedBy: varchar("assigned_by").references(() => users.id),
+      assignedAt: timestamp("assigned_at").defaultNow()
+    }, (table) => ({
+      pk: primaryKey({ columns: [table.userId, table.cruiseId] }),
+      userIdx: index("user_cruises_user_idx").on(table.userId),
+      cruiseIdx: index("user_cruises_cruise_idx").on(table.cruiseId)
+    }));
+    partyTemplates = pgTable("party_templates", {
+      id: serial("id").primaryKey(),
+      name: text("name").notNull(),
+      themeDescription: text("theme_description"),
+      dressCode: text("dress_code"),
+      defaultImageUrl: text("default_image_url"),
+      tags: jsonb("tags"),
+      // Array of tags for searching
+      defaults: jsonb("defaults"),
+      // Default values for events using this template
+      createdBy: varchar("created_by").references(() => users.id),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      nameIdx: index("party_templates_name_idx").on(table.name)
+    }));
+    cruiseInfoSections = pgTable("cruise_info_sections", {
+      id: serial("id").primaryKey(),
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      title: text("title").notNull(),
+      content: text("content"),
+      // Rich text content
+      orderIndex: integer("order_index").notNull(),
+      updatedBy: varchar("updated_by").references(() => users.id),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
+      orderIdx: index("cruise_info_order_idx").on(table.cruiseId, table.orderIndex)
+    }));
+    aiJobs = pgTable("ai_jobs", {
+      id: serial("id").primaryKey(),
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      sourceType: text("source_type").notNull(),
+      // pdf, url
+      sourceRef: text("source_ref").notNull(),
+      // URL or file path
+      task: text("task").notNull(),
+      // extract
+      status: text("status").default("queued"),
+      // queued, processing, completed, failed
+      result: jsonb("result"),
+      // Extracted data
+      error: text("error"),
+      createdBy: varchar("created_by").references(() => users.id),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      cruiseIdx: index("ai_jobs_cruise_idx").on(table.cruiseId),
+      statusIdx: index("ai_jobs_status_idx").on(table.status)
+    }));
+    aiDrafts = pgTable("ai_drafts", {
+      id: serial("id").primaryKey(),
+      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      draftType: text("draft_type").notNull(),
+      // itinerary, events, info
+      payload: jsonb("payload").notNull(),
+      // Draft data to be reviewed
+      createdFromJobId: integer("created_from_job_id").references(() => aiJobs.id),
+      createdBy: varchar("created_by").references(() => users.id),
+      createdAt: timestamp("created_at").defaultNow()
+    }, (table) => ({
+      cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId),
+      typeIdx: index("ai_drafts_type_idx").on(table.draftType)
+    }));
+    auditLog = pgTable("audit_log", {
+      id: serial("id").primaryKey(),
+      userId: varchar("user_id").references(() => users.id),
+      action: text("action").notNull(),
+      // create, update, delete
+      tableName: text("table_name").notNull(),
+      recordId: text("record_id"),
+      oldValues: jsonb("old_values"),
+      newValues: jsonb("new_values"),
+      timestamp: timestamp("timestamp").defaultNow(),
+      ipAddress: text("ip_address")
+    }, (table) => ({
+      userIdx: index("audit_user_idx").on(table.userId),
+      timestampIdx: index("audit_timestamp_idx").on(table.timestamp)
+    }));
+    cruisesRelations = relations(cruises, ({ many, one }) => ({
+      itinerary: many(itinerary),
+      events: many(events),
+      cruiseTalent: many(cruiseTalent),
+      userCruises: many(userCruises),
+      creator: one(users, {
+        fields: [cruises.createdBy],
+        references: [users.id]
+      })
+    }));
+    itineraryRelations = relations(itinerary, ({ one }) => ({
+      cruise: one(cruises, {
+        fields: [itinerary.cruiseId],
+        references: [cruises.id]
+      })
+    }));
+    eventsRelations = relations(events, ({ one }) => ({
+      cruise: one(cruises, {
+        fields: [events.cruiseId],
+        references: [cruises.id]
+      })
+    }));
+    talentRelations = relations(talent, ({ many }) => ({
+      cruiseTalent: many(cruiseTalent)
+    }));
+    cruiseTalentRelations = relations(cruiseTalent, ({ one }) => ({
+      cruise: one(cruises, {
+        fields: [cruiseTalent.cruiseId],
+        references: [cruises.id]
+      }),
+      talent: one(talent, {
+        fields: [cruiseTalent.talentId],
+        references: [talent.id]
+      })
+    }));
+    userCruisesRelations = relations(userCruises, ({ one }) => ({
+      user: one(users, {
+        fields: [userCruises.userId],
+        references: [users.id]
+      }),
+      cruise: one(cruises, {
+        fields: [userCruises.cruiseId],
+        references: [cruises.id]
+      })
+    }));
+    partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
+      creator: one(users, {
+        fields: [partyTemplates.createdBy],
+        references: [users.id]
+      })
+    }));
+    cruiseInfoSectionsRelations = relations(cruiseInfoSections, ({ one }) => ({
+      cruise: one(cruises, {
+        fields: [cruiseInfoSections.cruiseId],
+        references: [cruises.id]
+      }),
+      updater: one(users, {
+        fields: [cruiseInfoSections.updatedBy],
+        references: [users.id]
+      })
+    }));
+    aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
+      cruise: one(cruises, {
+        fields: [aiJobs.cruiseId],
+        references: [cruises.id]
+      }),
+      creator: one(users, {
+        fields: [aiJobs.createdBy],
+        references: [users.id]
+      }),
+      drafts: many(aiDrafts)
+    }));
+    aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
+      cruise: one(cruises, {
+        fields: [aiDrafts.cruiseId],
+        references: [cruises.id]
+      }),
+      job: one(aiJobs, {
+        fields: [aiDrafts.createdFromJobId],
+        references: [aiJobs.id]
+      }),
+      creator: one(users, {
+        fields: [aiDrafts.createdBy],
+        references: [users.id]
+      })
+    }));
+    insertUserSchema = createInsertSchema(users).pick({
+      username: true,
+      password: true,
+      email: true,
+      fullName: true,
+      role: true
+    });
+    insertCruiseSchema = createInsertSchema(cruises).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertItinerarySchema = createInsertSchema(itinerary).omit({
+      id: true
+    });
+    insertEventSchema = createInsertSchema(events).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertTalentSchema = createInsertSchema(talent).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertMediaSchema = createInsertSchema(media).omit({
+      id: true,
+      uploadedAt: true
+    });
+    insertPartyTemplateSchema = createInsertSchema(partyTemplates).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertCruiseInfoSectionSchema = createInsertSchema(cruiseInfoSections).omit({
+      id: true,
+      updatedAt: true
+    });
+    insertAiJobSchema = createInsertSchema(aiJobs).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertAiDraftSchema = createInsertSchema(aiDrafts).omit({
+      id: true,
+      createdAt: true
+    });
+  }
 });
 
 // server/storage.ts
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
+var queryClient, db, users2, cruises2, itinerary2, events2, talent2, cruiseTalent2, media2, userCruises2, auditLog2, UserStorage, CruiseStorage, ItineraryStorage, EventStorage, TalentStorage, MediaStorage, storage, cruiseStorage, itineraryStorage, eventStorage, talentStorage, mediaStorage;
+var init_storage = __esm({
+  "server/storage.ts"() {
+    "use strict";
+    init_schema();
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
+    }
+    queryClient = neon(process.env.DATABASE_URL);
+    db = drizzle(queryClient, { schema: schema_exports });
+    ({
+      users: users2,
+      cruises: cruises2,
+      itinerary: itinerary2,
+      events: events2,
+      talent: talent2,
+      cruiseTalent: cruiseTalent2,
+      media: media2,
+      userCruises: userCruises2,
+      auditLog: auditLog2
+    } = schema_exports);
+    UserStorage = class {
+      async getUser(id) {
+        const result = await db.select().from(users2).where(eq(users2.id, id));
+        return result[0];
+      }
+      async getUserByUsername(username) {
+        const result = await db.select().from(users2).where(eq(users2.username, username));
+        return result[0];
+      }
+      async createUser(insertUser) {
+        const result = await db.insert(users2).values(insertUser).returning();
+        return result[0];
+      }
+      async updateUserLastLogin(id) {
+        await db.update(users2).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users2.id, id));
+      }
+    };
+    CruiseStorage = class {
+      async getAllCruises() {
+        return await db.select().from(cruises2).orderBy(desc(cruises2.startDate));
+      }
+      async getCruiseById(id) {
+        const result = await db.select().from(cruises2).where(eq(cruises2.id, id));
+        return result[0];
+      }
+      async getCruiseBySlug(slug) {
+        const result = await db.select().from(cruises2).where(eq(cruises2.slug, slug));
+        return result[0];
+      }
+      async getUpcomingCruises() {
+        return await db.select().from(cruises2).where(eq(cruises2.status, "upcoming")).orderBy(asc(cruises2.startDate));
+      }
+      async getPastCruises() {
+        return await db.select().from(cruises2).where(eq(cruises2.status, "past")).orderBy(desc(cruises2.startDate));
+      }
+      async createCruise(cruise) {
+        const values = { ...cruise };
+        if (cruise.startDate) {
+          if (typeof cruise.startDate === "string") {
+            values.startDate = new Date(cruise.startDate);
+          } else {
+            values.startDate = cruise.startDate;
+          }
+        }
+        if (cruise.endDate) {
+          if (typeof cruise.endDate === "string") {
+            values.endDate = new Date(cruise.endDate);
+          } else {
+            values.endDate = cruise.endDate;
+          }
+        }
+        const result = await db.insert(cruises2).values(values).returning();
+        return result[0];
+      }
+      async updateCruise(id, cruise) {
+        const updates = { ...cruise, updatedAt: /* @__PURE__ */ new Date() };
+        if (cruise.startDate) {
+          if (typeof cruise.startDate === "string") {
+            updates.startDate = new Date(cruise.startDate);
+          } else {
+            updates.startDate = cruise.startDate;
+          }
+        }
+        if (cruise.endDate) {
+          if (typeof cruise.endDate === "string") {
+            updates.endDate = new Date(cruise.endDate);
+          } else {
+            updates.endDate = cruise.endDate;
+          }
+        }
+        const result = await db.update(cruises2).set(updates).where(eq(cruises2.id, id)).returning();
+        return result[0];
+      }
+      async deleteCruise(id) {
+        await db.delete(cruises2).where(eq(cruises2.id, id));
+      }
+    };
+    ItineraryStorage = class {
+      async getItineraryByCruise(cruiseId) {
+        return await db.select().from(itinerary2).where(eq(itinerary2.cruiseId, cruiseId)).orderBy(asc(itinerary2.orderIndex));
+      }
+      async createItineraryStop(stop) {
+        const values = { ...stop };
+        if (stop.date && stop.date !== "" && stop.date !== null) {
+          if (typeof stop.date === "string") {
+            values.date = new Date(stop.date);
+          } else {
+            values.date = stop.date;
+          }
+        } else {
+          if ("date" in values) {
+            delete values.date;
+          }
+        }
+        const result = await db.insert(itinerary2).values(values).returning();
+        return result[0];
+      }
+      async updateItineraryStop(id, stop) {
+        const updates = { ...stop };
+        if (stop.date && stop.date !== "" && stop.date !== null) {
+          if (typeof stop.date === "string") {
+            updates.date = new Date(stop.date);
+          } else {
+            updates.date = stop.date;
+          }
+        } else if (stop.hasOwnProperty("date")) {
+          if ("date" in updates) {
+            delete updates.date;
+          }
+        }
+        const result = await db.update(itinerary2).set(updates).where(eq(itinerary2.id, id)).returning();
+        return result[0];
+      }
+      async deleteItineraryStop(id) {
+        await db.delete(itinerary2).where(eq(itinerary2.id, id));
+      }
+    };
+    EventStorage = class {
+      async getEventsByCruise(cruiseId) {
+        return await db.select().from(events2).where(eq(events2.cruiseId, cruiseId)).orderBy(asc(events2.date), asc(events2.time));
+      }
+      async getEventsByDate(cruiseId, date) {
+        return await db.select().from(events2).where(and(eq(events2.cruiseId, cruiseId), eq(events2.date, date))).orderBy(asc(events2.time));
+      }
+      async getEventsByType(cruiseId, type) {
+        return await db.select().from(events2).where(and(eq(events2.cruiseId, cruiseId), eq(events2.type, type))).orderBy(asc(events2.date), asc(events2.time));
+      }
+      async createEvent(event) {
+        const result = await db.insert(events2).values(event).returning();
+        return result[0];
+      }
+      async updateEvent(id, event) {
+        const result = await db.update(events2).set({ ...event, updatedAt: /* @__PURE__ */ new Date() }).where(eq(events2.id, id)).returning();
+        return result[0];
+      }
+      async deleteEvent(id) {
+        await db.delete(events2).where(eq(events2.id, id));
+      }
+    };
+    TalentStorage = class {
+      async getAllTalent() {
+        return await db.select().from(talent2).orderBy(asc(talent2.name));
+      }
+      async getTalentById(id) {
+        const result = await db.select().from(talent2).where(eq(talent2.id, id));
+        return result[0];
+      }
+      async getTalentByCruise(cruiseId) {
+        const result = await db.select().from(talent2).innerJoin(cruiseTalent2, eq(talent2.id, cruiseTalent2.talentId)).where(eq(cruiseTalent2.cruiseId, cruiseId)).orderBy(asc(talent2.name));
+        return result.map((r) => r.talent);
+      }
+      async searchTalent(search, performanceType) {
+        const conditions = [];
+        if (search) {
+          conditions.push(
+            or(
+              ilike(talent2.name, `%${search}%`),
+              ilike(talent2.bio, `%${search}%`),
+              ilike(talent2.knownFor, `%${search}%`)
+            )
+          );
+        }
+        if (performanceType) {
+          conditions.push(eq(talent2.category, performanceType));
+        }
+        const query = conditions.length > 0 ? db.select().from(talent2).where(conditions.length === 1 ? conditions[0] : and(...conditions)) : db.select().from(talent2);
+        return await query.orderBy(asc(talent2.name));
+      }
+      async createTalent(talentData) {
+        const result = await db.insert(talent2).values(talentData).returning();
+        return result[0];
+      }
+      async updateTalent(id, talentData) {
+        const result = await db.update(talent2).set({ ...talentData, updatedAt: /* @__PURE__ */ new Date() }).where(eq(talent2.id, id)).returning();
+        return result[0];
+      }
+      async deleteTalent(id) {
+        await db.delete(talent2).where(eq(talent2.id, id));
+      }
+      async assignTalentToCruise(cruiseId, talentId, role) {
+        await db.insert(cruiseTalent2).values({
+          cruiseId,
+          talentId,
+          role
+        }).onConflictDoNothing();
+      }
+      async removeTalentFromCruise(cruiseId, talentId) {
+        await db.delete(cruiseTalent2).where(and(
+          eq(cruiseTalent2.cruiseId, cruiseId),
+          eq(cruiseTalent2.talentId, talentId)
+        ));
+      }
+    };
+    MediaStorage = class {
+      async getMediaByType(type) {
+        return await db.select().from(media2).where(eq(media2.type, type));
+      }
+      async getMediaByAssociation(associatedType, associatedId) {
+        return await db.select().from(media2).where(and(
+          eq(media2.associatedType, associatedType),
+          eq(media2.associatedId, associatedId)
+        ));
+      }
+      async createMedia(mediaData) {
+        const result = await db.insert(media2).values(mediaData).returning();
+        return result[0];
+      }
+      async deleteMedia(id) {
+        await db.delete(media2).where(eq(media2.id, id));
+      }
+    };
+    storage = new UserStorage();
+    cruiseStorage = new CruiseStorage();
+    itineraryStorage = new ItineraryStorage();
+    eventStorage = new EventStorage();
+    talentStorage = new TalentStorage();
+    mediaStorage = new MediaStorage();
+  }
+});
+
+// server/image-migration.ts
+var image_migration_exports = {};
+__export(image_migration_exports, {
+  downloadImageFromUrl: () => downloadImageFromUrl,
+  getAllImagesToMigrate: () => getAllImagesToMigrate,
+  migrateAllImages: () => migrateAllImages
+});
+import fetch2 from "node-fetch";
+import { promises as fs2 } from "fs";
+import path2 from "path";
+function getImageExtension(url) {
+  const urlParts = url.split("?")[0];
+  const extension = urlParts.split(".").pop()?.toLowerCase();
+  if (extension && ["jpg", "jpeg", "png", "webp", "gif"].includes(extension)) {
+    return extension;
+  }
+  return "jpg";
 }
-var queryClient = neon(process.env.DATABASE_URL);
-var db = drizzle(queryClient, { schema: schema_exports });
-var {
-  users: users2,
-  cruises: cruises2,
-  itinerary: itinerary2,
-  events: events2,
-  talent: talent2,
-  cruiseTalent: cruiseTalent2,
-  media: media2,
-  userCruises: userCruises2,
-  auditLog: auditLog2
-} = schema_exports;
-var UserStorage = class {
-  async getUser(id) {
-    const result = await db.select().from(users2).where(eq(users2.id, id));
-    return result[0];
+function createFilename(type, id, name, extension) {
+  const cleanName = name.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
+  return `${type}-${id}-${cleanName}.${extension}`;
+}
+function getImageDirectory(type) {
+  switch (type) {
+    case "talent":
+      return "server/public/talent-images";
+    case "event":
+      return "server/public/event-images";
+    case "itinerary":
+      return "server/public/itinerary-images";
+    case "cruise":
+      return "server/public/cruise-images";
+    case "party_template":
+      return "server/public/party-images";
+    default:
+      throw new Error(`Unknown image type: ${type}`);
   }
-  async getUserByUsername(username) {
-    const result = await db.select().from(users2).where(eq(users2.username, username));
-    return result[0];
+}
+function getPublicPath(type) {
+  switch (type) {
+    case "talent":
+      return "/talent-images";
+    case "event":
+      return "/event-images";
+    case "itinerary":
+      return "/itinerary-images";
+    case "cruise":
+      return "/cruise-images";
+    case "party_template":
+      return "/party-images";
+    default:
+      throw new Error(`Unknown image type: ${type}`);
   }
-  async createUser(insertUser) {
-    const result = await db.insert(users2).values(insertUser).returning();
-    return result[0];
-  }
-  async updateUserLastLogin(id) {
-    await db.update(users2).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users2.id, id));
-  }
-};
-var CruiseStorage = class {
-  async getAllCruises() {
-    return await db.select().from(cruises2).orderBy(desc(cruises2.startDate));
-  }
-  async getCruiseById(id) {
-    const result = await db.select().from(cruises2).where(eq(cruises2.id, id));
-    return result[0];
-  }
-  async getCruiseBySlug(slug) {
-    const result = await db.select().from(cruises2).where(eq(cruises2.slug, slug));
-    return result[0];
-  }
-  async getUpcomingCruises() {
-    return await db.select().from(cruises2).where(eq(cruises2.status, "upcoming")).orderBy(asc(cruises2.startDate));
-  }
-  async getPastCruises() {
-    return await db.select().from(cruises2).where(eq(cruises2.status, "past")).orderBy(desc(cruises2.startDate));
-  }
-  async createCruise(cruise) {
-    const values = { ...cruise };
-    if (cruise.startDate) {
-      if (typeof cruise.startDate === "string") {
-        values.startDate = new Date(cruise.startDate);
-      } else {
-        values.startDate = cruise.startDate;
-      }
+}
+async function downloadAndSaveImage(item) {
+  try {
+    console.log(`Downloading ${item.type} image for ${item.name}...`);
+    const response = await fetch2(item.currentUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.status}`);
     }
-    if (cruise.endDate) {
-      if (typeof cruise.endDate === "string") {
-        values.endDate = new Date(cruise.endDate);
-      } else {
-        values.endDate = cruise.endDate;
-      }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const extension = getImageExtension(item.currentUrl);
+    const filename = createFilename(item.type, item.id, item.name, extension);
+    const directory = getImageDirectory(item.type);
+    let adjustedDirectory = directory;
+    if (process.cwd().endsWith("/server")) {
+      adjustedDirectory = directory.replace("server/", "");
     }
-    const result = await db.insert(cruises2).values(values).returning();
-    return result[0];
+    const filePath = path2.join(process.cwd(), adjustedDirectory, filename);
+    console.log(`Saving ${filename} to ${filePath}...`);
+    await fs2.writeFile(filePath, buffer);
+    const publicPath = getPublicPath(item.type);
+    const localUrl = `${publicPath}/${filename}`;
+    console.log(`Successfully saved ${filename}`);
+    return { filename, localUrl };
+  } catch (error) {
+    console.error(`Error processing ${item.type} ${item.name}:`, error);
+    throw error;
   }
-  async updateCruise(id, cruise) {
-    const updates = { ...cruise, updatedAt: /* @__PURE__ */ new Date() };
-    if (cruise.startDate) {
-      if (typeof cruise.startDate === "string") {
-        updates.startDate = new Date(cruise.startDate);
-      } else {
-        updates.startDate = cruise.startDate;
-      }
+}
+async function updateDatabase(item, localUrl) {
+  try {
+    console.log(`Updating database for ${item.type} ${item.id} with local URL: ${localUrl}`);
+    switch (item.type) {
+      case "talent":
+        await talentStorage.updateTalent(item.id, { profileImageUrl: localUrl });
+        break;
+      case "event":
+        break;
+      case "itinerary":
+        break;
+      case "party_template":
+        break;
+      default:
+        throw new Error(`Unknown type for database update: ${item.type}`);
     }
-    if (cruise.endDate) {
-      if (typeof cruise.endDate === "string") {
-        updates.endDate = new Date(cruise.endDate);
-      } else {
-        updates.endDate = cruise.endDate;
-      }
+    console.log(`Database updated for ${item.type} ${item.id}`);
+  } catch (error) {
+    console.error(`Error updating database for ${item.type} ${item.id}:`, error);
+    throw error;
+  }
+}
+async function getAllImagesToMigrate() {
+  const imagesToMigrate = [];
+  const talent3 = await talentStorage.getAllTalent();
+  for (const t of talent3) {
+    if (t.profileImageUrl && !t.profileImageUrl.startsWith("/")) {
+      imagesToMigrate.push({
+        type: "talent",
+        id: t.id,
+        name: t.name,
+        currentUrl: t.profileImageUrl
+      });
     }
-    const result = await db.update(cruises2).set(updates).where(eq(cruises2.id, id)).returning();
-    return result[0];
   }
-  async deleteCruise(id) {
-    await db.delete(cruises2).where(eq(cruises2.id, id));
-  }
-};
-var ItineraryStorage = class {
-  async getItineraryByCruise(cruiseId) {
-    return await db.select().from(itinerary2).where(eq(itinerary2.cruiseId, cruiseId)).orderBy(asc(itinerary2.orderIndex));
-  }
-  async createItineraryStop(stop) {
-    const values = { ...stop };
-    if (stop.date && stop.date !== "" && stop.date !== null) {
-      if (typeof stop.date === "string") {
-        values.date = new Date(stop.date);
-      } else {
-        values.date = stop.date;
-      }
-    } else {
-      if ("date" in values) {
-        delete values.date;
-      }
+  return imagesToMigrate;
+}
+async function migrateAllImages() {
+  console.log("Starting comprehensive image migration...");
+  const imagesToMigrate = await getAllImagesToMigrate();
+  console.log(`Found ${imagesToMigrate.length} images to migrate`);
+  for (const item of imagesToMigrate) {
+    try {
+      const { filename, localUrl } = await downloadAndSaveImage(item);
+      await updateDatabase(item, localUrl);
+      console.log(`\u2705 Completed migration for ${item.type}: ${item.name}`);
+    } catch (error) {
+      console.error(`\u274C Failed migration for ${item.type}: ${item.name}:`, error);
     }
-    const result = await db.insert(itinerary2).values(values).returning();
-    return result[0];
   }
-  async updateItineraryStop(id, stop) {
-    const updates = { ...stop };
-    if (stop.date && stop.date !== "" && stop.date !== null) {
-      if (typeof stop.date === "string") {
-        updates.date = new Date(stop.date);
-      } else {
-        updates.date = stop.date;
-      }
-    } else if (stop.hasOwnProperty("date")) {
-      if ("date" in updates) {
-        delete updates.date;
-      }
-    }
-    const result = await db.update(itinerary2).set(updates).where(eq(itinerary2.id, id)).returning();
-    return result[0];
+  console.log("Comprehensive image migration completed!");
+}
+async function downloadImageFromUrl(url, type, name) {
+  const response = await fetch2(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download image: ${response.status}`);
   }
-  async deleteItineraryStop(id) {
-    await db.delete(itinerary2).where(eq(itinerary2.id, id));
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const extension = getImageExtension(url);
+  const filename = `${type}-${Date.now()}-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}.${extension}`;
+  const directory = getImageDirectory(type);
+  const filePath = path2.join(process.cwd(), directory, filename);
+  await fs2.writeFile(filePath, buffer);
+  const publicPath = getPublicPath(type);
+  return `${publicPath}/${filename}`;
+}
+var init_image_migration = __esm({
+  "server/image-migration.ts"() {
+    "use strict";
+    init_storage();
   }
-};
-var EventStorage = class {
-  async getEventsByCruise(cruiseId) {
-    return await db.select().from(events2).where(eq(events2.cruiseId, cruiseId)).orderBy(asc(events2.date), asc(events2.time));
-  }
-  async getEventsByDate(cruiseId, date) {
-    return await db.select().from(events2).where(and(eq(events2.cruiseId, cruiseId), eq(events2.date, date))).orderBy(asc(events2.time));
-  }
-  async getEventsByType(cruiseId, type) {
-    return await db.select().from(events2).where(and(eq(events2.cruiseId, cruiseId), eq(events2.type, type))).orderBy(asc(events2.date), asc(events2.time));
-  }
-  async createEvent(event) {
-    const result = await db.insert(events2).values(event).returning();
-    return result[0];
-  }
-  async updateEvent(id, event) {
-    const result = await db.update(events2).set({ ...event, updatedAt: /* @__PURE__ */ new Date() }).where(eq(events2.id, id)).returning();
-    return result[0];
-  }
-  async deleteEvent(id) {
-    await db.delete(events2).where(eq(events2.id, id));
-  }
-};
-var TalentStorage = class {
-  async getAllTalent() {
-    return await db.select().from(talent2).orderBy(asc(talent2.name));
-  }
-  async getTalentById(id) {
-    const result = await db.select().from(talent2).where(eq(talent2.id, id));
-    return result[0];
-  }
-  async getTalentByCruise(cruiseId) {
-    const result = await db.select().from(talent2).innerJoin(cruiseTalent2, eq(talent2.id, cruiseTalent2.talentId)).where(eq(cruiseTalent2.cruiseId, cruiseId)).orderBy(asc(talent2.name));
-    return result.map((r) => r.talent);
-  }
-  async searchTalent(search, performanceType) {
-    const conditions = [];
-    if (search) {
-      conditions.push(
-        or(
-          ilike(talent2.name, `%${search}%`),
-          ilike(talent2.bio, `%${search}%`),
-          ilike(talent2.knownFor, `%${search}%`)
-        )
-      );
-    }
-    if (performanceType) {
-      conditions.push(eq(talent2.category, performanceType));
-    }
-    const query = conditions.length > 0 ? db.select().from(talent2).where(conditions.length === 1 ? conditions[0] : and(...conditions)) : db.select().from(talent2);
-    return await query.orderBy(asc(talent2.name));
-  }
-  async createTalent(talentData) {
-    const result = await db.insert(talent2).values(talentData).returning();
-    return result[0];
-  }
-  async updateTalent(id, talentData) {
-    const result = await db.update(talent2).set({ ...talentData, updatedAt: /* @__PURE__ */ new Date() }).where(eq(talent2.id, id)).returning();
-    return result[0];
-  }
-  async deleteTalent(id) {
-    await db.delete(talent2).where(eq(talent2.id, id));
-  }
-  async assignTalentToCruise(cruiseId, talentId, role) {
-    await db.insert(cruiseTalent2).values({
-      cruiseId,
-      talentId,
-      role
-    }).onConflictDoNothing();
-  }
-  async removeTalentFromCruise(cruiseId, talentId) {
-    await db.delete(cruiseTalent2).where(and(
-      eq(cruiseTalent2.cruiseId, cruiseId),
-      eq(cruiseTalent2.talentId, talentId)
-    ));
-  }
-};
-var MediaStorage = class {
-  async getMediaByType(type) {
-    return await db.select().from(media2).where(eq(media2.type, type));
-  }
-  async getMediaByAssociation(associatedType, associatedId) {
-    return await db.select().from(media2).where(and(
-      eq(media2.associatedType, associatedType),
-      eq(media2.associatedId, associatedId)
-    ));
-  }
-  async createMedia(mediaData) {
-    const result = await db.insert(media2).values(mediaData).returning();
-    return result[0];
-  }
-  async deleteMedia(id) {
-    await db.delete(media2).where(eq(media2.id, id));
-  }
-};
-var storage = new UserStorage();
-var cruiseStorage = new CruiseStorage();
-var itineraryStorage = new ItineraryStorage();
-var eventStorage = new EventStorage();
-var talentStorage = new TalentStorage();
-var mediaStorage = new MediaStorage();
+});
+
+// server/index.ts
+import express3 from "express";
+import cookieParser from "cookie-parser";
+
+// server/routes.ts
+init_storage();
+import express from "express";
+import { createServer } from "http";
 
 // server/auth.ts
+init_storage();
 import * as argon2 from "argon2";
 import jwt from "jsonwebtoken";
 var JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -756,6 +927,8 @@ var requireContentEditor = requireRole(["super_admin", "cruise_admin", "content_
 var requireMediaManager = requireRole(["super_admin", "cruise_admin", "content_editor", "media_manager"]);
 
 // server/auth-routes.ts
+init_storage();
+init_schema();
 import { eq as eq2 } from "drizzle-orm";
 
 // server/utils/replitmail.ts
@@ -1228,6 +1401,8 @@ function registerAuthRoutes(app2) {
 }
 
 // server/routes.ts
+init_storage();
+init_schema();
 import { eq as eq3, ilike as ilike2, or as or2 } from "drizzle-orm";
 import { z as z2 } from "zod";
 
@@ -1351,164 +1526,8 @@ function isValidImageUrl(url) {
   }
 }
 
-// server/image-migration.ts
-import fetch2 from "node-fetch";
-import { promises as fs2 } from "fs";
-import path2 from "path";
-function getImageExtension(url) {
-  const urlParts = url.split("?")[0];
-  const extension = urlParts.split(".").pop()?.toLowerCase();
-  if (extension && ["jpg", "jpeg", "png", "webp", "gif"].includes(extension)) {
-    return extension;
-  }
-  return "jpg";
-}
-function createFilename(type, id, name, extension) {
-  const cleanName = name.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
-  return `${type}-${id}-${cleanName}.${extension}`;
-}
-function getImageDirectory(type) {
-  switch (type) {
-    case "talent":
-      return "server/public/talent-images";
-    case "event":
-      return "server/public/event-images";
-    case "itinerary":
-      return "server/public/itinerary-images";
-    case "cruise":
-      return "server/public/cruise-images";
-    case "party_template":
-      return "server/public/party-images";
-    default:
-      throw new Error(`Unknown image type: ${type}`);
-  }
-}
-function getPublicPath(type) {
-  switch (type) {
-    case "talent":
-      return "/talent-images";
-    case "event":
-      return "/event-images";
-    case "itinerary":
-      return "/itinerary-images";
-    case "cruise":
-      return "/cruise-images";
-    case "party_template":
-      return "/party-images";
-    default:
-      throw new Error(`Unknown image type: ${type}`);
-  }
-}
-async function downloadAndSaveImage(item) {
-  try {
-    console.log(`Downloading ${item.type} image for ${item.name}...`);
-    const response = await fetch2(item.currentUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.status}`);
-    }
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const extension = getImageExtension(item.currentUrl);
-    const filename = createFilename(item.type, item.id, item.name, extension);
-    const directory = getImageDirectory(item.type);
-    let adjustedDirectory = directory;
-    if (process.cwd().endsWith("/server")) {
-      adjustedDirectory = directory.replace("server/", "");
-    }
-    const filePath = path2.join(process.cwd(), adjustedDirectory, filename);
-    console.log(`Saving ${filename} to ${filePath}...`);
-    await fs2.writeFile(filePath, buffer);
-    const publicPath = getPublicPath(item.type);
-    const localUrl = `${publicPath}/${filename}`;
-    console.log(`Successfully saved ${filename}`);
-    return { filename, localUrl };
-  } catch (error) {
-    console.error(`Error processing ${item.type} ${item.name}:`, error);
-    throw error;
-  }
-}
-async function updateDatabase(item, localUrl) {
-  try {
-    console.log(`Updating database for ${item.type} ${item.id} with local URL: ${localUrl}`);
-    switch (item.type) {
-      case "talent":
-        await talentStorage.updateTalent(item.id, { profileImageUrl: localUrl });
-        break;
-      case "event":
-        break;
-      case "itinerary":
-        break;
-      case "party_template":
-        break;
-      default:
-        throw new Error(`Unknown type for database update: ${item.type}`);
-    }
-    console.log(`Database updated for ${item.type} ${item.id}`);
-  } catch (error) {
-    console.error(`Error updating database for ${item.type} ${item.id}:`, error);
-    throw error;
-  }
-}
-async function getAllImagesToMigrate() {
-  const imagesToMigrate = [];
-  const talent3 = await talentStorage.getAllTalent();
-  for (const t of talent3) {
-    if (t.profileImageUrl && !t.profileImageUrl.startsWith("/")) {
-      imagesToMigrate.push({
-        type: "talent",
-        id: t.id,
-        name: t.name,
-        currentUrl: t.profileImageUrl
-      });
-    }
-  }
-  return imagesToMigrate;
-}
-async function migrateAllImages() {
-  console.log("Starting comprehensive image migration...");
-  const imagesToMigrate = await getAllImagesToMigrate();
-  console.log(`Found ${imagesToMigrate.length} images to migrate`);
-  for (const item of imagesToMigrate) {
-    try {
-      const { filename, localUrl } = await downloadAndSaveImage(item);
-      await updateDatabase(item, localUrl);
-      console.log(`\u2705 Completed migration for ${item.type}: ${item.name}`);
-    } catch (error) {
-      console.error(`\u274C Failed migration for ${item.type}: ${item.name}:`, error);
-    }
-  }
-  console.log("Comprehensive image migration completed!");
-}
-async function downloadImageFromUrl(url, type, name) {
-  const response = await fetch2(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download image: ${response.status}`);
-  }
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const extension = getImageExtension(url);
-  const filename = `${type}-${Date.now()}-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}.${extension}`;
-  const directory = getImageDirectory(type);
-  const filePath = path2.join(process.cwd(), directory, filename);
-  await fs2.writeFile(filePath, buffer);
-  const publicPath = getPublicPath(type);
-  return `${publicPath}/${filename}`;
-}
-if (import.meta.url === `file://${process.argv[1]}`) {
-  migrateAllImages().then(() => {
-    console.log("Migration finished successfully");
-    process.exit(0);
-  }).catch((error) => {
-    console.error("Migration failed:", error);
-    process.exit(1);
-  });
-} else if (process.env.NODE_ENV === "production" && process.env.RUN_MIGRATIONS === "true") {
-  migrateAllImages().then(() => {
-    console.log("Migration finished successfully");
-  }).catch((error) => {
-    console.error("Migration failed:", error);
-  });
-}
-
 // server/routes.ts
+init_image_migration();
 async function registerRoutes(app2) {
   app2.use("/cruise-images", express.static("server/public/cruise-images", {
     maxAge: "24h",
@@ -2221,18 +2240,16 @@ function serveStatic(app2) {
 // server/index.ts
 var app = express3();
 app.get("/healthz", (req, res) => {
-  req.setTimeout(5e3);
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("OK");
+  try {
+    req.setTimeout(5e3);
+    res.status(200).json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+  } catch (error) {
+    res.status(500).json({ status: "unhealthy", error: error.message });
+  }
 });
 app.head("/healthz", (req, res) => {
   res.writeHead(200);
   res.end();
-});
-app.get("/", (req, res) => {
-  req.setTimeout(5e3);
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("OK");
 });
 app.use(express3.json());
 app.use(express3.urlencoded({ extended: false }));
@@ -2277,9 +2294,16 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(port, "0.0.0.0", async () => {
     log(`\u2705 Server ready and listening on port ${port}`);
-    try {
-    } catch (error) {
-      console.error("Migration failed:", error);
+    if (process.env.NODE_ENV === "production") {
+      setTimeout(async () => {
+        try {
+          const { migrateAllImages: migrateAllImages2 } = await Promise.resolve().then(() => (init_image_migration(), image_migration_exports));
+          await migrateAllImages2();
+          log("Background migration completed successfully");
+        } catch (error) {
+          log("Background migration failed: " + error.message);
+        }
+      }, 1e3);
     }
   });
   process.on("SIGTERM", () => {

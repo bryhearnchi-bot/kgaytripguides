@@ -1,27 +1,24 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// Explicit health check endpoints - fast and reliable
+// Explicit health check endpoints with proper error handling
 app.get('/healthz', (req, res) => {
-  req.setTimeout(5000); // 5 second timeout
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
+  try {
+    req.setTimeout(5000);
+    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(500).json({ status: 'unhealthy', error: error.message });
+  }
 });
 
 app.head('/healthz', (req, res) => {
   res.writeHead(200);
   res.end();
-});
-
-// Health check endpoint for GET requests
-app.get('/', (req, res) => {
-  req.setTimeout(5000); // 5 second timeout
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
 });
 
 app.use(express.json());
@@ -71,9 +68,7 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Static file serving configuration
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
@@ -82,15 +77,22 @@ app.use((req, res, next) => {
 
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  // Start server first, then run migrations
+  // Start server and keep it running
   server.listen(port, "0.0.0.0", async () => {
     log(`✅ Server ready and listening on port ${port}`);
     
-    // Run migrations after server is ready
-    try {
-      // Move migration logic here if it exists
-    } catch (error) {
-      console.error('Migration failed:', error);
+    // Run migrations in background without blocking or exiting
+    if (process.env.NODE_ENV === 'production') {
+      setTimeout(async () => {
+        try {
+          const { migrateAllImages } = await import('./image-migration.js');
+          await migrateAllImages();
+          log('Background migration completed successfully');
+        } catch (error) {
+          log('Background migration failed: ' + error.message);
+          // Don't exit on migration failure
+        }
+      }, 1000);
     }
   });
 
