@@ -132,8 +132,26 @@ app.head('/api/health', (req, res) => {
     
     // Skip production seeding in deployment to avoid blocking health checks
     if (process.env.NODE_ENV === 'production') {
-      log('Production environment detected - skipping seeding to ensure fast startup');
+      log('🚀 Production environment - server started successfully');
+      log('⚡ Health checks are ready for deployment verification');
     }
+  });
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      log('Process terminated');
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', () => {
+    log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+      log('Process terminated');
+      process.exit(0);
+    });
   });
 })().catch((error) => {
   console.error('💥 Failed to start server:', error);
