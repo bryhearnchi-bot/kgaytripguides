@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const imageType = req.body.imageType || 'general';
     let directory: string;
-    
+
     switch (imageType) {
       case 'talent':
         directory = 'server/public/talent-images';
@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
       default:
         directory = 'server/public/uploads';
     }
-    
+
     cb(null, directory);
   },
   filename: (req, file, cb) => {
@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
     const timestamp = Date.now();
     const uniqueId = randomUUID().substring(0, 8);
     const extension = path.extname(file.originalname).toLowerCase();
-    
+
     const filename = `${imageType}-${timestamp}-${uniqueId}${extension}`;
     cb(null, filename);
   }
@@ -49,7 +49,7 @@ const fileFilter = (req: any, file: any, cb: any) => {
     'image/webp',
     'image/gif'
   ];
-  
+
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -89,7 +89,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     const segments = urlPath.split('/');
     const filename = segments[segments.length - 1];
     const imageType = segments[segments.length - 2];
-    
+
     let directory: string;
     switch (imageType) {
       case 'talent-images':
@@ -107,7 +107,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
       default:
         directory = 'server/public/uploads';
     }
-    
+
     const filePath = path.join(process.cwd(), directory, filename);
     await fs.unlink(filePath);
   } catch (error) {
@@ -120,15 +120,15 @@ export async function deleteImage(imageUrl: string): Promise<void> {
 export function isValidImageUrl(url: string): boolean {
   try {
     const parsedUrl = new URL(url);
-    
+
     // Only allow http and https protocols
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       return false;
     }
-    
+
     // Basic SSRF protection - block private IP ranges
     const hostname = parsedUrl.hostname.toLowerCase();
-    
+
     // Block localhost and private IPs
     if (hostname === 'localhost' || 
         hostname === '127.0.0.1' ||
@@ -137,14 +137,29 @@ export function isValidImageUrl(url: string): boolean {
         hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./)) {
       return false;
     }
-    
+
     // Block internal domains
     if (hostname.endsWith('.local') || hostname.endsWith('.internal')) {
       return false;
     }
-    
+
     return true;
   } catch {
     return false;
   }
+}
+
+// File extensions that should be treated as binary
+const BINARY_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.mp4', '.mov', '.avi'];
+
+export function isBinaryFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  return BINARY_EXTENSIONS.includes(ext);
+}
+
+export function safReadFile(filePath: string): string | Buffer {
+  if (isBinaryFile(filePath)) {
+    return fs.readFileSync(filePath);
+  }
+  return fs.readFileSync(filePath, 'utf-8');
 }

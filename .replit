@@ -8,6 +8,7 @@ channel = "stable-25_05"
 run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
+ignoredPaths = ["attached_assets/*.jpeg", "attached_assets/*.jpg", "attached_assets/*.png", "attached_assets/*.pdf"]
 
 [[ports]]
 localPort = 5000
