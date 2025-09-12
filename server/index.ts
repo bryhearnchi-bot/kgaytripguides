@@ -135,7 +135,7 @@ app.head('/api/health', (req, res) => {
     if (process.env.NODE_ENV === 'production') {
       log('Production environment detected - starting background seeding...');
       
-      // Use setTimeout with a small delay to ensure health checks work first
+      // Use setTimeout with a longer delay to ensure health checks work first
       setTimeout(async () => {
         try {
           log('Starting production database seeding...');
@@ -149,7 +149,7 @@ app.head('/api/health', (req, res) => {
           console.error('Server will continue running without seeded data');
           // Don't crash server if seeding fails - just log the error
         }
-      }, 100); // Small delay to let health checks establish first
+      }, 2000); // Longer delay to let health checks establish first
     }
   });
 })();
