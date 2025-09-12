@@ -397,8 +397,8 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
             id="day"
             type="number"
             value={formData.day}
-            onChange={(e) => updateField('day', parseInt(e.target.value) || 1)}
-            min="1"
+            onChange={(e) => updateField('day', parseInt(e.target.value) || 0)}
+            min="0"
           />
         </div>
       </div>
