@@ -38,6 +38,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint - registered immediately before async operations  
+// Using /healthz to avoid overriding the frontend SPA root route
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Also add a HEAD request handler for the root path for health checks
+app.head('/', (req, res) => {
+  res.status(200).end();
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -69,5 +80,18 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Run production seeding in the background after server is up
+    if (process.env.NODE_ENV === 'production') {
+      import('./production-seed.ts').then((module) => {
+        if (module.seedProduction) {
+          module.seedProduction().catch((error) => {
+            console.error('Background seeding failed:', error);
+          });
+        }
+      }).catch((error) => {
+        console.error('Failed to load production seeding:', error);
+      });
+    }
   });
 })();
