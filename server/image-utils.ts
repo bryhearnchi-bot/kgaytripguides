@@ -116,11 +116,34 @@ export async function deleteImage(imageUrl: string): Promise<void> {
   }
 }
 
-// Validate image URL format
+// Validate image URL format with basic SSRF protection
 export function isValidImageUrl(url: string): boolean {
   try {
     const parsedUrl = new URL(url);
-    return ['http:', 'https:'].includes(parsedUrl.protocol);
+    
+    // Only allow http and https protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
+    }
+    
+    // Basic SSRF protection - block private IP ranges
+    const hostname = parsedUrl.hostname.toLowerCase();
+    
+    // Block localhost and private IPs
+    if (hostname === 'localhost' || 
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./)) {
+      return false;
+    }
+    
+    // Block internal domains
+    if (hostname.endsWith('.local') || hostname.endsWith('.internal')) {
+      return false;
+    }
+    
+    return true;
   } catch {
     return false;
   }

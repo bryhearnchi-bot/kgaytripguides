@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useToast } from '../../hooks/use-toast';
+import { ImageUpload } from './ImageUpload';
 
 interface Artist {
   id: number;
@@ -492,12 +493,12 @@ function ArtistForm({
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium">Profile Image URL</label>
-          <Input
-            value={formData.profileImageUrl}
-            onChange={(e) => setFormData({ ...formData, profileImageUrl: e.target.value })}
-            placeholder="https://example.com/profile.jpg"
-            type="url"
+          <ImageUpload
+            imageType="talent"
+            currentImageUrl={formData.profileImageUrl}
+            onImageChange={(imageUrl) => setFormData({ ...formData, profileImageUrl: imageUrl || '' })}
+            label="Profile Image"
+            disabled={isLoading}
           />
         </div>
       </div>

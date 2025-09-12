@@ -58,6 +58,8 @@ function getImageDirectory(type: string): string {
       return 'server/public/event-images';
     case 'itinerary':
       return 'server/public/itinerary-images';
+    case 'cruise':
+      return 'server/public/cruise-images';
     case 'party_template':
       return 'server/public/party-images';
     default:
@@ -73,6 +75,8 @@ function getPublicPath(type: string): string {
       return '/event-images';
     case 'itinerary':
       return '/itinerary-images';
+    case 'cruise':
+      return '/cruise-images';
     case 'party_template':
       return '/party-images';
     default:
@@ -186,7 +190,7 @@ export async function migrateAllImages(): Promise<void> {
 }
 
 // Utility function to download a single image from URL
-export async function downloadImageFromUrl(url: string, type: 'talent' | 'event' | 'itinerary', name: string): Promise<string> {
+export async function downloadImageFromUrl(url: string, type: 'talent' | 'event' | 'itinerary' | 'cruise', name: string): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.status}`);

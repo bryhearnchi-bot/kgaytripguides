@@ -44,6 +44,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     etag: false
   }));
   
+  // Serve general uploads (fallback)
+  app.use('/uploads', express.static('server/public/uploads', {
+    maxAge: '24h',
+    etag: false
+  }));
+  
   // ============ IMAGE MANAGEMENT ROUTES ============
   
   // Upload image endpoint
@@ -78,7 +84,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid URL provided' });
       }
       
-      const validImageType = ['talent', 'event', 'itinerary', 'cruise'].includes(imageType) ? imageType : 'general';
+      if (!['talent', 'event', 'itinerary', 'cruise'].includes(imageType)) {
+        return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, cruise' });
+      }
+      const validImageType = imageType;
       const imageName = name || 'downloaded-image';
       
       const localUrl = await downloadImageFromUrl(url, validImageType as any, imageName);
