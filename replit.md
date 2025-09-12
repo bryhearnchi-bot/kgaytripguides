@@ -2,7 +2,7 @@
 
 This is an interactive cruise guide application for Atlantis Events Greek Isles, Istanbul & Pyramids cruise aboard Virgin Resilient Lady. The application provides a comprehensive digital guide featuring cruise itineraries, daily entertainment schedules, talent information, and party themes. Built with a modern React frontend and Express backend, it's designed to help cruise passengers navigate their vacation experience with an intuitive, mobile-friendly interface.
 
-**Recent Updates (August 2025):**
+**Recent Updates (August-September 2025):**
 - Enhanced with official cruise guide information including detailed party theme descriptions
 - Added comprehensive cruise information: embarkation details, passport requirements, packing advice, prohibited items
 - Implemented interactive "View Events" buttons on itinerary locations with popup modals
@@ -26,6 +26,7 @@ This is an interactive cruise guide application for Atlantis Events Greek Isles,
 - **August 16, 2025**: Enhanced calendar time parsing to support both 12-hour (AM/PM) and 24-hour formats for accurate event scheduling
 - **August 16, 2025**: Simplified Apple Calendar download method using reliable blob URLs for consistent Safari compatibility
 - **August 16, 2025**: Removed all calendar functionality per user request - eliminated Google Calendar and Apple Calendar integration buttons from Events and Parties tabs
+- **September 12, 2025**: Fixed deployment health check failures by implementing proper health endpoints (GET /healthz, HEAD /) and moving production seeding to background
 
 # User Preferences
 
