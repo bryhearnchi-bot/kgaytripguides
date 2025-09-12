@@ -4,6 +4,53 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+// CRITICAL: Health checks must be the very first thing, before any middleware
+// This ensures health checks work even if other middleware has issues
+app.get('/healthz', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
+});
+
+app.head('/healthz', (req, res) => {
+  res.writeHead(200);
+  res.end();
+});
+
+app.get('/health', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
+});
+
+app.head('/health', (req, res) => {
+  res.writeHead(200);
+  res.end();
+});
+
+// Handle any request to root that looks like a health check IMMEDIATELY
+app.use('/', (req, res, next) => {
+  // Check if this is likely a health check request
+  const userAgent = req.headers['user-agent'] || '';
+  const isHealthCheck = 
+    req.method === 'HEAD' ||
+    req.method === 'GET' && (
+      userAgent.includes('HealthChecker') ||
+      userAgent.includes('kube-probe') ||
+      userAgent.includes('curl') ||
+      userAgent.includes('wget') ||
+      userAgent.includes('Go-http-client') ||
+      userAgent.startsWith('Mozilla') === false ||
+      req.headers.accept === '*/*' ||
+      !req.headers.accept
+    );
+
+  if (isHealthCheck && req.path === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    return res.end('OK');
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -38,64 +85,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Multiple health check endpoints for maximum compatibility
-// These must respond instantly without any processing delays
-
-// Primary health check endpoint
-app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
-});
-
-app.head('/healthz', (req, res) => {
-  res.status(200).end();
-});
-
-// Alternative health check endpoints
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
-
-app.head('/health', (req, res) => {
-  res.status(200).end();
-});
-
-// API health check
+// API health check for internal use
 app.get('/api/health', (req, res) => {
-  res.status(200).send('OK');
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
 });
 
 app.head('/api/health', (req, res) => {
-  res.status(200).end();
-});
-
-// Root path health check - handle deployment health checks
-app.get('/', (req, res, next) => {
-  // Check if this looks like a health check request
-  const userAgent = req.headers['user-agent'] || '';
-  const acceptHeader = req.headers.accept || '';
-  
-  // Common health check patterns
-  const isHealthCheck = 
-    userAgent.includes('HealthChecker') ||
-    userAgent.includes('kube-probe') ||
-    userAgent.includes('curl') ||
-    userAgent.includes('wget') ||
-    userAgent.startsWith('Go-http-client') ||
-    acceptHeader === '*/*' ||
-    acceptHeader === '' ||
-    !acceptHeader;
-
-  if (isHealthCheck) {
-    return res.status(200).send('OK');
-  }
-  
-  // Otherwise, pass to SPA handler
-  next();
-});
-
-// Always handle HEAD requests to root immediately
-app.head('/', (req, res) => {
-  res.status(200).end();
+  res.writeHead(200);
+  res.end();
 });
 
 (async () => {
