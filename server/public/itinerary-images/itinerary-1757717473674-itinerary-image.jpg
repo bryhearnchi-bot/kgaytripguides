@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Atlantis Cruise / Events Guides</title>
+    
+    <!-- Web App Icons -->
+    <link rel="icon" type="image/x-icon" href="https://bearvoyages.com/wp-content/uploads/2019/10/voyages_logo_rainbow-1.jpg" />
+    <link rel="apple-touch-icon" href="https://bearvoyages.com/wp-content/uploads/2019/10/voyages_logo_rainbow-1.jpg" />
+    <link rel="apple-touch-icon" sizes="152x152" href="https://bearvoyages.com/wp-content/uploads/2019/10/voyages_logo_rainbow-1.jpg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://bearvoyages.com/wp-content/uploads/2019/10/voyages_logo_rainbow-1.jpg" />
+    <link rel="apple-touch-icon" sizes="167x167" href="https://bearvoyages.com/wp-content/uploads/2019/10/voyages_logo_rainbow-1.jpg" />
+    
+    <!-- Web App Manifest for Android -->
+    <meta name="theme-color" content="#0066cc" />
+    <meta name="application-name" content="Atlantis Cruise / Events Guides" />
+    <meta name="apple-mobile-web-app-title" content="Greek Isles Guide" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="description" content="Unofficial fan guide for Atlantis Events Greek Isles, Istanbul & Pyramids cruise aboard Virgin Resilient Lady, August 21-31, 2025. Interactive itinerary, entertainment schedules, and performer profiles." />
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Atlantis Cruise / Events Guides" />
+    <meta property="og:description" content="Unofficial fan guide for Atlantis Events Greek Isles, Istanbul & Pyramids cruise aboard Virgin Resilient Lady, August 21-31, 2025. Interactive itinerary, entertainment schedules, and performer profiles." />
+    <meta property="og:image" content="https://modularassets.cdn.ignitetravel.com/modular_multisite/wp-content/uploads/sites/2/2022/03/04123250/1110x625-2023-08-04T123142.700.png" />
+    <meta property="og:image:width" content="1110" />
+    <meta property="og:image:height" content="625" />
+    <meta property="og:image:alt" content="Virgin Resilient Lady cruise ship at sea" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Atlantis Cruise / Events Guides" />
+    <meta name="twitter:description" content="Unofficial fan guide for Atlantis Events Greek Isles, Istanbul & Pyramids cruise aboard Virgin Resilient Lady, August 21-31, 2025." />
+    <meta name="twitter:image" content="https://modularassets.cdn.ignitetravel.com/modular_multisite/wp-content/uploads/sites/2/2022/03/04123250/1110x625-2023-08-04T123142.700.png" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-D-kChf1Q.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Dx1irFAG.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>
