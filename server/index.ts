@@ -130,27 +130,9 @@ app.head('/api/health', (req, res) => {
     log(`✅ Server ready and listening on port ${port}`);
     log(`🚀 Health checks available at /healthz and /health`);
     
-    // Only run seeding in production, completely in background without blocking
+    // Skip production seeding in deployment to avoid blocking health checks
     if (process.env.NODE_ENV === 'production') {
-      log('Production environment detected - will seed in background...');
-      
-      // Start seeding in background immediately without waiting
-      setImmediate(() => {
-        (async () => {
-          try {
-            log('Starting production database seeding...');
-            const module = await import('./production-seed.ts');
-            if (module.seedProduction) {
-              await module.seedProduction();
-              log('✅ Production seeding completed successfully');
-            }
-          } catch (error) {
-            console.error('❌ Production seeding failed:', error);
-            console.error('Server will continue running without seeded data');
-            // Don't crash server if seeding fails - just log the error
-          }
-        })();
-      });
+      log('Production environment detected - skipping seeding to ensure fast startup');
     }
   });
 })().catch((error) => {
