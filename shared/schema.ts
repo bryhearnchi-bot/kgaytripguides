@@ -10,7 +10,8 @@ import {
   decimal,
   serial,
   primaryKey,
-  index
+  index,
+  unique
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -44,6 +45,26 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   expiresIdx: index("password_reset_expires_idx").on(table.expiresAt),
 }));
 
+// ============ SETTINGS TABLE ============
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(), // trip_types, notification_types, etc.
+  key: text("key").notNull(), // cruise, hotel, flight, etc.
+  label: text("label").notNull(), // Display name for UI
+  value: text("value"), // Optional value field
+  metadata: jsonb("metadata"), // Additional data like button text, colors, etc.
+  isActive: boolean("is_active").default(true),
+  orderIndex: integer("order_index").default(0), // For sorting within category
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  categoryKeyUnique: unique("settings_category_key_unique").on(table.category, table.key),
+  categoryKeyIdx: index("settings_category_key_idx").on(table.category, table.key),
+  categoryIdx: index("settings_category_idx").on(table.category),
+  activeIdx: index("settings_active_idx").on(table.isActive),
+}));
+
 // ============ CRUISES TABLE ============
 export const cruises = pgTable("cruises", {
   id: serial("id").primaryKey(),
@@ -51,6 +72,7 @@ export const cruises = pgTable("cruises", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   shipName: text("ship_name").notNull(),
   cruiseLine: text("cruise_line"), // Virgin, Celebrity, etc.
+  tripType: text("trip_type").default("cruise").notNull(), // cruise, hotel, flight, etc. - references settings with category 'trip_types'
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   status: text("status").default("upcoming"), // upcoming, ongoing, past
@@ -65,6 +87,7 @@ export const cruises = pgTable("cruises", {
 }, (table) => ({
   statusIdx: index("cruise_status_idx").on(table.status),
   slugIdx: index("cruise_slug_idx").on(table.slug),
+  tripTypeIdx: index("cruise_trip_type_idx").on(table.tripType),
 }));
 
 // ============ ITINERARY TABLE ============
@@ -352,6 +375,13 @@ export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
   }),
 }));
 
+export const settingsRelations = relations(settings, ({ one }) => ({
+  creator: one(users, {
+    fields: [settings.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // ============ INSERT SCHEMAS ============
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -410,6 +440,12 @@ export const insertAiDraftSchema = createInsertSchema(aiDrafts).omit({
   createdAt: true,
 });
 
+export const insertSettingsSchema = createInsertSchema(settings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // ============ TYPE EXPORTS ============
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -424,3 +460,4 @@ export type PartyTemplate = typeof partyTemplates.$inferSelect;
 export type CruiseInfoSection = typeof cruiseInfoSections.$inferSelect;
 export type AiJob = typeof aiJobs.$inferSelect;
 export type AiDraft = typeof aiDrafts.$inferSelect;
+export type Settings = typeof settings.$inferSelect;
