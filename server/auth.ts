@@ -95,11 +95,21 @@ export function requireRole(allowedRoles: string[]) {
   };
 }
 
+// Middleware composition helper
+function composeAuth(roleCheck: (req: AuthenticatedRequest, res: Response, next: NextFunction) => void) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    requireAuth(req, res, (error?: any) => {
+      if (error) return next(error);
+      roleCheck(req, res, next);
+    });
+  };
+}
+
 // Specific role checks
-export const requireSuperAdmin = requireRole(['super_admin']);
-export const requireCruiseAdmin = requireRole(['super_admin', 'cruise_admin']);
-export const requireContentEditor = requireRole(['super_admin', 'cruise_admin', 'content_editor']);
-export const requireMediaManager = requireRole(['super_admin', 'cruise_admin', 'content_editor', 'media_manager']);
+export const requireSuperAdmin = composeAuth(requireRole(['super_admin']));
+export const requireCruiseAdmin = composeAuth(requireRole(['super_admin', 'cruise_admin']));
+export const requireContentEditor = composeAuth(requireRole(['super_admin', 'cruise_admin', 'content_editor']));
+export const requireMediaManager = composeAuth(requireRole(['super_admin', 'cruise_admin', 'content_editor', 'media_manager']));
 
 // Audit logging middleware
 export async function auditLog(action: string, tableName: string, recordId?: string, oldValues?: any, newValues?: any) {

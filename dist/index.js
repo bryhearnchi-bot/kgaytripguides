@@ -921,10 +921,18 @@ function requireRole(allowedRoles) {
     next();
   };
 }
-var requireSuperAdmin = requireRole(["super_admin"]);
-var requireCruiseAdmin = requireRole(["super_admin", "cruise_admin"]);
-var requireContentEditor = requireRole(["super_admin", "cruise_admin", "content_editor"]);
-var requireMediaManager = requireRole(["super_admin", "cruise_admin", "content_editor", "media_manager"]);
+function composeAuth(roleCheck) {
+  return (req, res, next) => {
+    requireAuth(req, res, (error) => {
+      if (error) return next(error);
+      roleCheck(req, res, next);
+    });
+  };
+}
+var requireSuperAdmin = composeAuth(requireRole(["super_admin"]));
+var requireCruiseAdmin = composeAuth(requireRole(["super_admin", "cruise_admin"]));
+var requireContentEditor = composeAuth(requireRole(["super_admin", "cruise_admin", "content_editor"]));
+var requireMediaManager = composeAuth(requireRole(["super_admin", "cruise_admin", "content_editor", "media_manager"]));
 
 // server/auth-routes.ts
 init_storage();
