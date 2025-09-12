@@ -605,7 +605,16 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
   const { timeFormat } = useTimeFormat();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityAttraction | null>(null);
-  const getPortImage = (port: string, date: string) => {
+  
+  const getPortImage = (stop: any) => {
+    // First, use the database image URL if available - check multiple field variations
+    const dbImageUrl = stop.imageUrl || stop.portImageUrl || (stop as any).port_image_url;
+    if (dbImageUrl) {
+      // Ensure the URL starts with a forward slash for proper routing
+      return dbImageUrl.startsWith('/') ? dbImageUrl : `/${dbImageUrl}`;
+    }
+
+    // Fallback to hardcoded images for backward compatibility
     const portImages = {
       "Athens, Greece": "/images/ports/athens-greece.jpg",
       "Santorini, Greece": "/images/ports/santorini-greece.jpg", 
@@ -616,30 +625,26 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
     };
 
     // Handle Istanbul's two different days
-    if (port === "Istanbul, Turkey") {
+    if (stop.port === "Istanbul, Turkey") {
       // First day (Aug 24) - Blue Mosque
-      if (date === "Sun, Aug 24") {
+      if (stop.date === "Sun, Aug 24") {
         return "/images/ports/istanbul-turkey-day1.jpg";
       }
       // Second day (Aug 25) - Mosque panorama
       return "/images/ports/istanbul-turkey-day2.jpg";
     }
 
-    if (port === "Day at Sea") {
-      // First sea day (Aug 26)
-      if (date === "Tue, Aug 26") {
-        return "/images/ports/sea-day.jpg";
-      }
-      // Second sea day (Aug 28) - Virgin Resilient Lady
+    if (stop.port === "Day at Sea") {
+      // Sea day fallback image
       return "/images/ports/sea-day.jpg";
     }
 
     // Handle Athens with special labels
-    if (port.includes("Athens, Greece")) {
+    if (stop.port.includes("Athens, Greece")) {
       return portImages["Athens, Greece"];
     }
 
-    return portImages[port as keyof typeof portImages];
+    return portImages[stop.port as keyof typeof portImages];
   };
 
   return (
@@ -675,9 +680,9 @@ function ItineraryTab({ onTalentClick, ITINERARY, CITY_ATTRACTIONS, DAILY, TALEN
                 <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
                   {/* Image Section - Fixed size */}
                   <div className="lg:col-span-1">
-                    {getPortImage(stop.port, stop.date) ? (
+                    {getPortImage(stop) ? (
                       <img 
-                        src={getPortImage(stop.port, stop.date)} 
+                        src={getPortImage(stop)} 
                         alt={stop.port} 
                         className="w-full h-48 lg:h-full object-cover"
                         onError={(e) => {

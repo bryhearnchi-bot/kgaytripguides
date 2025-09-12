@@ -78,7 +78,8 @@ export function transformCruiseData(data: CruiseData) {
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
-    imageUrl: stop.portImageUrl,
+    // Normalize image URL field - check all possible variations and ensure leading slash
+    imageUrl: stop.portImageUrl || (stop as any).port_image_url || null,
     description: stop.description,
     highlights: stop.highlights
   }));
