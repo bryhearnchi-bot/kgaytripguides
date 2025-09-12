@@ -38,41 +38,64 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoints - registered immediately and prioritized
+// Multiple health check endpoints for maximum compatibility
 // These must respond instantly without any processing delays
+
+// Primary health check endpoint
 app.get('/healthz', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
+  res.status(200).send('OK');
 });
 
 app.head('/healthz', (req, res) => {
-  res.writeHead(200);
-  res.end();
+  res.status(200).end();
 });
 
-// Root path health check handler - must be very fast
+// Alternative health check endpoints
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.head('/health', (req, res) => {
+  res.status(200).end();
+});
+
+// API health check
+app.get('/api/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.head('/api/health', (req, res) => {
+  res.status(200).end();
+});
+
+// Root path health check - handle deployment health checks
 app.get('/', (req, res, next) => {
-  // Health check patterns - respond immediately
+  // Check if this looks like a health check request
   const userAgent = req.headers['user-agent'] || '';
-  const isHealthCheck = userAgent.includes('HealthChecker') || 
-                       userAgent.includes('curl') ||
-                       userAgent.includes('wget') ||
-                       !req.headers.accept ||
-                       req.headers.accept === '*/*';
+  const acceptHeader = req.headers.accept || '';
+  
+  // Common health check patterns
+  const isHealthCheck = 
+    userAgent.includes('HealthChecker') ||
+    userAgent.includes('kube-probe') ||
+    userAgent.includes('curl') ||
+    userAgent.includes('wget') ||
+    userAgent.startsWith('Go-http-client') ||
+    acceptHeader === '*/*' ||
+    acceptHeader === '' ||
+    !acceptHeader;
 
   if (isHealthCheck) {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    return res.end('OK');
+    return res.status(200).send('OK');
   }
   
-  // Otherwise, pass to the next handler (SPA)
+  // Otherwise, pass to SPA handler
   next();
 });
 
-// HEAD requests to root - always respond immediately
+// Always handle HEAD requests to root immediately
 app.head('/', (req, res) => {
-  res.writeHead(200);
-  res.end();
+  res.status(200).end();
 });
 
 (async () => {
