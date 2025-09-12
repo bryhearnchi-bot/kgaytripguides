@@ -32,6 +32,7 @@ __export(schema_exports, {
   insertItinerarySchema: () => insertItinerarySchema,
   insertMediaSchema: () => insertMediaSchema,
   insertPartyTemplateSchema: () => insertPartyTemplateSchema,
+  insertSettingsSchema: () => insertSettingsSchema,
   insertTalentSchema: () => insertTalentSchema,
   insertUserSchema: () => insertUserSchema,
   itinerary: () => itinerary,
@@ -40,6 +41,8 @@ __export(schema_exports, {
   partyTemplates: () => partyTemplates,
   partyTemplatesRelations: () => partyTemplatesRelations,
   passwordResetTokens: () => passwordResetTokens,
+  settings: () => settings,
+  settingsRelations: () => settingsRelations,
   talent: () => talent,
   talentRelations: () => talentRelations,
   userCruises: () => userCruises,
@@ -57,11 +60,12 @@ import {
   jsonb,
   serial,
   primaryKey,
-  index
+  index,
+  unique
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
-var users, passwordResetTokens, cruises, itinerary, events, talent, cruiseTalent, media, userCruises, partyTemplates, cruiseInfoSections, aiJobs, aiDrafts, auditLog, cruisesRelations, itineraryRelations, eventsRelations, talentRelations, cruiseTalentRelations, userCruisesRelations, partyTemplatesRelations, cruiseInfoSectionsRelations, aiJobsRelations, aiDraftsRelations, insertUserSchema, insertCruiseSchema, insertItinerarySchema, insertEventSchema, insertTalentSchema, insertMediaSchema, insertPartyTemplateSchema, insertCruiseInfoSectionSchema, insertAiJobSchema, insertAiDraftSchema;
+var users, passwordResetTokens, settings, cruises, itinerary, events, talent, cruiseTalent, media, userCruises, partyTemplates, cruiseInfoSections, aiJobs, aiDrafts, auditLog, cruisesRelations, itineraryRelations, eventsRelations, talentRelations, cruiseTalentRelations, userCruisesRelations, partyTemplatesRelations, cruiseInfoSectionsRelations, aiJobsRelations, aiDraftsRelations, settingsRelations, insertUserSchema, insertCruiseSchema, insertItinerarySchema, insertEventSchema, insertTalentSchema, insertMediaSchema, insertPartyTemplateSchema, insertCruiseInfoSectionSchema, insertAiJobSchema, insertAiDraftSchema, insertSettingsSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -91,6 +95,30 @@ var init_schema = __esm({
       userIdx: index("password_reset_user_idx").on(table.userId),
       expiresIdx: index("password_reset_expires_idx").on(table.expiresAt)
     }));
+    settings = pgTable("settings", {
+      id: serial("id").primaryKey(),
+      category: text("category").notNull(),
+      // trip_types, notification_types, etc.
+      key: text("key").notNull(),
+      // cruise, hotel, flight, etc.
+      label: text("label").notNull(),
+      // Display name for UI
+      value: text("value"),
+      // Optional value field
+      metadata: jsonb("metadata"),
+      // Additional data like button text, colors, etc.
+      isActive: boolean("is_active").default(true),
+      orderIndex: integer("order_index").default(0),
+      // For sorting within category
+      createdBy: varchar("created_by").references(() => users.id),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    }, (table) => ({
+      categoryKeyUnique: unique("settings_category_key_unique").on(table.category, table.key),
+      categoryKeyIdx: index("settings_category_key_idx").on(table.category, table.key),
+      categoryIdx: index("settings_category_idx").on(table.category),
+      activeIdx: index("settings_active_idx").on(table.isActive)
+    }));
     cruises = pgTable("cruises", {
       id: serial("id").primaryKey(),
       name: text("name").notNull(),
@@ -98,6 +126,8 @@ var init_schema = __esm({
       shipName: text("ship_name").notNull(),
       cruiseLine: text("cruise_line"),
       // Virgin, Celebrity, etc.
+      tripType: text("trip_type").default("cruise").notNull(),
+      // cruise, hotel, flight, etc. - references settings with category 'trip_types'
       startDate: timestamp("start_date").notNull(),
       endDate: timestamp("end_date").notNull(),
       status: text("status").default("upcoming"),
@@ -115,7 +145,8 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").defaultNow()
     }, (table) => ({
       statusIdx: index("cruise_status_idx").on(table.status),
-      slugIdx: index("cruise_slug_idx").on(table.slug)
+      slugIdx: index("cruise_slug_idx").on(table.slug),
+      tripTypeIdx: index("cruise_trip_type_idx").on(table.tripType)
     }));
     itinerary = pgTable("itinerary", {
       id: serial("id").primaryKey(),
@@ -397,6 +428,12 @@ var init_schema = __esm({
         references: [users.id]
       })
     }));
+    settingsRelations = relations(settings, ({ one }) => ({
+      creator: one(users, {
+        fields: [settings.createdBy],
+        references: [users.id]
+      })
+    }));
     insertUserSchema = createInsertSchema(users).pick({
       username: true,
       password: true,
@@ -443,6 +480,11 @@ var init_schema = __esm({
     insertAiDraftSchema = createInsertSchema(aiDrafts).omit({
       id: true,
       createdAt: true
+    });
+    insertSettingsSchema = createInsertSchema(settings).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
     });
   }
 });
@@ -1558,7 +1600,7 @@ async function registerRoutes(app2) {
     maxAge: "24h",
     etag: false
   }));
-  app2.post("/api/images/upload/:type", requireContentEditor, (req, res, next) => {
+  app2.post("/api/images/upload/:type", requireAuth, requireContentEditor, (req, res, next) => {
     const imageType = req.params.type;
     if (!["talent", "event", "itinerary", "cruise"].includes(imageType)) {
       return res.status(400).json({ error: "Invalid image type. Must be one of: talent, event, itinerary, cruise" });
@@ -1584,7 +1626,7 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to upload image" });
     }
   });
-  app2.post("/api/images/download-from-url", requireContentEditor, async (req, res) => {
+  app2.post("/api/images/download-from-url", requireAuth, requireContentEditor, async (req, res) => {
     try {
       const { url, imageType, name } = req.body;
       if (!url || !isValidImageUrl(url)) {

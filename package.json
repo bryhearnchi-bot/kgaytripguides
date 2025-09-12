@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:deploy": "npm run build && npm run db:push:conditional",
+    "build:preview": "npm run build",
+    "db:push:conditional": "if [ \"$CONTEXT\" = \"production\" ]; then npm run db:push; else echo 'Skipping database migration - not in production context'; fi",
     "start": "NODE_ENV=production node dist/index.js",
     "production:seed": "tsx server/production-seed.ts",
     "check": "tsc",

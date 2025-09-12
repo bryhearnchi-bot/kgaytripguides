@@ -1,6 +1,15 @@
 [build]
   publish = "dist/public"
-  command = "npm install && npm run build"
+  command = "npm install && npm run build:deploy"
+
+[context.production]
+  command = "npm install && npm run build:deploy"
+
+[context.deploy-preview]
+  command = "npm install && npm run build:preview"
+
+[context.branch-deploy]
+  command = "npm install && npm run build:preview"
 
 [build.environment]
   NODE_VERSION = "20"
