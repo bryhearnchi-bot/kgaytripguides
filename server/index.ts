@@ -4,32 +4,14 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-// CRITICAL: Health checks must be the very first thing, before any middleware
-// This ensures health checks work even if other middleware has issues
-app.get('/healthz', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
+
+// Single, fast health check endpoint - this is what deployment will use
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
 });
 
-app.head('/healthz', (req, res) => {
-  res.writeHead(200);
-  res.end();
-});
-
-app.get('/health', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
-});
-
-app.head('/health', (req, res) => {
-  res.writeHead(200);
-  res.end();
-});
-
-// Handle HEAD requests to root for health checks only
 app.head('/', (req, res) => {
-  res.writeHead(200);
-  res.end();
+  res.status(200).end();
 });
 
 app.use(express.json());
@@ -66,16 +48,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// API health check for internal use
-app.get('/api/health', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
-});
 
-app.head('/api/health', (req, res) => {
-  res.writeHead(200);
-  res.end();
-});
 
 (async () => {
   const server = await registerRoutes(app);
@@ -109,55 +82,26 @@ app.head('/api/health', (req, res) => {
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
   }, () => {
     log(`✅ Server ready and listening on port ${port}`);
-    log(`🚀 Health checks available at /healthz and /health`);
-    
-    // Skip production seeding in deployment to avoid blocking health checks
-    if (process.env.NODE_ENV === 'production') {
-      log('🚀 Production environment - server started successfully');
-      log('⚡ Health checks are ready for deployment verification');
-    }
+    log(`🚀 Health check available at /`);
   });
 
-  // Handle graceful shutdown and prevent multiple instances
-  let isShuttingDown = false;
-  
-  const gracefulShutdown = (signal: string) => {
-    if (isShuttingDown) {
-      log(`${signal} received but already shutting down, forcing exit`);
-      process.exit(1);
-    }
-    
-    isShuttingDown = true;
-    log(`${signal} received, shutting down gracefully`);
-    
-    // Set a timeout to force exit if graceful shutdown takes too long
-    const forceExit = setTimeout(() => {
-      log('Graceful shutdown timeout, forcing exit');
-      process.exit(1);
-    }, 10000); // 10 seconds timeout
-    
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, shutting down gracefully');
     server.close(() => {
-      clearTimeout(forceExit);
-      log('Process terminated gracefully');
+      log('Process terminated');
       process.exit(0);
     });
-  };
-
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  
-  // Additional cleanup for unexpected exits
-  process.on('uncaughtException', (error) => {
-    log(`Uncaught exception: ${error.message}`);
-    gracefulShutdown('UNCAUGHT_EXCEPTION');
   });
-  
-  process.on('unhandledRejection', (reason, promise) => {
-    log(`Unhandled rejection: ${reason}`);
-    gracefulShutdown('UNHANDLED_REJECTION');
+
+  process.on('SIGINT', () => {
+    log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+      log('Process terminated');
+      process.exit(0);
+    });
   });
 })().catch((error) => {
   console.error('💥 Failed to start server:', error);
