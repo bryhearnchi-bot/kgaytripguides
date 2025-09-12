@@ -5,13 +5,21 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// Single, fast health check endpoint - this is what deployment will use
-app.get('/', (req, res) => {
-  res.status(200).send('OK');
+// Explicit health check endpoints - fast and reliable
+app.get('/healthz', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
 });
 
+app.head('/healthz', (req, res) => {
+  res.writeHead(200);
+  res.end();
+});
+
+// Fallback health check at root for HEAD requests only
 app.head('/', (req, res) => {
-  res.status(200).end();
+  res.writeHead(200);
+  res.end();
 });
 
 app.use(express.json());

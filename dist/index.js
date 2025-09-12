@@ -2222,14 +2222,6 @@ app.head("/healthz", (req, res) => {
   res.writeHead(200);
   res.end();
 });
-app.get("/health", (req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("OK");
-});
-app.head("/health", (req, res) => {
-  res.writeHead(200);
-  res.end();
-});
 app.head("/", (req, res) => {
   res.writeHead(200);
   res.end();
@@ -2261,14 +2253,6 @@ app.use((req, res, next) => {
   });
   next();
 });
-app.get("/api/health", (req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("OK");
-});
-app.head("/api/health", (req, res) => {
-  res.writeHead(200);
-  res.end();
-});
 (async () => {
   const server = await registerRoutes(app);
   app.use((err, _req, res, _next) => {
@@ -2285,43 +2269,24 @@ app.head("/api/health", (req, res) => {
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true
+    host: "0.0.0.0"
   }, () => {
     log(`\u2705 Server ready and listening on port ${port}`);
-    log(`\u{1F680} Health checks available at /healthz and /health`);
-    if (process.env.NODE_ENV === "production") {
-      log("\u{1F680} Production environment - server started successfully");
-      log("\u26A1 Health checks are ready for deployment verification");
-    }
+    log(`\u{1F680} Health check available at /`);
   });
-  let isShuttingDown = false;
-  const gracefulShutdown = (signal) => {
-    if (isShuttingDown) {
-      log(`${signal} received but already shutting down, forcing exit`);
-      process.exit(1);
-    }
-    isShuttingDown = true;
-    log(`${signal} received, shutting down gracefully`);
-    const forceExit = setTimeout(() => {
-      log("Graceful shutdown timeout, forcing exit");
-      process.exit(1);
-    }, 1e4);
+  process.on("SIGTERM", () => {
+    log("SIGTERM received, shutting down gracefully");
     server.close(() => {
-      clearTimeout(forceExit);
-      log("Process terminated gracefully");
+      log("Process terminated");
       process.exit(0);
     });
-  };
-  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-  process.on("uncaughtException", (error) => {
-    log(`Uncaught exception: ${error.message}`);
-    gracefulShutdown("UNCAUGHT_EXCEPTION");
   });
-  process.on("unhandledRejection", (reason, promise) => {
-    log(`Unhandled rejection: ${reason}`);
-    gracefulShutdown("UNHANDLED_REJECTION");
+  process.on("SIGINT", () => {
+    log("SIGINT received, shutting down gracefully");
+    server.close(() => {
+      log("Process terminated");
+      process.exit(0);
+    });
   });
 })().catch((error) => {
   console.error("\u{1F4A5} Failed to start server:", error);
