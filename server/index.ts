@@ -26,22 +26,10 @@ app.head('/health', (req, res) => {
   res.end();
 });
 
-// Handle root path - simple and fast health check response
+// Handle root path - ALWAYS return OK for health checks
 app.get('/', (req, res, next) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const accept = req.headers.accept || '';
-  
-  // Fast health check response for deployment systems
-  if (!accept.includes('text/html') || 
-      userAgent.includes('curl') || 
-      userAgent.includes('wget') || 
-      userAgent.includes('HealthChecker') ||
-      userAgent.includes('kube-probe') ||
-      userAgent.includes('GoogleHC')) {
-    return res.status(200).send('OK');
-  }
-  
-  next();
+  // Always return OK for any GET request to root - deployment health checks need this
+  return res.status(200).send('OK');
 });
 
 app.head('/', (req, res) => {
