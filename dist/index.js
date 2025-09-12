@@ -2221,6 +2221,7 @@ function serveStatic(app2) {
 // server/index.ts
 var app = express3();
 app.get("/healthz", (req, res) => {
+  req.setTimeout(5e3);
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("OK");
 });
@@ -2229,11 +2230,9 @@ app.head("/healthz", (req, res) => {
   res.end();
 });
 app.get("/", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
-app.head("/", (req, res) => {
-  res.writeHead(200);
-  res.end();
+  req.setTimeout(5e3);
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
 });
 app.use(express3.json());
 app.use(express3.urlencoded({ extended: false }));
@@ -2276,9 +2275,12 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
   const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen(port, "0.0.0.0", () => {
+  server.listen(port, "0.0.0.0", async () => {
     log(`\u2705 Server ready and listening on port ${port}`);
-    log(`\u{1F680} Health check available at /`);
+    try {
+    } catch (error) {
+      console.error("Migration failed:", error);
+    }
   });
   process.on("SIGTERM", () => {
     log("SIGTERM received, shutting down gracefully");

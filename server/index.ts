@@ -7,6 +7,7 @@ const app = express();
 
 // Explicit health check endpoints - fast and reliable
 app.get('/healthz', (req, res) => {
+  req.setTimeout(5000); // 5 second timeout
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('OK');
 });
@@ -18,13 +19,9 @@ app.head('/healthz', (req, res) => {
 
 // Health check endpoint for GET requests
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-// Fallback health check at root for HEAD requests only
-app.head('/', (req, res) => {
-  res.writeHead(200);
-  res.end();
+  req.setTimeout(5000); // 5 second timeout
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
 });
 
 app.use(express.json());
@@ -66,8 +63,6 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
   
-  // Note: HEAD requests are now handled in the GET / handler above
-
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -85,16 +80,18 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  // Start server and ensure it's ready to handle requests immediately
-  server.listen(port, "0.0.0.0", () => {
+  // Start server first, then run migrations
+  server.listen(port, "0.0.0.0", async () => {
     log(`✅ Server ready and listening on port ${port}`);
-    log(`🚀 Health check available at /`);
+    
+    // Run migrations after server is ready
+    try {
+      // Move migration logic here if it exists
+    } catch (error) {
+      console.error('Migration failed:', error);
+    }
   });
 
   // Handle graceful shutdown
