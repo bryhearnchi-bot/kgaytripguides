@@ -7,7 +7,8 @@ import {
   itineraryStorage, 
   eventStorage, 
   talentStorage,
-  mediaStorage 
+  mediaStorage,
+  settingsStorage
 } from "./storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
 import { registerAuthRoutes } from "./auth-routes";
@@ -776,6 +777,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting info section:', error);
       res.status(500).json({ error: 'Failed to delete info section' });
+    }
+  });
+
+  // ============ SETTINGS ROUTES ============
+  
+  // Get all settings for a category
+  app.get("/api/settings/:category", async (req, res) => {
+    try {
+      const { category } = req.params;
+      const settings = await settingsStorage.getSettingsByCategory(category);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching settings by category:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  // Get only active settings for a category
+  app.get("/api/settings/:category/active", async (req, res) => {
+    try {
+      const { category } = req.params;
+      const settings = await settingsStorage.getAllActiveSettingsByCategory(category);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching active settings:', error);
+      res.status(500).json({ error: 'Failed to fetch active settings' });
+    }
+  });
+
+  // Get a specific setting by category and key
+  app.get("/api/settings/:category/:key", async (req, res) => {
+    try {
+      const { category, key } = req.params;
+      const setting = await settingsStorage.getSettingByCategoryAndKey(category, key);
+      
+      if (!setting) {
+        return res.status(404).json({ error: 'Setting not found' });
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      console.error('Error fetching setting:', error);
+      res.status(500).json({ error: 'Failed to fetch setting' });
+    }
+  });
+
+  // Create a new setting (protected route)
+  app.post("/api/settings/:category", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { category } = req.params;
+      const { key, label, value, metadata, orderIndex } = req.body;
+      
+      // Validate required fields
+      if (!key || !label) {
+        return res.status(400).json({ error: 'Key and label are required' });
+      }
+      
+      // Check if setting with this category/key already exists
+      const existingSetting = await settingsStorage.getSettingByCategoryAndKey(category, key);
+      if (existingSetting) {
+        return res.status(409).json({ error: 'Setting with this key already exists in category' });
+      }
+      
+      const setting = await settingsStorage.createSetting({
+        category,
+        key,
+        label,
+        value,
+        metadata,
+        orderIndex: orderIndex || 0,
+        isActive: true,
+        createdBy: req.user!.id,
+      });
+      
+      res.status(201).json(setting);
+    } catch (error) {
+      console.error('Error creating setting:', error);
+      res.status(500).json({ error: 'Failed to create setting' });
+    }
+  });
+
+  // Update a setting (protected route)
+  app.put("/api/settings/:category/:key", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { category, key } = req.params;
+      const { label, value, metadata, orderIndex, isActive } = req.body;
+      
+      const setting = await settingsStorage.updateSetting(category, key, {
+        label,
+        value,
+        metadata,
+        orderIndex,
+        isActive,
+      });
+      
+      if (!setting) {
+        return res.status(404).json({ error: 'Setting not found' });
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      console.error('Error updating setting:', error);
+      res.status(500).json({ error: 'Failed to update setting' });
+    }
+  });
+
+  // Delete a setting (protected route)
+  app.delete("/api/settings/:category/:key", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { category, key } = req.params;
+      
+      // Check if setting exists before trying to delete
+      const setting = await settingsStorage.getSettingByCategoryAndKey(category, key);
+      if (!setting) {
+        return res.status(404).json({ error: 'Setting not found' });
+      }
+      
+      await settingsStorage.deleteSetting(category, key);
+      res.json({ message: 'Setting deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting setting:', error);
+      res.status(500).json({ error: 'Failed to delete setting' });
+    }
+  });
+
+  // Deactivate a setting (protected route)
+  app.post("/api/settings/:category/:key/deactivate", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { category, key } = req.params;
+      
+      const setting = await settingsStorage.deactivateSetting(category, key);
+      if (!setting) {
+        return res.status(404).json({ error: 'Setting not found' });
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      console.error('Error deactivating setting:', error);
+      res.status(500).json({ error: 'Failed to deactivate setting' });
+    }
+  });
+
+  // Reorder settings in a category (protected route)
+  app.post("/api/settings/:category/reorder", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { category } = req.params;
+      const { orderedKeys } = req.body;
+      
+      if (!Array.isArray(orderedKeys)) {
+        return res.status(400).json({ error: 'orderedKeys must be an array' });
+      }
+      
+      await settingsStorage.reorderSettings(category, orderedKeys);
+      
+      // Return updated settings for confirmation
+      const settings = await settingsStorage.getSettingsByCategory(category);
+      res.json({
+        message: 'Settings reordered successfully',
+        settings
+      });
+    } catch (error) {
+      console.error('Error reordering settings:', error);
+      res.status(500).json({ error: 'Failed to reorder settings' });
     }
   });
 

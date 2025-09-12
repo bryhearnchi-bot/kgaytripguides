@@ -9,7 +9,8 @@ import type {
   Itinerary,
   Event,
   Talent,
-  Media 
+  Media,
+  Settings
 } from "../shared/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -30,6 +31,7 @@ export const {
   media,
   userCruises,
   auditLog,
+  settings,
 } = schema;
 
 // ============ USER OPERATIONS ============
@@ -397,6 +399,79 @@ export class MediaStorage implements IMediaStorage {
   }
 }
 
+// ============ SETTINGS OPERATIONS ============
+export interface ISettingsStorage {
+  getSettingsByCategory(category: string): Promise<Settings[]>;
+  getSettingByCategoryAndKey(category: string, key: string): Promise<Settings | undefined>;
+  getAllActiveSettingsByCategory(category: string): Promise<Settings[]>;
+  createSetting(setting: Omit<Settings, 'id' | 'createdAt' | 'updatedAt'>): Promise<Settings>;
+  updateSetting(category: string, key: string, setting: Partial<Settings>): Promise<Settings | undefined>;
+  deleteSetting(category: string, key: string): Promise<void>;
+  deactivateSetting(category: string, key: string): Promise<Settings | undefined>;
+  reorderSettings(category: string, orderedKeys: string[]): Promise<void>;
+}
+
+export class SettingsStorage implements ISettingsStorage {
+  async getSettingsByCategory(category: string): Promise<Settings[]> {
+    return await db.select()
+      .from(settings)
+      .where(eq(settings.category, category))
+      .orderBy(asc(settings.orderIndex), asc(settings.label));
+  }
+
+  async getSettingByCategoryAndKey(category: string, key: string): Promise<Settings | undefined> {
+    const result = await db.select()
+      .from(settings)
+      .where(and(eq(settings.category, category), eq(settings.key, key)));
+    return result[0];
+  }
+
+  async getAllActiveSettingsByCategory(category: string): Promise<Settings[]> {
+    return await db.select()
+      .from(settings)
+      .where(and(
+        eq(settings.category, category), 
+        eq(settings.isActive, true)
+      ))
+      .orderBy(asc(settings.orderIndex), asc(settings.label));
+  }
+
+  async createSetting(settingData: Omit<Settings, 'id' | 'createdAt' | 'updatedAt'>): Promise<Settings> {
+    const result = await db.insert(settings).values(settingData).returning();
+    return result[0];
+  }
+
+  async updateSetting(category: string, key: string, settingData: Partial<Settings>): Promise<Settings | undefined> {
+    const result = await db.update(settings)
+      .set({ ...settingData, updatedAt: new Date() })
+      .where(and(eq(settings.category, category), eq(settings.key, key)))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSetting(category: string, key: string): Promise<void> {
+    await db.delete(settings)
+      .where(and(eq(settings.category, category), eq(settings.key, key)));
+  }
+
+  async deactivateSetting(category: string, key: string): Promise<Settings | undefined> {
+    const result = await db.update(settings)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(eq(settings.category, category), eq(settings.key, key)))
+      .returning();
+    return result[0];
+  }
+
+  async reorderSettings(category: string, orderedKeys: string[]): Promise<void> {
+    // Update order index for each setting in the category
+    for (let i = 0; i < orderedKeys.length; i++) {
+      await db.update(settings)
+        .set({ orderIndex: i, updatedAt: new Date() })
+        .where(and(eq(settings.category, category), eq(settings.key, orderedKeys[i])));
+    }
+  }
+}
+
 // Create storage instances
 export const storage = new UserStorage();
 export const cruiseStorage = new CruiseStorage();
@@ -404,3 +479,4 @@ export const itineraryStorage = new ItineraryStorage();
 export const eventStorage = new EventStorage();
 export const talentStorage = new TalentStorage();
 export const mediaStorage = new MediaStorage();
+export const settingsStorage = new SettingsStorage();
