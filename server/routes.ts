@@ -53,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ IMAGE MANAGEMENT ROUTES ============
   
   // Upload image endpoint with type parameter
-  app.post("/api/images/upload/:type", requireContentEditor, (req, res, next) => {
+  app.post("/api/images/upload/:type", requireAuth, requireContentEditor, (req, res, next) => {
     const imageType = req.params.type;
     if (!['talent', 'event', 'itinerary', 'cruise'].includes(imageType)) {
       return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, cruise' });
@@ -85,7 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Download image from URL endpoint
-  app.post("/api/images/download-from-url", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/images/download-from-url", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { url, imageType, name } = req.body;
       
