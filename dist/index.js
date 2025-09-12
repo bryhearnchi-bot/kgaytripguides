@@ -2230,10 +2230,6 @@ app.head("/health", (req, res) => {
   res.writeHead(200);
   res.end();
 });
-app.get("/", (req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("OK");
-});
 app.head("/", (req, res) => {
   res.writeHead(200);
   res.end();

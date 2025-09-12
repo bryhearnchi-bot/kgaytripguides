@@ -26,13 +26,7 @@ app.head('/health', (req, res) => {
   res.end();
 });
 
-// Handle root path - ALWAYS return OK for health checks  
-app.get('/', (req, res) => {
-  // Fast health check response for deployment verification
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
-});
-
+// Handle HEAD requests to root for health checks only
 app.head('/', (req, res) => {
   res.writeHead(200);
   res.end();
