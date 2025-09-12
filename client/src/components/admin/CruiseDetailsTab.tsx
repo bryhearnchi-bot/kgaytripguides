@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Ship, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from './ImageUpload';
 
 const setupSchema = z.object({
   name: z.string().min(1, 'Cruise name is required'),
@@ -303,14 +304,14 @@ export default function CruiseDetailsTab({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="heroImageUrl">Hero Image URL</Label>
-              <Input
-                id="heroImageUrl"
-                {...register('heroImageUrl')}
-                placeholder="https://example.com/cruise-hero-image.jpg"
-              />
-            </div>
+            <ImageUpload
+              imageType="cruise"
+              currentImageUrl={watch('heroImageUrl') || ''}
+              onImageChange={(imageUrl) => {
+                setValue('heroImageUrl', imageUrl || '', { shouldDirty: true });
+              }}
+              label="Hero Image"
+            />
 
             <div className="flex justify-end">
               <Button 

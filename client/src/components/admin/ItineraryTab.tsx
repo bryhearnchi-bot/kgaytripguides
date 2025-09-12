@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from './ImageUpload';
 
 interface ItineraryDay {
   id?: number;
@@ -37,6 +38,7 @@ interface ItineraryDay {
   arrivalTime?: string;
   departureTime?: string;
   allAboardTime?: string;
+  portImageUrl?: string;
   segment: 'pre' | 'main' | 'post';
   description?: string;
   orderIndex: number;
@@ -82,6 +84,7 @@ export default function ItineraryTab({
         arrivalTime: day.arrivalTime || '',
         departureTime: day.departureTime || '',
         allAboardTime: day.allAboardTime || '',
+        portImageUrl: day.portImageUrl || '',
         segment: day.segment || 'main',
         description: day.description || '',
         orderIndex: day.orderIndex || 0,
@@ -175,6 +178,7 @@ export default function ItineraryTab({
       date: '',
       day: itineraryDays.length + 1,
       portName: '',
+      portImageUrl: '',
       segment: 'main',
       orderIndex: itineraryDays.length,
     };
@@ -479,6 +483,15 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
           rows={3}
         />
       </div>
+
+      <ImageUpload
+        imageType="itinerary"
+        currentImageUrl={formData.portImageUrl}
+        onImageChange={(imageUrl) => {
+          setFormData(prev => ({ ...prev, portImageUrl: imageUrl || '' }));
+        }}
+        label="Port Image"
+      />
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
