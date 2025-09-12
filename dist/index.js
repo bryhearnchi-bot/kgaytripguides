@@ -2228,6 +2228,9 @@ app.head("/healthz", (req, res) => {
   res.writeHead(200);
   res.end();
 });
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.head("/", (req, res) => {
   res.writeHead(200);
   res.end();
@@ -2273,10 +2276,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
   const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen({
-    port,
-    host: "0.0.0.0"
-  }, () => {
+  server.listen(port, "0.0.0.0", () => {
     log(`\u2705 Server ready and listening on port ${port}`);
     log(`\u{1F680} Health check available at /`);
   });

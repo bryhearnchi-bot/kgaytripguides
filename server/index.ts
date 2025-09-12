@@ -16,6 +16,11 @@ app.head('/healthz', (req, res) => {
   res.end();
 });
 
+// Health check endpoint for GET requests
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Fallback health check at root for HEAD requests only
 app.head('/', (req, res) => {
   res.writeHead(200);
@@ -87,10 +92,7 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   
   // Start server and ensure it's ready to handle requests immediately
-  server.listen({
-    port,
-    host: "0.0.0.0",
-  }, () => {
+  server.listen(port, "0.0.0.0", () => {
     log(`✅ Server ready and listening on port ${port}`);
     log(`🚀 Health check available at /`);
   });

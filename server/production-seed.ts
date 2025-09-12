@@ -222,6 +222,15 @@ if (import.meta.url === new URL(process.argv[1], 'file://').href) {
       console.error('❌ Production seeding failed:', error);
       process.exit(1);
     });
+} else if (process.env.NODE_ENV === 'production') {
+  // Run seeding in background during production startup, but don't exit
+  seedProduction()
+    .then(() => {
+      console.log('✅ Production seeding completed');
+    })
+    .catch((error) => {
+      console.error('❌ Production seeding failed:', error);
+    });
 }
 
 export { seedProduction };
