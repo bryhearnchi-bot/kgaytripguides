@@ -1,0 +1,145 @@
+2025-09-12 16:39:42.13
+2adbc93d
+System
+command finished with error [node dist/index.js]: exit status 1
+2025-09-12 16:43:00.73
+2adbc93d
+User
+fatal error: all goroutines are asleep - deadlock!
+2025-09-12 16:43:01.33
+2adbc93d
+User
+goroutine 1 [chan receive]:
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/internal/helpers.(*ThreadSafeWaitGroup).Wait(...)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/internal/helpers/waitgroup.go:36
+2025-09-12 16:43:01.33
+2adbc93d
+User
+main.runService.func2()
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:114 +0x59
+2025-09-12 16:43:01.33
+2adbc93d
+User
+main.runService(0x1)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:160 +0x4ed
+2025-09-12 16:43:01.33
+2adbc93d
+User
+main.main()
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/main.go:241 +0xa29
+2025-09-12 16:43:01.33
+2adbc93d
+User
+2025-09-12 16:43:01.33
+2adbc93d
+User
+goroutine 6 [chan receive]:
+2025-09-12 16:43:01.33
+2adbc93d
+User
+main.runService.func1()
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:98 +0x4a
+2025-09-12 16:43:01.33
+2adbc93d
+User
+created by main.runService
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:97 +0x1e5
+2025-09-12 16:43:01.33
+2adbc93d
+User
+2025-09-12 16:43:01.33
+2adbc93d
+User
+goroutine 7 [chan receive]:
+2025-09-12 16:43:01.33
+2adbc93d
+User
+main.(*serviceType).sendRequest(0xc000172060, {0x94bc00, 0xc000f671d0})
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:192 +0xfa
+2025-09-12 16:43:01.33
+2adbc93d
+User
+main.runService.func3()
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:125 +0x39
+2025-09-12 16:43:01.33
+2adbc93d
+User
+created by main.runService
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/cmd/esbuild/service.go:122 +0x31c
+2025-09-12 16:43:01.33
+2adbc93d
+User
+2025-09-12 16:43:01.33
+2adbc93d
+User
+goroutine 9 [chan receive]:
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/internal/bundler.(*scanner).scanAllDependencies(0xc0000ba900)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/internal/bundler/bundler.go:2024 +0x239
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/internal/bundler.ScanBundle(_, {_, _, _, _, _, _}, {_, _}, 0xc00020c1e0, ...)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/internal/bundler/bundler.go:1371 +0xb36
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/pkg/api.rebuildImpl({0xc00020c1e0, {0xc00020a180, 0x1, 0x1}, {0x0, 0x0, 0x0}, {0x0, 0x1, 0x0, ...}, ...}, ...)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/pkg/api/api_impl.go:1458 +0x2e5
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/pkg/api.(*internalContext).rebuild(_)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/pkg/api/api_impl.go:977 +0x2a5
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/pkg/api.(*internalContext).Rebuild(0xc00022c500?)
+2025-09-12 16:43:01.33
+2adbc93d
+User
+github.com/evanw/esbuild/pkg/api/api_impl.go:1038 +0x58
