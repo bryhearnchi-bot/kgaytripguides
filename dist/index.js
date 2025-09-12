@@ -2571,17 +2571,18 @@ async function registerRoutes(app2) {
   app2.get("/api/party-templates", requireAuth, async (req, res) => {
     try {
       const search = req.query.search;
-      let query = db.select().from(partyTemplates).orderBy(partyTemplates.name);
+      let templates;
       if (search) {
-        query = db.select().from(partyTemplates).where(
+        templates = await db.select().from(partyTemplates).where(
           or2(
             ilike2(partyTemplates.name, `%${search}%`),
             ilike2(partyTemplates.themeDescription, `%${search}%`),
             ilike2(partyTemplates.dressCode, `%${search}%`)
           )
         ).orderBy(partyTemplates.name);
+      } else {
+        templates = await db.select().from(partyTemplates).orderBy(partyTemplates.name);
       }
-      const templates = await query;
       res.json(templates);
     } catch (error) {
       console.error("Error fetching party templates:", error);
@@ -2690,15 +2691,13 @@ async function registerRoutes(app2) {
   app2.post("/api/cruises/:cruiseId/info-sections", requireAuth, requireContentEditor, async (req, res) => {
     try {
       const cruiseId = parseInt(req.params.cruiseId);
-      const { title, content, type, orderIndex, isVisible } = req.body;
+      const { title, content, orderIndex } = req.body;
       const newSection = await db.insert(cruiseInfoSections).values({
         cruiseId,
         title,
         content,
-        type,
         orderIndex: orderIndex || 0,
-        isVisible: isVisible !== false,
-        createdBy: req.user.id
+        updatedBy: req.user.id
       }).returning();
       res.status(201).json(newSection[0]);
     } catch (error) {
@@ -2709,14 +2708,13 @@ async function registerRoutes(app2) {
   app2.put("/api/info-sections/:id", requireAuth, requireContentEditor, async (req, res) => {
     try {
       const sectionId = parseInt(req.params.id);
-      const { title, content, type, orderIndex, isVisible } = req.body;
+      const { title, content, orderIndex } = req.body;
       const updatedSection = await db.update(cruiseInfoSections).set({
         title,
         content,
-        type,
         orderIndex,
-        isVisible,
-        updatedAt: /* @__PURE__ */ new Date()
+        updatedAt: /* @__PURE__ */ new Date(),
+        updatedBy: req.user.id
       }).where(eq3(cruiseInfoSections.id, sectionId)).returning();
       if (updatedSection.length === 0) {
         return res.status(404).json({ error: "Info section not found" });
@@ -2889,7 +2887,31 @@ app.use((req, res, next) => {
   next();
 });
 app.get("/healthz", (req, res) => {
-  res.status(200).json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+  res.status(200).send("OK");
+});
+app.head("/healthz", (req, res) => {
+  res.status(200).end();
+});
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+app.head("/health", (req, res) => {
+  res.status(200).end();
+});
+app.get("/api/health", (req, res) => {
+  res.status(200).send("OK");
+});
+app.head("/api/health", (req, res) => {
+  res.status(200).end();
+});
+app.get("/", (req, res, next) => {
+  const userAgent = req.headers["user-agent"] || "";
+  const acceptHeader = req.headers.accept || "";
+  const isHealthCheck = userAgent.includes("HealthChecker") || userAgent.includes("kube-probe") || userAgent.includes("curl") || userAgent.includes("wget") || userAgent.startsWith("Go-http-client") || acceptHeader === "*/*" || acceptHeader === "" || !acceptHeader;
+  if (isHealthCheck) {
+    return res.status(200).send("OK");
+  }
+  next();
 });
 app.head("/", (req, res) => {
   res.status(200).end();
@@ -2915,15 +2937,20 @@ app.head("/", (req, res) => {
   }, () => {
     log(`serving on port ${port}`);
     if (process.env.NODE_ENV === "production") {
-      Promise.resolve().then(() => (init_production_seed(), production_seed_exports)).then((module) => {
-        if (module.seedProduction) {
-          module.seedProduction().catch((error) => {
-            console.error("Background seeding failed:", error);
-          });
+      log("Production environment detected - starting background seeding...");
+      setTimeout(async () => {
+        try {
+          log("Starting production database seeding...");
+          const module = await Promise.resolve().then(() => (init_production_seed(), production_seed_exports));
+          if (module.seedProduction) {
+            await module.seedProduction();
+            log("\u2705 Production seeding completed successfully");
+          }
+        } catch (error) {
+          console.error("\u274C Production seeding failed:", error);
+          console.error("Server will continue running without seeded data");
         }
-      }).catch((error) => {
-        console.error("Failed to load production seeding:", error);
-      });
+      }, 100);
     }
   });
 })();
