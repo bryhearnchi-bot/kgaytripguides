@@ -30,7 +30,7 @@ export default function NavigationBanner() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="!text-white !border-white !bg-transparent hover:!bg-white hover:!text-ocean-900 transition-colors"
+              className="!text-gray-800 !border-gray-300 !bg-white hover:!bg-gray-100 hover:!text-gray-900 transition-colors"
             >
               <Shield className="w-4 h-4 mr-2" />
               Admin
