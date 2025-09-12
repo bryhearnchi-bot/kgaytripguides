@@ -56,21 +56,6 @@ app.get('/', (req, res, next) => {
 });
 
 (async () => {
-  // Run production seeding BEFORE server starts to prevent blocking health checks
-  if (process.env.NODE_ENV === 'production') {
-    log('Production environment detected - running production seeding before server start...');
-    try {
-      const module = await import('./production-seed.ts');
-      if (module.seedProduction) {
-        await module.seedProduction();
-        log('Production seeding completed successfully');
-      }
-    } catch (error) {
-      console.error('Production seeding failed:', error);
-      // Don't crash server if seeding fails - just log the error
-    }
-  }
-
   const server = await registerRoutes(app);
   
   // Add HEAD request handler for the root path for lightweight health check probes
@@ -107,7 +92,22 @@ app.get('/', (req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
+    
+    // Run production seeding AFTER server starts listening to avoid blocking health checks
+    if (process.env.NODE_ENV === 'production') {
+      log('Production environment detected - running production seeding...');
+      try {
+        const module = await import('./production-seed.ts');
+        if (module.seedProduction) {
+          await module.seedProduction();
+          log('Production seeding completed successfully');
+        }
+      } catch (error) {
+        console.error('Production seeding failed:', error);
+        // Don't crash server if seeding fails - just log the error
+      }
+    }
   });
 })();
