@@ -33,8 +33,11 @@ app.get('/', (req, res, next) => {
   const accept = req.headers.accept || '';
   
   // Simple check: if it's not clearly a browser request, treat as health check
-  if (!accept.includes('text/html') || userAgent.includes('curl') || userAgent.includes('wget')) {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+  if (!accept.includes('text/html') || userAgent.includes('curl') || userAgent.includes('wget') || userAgent.includes('HealthChecker')) {
+    res.writeHead(200, { 
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
     return res.end('OK');
   }
   
@@ -118,20 +121,22 @@ app.head('/api/health', (req, res) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  // Start server and ensure it's ready to handle requests immediately
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`✅ Server ready and listening on port ${port}`);
+    log(`🚀 Health checks available at /healthz and /health`);
     
-    // Run production seeding asynchronously AFTER server starts listening
-    // This ensures health checks can respond immediately
+    // Only run seeding in production, and do it completely in background
     if (process.env.NODE_ENV === 'production') {
-      log('Production environment detected - will seed in background...');
+      log('Production environment detected - scheduling background seeding...');
       
-      // Start seeding immediately but don't await it
-      setImmediate(async () => {
+      // Delay seeding to let server fully start first
+      setTimeout(async () => {
         try {
           log('Starting production database seeding...');
           const module = await import('./production-seed.ts');
@@ -144,7 +149,10 @@ app.head('/api/health', (req, res) => {
           console.error('Server will continue running without seeded data');
           // Don't crash server if seeding fails - just log the error
         }
-      });
+      }, 2000); // Wait 2 seconds before starting seeding
     }
   });
-})();
+})().catch((error) => {
+  console.error('💥 Failed to start server:', error);
+  process.exit(1);
+});
