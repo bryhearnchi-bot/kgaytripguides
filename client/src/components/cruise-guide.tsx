@@ -2111,6 +2111,32 @@ export default function CruiseGuide({ slug = 'greek-isles-2025' }: CruiseGuidePr
         </div>
       </header>
 
+        {/* Hero Image Section */}
+      {cruiseData?.heroImageUrl && (
+        <div className="relative w-full h-64 md:h-80 lg:h-96 mt-[120px] mb-8">
+          <img
+            src={cruiseData.heroImageUrl}
+            alt={cruiseData.name || "Cruise Hero Image"}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+            <div className="text-center text-white px-4">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">
+                {cruiseData.name}
+              </h1>
+              <p className="text-lg md:text-xl lg:text-2xl drop-shadow-lg">
+                {cruiseData.shipName} • {cruiseData.startDate && cruiseData.endDate && 
+                  `${new Date(cruiseData.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${new Date(cruiseData.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
         {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <main className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
