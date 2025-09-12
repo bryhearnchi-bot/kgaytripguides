@@ -334,8 +334,8 @@ export default function ItineraryTab({
 
       {/* Edit Day Dialog */}
       <Dialog open={!!editingDay} onOpenChange={(open) => !open && setEditingDay(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
             <DialogTitle>
               {editingDay?.id ? 'Edit' : 'Add'} Itinerary Stop
             </DialogTitle>
@@ -344,13 +344,15 @@ export default function ItineraryTab({
             </DialogDescription>
           </DialogHeader>
           
-          {editingDay && (
-            <ItineraryDayForm
-              day={editingDay}
-              onSave={saveItineraryDay}
-              onCancel={() => setEditingDay(null)}
-            />
-          )}
+          <div className="py-4">
+            {editingDay && (
+              <ItineraryDayForm
+                day={editingDay}
+                onSave={saveItineraryDay}
+                onCancel={() => setEditingDay(null)}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
