@@ -44,7 +44,8 @@ app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Also add a HEAD request handler for the root path for health checks
+// Add HEAD request handler for the root path for lightweight health check probes
+// Note: We don't add a GET / handler to avoid hijacking the SPA root route
 app.head('/', (req, res) => {
   res.status(200).end();
 });
@@ -80,9 +81,13 @@ app.head('/', (req, res) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    
-    // Run production seeding in the background after server is up
-    if (process.env.NODE_ENV === 'production') {
+  });
+
+  // Run production seeding in the background after all setup is complete
+  // This ensures it doesn't interfere with health checks or server startup
+  if (process.env.NODE_ENV === 'production') {
+    // Use setTimeout to ensure this runs after all synchronous setup is complete
+    setTimeout(() => {
       import('./production-seed.ts').then((module) => {
         if (module.seedProduction) {
           module.seedProduction().catch((error) => {
@@ -92,6 +97,6 @@ app.head('/', (req, res) => {
       }).catch((error) => {
         console.error('Failed to load production seeding:', error);
       });
-    }
-  });
+    }, 1000); // Wait 1 second to ensure server is fully ready
+  }
 })();
