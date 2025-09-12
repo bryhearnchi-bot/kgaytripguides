@@ -2859,6 +2859,31 @@ function serveStatic(app2) {
 
 // server/index.ts
 var app = express3();
+app.get("/healthz", (req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
+});
+app.head("/healthz", (req, res) => {
+  res.writeHead(200);
+  res.end();
+});
+app.get("/health", (req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
+});
+app.head("/health", (req, res) => {
+  res.writeHead(200);
+  res.end();
+});
+app.use("/", (req, res, next) => {
+  const userAgent = req.headers["user-agent"] || "";
+  const isHealthCheck = req.method === "HEAD" || req.method === "GET" && (userAgent.includes("HealthChecker") || userAgent.includes("kube-probe") || userAgent.includes("curl") || userAgent.includes("wget") || userAgent.includes("Go-http-client") || userAgent.startsWith("Mozilla") === false || req.headers.accept === "*/*" || !req.headers.accept);
+  if (isHealthCheck && req.path === "/") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    return res.end("OK");
+  }
+  next();
+});
 app.use(express3.json());
 app.use(express3.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -2886,35 +2911,13 @@ app.use((req, res, next) => {
   });
   next();
 });
-app.get("/healthz", (req, res) => {
-  res.status(200).send("OK");
-});
-app.head("/healthz", (req, res) => {
-  res.status(200).end();
-});
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
-app.head("/health", (req, res) => {
-  res.status(200).end();
-});
 app.get("/api/health", (req, res) => {
-  res.status(200).send("OK");
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
 });
 app.head("/api/health", (req, res) => {
-  res.status(200).end();
-});
-app.get("/", (req, res, next) => {
-  const userAgent = req.headers["user-agent"] || "";
-  const acceptHeader = req.headers.accept || "";
-  const isHealthCheck = userAgent.includes("HealthChecker") || userAgent.includes("kube-probe") || userAgent.includes("curl") || userAgent.includes("wget") || userAgent.startsWith("Go-http-client") || acceptHeader === "*/*" || acceptHeader === "" || !acceptHeader;
-  if (isHealthCheck) {
-    return res.status(200).send("OK");
-  }
-  next();
-});
-app.head("/", (req, res) => {
-  res.status(200).end();
+  res.writeHead(200);
+  res.end();
 });
 (async () => {
   const server = await registerRoutes(app);
