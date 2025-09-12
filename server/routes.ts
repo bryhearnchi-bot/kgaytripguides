@@ -557,22 +557,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/party-templates", requireAuth, async (req, res) => {
     try {
       const search = req.query.search as string;
-      let query = db.select().from(partyTemplates).orderBy(partyTemplates.name);
+      
+      let query = db.select().from(partyTemplates);
       
       if (search) {
-        query = db.select()
-          .from(partyTemplates)
-          .where(
-            or(
-              ilike(partyTemplates.name, `%${search}%`),
-              ilike(partyTemplates.themeDescription, `%${search}%`),
-              ilike(partyTemplates.dressCode, `%${search}%`)
-            )
+        query = query.where(
+          or(
+            ilike(partyTemplates.name, `%${search}%`),
+            ilike(partyTemplates.themeDescription, `%${search}%`),
+            ilike(partyTemplates.dressCode, `%${search}%`)
           )
-          .orderBy(partyTemplates.name);
+        );
       }
       
-      const templates = await query;
+      const templates = await query.orderBy(partyTemplates.name);
       res.json(templates);
     } catch (error) {
       console.error('Error fetching party templates:', error);
@@ -715,16 +713,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cruises/:cruiseId/info-sections", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruiseId = parseInt(req.params.cruiseId);
-      const { title, content, type, orderIndex, isVisible } = req.body;
+      const { title, content, orderIndex } = req.body;
       
       const newSection = await db.insert(cruiseInfoSections).values({
         cruiseId,
         title,
         content,
-        type,
         orderIndex: orderIndex || 0,
-        isVisible: isVisible !== false,
-        createdBy: req.user!.id,
+        updatedBy: req.user!.id,
       }).returning();
       
       res.status(201).json(newSection[0]);
@@ -738,16 +734,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/info-sections/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const sectionId = parseInt(req.params.id);
-      const { title, content, type, orderIndex, isVisible } = req.body;
+      const { title, content, orderIndex } = req.body;
       
       const updatedSection = await db.update(cruiseInfoSections)
         .set({
           title,
           content,
-          type,
           orderIndex,
-          isVisible,
           updatedAt: new Date(),
+          updatedBy: req.user!.id,
         })
         .where(eq(cruiseInfoSections.id, sectionId))
         .returning();

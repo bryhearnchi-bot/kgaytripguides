@@ -44,10 +44,15 @@ app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Add HEAD request handler for the root path for lightweight health check probes
-// Note: We don't add a GET / handler to avoid hijacking the SPA root route
+// Add HEAD and GET request handlers for the root path for health check probes
+// These handlers are registered before serveStatic to ensure health checks work properly
 app.head('/', (req, res) => {
   res.status(200).end();
+});
+
+// Add GET handler for Cloud Run/Autoscale health checks
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 (async () => {
