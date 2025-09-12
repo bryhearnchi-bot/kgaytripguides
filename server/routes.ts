@@ -9,6 +9,7 @@ import {
   mediaStorage 
 } from "./storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
+import { ObjectStorageService } from "./objectStorage";
 import { registerAuthRoutes } from "./auth-routes";
 import { db } from "./storage";
 import { partyTemplates, cruiseInfoSections } from "../shared/schema";
@@ -16,6 +17,26 @@ import { eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ============ OBJECT STORAGE ROUTES ============
+  const objectStorageService = new ObjectStorageService();
+  
+  // Serve cruise hero images from object storage
+  app.get("/api/storage/cruise-images/:filename", async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const file = await objectStorageService.searchPublicObject(`cruise-images/${filename}`);
+      
+      if (!file) {
+        return res.status(404).json({ error: 'Image not found' });
+      }
+      
+      await objectStorageService.downloadObject(file, res, 86400); // Cache for 24 hours
+    } catch (error) {
+      console.error('Error serving cruise image:', error);
+      res.status(500).json({ error: 'Failed to serve image' });
+    }
+  });
+  
   // ============ AUTHENTICATION ROUTES ============
   registerAuthRoutes(app);
 
