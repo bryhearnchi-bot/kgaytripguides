@@ -38,26 +38,41 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoints - registered immediately before async operations
-// Both /healthz and GET / for Replit's default health checks
+// Health check endpoints - registered immediately and prioritized
+// These must respond instantly without any processing delays
 app.get('/healthz', (req, res) => {
-  // Respond immediately without any processing delays
-  res.status(200).send('OK');
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
 });
 
-// Add GET / handler for Replit's default health checks
-// This responds with 200 for health checks without interfering with SPA
+app.head('/healthz', (req, res) => {
+  res.writeHead(200);
+  res.end();
+});
+
+// Root path health check handler - must be very fast
 app.get('/', (req, res, next) => {
-  // If this is a health check request (no accept headers for HTML), return 200 immediately
-  if (req.headers['user-agent'] && req.headers['user-agent'].includes('HealthChecker')) {
-    return res.status(200).send('OK');
+  // Health check patterns - respond immediately
+  const userAgent = req.headers['user-agent'] || '';
+  const isHealthCheck = userAgent.includes('HealthChecker') || 
+                       userAgent.includes('curl') ||
+                       userAgent.includes('wget') ||
+                       !req.headers.accept ||
+                       req.headers.accept === '*/*';
+
+  if (isHealthCheck) {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    return res.end('OK');
   }
-  // Also handle HEAD requests for health checks
-  if (req.method === 'HEAD') {
-    return res.status(200).end();
-  }
+  
   // Otherwise, pass to the next handler (SPA)
   next();
+});
+
+// HEAD requests to root - always respond immediately
+app.head('/', (req, res) => {
+  res.writeHead(200);
+  res.end();
 });
 
 (async () => {
@@ -98,19 +113,22 @@ app.get('/', (req, res, next) => {
     // This ensures health checks can respond immediately
     if (process.env.NODE_ENV === 'production') {
       log('Production environment detected - starting background seeding...');
-      // Use setImmediate to run seeding on next tick, allowing health checks to respond first
-      setImmediate(async () => {
+      
+      // Use setTimeout with a small delay to ensure health checks work first
+      setTimeout(async () => {
         try {
+          log('Starting production database seeding...');
           const module = await import('./production-seed.ts');
           if (module.seedProduction) {
             await module.seedProduction();
-            log('Production seeding completed successfully');
+            log('✅ Production seeding completed successfully');
           }
         } catch (error) {
-          console.error('Production seeding failed:', error);
+          console.error('❌ Production seeding failed:', error);
+          console.error('Server will continue running without seeded data');
           // Don't crash server if seeding fails - just log the error
         }
-      });
+      }, 100); // Small delay to let health checks establish first
     }
   });
 })();
