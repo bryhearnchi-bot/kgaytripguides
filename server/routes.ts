@@ -25,6 +25,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     etag: false
   }));
   
+  // Serve talent profile images
+  app.use('/talent-images', express.static('server/public/talent-images', {
+    maxAge: '24h',
+    etag: false
+  }));
+  
+  // Serve event images
+  app.use('/event-images', express.static('server/public/event-images', {
+    maxAge: '24h',
+    etag: false
+  }));
+  
+  // Serve itinerary/port images
+  app.use('/itinerary-images', express.static('server/public/itinerary-images', {
+    maxAge: '24h',
+    etag: false
+  }));
+  
   // ============ AUTHENTICATION ROUTES ============
   registerAuthRoutes(app);
 
