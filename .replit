@@ -5,7 +5,7 @@ run = "npm run dev"
 channel = "stable-25_05"
 
 [deployment]
-run = ["sh", "-c", "node dist/index.js"]
+run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 
@@ -22,7 +22,7 @@ localPort = 38915
 externalPort = 5000
 
 [[ports]]
-localPort = 40307
+localPort = 40687
 externalPort = 3000
 
 [[ports]]

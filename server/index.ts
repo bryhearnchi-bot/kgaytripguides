@@ -38,13 +38,39 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint - registered immediately before async operations  
-// Using /healthz to avoid overriding the frontend SPA root route
+// Health check endpoints - registered immediately before async operations
+// Both /healthz and GET / for Replit's default health checks
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
+// Add GET / handler for Replit's default health checks
+// This responds with 200 for health checks without interfering with SPA
+app.get('/', (req, res, next) => {
+  // If this is a health check request (no accept headers for HTML), return 200
+  if (req.headers['user-agent'] && req.headers['user-agent'].includes('HealthChecker')) {
+    return res.status(200).send('OK');
+  }
+  // Otherwise, pass to the next handler (SPA)
+  next();
+});
+
 (async () => {
+  // Run production seeding BEFORE server starts to prevent blocking health checks
+  if (process.env.NODE_ENV === 'production') {
+    log('Production environment detected - running production seeding before server start...');
+    try {
+      const module = await import('./production-seed.ts');
+      if (module.seedProduction) {
+        await module.seedProduction();
+        log('Production seeding completed successfully');
+      }
+    } catch (error) {
+      console.error('Production seeding failed:', error);
+      // Don't crash server if seeding fails - just log the error
+    }
+  }
+
   const server = await registerRoutes(app);
   
   // Add HEAD request handler for the root path for lightweight health check probes
@@ -81,23 +107,7 @@ app.get('/healthz', (req, res) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, async () => {
+  }, () => {
     log(`serving on port ${port}`);
-    
-    // Run production seeding AFTER server starts listening to prevent blocking health checks
-    // This ensures the health check endpoint responds immediately while seeding runs in background
-    if (process.env.NODE_ENV === 'production') {
-      log('Production environment detected - starting background seeding...');
-      try {
-        const module = await import('./production-seed.ts');
-        if (module.seedProduction) {
-          await module.seedProduction();
-          log('Production seeding completed successfully');
-        }
-      } catch (error) {
-        console.error('Production seeding failed:', error);
-        // Don't crash server if seeding fails - just log the error
-      }
-    }
   });
 })();
