@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 
 const setupSchema = z.object({
-  name: z.string().min(1, 'Cruise name is required'),
+  name: z.string().min(1, 'Trip name is required'),
   slug: z.string().min(1, 'Slug is required'),
   shipName: z.string().min(1, 'Ship name is required'),
   cruiseLine: z.string().optional(),
@@ -29,15 +29,15 @@ const setupSchema = z.object({
 
 type SetupFormData = z.infer<typeof setupSchema>;
 
-interface CruiseDetailsTabProps {
-  cruise?: any;
+interface TripDetailsTabProps {
+  trip?: any;
   isEditing: boolean;
 }
 
-export default function CruiseDetailsTab({ 
-  cruise, 
+export default function TripDetailsTab({ 
+  trip, 
   isEditing
-}: CruiseDetailsTabProps) {
+}: TripDetailsTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -55,89 +55,89 @@ export default function CruiseDetailsTab({
     },
   });
 
-  // Fetch existing cruise data if editing
-  const { data: existingCruise, isLoading } = useQuery({
-    queryKey: ['cruise', cruise?.id],
+  // Fetch existing trip data if editing
+  const { data: existingTrip, isLoading } = useQuery({
+    queryKey: ['trip', trip?.id],
     queryFn: async () => {
-      if (!cruise?.id) return null;
-      const response = await fetch(`/api/cruises/id/${cruise.id}`, {
+      if (!trip?.id) return null;
+      const response = await fetch(`/api/trips/id/${trip.id}`, {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch cruise');
+      if (!response.ok) throw new Error('Failed to fetch trip');
       return response.json();
     },
-    enabled: !!cruise?.id && isEditing,
+    enabled: !!trip?.id && isEditing,
   });
 
-  // Load existing cruise data
+  // Load existing trip data
   useEffect(() => {
-    if (existingCruise && isEditing) {
+    if (existingTrip && isEditing) {
       reset({
-        name: existingCruise.name || '',
-        slug: existingCruise.slug || '',
-        shipName: existingCruise.shipName || '',
-        cruiseLine: existingCruise.cruiseLine || '',
-        startDate: existingCruise.startDate ? (existingCruise.startDate.includes('T') ? existingCruise.startDate.split('T')[0] : existingCruise.startDate) : '',
-        endDate: existingCruise.endDate ? (existingCruise.endDate.includes('T') ? existingCruise.endDate.split('T')[0] : existingCruise.endDate) : '',
-        status: existingCruise.status || 'upcoming',
-        description: existingCruise.description || '',
-        heroImageUrl: existingCruise.heroImageUrl || '',
+        name: existingTrip.name || '',
+        slug: existingTrip.slug || '',
+        shipName: existingTrip.shipName || '',
+        cruiseLine: existingTrip.cruiseLine || '',
+        startDate: existingTrip.startDate ? (existingTrip.startDate.includes('T') ? existingTrip.startDate.split('T')[0] : existingTrip.startDate) : '',
+        endDate: existingTrip.endDate ? (existingTrip.endDate.includes('T') ? existingTrip.endDate.split('T')[0] : existingTrip.endDate) : '',
+        status: existingTrip.status || 'upcoming',
+        description: existingTrip.description || '',
+        heroImageUrl: existingTrip.heroImageUrl || '',
       });
     }
-  }, [existingCruise, isEditing, reset]);
+  }, [existingTrip, isEditing, reset]);
 
-  // Create cruise mutation
-  const createCruise = useMutation({
+  // Create trip mutation
+  const createTrip = useMutation({
     mutationFn: async (data: SetupFormData) => {
-      const response = await fetch('/api/cruises', {
+      const response = await fetch('/api/trips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create cruise');
+      if (!response.ok) throw new Error('Failed to create trip');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
       toast({
-        title: "Cruise created",
+        title: "Trip created",
         description: `${data.name} has been created successfully.`,
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create cruise. Please try again.",
+        description: "Failed to create trip. Please try again.",
         variant: "destructive",
       });
     }
   });
 
-  // Update cruise mutation
-  const updateCruise = useMutation({
+  // Update trip mutation
+  const updateTrip = useMutation({
     mutationFn: async (data: SetupFormData) => {
-      const response = await fetch(`/api/cruises/${cruise.id}`, {
+      const response = await fetch(`/api/trips/${trip.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to update cruise');
+      if (!response.ok) throw new Error('Failed to update trip');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
-      queryClient.invalidateQueries({ queryKey: ['cruise', cruise?.id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['trip', trip?.id] });
       toast({
-        title: "Cruise updated",
-        description: "Cruise details have been updated successfully.",
+        title: "Trip updated",
+        description: "Trip details have been updated successfully.",
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to update cruise. Please try again.",
+        description: "Failed to update trip. Please try again.",
         variant: "destructive",
       });
     }
@@ -146,9 +146,9 @@ export default function CruiseDetailsTab({
   const onSubmit = (data: SetupFormData) => {
     console.log('Setup form submitted:', data);
     if (isEditing) {
-      updateCruise.mutate(data);
+      updateTrip.mutate(data);
     } else {
-      createCruise.mutate(data);
+      createTrip.mutate(data);
     }
   };
 
@@ -161,7 +161,7 @@ export default function CruiseDetailsTab({
       .trim();
   };
 
-  // Auto-generate slug when cruise name changes
+  // Auto-generate slug when trip name changes
   useEffect(() => {
     const subscription = watch((value, { name }) => {
       if (name === 'name' && value.name && !isEditing) {
@@ -181,7 +181,7 @@ export default function CruiseDetailsTab({
     return (
       <div className="flex items-center justify-center py-8">
         <Ship className="w-8 h-8 animate-pulse text-blue-600" />
-        <span className="ml-2">Loading cruise details...</span>
+        <span className="ml-2">Loading trip details...</span>
       </div>
     );
   }
@@ -192,14 +192,14 @@ export default function CruiseDetailsTab({
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Ship className="w-5 h-5" />
-            <span>Cruise Details</span>
+            <span>Trip Details</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Cruise Name *</Label>
+                <Label htmlFor="name">Trip Name *</Label>
                 <Input
                   id="name"
                   {...register('name')}
@@ -299,13 +299,13 @@ export default function CruiseDetailsTab({
               <Textarea
                 id="description"
                 {...register('description')}
-                placeholder="A brief description of the cruise experience..."
+                placeholder="A brief description of the trip experience..."
                 rows={3}
               />
             </div>
 
             <ImageUpload
-              imageType="cruise"
+              imageType="trip"
               currentImageUrl={watch('heroImageUrl') || ''}
               onImageChange={(imageUrl) => {
                 setValue('heroImageUrl', imageUrl || '', { shouldDirty: true });
@@ -316,14 +316,14 @@ export default function CruiseDetailsTab({
             <div className="flex justify-end">
               <Button 
                 type="submit" 
-                disabled={createCruise.isPending || updateCruise.isPending || !isDirty}
+                disabled={createTrip.isPending || updateTrip.isPending || !isDirty}
               >
                 <Save className="w-4 h-4 mr-2" />
-                {createCruise.isPending || updateCruise.isPending 
+                {createTrip.isPending || updateTrip.isPending 
                   ? 'Saving...' 
                   : isEditing 
-                    ? 'Update Cruise' 
-                    : 'Create Cruise'
+                    ? 'Update Trip' 
+                    : 'Create Trip'
                 }
               </Button>
             </div>
@@ -332,7 +332,7 @@ export default function CruiseDetailsTab({
       </Card>
 
       {/* Current Status Display */}
-      {existingCruise && (
+      {existingTrip && (
         <Card>
           <CardHeader>
             <CardTitle>Current Status</CardTitle>
@@ -341,20 +341,20 @@ export default function CruiseDetailsTab({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-gray-600">Status</p>
-                <Badge variant={existingCruise.status === 'upcoming' ? 'default' : 'secondary'}>
-                  {existingCruise.status}
+                <Badge variant={existingTrip.status === 'upcoming' ? 'default' : 'secondary'}>
+                  {existingTrip.status}
                 </Badge>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Created</p>
                 <p className="font-medium">
-                  {existingCruise.createdAt ? format(new Date(existingCruise.createdAt), 'MMM dd, yyyy') : 'Unknown'}
+                  {existingTrip.createdAt ? format(new Date(existingTrip.createdAt), 'MMM dd, yyyy') : 'Unknown'}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Last Updated</p>
                 <p className="font-medium">
-                  {existingCruise.updatedAt ? format(new Date(existingCruise.updatedAt), 'MMM dd, yyyy') : 'Unknown'}
+                  {existingTrip.updatedAt ? format(new Date(existingTrip.updatedAt), 'MMM dd, yyyy') : 'Unknown'}
                 </p>
               </div>
             </div>

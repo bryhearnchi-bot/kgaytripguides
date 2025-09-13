@@ -17,12 +17,12 @@ import PartyTemplatesManager from './PartyTemplatesManager';
 import ArtistDatabaseManager from './ArtistDatabaseManager';
 
 interface EventsAndEntertainmentTabProps {
-  cruise?: any;
+  trip?: any;
   onDataChange: () => void;
 }
 
 export default function EventsAndEntertainmentTab({ 
-  cruise, 
+  trip, 
   onDataChange 
 }: EventsAndEntertainmentTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,18 +56,18 @@ export default function EventsAndEntertainmentTab({
             </DialogTrigger>
             <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Select Artist for Cruise</DialogTitle>
+                <DialogTitle>Select Artist for Trip</DialogTitle>
               </DialogHeader>
               <ArtistDatabaseManager 
                 showSelectMode={true}
                 onSelectArtist={async (artist) => {
-                  if (!cruise?.id) {
-                    alert('Please save the cruise first before adding artists');
+                  if (!trip?.id) {
+                    alert('Please save the trip first before adding artists');
                     return;
                   }
                   
                   try {
-                    const response = await fetch(`/api/cruises/${cruise.id}/talent/${artist.id}`, {
+                    const response = await fetch(`/api/trips/${trip.id}/talent/${artist.id}`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -76,15 +76,15 @@ export default function EventsAndEntertainmentTab({
                     });
 
                     if (!response.ok) {
-                      throw new Error('Failed to associate artist with cruise');
+                      throw new Error('Failed to associate artist with trip');
                     }
 
-                    alert(`Successfully added ${artist.name} to the cruise lineup!`);
+                    alert(`Successfully added ${artist.name} to the trip lineup!`);
                     setShowArtistDatabase(false);
                     onDataChange();
                   } catch (error) {
                     console.error('Error associating artist:', error);
-                    alert('Failed to add artist to cruise. Please try again.');
+                    alert('Failed to add artist to trip. Please try again.');
                   }
                 }}
               />
@@ -198,7 +198,7 @@ export default function EventsAndEntertainmentTab({
                     showSelectMode={true}
                     onSelectArtist={(artist) => {
                       console.log('Selected artist:', artist);
-                      // TODO: Associate artist with current cruise/event
+                      // TODO: Associate artist with current trip/event
                       setShowArtistDatabase(false);
                       onDataChange();
                     }}

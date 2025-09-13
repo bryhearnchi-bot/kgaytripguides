@@ -1,5 +1,5 @@
-import CruiseGuide from "@/components/cruise-guide";
+import TripGuide from "@/components/trip-guide";
 
 export default function Home() {
-  return <CruiseGuide />;
+  return <TripGuide />;
 }

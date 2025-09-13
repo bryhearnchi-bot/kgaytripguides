@@ -15,8 +15,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-const cruiseSchema = z.object({
-  name: z.string().min(1, 'Cruise name is required'),
+const tripSchema = z.object({
+  name: z.string().min(1, 'Trip name is required'),
   slug: z.string().min(1, 'Slug is required'),
   shipName: z.string().min(1, 'Ship name is required'),
   cruiseLine: z.string().optional(),
@@ -34,14 +34,14 @@ const cruiseSchema = z.object({
   path: ["endDate"],
 });
 
-type CruiseFormData = z.infer<typeof cruiseSchema>;
+type TripFormData = z.infer<typeof tripSchema>;
 
-interface CruiseFormContentProps {
+interface TripFormContentProps {
   isEditing: boolean;
-  cruiseId?: string;
+  tripId?: string;
 }
 
-function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
+function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,8 +56,8 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
     setValue,
     watch,
     reset,
-  } = useForm<CruiseFormData>({
-    resolver: zodResolver(cruiseSchema),
+  } = useForm<TripFormData>({
+    resolver: zodResolver(tripSchema),
     defaultValues: {
       status: 'upcoming',
     },
@@ -75,38 +75,38 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
     }
   }, [watchedName, setValue, isEditing]);
 
-  // Fetch existing cruise data for editing
-  const { data: cruise, isLoading: isLoadingCruise } = useQuery({
-    queryKey: ['cruise', cruiseId],
+  // Fetch existing trip data for editing
+  const { data: trip, isLoading: isLoadingTrip } = useQuery({
+    queryKey: ['trip', tripId],
     queryFn: async () => {
-      if (!cruiseId) return null;
-      const response = await fetch(`/api/cruises/${cruiseId}`, {
+      if (!tripId) return null;
+      const response = await fetch(`/api/trips/${tripId}`, {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch cruise');
+      if (!response.ok) throw new Error('Failed to fetch trip');
       return response.json();
     },
-    enabled: isEditing && !!cruiseId,
+    enabled: isEditing && !!tripId,
   });
 
   // Populate form with existing data
   useEffect(() => {
-    if (cruise && isEditing) {
-      const heroImageUrl = cruise.heroImageUrl || '';
+    if (trip && isEditing) {
+      const heroImageUrl = trip.heroImageUrl || '';
       reset({
-        name: cruise.name,
-        slug: cruise.slug,
-        shipName: cruise.shipName,
-        cruiseLine: cruise.cruiseLine || '',
-        startDate: cruise.startDate ? cruise.startDate.split('T')[0] : '',
-        endDate: cruise.endDate ? cruise.endDate.split('T')[0] : '',
-        status: cruise.status,
-        description: cruise.description || '',
+        name: trip.name,
+        slug: trip.slug,
+        shipName: trip.shipName,
+        cruiseLine: trip.cruiseLine || '',
+        startDate: trip.startDate ? trip.startDate.split('T')[0] : '',
+        endDate: trip.endDate ? trip.endDate.split('T')[0] : '',
+        status: trip.status,
+        description: trip.description || '',
         heroImageUrl,
       });
       setImagePreview(heroImageUrl);
     }
-  }, [cruise, isEditing, reset]);
+  }, [trip, isEditing, reset]);
 
   // Upload image file
   const uploadImage = async (file: File): Promise<string> => {
@@ -189,9 +189,9 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
     }
   };
 
-  const saveCruise = useMutation({
-    mutationFn: async (data: CruiseFormData) => {
-      const url = isEditing ? `/api/cruises/${cruiseId}` : '/api/cruises';
+  const saveTrip = useMutation({
+    mutationFn: async (data: TripFormData) => {
+      const url = isEditing ? `/api/trips/${tripId}` : '/api/trips';
       const method = isEditing ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -209,43 +209,43 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to save cruise');
+        throw new Error(error.error || 'Failed to save trip');
       }
 
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
       if (isEditing) {
-        queryClient.invalidateQueries({ queryKey: ['cruise', cruiseId] });
+        queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       }
       
       toast({
         title: "Success",
-        description: `Cruise "${data.name}" has been ${isEditing ? 'updated' : 'created'}.`,
+        description: `Trip "${data.name}" has been ${isEditing ? 'updated' : 'created'}.`,
       });
       
-      setLocation('/admin/cruises');
+      setLocation('/admin/trips');
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || `Failed to ${isEditing ? 'update' : 'create'} cruise.`,
+        description: error.message || `Failed to ${isEditing ? 'update' : 'create'} trip.`,
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: CruiseFormData) => {
-    saveCruise.mutate(data);
+  const onSubmit = (data: TripFormData) => {
+    saveTrip.mutate(data);
   };
 
-  if (isEditing && isLoadingCruise) {
+  if (isEditing && isLoadingTrip) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading cruise data...</p>
+          <p className="text-gray-600">Loading trip data...</p>
         </div>
       </div>
     );
@@ -261,21 +261,21 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLocation('/admin/cruises')}
+                onClick={() => setLocation('/admin/trips')}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Cruises
+                Back to Trips
               </Button>
               <h1 className="text-xl font-semibold text-gray-900">
-                {isEditing ? 'Edit Cruise' : 'Create New Cruise'}
+                {isEditing ? 'Edit Trip' : 'Create New Trip'}
               </h1>
             </div>
             <Button
               type="submit"
-              form="cruise-form"
-              disabled={isSubmitting || saveCruise.isPending}
+              form="trip-form"
+              disabled={isSubmitting || saveTrip.isPending}
             >
-              {isSubmitting || saveCruise.isPending ? (
+              {isSubmitting || saveTrip.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
@@ -283,7 +283,7 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  {isEditing ? 'Update' : 'Create'} Cruise
+                  {isEditing ? 'Update' : 'Create'} Trip
                 </>
               )}
             </Button>
@@ -295,15 +295,15 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <CardHeader>
-            <CardTitle>Cruise Details</CardTitle>
+            <CardTitle>Trip Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <form id="cruise-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form id="trip-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Cruise Name *</Label>
+                    <Label htmlFor="name">Trip Name *</Label>
                     <Input
                       id="name"
                       {...register('name')}
@@ -487,7 +487,7 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
                 <Textarea
                   id="description"
                   {...register('description')}
-                  placeholder="Describe the cruise experience..."
+                  placeholder="Describe the trip experience..."
                   rows={4}
                 />
                 {errors.description && (
@@ -502,17 +502,17 @@ function CruiseFormContent({ isEditing, cruiseId }: CruiseFormContentProps) {
   );
 }
 
-interface CruiseFormProps {
+interface TripFormProps {
   isEditing?: boolean;
 }
 
-export default function CruiseForm({ isEditing = false }: CruiseFormProps) {
+export default function TripForm({ isEditing = false }: TripFormProps) {
   const params = useParams();
-  const cruiseId = params.id;
+  const tripId = params.id;
 
   return (
     <ProtectedRoute requiredRoles={['super_admin', 'cruise_admin', 'content_editor']}>
-      <CruiseFormContent isEditing={isEditing} cruiseId={cruiseId} />
+      <TripFormContent isEditing={isEditing} tripId={tripId} />
     </ProtectedRoute>
   );
 }

@@ -50,8 +50,8 @@ interface CreateUserData {
 const USER_ROLES = [
   { value: 'viewer', label: 'Viewer', description: 'Read-only access' },
   { value: 'media_manager', label: 'Media Manager', description: 'Can manage media and content' },
-  { value: 'content_editor', label: 'Content Editor', description: 'Can edit cruise content and events' },
-  { value: 'cruise_admin', label: 'Cruise Admin', description: 'Can manage cruises and content' },
+  { value: 'content_editor', label: 'Content Editor', description: 'Can edit trip content and events' },
+  { value: 'trip_admin', label: 'Trip Admin', description: 'Can manage trips and content' },
   { value: 'super_admin', label: 'Super Admin', description: 'Full system access' },
 ];
 

@@ -34,6 +34,8 @@ __export(schema_exports, {
   insertPartyTemplateSchema: () => insertPartyTemplateSchema,
   insertSettingsSchema: () => insertSettingsSchema,
   insertTalentSchema: () => insertTalentSchema,
+  insertTripInfoSectionSchema: () => insertTripInfoSectionSchema,
+  insertTripSchema: () => insertTripSchema,
   insertUserSchema: () => insertUserSchema,
   itinerary: () => itinerary,
   itineraryRelations: () => itineraryRelations,
@@ -45,8 +47,16 @@ __export(schema_exports, {
   settingsRelations: () => settingsRelations,
   talent: () => talent,
   talentRelations: () => talentRelations,
+  tripInfoSections: () => tripInfoSections,
+  tripInfoSectionsRelations: () => tripInfoSectionsRelations,
+  tripTalent: () => tripTalent,
+  tripTalentRelations: () => tripTalentRelations,
+  trips: () => trips,
+  tripsRelations: () => tripsRelations,
   userCruises: () => userCruises,
   userCruisesRelations: () => userCruisesRelations,
+  userTrips: () => userTrips,
+  userTripsRelations: () => userTripsRelations,
   users: () => users
 });
 import { sql } from "drizzle-orm";
@@ -65,7 +75,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
-var users, passwordResetTokens, settings, cruises, itinerary, events, talent, cruiseTalent, media, userCruises, partyTemplates, cruiseInfoSections, aiJobs, aiDrafts, auditLog, cruisesRelations, itineraryRelations, eventsRelations, talentRelations, cruiseTalentRelations, userCruisesRelations, partyTemplatesRelations, cruiseInfoSectionsRelations, aiJobsRelations, aiDraftsRelations, settingsRelations, insertUserSchema, insertCruiseSchema, insertItinerarySchema, insertEventSchema, insertTalentSchema, insertMediaSchema, insertPartyTemplateSchema, insertCruiseInfoSectionSchema, insertAiJobSchema, insertAiDraftSchema, insertSettingsSchema;
+var users, passwordResetTokens, settings, cruises, trips, itinerary, events, talent, cruiseTalent, tripTalent, media, userCruises, userTrips, partyTemplates, tripInfoSections, cruiseInfoSections, aiJobs, aiDrafts, auditLog, tripsRelations, cruisesRelations, itineraryRelations, eventsRelations, talentRelations, tripTalentRelations, cruiseTalentRelations, userTripsRelations, userCruisesRelations, partyTemplatesRelations, tripInfoSectionsRelations, cruiseInfoSectionsRelations, aiJobsRelations, aiDraftsRelations, settingsRelations, insertUserSchema, insertTripSchema, insertCruiseSchema, insertItinerarySchema, insertEventSchema, insertTalentSchema, insertMediaSchema, insertPartyTemplateSchema, insertTripInfoSectionSchema, insertCruiseInfoSectionSchema, insertAiJobSchema, insertAiDraftSchema, insertSettingsSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -76,7 +86,7 @@ var init_schema = __esm({
       email: text("email").unique(),
       fullName: text("full_name"),
       role: text("role").default("viewer"),
-      // super_admin, cruise_admin, content_editor, media_manager, viewer
+      // super_admin, trip_admin, content_editor, media_manager, viewer
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow(),
       lastLogin: timestamp("last_login"),
@@ -137,23 +147,24 @@ var init_schema = __esm({
       highlights: jsonb("highlights"),
       // Array of highlight strings
       includesInfo: jsonb("includes_info"),
-      // What's included in the cruise
+      // What's included in the trip
       pricing: jsonb("pricing"),
       // Pricing tiers and info
       createdBy: varchar("created_by").references(() => users.id),
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     }, (table) => ({
-      statusIdx: index("cruise_status_idx").on(table.status),
-      slugIdx: index("cruise_slug_idx").on(table.slug),
-      tripTypeIdx: index("cruise_trip_type_idx").on(table.tripType)
+      statusIdx: index("trip_status_idx").on(table.status),
+      slugIdx: index("trip_slug_idx").on(table.slug),
+      tripTypeIdx: index("trip_trip_type_idx").on(table.tripType)
     }));
+    trips = cruises;
     itinerary = pgTable("itinerary", {
       id: serial("id").primaryKey(),
       cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
       date: timestamp("date").notNull(),
       day: integer("day").notNull(),
-      // Day number of cruise (1, 2, 3, etc.)
+      // Day number of trip (1, 2, 3, etc.)
       portName: text("port_name").notNull(),
       country: text("country"),
       arrivalTime: text("arrival_time"),
@@ -230,14 +241,15 @@ var init_schema = __esm({
       cruiseIdx: index("cruise_talent_cruise_idx").on(table.cruiseId),
       talentIdx: index("cruise_talent_talent_idx").on(table.talentId)
     }));
+    tripTalent = cruiseTalent;
     media = pgTable("media", {
       id: serial("id").primaryKey(),
       url: text("url").notNull(),
       thumbnailUrl: text("thumbnail_url"),
       type: text("type").notNull(),
-      // port, party, talent, cruise, event, gallery
+      // port, party, talent, trip, event, gallery
       associatedType: text("associated_type"),
-      // cruise, event, talent, itinerary
+      // trip, event, talent, itinerary
       associatedId: integer("associated_id"),
       caption: text("caption"),
       altText: text("alt_text"),
@@ -263,6 +275,7 @@ var init_schema = __esm({
       userIdx: index("user_cruises_user_idx").on(table.userId),
       cruiseIdx: index("user_cruises_cruise_idx").on(table.cruiseId)
     }));
+    userTrips = userCruises;
     partyTemplates = pgTable("party_templates", {
       id: serial("id").primaryKey(),
       name: text("name").notNull(),
@@ -279,9 +292,9 @@ var init_schema = __esm({
     }, (table) => ({
       nameIdx: index("party_templates_name_idx").on(table.name)
     }));
-    cruiseInfoSections = pgTable("cruise_info_sections", {
+    tripInfoSections = pgTable("trip_info_sections", {
       id: serial("id").primaryKey(),
-      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
       title: text("title").notNull(),
       content: text("content"),
       // Rich text content
@@ -290,11 +303,12 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").defaultNow()
     }, (table) => ({
       cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
-      orderIdx: index("cruise_info_order_idx").on(table.cruiseId, table.orderIndex)
+      orderIdx: index("trip_info_order_idx").on(table.cruiseId, table.orderIndex)
     }));
+    cruiseInfoSections = tripInfoSections;
     aiJobs = pgTable("ai_jobs", {
       id: serial("id").primaryKey(),
-      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
       sourceType: text("source_type").notNull(),
       // pdf, url
       sourceRef: text("source_ref").notNull(),
@@ -315,7 +329,7 @@ var init_schema = __esm({
     }));
     aiDrafts = pgTable("ai_drafts", {
       id: serial("id").primaryKey(),
-      cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+      cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
       draftType: text("draft_type").notNull(),
       // itinerary, events, info
       payload: jsonb("payload").notNull(),
@@ -342,71 +356,77 @@ var init_schema = __esm({
       userIdx: index("audit_user_idx").on(table.userId),
       timestampIdx: index("audit_timestamp_idx").on(table.timestamp)
     }));
-    cruisesRelations = relations(cruises, ({ many, one }) => ({
+    tripsRelations = relations(trips, ({ many, one }) => ({
       itinerary: many(itinerary),
       events: many(events),
-      cruiseTalent: many(cruiseTalent),
-      userCruises: many(userCruises),
+      tripTalent: many(tripTalent),
+      userTrips: many(userTrips),
       creator: one(users, {
-        fields: [cruises.createdBy],
+        fields: [trips.createdBy],
         references: [users.id]
       })
     }));
+    cruisesRelations = tripsRelations;
     itineraryRelations = relations(itinerary, ({ one }) => ({
-      cruise: one(cruises, {
+      cruise: one(trips, {
         fields: [itinerary.cruiseId],
-        references: [cruises.id]
+        references: [trips.id]
       })
     }));
     eventsRelations = relations(events, ({ one }) => ({
-      cruise: one(cruises, {
+      cruise: one(trips, {
         fields: [events.cruiseId],
-        references: [cruises.id]
+        references: [trips.id]
       })
     }));
     talentRelations = relations(talent, ({ many }) => ({
-      cruiseTalent: many(cruiseTalent)
+      tripTalent: many(tripTalent),
+      // Backward compatibility
+      cruiseTalent: many(tripTalent)
     }));
-    cruiseTalentRelations = relations(cruiseTalent, ({ one }) => ({
-      cruise: one(cruises, {
-        fields: [cruiseTalent.cruiseId],
-        references: [cruises.id]
+    tripTalentRelations = relations(tripTalent, ({ one }) => ({
+      cruise: one(trips, {
+        fields: [tripTalent.cruiseId],
+        references: [trips.id]
       }),
       talent: one(talent, {
-        fields: [cruiseTalent.talentId],
+        fields: [tripTalent.talentId],
         references: [talent.id]
       })
     }));
-    userCruisesRelations = relations(userCruises, ({ one }) => ({
+    cruiseTalentRelations = tripTalentRelations;
+    userTripsRelations = relations(userTrips, ({ one }) => ({
       user: one(users, {
-        fields: [userCruises.userId],
+        fields: [userTrips.userId],
         references: [users.id]
       }),
-      cruise: one(cruises, {
-        fields: [userCruises.cruiseId],
-        references: [cruises.id]
+      cruise: one(trips, {
+        fields: [userTrips.cruiseId],
+        references: [trips.id]
       })
     }));
+    userCruisesRelations = userTripsRelations;
     partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
       creator: one(users, {
         fields: [partyTemplates.createdBy],
         references: [users.id]
       })
     }));
-    cruiseInfoSectionsRelations = relations(cruiseInfoSections, ({ one }) => ({
-      cruise: one(cruises, {
-        fields: [cruiseInfoSections.cruiseId],
-        references: [cruises.id]
+    tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) => ({
+      cruise: one(trips, {
+        fields: [tripInfoSections.cruiseId],
+        references: [trips.id]
       }),
       updater: one(users, {
-        fields: [cruiseInfoSections.updatedBy],
+        fields: [tripInfoSections.updatedBy],
         references: [users.id]
       })
     }));
+    cruiseInfoSectionsRelations = tripInfoSectionsRelations;
     aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
-      cruise: one(cruises, {
+      cruise: one(trips, {
         fields: [aiJobs.cruiseId],
-        references: [cruises.id]
+        references: [trips.id]
       }),
       creator: one(users, {
         fields: [aiJobs.createdBy],
@@ -415,9 +435,9 @@ var init_schema = __esm({
       drafts: many(aiDrafts)
     }));
     aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
-      cruise: one(cruises, {
+      cruise: one(trips, {
         fields: [aiDrafts.cruiseId],
-        references: [cruises.id]
+        references: [trips.id]
       }),
       job: one(aiJobs, {
         fields: [aiDrafts.createdFromJobId],
@@ -441,11 +461,12 @@ var init_schema = __esm({
       fullName: true,
       role: true
     });
-    insertCruiseSchema = createInsertSchema(cruises).omit({
+    insertTripSchema = createInsertSchema(trips).omit({
       id: true,
       createdAt: true,
       updatedAt: true
     });
+    insertCruiseSchema = insertTripSchema;
     insertItinerarySchema = createInsertSchema(itinerary).omit({
       id: true
     });
@@ -468,10 +489,11 @@ var init_schema = __esm({
       createdAt: true,
       updatedAt: true
     });
-    insertCruiseInfoSectionSchema = createInsertSchema(cruiseInfoSections).omit({
+    insertTripInfoSectionSchema = createInsertSchema(tripInfoSections).omit({
       id: true,
       updatedAt: true
     });
+    insertCruiseInfoSectionSchema = insertTripInfoSectionSchema;
     insertAiJobSchema = createInsertSchema(aiJobs).omit({
       id: true,
       createdAt: true,
@@ -493,7 +515,7 @@ var init_schema = __esm({
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
-var queryClient, db, users2, cruises2, itinerary2, events2, talent2, cruiseTalent2, media2, userCruises2, auditLog2, UserStorage, CruiseStorage, ItineraryStorage, EventStorage, TalentStorage, MediaStorage, storage, cruiseStorage, itineraryStorage, eventStorage, talentStorage, mediaStorage;
+var queryClient, db, users2, trips2, cruises2, itinerary2, events2, talent2, tripTalent2, cruiseTalent2, media2, userTrips2, userCruises2, auditLog2, settings2, UserStorage, TripStorage, CruiseStorage, ItineraryStorage, EventStorage, TalentStorage, MediaStorage, SettingsStorage, storage, tripStorage, cruiseStorage, itineraryStorage, eventStorage, talentStorage, mediaStorage, settingsStorage;
 var init_storage = __esm({
   "server/storage.ts"() {
     "use strict";
@@ -505,14 +527,27 @@ var init_storage = __esm({
     db = drizzle(queryClient, { schema: schema_exports });
     ({
       users: users2,
+      trips: trips2,
       cruises: cruises2,
-      itinerary: itinerary2,
+      itinerary: (
+        // Backward compatibility alias
+        itinerary2
+      ),
       events: events2,
       talent: talent2,
+      tripTalent: tripTalent2,
       cruiseTalent: cruiseTalent2,
-      media: media2,
+      media: (
+        // Backward compatibility alias
+        media2
+      ),
+      userTrips: userTrips2,
       userCruises: userCruises2,
-      auditLog: auditLog2
+      auditLog: (
+        // Backward compatibility alias
+        auditLog2
+      ),
+      settings: settings2
     } = schema_exports);
     UserStorage = class {
       async getUser(id) {
@@ -531,64 +566,91 @@ var init_storage = __esm({
         await db.update(users2).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users2.id, id));
       }
     };
-    CruiseStorage = class {
-      async getAllCruises() {
+    TripStorage = class {
+      async getAllTrips() {
         return await db.select().from(cruises2).orderBy(desc(cruises2.startDate));
       }
-      async getCruiseById(id) {
+      async getTripById(id) {
         const result = await db.select().from(cruises2).where(eq(cruises2.id, id));
         return result[0];
       }
-      async getCruiseBySlug(slug) {
+      async getTripBySlug(slug) {
         const result = await db.select().from(cruises2).where(eq(cruises2.slug, slug));
         return result[0];
       }
-      async getUpcomingCruises() {
+      async getUpcomingTrips() {
         return await db.select().from(cruises2).where(eq(cruises2.status, "upcoming")).orderBy(asc(cruises2.startDate));
       }
-      async getPastCruises() {
+      async getPastTrips() {
         return await db.select().from(cruises2).where(eq(cruises2.status, "past")).orderBy(desc(cruises2.startDate));
       }
-      async createCruise(cruise) {
-        const values = { ...cruise };
-        if (cruise.startDate) {
-          if (typeof cruise.startDate === "string") {
-            values.startDate = new Date(cruise.startDate);
+      async createTrip(trip) {
+        const values = { ...trip };
+        if (trip.startDate) {
+          if (typeof trip.startDate === "string") {
+            values.startDate = new Date(trip.startDate);
           } else {
-            values.startDate = cruise.startDate;
+            values.startDate = trip.startDate;
           }
         }
-        if (cruise.endDate) {
-          if (typeof cruise.endDate === "string") {
-            values.endDate = new Date(cruise.endDate);
+        if (trip.endDate) {
+          if (typeof trip.endDate === "string") {
+            values.endDate = new Date(trip.endDate);
           } else {
-            values.endDate = cruise.endDate;
+            values.endDate = trip.endDate;
           }
         }
         const result = await db.insert(cruises2).values(values).returning();
         return result[0];
       }
-      async updateCruise(id, cruise) {
-        const updates = { ...cruise, updatedAt: /* @__PURE__ */ new Date() };
-        if (cruise.startDate) {
-          if (typeof cruise.startDate === "string") {
-            updates.startDate = new Date(cruise.startDate);
+      async updateTrip(id, trip) {
+        const updates = { ...trip, updatedAt: /* @__PURE__ */ new Date() };
+        if (trip.startDate) {
+          if (typeof trip.startDate === "string") {
+            updates.startDate = new Date(trip.startDate);
           } else {
-            updates.startDate = cruise.startDate;
+            updates.startDate = trip.startDate;
           }
         }
-        if (cruise.endDate) {
-          if (typeof cruise.endDate === "string") {
-            updates.endDate = new Date(cruise.endDate);
+        if (trip.endDate) {
+          if (typeof trip.endDate === "string") {
+            updates.endDate = new Date(trip.endDate);
           } else {
-            updates.endDate = cruise.endDate;
+            updates.endDate = trip.endDate;
           }
         }
         const result = await db.update(cruises2).set(updates).where(eq(cruises2.id, id)).returning();
         return result[0];
       }
-      async deleteCruise(id) {
+      async deleteTrip(id) {
         await db.delete(cruises2).where(eq(cruises2.id, id));
+      }
+    };
+    CruiseStorage = class {
+      tripStorage = new TripStorage();
+      async getAllCruises() {
+        return await this.tripStorage.getAllTrips();
+      }
+      async getCruiseById(id) {
+        return await this.tripStorage.getTripById(id);
+      }
+      async getCruiseBySlug(slug) {
+        return await this.tripStorage.getTripBySlug(slug);
+      }
+      async getUpcomingCruises() {
+        return await this.tripStorage.getUpcomingTrips();
+      }
+      async getPastCruises() {
+        return await this.tripStorage.getPastTrips();
+      }
+      async createCruise(cruise) {
+        return await this.tripStorage.createTrip(cruise);
+      }
+      async updateCruise(id, cruise) {
+        return await this.tripStorage.updateTrip(id, cruise);
+      }
+      async deleteCruise(id) {
+        return await this.tripStorage.deleteTrip(id);
       }
     };
     ItineraryStorage = class {
@@ -725,12 +787,49 @@ var init_storage = __esm({
         await db.delete(media2).where(eq(media2.id, id));
       }
     };
+    SettingsStorage = class {
+      async getSettingsByCategory(category) {
+        return await db.select().from(settings2).where(eq(settings2.category, category)).orderBy(asc(settings2.orderIndex), asc(settings2.label));
+      }
+      async getSettingByCategoryAndKey(category, key) {
+        const result = await db.select().from(settings2).where(and(eq(settings2.category, category), eq(settings2.key, key)));
+        return result[0];
+      }
+      async getAllActiveSettingsByCategory(category) {
+        return await db.select().from(settings2).where(and(
+          eq(settings2.category, category),
+          eq(settings2.isActive, true)
+        )).orderBy(asc(settings2.orderIndex), asc(settings2.label));
+      }
+      async createSetting(settingData) {
+        const result = await db.insert(settings2).values(settingData).returning();
+        return result[0];
+      }
+      async updateSetting(category, key, settingData) {
+        const result = await db.update(settings2).set({ ...settingData, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(settings2.category, category), eq(settings2.key, key))).returning();
+        return result[0];
+      }
+      async deleteSetting(category, key) {
+        await db.delete(settings2).where(and(eq(settings2.category, category), eq(settings2.key, key)));
+      }
+      async deactivateSetting(category, key) {
+        const result = await db.update(settings2).set({ isActive: false, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(settings2.category, category), eq(settings2.key, key))).returning();
+        return result[0];
+      }
+      async reorderSettings(category, orderedKeys) {
+        for (let i = 0; i < orderedKeys.length; i++) {
+          await db.update(settings2).set({ orderIndex: i, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(settings2.category, category), eq(settings2.key, orderedKeys[i])));
+        }
+      }
+    };
     storage = new UserStorage();
+    tripStorage = new TripStorage();
     cruiseStorage = new CruiseStorage();
     itineraryStorage = new ItineraryStorage();
     eventStorage = new EventStorage();
     talentStorage = new TalentStorage();
     mediaStorage = new MediaStorage();
+    settingsStorage = new SettingsStorage();
   }
 });
 
@@ -1602,8 +1701,8 @@ async function registerRoutes(app2) {
   }));
   app2.post("/api/images/upload/:type", requireAuth, requireContentEditor, (req, res, next) => {
     const imageType = req.params.type;
-    if (!["talent", "event", "itinerary", "cruise"].includes(imageType)) {
-      return res.status(400).json({ error: "Invalid image type. Must be one of: talent, event, itinerary, cruise" });
+    if (!["talent", "event", "itinerary", "trip", "cruise"].includes(imageType)) {
+      return res.status(400).json({ error: "Invalid image type. Must be one of: talent, event, itinerary, trip, cruise" });
     }
     req.body.imageType = imageType;
     next();
@@ -1632,8 +1731,8 @@ async function registerRoutes(app2) {
       if (!url || !isValidImageUrl(url)) {
         return res.status(400).json({ error: "Invalid URL provided" });
       }
-      if (!["talent", "event", "itinerary", "cruise"].includes(imageType)) {
-        return res.status(400).json({ error: "Invalid image type. Must be one of: talent, event, itinerary, cruise" });
+      if (!["talent", "event", "itinerary", "trip", "cruise"].includes(imageType)) {
+        return res.status(400).json({ error: "Invalid image type. Must be one of: talent, event, itinerary, trip, cruise" });
       }
       const validImageType = imageType;
       const imageName = name || "downloaded-image";
@@ -1741,6 +1840,87 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting cruise:", error);
       res.status(500).json({ error: "Failed to delete cruise" });
+    }
+  });
+  app2.get("/api/trips", async (req, res) => {
+    try {
+      const trips3 = await tripStorage.getAllTrips();
+      res.json(trips3);
+    } catch (error) {
+      console.error("Error fetching trips:", error);
+      res.status(500).json({ error: "Failed to fetch trips" });
+    }
+  });
+  app2.get("/api/trips/upcoming", async (req, res) => {
+    try {
+      const trips3 = await tripStorage.getUpcomingTrips();
+      res.json(trips3);
+    } catch (error) {
+      console.error("Error fetching upcoming trips:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming trips" });
+    }
+  });
+  app2.get("/api/trips/past", async (req, res) => {
+    try {
+      const trips3 = await tripStorage.getPastTrips();
+      res.json(trips3);
+    } catch (error) {
+      console.error("Error fetching past trips:", error);
+      res.status(500).json({ error: "Failed to fetch past trips" });
+    }
+  });
+  app2.get("/api/trips/id/:id", async (req, res) => {
+    try {
+      const trip = await tripStorage.getTripById(parseInt(req.params.id));
+      if (!trip) {
+        return res.status(404).json({ error: "Trip not found" });
+      }
+      res.json(trip);
+    } catch (error) {
+      console.error("Error fetching trip:", error);
+      res.status(500).json({ error: "Failed to fetch trip" });
+    }
+  });
+  app2.get("/api/trips/:slug", async (req, res) => {
+    try {
+      const trip = await tripStorage.getTripBySlug(req.params.slug);
+      if (!trip) {
+        return res.status(404).json({ error: "Trip not found" });
+      }
+      res.json(trip);
+    } catch (error) {
+      console.error("Error fetching trip:", error);
+      res.status(500).json({ error: "Failed to fetch trip" });
+    }
+  });
+  app2.post("/api/trips", requireAuth, requireContentEditor, async (req, res) => {
+    try {
+      const trip = await tripStorage.createTrip(req.body);
+      res.status(201).json(trip);
+    } catch (error) {
+      console.error("Error creating trip:", error);
+      res.status(500).json({ error: "Failed to create trip" });
+    }
+  });
+  app2.put("/api/trips/:id", requireAuth, requireContentEditor, async (req, res) => {
+    try {
+      const trip = await tripStorage.updateTrip(parseInt(req.params.id), req.body);
+      if (!trip) {
+        return res.status(404).json({ error: "Trip not found" });
+      }
+      res.json(trip);
+    } catch (error) {
+      console.error("Error updating trip:", error);
+      res.status(500).json({ error: "Failed to update trip" });
+    }
+  });
+  app2.delete("/api/trips/:id", requireAuth, requireSuperAdmin, async (req, res) => {
+    try {
+      await tripStorage.deleteTrip(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting trip:", error);
+      res.status(500).json({ error: "Failed to delete trip" });
     }
   });
   app2.get("/api/cruises/:cruiseId/itinerary", async (req, res) => {
@@ -1998,6 +2178,28 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch cruise data" });
     }
   });
+  app2.get("/api/trips/:slug/complete", async (req, res) => {
+    try {
+      const trip = await tripStorage.getTripBySlug(req.params.slug);
+      if (!trip) {
+        return res.status(404).json({ error: "Trip not found" });
+      }
+      const [itinerary3, events3, talent3] = await Promise.all([
+        itineraryStorage.getItineraryByCruise(trip.id),
+        eventStorage.getEventsByCruise(trip.id),
+        talentStorage.getTalentByCruise(trip.id)
+      ]);
+      res.json({
+        trip,
+        itinerary: itinerary3,
+        events: events3,
+        talent: talent3
+      });
+    } catch (error) {
+      console.error("Error fetching complete trip data:", error);
+      res.status(500).json({ error: "Failed to fetch trip data" });
+    }
+  });
   app2.get("/api/party-templates", requireAuth, async (req, res) => {
     try {
       const search = req.query.search;
@@ -2166,6 +2368,131 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting info section:", error);
       res.status(500).json({ error: "Failed to delete info section" });
+    }
+  });
+  app2.get("/api/settings/:category", async (req, res) => {
+    try {
+      const { category } = req.params;
+      const settings3 = await settingsStorage.getSettingsByCategory(category);
+      res.json(settings3);
+    } catch (error) {
+      console.error("Error fetching settings by category:", error);
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+  app2.get("/api/settings/:category/active", async (req, res) => {
+    try {
+      const { category } = req.params;
+      const settings3 = await settingsStorage.getAllActiveSettingsByCategory(category);
+      res.json(settings3);
+    } catch (error) {
+      console.error("Error fetching active settings:", error);
+      res.status(500).json({ error: "Failed to fetch active settings" });
+    }
+  });
+  app2.get("/api/settings/:category/:key", async (req, res) => {
+    try {
+      const { category, key } = req.params;
+      const setting = await settingsStorage.getSettingByCategoryAndKey(category, key);
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error("Error fetching setting:", error);
+      res.status(500).json({ error: "Failed to fetch setting" });
+    }
+  });
+  app2.post("/api/settings/:category", requireAuth, requireContentEditor, async (req, res) => {
+    try {
+      const { category } = req.params;
+      const { key, label, value, metadata, orderIndex } = req.body;
+      if (!key || !label) {
+        return res.status(400).json({ error: "Key and label are required" });
+      }
+      const existingSetting = await settingsStorage.getSettingByCategoryAndKey(category, key);
+      if (existingSetting) {
+        return res.status(409).json({ error: "Setting with this key already exists in category" });
+      }
+      const setting = await settingsStorage.createSetting({
+        category,
+        key,
+        label,
+        value,
+        metadata,
+        orderIndex: orderIndex || 0,
+        isActive: true,
+        createdBy: req.user.id
+      });
+      res.status(201).json(setting);
+    } catch (error) {
+      console.error("Error creating setting:", error);
+      res.status(500).json({ error: "Failed to create setting" });
+    }
+  });
+  app2.put("/api/settings/:category/:key", requireAuth, requireContentEditor, async (req, res) => {
+    try {
+      const { category, key } = req.params;
+      const { label, value, metadata, orderIndex, isActive } = req.body;
+      const setting = await settingsStorage.updateSetting(category, key, {
+        label,
+        value,
+        metadata,
+        orderIndex,
+        isActive
+      });
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      res.status(500).json({ error: "Failed to update setting" });
+    }
+  });
+  app2.delete("/api/settings/:category/:key", requireAuth, requireSuperAdmin, async (req, res) => {
+    try {
+      const { category, key } = req.params;
+      const setting = await settingsStorage.getSettingByCategoryAndKey(category, key);
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      await settingsStorage.deleteSetting(category, key);
+      res.json({ message: "Setting deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting setting:", error);
+      res.status(500).json({ error: "Failed to delete setting" });
+    }
+  });
+  app2.post("/api/settings/:category/:key/deactivate", requireAuth, requireContentEditor, async (req, res) => {
+    try {
+      const { category, key } = req.params;
+      const setting = await settingsStorage.deactivateSetting(category, key);
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error("Error deactivating setting:", error);
+      res.status(500).json({ error: "Failed to deactivate setting" });
+    }
+  });
+  app2.post("/api/settings/:category/reorder", requireAuth, requireContentEditor, async (req, res) => {
+    try {
+      const { category } = req.params;
+      const { orderedKeys } = req.body;
+      if (!Array.isArray(orderedKeys)) {
+        return res.status(400).json({ error: "orderedKeys must be an array" });
+      }
+      await settingsStorage.reorderSettings(category, orderedKeys);
+      const settings3 = await settingsStorage.getSettingsByCategory(category);
+      res.json({
+        message: "Settings reordered successfully",
+        settings: settings3
+      });
+    } catch (error) {
+      console.error("Error reordering settings:", error);
+      res.status(500).json({ error: "Failed to reorder settings" });
     }
   });
   const httpServer = createServer(app2);

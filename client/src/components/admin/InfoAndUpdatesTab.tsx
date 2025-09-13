@@ -24,12 +24,12 @@ interface InfoSection {
 }
 
 interface InfoAndUpdatesTabProps {
-  cruise?: any;
+  trip?: any;
   onDataChange: () => void;
 }
 
 export default function InfoAndUpdatesTab({ 
-  cruise, 
+  trip, 
   onDataChange 
 }: InfoAndUpdatesTabProps) {
   const [infoSections, setInfoSections] = useState<InfoSection[]>([]);
@@ -92,7 +92,7 @@ export default function InfoAndUpdatesTab({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Information & Updates</h2>
-          <p className="text-gray-600">Manage cruise information and announcements</p>
+          <p className="text-gray-600">Manage trip information and announcements</p>
         </div>
         <Button>
           <Bell className="w-4 h-4 mr-2" />

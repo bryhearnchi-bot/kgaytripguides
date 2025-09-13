@@ -10,7 +10,7 @@ import { useState } from "react";
 import React from "react";
 import { dateOnly } from "@/lib/utils";
 
-interface Cruise {
+interface Trip {
   id: number;
   name: string;
   slug: string;
@@ -24,18 +24,18 @@ interface Cruise {
   highlights: string[] | null;
 }
 
-function CruiseCard({ cruise }: { cruise: Cruise }) {
-  const startDate = dateOnly(cruise.startDate);
-  const endDate = dateOnly(cruise.endDate);
+function TripCard({ trip }: { trip: Trip }) {
+  const startDate = dateOnly(trip.startDate);
+  const endDate = dateOnly(trip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60 flex flex-col h-full">
-      <Link href={`/cruise/${cruise.slug}`}>
+      <Link href={`/trip/${trip.slug}`}>
         <div className="relative overflow-hidden cursor-pointer">
           <img
-            src={cruise.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
-            alt={cruise.name}
+            src={trip.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
+            alt={trip.name}
             className="h-36 w-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               e.currentTarget.src = "/images/ships/resilient-lady-hero.jpg";
@@ -43,9 +43,9 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
           />
           <div className="absolute top-3 left-3">
             <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 text-xs">
-              {cruise.status === 'upcoming' && 'Upcoming'}
-              {cruise.status === 'current' && 'Current'}
-              {cruise.status === 'past' && 'Past'}
+              {trip.status === 'upcoming' && 'Upcoming'}
+              {trip.status === 'current' && 'Current'}
+              {trip.status === 'past' && 'Past'}
             </Badge>
           </div>
         </div>
@@ -53,10 +53,10 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
       
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
-          {cruise.name}
+          {trip.name}
         </CardTitle>
         <CardDescription className="text-ocean-600 text-sm">
-          {cruise.description}
+          {trip.description}
         </CardDescription>
       </CardHeader>
       
@@ -64,7 +64,7 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <Ship className="h-3.5 w-3.5" />
-            <span>{cruise.shipName} • {cruise.cruiseLine}</span>
+            <span>{trip.shipName} • {trip.cruiseLine}</span>
           </div>
           
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
@@ -74,18 +74,18 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
             </span>
           </div>
           
-          {cruise.highlights && cruise.highlights.length > 0 && (
+          {trip.highlights && trip.highlights.length > 0 && (
             <div className="flex items-start gap-1.5 text-xs text-ocean-700">
               <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-              <span className="line-clamp-2">{cruise.highlights[0]}</span>
+              <span className="line-clamp-2">{trip.highlights[0]}</span>
             </div>
           )}
         </div>
         
         <div className="mt-auto">
-          <Link href={`/cruise/${cruise.slug}`}>
+          <Link href={`/trip/${trip.slug}`}>
             <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white text-sm py-2">
-              View Cruise Guide
+              View Trip Guide
             </Button>
           </Link>
         </div>
@@ -94,8 +94,8 @@ function CruiseCard({ cruise }: { cruise: Cruise }) {
   );
 }
 
-// Function to determine cruise status based on dates
-function getCruiseStatus(startDate: string, endDate: string): 'upcoming' | 'current' | 'past' {
+// Function to determine trip status based on dates
+function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'current' | 'past' {
   const now = new Date();
   now.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
   const start = dateOnly(startDate);
@@ -113,31 +113,31 @@ function getCruiseStatus(startDate: string, endDate: string): 'upcoming' | 'curr
 export default function LandingPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
   
-  const { data: cruises, isLoading, error } = useQuery<Cruise[]>({
-    queryKey: ["cruises"],
+  const { data: trips, isLoading, error } = useQuery<Trip[]>({
+    queryKey: ["trips"],
     queryFn: async () => {
-      const response = await fetch("/api/cruises");
+      const response = await fetch("/api/trips");
       if (!response.ok) {
-        throw new Error("Failed to fetch cruises");
+        throw new Error("Failed to fetch trips");
       }
       const data = await response.json();
-      // Calculate status for each cruise based on dates
-      return data.map((cruise: Cruise) => ({
-        ...cruise,
-        status: getCruiseStatus(cruise.startDate, cruise.endDate)
+      // Calculate status for each trip based on dates
+      return data.map((trip: Trip) => ({
+        ...trip,
+        status: getTripStatus(trip.startDate, trip.endDate)
       }));
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
-  // Determine if there are current cruises
-  const hasCurrent = cruises?.some(cruise => cruise.status === 'current') || false;
+  // Determine if there are current trips
+  const hasCurrent = trips?.some(trip => trip.status === 'current') || false;
   const [hasSetDefault, setHasSetDefault] = useState(false);
 
   // Set default filter when data loads
   React.useEffect(() => {
-    if (cruises && !hasSetDefault) {
+    if (trips && !hasSetDefault) {
       if (hasCurrent) {
         setActiveFilter('current');
       } else {
@@ -145,14 +145,14 @@ export default function LandingPage() {
       }
       setHasSetDefault(true);
     }
-  }, [cruises, hasCurrent, hasSetDefault]);
+  }, [trips, hasCurrent, hasSetDefault]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-xl">Loading cruise guides...</p>
+          <p className="text-white text-xl">Loading trip guides...</p>
         </div>
       </div>
     );
@@ -163,7 +163,7 @@ export default function LandingPage() {
       <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 flex items-center justify-center">
         <div className="text-center text-white">
           <Ship className="h-16 w-16 mx-auto mb-4 text-red-400" />
-          <h2 className="text-2xl font-bold mb-2">Unable to load cruise guides</h2>
+          <h2 className="text-2xl font-bold mb-2">Unable to load trip guides</h2>
           <p className="text-lg mb-4">Please try refreshing the page</p>
           <Button 
             onClick={() => window.location.reload()}
@@ -176,16 +176,16 @@ export default function LandingPage() {
     );
   }
 
-  // Filter cruises based on active filter
-  const filteredCruises = cruises?.filter(cruise => 
-    activeFilter === 'all' ? true : cruise.status === activeFilter
+  // Filter trips based on active filter
+  const filteredTrips = trips?.filter(trip => 
+    activeFilter === 'all' ? true : trip.status === activeFilter
   ) || [];
 
-  // Group cruises by status for "all" view
-  const groupedCruises = cruises ? {
-    current: cruises.filter(cruise => cruise.status === 'current'),
-    upcoming: cruises.filter(cruise => cruise.status === 'upcoming'),
-    past: cruises.filter(cruise => cruise.status === 'past')
+  // Group trips by status for "all" view
+  const groupedTrips = trips ? {
+    current: trips.filter(trip => trip.status === 'current'),
+    upcoming: trips.filter(trip => trip.status === 'upcoming'),
+    past: trips.filter(trip => trip.status === 'past')
   } : { current: [], upcoming: [], past: [] };
 
   return (
@@ -195,10 +195,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 py-1">
           <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-              Atlantis Cruise / Events Guides
+              Atlantis Trip / Events Guides
             </h1>
             <p className="text-white/80 text-base">
-              Your complete guide to unforgettable cruise experiences
+              Your complete guide to unforgettable trip experiences
             </p>
             <div className="flex items-center justify-center gap-4 mt-2">
               <p className="text-white/60 text-xs">
@@ -241,8 +241,8 @@ export default function LandingPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
-        {/* Filtered Cruises */}
-        {filteredCruises.length > 0 ? (
+        {/* Filtered Trips */}
+        {filteredTrips.length > 0 ? (
           <section>
             {activeFilter === 'all' ? (
               // Sectioned view for "All" filter
@@ -250,13 +250,13 @@ export default function LandingPage() {
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <Grid3X3 className="w-6 h-6 text-white/70" />
-                    <h2 className="text-2xl font-semibold text-white">All Cruise Guides</h2>
+                    <h2 className="text-2xl font-semibold text-white">All Trip Guides</h2>
                   </div>
-                  <p className="text-sm text-white/70">Explore all available cruise guides and experiences</p>
+                  <p className="text-sm text-white/70">Explore all available trip guides and experiences</p>
                 </div>
 
-                {/* Current Cruises Section */}
-                {groupedCruises.current.length > 0 && (
+                {/* Current Trips Section */}
+                {groupedTrips.current.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -264,15 +264,15 @@ export default function LandingPage() {
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedCruises.current.map((cruise) => (
-                        <CruiseCard key={cruise.id} cruise={cruise} />
+                      {groupedTrips.current.map((trip) => (
+                        <TripCard key={trip.id} trip={trip} />
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Upcoming Cruises Section */}
-                {groupedCruises.upcoming.length > 0 && (
+                {/* Upcoming Trips Section */}
+                {groupedTrips.upcoming.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <Calendar className="w-4 h-4 text-blue-400" />
@@ -280,15 +280,15 @@ export default function LandingPage() {
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedCruises.upcoming.map((cruise) => (
-                        <CruiseCard key={cruise.id} cruise={cruise} />
+                      {groupedTrips.upcoming.map((trip) => (
+                        <TripCard key={trip.id} trip={trip} />
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Past Cruises Section */}
-                {groupedCruises.past.length > 0 && (
+                {/* Past Trips Section */}
+                {groupedTrips.past.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <History className="w-4 h-4 text-amber-400" />
@@ -296,8 +296,8 @@ export default function LandingPage() {
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedCruises.past.map((cruise) => (
-                        <CruiseCard key={cruise.id} cruise={cruise} />
+                      {groupedTrips.past.map((trip) => (
+                        <TripCard key={trip.id} trip={trip} />
                       ))}
                     </div>
                   </div>
@@ -312,21 +312,21 @@ export default function LandingPage() {
                     {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
                     {activeFilter === 'past' && <History className="w-6 h-6 text-white/70" />}
                     <h2 className="text-2xl font-semibold text-white">
-                      {activeFilter === 'upcoming' && 'Upcoming Cruises'}
-                      {activeFilter === 'current' && 'Current Cruises'}
+                      {activeFilter === 'upcoming' && 'Upcoming Trips'}
+                      {activeFilter === 'current' && 'Current Trips'}
                       {activeFilter === 'past' && 'Past Adventures'}
                     </h2>
                   </div>
                   <p className="text-sm text-white/70">
-                    {activeFilter === 'upcoming' && 'Access your cruise guide and plan your adventure'}
-                    {activeFilter === 'current' && 'Currently sailing - access your cruise guide'}
-                    {activeFilter === 'past' && 'Relive the memories and revisit your cruise guides'}
+                    {activeFilter === 'upcoming' && 'Access your trip guide and plan your adventure'}
+                    {activeFilter === 'current' && 'Currently sailing - access your trip guide'}
+                    {activeFilter === 'past' && 'Relive the memories and revisit your trip guides'}
                   </p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                  {filteredCruises.map((cruise) => (
-                    <CruiseCard key={cruise.id} cruise={cruise} />
+                  {filteredTrips.map((trip) => (
+                    <TripCard key={trip.id} trip={trip} />
                   ))}
                 </div>
               </div>
@@ -341,16 +341,16 @@ export default function LandingPage() {
               {activeFilter === 'past' && <History className="h-8 w-8 text-white" />}
             </div>
             <h2 className="text-3xl font-bold text-white mb-4">
-              {activeFilter === 'all' && 'No Cruise Guides Available'}
-              {activeFilter === 'upcoming' && 'No Upcoming Cruises'}
-              {activeFilter === 'current' && 'No Current Cruises'}
-              {activeFilter === 'past' && 'No Past Cruises'}
+              {activeFilter === 'all' && 'No Trip Guides Available'}
+              {activeFilter === 'upcoming' && 'No Upcoming Trips'}
+              {activeFilter === 'current' && 'No Current Trips'}
+              {activeFilter === 'past' && 'No Past Trips'}
             </h2>
             <p className="text-white/80 text-lg">
-              {activeFilter === 'all' && 'No cruise guides are currently available'}
-              {activeFilter === 'upcoming' && 'Check back soon for new cruise announcements!'}
-              {activeFilter === 'current' && 'No cruises are currently sailing'}
-              {activeFilter === 'past' && 'No past cruise guides available'}
+              {activeFilter === 'all' && 'No trip guides are currently available'}
+              {activeFilter === 'upcoming' && 'Check back soon for new trip announcements!'}
+              {activeFilter === 'current' && 'No trips are currently sailing'}
+              {activeFilter === 'past' && 'No past trip guides available'}
             </p>
           </div>
         )}

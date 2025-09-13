@@ -35,7 +35,7 @@ export default function AdminLogin() {
           </div>
           <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
           <CardDescription>
-            Access the Cruise Guide Admin Dashboard
+            Access the Trip Guide Admin Dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>

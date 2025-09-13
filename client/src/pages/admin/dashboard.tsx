@@ -29,14 +29,14 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { dateOnly } from '@/lib/utils';
 import ArtistDatabaseManager from '../../components/admin/ArtistDatabaseManager';
-import CruiseDetailsTab from '@/components/admin/CruiseDetailsTab';
+import TripDetailsTab from '@/components/admin/TripDetailsTab';
 import ItineraryTab from '@/components/admin/ItineraryTab';
 import EventsAndEntertainmentTab from '../../components/admin/EventsAndEntertainmentTab';
 import InfoAndUpdatesTab from '../../components/admin/InfoAndUpdatesTab';
 import UserManagement from '@/components/admin/UserManagement';
 import SettingsTab from '@/components/admin/SettingsTab';
 
-interface Cruise {
+interface Trip {
   id: number;
   name: string;
   description?: string;
@@ -58,11 +58,11 @@ interface Cruise {
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("cruises");
+  const [activeTab, setActiveTab] = useState("trips");
   const [searchTerm, setSearchTerm] = useState('');
-  const [cruiseModalOpen, setCruiseModalOpen] = useState(false);
-  const [editingCruiseId, setEditingCruiseId] = useState<number | null>(null);
-  const [cruiseEditorTab, setCruiseEditorTab] = useState("details");
+  const [tripModalOpen, setTripModalOpen] = useState(false);
+  const [editingTripId, setEditingTripId] = useState<number | null>(null);
+  const [tripEditorTab, setTripEditorTab] = useState("details");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -74,49 +74,49 @@ export default function AdminDashboard() {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'super_admin': return 'destructive';
-      case 'cruise_admin': return 'default';
+      case 'trip_admin': return 'default';
       case 'content_editor': return 'secondary';
       case 'media_manager': return 'outline';
       default: return 'secondary';
     }
   };
 
-  // Fetch cruises data
-  const { data: cruises, isLoading: cruisesLoading, error: cruisesError } = useQuery<Cruise[]>({
-    queryKey: ['admin-cruises'],
+  // Fetch trips data
+  const { data: trips, isLoading: tripsLoading, error: tripsError } = useQuery<Trip[]>({
+    queryKey: ['admin-trips'],
     queryFn: async () => {
-      const response = await fetch('/api/cruises', {
+      const response = await fetch('/api/trips', {
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch cruises');
+        throw new Error('Failed to fetch trips');
       }
       return response.json();
     },
-    enabled: activeTab === 'cruises',
+    enabled: activeTab === 'trips',
   });
 
-  const deleteCruise = useMutation({
-    mutationFn: async (cruiseId: number) => {
-      const response = await fetch(`/api/cruises/${cruiseId}`, {
+  const deleteTrip = useMutation({
+    mutationFn: async (tripId: number) => {
+      const response = await fetch(`/api/trips/${tripId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete cruise');
+        throw new Error('Failed to delete trip');
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
       toast({
-        title: "Cruise deleted",
-        description: "The cruise has been successfully deleted.",
+        title: "Trip deleted",
+        description: "The trip has been successfully deleted.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to delete cruise. Please try again.",
+        description: "Failed to delete trip. Please try again.",
         variant: "destructive",
       });
     }
@@ -135,32 +135,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredCruises = cruises?.filter(cruise =>
-    cruise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cruise.shipName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cruise.cruiseLine && cruise.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredTrips = trips?.filter(trip =>
+    trip.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    trip.shipName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
-  const canEdit = user?.role && ['super_admin', 'cruise_admin', 'content_editor'].includes(user.role);
+  const canEdit = user?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(user.role);
   const canDelete = user?.role && ['super_admin'].includes(user.role);
 
-  const handleDeleteCruise = (cruise: Cruise) => {
-    if (confirm(`Are you sure you want to delete "${cruise.name}"? This action cannot be undone.`)) {
-      deleteCruise.mutate(cruise.id);
+  const handleDeleteTrip = (trip: Trip) => {
+    if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
+      deleteTrip.mutate(trip.id);
     }
   };
 
-  const openCruiseModal = (cruiseId?: number) => {
-    setEditingCruiseId(cruiseId || null);
-    setCruiseModalOpen(true);
+  const openTripModal = (tripId?: number) => {
+    setEditingTripId(tripId || null);
+    setTripModalOpen(true);
   };
 
-  const closeCruiseModal = () => {
-    setCruiseModalOpen(false);
-    setEditingCruiseId(null);
-    setCruiseEditorTab("details");
-    // Refresh cruises data when modal closes
-    queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+  const closeTripModal = () => {
+    setTripModalOpen(false);
+    setEditingTripId(null);
+    setTripEditorTab("details");
+    // Refresh trips data when modal closes
+    queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
   };
 
   return (
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
               <Ship className="w-8 h-8 text-blue-600" />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  <span className="hidden sm:inline">Cruise Guide Admin</span>
+                  <span className="hidden sm:inline">Trip Guide Admin</span>
                   <span className="sm:hidden">Admin</span>
                 </h1>
                 <p className="text-sm text-gray-500 hidden md:block">
@@ -205,10 +205,10 @@ export default function AdminDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* Tab Navigation - Responsive */}
           <TabsList className="grid w-full grid-cols-5 mb-8">
-            <TabsTrigger value="cruises" className="flex items-center space-x-2">
+            <TabsTrigger value="trips" className="flex items-center space-x-2">
               <Ship className="w-4 h-4" />
-              <span className="hidden sm:inline">Cruise Management</span>
-              <span className="sm:hidden">Cruises</span>
+              <span className="hidden sm:inline">Trip Management</span>
+              <span className="sm:hidden">Trips</span>
             </TabsTrigger>
             <TabsTrigger value="talent" className="flex items-center space-x-2">
               <Users className="w-4 h-4" />
@@ -232,17 +232,17 @@ export default function AdminDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Cruise Management Tab */}
-          <TabsContent value="cruises" className="space-y-6">
+          {/* Trip Management Tab */}
+          <TabsContent value="trips" className="space-y-6">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Cruise Management</h2>
-                <p className="text-gray-600">Create and manage cruise itineraries, events, and entertainment</p>
+                <h2 className="text-2xl font-bold text-gray-900">Trip Management</h2>
+                <p className="text-gray-600">Create and manage trip itineraries, events, and entertainment</p>
               </div>
               {canEdit && (
-                <Button onClick={() => openCruiseModal()}>
+                <Button onClick={() => openTripModal()}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create New Cruise
+                  Create New Trip
                 </Button>
               )}
             </div>
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search cruises by name or ship..."
+                    placeholder="Search trips by name or ship..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -262,59 +262,59 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Cruises List */}
-            {cruisesLoading && (
+            {/* Trips List */}
+            {tripsLoading && (
               <div className="text-center py-8">
                 <Ship className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
-                <p>Loading cruises...</p>
+                <p>Loading trips...</p>
               </div>
             )}
 
-            {cruisesError && (
+            {tripsError && (
               <div className="text-center py-8 text-red-600">
-                <p>Error loading cruises: {cruisesError.message}</p>
+                <p>Error loading trips: {tripsError.message}</p>
               </div>
             )}
 
-            {filteredCruises && (
+            {filteredTrips && (
               <div className="grid gap-4">
-                {filteredCruises.length === 0 ? (
+                {filteredTrips.length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-12">
                       <Ship className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No cruises found</h3>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No trips found</h3>
                       <p className="text-gray-500 mb-4">
-                        {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first cruise.'}
+                        {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first trip.'}
                       </p>
                       {canEdit && !searchTerm && (
-                        <Button onClick={() => openCruiseModal()}>
+                        <Button onClick={() => openTripModal()}>
                           <Plus className="w-4 h-4 mr-2" />
-                          Create First Cruise
+                          Create First Trip
                         </Button>
                       )}
                     </CardContent>
                   </Card>
                 ) : (
-                  filteredCruises.map((cruise) => (
-                    <Card key={cruise.id} className="hover:shadow-md transition-shadow">
+                  filteredTrips.map((trip) => (
+                    <Card key={trip.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-900">{cruise.name}</h3>
-                              {getStatusBadge(cruise.status)}
+                              <h3 className="text-lg font-semibold text-gray-900">{trip.name}</h3>
+                              {getStatusBadge(trip.status)}
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
-                              <p><strong>Ship:</strong> {cruise.shipName}</p>
-                              {cruise.cruiseLine && <p><strong>Line:</strong> {cruise.cruiseLine}</p>}
-                              <p><strong>Dates:</strong> {format(dateOnly(cruise.startDate), 'MMM dd, yyyy')} - {format(dateOnly(cruise.endDate), 'MMM dd, yyyy')}</p>
+                              <p><strong>Ship:</strong> {trip.shipName}</p>
+                              {trip.cruiseLine && <p><strong>Line:</strong> {trip.cruiseLine}</p>}
+                              <p><strong>Dates:</strong> {format(dateOnly(trip.startDate), 'MMM dd, yyyy')} - {format(dateOnly(trip.endDate), 'MMM dd, yyyy')}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setLocation(`/cruise/${cruise.slug}`)}
+                              onClick={() => setLocation(`/trip/${trip.slug}`)}
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               View
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => openCruiseModal(cruise.id)}
+                                onClick={() => openTripModal(trip.id)}
                               >
                                 <Edit className="w-4 h-4 mr-1" />
                                 Edit
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteCruise(cruise)}
+                                onClick={() => handleDeleteTrip(trip)}
                                 className="text-red-600 hover:text-red-700 hover:border-red-300"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -398,12 +398,12 @@ export default function AdminDashboard() {
         </Tabs>
       </main>
 
-      {/* Cruise Editor Modal */}
-      <Dialog open={cruiseModalOpen} onOpenChange={(open) => !open && closeCruiseModal()}>
+      {/* Trip Editor Modal */}
+      <Dialog open={tripModalOpen} onOpenChange={(open) => !open && closeTripModal()}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingCruiseId ? 'Edit Cruise' : 'Create New Cruise'}
+              {editingTripId ? 'Edit Trip' : 'Create New Trip'}
             </DialogTitle>
             <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
               <X className="h-4 w-4" />
@@ -412,11 +412,11 @@ export default function AdminDashboard() {
           </DialogHeader>
           
           <div className="mt-4">
-            <Tabs value={cruiseEditorTab} onValueChange={setCruiseEditorTab}>
+            <Tabs value={tripEditorTab} onValueChange={setTripEditorTab}>
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="details" className="flex items-center space-x-2">
                   <Ship className="w-4 h-4" />
-                  <span className="hidden sm:inline">Cruise Details</span>
+                  <span className="hidden sm:inline">Trip Details</span>
                   <span className="sm:hidden">Details</span>
                 </TabsTrigger>
                 <TabsTrigger value="itinerary" className="flex items-center space-x-2">
@@ -435,16 +435,16 @@ export default function AdminDashboard() {
               </TabsList>
 
               <TabsContent value="details" className="mt-6">
-                <CruiseDetailsTab 
-                  cruise={editingCruiseId ? { id: editingCruiseId } : null}
-                  isEditing={!!editingCruiseId}
+                <TripDetailsTab 
+                  trip={editingTripId ? { id: editingTripId } : null}
+                  isEditing={!!editingTripId}
                 />
               </TabsContent>
 
               <TabsContent value="itinerary" className="mt-6">
                 <ItineraryTab 
-                  cruise={editingCruiseId ? { id: editingCruiseId } : null}
-                  isEditing={!!editingCruiseId}
+                  trip={editingTripId ? { id: editingTripId } : null}
+                  isEditing={!!editingTripId}
                 />
               </TabsContent>
 
@@ -452,7 +452,7 @@ export default function AdminDashboard() {
                 <EventsAndEntertainmentTab 
                   onDataChange={() => {
                     // Handle events data changes
-                    queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+                    queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
                   }}
                 />
               </TabsContent>
@@ -461,7 +461,7 @@ export default function AdminDashboard() {
                 <InfoAndUpdatesTab 
                   onDataChange={() => {
                     // Handle info data changes  
-                    queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+                    queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
                   }}
                 />
               </TabsContent>

@@ -29,7 +29,7 @@ import { format } from 'date-fns';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 
-interface Cruise {
+interface Trip {
   id: number;
   name: string;
   description?: string;
@@ -48,38 +48,38 @@ interface Cruise {
   updatedAt: string;
 }
 
-function CruisesManagementContent() {
+function TripsManagementContent() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: cruises, isLoading, error } = useQuery<Cruise[]>({
-    queryKey: ['admin-cruises'],
+  const { data: trips, isLoading, error } = useQuery<Trip[]>({
+    queryKey: ['admin-trips'],
     queryFn: async () => {
-      const response = await fetch('/api/cruises', {
+      const response = await fetch('/api/trips', {
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch cruises');
+        throw new Error('Failed to fetch trips');
       }
       return response.json();
     },
   });
 
-  const deleteCruise = useMutation({
-    mutationFn: async (cruiseId: number) => {
-      const response = await fetch(`/api/cruises/${cruiseId}`, {
+  const deleteTrip = useMutation({
+    mutationFn: async (tripId: number) => {
+      const response = await fetch(`/api/trips/${tripId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete cruise');
+        throw new Error('Failed to delete trip');
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-cruises'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
     },
   });
 
@@ -96,10 +96,10 @@ function CruisesManagementContent() {
     }
   };
 
-  const filteredCruises = cruises?.filter(cruise =>
-    cruise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cruise.shipName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cruise.cruiseLine && cruise.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredTrips = trips?.filter(trip =>
+    trip.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    trip.shipName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
   const canEdit = user?.role && ['super_admin', 'cruise_admin', 'content_editor'].includes(user.role);
@@ -110,7 +110,7 @@ function CruisesManagementContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Ship className="w-8 h-8 animate-pulse mx-auto mb-4" />
-          <p>Loading cruises...</p>
+          <p>Loading trips...</p>
         </div>
       </div>
     );
@@ -120,7 +120,7 @@ function CruisesManagementContent() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center text-red-600">
-          <p>Error loading cruises: {error.message}</p>
+          <p>Error loading trips: {error.message}</p>
         </div>
       </div>
     );
@@ -144,14 +144,14 @@ function CruisesManagementContent() {
               <div className="flex items-center space-x-2">
                 <Ship className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-semibold text-gray-900">
-                  Cruise Management
+                  Trip Management
                 </h1>
               </div>
             </div>
             {canEdit && (
-              <Button onClick={() => setLocation('/admin/cruises/unified/new')}>
+              <Button onClick={() => setLocation('/admin/trips/unified/new')}>
                 <Plus className="w-4 h-4 mr-2" />
-                New Cruise
+                New Trip
               </Button>
             )}
           </div>
@@ -166,7 +166,7 @@ function CruisesManagementContent() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search cruises by name or ship..."
+                placeholder="Search trips by name or ship..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -181,8 +181,8 @@ function CruisesManagementContent() {
                 <div className="flex items-center space-x-2">
                   <Ship className="w-5 h-5 text-blue-600" />
                   <div>
-                    <p className="text-sm text-gray-600">Total Cruises</p>
-                    <p className="text-2xl font-bold">{cruises?.length || 0}</p>
+                    <p className="text-sm text-gray-600">Total Trips</p>
+                    <p className="text-2xl font-bold">{trips?.length || 0}</p>
                   </div>
                 </div>
               </CardContent>
@@ -194,7 +194,7 @@ function CruisesManagementContent() {
                   <div>
                     <p className="text-sm text-gray-600">Upcoming</p>
                     <p className="text-2xl font-bold">
-                      {cruises?.filter(c => c.status === 'upcoming').length || 0}
+                      {trips?.filter(c => c.status === 'upcoming').length || 0}
                     </p>
                   </div>
                 </div>
@@ -207,7 +207,7 @@ function CruisesManagementContent() {
                   <div>
                     <p className="text-sm text-gray-600">Ongoing</p>
                     <p className="text-2xl font-bold">
-                      {cruises?.filter(c => c.status === 'ongoing').length || 0}
+                      {trips?.filter(c => c.status === 'ongoing').length || 0}
                     </p>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ function CruisesManagementContent() {
                   <div>
                     <p className="text-sm text-gray-600">Past</p>
                     <p className="text-2xl font-bold">
-                      {cruises?.filter(c => c.status === 'past').length || 0}
+                      {trips?.filter(c => c.status === 'past').length || 0}
                     </p>
                   </div>
                 </div>
@@ -229,16 +229,16 @@ function CruisesManagementContent() {
           </div>
         </div>
 
-        {/* Cruises Table */}
+        {/* Trips Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Cruises</CardTitle>
+            <CardTitle>All Trips</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cruise Name</TableHead>
+                  <TableHead>Trip Name</TableHead>
                   <TableHead>Ship</TableHead>
                   <TableHead>Dates</TableHead>
                   <TableHead>Status</TableHead>
@@ -247,33 +247,33 @@ function CruisesManagementContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCruises.map((cruise) => (
-                  <TableRow key={cruise.id}>
+                {filteredTrips.map((trip) => (
+                  <TableRow key={trip.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{cruise.name}</p>
-                        <p className="text-sm text-gray-500">{cruise.slug}</p>
+                        <p className="font-medium">{trip.name}</p>
+                        <p className="text-sm text-gray-500">{trip.slug}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p>{cruise.shipName}</p>
-                        {cruise.cruiseLine && (
-                          <p className="text-sm text-gray-500">{cruise.cruiseLine}</p>
+                        <p>{trip.shipName}</p>
+                        {trip.cruiseLine && (
+                          <p className="text-sm text-gray-500">{trip.cruiseLine}</p>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <p>{format(new Date(cruise.startDate), 'MMM dd, yyyy')}</p>
+                        <p>{format(new Date(trip.startDate), 'MMM dd, yyyy')}</p>
                         <p className="text-gray-500">
-                          to {format(new Date(cruise.endDate), 'MMM dd, yyyy')}
+                          to {format(new Date(trip.endDate), 'MMM dd, yyyy')}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>{getStatusBadge(cruise.status)}</TableCell>
+                    <TableCell>{getStatusBadge(trip.status)}</TableCell>
                     <TableCell>
-                      {cruise.pricing ? (
+                      {trip.pricing ? (
                         <span className="text-sm">View Pricing</span>
                       ) : (
                         <span className="text-gray-400">Not set</span>
@@ -285,7 +285,7 @@ function CruisesManagementContent() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setLocation(`/admin/cruises/${cruise.id}/unified`)}
+                            onClick={() => setLocation(`/admin/trips/${trip.id}/unified`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -295,25 +295,25 @@ function CruisesManagementContent() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              if (confirm(`Are you sure you want to delete "${cruise.name}"? This action cannot be undone.`)) {
-                                deleteCruise.mutate(cruise.id, {
+                              if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
+                                deleteTrip.mutate(trip.id, {
                                   onSuccess: () => {
                                     toast({
                                       title: "Success",
-                                      description: `"${cruise.name}" has been deleted.`,
+                                      description: `"${trip.name}" has been deleted.`,
                                     });
                                   },
                                   onError: (error: any) => {
                                     toast({
                                       title: "Error",
-                                      description: error.message || "Failed to delete cruise. Please try again.",
+                                      description: error.message || "Failed to delete trip. Please try again.",
                                       variant: "destructive",
                                     });
                                   }
                                 });
                               }
                             }}
-                            disabled={deleteCruise.isPending}
+                            disabled={deleteTrip.isPending}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -324,9 +324,9 @@ function CruisesManagementContent() {
                 ))}
               </TableBody>
             </Table>
-            {filteredCruises.length === 0 && (
+            {filteredTrips.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                {searchTerm ? 'No cruises found matching your search.' : 'No cruises found.'}
+                {searchTerm ? 'No trips found matching your search.' : 'No trips found.'}
               </div>
             )}
           </CardContent>
@@ -336,10 +336,10 @@ function CruisesManagementContent() {
   );
 }
 
-export default function CruisesManagement() {
+export default function TripsManagement() {
   return (
     <ProtectedRoute requiredRoles={['super_admin', 'cruise_admin', 'content_editor']}>
-      <CruisesManagementContent />
+      <TripsManagementContent />
     </ProtectedRoute>
   );
 }

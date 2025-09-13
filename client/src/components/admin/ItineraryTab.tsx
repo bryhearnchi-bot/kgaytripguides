@@ -45,12 +45,12 @@ interface ItineraryDay {
 }
 
 interface ItineraryTabProps {
-  cruise?: any;
+  trip?: any;
   isEditing: boolean;
 }
 
 export default function ItineraryTab({ 
-  cruise, 
+  trip, 
   isEditing
 }: ItineraryTabProps) {
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
@@ -60,16 +60,16 @@ export default function ItineraryTab({
 
   // Fetch existing itinerary data
   const { data: existingItinerary, isLoading: itineraryLoading } = useQuery({
-    queryKey: ['itinerary', cruise?.id],
+    queryKey: ['itinerary', trip?.id],
     queryFn: async () => {
-      if (!cruise?.id) return [];
-      const response = await fetch(`/api/cruises/${cruise.id}/itinerary`, {
+      if (!trip?.id) return [];
+      const response = await fetch(`/api/trips/${trip.id}/itinerary`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch itinerary');
       return response.json();
     },
-    enabled: !!cruise?.id && isEditing,
+    enabled: !!trip?.id && isEditing,
   });
 
   // Load existing itinerary data
@@ -96,8 +96,8 @@ export default function ItineraryTab({
   // Create itinerary day mutation
   const createItineraryMutation = useMutation({
     mutationFn: async (dayData: ItineraryDay) => {
-      if (!cruise?.id) throw new Error('No cruise ID');
-      const response = await fetch(`/api/cruises/${cruise.id}/itinerary`, {
+      if (!trip?.id) throw new Error('No trip ID');
+      const response = await fetch(`/api/trips/${trip.id}/itinerary`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -110,7 +110,7 @@ export default function ItineraryTab({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['itinerary', cruise?.id] });
+      queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
       toast({ title: 'Success', description: 'Itinerary day added successfully' });
     },
     onError: (error: any) => {
@@ -139,7 +139,7 @@ export default function ItineraryTab({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['itinerary', cruise?.id] });
+      queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
       toast({ title: 'Success', description: 'Itinerary day updated successfully' });
     },
     onError: (error: any) => {
@@ -161,7 +161,7 @@ export default function ItineraryTab({
       if (!response.ok) throw new Error('Failed to delete itinerary day');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['itinerary', cruise?.id] });
+      queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
       toast({ title: 'Success', description: 'Itinerary day deleted successfully' });
     },
     onError: (error: any) => {
@@ -224,13 +224,13 @@ export default function ItineraryTab({
     );
   }
 
-  if (!cruise?.id) {
+  if (!trip?.id) {
     return (
       <div className="text-center py-8">
         <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Cruise Required</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Trip Required</h3>
         <p className="text-gray-500">
-          Please create the cruise details first before adding itinerary stops.
+          Please create the trip details first before adding itinerary stops.
         </p>
       </div>
     );
@@ -244,7 +244,7 @@ export default function ItineraryTab({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center space-x-2">
               <MapPin className="w-5 h-5" />
-              <span>Cruise Itinerary</span>
+              <span>Trip Itinerary</span>
             </CardTitle>
             <Button onClick={addItineraryDay} size="sm">
               <Plus className="w-4 h-4 mr-2" />
@@ -258,7 +258,7 @@ export default function ItineraryTab({
               <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No itinerary stops</h3>
               <p className="text-gray-500 mb-4">
-                Start building your cruise itinerary by adding port stops and activities.
+                Start building your trip itinerary by adding port stops and activities.
               </p>
               <Button onClick={addItineraryDay}>
                 <Plus className="w-4 h-4 mr-2" />
@@ -468,9 +468,9 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="pre">Pre-Cruise</SelectItem>
-            <SelectItem value="main">Main Cruise</SelectItem>
-            <SelectItem value="post">Post-Cruise</SelectItem>
+            <SelectItem value="pre">Pre-Trip</SelectItem>
+            <SelectItem value="main">Main Trip</SelectItem>
+            <SelectItem value="post">Post-Trip</SelectItem>
           </SelectContent>
         </Select>
       </div>
