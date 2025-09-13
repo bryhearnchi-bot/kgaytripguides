@@ -45,7 +45,7 @@ function App() {
           <TimeFormatProvider>
             <TooltipProvider>
               <NavigationBanner />
-              <div className="pt-14 w-full"> {/* Add padding to account for fixed banner */}
+              <div className="pt-10 w-full"> {/* Add padding to account for fixed banner */}
                 <Toaster />
                 <Router />
               </div>
