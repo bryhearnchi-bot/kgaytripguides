@@ -3,15 +3,24 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-html, body {
-  margin: 0;
-  padding: 0;
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100%;
+  }
+
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh;
+  }
 }
 
 :root {

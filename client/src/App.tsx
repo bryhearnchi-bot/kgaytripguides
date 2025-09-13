@@ -39,19 +39,21 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TimeFormatProvider>
-          <TooltipProvider>
-            <NavigationBanner />
-            <div className="pt-14"> {/* Add padding to account for fixed banner */}
-              <Toaster />
-              <Router />
-            </div>
-          </TooltipProvider>
-        </TimeFormatProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <div className="min-h-screen w-full m-0 p-0">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TimeFormatProvider>
+            <TooltipProvider>
+              <NavigationBanner />
+              <div className="pt-14 w-full"> {/* Add padding to account for fixed banner */}
+                <Toaster />
+                <Router />
+              </div>
+            </TooltipProvider>
+          </TimeFormatProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </div>
   );
 }
 
