@@ -1,10 +1,54 @@
-import { db, cruises, itinerary, events, talent, cruiseTalent } from './storage';
+import { db, cruises, itinerary, events, talent, cruiseTalent, settings } from './storage';
 import { eq, and } from 'drizzle-orm';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 
+// Trip type settings with metadata for production
+const TRIP_TYPE_SETTINGS = [
+  {
+    key: 'cruise',
+    label: 'Cruise',
+    value: null,
+    metadata: {
+      buttonText: 'Book Cruise',
+      description: 'Multi-day cruise experiences with entertainment, dining, and port visits'
+    },
+    orderIndex: 0
+  },
+  {
+    key: 'vacation',
+    label: 'Vacation Package',
+    value: null,
+    metadata: {
+      buttonText: 'Book Vacation',
+      description: 'Complete vacation packages including accommodations and activities'
+    },
+    orderIndex: 1
+  },
+  {
+    key: 'event',
+    label: 'Special Event',
+    value: null,
+    metadata: {
+      buttonText: 'Register for Event',
+      description: 'Exclusive events, parties, and special occasions'
+    },
+    orderIndex: 2
+  },
+  {
+    key: 'resort',
+    label: 'Resort Stay',
+    value: null,
+    metadata: {
+      buttonText: 'Book Resort',
+      description: 'Luxury resort accommodations with all-inclusive amenities'
+    },
+    orderIndex: 3
+  }
+];
+
 /**
  * Production seeding script that intelligently manages data:
- * - First deployment: Seeds all Greek Isles cruise data
+ * - First deployment: Seeds all Greek Isles cruise data and default settings
  * - Subsequent deployments: Only adds new/changed data
  */
 async function seedProduction() {
@@ -68,7 +112,33 @@ async function seedProduction() {
       console.log(`✅ Found existing cruise: ${cruise.name} (ID: ${cruise.id})`);
     }
 
-    // 2. Seed/Update Talent (check for new talent)
+    // 2. Seed/Update Settings (check for new trip type settings)
+    console.log('⚙️ Checking trip type settings...');
+    const existingSettings = await db.select().from(settings).where(eq(settings.category, 'trip_types'));
+    const existingSettingKeys = existingSettings.map(s => s.key);
+    
+    let newSettingsCount = 0;
+    for (const settingData of TRIP_TYPE_SETTINGS) {
+      if (!existingSettingKeys.includes(settingData.key)) {
+        console.log(`➕ Adding new trip type setting: ${settingData.label}`);
+        
+        await db.insert(settings).values({
+          category: 'trip_types',
+          key: settingData.key,
+          label: settingData.label,
+          value: settingData.value,
+          metadata: settingData.metadata,
+          isActive: true,
+          orderIndex: settingData.orderIndex,
+          createdBy: null // System-created settings don't have a specific user
+        });
+        
+        newSettingsCount++;
+      }
+    }
+    console.log(`✅ Trip type settings check complete. Added ${newSettingsCount} new settings.`);
+
+    // 3. Seed/Update Talent (check for new talent)
     console.log('🎭 Checking talent data...');
     const existingTalent = await db.select().from(talent);
     const existingTalentNames = existingTalent.map(t => t.name);
@@ -104,7 +174,7 @@ async function seedProduction() {
     }
     console.log(`✅ Talent check complete. Added ${newTalentCount} new performers.`);
 
-    // 3. Seed/Update Itinerary (check for new stops)
+    // 4. Seed/Update Itinerary (check for new stops)
     console.log('🗺️ Checking itinerary data...');
     const existingItinerary = await db.select().from(itinerary).where(eq(itinerary.cruiseId, cruise.id));
     const existingPorts = existingItinerary.map(i => `${i.date?.toISOString().split('T')[0]}-${i.portName}`);
@@ -145,7 +215,7 @@ async function seedProduction() {
     }
     console.log(`✅ Itinerary check complete. Added ${newItineraryCount} new stops.`);
 
-    // 4. Seed/Update Events (check for new events)
+    // 5. Seed/Update Events (check for new events)
     console.log('🎉 Checking events data...');
     const existingEvents = await db.select().from(events).where(eq(events.cruiseId, cruise.id));
     const existingEventKeys = existingEvents.map(e => 
@@ -201,6 +271,7 @@ async function seedProduction() {
     console.log('🎯 Production seeding completed successfully!');
     console.log(`📊 Summary:`);
     console.log(`   - Cruise: ${cruise.name} (${cruise.status})`);
+    console.log(`   - New trip type settings: ${newSettingsCount}`);
     console.log(`   - New talent added: ${newTalentCount}`);
     console.log(`   - New itinerary stops: ${newItineraryCount}`);
     console.log(`   - New events added: ${newEventCount}`);
