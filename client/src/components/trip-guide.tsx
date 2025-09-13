@@ -813,12 +813,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
+      <div className="bg-ocean-50 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
             {/* Daily Schedule Tab */}
-            <TabsContent value="schedule" className="bg-gray-50 min-h-screen">
+            <TabsContent value="schedule" className="min-h-screen">
               <div className="max-w-6xl mx-auto p-4 space-y-6">
                 {/* Date Filter */}
                 <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -1020,7 +1021,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
             
             {/* Talent Tab */}
-            <TabsContent value="talent" className="bg-gray-50 min-h-screen">
+            <TabsContent value="talent" className="min-h-screen">
               <div className="max-w-6xl mx-auto p-4 space-y-6">
                 {/* Search */}
                 <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -1098,7 +1099,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             {/* Parties Tab */}
-            <TabsContent value="parties" className="bg-gray-50 min-h-screen">
+            <TabsContent value="parties" className="min-h-screen">
               <div className="max-w-6xl mx-auto p-4 space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <div className="flex items-center space-x-3 mb-6">
@@ -1169,7 +1170,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             {/* Important Info Tab */}
-            <TabsContent value="info" className="bg-gray-50 min-h-screen">
+            <TabsContent value="info" className="min-h-screen">
               <div className="max-w-6xl mx-auto p-4 space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <div className="flex items-center space-x-3 mb-6">
@@ -1273,8 +1274,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
           </Tabs>
         </div>
       </div>
+    </div>
 
-      {/* Talent Modal */}
+    {/* Talent Modal */}
       <Dialog open={showTalentModal} onOpenChange={setShowTalentModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
