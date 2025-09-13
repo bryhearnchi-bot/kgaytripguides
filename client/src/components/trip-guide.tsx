@@ -620,31 +620,51 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const IMPORTANT_INFO = isGreekCruise ? (data?.IMPORTANT_INFO || {}) : {};
   const TRIP_INFO = data?.TRIP_INFO || {};
 
+  // Utility function: Events before 6am belong to the previous day's schedule
+  const getScheduleDate = (date: string, time: string): string => {
+    const hour = parseInt(time.split(':')[0]);
+    if (hour < 6) {
+      // Before 6am - belongs to previous day
+      const currentDate = new Date(date);
+      currentDate.setDate(currentDate.getDate() - 1);
+      return currentDate.toISOString().split('T')[0];
+    }
+    return date;
+  };
+
   // Create mapping of party themes to their scheduled dates and times
-  const partyScheduleMap: Record<string, { date: string; time: string; dateTime: string; venue: string }> = {};
+  const partyScheduleMap: Record<string, { date: string; time: string; dateTime: string; venue: string; scheduleDate: string }> = {};
   DAILY.forEach(day => {
     day.items.forEach(item => {
       if (item.type === 'party' || item.type === 'after') {
         const theme = PARTY_THEMES.find(p => item.title.includes(p.key));
         if (theme) {
-          const dateTime = `${day.key}T${item.time.padStart(5, '0')}`;
-          partyScheduleMap[theme.key] = { date: day.key, time: item.time, dateTime, venue: item.venue };
+          const scheduleDate = getScheduleDate(day.key, item.time);
+          const dateTime = `${scheduleDate}T${item.time.padStart(5, '0')}`;
+          partyScheduleMap[theme.key] = { 
+            date: day.key, 
+            time: item.time, 
+            dateTime, 
+            venue: item.venue, 
+            scheduleDate 
+          };
         }
       }
     });
   });
 
-  // Group parties by date for timeline display
+  // Group parties by schedule date (respecting 6am rule)
   const partiesByDate = PARTY_THEMES
     .filter(theme => partyScheduleMap[theme.key]) // Only show parties that are scheduled
     .reduce((acc, theme) => {
       const schedule = partyScheduleMap[theme.key];
-      if (!acc[schedule.date]) {
-        acc[schedule.date] = [];
+      const groupDate = schedule.scheduleDate;
+      if (!acc[groupDate]) {
+        acc[groupDate] = [];
       }
-      acc[schedule.date].push({ theme, schedule });
+      acc[groupDate].push({ theme, schedule });
       return acc;
-    }, {} as Record<string, { theme: typeof PARTY_THEMES[0]; schedule: { date: string; time: string; dateTime: string; venue: string } }[]>);
+    }, {} as Record<string, { theme: typeof PARTY_THEMES[0]; schedule: { date: string; time: string; dateTime: string; venue: string; scheduleDate: string } }[]>);
 
   // Sort dates and parties within each date
   const sortedPartyDates = Object.keys(partiesByDate).sort();
@@ -716,7 +736,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
     );
   }
 
-  // Filter daily events based on selected date
+  // Filter daily events based on selected date 
   const filteredDaily = selectedDate 
     ? DAILY.filter(day => day.key === selectedDate)
     : DAILY;
