@@ -12,7 +12,7 @@ app.get('/healthz', (req, res) => {
     req.setTimeout(5000);
     res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
   } catch (error) {
-    res.status(500).json({ status: 'unhealthy', error: error.message });
+    res.status(500).json({ status: 'unhealthy', error: (error as Error).message });
   }
 });
 
@@ -20,6 +20,10 @@ app.head('/healthz', (req, res) => {
   res.writeHead(200);
   res.end();
 });
+
+// Add explicit handlers for /api to prevent Vite from handling them
+app.get('/api', (_req, res) => res.json({ ok: true, message: 'API is running' }));
+app.head('/api', (_req, res) => res.sendStatus(200));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -60,6 +64,9 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
   
+  // Terminal 404 handler for unmatched API routes - prevents fallthrough to Vite
+  app.all('/api/*', (_req, res) => res.status(404).json({ error: 'API route not found' }));
+  
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -89,7 +96,7 @@ app.use((req, res, next) => {
           await migrateAllImages();
           log('Background migration completed successfully');
         } catch (error) {
-          log('Background migration failed: ' + error.message);
+          log('Background migration failed: ' + (error as Error).message);
           // Don't exit on migration failure
         }
       }, 1000);
