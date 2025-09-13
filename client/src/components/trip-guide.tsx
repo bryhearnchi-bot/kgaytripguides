@@ -620,17 +620,28 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const IMPORTANT_INFO = isGreekCruise ? (data?.IMPORTANT_INFO || {}) : {};
   const TRIP_INFO = data?.TRIP_INFO || {};
 
-  // Sort party themes - prioritize those with time info, then alphabetically
-  const sortedPartyThemes = PARTY_THEMES.sort((a, b) => {
-    const aHasTime = a.desc.includes('12:30am') || a.desc.includes('afternoon') || a.desc.includes('T-Dance');
-    const bHasTime = b.desc.includes('12:30am') || b.desc.includes('afternoon') || b.desc.includes('T-Dance');
-    
-    if (aHasTime && !bHasTime) return -1;
-    if (!aHasTime && bHasTime) return 1;
-    
-    // Secondary sort by name
-    return a.key.localeCompare(b.key);
+  // Create mapping of party themes to their scheduled dates and times
+  const partyScheduleMap: Record<string, { date: string; time: string; dateTime: string; venue: string }> = {};
+  DAILY.forEach(day => {
+    day.items.forEach(item => {
+      if (item.type === 'party' || item.type === 'after') {
+        const theme = PARTY_THEMES.find(p => item.title.includes(p.key));
+        if (theme) {
+          const dateTime = `${day.key}T${item.time.padStart(5, '0')}`;
+          partyScheduleMap[theme.key] = { date: day.key, time: item.time, dateTime, venue: item.venue };
+        }
+      }
+    });
   });
+
+  // Sort party themes by their actual scheduled date and time
+  const sortedPartyThemes = PARTY_THEMES
+    .filter(theme => partyScheduleMap[theme.key]) // Only show parties that are scheduled
+    .sort((a, b) => {
+      const aSchedule = partyScheduleMap[a.key];
+      const bSchedule = partyScheduleMap[b.key];
+      return aSchedule.dateTime.localeCompare(bSchedule.dateTime);
+    });
 
   // Rest of the component logic remains the same but with trip terminology
   const toggleDayCollapse = (dateKey: string) => {
@@ -1063,22 +1074,40 @@ export default function TripGuide({ slug }: TripGuideProps) {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {sortedPartyThemes.map((theme, index) => (
-                        <div key={theme.key} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                          <div className="flex items-start space-x-4">
-                            <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-sm font-bold px-3 py-1 rounded-full flex-shrink-0">
-                              {index + 1}
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="text-xl font-bold text-gray-900 mb-3">{theme.key}</h3>
-                              <p className="text-gray-600 mb-3">{theme.desc}</p>
-                              {theme.shortDesc && (
-                                <p className="text-sm text-ocean-600 font-medium italic">"{theme.shortDesc}"</p>
-                              )}
+                      {sortedPartyThemes.map((theme, index) => {
+                        const schedule = partyScheduleMap[theme.key];
+                        const date = new Date(schedule.date);
+                        const formattedDate = date.toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        });
+                        return (
+                          <div key={theme.key} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div className="flex items-start space-x-4">
+                              <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-sm font-bold px-3 py-1 rounded-full flex-shrink-0">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h3 className="text-xl font-bold text-gray-900">{theme.key}</h3>
+                                  <div className="text-right text-sm text-gray-600">
+                                    <div className="font-medium">{formattedDate}</div>
+                                    <div>{globalFormatTime(schedule.time, timeFormat)}</div>
+                                  </div>
+                                </div>
+                                <p className="text-gray-600 mb-3">{theme.desc}</p>
+                                <div className="flex items-center justify-between">
+                                  {theme.shortDesc && (
+                                    <p className="text-sm text-ocean-600 font-medium italic">"{theme.shortDesc}"</p>
+                                  )}
+                                  <span className="text-xs text-gray-500 ml-auto">{schedule.venue}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
