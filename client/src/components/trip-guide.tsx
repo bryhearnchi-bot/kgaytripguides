@@ -965,13 +965,16 @@ export default function TripGuide({ slug }: TripGuideProps) {
                       <div key={stop.key} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <span className="bg-ocean-100 text-ocean-700 text-sm font-medium px-2 py-1 rounded">
-                                Day {index + 1}
-                              </span>
+                            <div className="flex items-center space-x-3 mb-3">
+                              <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full">
+                                {new Date(stop.date).toLocaleDateString('en-US', { 
+                                  weekday: 'long', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </div>
                               <h3 className="text-lg font-semibold text-gray-900">{stop.port}</h3>
                             </div>
-                            <p className="text-gray-600 mb-3">{stop.date}</p>
                             
                             <div className="grid grid-cols-3 gap-4 text-sm">
                               <div>
