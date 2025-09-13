@@ -97,8 +97,6 @@ export const trips = cruises;
 export const itinerary = pgTable("itinerary", {
   id: serial("id").primaryKey(),
   cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  // Forward compatibility
-  tripId: integer("trip_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   day: integer("day").notNull(), // Day number of trip (1, 2, 3, etc.)
   portName: text("port_name").notNull(),
@@ -112,8 +110,7 @@ export const itinerary = pgTable("itinerary", {
   orderIndex: integer("order_index").notNull(), // For sorting
   segment: text("segment").default("main"), // pre, main, post
 }, (table) => ({
-  tripIdx: index("itinerary_trip_idx").on(table.tripId),
-  cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId), // Backward compatibility
+  cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId),
   dateIdx: index("itinerary_date_idx").on(table.date),
 }));
 
@@ -121,8 +118,6 @@ export const itinerary = pgTable("itinerary", {
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  // Forward compatibility
-  tripId: integer("trip_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   time: text("time").notNull(), // "14:00", "21:30", etc.
   title: text("title").notNull(),
@@ -140,8 +135,7 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  tripIdx: index("events_trip_idx").on(table.tripId),
-  cruiseIdx: index("events_cruise_idx").on(table.cruiseId), // Backward compatibility
+  cruiseIdx: index("events_cruise_idx").on(table.cruiseId),
   dateIdx: index("events_date_idx").on(table.date),
   typeIdx: index("events_type_idx").on(table.type),
 }));
@@ -166,8 +160,6 @@ export const talent = pgTable("talent", {
 // ============ CRUISE_TALENT JUNCTION TABLE ============
 export const cruiseTalent = pgTable("cruise_talent", {
   cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  // Forward compatibility
-  tripId: integer("trip_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
   talentId: integer("talent_id").notNull().references(() => talent.id, { onDelete: "cascade" }),
   role: text("role"), // Headliner, Special Guest, Host, etc.
   performanceCount: integer("performance_count"),
@@ -176,7 +168,6 @@ export const cruiseTalent = pgTable("cruise_talent", {
 }, (table) => ({
   pk: primaryKey({ columns: [table.cruiseId, table.talentId] }),
   cruiseIdx: index("cruise_talent_cruise_idx").on(table.cruiseId),
-  tripIdx: index("trip_talent_trip_idx").on(table.tripId), // Forward compatibility
   talentIdx: index("cruise_talent_talent_idx").on(table.talentId),
 }));
 
@@ -206,8 +197,6 @@ export const media = pgTable("media", {
 export const userCruises = pgTable("user_cruises", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  // Forward compatibility
-  tripId: integer("trip_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
   permissionLevel: text("permission_level").notNull(), // admin, editor, viewer
   assignedBy: varchar("assigned_by").references(() => users.id),
   assignedAt: timestamp("assigned_at").defaultNow(),
@@ -215,7 +204,6 @@ export const userCruises = pgTable("user_cruises", {
   pk: primaryKey({ columns: [table.userId, table.cruiseId] }),
   userIdx: index("user_cruises_user_idx").on(table.userId),
   cruiseIdx: index("user_cruises_cruise_idx").on(table.cruiseId),
-  tripIdx: index("user_trips_trip_idx").on(table.tripId), // Forward compatibility
 }));
 
 // Forward compatibility alias
@@ -240,8 +228,6 @@ export const partyTemplates = pgTable("party_templates", {
 // ============ TRIP INFO SECTIONS TABLE (formerly cruise_info_sections) ============
 export const tripInfoSections = pgTable("trip_info_sections", {
   id: serial("id").primaryKey(),
-  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
-  // Backward compatibility
   cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   content: text("content"), // Rich text content
@@ -249,9 +235,8 @@ export const tripInfoSections = pgTable("trip_info_sections", {
   updatedBy: varchar("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  tripIdx: index("trip_info_trip_idx").on(table.tripId),
-  cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId), // Backward compatibility
-  orderIdx: index("trip_info_order_idx").on(table.tripId, table.orderIndex),
+  cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
+  orderIdx: index("trip_info_order_idx").on(table.cruiseId, table.orderIndex),
 }));
 
 // Backward compatibility alias
@@ -260,8 +245,6 @@ export const cruiseInfoSections = tripInfoSections;
 // ============ AI JOBS TABLE ============
 export const aiJobs = pgTable("ai_jobs", {
   id: serial("id").primaryKey(),
-  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
-  // Backward compatibility
   cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   sourceType: text("source_type").notNull(), // pdf, url
   sourceRef: text("source_ref").notNull(), // URL or file path
@@ -273,16 +256,13 @@ export const aiJobs = pgTable("ai_jobs", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  tripIdx: index("ai_jobs_trip_idx").on(table.tripId),
-  cruiseIdx: index("ai_jobs_cruise_idx").on(table.cruiseId), // Backward compatibility
+  cruiseIdx: index("ai_jobs_cruise_idx").on(table.cruiseId),
   statusIdx: index("ai_jobs_status_idx").on(table.status),
 }));
 
 // ============ AI DRAFTS TABLE ============
 export const aiDrafts = pgTable("ai_drafts", {
   id: serial("id").primaryKey(),
-  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
-  // Backward compatibility
   cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   draftType: text("draft_type").notNull(), // itinerary, events, info
   payload: jsonb("payload").notNull(), // Draft data to be reviewed
@@ -290,8 +270,7 @@ export const aiDrafts = pgTable("ai_drafts", {
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
-  tripIdx: index("ai_drafts_trip_idx").on(table.tripId),
-  cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId), // Backward compatibility
+  cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId),
   typeIdx: index("ai_drafts_type_idx").on(table.draftType),
 }));
 
@@ -327,11 +306,6 @@ export const tripsRelations = relations(trips, ({ many, one }) => ({
 export const cruisesRelations = tripsRelations;
 
 export const itineraryRelations = relations(itinerary, ({ one }) => ({
-  trip: one(trips, {
-    fields: [itinerary.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [itinerary.cruiseId],
     references: [trips.id],
@@ -339,11 +313,6 @@ export const itineraryRelations = relations(itinerary, ({ one }) => ({
 }));
 
 export const eventsRelations = relations(events, ({ one }) => ({
-  trip: one(trips, {
-    fields: [events.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [events.cruiseId],
     references: [trips.id],
@@ -357,11 +326,6 @@ export const talentRelations = relations(talent, ({ many }) => ({
 }));
 
 export const tripTalentRelations = relations(tripTalent, ({ one }) => ({
-  trip: one(trips, {
-    fields: [tripTalent.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [tripTalent.cruiseId],
     references: [trips.id],
@@ -380,11 +344,6 @@ export const userTripsRelations = relations(userTrips, ({ one }) => ({
     fields: [userTrips.userId],
     references: [users.id],
   }),
-  trip: one(trips, {
-    fields: [userTrips.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [userTrips.cruiseId],
     references: [trips.id],
@@ -402,11 +361,6 @@ export const partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
 }));
 
 export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) => ({
-  trip: one(trips, {
-    fields: [tripInfoSections.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [tripInfoSections.cruiseId],
     references: [trips.id],
@@ -421,11 +375,6 @@ export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) =
 export const cruiseInfoSectionsRelations = tripInfoSectionsRelations;
 
 export const aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
-  trip: one(trips, {
-    fields: [aiJobs.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [aiJobs.cruiseId],
     references: [trips.id],
@@ -438,11 +387,6 @@ export const aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
 }));
 
 export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
-  trip: one(trips, {
-    fields: [aiDrafts.tripId],
-    references: [trips.id],
-  }),
-  // Backward compatibility
   cruise: one(trips, {
     fields: [aiDrafts.cruiseId],
     references: [trips.id],

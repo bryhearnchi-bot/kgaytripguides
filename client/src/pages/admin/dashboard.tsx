@@ -34,6 +34,7 @@ import ItineraryTab from '@/components/admin/ItineraryTab';
 import EventsAndEntertainmentTab from '../../components/admin/EventsAndEntertainmentTab';
 import InfoAndUpdatesTab from '../../components/admin/InfoAndUpdatesTab';
 import UserManagement from '@/components/admin/UserManagement';
+import SettingsTab from '@/components/admin/SettingsTab';
 
 interface Cruise {
   id: number;
@@ -392,20 +393,7 @@ export default function AdminDashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Settings</h2>
-              <p className="text-gray-600">Configure system settings, branding, and preferences</p>
-            </div>
-            
-            <Card>
-              <CardContent className="text-center py-12">
-                <Settings className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Settings Coming Soon</h3>
-                <p className="text-gray-500">
-                  System configuration and settings panel will be available in a future update.
-                </p>
-              </CardContent>
-            </Card>
+            <SettingsTab />
           </TabsContent>
         </Tabs>
       </main>
