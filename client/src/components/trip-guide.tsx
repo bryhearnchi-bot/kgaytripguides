@@ -813,7 +813,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
         </div>
       </header>
 
-      <div className="bg-ocean-50 min-h-screen">
+      <div className="bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
