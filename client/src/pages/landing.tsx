@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import React from "react";
 import { dateOnly } from "@/lib/utils";
+import { getTripButtonText } from "@/lib/tripUtils";
 
 interface Trip {
   id: number;
@@ -16,6 +17,7 @@ interface Trip {
   slug: string;
   shipName: string;
   cruiseLine: string;
+  tripType?: string;
   startDate: string;
   endDate: string;
   status: string;
@@ -85,7 +87,7 @@ function TripCard({ trip }: { trip: Trip }) {
         <div className="mt-auto">
           <Link href={`/trip/${trip.slug}`}>
             <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white text-sm py-2">
-              View Trip Guide
+              {getTripButtonText(trip.tripType)}
             </Button>
           </Link>
         </div>

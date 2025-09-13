@@ -20,6 +20,7 @@ const setupSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   shipName: z.string().min(1, 'Ship name is required'),
   cruiseLine: z.string().optional(),
+  tripType: z.string().default('cruise'),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
   status: z.enum(['upcoming', 'ongoing', 'past']).default('upcoming'),
@@ -41,6 +42,16 @@ export default function TripDetailsTab({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch trip types for dropdown
+  const { data: tripTypes } = useQuery({
+    queryKey: ['trip-types'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings/trip_types');
+      if (!response.ok) throw new Error('Failed to fetch trip types');
+      return response.json();
+    },
+  });
+
   const {
     register,
     handleSubmit,
@@ -52,6 +63,7 @@ export default function TripDetailsTab({
     resolver: zodResolver(setupSchema),
     defaultValues: {
       status: 'upcoming',
+      tripType: 'cruise',
     },
   });
 
@@ -77,6 +89,7 @@ export default function TripDetailsTab({
         slug: existingTrip.slug || '',
         shipName: existingTrip.shipName || '',
         cruiseLine: existingTrip.cruiseLine || '',
+        tripType: existingTrip.tripType || 'cruise',
         startDate: existingTrip.startDate ? (existingTrip.startDate.includes('T') ? existingTrip.startDate.split('T')[0] : existingTrip.startDate) : '',
         endDate: existingTrip.endDate ? (existingTrip.endDate.includes('T') ? existingTrip.endDate.split('T')[0] : existingTrip.endDate) : '',
         status: existingTrip.status || 'upcoming',
@@ -223,7 +236,7 @@ export default function TripDetailsTab({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="shipName">Ship Name *</Label>
                 <Input
@@ -243,6 +256,30 @@ export default function TripDetailsTab({
                   {...register('cruiseLine')}
                   placeholder="e.g., Virgin Voyages"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tripType">Trip Type</Label>
+                <Select 
+                  value={watch('tripType')} 
+                  onValueChange={(value) => setValue('tripType', value, { shouldDirty: true })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select trip type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tripTypes?.map(type => (
+                      <SelectItem key={type.key} value={type.key}>
+                        <div className="flex items-center space-x-2">
+                          <span>{type.label}</span>
+                          {type.metadata?.description && (
+                            <span className="text-xs text-gray-500">({type.metadata.description})</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
