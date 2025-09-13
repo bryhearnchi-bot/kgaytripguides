@@ -225,7 +225,7 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Validate input with allowed roles
-      const allowedRoles = ['viewer', 'media_manager', 'content_editor', 'cruise_admin', 'super_admin'];
+      const allowedRoles = ['viewer', 'media_manager', 'content_editor', 'trip_admin', 'super_admin'];
       const userData = req.body;
       
       if (!userData.username || !userData.password) {
@@ -349,7 +349,7 @@ export function registerAuthRoutes(app: Express) {
       const updateData = req.body;
       
       // Validate input and restrict updatable fields
-      const allowedRoles = ['viewer', 'media_manager', 'content_editor', 'cruise_admin', 'super_admin'];
+      const allowedRoles = ['viewer', 'media_manager', 'content_editor', 'trip_admin', 'super_admin'];
       const allowedFields = ['username', 'email', 'fullName', 'role', 'isActive', 'password'];
       
       // Filter to only allowed fields

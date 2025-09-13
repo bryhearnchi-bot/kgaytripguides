@@ -511,7 +511,7 @@ export default function TripForm({ isEditing = false }: TripFormProps) {
   const tripId = params.id;
 
   return (
-    <ProtectedRoute requiredRoles={['super_admin', 'cruise_admin', 'content_editor']}>
+    <ProtectedRoute requiredRoles={['super_admin', 'trip_admin', 'content_editor']}>
       <TripFormContent isEditing={isEditing} tripId={tripId} />
     </ProtectedRoute>
   );

@@ -105,7 +105,7 @@ export default function SettingsTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingSetting, setDeletingSetting] = useState<Setting | null>(null);
 
-  const canEdit = user?.role && ['super_admin', 'cruise_admin', 'content_editor'].includes(user.role);
+  const canEdit = user?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(user.role);
   const canDelete = user?.role && ['super_admin'].includes(user.role);
 
   const {

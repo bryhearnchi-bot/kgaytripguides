@@ -107,9 +107,12 @@ function composeAuth(roleCheck: (req: AuthenticatedRequest, res: Response, next:
 
 // Specific role checks
 export const requireSuperAdmin = composeAuth(requireRole(['super_admin']));
-export const requireCruiseAdmin = composeAuth(requireRole(['super_admin', 'cruise_admin']));
-export const requireContentEditor = composeAuth(requireRole(['super_admin', 'cruise_admin', 'content_editor']));
-export const requireMediaManager = composeAuth(requireRole(['super_admin', 'cruise_admin', 'content_editor', 'media_manager']));
+export const requireTripAdmin = composeAuth(requireRole(['super_admin', 'trip_admin']));
+export const requireContentEditor = composeAuth(requireRole(['super_admin', 'trip_admin', 'content_editor']));
+export const requireMediaManager = composeAuth(requireRole(['super_admin', 'trip_admin', 'content_editor', 'media_manager']));
+
+// Backward compatibility alias
+export const requireCruiseAdmin = requireTripAdmin;
 
 // Audit logging middleware
 export async function auditLog(action: string, tableName: string, recordId?: string, oldValues?: any, newValues?: any) {

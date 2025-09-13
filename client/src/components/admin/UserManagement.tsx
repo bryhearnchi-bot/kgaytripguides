@@ -271,7 +271,7 @@ export default function UserManagement() {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'super_admin': return 'destructive';
-      case 'cruise_admin': return 'default';
+      case 'trip_admin': return 'default';
       case 'content_editor': return 'secondary';
       case 'media_manager': return 'outline';
       default: return 'secondary';

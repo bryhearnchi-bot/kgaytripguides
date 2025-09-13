@@ -1071,9 +1071,9 @@ function composeAuth(roleCheck) {
   };
 }
 var requireSuperAdmin = composeAuth(requireRole(["super_admin"]));
-var requireCruiseAdmin = composeAuth(requireRole(["super_admin", "cruise_admin"]));
-var requireContentEditor = composeAuth(requireRole(["super_admin", "cruise_admin", "content_editor"]));
-var requireMediaManager = composeAuth(requireRole(["super_admin", "cruise_admin", "content_editor", "media_manager"]));
+var requireTripAdmin = composeAuth(requireRole(["super_admin", "trip_admin"]));
+var requireContentEditor = composeAuth(requireRole(["super_admin", "trip_admin", "content_editor"]));
+var requireMediaManager = composeAuth(requireRole(["super_admin", "trip_admin", "content_editor", "media_manager"]));
 
 // server/auth-routes.ts
 init_storage();
@@ -1289,7 +1289,7 @@ function registerAuthRoutes(app2) {
       if (!currentUser || currentUser?.role !== "super_admin") {
         return res.status(403).json({ error: "Only super admins can create users" });
       }
-      const allowedRoles = ["viewer", "media_manager", "content_editor", "cruise_admin", "super_admin"];
+      const allowedRoles = ["viewer", "media_manager", "content_editor", "trip_admin", "super_admin"];
       const userData = req.body;
       if (!userData.username || !userData.password) {
         return res.status(400).json({ error: "Username and password are required" });
@@ -1368,7 +1368,7 @@ function registerAuthRoutes(app2) {
         return res.status(403).json({ error: "Only super admins can update users" });
       }
       const updateData = req.body;
-      const allowedRoles = ["viewer", "media_manager", "content_editor", "cruise_admin", "super_admin"];
+      const allowedRoles = ["viewer", "media_manager", "content_editor", "trip_admin", "super_admin"];
       const allowedFields = ["username", "email", "fullName", "role", "isActive", "password"];
       const filteredUpdateData = {};
       for (const field of allowedFields) {
