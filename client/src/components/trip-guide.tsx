@@ -967,7 +967,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
                           {/* Hero Image */}
                           <div className="w-48 h-32 flex-shrink-0">
                             <img 
-                              src={`/images/ports/${stop.port.toLowerCase().replace(/\s+/g, '-')}.jpg`}
+                              src={(() => {
+                                if (stop.port.includes('Santorini')) return '/images/ports/santorini-greece.jpg';
+                                if (stop.port.includes('Athens')) return '/images/ports/athens-greece.jpg';
+                                if (stop.port.includes('Mykonos')) return '/images/ports/mykonos-greece.jpg';
+                                if (stop.port.includes('Istanbul')) return '/images/ports/istanbul-turkey.jpg';
+                                if (stop.port.includes('Kuşadası')) return '/images/ports/kusadasi-turkey.jpg';
+                                if (stop.port.includes('Alexandria') || stop.port.includes('Cairo')) return '/images/ports/alexandria-cairo-egypt.jpg';
+                                if (stop.port.includes('Iraklion') || stop.port.includes('Crete')) return '/images/ports/iraklion-crete.jpg';
+                                if (stop.port.includes('Day at Sea')) return '/images/ports/day-at-sea.jpg';
+                                return '/images/ships/resilient-lady-hero.jpg';
+                              })()}
                               alt={stop.port}
                               className="w-full h-full object-cover"
                               onError={(e) => {
