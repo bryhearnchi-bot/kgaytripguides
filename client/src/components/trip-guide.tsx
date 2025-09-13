@@ -965,7 +965,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                       <div key={stop.key} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="flex">
                           {/* Hero Image */}
-                          <div className="w-48 h-32 flex-shrink-0">
+                          <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
                             <img 
                               src={(() => {
                                 if (stop.port.includes('Santorini')) return '/images/ports/santorini-greece.jpg';
@@ -979,11 +979,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 return '/images/ships/resilient-lady-hero.jpg';
                               })()}
                               alt={stop.port}
-                              className={`w-full h-full object-cover ${
-                                stop.port.includes('Day at Sea') 
-                                  ? 'object-center' // For cruise ship wake, show the center with deck and wake
-                                  : 'object-center' // For city/landmark images, show the center
-                              }`}
+                              className="w-full h-full object-cover object-center min-w-full min-h-full"
+                              style={{ 
+                                width: '192px', 
+                                height: '128px',
+                                objectFit: 'cover',
+                                objectPosition: 'center'
+                              }}
                               onError={(e) => {
                                 e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
                               }}
