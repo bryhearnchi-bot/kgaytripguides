@@ -4,42 +4,32 @@ import * as fsSync from "fs";
 import path from "path";
 import { downloadImageFromUrl } from "./image-migration";
 import { randomUUID } from "crypto";
+import {
+  talentImageStorage,
+  eventImageStorage,
+  itineraryImageStorage,
+  cruiseImageStorage,
+  createCloudinaryStorage
+} from "./cloudinary";
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const imageType = req.body.imageType || 'general';
-    let directory: string;
-
-    switch (imageType) {
-      case 'talent':
-        directory = 'server/public/talent-images';
-        break;
-      case 'event':
-        directory = 'server/public/event-images';
-        break;
-      case 'itinerary':
-        directory = 'server/public/itinerary-images';
-        break;
-      case 'cruise':
-        directory = 'server/public/cruise-images';
-        break;
-      default:
-        directory = 'server/public/uploads';
-    }
-
-    cb(null, directory);
-  },
-  filename: (req, file, cb) => {
-    const imageType = req.body.imageType || 'general';
-    const timestamp = Date.now();
-    const uniqueId = randomUUID().substring(0, 8);
-    const extension = path.extname(file.originalname).toLowerCase();
-
-    const filename = `${imageType}-${timestamp}-${uniqueId}${extension}`;
-    cb(null, filename);
+// Get appropriate Cloudinary storage based on image type
+function getCloudinaryStorage(imageType: string) {
+  switch (imageType) {
+    case 'talent':
+      return talentImageStorage;
+    case 'event':
+      return eventImageStorage;
+    case 'itinerary':
+      return itineraryImageStorage;
+    case 'cruise':
+      return cruiseImageStorage;
+    default:
+      return createCloudinaryStorage('general');
   }
-});
+}
+
+// Configure multer for Cloudinary uploads
+const storage = multer.memoryStorage(); // Use memory storage for Cloudinary
 
 // File filter for images only
 const fileFilter = (req: any, file: any, cb: any) => {
@@ -58,7 +48,8 @@ const fileFilter = (req: any, file: any, cb: any) => {
   }
 };
 
-export const upload = multer({
+// Create a base multer instance for memory storage
+const baseUpload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
@@ -66,8 +57,41 @@ export const upload = multer({
   }
 });
 
-// Get public URL for uploaded image
+// Export the upload middleware - we'll handle Cloudinary in routes
+export const upload = baseUpload;
+
+// Upload image to Cloudinary
+export async function uploadToCloudinary(file: Express.Multer.File, imageType: string): Promise<string> {
+  const { cloudinary } = await import('./cloudinary');
+
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        folder: `cruise-app/${imageType}`,
+        resource_type: 'auto',
+        transformation: [
+          { width: 1200, height: 1200, crop: 'limit', quality: 'auto' }
+        ]
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result!.secure_url);
+        }
+      }
+    ).end(file.buffer);
+  });
+}
+
+// Get public URL for uploaded image (now returns Cloudinary URLs)
 export function getPublicImageUrl(imageType: string, filename: string): string {
+  // For backward compatibility, but new uploads will return full Cloudinary URLs
+  if (filename.startsWith('http')) {
+    return filename; // Already a full URL
+  }
+
+  // Legacy local file URLs (for migration period)
   switch (imageType) {
     case 'talent':
       return `/talent-images/${filename}`;

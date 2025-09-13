@@ -268,7 +268,7 @@ export default function TripDetailsTab({
                     <SelectValue placeholder="Select trip type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tripTypes?.map(type => (
+                    {tripTypes?.map((type: any) => (
                       <SelectItem key={type.key} value={type.key}>
                         <div className="flex items-center space-x-2">
                           <span>{type.label}</span>
@@ -342,7 +342,7 @@ export default function TripDetailsTab({
             </div>
 
             <ImageUpload
-              imageType="trip"
+              imageType="cruise"
               currentImageUrl={watch('heroImageUrl') || ''}
               onImageChange={(imageUrl) => {
                 setValue('heroImageUrl', imageUrl || '', { shouldDirty: true });

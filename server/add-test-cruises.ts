@@ -1,5 +1,6 @@
 
 import { db, cruises } from './storage';
+import { eq } from 'drizzle-orm';
 
 /**
  * Script to add test cruises for UI testing purposes
@@ -91,7 +92,7 @@ async function addTestCruises() {
 
     for (const cruise of testCruises) {
       // Check if cruise already exists
-      const existingCruise = await db.select().from(cruises).where(eq => eq.slug === cruise.slug);
+      const existingCruise = await db.select().from(cruises).where(eq(cruises.slug, cruise.slug));
       
       if (existingCruise.length === 0) {
         console.log(`➕ Adding test cruise: ${cruise.name}`);

@@ -674,11 +674,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Rest of the component logic remains the same but with trip terminology
   const toggleDayCollapse = (dateKey: string) => {
-    setCollapsedDays(prev => 
-      prev.includes(dateKey) 
-        ? prev.filter(d => d !== dateKey)
-        : [...prev, dateKey]
-    );
+    const newCollapsedDays = collapsedDays.includes(dateKey)
+      ? collapsedDays.filter((d: string) => d !== dateKey)
+      : [...collapsedDays, dateKey];
+    setCollapsedDays(newCollapsedDays);
   };
 
   const handleTalentClick = (name: string) => {

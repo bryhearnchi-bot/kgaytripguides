@@ -1,4 +1,4 @@
-import { db, cruises, itinerary, events, talent, cruiseTalent } from './storage';
+import { db, cruises, itinerary, events, talent } from './storage';
 import { eq } from 'drizzle-orm';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../client/src/data/mock-data';
@@ -110,15 +110,6 @@ async function seedDatabase() {
       }).returning();
       
       talentMap.set(t.name, talentRecord.id);
-
-      // Link talent to cruise
-      await db.insert(cruiseTalent).values({
-        cruiseId: cruise.id,
-        talentId: talentRecord.id,
-        role: t.cat === 'Broadway' ? 'Headliner' : 
-              t.cat === 'Drag' ? 'Special Guest' : 
-              t.cat === 'Comedy' ? 'Host' : 'Performer'
-      });
     }
 
     // Seed events

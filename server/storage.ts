@@ -1,10 +1,11 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { config } from 'dotenv';
 import { eq, and, desc, asc, ilike, or } from 'drizzle-orm';
-import * as schema from '../shared/schema';
-import type { 
-  User, 
-  InsertUser, 
+
+// Load environment variables
+config();
+import type {
+  User,
+  InsertUser,
   Trip,
   Cruise, // Backward compatibility
   Itinerary,
@@ -18,24 +19,37 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
 }
 
-const queryClient = neon(process.env.DATABASE_URL);
-export const db = drizzle(queryClient, { schema });
+// Dynamic database connection based on DATABASE_URL
+let db: any;
+let schema: any;
+
+if (process.env.DATABASE_URL.startsWith('file:')) {
+  // Local SQLite
+  const { drizzle } = await import('drizzle-orm/better-sqlite3');
+  const Database = (await import('better-sqlite3')).default;
+  schema = await import('../shared/schema-sqlite');
+  const sqlite = new Database(process.env.DATABASE_URL.replace('file:', ''));
+  db = drizzle(sqlite, { schema });
+} else {
+  // Neon PostgreSQL
+  const { drizzle } = await import('drizzle-orm/neon-http');
+  const { neon } = await import('@neondatabase/serverless');
+  schema = await import('../shared/schema');
+  const queryClient = neon(process.env.DATABASE_URL);
+  db = drizzle(queryClient, { schema });
+}
+
+export { db };
 
 // Export all schema tables for easy access
 export const {
   users,
   trips,
-  cruises, // Backward compatibility alias
+  cruises,
   itinerary,
   events,
   talent,
-  tripTalent,
-  cruiseTalent, // Backward compatibility alias
-  media,
-  userTrips,
-  userCruises, // Backward compatibility alias
-  auditLog,
-  settings,
+  media
 } = schema;
 
 // ============ USER OPERATIONS ============
@@ -220,10 +234,20 @@ export interface IItineraryStorage {
 
 export class ItineraryStorage implements IItineraryStorage {
   async getItineraryByCruise(cruiseId: number): Promise<Itinerary[]> {
-    return await db.select()
-      .from(itinerary)
-      .where(eq(itinerary.cruiseId, cruiseId))
-      .orderBy(asc(itinerary.orderIndex));
+    // Handle both PostgreSQL and SQLite schemas
+    if (process.env.DATABASE_URL.startsWith('file:')) {
+      // SQLite schema uses tripId and day for ordering
+      return await db.select()
+        .from(itinerary)
+        .where(eq(itinerary.tripId, cruiseId))
+        .orderBy(asc(itinerary.day));
+    } else {
+      // PostgreSQL schema uses cruiseId and orderIndex
+      return await db.select()
+        .from(itinerary)
+        .where(eq(itinerary.cruiseId, cruiseId))
+        .orderBy(asc(itinerary.orderIndex));
+    }
   }
 
   async createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary> {
@@ -288,10 +312,20 @@ export interface IEventStorage {
 
 export class EventStorage implements IEventStorage {
   async getEventsByCruise(cruiseId: number): Promise<Event[]> {
-    return await db.select()
-      .from(events)
-      .where(eq(events.cruiseId, cruiseId))
-      .orderBy(asc(events.date), asc(events.time));
+    // Handle both PostgreSQL and SQLite schemas
+    if (process.env.DATABASE_URL.startsWith('file:')) {
+      // SQLite schema uses tripId
+      return await db.select()
+        .from(events)
+        .where(eq(events.tripId, cruiseId))
+        .orderBy(asc(events.date), asc(events.startTime));
+    } else {
+      // PostgreSQL schema uses cruiseId
+      return await db.select()
+        .from(events)
+        .where(eq(events.cruiseId, cruiseId))
+        .orderBy(asc(events.date), asc(events.time));
+    }
   }
 
   async getEventsByDate(cruiseId: number, date: Date): Promise<Event[]> {
@@ -350,12 +384,11 @@ export class TalentStorage implements ITalentStorage {
   }
 
   async getTalentByCruise(cruiseId: number): Promise<Talent[]> {
+    // For simplified schema, return all talent (no cruise-talent relationship table)
     const result = await db.select()
       .from(talent)
-      .innerJoin(cruiseTalent, eq(talent.id, cruiseTalent.talentId))
-      .where(eq(cruiseTalent.cruiseId, cruiseId))
       .orderBy(asc(talent.name));
-    return result.map(r => r.talent);
+    return result;
   }
 
   async searchTalent(search?: string, performanceType?: string): Promise<Talent[]> {

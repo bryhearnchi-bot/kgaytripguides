@@ -17,7 +17,8 @@ import { db } from "./storage";
 import { partyTemplates, cruiseInfoSections } from "../shared/schema";
 import { eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
-import { upload, getPublicImageUrl, deleteImage, isValidImageUrl } from "./image-utils";
+import path from "path";
+import { upload, getPublicImageUrl, deleteImage, isValidImageUrl, uploadToCloudinary } from "./image-utils";
 import { downloadImageFromUrl } from "./image-migration";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -69,16 +70,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ error: 'No image file provided' });
       }
-      
+
       const imageType = req.params.type;
-      const publicUrl = getPublicImageUrl(imageType, req.file.filename);
-      
+
+      // Upload to Cloudinary
+      const cloudinaryUrl = await uploadToCloudinary(req.file, imageType);
+
       res.json({
         success: true,
-        imageUrl: publicUrl,
-        filename: req.file.filename,
+        imageUrl: cloudinaryUrl,
+        filename: path.basename(cloudinaryUrl),
         originalName: req.file.originalname,
-        size: req.file.size
+        size: req.file.size,
+        cloudinaryUrl: cloudinaryUrl
       });
     } catch (error) {
       console.error('Image upload error:', error);

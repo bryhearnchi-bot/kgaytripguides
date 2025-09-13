@@ -1,7 +1,7 @@
 import * as argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
-import { storage, db, auditLog as auditLogTable } from './storage';
+import { storage, db } from './storage';
 import type { User } from '@shared/schema';
 
 // JWT secret - in production this should come from environment variables
@@ -114,21 +114,22 @@ export const requireMediaManager = composeAuth(requireRole(['super_admin', 'trip
 // Backward compatibility alias
 export const requireCruiseAdmin = requireTripAdmin;
 
-// Audit logging middleware
+// Audit logging middleware (disabled for simplified schema)
 export async function auditLog(action: string, tableName: string, recordId?: string, oldValues?: any, newValues?: any) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      if (req.user) {
-        await db.insert(auditLogTable).values({
-          userId: req.user.id,
-          action,
-          tableName,
-          recordId: recordId?.toString(),
-          oldValues,
-          newValues,
-          ipAddress: req.ip || req.connection.remoteAddress,
-        });
-      }
+      // TODO: Re-enable when audit log table is added back
+      // if (req.user) {
+      //   await db.insert(auditLogTable).values({
+      //     userId: req.user.id,
+      //     action,
+      //     tableName,
+      //     recordId: recordId?.toString(),
+      //     oldValues,
+      //     newValues,
+      //     ipAddress: req.ip || req.connection.remoteAddress,
+      //   });
+      // }
     } catch (error) {
       console.error('Audit logging failed:', error);
       // Don't fail the request if audit logging fails

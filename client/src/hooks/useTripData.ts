@@ -8,51 +8,49 @@ export interface TripData {
     id: number;
     name: string;
     slug: string;
-    shipName: string;
-    cruiseLine: string;
     startDate: string;
     endDate: string;
     status: string;
     heroImageUrl: string | null;
     description: string | null;
-    highlights: any;
-    includesInfo: any;
-    pricing: any;
+    shortDescription: string | null;
+    featured: boolean;
   };
   itinerary: Array<{
     id: number;
-    tripId: number;
+    cruiseId: number;
     date: string;
     day: number;
     portName: string;
     country: string | null;
     arrivalTime: string | null;
     departureTime: string | null;
-    allAboardTime: string | null;
+    allAboardTime?: string | null;
     portImageUrl: string | null;
     description: string | null;
-    highlights: any;
+    highlights?: any;
     orderIndex: number;
+    segment?: string;
   }>;
   events: Array<{
     id: number;
-    tripId: number;
+    cruiseId: number;
     date: string;
     time: string;
     title: string;
     type: string;
     venue: string;
-    deck: string | null;
+    deck?: string | null;
     description: string | null;
-    shortDescription: string | null;
-    imageUrl: string | null;
-    themeDescription: string | null;
-    dressCode: string | null;
-    capacity: number | null;
-    requiresReservation: boolean;
-    talentIds: any;
-    createdAt: string;
-    updatedAt: string;
+    shortDescription?: string | null;
+    imageUrl?: string | null;
+    themeDescription?: string | null;
+    dressCode?: string | null;
+    capacity?: number | null;
+    requiresReservation?: boolean;
+    talentIds?: any;
+    createdAt?: string;
+    updatedAt?: string;
   }>;
   talent: Array<{
     id: number;
@@ -61,10 +59,10 @@ export interface TripData {
     bio: string | null;
     knownFor: string | null;
     profileImageUrl: string | null;
-    socialLinks: any;
-    website: string | null;
-    createdAt: string;
-    updatedAt: string;
+    socialLinks?: any;
+    website?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
   }>;
 }
 
@@ -78,8 +76,7 @@ export function transformTripData(data: TripData) {
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
-    // Normalize image URL field - check all possible variations and ensure leading slash
-    imageUrl: stop.portImageUrl || (stop as any).port_image_url || null,
+    imageUrl: stop.portImageUrl,
     description: stop.description,
     highlights: stop.highlights
   }));
@@ -188,8 +185,8 @@ export function transformTripData(data: TripData) {
 
   const tripInfo = {
     ship: {
-      name: data.trip.shipName,
-      line: data.trip.cruiseLine,
+      name: "Resilient Lady", // Default ship for now
+      line: "Virgin Voyages", // Default cruise line for now
       capacity: "2,770 guests",
       crew: "1,160 crew members",
       tonnage: "110,000 gross tons",
