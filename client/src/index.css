@@ -14,13 +14,27 @@
     margin: 0 !important;
     padding: 0 !important;
     height: 100%;
+    overflow-x: hidden;
   }
 
   #root {
     margin: 0 !important;
     padding: 0 !important;
     min-height: 100vh;
+    position: relative;
   }
+}
+
+/* Force remove any top spacing */
+body {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Override any browser default margins */
+html {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 :root {

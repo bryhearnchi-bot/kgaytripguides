@@ -5,7 +5,15 @@ import TimeFormatToggle from "@/components/TimeFormatToggle";
 
 export default function NavigationBanner() {
   return (
-    <div className="bg-ocean-900 text-white py-2 px-4 shadow-lg fixed top-0 left-0 right-0 z-50 m-0">
+    <div className="bg-ocean-900 text-white shadow-lg fixed z-50 w-full" style={{
+      position: 'fixed',
+      top: '-2px',
+      left: '0px',
+      right: '0px',
+      padding: '8px 16px',
+      border: 'none',
+      outline: 'none'
+    }}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/">
