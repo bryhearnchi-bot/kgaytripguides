@@ -592,7 +592,7 @@ interface TripGuideProps {
 
 export default function TripGuide({ slug }: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
-  const [activeTab, setActiveTab] = useState("schedule");
+  const [activeTab, setActiveTab] = useState("itinerary");
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -620,6 +620,18 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const IMPORTANT_INFO = isGreekCruise ? (data?.IMPORTANT_INFO || {}) : {};
   const TRIP_INFO = data?.TRIP_INFO || {};
 
+  // Sort party themes - prioritize those with time info, then alphabetically
+  const sortedPartyThemes = PARTY_THEMES.sort((a, b) => {
+    const aHasTime = a.desc.includes('12:30am') || a.desc.includes('afternoon') || a.desc.includes('T-Dance');
+    const bHasTime = b.desc.includes('12:30am') || b.desc.includes('afternoon') || b.desc.includes('T-Dance');
+    
+    if (aHasTime && !bHasTime) return -1;
+    if (!aHasTime && bHasTime) return 1;
+    
+    // Secondary sort by name
+    return a.key.localeCompare(b.key);
+  });
+
   // Rest of the component logic remains the same but with trip terminology
   const toggleDayCollapse = (dateKey: string) => {
     setCollapsedDays((prev: string[]) => 
@@ -642,6 +654,18 @@ export default function TripGuide({ slug }: TripGuideProps) {
     talent.cat.toLowerCase().includes(searchQuery.toLowerCase()) ||
     talent.knownFor.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Group talent by category
+  const talentByCategory = filteredTalent.reduce((acc, talent) => {
+    const category = talent.cat || 'Other';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(talent);
+    return acc;
+  }, {} as Record<string, typeof filteredTalent>);
+
+  const sortedCategories = Object.keys(talentByCategory).sort();
 
   if (isLoading) {
     return (
@@ -720,13 +744,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full justify-start bg-white border-b rounded-none p-0 h-auto overflow-x-auto">
-              <TabsTrigger value="schedule" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <CalendarDays className="w-4 h-4 mr-2" />
-                Daily Schedule
-              </TabsTrigger>
               <TabsTrigger value="itinerary" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
                 <Map className="w-4 h-4 mr-2" />
                 Itinerary
+              </TabsTrigger>
+              <TabsTrigger value="schedule" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
+                <CalendarDays className="w-4 h-4 mr-2" />
+                Daily Schedule
               </TabsTrigger>
               <TabsTrigger value="talent" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
                 <Star className="w-4 h-4 mr-2" />
@@ -960,45 +984,57 @@ export default function TripGuide({ slug }: TripGuideProps) {
                   </div>
                 </div>
 
-                {/* Talent Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTalent.map((talent, index) => (
-                    <motion.div
-                      key={talent.name}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                    >
-                      <Card 
-                        className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white border border-gray-200"
-                        onClick={() => handleTalentClick(talent.name)}
-                      >
-                        <div className="p-0">
-                          <div className="relative h-48 overflow-hidden rounded-t-lg">
-                            <img 
-                              src={talent.img} 
-                              alt={talent.name}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              onError={(e) => {
-                                e.currentTarget.src = "/images/talent/default-performer.jpg";
-                              }}
-                            />
-                            <div className="absolute top-2 right-2">
-                              <Badge variant="secondary" className="bg-white/90 text-gray-700 border-white/50">
-                                {talent.cat}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <h3 className="font-bold text-lg text-gray-900 mb-1">{talent.name}</h3>
-                            <p className="text-sm text-ocean-600 mb-2">{(talent as any).role || talent.knownFor}</p>
-                            <p className="text-sm text-gray-600 line-clamp-2">{talent.bio}</p>
-                          </div>
+                {/* Talent by Category */}
+                {sortedCategories.length > 0 ? (
+                  <div className="space-y-8">
+                    {sortedCategories.map((category) => (
+                      <div key={category} className="bg-white rounded-lg p-6 shadow-sm">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                          <Star className="w-5 h-5 mr-2 text-ocean-600" />
+                          {category} ({talentByCategory[category].length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {talentByCategory[category].map((talent, index) => (
+                            <motion.div
+                              key={talent.name}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.05 }}
+                            >
+                              <Card 
+                                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white border border-gray-200"
+                                onClick={() => handleTalentClick(talent.name)}
+                              >
+                                <div className="p-0">
+                                  <div className="relative h-48 overflow-hidden rounded-t-lg">
+                                    <img 
+                                      src={talent.img} 
+                                      alt={talent.name}
+                                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                                      onError={(e) => {
+                                        e.currentTarget.src = "/images/talent/default-performer.jpg";
+                                      }}
+                                    />
+                                    <div className="absolute top-2 right-2">
+                                      <Badge variant="secondary" className="bg-white/90 text-gray-700 border-white/50">
+                                        {talent.cat}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="p-4">
+                                    <h3 className="font-bold text-lg text-gray-900 mb-1">{talent.name}</h3>
+                                    <p className="text-sm text-ocean-600 mb-2">{(talent as any).role || talent.knownFor}</p>
+                                    <p className="text-sm text-gray-600 line-clamp-2">{talent.bio}</p>
+                                  </div>
+                                </div>
+                              </Card>
+                            </motion.div>
+                          ))}
                         </div>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 {filteredTalent.length === 0 && (
                   <div className="text-center py-12">
@@ -1027,7 +1063,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {PARTY_THEMES.map((theme, index) => (
+                      {sortedPartyThemes.map((theme, index) => (
                         <div key={theme.key} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                           <div className="flex items-start space-x-4">
                             <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-sm font-bold px-3 py-1 rounded-full flex-shrink-0">
