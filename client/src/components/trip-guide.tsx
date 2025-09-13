@@ -1142,8 +1142,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             <div className="space-y-4">
                               {dayParties.map(({ theme, schedule }, index) => (
                                 <div key={theme.key} className="flex items-start space-x-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
-                                  <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 mt-1">
-                                    {globalFormatTime(schedule.time, timeFormat)}
+                                  <div className="flex-shrink-0 flex items-center space-x-3">
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-ocean-200 bg-gradient-to-br from-coral to-pink-500 shadow-md">
+                                      {React.cloneElement(getPartyIcon(theme.key), { className: "w-6 h-6 text-white" })}
+                                    </div>
+                                    <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                      {globalFormatTime(schedule.time, timeFormat)}
+                                    </div>
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between mb-2">
