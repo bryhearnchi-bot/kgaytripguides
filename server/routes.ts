@@ -346,6 +346,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get itinerary for a trip (new trip-based API)
+  app.get("/api/trips/:tripId/itinerary", async (req, res) => {
+    try {
+      const itinerary = await itineraryStorage.getItineraryByCruise(parseInt(req.params.tripId));
+      res.json(itinerary);
+    } catch (error) {
+      console.error('Error fetching trip itinerary:', error);
+      res.status(500).json({ error: 'Failed to fetch trip itinerary' });
+    }
+  });
+
   // Add itinerary stop (protected route)
   app.post("/api/cruises/:cruiseId/itinerary", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
