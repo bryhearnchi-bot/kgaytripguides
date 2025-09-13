@@ -744,7 +744,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       {/* Hero Section with Tabs */}
-      <header className="relative overflow-hidden fixed top-10 left-0 right-0 z-40">
+      <header className="relative overflow-hidden fixed top-12 left-0 right-0 z-40">
         <div className="absolute inset-0 h-40">
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20 z-10"></div>
           {tripData?.trip?.heroImageUrl ? (
@@ -762,7 +762,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
           )}
         </div>
         
-        <div className="relative z-20 pt-[15px] pb-[24px]">
+        <div className="relative z-20 h-40 flex items-center justify-center">
           <div className="max-w-7xl mx-auto px-4 py-1">
             <div className="text-center mb-4">
               <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">

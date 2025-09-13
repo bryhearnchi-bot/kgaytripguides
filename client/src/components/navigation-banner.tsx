@@ -7,7 +7,7 @@ export default function NavigationBanner() {
   return (
     <div className="bg-ocean-900 text-white shadow-lg fixed z-50 w-full" style={{
       position: 'fixed',
-      top: '-2px',
+      top: '0px',
       left: '0px',
       right: '0px',
       padding: '8px 16px',
