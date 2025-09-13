@@ -42,7 +42,9 @@ import {
   Youtube, 
   Linkedin, 
   User, 
-  RefreshCw
+  RefreshCw,
+  Lightbulb,
+  UtensilsCrossed
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -589,6 +591,7 @@ interface TripGuideProps {
 }
 
 export default function TripGuide({ slug }: TripGuideProps) {
+  const { timeFormat } = useTimeFormat();
   const [activeTab, setActiveTab] = useState("schedule");
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
@@ -616,9 +619,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Rest of the component logic remains the same but with trip terminology
   const toggleDayCollapse = (dateKey: string) => {
-    setCollapsedDays(prev => 
+    setCollapsedDays((prev: string[]) => 
       prev.includes(dateKey) 
-        ? prev.filter(d => d !== dateKey)
+        ? prev.filter((d: string) => d !== dateKey)
         : [...prev, dateKey]
     );
   };
@@ -730,10 +733,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 <PartyPopper className="w-4 h-4 mr-2" />
                 Parties
               </TabsTrigger>
-              <TabsTrigger value="ports" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <MapPin className="w-4 h-4 mr-2" />
-                Ports
-              </TabsTrigger>
               <TabsTrigger value="info" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
                 <Info className="w-4 h-4 mr-2" />
                 Important Info
@@ -816,7 +815,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             <div className="flex items-center space-x-2">
                               {day.items.length > 0 && (
                                 <span className="text-sm text-gray-500">
-                                  {globalFormatTime(day.items[0].time, 'standard')} - {globalFormatTime(day.items[day.items.length - 1].time, 'standard')}
+                                  {globalFormatTime(day.items[0].time, timeFormat)} - {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
                                 </span>
                               )}
                               {isCollapsed ? (
@@ -989,7 +988,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                           </div>
                           <div className="p-4">
                             <h3 className="font-bold text-lg text-gray-900 mb-1">{talent.name}</h3>
-                            <p className="text-sm text-ocean-600 mb-2">{talent.role || talent.knownFor}</p>
+                            <p className="text-sm text-ocean-600 mb-2">{(talent as any).role || talent.knownFor}</p>
                             <p className="text-sm text-gray-600 line-clamp-2">{talent.bio}</p>
                           </div>
                         </div>
@@ -1008,7 +1007,146 @@ export default function TripGuide({ slug }: TripGuideProps) {
               </div>
             </TabsContent>
 
-            {/* Continue with other tabs... */}
+            {/* Parties Tab */}
+            <TabsContent value="parties" className="bg-gray-50 min-h-screen">
+              <div className="max-w-6xl mx-auto p-4 space-y-6">
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <PartyPopper className="w-6 h-6 text-ocean-600" />
+                    <h2 className="text-2xl font-bold text-gray-900">Party Themes</h2>
+                  </div>
+                  
+                  {PARTY_THEMES.length === 0 ? (
+                    <div className="text-center py-12">
+                      <PartyPopper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No party themes available</h3>
+                      <p className="text-gray-500">Party information will be available soon.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {PARTY_THEMES.map((theme, index) => (
+                        <div key={theme.key} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                          <div className="flex items-start space-x-4">
+                            <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-sm font-bold px-3 py-1 rounded-full flex-shrink-0">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-gray-900 mb-3">{theme.key}</h3>
+                              <p className="text-gray-600 mb-3">{theme.desc}</p>
+                              {theme.shortDesc && (
+                                <p className="text-sm text-ocean-600 font-medium italic">"{theme.shortDesc}"</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Important Info Tab */}
+            <TabsContent value="info" className="bg-gray-50 min-h-screen">
+              <div className="max-w-6xl mx-auto p-4 space-y-6">
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <Info className="w-6 h-6 text-ocean-600" />
+                    <h2 className="text-2xl font-bold text-gray-900">Important Trip Information</h2>
+                  </div>
+                  
+                  {/* Check-In Information */}
+                  {(IMPORTANT_INFO as any).checkIn && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <CalendarDays className="w-5 h-5 mr-2 text-ocean-600" />
+                        Check-In Information
+                      </h3>
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <p><span className="font-medium">Location:</span> {(IMPORTANT_INFO as any).checkIn.location}</p>
+                        <p><span className="font-medium">Address:</span> {(IMPORTANT_INFO as any).checkIn.address}</p>
+                        <p><span className="font-medium">Time:</span> {(IMPORTANT_INFO as any).checkIn.time}</p>
+                        <div>
+                          <span className="font-medium">Required Documents:</span>
+                          <ul className="list-disc list-inside ml-4 mt-1">
+                            {(IMPORTANT_INFO as any).checkIn.documents.map((doc: any, index: number) => (
+                              <li key={index}>{doc}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Departure Information */}
+                  {(IMPORTANT_INFO as any).departure && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Ship className="w-5 h-5 mr-2 text-ocean-600" />
+                        Departure Information
+                      </h3>
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <p><span className="font-medium">Sail Away:</span> {(IMPORTANT_INFO as any).departure.sailAway}</p>
+                        <p><span className="font-medium">All Aboard:</span> {(IMPORTANT_INFO as any).departure.allAboard}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* First Day Tips */}
+                  {(IMPORTANT_INFO as any).firstDayTips && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Lightbulb className="w-5 h-5 mr-2 text-ocean-600" />
+                        First Day Tips
+                      </h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <ul className="space-y-2">
+                          {(IMPORTANT_INFO as any).firstDayTips.map((tip: any, index: number) => (
+                            <li key={index} className="flex items-start">
+                              <span className="bg-ocean-100 text-ocean-700 text-xs font-medium px-2 py-1 rounded mr-3 mt-0.5 flex-shrink-0">
+                                {index + 1}
+                              </span>
+                              <span>{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Entertainment Info */}
+                  {(IMPORTANT_INFO as any).entertainment && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Star className="w-5 h-5 mr-2 text-ocean-600" />
+                        Entertainment Booking
+                      </h3>
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <p><span className="font-medium">Booking Start:</span> {(IMPORTANT_INFO as any).entertainment.bookingStart}</p>
+                        <p><span className="font-medium">Walk-ins:</span> {(IMPORTANT_INFO as any).entertainment.walkIns}</p>
+                        <p><span className="font-medium">Standby Release:</span> {(IMPORTANT_INFO as any).entertainment.standbyRelease}</p>
+                        <p><span className="font-medium">Rockstar Suites:</span> {(IMPORTANT_INFO as any).entertainment.rockstarSuites}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dining Info */}
+                  {(IMPORTANT_INFO as any).dining && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <UtensilsCrossed className="w-5 h-5 mr-2 text-ocean-600" />
+                        Dining Information
+                      </h3>
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <p><span className="font-medium">Reservations:</span> {(IMPORTANT_INFO as any).dining.reservations}</p>
+                        <p><span className="font-medium">Walk-ins:</span> {(IMPORTANT_INFO as any).dining.walkIns}</p>
+                        <p><span className="font-medium">Included:</span> {(IMPORTANT_INFO as any).dining.included}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
@@ -1034,7 +1172,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 <div className="flex-1 text-center sm:text-left">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedTalent.name}</h2>
                   <Badge variant="secondary" className="mb-2">{selectedTalent.cat}</Badge>
-                  <p className="text-ocean-600 font-medium mb-2">{selectedTalent.role || selectedTalent.knownFor}</p>
+                  <p className="text-ocean-600 font-medium mb-2">{(selectedTalent as any).role || selectedTalent.knownFor}</p>
                   <p className="text-gray-700 leading-relaxed">{selectedTalent.bio}</p>
                 </div>
               </div>
