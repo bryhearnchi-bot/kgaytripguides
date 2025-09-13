@@ -743,9 +743,25 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-      {/* Header - Identical to Landing Page */}
-      <header className="cruise-gradient wave-pattern text-white fixed top-0 left-0 right-0 z-40 bg-ocean-600 opacity-100 pt-[15px] pb-[24px]">
-        <div className="max-w-7xl mx-auto px-4 py-1">
+      {/* Header with Hero Image Background */}
+      <header className="relative overflow-hidden text-white fixed top-0 left-0 right-0 z-40 pt-[15px] pb-[24px]">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20 z-10"></div>
+          {tripData?.trip?.heroImageUrl ? (
+            <img 
+              src={tripData.trip.heroImageUrl} 
+              alt={tripData.trip.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <img 
+              src="/images/ships/resilient-lady-hero.jpg" 
+              alt="Trip Ship"
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+        <div className="relative z-20 max-w-7xl mx-auto px-4 py-1">
           <div className="text-center mb-4">
             <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
               {tripData?.trip?.name || "Trip Guide"}
