@@ -743,77 +743,80 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-      {/* Hero Section */}
-      <div className="relative h-96 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20 z-10"></div>
-        {tripData?.trip?.heroImageUrl ? (
-          <img 
-            src={tripData.trip.heroImageUrl} 
-            alt={tripData.trip.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <img 
-            src="/images/ships/resilient-lady-hero.jpg" 
-            alt="Trip Ship"
-            className="w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute inset-0 z-20 flex items-center justify-center text-center">
-          <div className="max-w-4xl px-4">
-            <h1 className="text-3xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">
-              {tripData?.trip?.name || "Trip Guide"}
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-2 drop-shadow">
-              {tripData?.trip?.shipName && tripData?.trip?.cruiseLine 
-                ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
-                : "Your Adventure Awaits"
-              }
-            </p>
-            {tripData?.trip?.startDate && tripData?.trip?.endDate && (
-              <p className="text-lg text-white/80 drop-shadow">
-                {format(new Date(tripData.trip.startDate), 'MMMM d')} - {format(new Date(tripData.trip.endDate), 'MMMM d, yyyy')}
+      {/* Hero Section with Tabs */}
+      <header className="relative overflow-hidden fixed top-14 left-0 right-0 z-40">
+        <div className="absolute inset-0 h-40">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20 z-10"></div>
+          {tripData?.trip?.heroImageUrl ? (
+            <img 
+              src={tripData.trip.heroImageUrl} 
+              alt={tripData.trip.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <img 
+              src="/images/ships/resilient-lady-hero.jpg" 
+              alt="Trip Ship"
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+        
+        <div className="relative z-20 pt-[15px] pb-[24px]">
+          <div className="max-w-7xl mx-auto px-4 py-1">
+            <div className="text-center mb-4">
+              <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
+                {tripData?.trip?.name || "Trip Guide"}
+              </h1>
+              <p className="text-white/80 text-base">
+                {tripData?.trip?.shipName && tripData?.trip?.cruiseLine 
+                  ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
+                  : "Your Adventure Awaits"
+                }
               </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="cruise-gradient wave-pattern text-white sticky top-14 z-30 bg-ocean-600 pt-4 pb-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-center">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="itinerary" className="flex items-center gap-2">
-                    <Map className="w-4 h-4" />
-                    <span className="hidden sm:inline">Itinerary</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="schedule" className="flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4" />
-                    <span className="hidden sm:inline">Schedule</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="talent" className="flex items-center gap-2">
-                    <Star className="w-4 h-4" />
-                    <span className="hidden sm:inline">Talent</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="parties" className="flex items-center gap-2">
-                    <PartyPopper className="w-4 h-4" />
-                    <span className="hidden sm:inline">Parties</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="info" className="flex items-center gap-2">
-                    <Info className="w-4 h-4" />
-                    <span className="hidden sm:inline">Info</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {tripData?.trip?.startDate && tripData?.trip?.endDate && (
+                <div className="flex items-center justify-center gap-4 mt-2">
+                  <p className="text-white/60 text-xs">
+                    {format(new Date(tripData.trip.startDate), 'MMMM d')} - {format(new Date(tripData.trip.endDate), 'MMMM d, yyyy')}
+                  </p>
+                </div>
+              )}
             </div>
+            
+            {/* Navigation Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <div className="flex justify-center">
+                <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
+                  <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="itinerary" className="flex items-center gap-2">
+                      <Map className="w-4 h-4" />
+                      <span className="hidden sm:inline">Itinerary</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="schedule" className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4" />
+                      <span className="hidden sm:inline">Schedule</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="talent" className="flex items-center gap-2">
+                      <Star className="w-4 h-4" />
+                      <span className="hidden sm:inline">Talent</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="parties" className="flex items-center gap-2">
+                      <PartyPopper className="w-4 h-4" />
+                      <span className="hidden sm:inline">Parties</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="info" className="flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      <span className="hidden sm:inline">Info</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
+            </Tabs>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-gray-50 min-h-screen pt-56">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
