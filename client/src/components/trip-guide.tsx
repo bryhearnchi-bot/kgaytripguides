@@ -612,9 +612,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const ITINERARY = data?.ITINERARY || [];
   const DAILY = data?.DAILY || [];
   const TALENT = data?.TALENT || [];
-  const PARTY_THEMES = data?.PARTY_THEMES || [];
+  
+  // Only show party themes and important info for Greek cruise
+  const isGreekCruise = slug === 'greek-isles-2025';
+  const PARTY_THEMES = isGreekCruise ? (data?.PARTY_THEMES || []) : [];
   const CITY_ATTRACTIONS = data?.CITY_ATTRACTIONS || [];
-  const IMPORTANT_INFO = data?.IMPORTANT_INFO || {};
+  const IMPORTANT_INFO = isGreekCruise ? (data?.IMPORTANT_INFO || {}) : {};
   const TRIP_INFO = data?.TRIP_INFO || {};
 
   // Rest of the component logic remains the same but with trip terminology
