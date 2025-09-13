@@ -979,11 +979,11 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 return '/images/ships/resilient-lady-hero.jpg';
                               })()}
                               alt={stop.port}
-                              className="w-full h-full object-cover object-center min-w-full min-h-full"
+                              className="w-full h-full object-cover min-w-full min-h-full"
                               style={{ 
                                 width: '192px', 
                                 height: '128px',
-                                objectFit: 'cover',
+                                objectFit: stop.port.includes('Day at Sea') ? 'fill' : 'cover',
                                 objectPosition: 'center'
                               }}
                               onError={(e) => {
