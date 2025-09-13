@@ -979,7 +979,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 return '/images/ships/resilient-lady-hero.jpg';
                               })()}
                               alt={stop.port}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover object-center"
                               onError={(e) => {
                                 e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
                               }}
