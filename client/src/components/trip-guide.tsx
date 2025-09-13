@@ -962,9 +962,22 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 ) : (
                   <div className="space-y-4">
                     {ITINERARY.map((stop, index) => (
-                      <div key={stop.key} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                      <div key={stop.key} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="flex">
+                          {/* Hero Image */}
+                          <div className="w-48 h-32 flex-shrink-0">
+                            <img 
+                              src={`/images/ports/${stop.port.toLowerCase().replace(/\s+/g, '-')}.jpg`}
+                              alt={stop.port}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
+                              }}
+                            />
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 p-4">
                             <div className="flex items-center space-x-3 mb-3">
                               <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full">
                                 {new Date(stop.date).toLocaleDateString('en-US', { 
@@ -976,7 +989,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                               <h3 className="text-lg font-semibold text-gray-900">{stop.port}</h3>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                               <div>
                                 <span className="font-medium text-gray-700">Arrive:</span>
                                 <p className="text-gray-600">{stop.arrive}</p>
@@ -992,22 +1005,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             </div>
                             
                             {stop.description && (
-                              <p className="text-gray-600 mt-3">{stop.description}</p>
+                              <p className="text-gray-600 text-sm">{stop.description}</p>
                             )}
                           </div>
-                          
-                          {stop.imageUrl && (
-                            <div className="ml-4">
-                              <img 
-                                src={stop.imageUrl} 
-                                alt={stop.port}
-                                className="w-20 h-20 object-cover rounded-lg"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}
