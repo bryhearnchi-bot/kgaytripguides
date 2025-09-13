@@ -953,70 +953,63 @@ export default function TripGuide({ slug }: TripGuideProps) {
             {/* Itinerary Tab */}
             <TabsContent value="itinerary" className="min-h-screen">
               <div className="max-w-6xl mx-auto p-4 space-y-6">
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <Map className="w-6 h-6 text-ocean-600" />
-                    <h2 className="text-2xl font-bold text-gray-900">Trip Itinerary</h2>
+                {ITINERARY.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No itinerary available</h3>
+                    <p className="text-gray-500">Itinerary information will be available soon.</p>
                   </div>
-                  
-                  {ITINERARY.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No itinerary available</h3>
-                      <p className="text-gray-500">Itinerary information will be available soon.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {ITINERARY.map((stop, index) => (
-                        <div key={stop.key} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <span className="bg-ocean-100 text-ocean-700 text-sm font-medium px-2 py-1 rounded">
-                                  Day {index + 1}
-                                </span>
-                                <h3 className="text-lg font-semibold text-gray-900">{stop.port}</h3>
+                ) : (
+                  <div className="space-y-4">
+                    {ITINERARY.map((stop, index) => (
+                      <div key={stop.key} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <span className="bg-ocean-100 text-ocean-700 text-sm font-medium px-2 py-1 rounded">
+                                Day {index + 1}
+                              </span>
+                              <h3 className="text-lg font-semibold text-gray-900">{stop.port}</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">{stop.date}</p>
+                            
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-700">Arrive:</span>
+                                <p className="text-gray-600">{stop.arrive}</p>
                               </div>
-                              <p className="text-gray-600 mb-3">{stop.date}</p>
-                              
-                              <div className="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                  <span className="font-medium text-gray-700">Arrive:</span>
-                                  <p className="text-gray-600">{stop.arrive}</p>
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-700">Depart:</span>
-                                  <p className="text-gray-600">{stop.depart}</p>
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-700">All Aboard:</span>
-                                  <p className="text-gray-600">{stop.allAboard || '—'}</p>
-                                </div>
+                              <div>
+                                <span className="font-medium text-gray-700">Depart:</span>
+                                <p className="text-gray-600">{stop.depart}</p>
                               </div>
-                              
-                              {stop.description && (
-                                <p className="text-gray-600 mt-3">{stop.description}</p>
-                              )}
+                              <div>
+                                <span className="font-medium text-gray-700">All Aboard:</span>
+                                <p className="text-gray-600">{stop.allAboard || '—'}</p>
+                              </div>
                             </div>
                             
-                            {stop.imageUrl && (
-                              <div className="ml-4">
-                                <img 
-                                  src={stop.imageUrl} 
-                                  alt={stop.port}
-                                  className="w-20 h-20 object-cover rounded-lg"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              </div>
+                            {stop.description && (
+                              <p className="text-gray-600 mt-3">{stop.description}</p>
                             )}
                           </div>
+                          
+                          {stop.imageUrl && (
+                            <div className="ml-4">
+                              <img 
+                                src={stop.imageUrl} 
+                                alt={stop.port}
+                                className="w-20 h-20 object-cover rounded-lg"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </TabsContent>
             
