@@ -951,7 +951,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             {/* Itinerary Tab */}
-            <TabsContent value="itinerary" className="bg-gray-50 min-h-screen">
+            <TabsContent value="itinerary" className="min-h-screen">
               <div className="max-w-6xl mx-auto p-4 space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <div className="flex items-center space-x-3 mb-6">
@@ -1141,7 +1141,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             
                             <div className="space-y-4">
                               {dayParties.map(({ theme, schedule }, index) => (
-                                <div key={theme.key} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div key={theme.key} className="flex items-start space-x-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
                                   <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 mt-1">
                                     {globalFormatTime(schedule.time, timeFormat)}
                                   </div>
@@ -1185,7 +1185,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         <CalendarDays className="w-5 h-5 mr-2 text-ocean-600" />
                         Check-In Information
                       </h3>
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <div className="bg-white rounded-lg p-4 space-y-2">
                         <p><span className="font-medium">Location:</span> {(IMPORTANT_INFO as any).checkIn.location}</p>
                         <p><span className="font-medium">Address:</span> {(IMPORTANT_INFO as any).checkIn.address}</p>
                         <p><span className="font-medium">Time:</span> {(IMPORTANT_INFO as any).checkIn.time}</p>
@@ -1208,7 +1208,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         <Ship className="w-5 h-5 mr-2 text-ocean-600" />
                         Departure Information
                       </h3>
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <div className="bg-white rounded-lg p-4 space-y-2">
                         <p><span className="font-medium">Sail Away:</span> {(IMPORTANT_INFO as any).departure.sailAway}</p>
                         <p><span className="font-medium">All Aboard:</span> {(IMPORTANT_INFO as any).departure.allAboard}</p>
                       </div>
@@ -1244,7 +1244,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         <Star className="w-5 h-5 mr-2 text-ocean-600" />
                         Entertainment Booking
                       </h3>
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <div className="bg-white rounded-lg p-4 space-y-2">
                         <p><span className="font-medium">Booking Start:</span> {(IMPORTANT_INFO as any).entertainment.bookingStart}</p>
                         <p><span className="font-medium">Walk-ins:</span> {(IMPORTANT_INFO as any).entertainment.walkIns}</p>
                         <p><span className="font-medium">Standby Release:</span> {(IMPORTANT_INFO as any).entertainment.standbyRelease}</p>
@@ -1260,7 +1260,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         <UtensilsCrossed className="w-5 h-5 mr-2 text-ocean-600" />
                         Dining Information
                       </h3>
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <div className="bg-white rounded-lg p-4 space-y-2">
                         <p><span className="font-medium">Reservations:</span> {(IMPORTANT_INFO as any).dining.reservations}</p>
                         <p><span className="font-medium">Walk-ins:</span> {(IMPORTANT_INFO as any).dining.walkIns}</p>
                         <p><span className="font-medium">Included:</span> {(IMPORTANT_INFO as any).dining.included}</p>
