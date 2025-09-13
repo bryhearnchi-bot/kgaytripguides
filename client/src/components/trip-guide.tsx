@@ -674,9 +674,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Rest of the component logic remains the same but with trip terminology
   const toggleDayCollapse = (dateKey: string) => {
-    setCollapsedDays((prev: string[]) => 
+    setCollapsedDays(prev => 
       prev.includes(dateKey) 
-        ? prev.filter((d: string) => d !== dateKey)
+        ? prev.filter(d => d !== dateKey)
         : [...prev, dateKey]
     );
   };
@@ -684,7 +684,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const handleTalentClick = (name: string) => {
     const talent = TALENT.find(t => t.name === name);
     if (talent) {
-      setSelectedTalent(talent);
+      setSelectedTalent({ ...talent, role: talent.knownFor });
       setShowTalentModal(true);
     }
   };
@@ -761,7 +761,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
         )}
         <div className="absolute inset-0 z-20 flex items-center justify-center text-center">
           <div className="max-w-4xl px-4">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+            <h1 className="text-3xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">
               {tripData?.trip?.name || "Trip Guide"}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-2 drop-shadow">
@@ -780,31 +780,42 @@ export default function TripGuide({ slug }: TripGuideProps) {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white shadow-sm sticky top-14 z-30">
+      <div className="cruise-gradient wave-pattern text-white sticky top-14 z-30 bg-ocean-600 pt-4 pb-6">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-center">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-1">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="itinerary" className="flex items-center gap-2">
+                    <Map className="w-4 h-4" />
+                    <span className="hidden sm:inline">Itinerary</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="schedule" className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4" />
+                    <span className="hidden sm:inline">Schedule</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="talent" className="flex items-center gap-2">
+                    <Star className="w-4 h-4" />
+                    <span className="hidden sm:inline">Talent</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="parties" className="flex items-center gap-2">
+                    <PartyPopper className="w-4 h-4" />
+                    <span className="hidden sm:inline">Parties</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="info" className="flex items-center gap-2">
+                    <Info className="w-4 h-4" />
+                    <span className="hidden sm:inline">Info</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-start bg-white border-b rounded-none p-0 h-auto overflow-x-auto">
-              <TabsTrigger value="itinerary" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <Map className="w-4 h-4 mr-2" />
-                Itinerary
-              </TabsTrigger>
-              <TabsTrigger value="schedule" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <CalendarDays className="w-4 h-4 mr-2" />
-                Daily Schedule
-              </TabsTrigger>
-              <TabsTrigger value="talent" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <Star className="w-4 h-4 mr-2" />
-                Talent
-              </TabsTrigger>
-              <TabsTrigger value="parties" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <PartyPopper className="w-4 h-4 mr-2" />
-                Parties
-              </TabsTrigger>
-              <TabsTrigger value="info" className="flex-shrink-0 px-6 py-4 data-[state=active]:bg-ocean-50 data-[state=active]:text-ocean-700">
-                <Info className="w-4 h-4 mr-2" />
-                Important Info
-              </TabsTrigger>
-            </TabsList>
 
             {/* Daily Schedule Tab */}
             <TabsContent value="schedule" className="bg-gray-50 min-h-screen">
