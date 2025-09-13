@@ -820,10 +820,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Daily Schedule Tab */}
             <TabsContent value="schedule" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-4 space-y-6">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
                 {/* Date Filter */}
                 <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center">
                     <div className="flex items-center space-x-2">
                       <CalendarDays className="w-5 h-5 text-ocean-600" />
                       <span className="font-medium text-gray-900">Filter by Date:</span>
@@ -952,7 +952,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Itinerary Tab */}
             <TabsContent value="itinerary" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-4 space-y-6">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
                 {ITINERARY.length === 0 ? (
                   <div className="text-center py-12">
                     <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -960,12 +960,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
                     <p className="text-gray-500">Itinerary information will be available soon.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {ITINERARY.map((stop, index) => (
                       <div key={stop.key} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="flex">
+                        <div className="flex flex-col sm:flex-row">
                           {/* Hero Image */}
-                          <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
+                          <div className="w-full h-48 sm:w-48 sm:h-32 flex-shrink-0 overflow-hidden">
                             <img 
                               src={(() => {
                                 if (stop.port.includes('Santorini')) return '/images/ports/santorini-greece.jpg';
@@ -979,10 +979,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 return '/images/ships/resilient-lady-hero.jpg';
                               })()}
                               alt={stop.port}
-                              className="w-full h-full object-cover min-w-full min-h-full"
+                              className="w-full h-full object-cover"
                               style={{ 
-                                width: '192px', 
-                                height: '128px',
                                 objectFit: stop.port.includes('Day at Sea') ? 'fill' : 'cover',
                                 objectPosition: 'center'
                               }}
@@ -993,30 +991,39 @@ export default function TripGuide({ slug }: TripGuideProps) {
                           </div>
                           
                           {/* Content */}
-                          <div className="flex-1 p-4">
-                            <div className="flex items-center space-x-3 mb-3">
-                              <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full">
-                                {new Date(stop.date).toLocaleDateString('en-US', { 
-                                  weekday: 'long', 
-                                  month: 'long', 
-                                  day: 'numeric' 
-                                })}
+                          <div className="flex-1 p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3">
+                              <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full self-start">
+                                <span className="sm:hidden">
+                                  {new Date(stop.date).toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </span>
+                                <span className="hidden sm:inline">
+                                  {new Date(stop.date).toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                  })}
+                                </span>
                               </div>
-                              <h3 className="text-lg font-semibold text-gray-900">{stop.port}</h3>
+                              <h3 className="text-base sm:text-lg font-semibold text-gray-900">{stop.port}</h3>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-4 text-sm mb-3">
-                              <div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm mb-3">
+                              <div className="flex justify-between sm:block">
                                 <span className="font-medium text-gray-700">Arrive:</span>
-                                <p className="text-gray-600">{stop.arrive}</p>
+                                <p className="text-gray-600 sm:mt-0">{stop.arrive}</p>
                               </div>
-                              <div>
+                              <div className="flex justify-between sm:block">
                                 <span className="font-medium text-gray-700">Depart:</span>
-                                <p className="text-gray-600">{stop.depart}</p>
+                                <p className="text-gray-600 sm:mt-0">{stop.depart}</p>
                               </div>
-                              <div>
+                              <div className="flex justify-between sm:block">
                                 <span className="font-medium text-gray-700">All Aboard:</span>
-                                <p className="text-gray-600">{stop.allAboard || '—'}</p>
+                                <p className="text-gray-600 sm:mt-0">{stop.allAboard || '—'}</p>
                               </div>
                             </div>
                             
@@ -1034,7 +1041,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             
             {/* Talent Tab */}
             <TabsContent value="talent" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-4 space-y-6">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
                 {/* Search */}
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <div className="relative">
@@ -1052,12 +1059,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {sortedCategories.length > 0 ? (
                   <div className="space-y-8">
                     {sortedCategories.map((category) => (
-                      <div key={category} className="bg-white rounded-lg p-6 shadow-sm">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <div key={category} className="bg-white rounded-lg p-3 sm:p-6 shadow-sm">
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                           <Star className="w-5 h-5 mr-2 text-ocean-600" />
                           {category} ({talentByCategory[category].length})
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                           {talentByCategory[category].map((talent, index) => (
                             <motion.div
                               key={talent.name}
@@ -1112,7 +1119,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Parties Tab */}
             <TabsContent value="parties" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-4 space-y-6">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <div className="flex items-center space-x-3 mb-6">
                     <PartyPopper className="w-6 h-6 text-ocean-600" />
@@ -1138,10 +1145,19 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         const itineraryStop = ITINERARY.find(stop => stop.key === dateKey);
                         
                         return (
-                          <div key={dateKey} className="bg-white rounded-lg p-6 shadow-sm">
-                            <div className="flex items-center space-x-3 mb-6">
-                              <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full">
-                                {formattedDate}
+                          <div key={dateKey} className="bg-white rounded-lg p-3 sm:p-6 shadow-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4 sm:mb-6">
+                              <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full self-start">
+                                <span className="sm:hidden">
+                                  {date.toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </span>
+                                <span className="hidden sm:inline">
+                                  {formattedDate}
+                                </span>
                               </div>
                               {itineraryStop && (
                                 <div className="text-gray-600 text-sm">
@@ -1153,8 +1169,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             
                             <div className="space-y-4">
                               {dayParties.map(({ theme, schedule }, index) => (
-                                <div key={theme.key} className="flex items-start space-x-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
-                                  <div className="flex-shrink-0 flex items-center space-x-3">
+                                <div key={theme.key} className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                                  <div className="flex-shrink-0 flex items-center space-x-3 justify-start sm:justify-start">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-ocean-200 bg-gradient-to-br from-coral to-pink-500 shadow-md">
                                       {React.cloneElement(getPartyIcon(theme.key), { className: "w-6 h-6 text-white" })}
                                     </div>
@@ -1188,7 +1204,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Important Info Tab */}
             <TabsContent value="info" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-4 space-y-6">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <div className="flex items-center space-x-3 mb-6">
                     <Info className="w-6 h-6 text-ocean-600" />
