@@ -44,8 +44,10 @@ function App() {
         <TimeFormatProvider>
           <TooltipProvider>
             <NavigationBanner />
-            <Toaster />
-            <Router />
+            <div className="pt-14"> {/* Add padding to account for fixed banner */}
+              <Toaster />
+              <Router />
+            </div>
           </TooltipProvider>
         </TimeFormatProvider>
       </AuthProvider>
