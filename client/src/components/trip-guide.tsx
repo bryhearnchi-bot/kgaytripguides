@@ -981,7 +981,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                               alt={stop.port}
                               className={`w-full h-full object-cover ${
                                 stop.port.includes('Day at Sea') 
-                                  ? 'object-bottom' // For ocean images, show the horizon/water
+                                  ? 'object-center' // For cruise ship wake, show the center with deck and wake
                                   : 'object-center' // For city/landmark images, show the center
                               }`}
                               onError={(e) => {
