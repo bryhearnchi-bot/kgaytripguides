@@ -13,7 +13,7 @@
   command = "npm install && npm run build:netlify"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "20.11.0"
 
 [[redirects]]
   from = "/api/trips/*/complete"
