@@ -63,6 +63,23 @@ export default async function handler(req, res) {
     }
   }
 
+  // Basic itinerary endpoint
+  if (req.url.startsWith('/api/itinerary/') && req.method === 'GET') {
+    try {
+      const cruiseId = req.url.split('/api/itinerary/')[1];
+      const { neon } = await import('@neondatabase/serverless');
+      const client = neon(process.env.DATABASE_URL);
+      const itinerary = await client`SELECT * FROM itinerary WHERE "cruiseId" = ${cruiseId} ORDER BY day`;
+      return res.json(itinerary);
+    } catch (error) {
+      return res.status(500).json({
+        error: 'Failed to fetch itinerary',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   // 404 for unmatched routes
   return res.status(404).json({
     error: 'Route not found',

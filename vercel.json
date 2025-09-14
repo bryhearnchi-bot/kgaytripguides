@@ -4,7 +4,8 @@
   "outputDirectory": "dist/public",
   "functions": {
     "api/simple.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 128
     }
   },
   "rewrites": [

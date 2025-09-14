@@ -8,7 +8,7 @@
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "build:deploy": "npm run build && npm run db:push:conditional",
     "build:netlify": "npm run build && node scripts/deploy-db-migration.js && npm run db:push:conditional",
-    "build:vercel": "npm run build",
+    "build:vercel": "vite build",
     "build:preview": "npm run build",
     "db:push:conditional": "if [ \"$CONTEXT\" = \"production\" ]; then npm run db:push; else echo 'Skipping database migration - not in production context'; fi",
     "start": "NODE_ENV=production node dist/index.js",
