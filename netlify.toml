@@ -14,6 +14,7 @@
 
 [build.environment]
   NODE_VERSION = "20.11.0"
+  SECRETS_SCAN_ENABLED = "false"
 
 [[redirects]]
   from = "/api/trips/*/complete"
