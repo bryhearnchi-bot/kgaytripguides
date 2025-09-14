@@ -3,9 +3,6 @@
   functions = "netlify/functions"
   command = "npm install && npm run build:netlify"
 
-[functions]
-  node_bundler = "esbuild"
-  external_node_modules = ["@neondatabase/serverless"]
 
 [context.production]
   command = "npm install && npm run build:netlify"
@@ -17,27 +14,12 @@
   command = "npm install && npm run build:netlify"
 
 [build.environment]
-  NODE_VERSION = "20.11.0"
+  NODE_VERSION = "18"
   SECRETS_SCAN_ENABLED = "false"
 
 [[redirects]]
-  from = "/api/test"
-  to = "/.netlify/functions/test"
-  status = 200
-
-[[redirects]]
-  from = "/api/trips"
-  to = "/.netlify/functions/trips-simple"
-  status = 200
-
-[[redirects]]
-  from = "/api/trips/*/complete"
-  to = "/.netlify/functions/trips-complete"
-  status = 200
-
-[[redirects]]
-  from = "/api/health"
-  to = "/.netlify/functions/health"
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 [[redirects]]
