@@ -603,6 +603,11 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
 
+  // Scroll to top when slug changes (navigating between different trips)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [slug]);
+
   // Use the trip data hook
   const { data: tripData, isLoading, error } = useTripData(slug);
 
