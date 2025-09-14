@@ -5,12 +5,23 @@ const sql = neon(process.env.DATABASE_URL);
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Content-Type': 'application/json',
   };
 
+  // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
+  }
+
+  // Only allow GET requests for this endpoint
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
@@ -132,10 +143,39 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Function error:', error);
+
+    // Handle database connection errors specifically
+    if (error.message.includes('relation') && error.message.includes('does not exist')) {
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({
+          error: 'Database unavailable',
+          message: 'Database schema not found. Please check database setup.'
+        })
+      };
+    }
+
+    // Handle network/connection errors
+    if (error.message.includes('connect') || error.message.includes('network')) {
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({
+          error: 'Service unavailable',
+          message: 'Unable to connect to database. Please try again later.'
+        })
+      };
+    }
+
+    // Generic server error
     return {
       statusCode: 500,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Internal server error', details: error.message })
+      headers,
+      body: JSON.stringify({
+        error: 'Internal server error',
+        message: 'An unexpected error occurred.'
+      })
     };
   }
 };
