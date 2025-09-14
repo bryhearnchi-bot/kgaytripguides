@@ -1,19 +1,35 @@
 [build]
   publish = "dist/public"
-  command = "npm install && npm run build:netlify"
+  functions = "netlify/functions"
+  command = "npm install && npm run build:frontend-only"
 
 [context.production]
-  command = "npm install && npm run build:netlify"
+  command = "npm install && npm run build:frontend-only"
 
 [context.deploy-preview]
-  command = "npm install && npm run build:preview"
+  command = "npm install && npm run build:frontend-only"
 
 [context.branch-deploy]
-  command = "npm install && npm run build:preview"
+  command = "npm install && npm run build:frontend-only"
 
 [build.environment]
   NODE_VERSION = "20"
   NPM_VERSION = "10"
+
+[[redirects]]
+  from = "/api/trips/*/complete"
+  to = "/.netlify/functions/trips-complete"
+  status = 200
+
+[[redirects]]
+  from = "/api/trips"
+  to = "/.netlify/functions/trips"
+  status = 200
+
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
 
 [[redirects]]
   from = "/*"
