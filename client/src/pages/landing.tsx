@@ -140,14 +140,10 @@ export default function LandingPage() {
   // Set default filter when data loads
   React.useEffect(() => {
     if (trips && !hasSetDefault) {
-      if (hasCurrent) {
-        setActiveFilter('current');
-      } else {
-        setActiveFilter('all');
-      }
+      setActiveFilter('all');
       setHasSetDefault(true);
     }
-  }, [trips, hasCurrent, hasSetDefault]);
+  }, [trips, hasSetDefault]);
 
   if (isLoading) {
     return (
