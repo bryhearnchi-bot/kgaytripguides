@@ -371,6 +371,7 @@ function AddToCalendarButton({ event, eventDate }: AddToCalendarButtonProps) {
 interface TimelineListProps {
   events: DailyEvent[];
   onTalentClick: (name: string) => void;
+  onPartyClick?: (party: any) => void;
   eventDate?: string;
   TALENT: any[];
   PARTY_THEMES?: any[];
@@ -378,7 +379,7 @@ interface TimelineListProps {
 
 
 
-function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES = [] }: TimelineListProps) {
+function TimelineList({ events, onTalentClick, onPartyClick, eventDate, TALENT, PARTY_THEMES = [] }: TimelineListProps) {
   const { timeFormat } = useTimeFormat();
   // Events are already sorted by the parent component with 6am rule applied
   const sortedEvents = events;
@@ -484,7 +485,22 @@ function TimelineList({ events, onTalentClick, eventDate, TALENT, PARTY_THEMES =
             transition={{ duration: 0.25, delay: idx * 0.02 }}
             className="mb-3"
           >
-            <Card className="p-4 bg-white/90 hover:shadow-lg transition-all duration-300 border border-gray-200 min-h-24 relative">
+            <Card
+              className={`p-4 bg-white/90 hover:shadow-lg transition-all duration-300 border border-gray-200 min-h-24 relative ${
+                (clickableNames.length > 0 || event.type === 'party' || event.type === 'club' || event.type === 'after')
+                  ? 'cursor-pointer'
+                  : ''
+              }`}
+              onClick={() => {
+                if (clickableNames.length > 0) {
+                  // If there are talent names, click the first one
+                  onTalentClick(clickableNames[0]);
+                } else if ((event.type === 'party' || event.type === 'club' || event.type === 'after') && onPartyClick) {
+                  // If it's a party event, open party modal
+                  onPartyClick(event);
+                }
+              }}
+            >
               <div className="flex items-center gap-3 w-full">
                 {/* Artist Thumbnail, Party Thumbnail, Bingo Thumbnail, or KGay Logo */}
                 {(clickableNames.length > 0 || event.title.includes("KGay Travel") || event.type === 'party' || event.type === 'after' || event.type === 'club' || event.title.toLowerCase().includes("bingo")) && (
@@ -580,6 +596,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [selectedItineraryStop, setSelectedItineraryStop] = useState<any>(null);
+  const [showEventsModal, setShowEventsModal] = useState(false);
+  const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
+  const [showPartyModal, setShowPartyModal] = useState(false);
+  const [selectedParty, setSelectedParty] = useState<any>(null);
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
 
   // Use the trip data hook
@@ -611,6 +631,42 @@ export default function TripGuide({ slug }: TripGuideProps) {
       return currentDate.toISOString().split('T')[0];
     }
     return date;
+  };
+
+  // Filter events based on cruise status and timing
+  const filterEventsByTiming = (events: any[], cruiseStatus: string) => {
+    if (cruiseStatus !== 'current') {
+      // For upcoming or past cruises, show all events
+      return events;
+    }
+
+    // For current cruise, filter out past events
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    return events.filter(event => {
+      const eventDate = event.dateKey || event.key;
+
+      // Future dates are always included
+      if (eventDate > today) return true;
+
+      // Past dates are excluded
+      if (eventDate < today) return false;
+
+      // For today, check the time
+      if (eventDate === today) {
+        const [eventHour, eventMinute] = event.time.split(':').map(Number);
+        const eventTotalMinutes = eventHour * 60 + eventMinute;
+        const currentTotalMinutes = currentHour * 60 + currentMinute;
+
+        // Only show future events
+        return eventTotalMinutes > currentTotalMinutes;
+      }
+
+      return true;
+    });
   };
 
   // Apply 6am rule to reorganize events for both schedule and parties tabs
@@ -660,7 +716,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
       }));
   };
 
-  const SCHEDULED_DAILY = getScheduledDaily();
+  const getFilteredScheduledDaily = () => {
+    const scheduledDaily = getScheduledDaily();
+    const cruiseStatus = data?.trip?.status || 'upcoming';
+
+    return scheduledDaily.map(day => ({
+      ...day,
+      items: filterEventsByTiming(day.items, cruiseStatus)
+    })).filter(day => day.items.length > 0); // Remove days with no events after filtering
+  };
+
+  const SCHEDULED_DAILY = getFilteredScheduledDaily();
 
   // Rest of the component logic remains the same but with trip terminology
   const toggleDayCollapse = (dateKey: string) => {
@@ -676,6 +742,19 @@ export default function TripGuide({ slug }: TripGuideProps) {
       setSelectedTalent({ ...talent, role: talent.knownFor });
       setShowTalentModal(true);
     }
+  };
+
+  const handleViewEvents = (dateKey: string, portName: string) => {
+    // Find events for this date
+    const dayEvents = SCHEDULED_DAILY.find(day => day.key === dateKey);
+    setSelectedDateEvents(dayEvents?.items || []);
+    setSelectedItineraryStop({ port: portName, date: dateKey });
+    setShowEventsModal(true);
+  };
+
+  const handlePartyClick = (party: any) => {
+    setSelectedParty(party);
+    setShowPartyModal(true);
   };
 
   // Group talent by category
@@ -900,6 +979,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                     <TimelineList
                                       events={day.items}
                                       onTalentClick={handleTalentClick}
+                                      onPartyClick={handlePartyClick}
                                       eventDate={itineraryStop?.date}
                                       TALENT={TALENT}
                                       PARTY_THEMES={PARTY_THEMES}
@@ -950,9 +1030,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
                       >
 
                         <div className="bg-gray-100 border border-gray-200 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300">
-                          <div className="flex flex-col sm:flex-row">
+                          <div className="flex flex-col lg:flex-row">
                             {/* Hero Image */}
-                            <div className="w-full h-48 sm:w-48 sm:h-32 flex-shrink-0 overflow-hidden">
+                            <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden">
                               <img
                                 src={stop.imageUrl || (() => {
                                   if (stop.port.includes('Santorini')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/santorini-greece_cuv35p.jpg';
@@ -975,17 +1055,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 p-3 sm:p-4">
-                              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3">
+                            <div className="flex-1 p-3 lg:p-4">
+                              <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-3 mb-3">
                                 <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full self-start">
-                                  <span className="sm:hidden">
+                                  <span className="lg:hidden">
                                     {dateOnly((stop as any).rawDate).toLocaleDateString('en-US', {
                                       weekday: 'short',
                                       month: 'short',
                                       day: 'numeric'
                                     })}
                                   </span>
-                                  <span className="hidden sm:inline">
+                                  <span className="hidden lg:inline">
                                     {dateOnly((stop as any).rawDate).toLocaleDateString('en-US', {
                                       weekday: 'long',
                                       month: 'long',
@@ -993,33 +1073,33 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                     })}
                                   </span>
                                 </div>
-                                <div className="flex items-center">
-                                  <MapPin className="w-4 h-4 text-gray-600 mr-1" />
-                                  <span className="text-base font-bold text-gray-900">{stop.port}</span>
+                                <div className="flex items-center min-w-0">
+                                  <MapPin className="w-4 h-4 text-gray-600 mr-1 flex-shrink-0" />
+                                  <span className="text-base font-bold text-gray-900 break-words">{stop.port}</span>
                                 </div>
                               </div>
 
-                              <div className="flex flex-wrap gap-2 text-sm mb-3">
+                              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3 text-sm mb-3">
                                 {stop.arrive !== '—' && (
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium text-gray-700">Arrive:</span>
-                                    <span className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                  <div className="flex items-center space-x-2 min-w-0">
+                                    <span className="font-medium text-gray-700 whitespace-nowrap">Arrive:</span>
+                                    <span className="font-bold text-gray-800 break-words">
                                       {stop.arrive}
                                     </span>
                                   </div>
                                 )}
                                 {stop.depart !== '—' && (
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium text-gray-700">Depart:</span>
-                                    <span className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                  <div className="flex items-center space-x-2 min-w-0">
+                                    <span className="font-medium text-gray-700 whitespace-nowrap">Depart:</span>
+                                    <span className="font-bold text-gray-800 break-words">
                                       {stop.depart}
                                     </span>
                                   </div>
                                 )}
                                 {stop.allAboard && stop.allAboard !== '—' && (
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium text-gray-700">All Aboard:</span>
-                                    <span className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                  <div className="flex items-center space-x-2 min-w-0">
+                                    <span className="font-medium text-gray-700 whitespace-nowrap">All Aboard:</span>
+                                    <span className="bg-gradient-to-r from-coral to-pink-500 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md whitespace-nowrap">
                                       {stop.allAboard}
                                     </span>
                                   </div>
@@ -1027,8 +1107,18 @@ export default function TripGuide({ slug }: TripGuideProps) {
                               </div>
 
                               {stop.description && (
-                                <p className="text-gray-600 text-sm">{stop.description}</p>
+                                <p className="text-gray-600 text-sm mb-3 break-words leading-relaxed">{stop.description}</p>
                               )}
+
+                              <div className="flex justify-end">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleViewEvents(stop.key, stop.port)}
+                                  className="bg-ocean-600 hover:bg-ocean-700 text-white text-xs"
+                                >
+                                  View Events
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1072,8 +1162,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 className="cursor-pointer hover:shadow-lg transition-all duration-300 bg-gray-100 border border-gray-200 overflow-hidden"
                                 onClick={() => handleTalentClick(talent.name)}
                               >
-                                <div className="flex flex-col sm:flex-row">
-                                  <div className="w-full h-48 sm:w-32 sm:h-32 flex-shrink-0">
+                                <div className="flex flex-col lg:flex-row">
+                                  <div className="w-full h-48 lg:w-32 lg:h-32 flex-shrink-0">
                                     <img
                                       src={talent.img}
                                       alt={talent.name}
@@ -1084,13 +1174,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                     />
                                   </div>
                                   <div className="flex-1 p-4">
-                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                                      <div className="flex-1">
-                                        <h3 className="font-bold text-lg text-gray-900 mb-1">{talent.name}</h3>
+                                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                                      <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-lg text-gray-900 mb-1 break-words">{talent.name}</h3>
                                         <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full inline-block mb-2">
-                                          {(talent as any).role || talent.knownFor}
+                                          <span className="break-words">{(talent as any).role || talent.knownFor}</span>
                                         </div>
-                                        <p className="text-sm text-gray-600 line-clamp-2">{talent.bio}</p>
+                                        <p className="text-sm text-gray-600 line-clamp-2 break-words leading-relaxed">{talent.bio}</p>
                                       </div>
                                     </div>
                                   </div>
@@ -1193,9 +1283,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             <div className="space-y-4">
                               {dayParties.map((party, index) => (
                                 <div key={`${party.title}-${party.time}`} className="bg-white/90 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
-                                  <div className="flex flex-col sm:flex-row">
+                                  <div className="flex flex-col lg:flex-row">
                                     {/* Hero Image */}
-                                    <div className="w-full h-48 sm:w-48 sm:h-32 flex-shrink-0 overflow-hidden">
+                                    <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden ring-2 ring-white/50 rounded-md">
                                       <img
                                         src={party.imageUrl || 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg'}
                                         alt={party.title}
@@ -1208,20 +1298,25 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                     </div>
 
                                     {/* Content */}
-                                    <div className="flex-1 p-3 sm:p-4">
-                                      <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                          <h4 className="text-lg font-bold text-gray-900">{party.title}</h4>
-                                          <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                    <div className="flex-1 p-3 lg:p-4">
+                                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+                                          <h4 className="text-lg font-bold text-gray-900 break-words">{party.title}</h4>
+                                          <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
                                             {globalFormatTime(party.time, timeFormat)}
                                           </div>
                                         </div>
-                                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700">
-                                          {party.venue}
+                                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 self-start sm:self-center">
+                                          <span className="break-words">{party.venue}</span>
                                         </Badge>
                                       </div>
                                       {party.description && (
-                                        <p className="text-sm text-gray-600 mb-2">{party.description}</p>
+                                        <p className="text-sm text-gray-700 leading-relaxed mb-2 break-words">
+                                          <span className="font-medium">{party.description.split('.')[0]}.</span>
+                                          {party.description.split('.').slice(1).join('.') &&
+                                            <span>{party.description.split('.').slice(1).join('.')}</span>
+                                          }
+                                        </p>
                                       )}
                                     </div>
                                   </div>
@@ -1351,22 +1446,69 @@ export default function TripGuide({ slug }: TripGuideProps) {
           </DialogHeader>
           {selectedTalent && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-shrink-0">
-                  <img 
-                    src={selectedTalent.img} 
+                  <img
+                    src={selectedTalent.img}
                     alt={selectedTalent.name}
-                    className="w-32 h-32 rounded-md object-cover mx-auto sm:mx-0"
+                    className="w-32 h-32 rounded-md object-cover mx-auto lg:mx-0"
                   />
                 </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedTalent.name}</h2>
+                <div className="flex-1 text-center lg:text-left min-w-0">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2 break-words">{selectedTalent.name}</h2>
                   <Badge variant="secondary" className="mb-2">{selectedTalent.cat}</Badge>
-                  <p className="text-ocean-600 font-medium mb-2">{(selectedTalent as any).role || selectedTalent.knownFor}</p>
-                  <p className="text-gray-700 leading-relaxed">{selectedTalent.bio}</p>
+                  <p className="text-ocean-600 font-medium mb-2 break-words">{(selectedTalent as any).role || selectedTalent.knownFor}</p>
+                  <p className="text-gray-700 leading-relaxed break-words">{selectedTalent.bio}</p>
                 </div>
               </div>
-              
+
+              {/* Performance Schedule */}
+              {(() => {
+                // Find all performances for this talent
+                const allTalentPerformances = SCHEDULED_DAILY.flatMap(day =>
+                  day.items
+                    .filter(event =>
+                      findTalentInTitle(event.title, TALENT).includes(selectedTalent.name) ||
+                      (event.talent && event.talent.some((t: any) => t.name === selectedTalent.name))
+                    )
+                    .map(event => ({
+                      ...event,
+                      dateKey: day.key,
+                      date: ITINERARY.find(stop => stop.key === day.key)?.date || day.key
+                    }))
+                ).sort((a, b) => {
+                  const dateCompare = a.dateKey.localeCompare(b.dateKey);
+                  if (dateCompare !== 0) return dateCompare;
+                  return a.time.localeCompare(b.time);
+                });
+
+                // Apply timing filter for talent performances
+                const cruiseStatus = data?.trip?.status || 'upcoming';
+                const talentPerformances = filterEventsByTiming(allTalentPerformances, cruiseStatus);
+
+                return talentPerformances.length > 0 && (
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                      <Music className="w-4 h-4 mr-2" />
+                      Performance Schedule
+                    </h3>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {talentPerformances.map((performance, index) => (
+                        <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 py-2 px-2 bg-gray-50 rounded">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-sm font-medium text-gray-900 break-words">{performance.title}</span>
+                            <span className="text-xs text-gray-500 ml-2 break-words">({performance.venue})</span>
+                          </div>
+                          <div className="text-sm text-ocean-600 font-medium whitespace-nowrap">
+                            {performance.date} • {globalFormatTime(performance.time, timeFormat)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {selectedTalent.social && Object.keys(selectedTalent.social).length > 0 && (
                 <div className="border-t pt-4">
                   <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
@@ -1417,6 +1559,90 @@ export default function TripGuide({ slug }: TripGuideProps) {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Events Modal */}
+      <Dialog open={showEventsModal} onOpenChange={setShowEventsModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Events for {selectedItineraryStop?.port}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedDateEvents.length > 0 ? (
+              selectedDateEvents.map((event, index) => (
+                <div key={index} className="border-l-4 border-ocean-500 pl-4 py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="font-medium text-gray-900">{event.title}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-ocean-600 font-medium">
+                        {globalFormatTime(event.time, timeFormat)}
+                      </span>
+                      <Badge variant="secondary" className="bg-ocean-100 text-ocean-700">
+                        {event.venue}
+                      </Badge>
+                    </div>
+                  </div>
+                  {event.description && (
+                    <p className="text-sm text-gray-600">{event.description}</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-center py-8 text-gray-500">
+                No scheduled events for this day
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Party Modal */}
+      <Dialog open={showPartyModal} onOpenChange={setShowPartyModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedParty?.title}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedParty && (
+            <div className="space-y-4">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {selectedParty.imageUrl && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={selectedParty.imageUrl}
+                      alt={selectedParty.title}
+                      className="w-32 h-32 rounded-md object-cover mx-auto lg:mx-0"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 text-center lg:text-left space-y-2 min-w-0">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-2">
+                    <Badge variant="secondary" className="bg-ocean-100 text-ocean-700">
+                      <span className="break-words">{selectedParty.venue}</span>
+                    </Badge>
+                    <span className="text-ocean-600 font-medium break-words">
+                      {selectedParty.time && globalFormatTime(selectedParty.time, timeFormat)}
+                    </span>
+                  </div>
+                  {selectedParty.description && (
+                    <p className="text-gray-700 leading-relaxed break-words">{selectedParty.description}</p>
+                  )}
+                  {selectedParty.dressCode && (
+                    <div>
+                      <span className="font-medium text-gray-900">Dress Code: </span>
+                      <span className="text-gray-700 break-words">{selectedParty.dressCode}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>

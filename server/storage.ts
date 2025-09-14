@@ -48,7 +48,8 @@ export const {
   talent,
   media,
   settings,
-  cruiseTalent
+  cruiseTalent,
+  tripInfoSections
 } = schema;
 
 // ============ USER OPERATIONS ============
@@ -536,6 +537,20 @@ export class SettingsStorage implements ISettingsStorage {
   }
 }
 
+// ============ TRIP INFO SECTIONS OPERATIONS ============
+export interface ITripInfoStorage {
+  getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]>;
+}
+
+export class TripInfoStorage implements ITripInfoStorage {
+  async getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]> {
+    return await db.select()
+      .from(tripInfoSections)
+      .where(eq(tripInfoSections.cruiseId, cruiseId))
+      .orderBy(asc(tripInfoSections.orderIndex));
+  }
+}
+
 // Create storage instances
 export const storage = new UserStorage();
 export const tripStorage = new TripStorage();
@@ -545,3 +560,4 @@ export const eventStorage = new EventStorage();
 export const talentStorage = new TalentStorage();
 export const mediaStorage = new MediaStorage();
 export const settingsStorage = new SettingsStorage();
+export const tripInfoStorage = new TripInfoStorage();

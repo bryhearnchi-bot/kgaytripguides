@@ -66,6 +66,15 @@ export interface TripData {
     createdAt?: string;
     updatedAt?: string;
   }>;
+  tripInfoSections?: Array<{
+    id: number;
+    cruiseId: number;
+    title: string;
+    content: string | null;
+    orderIndex: number;
+    updatedBy?: string | null;
+    updatedAt?: string;
+  }>;
 }
 
 // Transform database data to match the existing component format
@@ -149,44 +158,56 @@ export function transformTripData(data: TripData) {
   // City attractions (keep static for now)
   const cityAttractions: any[] = [];
 
-  // Important info (keep static for now)
-  const importantInfo = {
-    checkIn: {
-      location: "Trip Terminal A - World Trade Center Barcelona",
-      address: "Moll de Barcelona, s/n, 08039 Barcelona, Spain",
-      time: "2:00 PM - 5:00 PM",
-      documents: ["Passport", "Trip documents", "Proof of citizenship"]
-    },
-    departure: {
-      sailAway: "7:00 PM",
-      allAboard: "5:30 PM"
-    },
-    disembarkation: {
-      date: "Sunday, August 31, 2025",
-      time: "Beginning at 8:00 AM",
-      location: "Barcelona, Spain"
-    },
-    firstDayTips: [
-      "Download the Virgin Voyages app before boarding - it's your key to everything onboard",
-      "Book dinner reservations and shows early - popular times fill up fast",
-      "Attend the mandatory safety drill at 4:00 PM - it's quick and required for all guests",
-      "Visit Sailor Services on Deck 5 for any questions or assistance",
-      "The Galley food court on Deck 15 is open for lunch when you board",
-      "Set up your onboard account at any bar or restaurant to start charging to your cabin",
-      "Join the Atlantis welcome reception at 5:30 PM in The Manor nightclub"
-    ],
-    entertainment: {
-      bookingStart: "Starting 10:00 AM on embarkation day",
-      walkIns: "Available 15 minutes before showtime if space permits",
-      standbyRelease: "10 minutes before showtime",
-      rockstarSuites: "Rockstar guests get priority booking and reserved seating"
-    },
-    dining: {
-      reservations: "Book via the Virgin Voyages app or at the restaurant host stand",
-      walkIns: "All restaurants accept walk-ins when space is available",
-      included: "All specialty restaurants are included in your trip fare - no extra charges!"
+  // Transform trip info sections from database
+  const tripInfoSections = data.tripInfoSections || [];
+  const importantInfo: any = {};
+
+  // Parse info sections and organize them
+  tripInfoSections.forEach(section => {
+    const key = section.title.toLowerCase().replace(/\s+/g, '');
+
+    if (section.content) {
+      if (section.title === 'First Day Tips') {
+        // Parse numbered list
+        importantInfo.firstDayTips = section.content.split('\n').map(tip =>
+          tip.replace(/^\d+\.\s*/, '')
+        );
+      } else if (section.title === 'Entertainment Booking') {
+        // Parse key-value pairs
+        const entertainment: any = {};
+        section.content.split('\n').forEach(line => {
+          if (line.includes(':')) {
+            const [key, value] = line.split(':');
+            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+            entertainment[cleanKey] = value.trim();
+          }
+        });
+        importantInfo.entertainment = entertainment;
+      } else if (section.title === 'Dining Information') {
+        // Parse key-value pairs
+        const dining: any = {};
+        section.content.split('\n').forEach(line => {
+          if (line.includes(':')) {
+            const [key, value] = line.split(':');
+            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+            dining[cleanKey] = value.trim();
+          }
+        });
+        importantInfo.dining = dining;
+      } else {
+        // Generic key-value parsing
+        const sectionData: any = {};
+        section.content.split('\n').forEach(line => {
+          if (line.includes(':')) {
+            const [key, value] = line.split(':');
+            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+            sectionData[cleanKey] = value.trim();
+          }
+        });
+        importantInfo[key] = sectionData;
+      }
     }
-  };
+  });
 
   const tripInfo = {
     ship: {

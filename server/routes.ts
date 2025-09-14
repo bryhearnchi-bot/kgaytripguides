@@ -1,15 +1,16 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-import { 
-  storage, 
+import {
+  storage,
   tripStorage,
   cruiseStorage, // Backward compatibility
-  itineraryStorage, 
-  eventStorage, 
+  itineraryStorage,
+  eventStorage,
   talentStorage,
   mediaStorage,
-  settingsStorage
+  settingsStorage,
+  tripInfoStorage
 } from "./storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
 import { registerAuthRoutes } from "./auth-routes";
@@ -677,17 +678,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Trip not found' });
       }
 
-      const [itinerary, events, talent] = await Promise.all([
+      const [itinerary, events, talent, tripInfoSections] = await Promise.all([
         itineraryStorage.getItineraryByCruise(trip.id),
         eventStorage.getEventsByCruise(trip.id),
-        talentStorage.getTalentByCruise(trip.id)
+        talentStorage.getTalentByCruise(trip.id),
+        tripInfoStorage.getTripInfoSectionsByCruise(trip.id)
       ]);
 
       res.json({
         trip,
         itinerary,
         events,
-        talent
+        talent,
+        tripInfoSections
       });
     } catch (error) {
       console.error('Error fetching complete trip data:', error);

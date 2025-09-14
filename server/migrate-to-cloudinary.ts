@@ -1,11 +1,14 @@
-import { config } from 'dotenv';
 import { v2 as cloudinary } from 'cloudinary';
 import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
 
-// Load environment variables
-config();
+// Load environment variables only in development
+// Railway injects environment variables directly in production
+if (process.env.NODE_ENV !== 'production') {
+  const { config } = await import('dotenv');
+  config();
+}
 
 // Configure Cloudinary
 cloudinary.config({

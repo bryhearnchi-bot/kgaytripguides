@@ -78,3 +78,55 @@ All images are now properly stored in Cloudinary and referenced in the Neon data
   - Dog Tag, UNITE, Lost At Sea, Empires, Think Pink
   - Greek Isles, Neon Playground, Virgin White, Off-White
   - Revival, Atlantis Classics, Last Dance, and more
+
+## UI Preservation Guidelines
+
+**IMPORTANT**: The app UI has been finalized and approved. DO NOT make changes to:
+- Headers, navigation, or tab bars
+- Overall color scheme or gradients (ocean theme)
+- Banner and hero sections
+- General layout structure and spacing patterns
+- Tab ordering and navigation behavior
+
+**Allowed modifications**:
+- Content within existing card structures
+- Text formatting within established design system
+- Mobile-specific responsive fixes that don't affect desktop
+- Data display improvements that maintain current visual hierarchy
+
+Always preserve the ocean-themed design system and existing visual hierarchy.
+
+## Test-Driven Development (TDD) Guidelines
+
+Starting from January 2025, all changes must follow TDD practices:
+
+### TDD Process
+1. **Write tests first** - Before implementing any feature or fix
+2. **See tests fail** (red phase)
+3. **Implement minimal code** to make tests pass (green phase)
+4. **Refactor** while keeping tests passing (refactor phase)
+
+### Test Locations
+- Unit tests: `__tests__/` directories or adjacent to components
+- E2E tests: `test/e2e/` directory (using Playwright)
+- Component tests: Adjacent to components with `.test.tsx` extension
+
+### Test Coverage Requirements
+- New features: Minimum 80% coverage
+- Bug fixes: Must include regression tests
+- UI changes: Visual regression tests when applicable
+- Mobile responsiveness: Viewport tests at 375px, 768px, 1024px
+
+### Test Commands
+```bash
+npm test                # Run unit tests in watch mode
+npm run test:run        # Run all tests once (CI mode)
+npm run test:e2e        # Run E2E tests
+npm run test:e2e:ui     # Run E2E tests with UI
+```
+
+### Pre-commit Checklist
+- [ ] All tests pass (`npm run test:run`)
+- [ ] E2E tests pass (`npm run test:e2e`)
+- [ ] TypeScript checks pass (`npm run check`)
+- [ ] Changes documented in CHANGELOG.md

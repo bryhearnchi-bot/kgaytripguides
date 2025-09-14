@@ -93,7 +93,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  const port = parseInt(process.env.PORT || '5000', 10);
+  const port = parseInt(process.env.PORT || '3001', 10);
   
   // Start server and keep it running
   server.listen(port, "0.0.0.0", async () => {
