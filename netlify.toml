@@ -18,13 +18,8 @@
   SECRETS_SCAN_ENABLED = "false"
 
 [[redirects]]
-  from = "/api/trips"
-  to = "/.netlify/functions/trips"
-  status = 200
-
-[[redirects]]
-  from = "/api/trips/*/complete"
-  to = "/.netlify/functions/trip-complete"
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 [[redirects]]
