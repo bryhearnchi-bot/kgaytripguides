@@ -1,6 +1,5 @@
 [build]
   publish = "dist/public"
-  functions = "netlify/functions"
   command = "npm install && npm run build:netlify"
 
 
@@ -16,11 +15,6 @@
 [build.environment]
   NODE_VERSION = "20.10.0"
   SECRETS_SCAN_ENABLED = "false"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
 
 [[redirects]]
   from = "/*"
