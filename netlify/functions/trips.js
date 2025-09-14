@@ -1,8 +1,6 @@
-import { neon } from '@neondatabase/serverless';
+const { neon } = require('@neondatabase/serverless');
 
-const sql = neon(process.env.DATABASE_URL);
-
-export async function handler(event, context) {
+exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -25,8 +23,9 @@ export async function handler(event, context) {
   }
 
   try {
+    const sql = neon(process.env.DATABASE_URL);
+
     // Extract slug from the path
-    // Path will be like /trips/greek-isles-2025/complete
     const pathSegments = event.path.replace('/.netlify/functions/trips/', '').split('/').filter(Boolean);
 
     // Handle trips/{slug}/complete
@@ -41,7 +40,7 @@ export async function handler(event, context) {
       if (cruiseResult.length === 0) {
         return {
           statusCode: 404,
-          headers: { ...headers, 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ error: 'Trip not found' })
         };
       }
@@ -130,14 +129,14 @@ export async function handler(event, context) {
 
       return {
         statusCode: 200,
-        headers: { ...headers, 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(response)
       };
     }
 
     return {
       statusCode: 404,
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ error: 'Endpoint not found' })
     };
 
@@ -178,4 +177,4 @@ export async function handler(event, context) {
       })
     };
   }
-}
+};
