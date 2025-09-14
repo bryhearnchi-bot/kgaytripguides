@@ -3,7 +3,7 @@
  * This enforces the rule that ALL images in the app should use Cloudinary
  */
 
-const CLOUDINARY_CLOUD_NAME = 'dfqoebbyj';
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dfqoebbyj';
 const CLOUDINARY_BASE_URL = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}`;
 
 /**
