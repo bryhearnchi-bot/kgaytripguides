@@ -1,7 +1,8 @@
-import { config } from 'dotenv';
 import { eq, and, desc, asc, ilike, or } from 'drizzle-orm';
 
-// Load environment variables
+// Load environment variables for all environments
+// Railway may need dotenv in some cases
+const { config } = await import('dotenv');
 config();
 import type {
   User,
@@ -14,6 +15,14 @@ import type {
   Media,
   Settings
 } from "../shared/schema";
+
+// Debug environment variables in production
+if (process.env.NODE_ENV === 'production') {
+  console.log('Environment check:');
+  console.log('- NODE_ENV:', process.env.NODE_ENV);
+  console.log('- DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  console.log('- DATABASE_URL length:', process.env.DATABASE_URL?.length || 0);
+}
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
