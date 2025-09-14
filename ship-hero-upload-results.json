@@ -1,0 +1,30 @@
+[
+  {
+    "shipName": "norwegian-bliss",
+    "cruiseName": "Alaska Inside Passage",
+    "public_id": "cruise-app/ships/cruise-app/ships/norwegian-bliss",
+    "secure_url": "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757882101/cruise-app/ships/cruise-app/ships/norwegian-bliss.jpg",
+    "success": true
+  },
+  {
+    "shipName": "viking-star",
+    "cruiseName": "Baltic Capitals Explorer",
+    "public_id": "cruise-app/ships/cruise-app/ships/viking-star",
+    "secure_url": "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757882102/cruise-app/ships/cruise-app/ships/viking-star.jpg",
+    "success": true
+  },
+  {
+    "shipName": "harmony-of-the-seas",
+    "cruiseName": "Caribbean Paradise",
+    "public_id": "cruise-app/ships/cruise-app/ships/harmony-of-the-seas",
+    "secure_url": "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757882103/cruise-app/ships/cruise-app/ships/harmony-of-the-seas.jpg",
+    "success": true
+  },
+  {
+    "shipName": "celebrity-apex",
+    "cruiseName": "Mediterranean Dreams",
+    "public_id": "cruise-app/ships/cruise-app/ships/celebrity-apex",
+    "secure_url": "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757882104/cruise-app/ships/cruise-app/ships/celebrity-apex.webp",
+    "success": true
+  }
+]
