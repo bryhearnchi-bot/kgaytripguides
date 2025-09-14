@@ -1,9 +1,10 @@
 import { eq, and, desc, asc, ilike, or } from 'drizzle-orm';
 
-// Load environment variables for all environments
-// Railway may need dotenv in some cases
-const { config } = await import('dotenv');
-config();
+// Load environment variables only for development
+if (process.env.NODE_ENV !== 'production') {
+  const { config } = await import('dotenv');
+  config();
+}
 import type {
   User,
   InsertUser,
