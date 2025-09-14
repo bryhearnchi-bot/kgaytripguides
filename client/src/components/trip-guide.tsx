@@ -600,6 +600,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<any>(null);
+  const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
 
   // Use the trip data hook
@@ -755,6 +756,23 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const handlePartyClick = (party: any) => {
     setSelectedParty(party);
     setShowPartyModal(true);
+  };
+
+  // Custom close handlers that return to events modal if needed
+  const handleTalentModalClose = (open: boolean) => {
+    setShowTalentModal(open);
+    if (!open && cameFromEventsModal) {
+      setShowEventsModal(true);
+      setCameFromEventsModal(false);
+    }
+  };
+
+  const handlePartyModalClose = (open: boolean) => {
+    setShowPartyModal(open);
+    if (!open && cameFromEventsModal) {
+      setShowEventsModal(true);
+      setCameFromEventsModal(false);
+    }
   };
 
   // Group talent by category
@@ -1457,7 +1475,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
       </div>
 
       {/* Talent Modal */}
-      <Dialog open={showTalentModal} onOpenChange={setShowTalentModal}>
+      <Dialog open={showTalentModal} onOpenChange={handleTalentModalClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="sr-only">
@@ -1595,24 +1613,53 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
           <div className="space-y-4">
             {selectedDateEvents.length > 0 ? (
-              selectedDateEvents.map((event, index) => (
-                <div key={index} className="border-l-4 border-ocean-500 pl-4 py-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-medium text-gray-900">{event.title}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-ocean-600 font-medium">
-                        {globalFormatTime(event.time, timeFormat)}
-                      </span>
-                      <Badge variant="secondary" className="bg-ocean-100 text-ocean-700">
-                        {event.venue}
-                      </Badge>
+              selectedDateEvents.map((event, index) => {
+                const clickableNames = findTalentInTitle(event.title, TALENT);
+                const isPartyEvent = event.type === 'party' || event.type === 'club' || event.type === 'after';
+                const isClickable = clickableNames.length > 0 || isPartyEvent;
+
+                return (
+                  <div
+                    key={index}
+                    className={`border-l-4 border-ocean-500 pl-4 py-2 rounded-r-lg transition-all duration-200 ${
+                      isClickable
+                        ? 'cursor-pointer hover:bg-ocean-50 hover:shadow-md'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      if (clickableNames.length > 0) {
+                        // If there are talent names, click the first one
+                        setCameFromEventsModal(true);
+                        handleTalentClick(clickableNames[0]);
+                        setShowEventsModal(false); // Close events modal
+                      } else if (isPartyEvent) {
+                        // If it's a party event, open party modal
+                        setCameFromEventsModal(true);
+                        handlePartyClick(event);
+                        setShowEventsModal(false); // Close events modal
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className={`font-medium ${isClickable ? 'text-ocean-700 hover:text-ocean-800' : 'text-gray-900'}`}>
+                        {event.title}
+                        {isClickable && <span className="ml-1 text-xs text-ocean-500">→</span>}
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-ocean-600 font-medium">
+                          {globalFormatTime(event.time, timeFormat)}
+                        </span>
+                        <Badge variant="secondary" className="bg-ocean-100 text-ocean-700">
+                          {event.venue}
+                        </Badge>
+                      </div>
                     </div>
+                    {event.description && (
+                      <p className="text-sm text-gray-600">{event.description}</p>
+                    )}
                   </div>
-                  {event.description && (
-                    <p className="text-sm text-gray-600">{event.description}</p>
-                  )}
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-center py-8 text-gray-500">
                 No scheduled events for this day
@@ -1623,7 +1670,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
       </Dialog>
 
       {/* Party Modal */}
-      <Dialog open={showPartyModal} onOpenChange={setShowPartyModal}>
+      <Dialog open={showPartyModal} onOpenChange={handlePartyModalClose}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
