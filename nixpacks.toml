@@ -1,11 +1,9 @@
 [variables]
 NODE_ENV = "production"
-
-[providers.nodejs]
-version = "20"
+NIXPACKS_NODE_VERSION = "20"
 
 [phases.build]
 cmds = ["npm ci", "npm run build"]
 
-[phases.start]
+[start]
 cmd = "npx tsx server/index.ts"
