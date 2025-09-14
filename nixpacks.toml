@@ -1,8 +1,8 @@
 [variables]
 NODE_ENV = "production"
 
-[providers]
-nodejs = { version = "20" }
+[providers.nodejs]
+version = "20"
 
 [phases.build]
 cmds = ["npm ci", "npm run build"]
