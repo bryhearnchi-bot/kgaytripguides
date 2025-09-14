@@ -1,5 +1,6 @@
 [build]
   publish = "dist/public"
+  functions = "netlify/functions"
   command = "npm install && npm run build:netlify"
 
 
@@ -15,6 +16,16 @@
 [build.environment]
   NODE_VERSION = "20.10.0"
   SECRETS_SCAN_ENABLED = "false"
+
+[[redirects]]
+  from = "/api/trips"
+  to = "/.netlify/functions/trips"
+  status = 200
+
+[[redirects]]
+  from = "/api/trips/*/complete"
+  to = "/.netlify/functions/trip-complete"
+  status = 200
 
 [[redirects]]
   from = "/*"
