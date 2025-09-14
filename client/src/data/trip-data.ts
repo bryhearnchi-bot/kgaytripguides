@@ -239,7 +239,7 @@ export const TALENT: Talent[] = [
     role: "Six-time Tony winner", 
     knownFor: "Broadway's leading lady", 
     bio: "Six-time Tony Award winner and Grammy Award recipient, Audra McDonald is one of Broadway's most celebrated performers. Known for her powerful voice and versatility across musical theater, opera, and television, she has starred in productions like Ragtime, Carousel, and Lady Day at Emerson's Bar & Grill.", 
-    img: "https://www.theatermania.com/wp-content/uploads/sites/4/2023/03/audra-mcdonald-will-swenson-logo-50940-1.jpeg?w=640",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787642/cruise-app/talent/audra-mcdonald.jpg",
     social: {
       instagram: "https://www.instagram.com/audramcdonald/",
       twitter: "https://x.com/AudraEqualityMc"
@@ -251,7 +251,7 @@ export const TALENT: Talent[] = [
     role: "Drag icon & comic", 
     knownFor: "RPDR All Stars 4 winner", 
     bio: "Born in New York City, Monét is a classically trained performer who won RuPaul's Drag Race All Stars 4. With her signature wit and powerful vocals, she's become a beloved figure in drag culture and comedy.", 
-    img: "https://www.billboard.com/wp-content/uploads/media/03-2-Monet-X-Change-rupauls-drag-race-s10-billboard-a-1548.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787676/cruise-app/talent/monet-x-change.jpg",
     social: {
       instagram: "https://www.instagram.com/monetxchange/",
       twitter: "https://x.com/monetxchange",
@@ -264,7 +264,7 @@ export const TALENT: Talent[] = [
     role: "Singer & RPDR favorite", 
     knownFor: "Glam cabaret", 
     bio: "Broadway-trained drag performer who placed 5th on RuPaul's Drag Race Season 9. Known for her theatrical performances and cabaret shows at venues like Feinstein's/54 Below.", 
-    img: "https://i.redd.it/azxnlnbuql9b1.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787677/cruise-app/talent/alexis-michelle.jpg",
     social: {
       instagram: "https://www.instagram.com/alexismichelleofficial/",
       tiktok: "https://www.tiktok.com/@alexismichelleofficial"
@@ -276,7 +276,7 @@ export const TALENT: Talent[] = [
     role: "Vocalist", 
     knownFor: "Queen of the Universe", 
     bio: "French drag queen and countertenor baritone with a three-octave range. Known for her appearances at Queen of the Universe and The Voice France in 2019.", 
-    img: "https://i.pinimg.com/736x/83/eb/d7/83ebd7f4d42b686feb15dd51ed68d987.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787677/cruise-app/talent/leona-winter.jpg",
     social: {
       instagram: "https://www.instagram.com/leonawinter16/",
       tiktok: "https://www.tiktok.com/@leonawinterofficiel"
@@ -288,7 +288,7 @@ export const TALENT: Talent[] = [
     role: "Comedy & vocals", 
     knownFor: "Parody legend", 
     bio: "Legendary NYC drag icon with over 35 years in entertainment. Known for her hilarious parody songs and has been a fixture of NYC nightlife since the 1990s.", 
-    img: "http://static1.squarespace.com/static/5e2256cf72c72a5f12f1fdfe/t/63cc50edf5765a4e44b610f1/1580806649356/sherry-web-social.png?format=1500w",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787266/cruise-app/talent/talent_5_sherry-web-social_emgw0l.png",
     social: {
       instagram: "https://www.instagram.com/misssherryvine/"
     }
@@ -299,7 +299,7 @@ export const TALENT: Talent[] = [
     role: "Comic performer", 
     knownFor: "Cabaret provocateur", 
     bio: "Award-winning Australian comedian, cabaret host, and writer known for pushing boundaries. Nominated for Best Show at the 2024 Edinburgh Comedy Awards.", 
-    img: "https://encoremelbourne.com/wp-content/uploads/2024/09/Reuben-Kaye-c-Alan-Moyle-scaled-e1727080187482.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757779804/cruise-app/talent/talent-6-reuben-kaye.jpg",
     social: {
       instagram: "https://www.instagram.com/reubenkayeofficial/",
       twitter: "https://x.com/reubenkaye",
@@ -312,7 +312,7 @@ export const TALENT: Talent[] = [
     role: "West End star", 
     knownFor: "Les Misérables, Titanique", 
     bio: "British stage actor and producer best known for playing Marius in Les Misérables. Also starred in musicals including Titanique, South Pacific, and The Light in the Piazza.", 
-    img: "http://www.digitaljournal.com/wp-content/uploads/2024/10/Rob-Houchen-Photo-e1728160861225.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787269/cruise-app/talent/talent_7_Rob-Houchen-Photo-e1728160861225_mfphsq.jpg",
     social: {
       instagram: "https://www.instagram.com/robhouchen/"
     }
@@ -323,7 +323,7 @@ export const TALENT: Talent[] = [
     role: "Vocalist", 
     knownFor: "American Idol Top 9", 
     bio: "Singer and performer from Kentucky who made it to the Top 9 on American Idol. Katy Perry called her a 'once in a generation' performer.", 
-    img: "https://s.yimg.com/ny/api/res/1.2/B32A9JNeo3IpS.FKxuffIQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD02NzY7Y2Y9d2VicA--/https://s.yimg.com/os/creatr-uploaded-images/2021-03/1a562ab0-7ee4-11eb-afce-ac7a09171992",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787271/cruise-app/talent/talent_8_1a562ab0-7ee4-11eb-afce-ac7a09171992_t0cvyc.jpg",
     social: {
       instagram: "https://www.instagram.com/itsalyssawray/"
     }
@@ -334,7 +334,7 @@ export const TALENT: Talent[] = [
     role: "Comedian", 
     knownFor: "Atlantis favorite", 
     bio: "American stand-up comedian from Upstate New York who was a regular on premium cable comedy shows. Known for his appearances at Pride events, circuit parties, and trip ships.", 
-    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1701816763654-IG6NG6UERJXYU354L1ZU/brad-loekle-web.jpg?format=2500w",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787272/cruise-app/talent/talent_9_brad-loekle-web_vrtxz1.jpg",
     social: {
       instagram: "https://www.instagram.com/bradloekle/",
       website: "https://www.bradloekle.com"
@@ -346,7 +346,7 @@ export const TALENT: Talent[] = [
     role: "Comedian", 
     knownFor: "Two Dykes and a Mic", 
     bio: "LA-based stand-up comedian and co-host of the popular podcast 'Two Dykes and a Mic'. Known for her sharp queer humor and sex-positive comedy.", 
-    img: "https://www.empirecomedyme.com/img/comedians/Rachel-Scanlon-Primary-Headshot-da5f117a-main-image.png",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787271/cruise-app/talent/talent_10_Rachel-Scanlon-Primary-Headshot-da5f117a-main-image_te7d5u.png",
     social: {
       instagram: "https://www.instagram.com/rachelscanloncomedy/",
       linktree: "https://linktr.ee/rachelscanlon"
@@ -358,7 +358,7 @@ export const TALENT: Talent[] = [
     role: "Comedian", 
     knownFor: "Opened for Margaret Cho", 
     bio: "Texas-born LA-based comedian who currently tours as the opening act for Margaret Cho. Featured in the documentary 'Queer Riot' and released his hour-long special 'Hoe's Parade: Live at the Rose Bowl' in 2021.", 
-    img: "https://images.squarespace-cdn.com/content/v1/62b20e5c24737a3005ebe5e1/1668557899908-6Z03ZHA1FY8Y9ANSKMJ9/daniel-webb-web.jpg?format=2500w",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787270/cruise-app/talent/talent_11_daniel-webb-web_vj7g1j.jpg",
     social: {
       instagram: "https://www.instagram.com/the_danielwebb/",
       website: "https://www.thedanielwebb.com"
@@ -370,7 +370,7 @@ export const TALENT: Talent[] = [
     role: "Acrobatic spectacle", 
     knownFor: "Les Farfadais production", 
     bio: "High-energy circus cabaret show created by Les Farfadais featuring aerial acrobatics, dance, and stunning costumes.", 
-    img: "https://airoticcirquesoiree.com/assets/img/info/info_love-3.6a496b70.webp",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/v1757787273/cruise-app/talent/talent_12_info_love-3.6a496b70_qmili8.webp",
     social: {
       instagram: "https://www.instagram.com/airoticshow/"
     }
@@ -381,7 +381,7 @@ export const TALENT: Talent[] = [
     role: "Immersive dinner show", 
     knownFor: "Interactive feast", 
     bio: "Virgin Voyages' premium dinner theater experience featuring interactive storytelling and culinary artistry in an immersive setting.", 
-    img: "https://s3.amazonaws.com/a-us.storyblok.com/f/1005231/594cc18563/virgin-voyages_resilient-lady_persepone-and-hades_entertainment_kyle-valenta_18913661.jpg"
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/kyle-valenta"
   },
   { 
     name: "Persephone", 
@@ -389,7 +389,7 @@ export const TALENT: Talent[] = [
     role: "Virgin production", 
     knownFor: "High-energy acrobatics", 
     bio: "Virgin Voyages' signature acrobatic production show featuring aerial performances and theatrical storytelling for an adult-oriented entertainment experience.", 
-    img: "https://i0.wp.com/thehoteljournal.com/wp-content/uploads/2024/05/Virgin-Voyages-Cruise-Review-Show.jpg?resize=798%2C599&ssl=1"
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/virgin-voyages-cast"
   },
   { 
     name: "The Diva (Bingo)", 
@@ -397,7 +397,7 @@ export const TALENT: Talent[] = [
     role: "Host", 
     knownFor: "Camp bingo chaos", 
     bio: "Virgin Voyages' drag bingo experience featuring outrageous hosts, ridiculous prizes, and camp chaos in a uniquely entertaining format.", 
-    img: "https://attractionsmagazine.com/wp-content/uploads/2025/01/IMG_8480-3-1.jpeg"
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/entertainer-1"
   },
   { 
     name: "Abel", 
@@ -405,7 +405,7 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Miami sound", 
     bio: "Grammy-nominated DJ and producer from Miami, half of the electronic duo Abel. Known for producing tracks for Madonna, Rihanna, and Jennifer Lopez.", 
-    img: "https://bosphilly.com/wp-content/uploads/2023/01/ABEL-SPINNING-scaled-1.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/abel-spinning",
     social: {
       instagram: "https://www.instagram.com/djabelaguilera/"
     }
@@ -416,7 +416,7 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Sydney to global", 
     bio: "Australian DJ and producer based in the United States, with a career spanning over two decades and collaborations with major artists.", 
-    img: "https://chicago.gopride.com/c/I/52051-156158.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/dj-entertainer",
     social: {
       instagram: "https://www.instagram.com/danielsl8r/",
       website: "https://www.djdanSlater.com"
@@ -428,7 +428,7 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Madrid", 
     bio: "Valencia-born DJ specializing in electronic and house music. Known for his performances at major clubs worldwide and his ability to blend various electronic music subgenres.", 
-    img: "https://jceventsinternational.com/wp-content/uploads/2018/12/DJ-profile-pic_0002_DJSuri.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/dj-suri",
     social: {
       instagram: "https://www.instagram.com/djsurimusic/",
       youtube: "https://www.youtube.com/suridj"
@@ -440,7 +440,7 @@ export const TALENT: Talent[] = [
     role: "DJ", 
     knownFor: "Athens/Atlanta", 
     bio: "Greek-born international DJ and producer George Spiliopoulos. Has performed in over 30 countries and produced remixes for Ariana Grande and Lil Nas X.", 
-    img: "https://geo-media.beatport.com/image_size/590x404/b4e28817-74b7-4868-9d60-34d0e944fe01.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/dj-performer",
     social: {
       instagram: "https://www.instagram.com/gspdj/"
     }
@@ -451,7 +451,7 @@ export const TALENT: Talent[] = [
     role: "Piano entertainer", 
     knownFor: "Showtunes & pop", 
     bio: "NYC-based composer, arranger, and piano entertainer who specializes in Broadway music and pop standards. Has worked with artists including Sharon Needles and the late Joan Rivers.", 
-    img: "https://shows.donttellmamanyc.com/images/performers/William_TN_Hallnew.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/william-hall",
     social: {
       instagram: "https://www.instagram.com/williamtnhall?igsh=MXJjZnR1aGl0MmpxMQ==",
       twitter: "https://x.com/williamtnhall"
@@ -463,7 +463,7 @@ export const TALENT: Talent[] = [
     role: "Piano entertainer", 
     knownFor: "Musical director", 
     bio: "Award-winning pianist, singer, and musical director from Nashville. Serves as entertainment coordinator and resident MD for Atlantis Events worldwide.", 
-    img: "https://cdn1.sixthman.net/2025/broadway/images/artists/brian_nash_-_brd_-_1500x1000_982140.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/brian-nash",
     social: {
       instagram: "https://www.instagram.com/brianjnash/"
     }
@@ -474,7 +474,7 @@ export const TALENT: Talent[] = [
     role: "Piano entertainer", 
     knownFor: "Late night fun", 
     bio: "Piano bar entertainer and vocalist known for his late-night performances and ability to take audience requests for an engaging experience.", 
-    img: "https://eghcszbxego.exactdn.com/wp-content/uploads/2025/07/Brandon-James-Gwinn-photo-by-Michael-Hull.jpg",
+    img: "https://res.cloudinary.com/dfqoebbyj/image/upload/c_fill,w_400,h_400,g_face/cruise-app/talent/brandon-james-gwinn",
     social: {
       instagram: "https://www.instagram.com/brandonjamesg",
       twitter: "https://x.com/brandonjamesg",

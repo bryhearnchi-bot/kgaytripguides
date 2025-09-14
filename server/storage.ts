@@ -19,25 +19,12 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
 }
 
-// Dynamic database connection based on DATABASE_URL
-let db: any;
-let schema: any;
-
-if (process.env.DATABASE_URL.startsWith('file:')) {
-  // Local SQLite
-  const { drizzle } = await import('drizzle-orm/better-sqlite3');
-  const Database = (await import('better-sqlite3')).default;
-  schema = await import('../shared/schema-sqlite');
-  const sqlite = new Database(process.env.DATABASE_URL.replace('file:', ''));
-  db = drizzle(sqlite, { schema });
-} else {
-  // Neon PostgreSQL
-  const { drizzle } = await import('drizzle-orm/neon-http');
-  const { neon } = await import('@neondatabase/serverless');
-  schema = await import('../shared/schema');
-  const queryClient = neon(process.env.DATABASE_URL);
-  db = drizzle(queryClient, { schema });
-}
+// Neon PostgreSQL database connection
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
+import * as schema from '../shared/schema';
+const queryClient = neon(process.env.DATABASE_URL);
+const db = drizzle(queryClient, { schema });
 
 export { db };
 
@@ -49,7 +36,9 @@ export const {
   itinerary,
   events,
   talent,
-  media
+  media,
+  settings,
+  cruiseTalent
 } = schema;
 
 // ============ USER OPERATIONS ============
@@ -234,20 +223,10 @@ export interface IItineraryStorage {
 
 export class ItineraryStorage implements IItineraryStorage {
   async getItineraryByCruise(cruiseId: number): Promise<Itinerary[]> {
-    // Handle both PostgreSQL and SQLite schemas
-    if (process.env.DATABASE_URL.startsWith('file:')) {
-      // SQLite schema uses tripId and day for ordering
-      return await db.select()
-        .from(itinerary)
-        .where(eq(itinerary.tripId, cruiseId))
-        .orderBy(asc(itinerary.day));
-    } else {
-      // PostgreSQL schema uses cruiseId and orderIndex
-      return await db.select()
-        .from(itinerary)
-        .where(eq(itinerary.cruiseId, cruiseId))
-        .orderBy(asc(itinerary.orderIndex));
-    }
+    return await db.select()
+      .from(itinerary)
+      .where(eq(itinerary.cruiseId, cruiseId))
+      .orderBy(asc(itinerary.orderIndex));
   }
 
   async createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary> {
@@ -312,20 +291,10 @@ export interface IEventStorage {
 
 export class EventStorage implements IEventStorage {
   async getEventsByCruise(cruiseId: number): Promise<Event[]> {
-    // Handle both PostgreSQL and SQLite schemas
-    if (process.env.DATABASE_URL.startsWith('file:')) {
-      // SQLite schema uses tripId
-      return await db.select()
-        .from(events)
-        .where(eq(events.tripId, cruiseId))
-        .orderBy(asc(events.date), asc(events.startTime));
-    } else {
-      // PostgreSQL schema uses cruiseId
-      return await db.select()
-        .from(events)
-        .where(eq(events.cruiseId, cruiseId))
-        .orderBy(asc(events.date), asc(events.time));
-    }
+    return await db.select()
+      .from(events)
+      .where(eq(events.cruiseId, cruiseId))
+      .orderBy(asc(events.date), asc(events.time));
   }
 
   async getEventsByDate(cruiseId: number, date: Date): Promise<Event[]> {

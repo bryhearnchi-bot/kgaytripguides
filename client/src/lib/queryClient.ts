@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { logError, shouldRetry } from "./error-utils";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -48,10 +49,12 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
+      retry: (failureCount, error) => shouldRetry(error, failureCount),
+      onError: (error) => logError(error, 'Query'),
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => shouldRetry(error, failureCount),
+      onError: (error) => logError(error, 'Mutation'),
     },
   },
 });

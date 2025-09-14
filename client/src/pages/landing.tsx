@@ -202,11 +202,6 @@ export default function LandingPage() {
             <p className="text-white/80 text-base">
               Your complete guide to unforgettable trip experiences
             </p>
-            <div className="flex items-center justify-center gap-4 mt-2">
-              <p className="text-white/60 text-xs">
-                Thousands of gay men from around the world
-              </p>
-            </div>
           </div>
           
           {/* Navigation Tabs */}

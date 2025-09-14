@@ -19,6 +19,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Local images (use Cloudinary instead)
+client/public/images/
+!client/public/images/.gitkeep
+
 # Database files (local development)
 *.db
 *.sqlite

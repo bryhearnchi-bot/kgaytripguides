@@ -3,18 +3,14 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { securityHeaders, rateLimit } from "./middleware/security";
+import { cdnHeaders } from "./lib/cdn";
+import { performanceMonitoring, healthCheck, getMetrics, errorTracking, analytics } from "./lib/monitoring";
 
 const app = express();
 
 // Explicit health check endpoints with proper error handling
-app.get('/healthz', (req, res) => {
-  try {
-    req.setTimeout(5000);
-    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-  } catch (error) {
-    res.status(500).json({ status: 'unhealthy', error: (error as Error).message });
-  }
-});
+app.get('/healthz', healthCheck);
 
 app.head('/healthz', (req, res) => {
   res.writeHead(200);
@@ -24,6 +20,20 @@ app.head('/healthz', (req, res) => {
 // Add explicit handlers for /api to prevent Vite from handling them
 app.get('/api', (_req, res) => res.json({ ok: true, message: 'API is running' }));
 app.head('/api', (_req, res) => res.sendStatus(200));
+
+// Add monitoring endpoints
+app.get('/api/metrics', getMetrics);
+app.post('/api/analytics/track', (req, res) => {
+  const { event, properties = {}, userId, sessionId } = req.body;
+  analytics.track(event, properties, userId, sessionId);
+  res.json({ success: true });
+});
+
+app.use(performanceMonitoring);
+// Disabled CSP to allow all external images
+// app.use(securityHeaders);
+app.use(rateLimit());
+app.use(cdnHeaders);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -67,6 +77,7 @@ app.use((req, res, next) => {
   // Terminal 404 handler for unmatched API routes - prevents fallthrough to Vite
   app.all('/api/*', (_req, res) => res.status(404).json({ error: 'API route not found' }));
   
+  app.use(errorTracking);
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

@@ -15,6 +15,8 @@ export interface TripData {
     description: string | null;
     shortDescription: string | null;
     featured: boolean;
+    shipName?: string;
+    cruiseLine?: string;
   };
   itinerary: Array<{
     id: number;
@@ -72,6 +74,7 @@ export function transformTripData(data: TripData) {
   const itinerary = data.itinerary.map(stop => ({
     key: stop.date.split('T')[0],
     date: formatDate(dateOnly(stop.date)),
+    rawDate: stop.date, // Keep raw date for component date operations
     port: stop.portName,
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
@@ -126,6 +129,8 @@ export function transformTripData(data: TripData) {
 
   // Party themes (we'll keep these static for now as they're descriptive content)
   const partyThemes = [
+    { key: "Sail-Away Party", desc: "Top-deck vibes as we depart on our adventure! Join us poolside for departure cocktails and ocean views.", shortDesc: "Top-deck departure celebration" },
+    { key: "Welcome Party", desc: "First night under the stars! Join your fellow travelers for cocktails, music, and the beginning of an unforgettable journey.", shortDesc: "First night celebration" },
     { key: "Dog Tag", desc: "The legendary Dog Tag T-Dance is back! Celebrate your pride with thousands of men from around the world.", shortDesc: "The legendary pride celebration" },
     { key: "UNITE", desc: "We Are Family! Let's celebrate our global LGBTQ+ community in this joyous evening of connection.", shortDesc: "Celebrating our global community" },
     { key: "Atlantis Empires", desc: "A celebration of legendary civilizations and mythical realms. Choose your empire and rule the night!", shortDesc: "Choose your empire and rule" },
