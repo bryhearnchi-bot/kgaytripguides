@@ -1,8 +1,8 @@
-const { neon } = require('@neondatabase/serverless');
+import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL);
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
