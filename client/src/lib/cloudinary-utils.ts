@@ -122,11 +122,12 @@ export const getItineraryImageUrl = (publicId: string): string => {
  * Default fallback image for when images fail to load
  */
 export const getDefaultFallbackImage = (type: 'talent' | 'event' | 'cruise' | 'general' = 'general'): string => {
+  // Use existing working Cloudinary images as fallbacks
   const fallbackImages = {
-    talent: 'cruise-app/defaults/default-performer',
-    event: 'cruise-app/defaults/default-event',
-    cruise: 'cruise-app/defaults/default-cruise',
-    general: 'cruise-app/defaults/default-image'
+    talent: 'cruise-app/ships/virgin-resilient-lady',
+    event: 'cruise-app/ships/virgin-resilient-lady',
+    cruise: 'cruise-app/ships/virgin-resilient-lady',
+    general: 'cruise-app/ships/virgin-resilient-lady'
   };
 
   return getCloudinaryUrl(fallbackImages[type], {

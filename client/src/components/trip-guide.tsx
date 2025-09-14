@@ -612,10 +612,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   const ITINERARY = data?.ITINERARY || [];
   const DAILY = data?.DAILY || [];
-  const TALENT = data?.TALENT || [];
-  
-  // Only show party themes and important info for Greek cruise
+
+  // Only show party themes, talent, and important info for Greek cruise
   const isGreekCruise = slug === 'greek-isles-2025';
+  const TALENT = isGreekCruise ? (data?.TALENT || []) : [];
   const PARTY_THEMES = isGreekCruise ? (data?.PARTY_THEMES || []) : [];
   const CITY_ATTRACTIONS = data?.CITY_ATTRACTIONS || [];
   const IMPORTANT_INFO = isGreekCruise ? (data?.IMPORTANT_INFO || {}) : {};
@@ -825,18 +825,18 @@ export default function TripGuide({ slug }: TripGuideProps) {
         </div>
         <div className="relative z-20 max-w-7xl mx-auto px-4 py-1">
           <div className="text-center mb-4">
-            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
+            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight drop-shadow-lg">
               {tripData?.trip?.name || "Trip Guide"}
             </h1>
-            <p className="text-white/80 text-base">
-              {tripData?.trip?.shipName && tripData?.trip?.cruiseLine 
+            <p className="text-white text-base font-medium drop-shadow-md">
+              {tripData?.trip?.shipName && tripData?.trip?.cruiseLine
                 ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
                 : "Your Adventure Awaits"
               }
             </p>
             {tripData?.trip?.startDate && tripData?.trip?.endDate && (
               <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-white/60 text-xs">
+                <p className="text-white text-sm font-medium drop-shadow-md">
                   {format(new Date(tripData.trip.startDate), 'MMMM d')} - {format(new Date(tripData.trip.endDate), 'MMMM d, yyyy')}
                 </p>
               </div>
@@ -876,12 +876,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
       </header>
 
       <div className="bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 pt-[24px] pb-[2px]">
+        <div className="max-w-7xl mx-auto px-4 pt-[12px] pb-[2px]">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
             {/* Daily Schedule Tab */}
-            <TabsContent value="schedule" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
+            <TabsContent value="schedule">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div className="flex items-center justify-between mb-4 -mt-2">
                   <div className="flex items-center space-x-2">
                     <CalendarDays className="w-5 h-5 text-white/80" />
@@ -996,7 +996,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 </div>
 
                 {DAILY.length === 0 && (
-                  <div className="text-center py-12">
+                  <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
                     <CalendarDays className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
                     <p className="text-gray-500">No events are currently scheduled.</p>
@@ -1006,14 +1006,14 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             {/* Itinerary Tab */}
-            <TabsContent value="itinerary" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
+            <TabsContent value="itinerary">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <Map className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Trip Itinerary</h2>
                 </div>
                 {ITINERARY.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
                     <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No itinerary available</h3>
                     <p className="text-gray-500">Itinerary information will be available soon.</p>
@@ -1029,7 +1029,24 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         className="mb-6"
                       >
 
-                        <div className="bg-gray-100 border border-gray-200 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300">
+                        <div
+                          className="bg-gray-100 border border-gray-200 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer relative"
+                          onClick={() => handleViewEvents(stop.key, stop.port)}
+                        >
+                          {/* View Events Button - positioned in top right corner */}
+                          <div className="absolute top-3 right-3 z-10">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent double-click from card
+                                handleViewEvents(stop.key, stop.port);
+                              }}
+                              className="bg-ocean-600 hover:bg-ocean-700 text-white text-xs px-4 py-2"
+                            >
+                              View Events
+                            </Button>
+                          </div>
+
                           <div className="flex flex-col lg:flex-row">
                             {/* Hero Image */}
                             <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden">
@@ -1079,26 +1096,30 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 </div>
                               </div>
 
-                              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3 text-sm mb-3">
-                                {stop.arrive !== '—' && (
-                                  <div className="flex items-center space-x-2 min-w-0">
-                                    <span className="font-medium text-gray-700 whitespace-nowrap">Arrive:</span>
-                                    <span className="font-bold text-gray-800 break-words">
-                                      {stop.arrive}
-                                    </span>
-                                  </div>
-                                )}
-                                {stop.depart !== '—' && (
-                                  <div className="flex items-center space-x-2 min-w-0">
-                                    <span className="font-medium text-gray-700 whitespace-nowrap">Depart:</span>
-                                    <span className="font-bold text-gray-800 break-words">
-                                      {stop.depart}
-                                    </span>
-                                  </div>
-                                )}
+                              <div className="flex flex-col gap-2 text-sm mb-3">
+                                {/* Arrive and Depart times grouped together */}
+                                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
+                                  {stop.arrive !== '—' && (
+                                    <div className="flex items-center space-x-2 min-w-0">
+                                      <span className="font-medium text-gray-700 whitespace-nowrap">Arrive:</span>
+                                      <span className="font-bold text-gray-800 break-words">
+                                        {stop.arrive}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {stop.depart !== '—' && (
+                                    <div className="flex items-center space-x-2 min-w-0">
+                                      <span className="font-medium text-gray-700 whitespace-nowrap">Depart:</span>
+                                      <span className="font-bold text-gray-800 break-words">
+                                        {stop.depart}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                {/* All Aboard time always on separate line below */}
                                 {stop.allAboard && stop.allAboard !== '—' && (
                                   <div className="flex items-center space-x-2 min-w-0">
-                                    <span className="font-medium text-gray-700 whitespace-nowrap">All Aboard:</span>
+                                    <span className="font-bold text-gray-700 whitespace-nowrap">All Aboard:</span>
                                     <span className="bg-gradient-to-r from-coral to-pink-500 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md whitespace-nowrap">
                                       {stop.allAboard}
                                     </span>
@@ -1109,16 +1130,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
                               {stop.description && (
                                 <p className="text-gray-600 text-sm mb-3 break-words leading-relaxed">{stop.description}</p>
                               )}
-
-                              <div className="flex justify-end">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleViewEvents(stop.key, stop.port)}
-                                  className="bg-ocean-600 hover:bg-ocean-700 text-white text-xs"
-                                >
-                                  View Events
-                                </Button>
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -1130,8 +1141,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
             
             {/* Talent Tab */}
-            <TabsContent value="talent" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
+            <TabsContent value="talent">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <Star className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Featured Talent</h2>
@@ -1162,14 +1173,14 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 className="cursor-pointer hover:shadow-lg transition-all duration-300 bg-gray-100 border border-gray-200 overflow-hidden"
                                 onClick={() => handleTalentClick(talent.name)}
                               >
-                                <div className="flex flex-col lg:flex-row">
-                                  <div className="w-full h-48 lg:w-32 lg:h-32 flex-shrink-0">
+                                <div className="flex flex-row">
+                                  <div className="w-32 h-32 flex-shrink-0">
                                     <img
                                       src={talent.img}
                                       alt={talent.name}
                                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                                       onError={(e) => {
-                                        e.currentTarget.src = "https://res.cloudinary.com/dfqoebbyj/image/upload/w_400,h_400,c_fill,g_face,q_auto,f_auto/v1757773863/cruise-app/assets/default-performer_cuv35p.jpg";
+                                        e.currentTarget.src = "https://res.cloudinary.com/dfqoebbyj/image/upload/w_400,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/ships/virgin-resilient-lady.jpg";
                                       }}
                                     />
                                   </div>
@@ -1195,8 +1206,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 ) : null}
 
                 {TALENT.length === 0 && (
-                  <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-12 border border-white/30">
-                    <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
+                    <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No talent found</h3>
                     <p className="text-gray-500">Talent information will be available soon.</p>
                   </div>
@@ -1205,8 +1216,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             {/* Parties Tab */}
-            <TabsContent value="parties" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
+            <TabsContent value="parties">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <PartyPopper className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Party Events</h2>
@@ -1240,7 +1251,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                   const partyDates = Object.keys(partiesByDate).sort();
 
                   return partyDates.length === 0 ? (
-                    <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-12 border border-white/30">
+                    <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
                       <PartyPopper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No party events available</h3>
                       <p className="text-gray-500">Party information will be available soon.</p>
@@ -1285,7 +1296,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 <div key={`${party.title}-${party.time}`} className="bg-white/90 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
                                   <div className="flex flex-col lg:flex-row">
                                     {/* Hero Image */}
-                                    <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden ring-2 ring-white/50 rounded-md">
+                                    <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden">
                                       <img
                                         src={party.imageUrl || 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg'}
                                         alt={party.title}
@@ -1333,8 +1344,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             {/* Important Info Tab */}
-            <TabsContent value="info" className="min-h-screen">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6">
+            <TabsContent value="info">
+              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <Info className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Important Trip Information</h2>
@@ -1427,6 +1438,15 @@ export default function TripGuide({ slug }: TripGuideProps) {
                       <p><span className="font-medium">Walk-ins:</span> {(IMPORTANT_INFO as any).dining.walkIns}</p>
                       <p><span className="font-medium">Included:</span> {(IMPORTANT_INFO as any).dining.included}</p>
                     </div>
+                  </div>
+                )}
+
+                {/* Info tab placeholder when no data */}
+                {Object.keys(IMPORTANT_INFO).length === 0 && (
+                  <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
+                    <Info className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No information available</h3>
+                    <p className="text-gray-500">Trip information will be available soon.</p>
                   </div>
                 )}
               </div>
@@ -1647,6 +1667,25 @@ export default function TripGuide({ slug }: TripGuideProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Footer */}
+      <footer className="atlantis-gradient wave-pattern text-white py-6 mt-6">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="flex items-center justify-center mb-4">
+            <img
+              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png"
+              alt="Atlantis Events"
+              className="h-8 w-auto mr-3 brightness-0 invert"
+            />
+            <div className="text-left">
+              <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
+            </div>
+          </div>
+          <p className="text-sm text-white/80">
+            Your ultimate resource for cruise information and planning
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
