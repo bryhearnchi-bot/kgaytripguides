@@ -967,7 +967,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                               <div className="flex items-center space-x-2">
                                 {day.items.length > 0 && (
                                   <span className="text-xs text-gray-500 hidden sm:inline">
-                                    Ends: {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
+                                    Departs: {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
                                   </span>
                                 )}
                                 {isCollapsed ? (
