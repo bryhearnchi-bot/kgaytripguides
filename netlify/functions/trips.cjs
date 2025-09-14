@@ -142,39 +142,10 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Function error:', error);
-
-    // Handle database connection errors specifically
-    if (error.message.includes('relation') && error.message.includes('does not exist')) {
-      return {
-        statusCode: 503,
-        headers,
-        body: JSON.stringify({
-          error: 'Database unavailable',
-          message: 'Database schema not found. Please check database setup.'
-        })
-      };
-    }
-
-    // Handle network/connection errors
-    if (error.message.includes('connect') || error.message.includes('network')) {
-      return {
-        statusCode: 503,
-        headers,
-        body: JSON.stringify({
-          error: 'Service unavailable',
-          message: 'Unable to connect to database. Please try again later.'
-        })
-      };
-    }
-
-    // Generic server error
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
-        error: 'Internal server error',
-        message: 'An unexpected error occurred.'
-      })
+      body: JSON.stringify({ error: 'Internal server error' })
     };
   }
 };
