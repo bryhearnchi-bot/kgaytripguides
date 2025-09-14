@@ -22,12 +22,12 @@ exports.handler = async (event, context) => {
     if (pathSegments.length >= 2 && pathSegments[pathSegments.length - 1] === 'complete') {
       const slug = pathSegments[pathSegments.length - 2];
 
-      // Get trip data
-      const tripResult = await sql`
-        SELECT * FROM trips WHERE slug = ${slug} LIMIT 1
+      // Get cruise data
+      const cruiseResult = await sql`
+        SELECT * FROM cruises WHERE slug = ${slug} LIMIT 1
       `;
 
-      if (tripResult.length === 0) {
+      if (cruiseResult.length === 0) {
         return {
           statusCode: 404,
           headers: { ...headers, 'Content-Type': 'application/json' },
@@ -35,16 +35,16 @@ exports.handler = async (event, context) => {
         };
       }
 
-      const trip = tripResult[0];
+      const cruise = cruiseResult[0];
 
       // Get itinerary
       const itinerary = await sql`
-        SELECT * FROM itinerary WHERE cruise_id = ${trip.id} ORDER BY order_index
+        SELECT * FROM itinerary WHERE cruise_id = ${cruise.id} ORDER BY order_index
       `;
 
       // Get events
       const events = await sql`
-        SELECT * FROM events WHERE cruise_id = ${trip.id} ORDER BY date, time
+        SELECT * FROM events WHERE cruise_id = ${cruise.id} ORDER BY date, time
       `;
 
       // Get talent
@@ -54,18 +54,18 @@ exports.handler = async (event, context) => {
 
       const response = {
         trip: {
-          id: trip.id,
-          name: trip.name,
-          slug: trip.slug,
-          startDate: trip.start_date,
-          endDate: trip.end_date,
-          status: trip.status,
-          heroImageUrl: trip.hero_image_url,
-          description: trip.description,
-          shortDescription: trip.short_description,
-          featured: trip.featured,
-          shipName: trip.ship_name,
-          cruiseLine: trip.cruise_line
+          id: cruise.id,
+          name: cruise.name,
+          slug: cruise.slug,
+          startDate: cruise.start_date,
+          endDate: cruise.end_date,
+          status: cruise.status,
+          heroImageUrl: cruise.hero_image_url,
+          description: cruise.description,
+          shortDescription: cruise.short_description,
+          featured: cruise.featured,
+          shipName: cruise.ship_name,
+          cruiseLine: cruise.cruise_line
         },
         itinerary: itinerary.map(item => ({
           id: item.id,

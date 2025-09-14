@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getTripSlug } from '../data/data-service';
+import { getTripSlug, getItineraryData, getTalentData, getDailyScheduleData, getPartyThemeData } from '../data/data-service';
 import { dateOnly } from '@/lib/utils';
 
 export interface TripData {
@@ -245,7 +245,7 @@ export function useTripData(slug: string = getTripSlug()) {
     queryFn: async () => {
       const response = await fetch(`/api/trips/${slug}/complete`);
       if (!response.ok) {
-        throw new Error('Failed to fetch trip data');
+        throw new Error(`Failed to fetch trip data: ${response.statusText}`);
       }
       return response.json();
     },

@@ -115,3 +115,5 @@ drizzle.config.local.ts
 .replit
 replit.nix
 .upm/
+# Local Netlify folder
+.netlify
