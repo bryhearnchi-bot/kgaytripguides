@@ -99,19 +99,8 @@ app.use((req, res, next) => {
   server.listen(port, "0.0.0.0", async () => {
     log(`✅ Server ready and listening on port ${port}`);
     
-    // Run migrations in background without blocking or exiting
-    if (process.env.NODE_ENV === 'production') {
-      setTimeout(async () => {
-        try {
-          const { migrateAllImages } = await import('./image-migration.js');
-          await migrateAllImages();
-          log('Background migration completed successfully');
-        } catch (error) {
-          log('Background migration failed: ' + (error as Error).message);
-          // Don't exit on migration failure
-        }
-      }, 1000);
-    }
+    // Skip image migrations for now to avoid startup issues
+    // TODO: Re-enable once Railway deployment is stable
   });
 
   // Handle graceful shutdown
