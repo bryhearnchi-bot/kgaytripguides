@@ -649,12 +649,14 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const ITINERARY = data?.ITINERARY || [];
   const DAILY = data?.DAILY || [];
 
-  // Only show party themes, talent, and important info for Greek cruise
+  // Show party themes, talent, and important info for cruises that have talent
   const isGreekCruise = slug === 'greek-isles-2025';
-  const TALENT = isGreekCruise ? (data?.TALENT || []) : [];
-  const PARTY_THEMES = isGreekCruise ? (data?.PARTY_THEMES || []) : [];
+  const isDragStarsCruise = slug === 'drag-stars-at-sea-2025';
+  const hasTalent = isGreekCruise || isDragStarsCruise;
+  const TALENT = hasTalent ? (data?.TALENT || []) : [];
+  const PARTY_THEMES = hasTalent ? (data?.PARTY_THEMES || []) : [];
   const CITY_ATTRACTIONS = data?.CITY_ATTRACTIONS || [];
-  const IMPORTANT_INFO = isGreekCruise ? (data?.IMPORTANT_INFO || {}) : {};
+  const IMPORTANT_INFO = hasTalent ? (data?.IMPORTANT_INFO || {}) : {};
   const TRIP_INFO = data?.TRIP_INFO || {};
 
   // Utility function: Events before 6am belong to the previous day's schedule

@@ -366,9 +366,22 @@ export class TalentStorage implements ITalentStorage {
   }
 
   async getTalentByCruise(cruiseId: number): Promise<Talent[]> {
-    // For simplified schema, return all talent (no cruise-talent relationship table)
-    const result = await db.select()
+    // Return only talent linked to this specific cruise through cruise_talent junction table
+    const result = await db.select({
+      id: talent.id,
+      name: talent.name,
+      category: talent.category,
+      bio: talent.bio,
+      knownFor: talent.knownFor,
+      profileImageUrl: talent.profileImageUrl,
+      socialLinks: talent.socialLinks,
+      website: talent.website,
+      createdAt: talent.createdAt,
+      updatedAt: talent.updatedAt
+    })
       .from(talent)
+      .innerJoin(cruiseTalent, eq(talent.id, cruiseTalent.talentId))
+      .where(eq(cruiseTalent.cruiseId, cruiseId))
       .orderBy(asc(talent.name));
     return result;
   }
