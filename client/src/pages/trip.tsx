@@ -7,7 +7,22 @@ export default function TripPage() {
 
   // Scroll to top when navigating to a trip page
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Use setTimeout to ensure DOM is ready and smooth scroll
+    const scrollToTop = () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'smooth'
+      });
+    };
+
+    // Try immediate scroll first
+    scrollToTop();
+
+    // Also try after a short delay to catch any late rendering
+    const timeoutId = setTimeout(scrollToTop, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [params?.slug]);
   
   if (!match || !params?.slug) {

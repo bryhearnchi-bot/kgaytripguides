@@ -605,11 +605,41 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Scroll to top when slug changes (navigating between different trips)
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Use setTimeout to ensure DOM is ready and smooth scroll
+    const scrollToTop = () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'smooth'
+      });
+    };
+
+    // Try immediate scroll first
+    scrollToTop();
+
+    // Also try after a short delay to catch any late rendering
+    const timeoutId = setTimeout(scrollToTop, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [slug]);
 
   // Use the trip data hook
   const { data: tripData, isLoading, error } = useTripData(slug);
+
+  // Additional scroll to top when data loads (in case content height changes)
+  useEffect(() => {
+    if (!isLoading && tripData) {
+      const timeoutId = setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'instant'
+        });
+      }, 50);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading, tripData]);
 
   const data = useMemo(() => {
     if (!tripData) return null;
