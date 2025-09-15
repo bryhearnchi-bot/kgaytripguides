@@ -1182,9 +1182,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 )}
                               </div>
 
-                              {stop.description && (
-                                <p className="text-gray-600 text-sm mb-3 break-words leading-relaxed">{stop.description}</p>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -1647,6 +1644,16 @@ export default function TripGuide({ slug }: TripGuideProps) {
               Events for {selectedItineraryStop?.port}
             </DialogTitle>
           </DialogHeader>
+
+          {/* Port Description */}
+          {selectedItineraryStop && (() => {
+            const itineraryStop = ITINERARY.find(stop => stop.key === selectedItineraryStop.date);
+            return itineraryStop?.description && (
+              <div className="border-b pb-4 mb-4">
+                <p className="text-gray-700 text-sm leading-relaxed">{itineraryStop.description}</p>
+              </div>
+            );
+          })()}
 
           <div className="space-y-4">
             {selectedDateEvents.length > 0 ? (
