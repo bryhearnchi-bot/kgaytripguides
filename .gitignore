@@ -117,3 +117,5 @@ replit.nix
 .upm/
 # Local Netlify folder
 .netlify
+modelcontextprotocol/
+.claude/
