@@ -878,22 +878,24 @@ export default function TripGuide({ slug }: TripGuideProps) {
         </div>
         <div className="relative z-20 max-w-7xl mx-auto px-4 py-1">
           <div className="text-center mb-4">
-            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight drop-shadow-lg">
-              {tripData?.trip?.name || "Trip Guide"}
-            </h1>
-            <p className="text-white text-base font-medium drop-shadow-md">
-              {tripData?.trip?.shipName && tripData?.trip?.cruiseLine
-                ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
-                : "Your Adventure Awaits"
-              }
-            </p>
-            {tripData?.trip?.startDate && tripData?.trip?.endDate && (
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-white text-sm font-medium drop-shadow-md">
-                  {format(new Date(tripData.trip.startDate), 'MMMM d')} - {format(new Date(tripData.trip.endDate), 'MMMM d, yyyy')}
-                </p>
-              </div>
-            )}
+            <div className="inline-block bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/20 shadow-lg">
+              <h1 className="text-3xl font-bold text-white mb-1 tracking-tight drop-shadow-lg">
+                {tripData?.trip?.name || "Trip Guide"}
+              </h1>
+              <p className="text-white text-base font-medium drop-shadow-md">
+                {tripData?.trip?.shipName && tripData?.trip?.cruiseLine
+                  ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
+                  : "Your Adventure Awaits"
+                }
+              </p>
+              {tripData?.trip?.startDate && tripData?.trip?.endDate && (
+                <div className="flex items-center justify-center gap-4 mt-2">
+                  <p className="text-white text-sm font-medium drop-shadow-md">
+                    {format(new Date(tripData.trip.startDate), 'MMMM d')} - {format(new Date(tripData.trip.endDate), 'MMMM d, yyyy')}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Navigation Tabs */}
