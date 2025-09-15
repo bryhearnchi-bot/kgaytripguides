@@ -603,76 +603,48 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
 
-  // Scroll to top when slug changes (navigating between different trips)
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready and smooth scroll
-    const scrollToTop = () => {
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: 'smooth'
-      });
-    };
-
-    // Try immediate scroll first
-    scrollToTop();
-
-    // Also try after a short delay to catch any late rendering
-    const timeoutId = setTimeout(scrollToTop, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [slug]);
-
   // Use the trip data hook
   const { data: tripData, isLoading, error } = useTripData(slug);
-
-  // Additional scroll to top when data loads (in case content height changes)
-  useEffect(() => {
-    if (!isLoading && tripData) {
-      // Multiple attempts with increasing delays to ensure content is rendered
-      const scrollToTop = () => {
-        window.scrollTo({
-          top: 0,
-          left: 0,
-          behavior: 'instant'
-        });
-      };
-
-      // Immediate attempt
-      scrollToTop();
-
-      // Try again after short delays
-      const timeouts = [
-        setTimeout(scrollToTop, 50),
-        setTimeout(scrollToTop, 200),
-        setTimeout(scrollToTop, 500)
-      ];
-
-      return () => {
-        timeouts.forEach(clearTimeout);
-      };
-    }
-  }, [isLoading, tripData]);
 
   const data = useMemo(() => {
     if (!tripData) return null;
     return transformTripData(tripData);
   }, [tripData]);
 
-  // Scroll to top when processed data becomes available (final safety net)
+  // Robust scroll to top when component content is ready
   useEffect(() => {
-    if (data) {
-      const timeoutId = setTimeout(() => {
+    if (data && !isLoading) {
+      const forceScrollToTop = () => {
+        // Multiple scroll methods for maximum compatibility
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        // Also try with options
         window.scrollTo({
           top: 0,
           left: 0,
           behavior: 'instant'
         });
-      }, 100);
+      };
 
-      return () => clearTimeout(timeoutId);
+      // Immediate scroll
+      forceScrollToTop();
+
+      // Use requestAnimationFrame for next paint cycle
+      requestAnimationFrame(() => {
+        forceScrollToTop();
+
+        // Additional attempts to ensure it works
+        setTimeout(forceScrollToTop, 1);
+        setTimeout(forceScrollToTop, 10);
+        setTimeout(forceScrollToTop, 50);
+        setTimeout(forceScrollToTop, 100);
+        setTimeout(forceScrollToTop, 300);
+        setTimeout(forceScrollToTop, 500);
+      });
     }
-  }, [data]);
+  }, [data, isLoading, slug]);
 
   const ITINERARY = data?.ITINERARY || [];
   const DAILY = data?.DAILY || [];

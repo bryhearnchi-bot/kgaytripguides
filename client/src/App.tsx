@@ -52,6 +52,11 @@ function App() {
         });
       });
     }
+
+    // Disable browser scroll restoration globally
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
   }, []);
 
   return (

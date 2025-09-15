@@ -5,24 +5,42 @@ import TripGuide from "@/components/trip-guide";
 export default function TripPage() {
   const [match, params] = useRoute("/trip/:slug");
 
-  // Scroll to top when navigating to a trip page
+  // Robust scroll to top implementation
   useEffect(() => {
-    // Use setTimeout to ensure DOM is ready and smooth scroll
-    const scrollToTop = () => {
+    // Disable browser scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    const forceScrollToTop = () => {
+      // Multiple scroll methods for maximum compatibility
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // Also try with options
       window.scrollTo({
         top: 0,
         left: 0,
-        behavior: 'smooth'
+        behavior: 'instant'
       });
     };
 
-    // Try immediate scroll first
-    scrollToTop();
+    // Immediate scroll
+    forceScrollToTop();
 
-    // Also try after a short delay to catch any late rendering
-    const timeoutId = setTimeout(scrollToTop, 100);
+    // Use requestAnimationFrame for next paint cycle
+    requestAnimationFrame(() => {
+      forceScrollToTop();
 
-    return () => clearTimeout(timeoutId);
+      // Additional attempts with longer delays
+      setTimeout(forceScrollToTop, 1);
+      setTimeout(forceScrollToTop, 10);
+      setTimeout(forceScrollToTop, 50);
+      setTimeout(forceScrollToTop, 100);
+      setTimeout(forceScrollToTop, 200);
+    });
+
   }, [params?.slug]);
   
   if (!match || !params?.slug) {
