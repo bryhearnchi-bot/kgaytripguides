@@ -29,24 +29,14 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
 }
 
-// Database connection - use different drivers for different environments
+// Railway PostgreSQL database connection (for both dev and production)
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from '../shared/schema';
 
-let db: any;
-
-if (process.env.NODE_ENV === 'production') {
-  // Production: Use standard PostgreSQL driver for Railway
-  const { drizzle } = await import('drizzle-orm/postgres-js');
-  const postgres = (await import('postgres')).default;
-  const client = postgres(process.env.DATABASE_URL!);
-  db = drizzle(client, { schema });
-} else {
-  // Development: Use Neon serverless for external access
-  const { drizzle } = await import('drizzle-orm/neon-http');
-  const { neon } = await import('@neondatabase/serverless');
-  const queryClient = neon(process.env.DATABASE_URL!);
-  db = drizzle(queryClient, { schema });
-}
+// Use postgres driver for Railway in all environments
+const client = postgres(process.env.DATABASE_URL!);
+const db = drizzle(client, { schema });
 
 export { db };
 
