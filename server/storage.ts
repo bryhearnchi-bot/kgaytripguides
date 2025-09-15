@@ -29,12 +29,24 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
 }
 
-// Neon PostgreSQL database connection
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+// Database connection - use different drivers for different environments
 import * as schema from '../shared/schema';
-const queryClient = neon(process.env.DATABASE_URL);
-const db = drizzle(queryClient, { schema });
+
+let db: any;
+
+if (process.env.NODE_ENV === 'production') {
+  // Production: Use standard PostgreSQL driver for Railway
+  const { drizzle } = await import('drizzle-orm/postgres-js');
+  const postgres = (await import('postgres')).default;
+  const client = postgres(process.env.DATABASE_URL!);
+  db = drizzle(client, { schema });
+} else {
+  // Development: Use Neon serverless for external access
+  const { drizzle } = await import('drizzle-orm/neon-http');
+  const { neon } = await import('@neondatabase/serverless');
+  const queryClient = neon(process.env.DATABASE_URL!);
+  db = drizzle(queryClient, { schema });
+}
 
 export { db };
 
