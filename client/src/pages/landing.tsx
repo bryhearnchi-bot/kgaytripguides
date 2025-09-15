@@ -33,7 +33,15 @@ function TripCard({ trip }: { trip: Trip }) {
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95 backdrop-blur-sm border-ocean-200/60 flex flex-col h-full">
-      <Link href={`/trip/${trip.slug}`}>
+      <Link
+        href={`/trip/${trip.slug}`}
+        onClick={() => {
+          // Force scroll to top immediately on navigation
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        }}
+      >
         <div className="relative overflow-hidden cursor-pointer">
           <img
             src={trip.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
@@ -85,7 +93,15 @@ function TripCard({ trip }: { trip: Trip }) {
         </div>
         
         <div className="mt-auto">
-          <Link href={`/trip/${trip.slug}`}>
+          <Link
+            href={`/trip/${trip.slug}`}
+            onClick={() => {
+              // Force scroll to top immediately on navigation
+              window.scrollTo(0, 0);
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
+            }}
+          >
             <Button className="w-full bg-gradient-to-r from-ocean-600 to-ocean-700 hover:from-ocean-700 hover:to-ocean-800 text-white text-sm py-2">
               {getTripButtonText(trip.tripType)}
             </Button>
