@@ -629,15 +629,28 @@ export default function TripGuide({ slug }: TripGuideProps) {
   // Additional scroll to top when data loads (in case content height changes)
   useEffect(() => {
     if (!isLoading && tripData) {
-      const timeoutId = setTimeout(() => {
+      // Multiple attempts with increasing delays to ensure content is rendered
+      const scrollToTop = () => {
         window.scrollTo({
           top: 0,
           left: 0,
           behavior: 'instant'
         });
-      }, 50);
+      };
 
-      return () => clearTimeout(timeoutId);
+      // Immediate attempt
+      scrollToTop();
+
+      // Try again after short delays
+      const timeouts = [
+        setTimeout(scrollToTop, 50),
+        setTimeout(scrollToTop, 200),
+        setTimeout(scrollToTop, 500)
+      ];
+
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
     }
   }, [isLoading, tripData]);
 
@@ -645,6 +658,21 @@ export default function TripGuide({ slug }: TripGuideProps) {
     if (!tripData) return null;
     return transformTripData(tripData);
   }, [tripData]);
+
+  // Scroll to top when processed data becomes available (final safety net)
+  useEffect(() => {
+    if (data) {
+      const timeoutId = setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'instant'
+        });
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [data]);
 
   const ITINERARY = data?.ITINERARY || [];
   const DAILY = data?.DAILY || [];
