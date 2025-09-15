@@ -48,6 +48,31 @@ All images are now properly stored in Cloudinary and referenced in the Neon data
 
 **Note**: The itinerary tab cards now properly use Cloudinary images from the database instead of local server images.
 
+## Date and Time Handling Policy
+
+**IMPORTANT**: The entire application should NOT adjust for time zones unless specifically asked to build a component that requires timezone functionality.
+
+### Guidelines:
+- **Always use `dateOnly()` utility** when displaying dates from the database
+- **Never use `new Date()` directly** on database date strings - it applies unwanted timezone conversion
+- **Database dates are stored as intended** - display them exactly as stored
+- **Time zone adjustments cause incorrect date display** (e.g., Oct 15 showing as Oct 14)
+
+### Correct Usage:
+```typescript
+// ✅ CORRECT - No timezone adjustment
+format(dateOnly(tripData.trip.startDate), 'MMMM d')
+
+// ❌ WRONG - Applies timezone conversion
+format(new Date(tripData.trip.startDate), 'MMMM d')
+```
+
+### Exception:
+Only implement timezone handling when explicitly requested for features like:
+- World clock components
+- Multi-timezone event scheduling
+- User location-based time displays
+
 ### Day at Sea Images (Completed)
 - Updated "Day at Sea" image to use specific Cloudinary URL with optimized transformations
 - URL: `https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/celebrity-cruise-lines_celebrity-solstice_wake_article_article-2997_5685_1757732437578_cuv35p.jpg`

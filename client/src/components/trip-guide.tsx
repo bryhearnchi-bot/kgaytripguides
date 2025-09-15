@@ -893,7 +893,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
               {tripData?.trip?.startDate && tripData?.trip?.endDate && (
                 <div className="flex items-center justify-center gap-4 mt-2">
                   <p className="text-white text-sm font-medium drop-shadow-md">
-                    {format(new Date(tripData.trip.startDate), 'MMMM d')} - {format(new Date(tripData.trip.endDate), 'MMMM d, yyyy')}
+                    {format(dateOnly(tripData.trip.startDate), 'MMMM d')} - {format(dateOnly(tripData.trip.endDate), 'MMMM d, yyyy')}
                   </p>
                 </div>
               )}
