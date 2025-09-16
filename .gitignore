@@ -119,3 +119,9 @@ replit.nix
 .netlify
 modelcontextprotocol/
 .claude/
+
+# MCP configuration scripts (contain sensitive API keys)
+fix-mcp-config.js
+add-supabase-mcp.js
+remove-unused-mcp.js
+*-mcp-config.js

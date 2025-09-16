@@ -79,24 +79,53 @@ Only implement timezone handling when explicitly requested for features like:
 - Banner and hero sections
 - General layout structure and spacing patterns
 - Tab ordering and navigation behavior
+- **Landing page** - Always ask for permission before making any changes
+- **Trip guides pages** - Always ask for permission before making any changes
 
 **Allowed modifications**:
 - Content within existing card structures
 - Text formatting within established design system
 - Mobile-specific responsive fixes that don't affect desktop
 - Data display improvements that maintain current visual hierarchy
+- Admin interfaces (Port Management, Party Management, Event Wizard)
+- AI Assistant panel integration
 
 Always preserve the ocean-themed design system and existing visual hierarchy.
 
 ## Test-Driven Development (TDD) Guidelines
 
-Starting from January 2025, all changes must follow TDD practices:
+**MANDATORY**: All changes must follow TDD practices throughout the entire migration:
 
-### TDD Process
+### TDD Process (Required for EVERY change)
 1. **Write tests first** - Before implementing any feature or fix
-2. **See tests fail** (red phase)
+2. **See tests fail** (red phase) - Confirm tests actually test something
 3. **Implement minimal code** to make tests pass (green phase)
 4. **Refactor** while keeping tests passing (refactor phase)
+5. **QA Review** - Independent verification of test coverage
+
+### TDD Enforcement
+- No code merged without tests written first
+- Test coverage must increase or stay same, never decrease
+- All PRs must show test-first commit history
+- QA must verify TDD was followed
+- Migration steps require pre-written validation tests
+
+### QA Process During Migration
+1. **Pre-Implementation QA**
+   - Review test plans before coding
+   - Verify test coverage targets
+   - Review acceptance criteria
+
+2. **During Implementation QA**
+   - Continuous test execution
+   - Real-time coverage monitoring
+   - Performance testing at each step
+
+3. **Post-Implementation QA**
+   - Full regression testing
+   - User acceptance testing
+   - Performance benchmarking
+   - Security audit
 
 ### Test Locations
 - Unit tests: `__tests__/` directories or adjacent to components

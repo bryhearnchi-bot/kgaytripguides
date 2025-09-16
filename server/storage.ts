@@ -51,7 +51,10 @@ export const {
   media,
   settings,
   cruiseTalent,
-  tripInfoSections
+  tripInfoSections,
+  ports,
+  parties,
+  eventTalent
 } = schema;
 
 // ============ USER OPERATIONS ============
@@ -236,6 +239,8 @@ export interface IItineraryStorage {
 
 export class ItineraryStorage implements IItineraryStorage {
   async getItineraryByCruise(cruiseId: number): Promise<Itinerary[]> {
+    // For now, just return the itinerary items without port data
+    // to avoid circular import issues
     return await db.select()
       .from(itinerary)
       .where(eq(itinerary.cruiseId, cruiseId))
@@ -304,6 +309,8 @@ export interface IEventStorage {
 
 export class EventStorage implements IEventStorage {
   async getEventsByCruise(cruiseId: number): Promise<Event[]> {
+    // For now, just return the events without party data
+    // to avoid circular import issues
     return await db.select()
       .from(events)
       .where(eq(events.cruiseId, cruiseId))
@@ -576,3 +583,8 @@ export const talentStorage = new TalentStorage();
 export const mediaStorage = new MediaStorage();
 export const settingsStorage = new SettingsStorage();
 export const tripInfoStorage = new TripInfoStorage();
+
+// Export new storage classes
+export { portStorage, type Port, type NewPort } from './storage/PortStorage';
+export { partyStorage, type Party, type NewParty } from './storage/PartyStorage';
+export { eventTalentStorage, type EventTalent, type NewEventTalent, type EventTalentWithDetails } from './storage/EventTalentStorage';

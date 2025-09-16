@@ -109,6 +109,7 @@ export const itinerary = pgTable("itinerary", {
   highlights: jsonb("highlights"), // Port highlights
   orderIndex: integer("order_index").notNull(), // For sorting
   segment: text("segment").default("main"), // pre, main, post
+  port_id: integer("port_id"), // NEW: Foreign key to ports table
 }, (table) => ({
   cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId),
   dateIdx: index("itinerary_date_idx").on(table.date),
@@ -131,7 +132,8 @@ export const events = pgTable("events", {
   dressCode: text("dress_code"),
   capacity: integer("capacity"),
   requiresReservation: boolean("requires_reservation").default(false),
-  talentIds: jsonb("talent_ids"), // Array of talent IDs
+  talentIds: jsonb("talent_ids"), // Array of talent IDs (deprecated - use event_talent table)
+  party_id: integer("party_id"), // NEW: Foreign key to parties table
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -191,6 +193,56 @@ export const media = pgTable("media", {
 }, (table) => ({
   typeIdx: index("media_type_idx").on(table.type),
   associatedIdx: index("media_associated_idx").on(table.associatedType, table.associatedId),
+}));
+
+// ============ PORTS TABLE (NEW - Normalized) ============
+export const ports = pgTable("ports", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  country: varchar("country", { length: 100 }).notNull(),
+  region: varchar("region", { length: 100 }),
+  port_type: varchar("port_type", { length: 20 }).default('port'), // port, sea_day, embark, disembark
+  coordinates: jsonb("coordinates"), // { lat: number, lng: number }
+  description: text("description"),
+  image_url: text("image_url"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: unique("ports_name_unique").on(table.name),
+  typeIdx: index("ports_type_idx").on(table.port_type),
+}));
+
+// ============ PARTIES TABLE (NEW - Normalized) ============
+export const parties = pgTable("parties", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  theme: text("theme"),
+  venue_type: varchar("venue_type", { length: 20 }).default('deck'), // pool, club, theater, deck, lounge
+  capacity: integer("capacity"),
+  duration_hours: decimal("duration_hours", { precision: 3, scale: 1 }),
+  requirements: jsonb("requirements"),
+  image_url: text("image_url"),
+  usage_count: integer("usage_count").default(0),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: unique("parties_name_unique").on(table.name),
+  venueIdx: index("parties_venue_idx").on(table.venue_type),
+  usageIdx: index("parties_usage_idx").on(table.usage_count),
+}));
+
+// ============ EVENT_TALENT TABLE (NEW - Junction) ============
+export const eventTalent = pgTable("event_talent", {
+  id: serial("id").primaryKey(),
+  event_id: integer("event_id").notNull(), // Will add FK reference after events table update
+  talent_id: integer("talent_id").notNull().references(() => talent.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 50 }).default('performer'),
+  performance_order: integer("performance_order"),
+  created_at: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  eventTalentUnique: unique("event_talent_unique").on(table.event_id, table.talent_id),
+  eventIdx: index("event_talent_event_idx").on(table.event_id),
+  talentIdx: index("event_talent_talent_idx").on(table.talent_id),
 }));
 
 // ============ USER_CRUISES TABLE (for permissions) ============

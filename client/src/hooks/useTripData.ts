@@ -84,13 +84,14 @@ export function transformTripData(data: TripData) {
     key: stop.date.split('T')[0],
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
-    port: stop.portName,
+    port: (stop as any).port?.name || stop.portName, // Use port.name if available, fallback to portName
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
-    imageUrl: stop.portImageUrl,
-    description: stop.description,
-    highlights: stop.highlights
+    imageUrl: (stop as any).port?.image_url || stop.portImageUrl, // Use port.image_url if available
+    description: (stop as any).port?.description || stop.description, // Use port.description if available
+    highlights: (stop as any).port?.highlights || stop.highlights, // Use port.highlights if available
+    portDetails: (stop as any).port // Include full port details if available
   }));
 
   // Group events by date
@@ -107,16 +108,17 @@ export function transformTripData(data: TripData) {
     
     dailyEvents[dateKey].push({
       time: event.time,
-      title: event.title,
+      title: (event as any).party?.name || event.title, // Use party.name if available
       type: event.type,
-      venue: event.venue,
+      venue: (event as any).party?.venue_type || event.venue, // Use party.venue_type if available
       deck: event.deck,
-      description: event.description || event.themeDescription,
+      description: (event as any).party?.theme || event.description || event.themeDescription, // Use party.theme if available
       shortDescription: event.shortDescription,
-      imageUrl: event.imageUrl,
-      dressCode: event.dressCode,
+      imageUrl: (event as any).party?.image_url || event.imageUrl, // Use party.image_url if available
+      dressCode: (event as any).party?.dress_code || event.dressCode, // Use party.dress_code if available
       requiresReservation: event.requiresReservation,
-      talent: eventTalent
+      talent: eventTalent,
+      partyDetails: (event as any).party // Include full party details if available
     });
   });
 
