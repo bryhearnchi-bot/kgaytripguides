@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ interface Trip {
 }
 
 function TripsManagementContent() {
-  const { user } = useAuth();
+  const { profile } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
@@ -102,8 +102,8 @@ function TripsManagementContent() {
     (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
-  const canEdit = user?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(user.role);
-  const canDelete = user?.role && ['super_admin'].includes(user.role);
+  const canEdit = profile?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(profile.role);
+  const canDelete = profile?.role && ['super_admin'].includes(profile.role);
 
   if (isLoading) {
     return (

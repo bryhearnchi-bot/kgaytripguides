@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ interface Trip {
 }
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { profile, signOut } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("trips");
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
 
   const handleLogout = () => {
-    logout();
+    signOut();
     setLocation('/admin/login');
   };
 
@@ -141,8 +141,8 @@ export default function AdminDashboard() {
     (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
-  const canEdit = user?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(user.role);
-  const canDelete = user?.role && ['super_admin'].includes(user.role);
+  const canEdit = profile?.role && ['super_admin', 'trip_admin', 'content_editor', 'admin'].includes(profile.role);
+  const canDelete = profile?.role && ['super_admin', 'admin'].includes(profile.role);
 
   const handleDeleteTrip = (trip: Trip) => {
     if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
@@ -183,11 +183,11 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
+                <p className="text-sm font-medium text-gray-900">{profile?.full_name || profile?.email}</p>
                 <div className="flex items-center space-x-2">
-                  <Badge variant={getRoleBadgeVariant(user?.role || '')}>
-                    <span className="hidden md:inline">{user?.role?.replace('_', ' ').toUpperCase()}</span>
-                    <span className="md:hidden">{user?.role?.split('_')[0].toUpperCase()}</span>
+                  <Badge variant={getRoleBadgeVariant(profile?.role || '')}>
+                    <span className="hidden md:inline">{profile?.role?.replace('_', ' ').toUpperCase()}</span>
+                    <span className="md:hidden">{profile?.role?.split('_')[0].toUpperCase()}</span>
                   </Badge>
                 </div>
               </div>

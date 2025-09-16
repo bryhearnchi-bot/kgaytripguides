@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -11,7 +11,7 @@ import {
 import ArtistDatabaseManager from '../../components/admin/ArtistDatabaseManager';
 
 function TalentManagementContent() {
-  const { user } = useAuth();
+  const { profile } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
 
   const handleBack = () => {
@@ -42,7 +42,7 @@ function TalentManagementContent() {
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">Logged in as</span>
-              <span className="text-sm font-medium text-gray-900">{user?.username}</span>
+              <span className="text-sm font-medium text-gray-900">{profile?.username}</span>
             </div>
           </div>
         </div>

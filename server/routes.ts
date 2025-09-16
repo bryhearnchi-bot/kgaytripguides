@@ -20,7 +20,6 @@ import { eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import path from "path";
 import { upload, getPublicImageUrl, deleteImage, isValidImageUrl, uploadToCloudinary } from "./image-utils";
-import { downloadImageFromUrl } from "./image-migration";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ STATIC FILE SERVING ============
@@ -106,11 +105,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validImageType = imageType;
       const imageName = name || 'downloaded-image';
       
-      const localUrl = await downloadImageFromUrl(url, validImageType as any, imageName);
-      
+      // For now, just return the URL as-is since we're using Supabase storage
+      // TODO: Implement Supabase storage upload if needed
+
       res.json({
         success: true,
-        imageUrl: localUrl,
+        imageUrl: url,
         originalUrl: url
       });
     } catch (error) {

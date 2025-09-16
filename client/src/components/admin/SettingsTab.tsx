@@ -52,7 +52,7 @@ import {
   Check
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 const settingSchema = z.object({
   key: z.string().min(1, 'Key is required'),
@@ -96,7 +96,7 @@ const CATEGORIES = [
 ];
 
 export default function SettingsTab() {
-  const { user } = useAuth();
+  const { profile } = useSupabaseAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('trip_types');
@@ -105,8 +105,8 @@ export default function SettingsTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingSetting, setDeletingSetting] = useState<Setting | null>(null);
 
-  const canEdit = user?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(user.role);
-  const canDelete = user?.role && ['super_admin'].includes(user.role);
+  const canEdit = profile?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(profile.role);
+  const canDelete = profile?.role && ['super_admin'].includes(profile.role);
 
   const {
     register,

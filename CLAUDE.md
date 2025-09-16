@@ -7,9 +7,8 @@
 ## MCP Configuration
 
 The following MCP servers are configured locally for this project:
-- **railway**: PostgreSQL database connection
+- **supabase**: Connected to project `bxiiodeyqvqqcgzzqzvt.supabase.co` (primary database and auth)
 - **perplexity-sonar**: AI-powered search with API key configured
-- **supabase**: Connected to project `bxiiodeyqvqqcgzzqzvt.supabase.co`
 - **playwright**: Browser automation and testing
 - **vercel**: Deployment management
 
@@ -17,13 +16,14 @@ All MCP servers are installed locally in the project's `node_modules` directory 
 
 ## Database Configuration
 
-**IMPORTANT**: This project uses **Railway PostgreSQL** database, NOT SQLite or Neon.
+**IMPORTANT**: This project uses **Supabase PostgreSQL** database, NOT SQLite, Neon, or Railway.
 
-- All database calls/edits must be done through the Railway PostgreSQL connection
+- All database calls/edits must be done through the Supabase PostgreSQL connection
 - The database connection is configured in `server/storage.ts`
 - Uses Drizzle ORM with node-postgres driver
-- Environment variable: `DATABASE_URL` points to the Railway database
+- Environment variable: `DATABASE_URL` points to the Supabase database
 - Schema is defined in `shared/schema.ts`
+- Authentication handled via Supabase Auth with `SupabaseAuthContext`
 
 ### Never use SQLite commands like:
 - `sqlite3 database.db`
@@ -32,16 +32,18 @@ All MCP servers are installed locally in the project's `node_modules` directory 
 
 ### Always use:
 - The existing storage layer (`server/storage.ts`)
-- Drizzle ORM queries through the Railway connection
+- Drizzle ORM queries through the Supabase connection
 - Environment-based database URL configuration
+- Supabase MCP tools for database operations
 
-## Cloudinary Image Storage
+## Image Storage
 
-All images are stored in Cloudinary and referenced in the Railway database:
+All images are stored in Supabase Storage and referenced in the Supabase database:
 - **Talent Images**: 22 artist profile images with `profileImageUrl` fields
 - **Port Images**: 7 destination images (Athens, Santorini, Kuşadası, Istanbul, Alexandria, Mykonos, Iraklion)
 - **Party Theme Images**: All party events have hero images
-- All images serve from Cloudinary CDN with optimized transformations
+- All images serve from Supabase Storage CDN with optimized transformations
+- **Migration Complete**: Cloudinary integration has been archived to `archived/old-cloudinary/`
 
 ## Date and Time Handling Policy
 

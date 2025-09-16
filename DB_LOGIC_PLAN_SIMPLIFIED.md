@@ -1,10 +1,11 @@
-# Simplified Database Migration Plan (Integrated with Phase 2) ✅ COMPLETED
+# Simplified Database Migration Plan (Integrated with Phase 2 & 3) ✅ COMPLETED
 
 ## Overview
-This plan is now integrated into Phase 2 of the main backend plan. The database migration and frontend updates happened together in a single sprint.
+This plan is now integrated into Phase 2 and 3 of the main backend plan. The database migration happened in Phase 2, and platform migration to Supabase completed in Phase 3.
 
-**Status**: ✅ COMPLETED (January 15, 2025)
-**Result**: Successfully migrated to normalized database structure with ports and parties tables.
+**Phase 2 Status**: ✅ COMPLETED (January 15, 2025) - Database normalized with ports/parties tables
+**Phase 3 Status**: ✅ COMPLETED (September 15, 2025) - Migrated to Supabase platform
+**Result**: Successfully running on Supabase with normalized database structure.
 
 ---
 
@@ -511,7 +512,12 @@ DROP TABLE backup_events;
 - Database is normalized with foreign key relationships
 - Both frontend and backend fully operational
 - Old columns renamed but retained for safety (can be dropped after 24-hour stability)
-- Application running on Railway PostgreSQL
+- Application running on Supabase PostgreSQL (migrated from Railway)
+- Images migrated to Supabase Storage (48 images, September 15, 2025)
+- Connection strings:
+  - Local/Railway: `postgresql://postgres.bxiiodeyqvqqcgzzqzvt:kgayatlantis2025@aws-1-us-east-2.pooler.supabase.com:6543/postgres`
+  - Uses Supabase Shared Pooler for IPv4 compatibility
+- Storage buckets created: talent-images, destination-images, event-images, cruise-images, party-images
 
 ---
 

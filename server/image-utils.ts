@@ -2,34 +2,10 @@ import multer from "multer";
 import { promises as fs } from "fs";
 import * as fsSync from "fs";
 import path from "path";
-import { downloadImageFromUrl } from "./image-migration";
 import { randomUUID } from "crypto";
-import {
-  talentImageStorage,
-  eventImageStorage,
-  itineraryImageStorage,
-  cruiseImageStorage,
-  createCloudinaryStorage
-} from "./cloudinary";
 
-// Get appropriate Cloudinary storage based on image type
-function getCloudinaryStorage(imageType: string) {
-  switch (imageType) {
-    case 'talent':
-      return talentImageStorage;
-    case 'event':
-      return eventImageStorage;
-    case 'itinerary':
-      return itineraryImageStorage;
-    case 'cruise':
-      return cruiseImageStorage;
-    default:
-      return createCloudinaryStorage('general');
-  }
-}
-
-// Configure multer for Cloudinary uploads
-const storage = multer.memoryStorage(); // Use memory storage for Cloudinary
+// Configure multer for temporary uploads
+const storage = multer.memoryStorage(); // Use memory storage
 
 // File filter for images only
 const fileFilter = (req: any, file: any, cb: any) => {
@@ -60,28 +36,19 @@ const baseUpload = multer({
 // Export the upload middleware - we'll handle Cloudinary in routes
 export const upload = baseUpload;
 
-// Upload image to Cloudinary
+// Upload image to Supabase Storage (stub - to be implemented)
 export async function uploadToCloudinary(file: Express.Multer.File, imageType: string): Promise<string> {
-  const { cloudinary } = await import('./cloudinary');
+  // TODO: Implement Supabase Storage upload
+  // For now, return a placeholder URL
+  const filename = `${imageType}-${randomUUID()}.jpg`;
+  return `https://placeholder.com/${imageType}/${filename}`;
+}
 
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      {
-        folder: `cruise-app/${imageType}`,
-        resource_type: 'auto',
-        transformation: [
-          { width: 1200, height: 1200, crop: 'limit', quality: 'auto' }
-        ]
-      },
-      (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result!.secure_url);
-        }
-      }
-    ).end(file.buffer);
-  });
+// Download image from URL (stub - replaces image-migration function)
+export async function downloadImageFromUrl(url: string, type: string, name: string): Promise<string> {
+  // TODO: Implement actual download and Supabase Storage upload
+  // For now, just return the original URL
+  return url;
 }
 
 // Get public URL for uploaded image (now returns Cloudinary URLs)

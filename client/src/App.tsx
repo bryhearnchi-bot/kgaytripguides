@@ -4,21 +4,20 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 import { TimeFormatProvider } from "@/contexts/TimeFormatContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavigationBanner from "@/components/navigation-banner";
 import LandingPage from "@/pages/landing";
 import TripPage from "@/pages/trip";
-import AdminLogin from "@/pages/admin/login";
-import ForgotPassword from "@/pages/admin/forgot-password";
-import ResetPassword from "@/pages/admin/reset-password";
 import AdminDashboard from "@/pages/admin/dashboard";
 import TripsManagement from "@/pages/admin/trips";
 import TripForm from "@/pages/admin/trip-form";
 import TalentManagement from "@/pages/admin/talent";
 import NotFound from "@/pages/not-found";
 import ImageTest from "@/pages/image-test";
+import { AuthCallback } from "@/pages/auth/AuthCallback";
+import LoginPage from "@/pages/auth/login";
 
 function Router() {
   return (
@@ -26,9 +25,8 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/image-test" component={ImageTest} />
       <Route path="/trip/:slug" component={TripPage} />
-      <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin/forgot-password" component={ForgotPassword} />
-      <Route path="/admin/reset-password/:token" component={ResetPassword} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/trips" component={() => <ProtectedRoute><TripsManagement /></ProtectedRoute>} />
       <Route path="/admin/trips/new" component={() => <ProtectedRoute><TripForm isEditing={false} /></ProtectedRoute>} />
@@ -62,7 +60,7 @@ function App() {
   return (
     <div className="min-h-screen w-full m-0 p-0">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
+        <SupabaseAuthProvider>
           <TimeFormatProvider>
             <TooltipProvider>
               <NavigationBanner />
@@ -72,7 +70,7 @@ function App() {
               </div>
             </TooltipProvider>
           </TimeFormatProvider>
-        </AuthProvider>
+        </SupabaseAuthProvider>
       </QueryClientProvider>
     </div>
   );
