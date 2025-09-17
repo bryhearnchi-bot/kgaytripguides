@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useLocation } from 'wouter';
@@ -18,6 +18,7 @@ export function useSupabaseAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [, navigate] = useLocation();
+  const initialLoadCompleteRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -31,32 +32,51 @@ export function useSupabaseAuth() {
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        }
-
+        // Set loading to false immediately after setting auth state
+        initialLoadCompleteRef.current = true;
         setLoading(false);
+
+        // Fetch profile asynchronously without blocking initial load
+        if (session?.user) {
+          fetchProfile(session.user.id).catch(error => {
+            console.error('Failed to fetch profile during init:', error);
+            // Profile fetch failure doesn't affect authentication state
+          });
+        }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        // Log error without sensitive details
+        console.error('Error initializing auth');
         if (mounted) {
+          initialLoadCompleteRef.current = true;
           setLoading(false);
         }
       }
     };
 
-    initAuth();
-
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
-
       if (!mounted) return;
+
+      // Skip the initial session event to avoid race condition
+      if (event === 'INITIAL_SESSION' && !initialLoadCompleteRef.current) {
+        return;
+      }
 
       setSession(session);
       setUser(session?.user ?? null);
 
+      // Set loading to false immediately after setting session/user
+      // Profile fetching happens asynchronously and shouldn't block auth state
+      if (initialLoadCompleteRef.current) {
+        setLoading(false);
+      }
+
+      // Fetch profile asynchronously without blocking loading state
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        fetchProfile(session.user.id).catch(error => {
+          console.error('Failed to fetch profile in auth state change:', error);
+          // Profile fetch failure doesn't affect authentication state
+        });
       } else {
         setProfile(null);
       }
@@ -70,6 +90,8 @@ export function useSupabaseAuth() {
         }
       }
     });
+
+    initAuth();
 
     return () => {
       mounted = false;

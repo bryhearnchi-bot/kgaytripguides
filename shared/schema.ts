@@ -17,7 +17,17 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// ============ USERS TABLE (existing) ============
+// ============ PROFILES TABLE (Supabase Auth Integration) ============
+export const profiles = pgTable("profiles", {
+  id: text("id").primaryKey(), // References auth.users.id
+  email: text("email").notNull(),
+  fullName: text("full_name"),
+  role: text("role").default("user"), // admin, user
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============ USERS TABLE (Legacy - keeping for backward compatibility) ============
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
@@ -65,13 +75,46 @@ export const settings = pgTable("settings", {
   activeIdx: index("settings_active_idx").on(table.isActive),
 }));
 
+// ============ SHIPS TABLE (NEW - Reusable) ============
+export const ships = pgTable("ships", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  cruiseLine: varchar("cruise_line", { length: 255 }).notNull(),
+  shipCode: varchar("ship_code", { length: 50 }), // Short code like "VL" for Valiant Lady
+  capacity: integer("capacity"), // Passenger capacity
+  crewSize: integer("crew_size"), // Number of crew
+  grossTonnage: integer("gross_tonnage"), // Ship size
+  lengthMeters: decimal("length_meters", { precision: 10, scale: 2 }), // Ship length
+  beamMeters: decimal("beam_meters", { precision: 10, scale: 2 }), // Ship width
+  decks: integer("decks"), // Number of decks
+  builtYear: integer("built_year"), // Year built
+  refurbishedYear: integer("refurbished_year"), // Last refurbishment
+  shipClass: varchar("ship_class", { length: 100 }), // Ship class/series
+  flag: varchar("flag", { length: 100 }), // Country of registration
+  imageUrl: text("image_url"), // Hero image of the ship
+  deckPlans: jsonb("deck_plans"), // Array of deck plan URLs or data
+  amenities: jsonb("amenities"), // Ship amenities and features
+  diningVenues: jsonb("dining_venues"), // Dining options on board
+  entertainmentVenues: jsonb("entertainment_venues"), // Entertainment venues
+  stateroomCategories: jsonb("stateroom_categories"), // Room types and counts
+  description: text("description"), // Ship description
+  highlights: jsonb("highlights"), // Array of highlight features
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("ships_name_idx").on(table.name),
+  cruiseLineIdx: index("ships_cruise_line_idx").on(table.cruiseLine),
+  nameLineUnique: unique("ships_name_cruise_line_unique").on(table.name, table.cruiseLine),
+}));
+
 // ============ CRUISES TABLE ============
 export const cruises = pgTable("cruises", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
-  shipName: text("ship_name").notNull(),
-  cruiseLine: text("cruise_line"), // Virgin, Celebrity, etc.
+  shipName: text("ship_name").notNull(), // Kept for backward compatibility, will be deprecated
+  cruiseLine: text("cruise_line"), // Kept for backward compatibility, will be deprecated
+  shipId: integer("ship_id").references(() => ships.id), // NEW: Foreign key to ships table
   tripType: text("trip_type").default("cruise").notNull(), // cruise, hotel, flight, etc. - references settings with category 'trip_types'
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
@@ -88,6 +131,7 @@ export const cruises = pgTable("cruises", {
   statusIdx: index("trip_status_idx").on(table.status),
   slugIdx: index("trip_slug_idx").on(table.slug),
   tripTypeIdx: index("trip_trip_type_idx").on(table.tripType),
+  shipIdx: index("cruises_ship_id_idx").on(table.shipId), // NEW: Index for ship foreign key
 }));
 
 // Forward compatibility alias
@@ -343,11 +387,23 @@ export const auditLog = pgTable("audit_log", {
 }));
 
 // ============ RELATIONS ============
+export const profilesRelations = relations(profiles, ({ many }) => ({
+  // Future relations can be added here
+}));
+
+export const shipsRelations = relations(ships, ({ many }) => ({
+  cruises: many(cruises),
+}));
+
 export const tripsRelations = relations(trips, ({ many, one }) => ({
   itinerary: many(itinerary),
   events: many(events),
   tripTalent: many(tripTalent),
   userTrips: many(userTrips),
+  ship: one(ships, {
+    fields: [trips.shipId],
+    references: [ships.id],
+  }),
   creator: one(users, {
     fields: [trips.createdBy],
     references: [users.id],
@@ -461,6 +517,17 @@ export const settingsRelations = relations(settings, ({ one }) => ({
 }));
 
 // ============ INSERT SCHEMAS ============
+export const insertProfileSchema = createInsertSchema(profiles).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertShipSchema = createInsertSchema(ships).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -531,7 +598,11 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({
 });
 
 // ============ TYPE EXPORTS ============
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+export type InsertShip = z.infer<typeof insertShipSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Profile = typeof profiles.$inferSelect;
+export type Ship = typeof ships.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Trip = typeof trips.$inferSelect;
 export type Itinerary = typeof itinerary.$inferSelect;

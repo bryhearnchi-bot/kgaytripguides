@@ -42,6 +42,7 @@ export { db };
 
 // Export all schema tables for easy access
 export const {
+  profiles,
   users,
   trips,
   cruises,
@@ -57,7 +58,40 @@ export const {
   eventTalent
 } = schema;
 
-// ============ USER OPERATIONS ============
+// ============ PROFILE OPERATIONS (Supabase Auth Integration) ============
+export interface IProfileStorage {
+  getProfile(id: string): Promise<schema.Profile | undefined>;
+  getProfileByEmail(email: string): Promise<schema.Profile | undefined>;
+  createProfile(profile: schema.InsertProfile): Promise<schema.Profile>;
+  updateProfile(id: string, profile: Partial<schema.Profile>): Promise<schema.Profile | undefined>;
+}
+
+export class ProfileStorage implements IProfileStorage {
+  async getProfile(id: string): Promise<schema.Profile | undefined> {
+    const result = await db.select().from(profiles).where(eq(profiles.id, id));
+    return result[0];
+  }
+
+  async getProfileByEmail(email: string): Promise<schema.Profile | undefined> {
+    const result = await db.select().from(profiles).where(eq(profiles.email, email));
+    return result[0];
+  }
+
+  async createProfile(insertProfile: schema.InsertProfile): Promise<schema.Profile> {
+    const result = await db.insert(profiles).values(insertProfile).returning();
+    return result[0];
+  }
+
+  async updateProfile(id: string, profileData: Partial<schema.Profile>): Promise<schema.Profile | undefined> {
+    const result = await db.update(profiles)
+      .set({ ...profileData, updatedAt: new Date() })
+      .where(eq(profiles.id, id))
+      .returning();
+    return result[0];
+  }
+}
+
+// ============ USER OPERATIONS (Legacy) ============
 export interface IUserStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -574,6 +608,7 @@ export class TripInfoStorage implements ITripInfoStorage {
 }
 
 // Create storage instances
+export const profileStorage = new ProfileStorage();
 export const storage = new UserStorage();
 export const tripStorage = new TripStorage();
 export const cruiseStorage = new CruiseStorage(); // Backward compatibility
