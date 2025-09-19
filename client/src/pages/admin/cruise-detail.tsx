@@ -1,0 +1,695 @@
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  ArrowLeft,
+  Ship,
+  Save,
+  Eye,
+  Edit,
+  Calendar,
+  MapPin,
+  Users,
+  Music,
+  Image,
+  FileText,
+  Settings,
+  Activity,
+  Star,
+  Clock,
+  Anchor,
+  Upload
+} from 'lucide-react';
+import { format, differenceInDays } from 'date-fns';
+import { dateOnly } from '@/lib/utils';
+
+interface CruiseDetail {
+  id: number;
+  name: string;
+  description?: string;
+  slug: string;
+  startDate: string;
+  endDate: string;
+  shipName: string;
+  cruiseLine?: string;
+  status: 'upcoming' | 'ongoing' | 'past' | 'archived';
+  heroImageUrl?: string;
+  guestCount?: number;
+  maxCapacity?: number;
+  highlights?: any;
+  includesInfo?: any;
+  pricing?: any;
+  itinerary?: any[];
+  events?: any[];
+  ports?: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CruiseFormData {
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  shipName: string;
+  cruiseLine: string;
+  guestCount: number;
+  maxCapacity: number;
+  heroImageUrl: string;
+}
+
+export default function CruiseDetail() {
+  const [, setLocation] = useLocation();
+  const [cruise, setCruise] = useState<CruiseDetail | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<CruiseFormData>({
+    name: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    shipName: '',
+    cruiseLine: '',
+    guestCount: 0,
+    maxCapacity: 0,
+    heroImageUrl: '',
+  });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Get cruise ID from URL params
+  const cruiseId = new URLSearchParams(window.location.search).get('id');
+
+  // Fetch cruise details
+  const { data: cruiseData, isLoading: cruiseLoading, error: cruiseError } = useQuery<CruiseDetail>({
+    queryKey: ['admin-cruise-detail', cruiseId],
+    queryFn: async () => {
+      if (!cruiseId) throw new Error('No cruise ID provided');
+
+      const response = await fetch(`/api/admin/cruises/${cruiseId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch cruise details');
+      }
+      return response.json();
+    },
+    enabled: !!cruiseId,
+  });
+
+  // Initialize form data when cruise data loads
+  useEffect(() => {
+    if (cruiseData) {
+      setCruise(cruiseData);
+      setFormData({
+        name: cruiseData.name,
+        description: cruiseData.description || '',
+        startDate: cruiseData.startDate,
+        endDate: cruiseData.endDate,
+        shipName: cruiseData.shipName,
+        cruiseLine: cruiseData.cruiseLine || '',
+        guestCount: cruiseData.guestCount || 0,
+        maxCapacity: cruiseData.maxCapacity || 0,
+        heroImageUrl: cruiseData.heroImageUrl || '',
+      });
+    }
+  }, [cruiseData]);
+
+  // Update cruise mutation
+  const updateCruise = useMutation({
+    mutationFn: async (data: Partial<CruiseFormData>) => {
+      if (!cruiseId) throw new Error('No cruise ID');
+
+      const response = await fetch(`/api/admin/cruises/${cruiseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to update cruise');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Cruise updated successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-cruise-detail', cruiseId] });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update cruise',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleInputChange = (field: keyof CruiseFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Cruise name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.startDate || !formData.endDate) {
+      toast({
+        title: 'Validation Error',
+        description: 'Start and end dates are required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
+      toast({
+        title: 'Validation Error',
+        description: 'End date must be after start date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    updateCruise.mutate(formData);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'upcoming':
+        return <Badge variant="default" className="bg-blue-100 text-blue-800">Upcoming</Badge>;
+      case 'ongoing':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Ongoing</Badge>;
+      case 'past':
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Past</Badge>;
+      case 'archived':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-700">Archived</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (!cruiseId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <Card className="w-96">
+          <CardContent className="text-center py-8">
+            <Ship className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Cruise Selected</h3>
+            <p className="text-gray-500 mb-4">Please select a cruise to view details.</p>
+            <Button onClick={() => setLocation('/admin/cruises-active')}>
+              View Active Cruises
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (cruiseLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Ship className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
+          <p>Loading cruise details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (cruiseError || !cruise) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <Card className="w-96">
+          <CardContent className="text-center py-8">
+            <Ship className="w-12 h-12 mx-auto mb-4 text-red-400" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Cruise</h3>
+            <p className="text-gray-500 mb-4">
+              {cruiseError?.message || 'Failed to load cruise details'}
+            </p>
+            <Button onClick={() => setLocation('/admin/cruises-active')}>
+              Back to Cruises
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation('/admin/cruises-active')}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Cruises
+              </Button>
+              <div className="h-6 w-px bg-gray-300" />
+              <div className="flex items-center space-x-2">
+                <Ship className="w-6 h-6 text-blue-600" />
+                <h1 className="text-xl font-semibold text-gray-900">{cruise.name}</h1>
+                {getStatusBadge(cruise.status)}
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation(`/trip/${cruise.slug}`)}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View Live
+              </Button>
+              {!isEditing ? (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Cruise
+                </Button>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={updateCruise.isPending}
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {updateCruise.isPending ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <Ship className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="itinerary" className="flex items-center space-x-2">
+              <MapPin className="w-4 h-4" />
+              <span>Itinerary</span>
+            </TabsTrigger>
+            <TabsTrigger value="events" className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4" />
+              <span>Events</span>
+            </TabsTrigger>
+            <TabsTrigger value="media" className="flex items-center space-x-2">
+              <Image className="w-4 h-4" />
+              <span>Media</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <Activity className="w-4 h-4" />
+              <span>Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center space-x-2">
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Cruise Information */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cruise Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {isEditing ? (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Cruise Name *</Label>
+                            <Input
+                              id="name"
+                              value={formData.name}
+                              onChange={(e) => handleInputChange('name', e.target.value)}
+                              placeholder="Enter cruise name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="shipName">Ship Name *</Label>
+                            <Input
+                              id="shipName"
+                              value={formData.shipName}
+                              onChange={(e) => handleInputChange('shipName', e.target.value)}
+                              placeholder="Enter ship name"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="cruiseLine">Cruise Line</Label>
+                          <Input
+                            id="cruiseLine"
+                            value={formData.cruiseLine}
+                            onChange={(e) => handleInputChange('cruiseLine', e.target.value)}
+                            placeholder="Enter cruise line"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            placeholder="Enter cruise description"
+                            rows={4}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="startDate">Start Date *</Label>
+                            <Input
+                              id="startDate"
+                              type="date"
+                              value={formData.startDate}
+                              onChange={(e) => handleInputChange('startDate', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="endDate">End Date *</Label>
+                            <Input
+                              id="endDate"
+                              type="date"
+                              value={formData.endDate}
+                              onChange={(e) => handleInputChange('endDate', e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="guestCount">Current Guest Count</Label>
+                            <Input
+                              id="guestCount"
+                              type="number"
+                              value={formData.guestCount}
+                              onChange={(e) => handleInputChange('guestCount', parseInt(e.target.value) || 0)}
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="maxCapacity">Maximum Capacity</Label>
+                            <Input
+                              id="maxCapacity"
+                              type="number"
+                              value={formData.maxCapacity}
+                              onChange={(e) => handleInputChange('maxCapacity', parseInt(e.target.value) || 0)}
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="heroImageUrl">Hero Image URL</Label>
+                          <Input
+                            id="heroImageUrl"
+                            value={formData.heroImageUrl}
+                            onChange={(e) => handleInputChange('heroImageUrl', e.target.value)}
+                            placeholder="Enter image URL"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm text-gray-600">Ship</p>
+                              <p className="font-medium">{cruise.shipName}</p>
+                            </div>
+                            {cruise.cruiseLine && (
+                              <div>
+                                <p className="text-sm text-gray-600">Cruise Line</p>
+                                <p className="font-medium">{cruise.cruiseLine}</p>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm text-gray-600">Duration</p>
+                              <p className="font-medium">
+                                {differenceInDays(dateOnly(cruise.endDate), dateOnly(cruise.startDate))} days
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm text-gray-600">Departure</p>
+                              <p className="font-medium">{format(dateOnly(cruise.startDate), 'MMM dd, yyyy')}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600">Return</p>
+                              <p className="font-medium">{format(dateOnly(cruise.endDate), 'MMM dd, yyyy')}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600">Status</p>
+                              <div>{getStatusBadge(cruise.status)}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {cruise.description && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">Description</p>
+                            <p className="text-gray-900">{cruise.description}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Statistics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                        <p className="text-2xl font-bold text-gray-900">
+                          {cruise.guestCount?.toLocaleString() || '0'}
+                        </p>
+                        <p className="text-sm text-gray-600">Guests</p>
+                      </div>
+                      <div className="text-center">
+                        <MapPin className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                        <p className="text-2xl font-bold text-gray-900">
+                          {cruise.ports?.length || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Ports</p>
+                      </div>
+                      <div className="text-center">
+                        <Calendar className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                        <p className="text-2xl font-bold text-gray-900">
+                          {cruise.events?.length || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Events</p>
+                      </div>
+                      <div className="text-center">
+                        <Clock className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+                        <p className="text-2xl font-bold text-gray-900">
+                          {differenceInDays(dateOnly(cruise.endDate), dateOnly(cruise.startDate))}
+                        </p>
+                        <p className="text-sm text-gray-600">Days</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Hero Image */}
+                {cruise.heroImageUrl && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Hero Image</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <img
+                        src={cruise.heroImageUrl}
+                        alt={cruise.name}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Recent Activity */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                        <span>Cruise created</span>
+                        <span className="text-gray-500 ml-auto">
+                          {format(dateOnly(cruise.createdAt), 'MMM dd')}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full" />
+                        <span>Last updated</span>
+                        <span className="text-gray-500 ml-auto">
+                          {format(dateOnly(cruise.updatedAt), 'MMM dd')}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('itinerary')}
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Manage Itinerary
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('events')}
+                    >
+                      <Music className="w-4 h-4 mr-2" />
+                      Manage Events
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('media')}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Media
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Other tabs would be implemented here */}
+          <TabsContent value="itinerary" className="space-y-6">
+            <Card>
+              <CardContent className="text-center py-12">
+                <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Itinerary Management</h3>
+                <p className="text-gray-500">
+                  Itinerary management features will be integrated here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-6">
+            <Card>
+              <CardContent className="text-center py-12">
+                <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Events Management</h3>
+                <p className="text-gray-500">
+                  Events management features will be integrated here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-6">
+            <Card>
+              <CardContent className="text-center py-12">
+                <Image className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Media Management</h3>
+                <p className="text-gray-500">
+                  Media upload and management features will be integrated here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <Card>
+              <CardContent className="text-center py-12">
+                <Activity className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Dashboard</h3>
+                <p className="text-gray-500">
+                  Analytics and reporting features will be integrated here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardContent className="text-center py-12">
+                <Settings className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Cruise Settings</h3>
+                <p className="text-gray-500">
+                  Advanced settings and configuration options will be integrated here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+}

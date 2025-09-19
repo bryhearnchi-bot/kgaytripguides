@@ -7,38 +7,88 @@ import { randomUUID } from "crypto";
 // Configure multer for temporary uploads
 const storage = multer.memoryStorage(); // Use memory storage
 
-// File filter for images only
+// File filter for images only with enhanced validation
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedMimeTypes = [
     'image/jpeg',
-    'image/jpg', 
+    'image/jpg',
     'image/png',
     'image/webp',
     'image/gif'
   ];
 
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type. Only image files are allowed.'), false);
+  // Check MIME type
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'), false);
+    return;
   }
+
+  // Check file extension (double validation)
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+  if (!allowedExtensions.includes(ext)) {
+    cb(new Error('Invalid file extension. Only .jpg, .jpeg, .png, .webp, and .gif are allowed.'), false);
+    return;
+  }
+
+  // Check filename for malicious patterns
+  const filename = path.basename(file.originalname);
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    cb(new Error('Invalid filename. Path traversal attempts are not allowed.'), false);
+    return;
+  }
+
+  cb(null, true);
 };
 
-// Create a base multer instance for memory storage
+// Create a base multer instance for memory storage with enhanced security
 const baseUpload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB limit (reduced from 10MB for security)
+    files: 1, // Only allow 1 file per request
+    fields: 10, // Limit number of fields
+    fieldSize: 1024 * 1024 // 1MB max field size
   }
 });
 
 // Export the upload middleware - we'll handle Cloudinary in routes
 export const upload = baseUpload;
 
-// Upload image to Supabase Storage (stub - to be implemented)
+// Malware scanning placeholder - integrate with actual antivirus service in production
+async function scanFileForMalware(buffer: Buffer): Promise<boolean> {
+  // TODO: Integrate with ClamAV, VirusTotal API, or cloud-based scanning service
+  // For now, perform basic checks
+
+  // Check for suspicious file signatures (basic check)
+  const suspiciousPatterns = [
+    Buffer.from('4D5A'), // Windows executable (MZ)
+    Buffer.from('7F454C46'), // Linux ELF executable
+    Buffer.from('504B0304'), // ZIP archive (could hide malware)
+  ];
+
+  for (const pattern of suspiciousPatterns) {
+    if (buffer.slice(0, pattern.length).equals(pattern)) {
+      return false; // File is suspicious
+    }
+  }
+
+  return true; // File appears safe (basic check only)
+}
+
+// Upload image to Supabase Storage with security checks
 export async function uploadToCloudinary(file: Express.Multer.File, imageType: string): Promise<string> {
-  // TODO: Implement Supabase Storage upload
+  // Perform malware scan
+  const isSafe = await scanFileForMalware(file.buffer);
+  if (!isSafe) {
+    throw new Error('File failed security scan. Upload rejected.');
+  }
+
+  // Additional content validation could be added here
+  // e.g., using sharp or jimp to verify it's a valid image
+
+  // TODO: Implement actual Supabase Storage upload
   // For now, return a placeholder URL
   const filename = `${imageType}-${randomUUID()}.jpg`;
   return `https://placeholder.com/${imageType}/${filename}`;

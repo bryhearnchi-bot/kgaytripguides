@@ -30,8 +30,7 @@ app.post('/api/analytics/track', (req, res) => {
 });
 
 app.use(performanceMonitoring);
-// Disabled CSP to allow all external images
-// app.use(securityHeaders);
+app.use(securityHeaders);
 app.use(rateLimit());
 app.use(cdnHeaders);
 

@@ -1,12 +1,47 @@
+/*
+ * DISABLED: Custom JWT Authentication System
+ *
+ * This file contains a custom JWT-based authentication system that conflicts
+ * with Supabase Auth. Since we are using Supabase exclusively for authentication,
+ * this entire file has been disabled to prevent route conflicts.
+ *
+ * The following routes were disabled:
+ * - POST /api/auth/login
+ * - POST /api/auth/refresh
+ * - POST /api/auth/logout
+ * - GET /api/auth/me
+ * - POST /api/auth/users (create user)
+ * - GET /api/auth/users (list users)
+ * - PUT /api/auth/users/:id (update user)
+ * - DELETE /api/auth/users/:id (delete user)
+ * - POST /api/auth/forgot-password
+ * - GET /api/auth/validate-reset-token/:token
+ * - POST /api/auth/reset-password
+ *
+ * All authentication is now handled by:
+ * - Supabase Auth (client-side)
+ * - SupabaseAuthContext (React context)
+ * - requireAuth middleware (server-side protection)
+ *
+ * DO NOT RE-ENABLE without removing Supabase Auth first.
+ */
+
 import type { Express } from "express";
-import { storage, db } from "./storage";
-import { AuthService, type AuthenticatedRequest } from "./auth";
-import { insertUserSchema, users, passwordResetTokens } from "@shared/schema";
-import { eq, gt } from "drizzle-orm";
-import { sendEmail } from "./utils/replitmail";
-import { randomBytes, createHash } from 'crypto';
+// import { storage, db } from "./storage";
+// import { AuthService, type AuthenticatedRequest } from "./auth";
+// import { insertUserSchema, users, passwordResetTokens } from "@shared/schema";
+// import { eq, gt } from "drizzle-orm";
+// import { sendEmail } from "./utils/replitmail";
+// import { randomBytes, createHash } from 'crypto';
 
 export function registerAuthRoutes(app: Express) {
+  // DISABLED: All custom JWT auth routes disabled in favor of Supabase Auth
+  console.log('Custom JWT auth routes are disabled - using Supabase Auth');
+  return;
+
+  /*
+  // ALL ROUTES BELOW ARE COMMENTED OUT - DO NOT UNCOMMENT WITHOUT REMOVING SUPABASE AUTH
+
   // Login
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -500,7 +535,7 @@ export function registerAuthRoutes(app: Express) {
         });
 
       // Send email with reset link
-      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/admin/reset-password/${resetToken}`;
+      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:3001'}/admin/reset-password/${resetToken}`;
       
       try {
         await sendEmail({
@@ -632,4 +667,7 @@ export function registerAuthRoutes(app: Express) {
       res.status(500).json({ error: 'Failed to reset password' });
     }
   });
+
+  // END OF COMMENTED OUT ROUTES
+  */
 }

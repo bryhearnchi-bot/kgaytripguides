@@ -125,3 +125,4 @@ fix-mcp-config.js
 add-supabase-mcp.js
 remove-unused-mcp.js
 *-mcp-config.js
+claude_desktop_config.json

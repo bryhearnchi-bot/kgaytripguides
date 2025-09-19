@@ -18,8 +18,10 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // User just signed in - redirect to admin dashboard
-        navigate('/admin/dashboard');
+        // User just signed in - wait a moment for auth context to update, then redirect
+        setTimeout(() => {
+          navigate('/admin/dashboard');
+        }, 100);
       }
     });
 

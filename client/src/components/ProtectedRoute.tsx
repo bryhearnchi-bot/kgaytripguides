@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Ship } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,48 +9,15 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { session, loading } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Listen for auth changes first since getSession() might hang
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('ProtectedRoute: Auth state change:', event, session?.user?.email);
-      setSession(session);
-      setLoading(false); // Set loading to false when we get auth state
-
-      if (!session) {
-        setLocation('/login');
-      }
-    });
-
-    // Also try getSession with a timeout
-    const timeoutId = setTimeout(() => {
-      console.log('ProtectedRoute: Session check timed out');
-      setLoading(false);
-    }, 3000);
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      clearTimeout(timeoutId);
-      console.log('ProtectedRoute: Got session:', session?.user?.email);
-      setSession(session);
-      setLoading(false);
-
-      if (!session) {
-        setLocation('/login');
-      }
-    }).catch(error => {
-      clearTimeout(timeoutId);
-      console.error('ProtectedRoute: Error getting session:', error);
-      setLoading(false);
-    });
-
-    return () => {
-      clearTimeout(timeoutId);
-      subscription.unsubscribe();
-    };
-  }, [setLocation]);
+    // Redirect to login if not authenticated and not loading
+    if (!loading && !session) {
+      setLocation('/login');
+    }
+  }, [session, loading, setLocation]);
 
   // Show loading screen while checking authentication
   if (loading) {

@@ -16,18 +16,34 @@ import {
   DialogFooter, 
   DialogDescription 
 } from '@/components/ui/dialog';
-import { 
-  Plus, 
-  Edit3, 
-  Trash2, 
+import {
+  Plus,
+  Edit3,
+  Trash2,
   Calendar,
   MapPin,
   Clock,
-  Save
+  Save,
+  Search,
+  Anchor
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
+import PortManagement from './PortManagement';
+
+interface Port {
+  id: number;
+  name: string;
+  country: string;
+  region?: string;
+  port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
+  coordinates?: { lat: number; lng: number } | null;
+  description?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface ItineraryDay {
   id?: number;
@@ -368,6 +384,7 @@ interface ItineraryDayFormProps {
 
 function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
   const [formData, setFormData] = useState<ItineraryDay>(day);
+  const [showPortSelector, setShowPortSelector] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,8 +395,19 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handlePortSelection = (port: Port) => {
+    setFormData(prev => ({
+      ...prev,
+      portName: port.name,
+      country: port.country,
+      portImageUrl: port.image_url || ''
+    }));
+    setShowPortSelector(false);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="date">Date</Label>
@@ -406,13 +434,27 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="portName">Port/Location Name *</Label>
-          <Input
-            id="portName"
-            value={formData.portName}
-            onChange={(e) => updateField('portName', e.target.value)}
-            placeholder="e.g., Santorini, Greece"
-            required
-          />
+          <div className="flex gap-2">
+            <Input
+              id="portName"
+              value={formData.portName}
+              onChange={(e) => updateField('portName', e.target.value)}
+              placeholder="e.g., Santorini, Greece"
+              required
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowPortSelector(true)}
+              className="flex-shrink-0"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Browse Ports
+            </Button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Enter manually or browse from the port database
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -505,5 +547,27 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
         </Button>
       </DialogFooter>
     </form>
+
+      {/* Port Selector Dialog */}
+      <Dialog open={showPortSelector} onOpenChange={setShowPortSelector}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Anchor className="w-5 h-5" />
+              Select Port from Database
+            </DialogTitle>
+            <DialogDescription>
+              Choose a port from our database to automatically fill port details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <PortManagement
+              mode="select"
+              onPortSelect={handlePortSelection}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -18,8 +18,8 @@ export function AuthCallback() {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
-            console.error('Error during authentication:', error.message);
-            navigate('/login?error=' + encodeURIComponent(error.message));
+            // Navigate to login with generic error message
+            navigate('/login?error=Authentication failed');
             return;
           }
         }
@@ -44,7 +44,7 @@ export function AuthCallback() {
           navigate('/login');
         }
       } catch (error) {
-        console.error('Unexpected error during auth callback:', error);
+        // Navigate to login with generic error message
         navigate('/login?error=Authentication failed');
       }
     };
