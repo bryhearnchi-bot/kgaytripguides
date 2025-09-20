@@ -558,7 +558,28 @@ export default function UsersManagement() {
                           <TableCell>
                             {user.last_sign_in_at ? (
                               <div className="text-sm text-gray-600">
-                                {format(dateOnly(user.last_sign_in_at), 'MMM dd, yyyy')}
+                                {(() => {
+                                  try {
+                                    // Try to parse the date - it might include time
+                                    const date = new Date(user.last_sign_in_at);
+                                    if (!isNaN(date.getTime())) {
+                                      // Check if it's today
+                                      const today = new Date();
+                                      const isToday = date.toDateString() === today.toDateString();
+
+                                      if (isToday) {
+                                        // Show time for today
+                                        return format(date, 'h:mm');
+                                      } else {
+                                        // Show date for other days
+                                        return format(date, 'MMM dd, yyyy');
+                                      }
+                                    }
+                                    return 'Invalid date';
+                                  } catch {
+                                    return 'Invalid date';
+                                  }
+                                })()}
                               </div>
                             ) : (
                               <span className="text-gray-400 text-sm">Never</span>

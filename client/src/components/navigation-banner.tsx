@@ -23,34 +23,26 @@ export default function NavigationBanner() {
   };
 
   return (
-    <div className="bg-ocean-900 text-white shadow-lg fixed z-50 w-full" style={{
-      position: 'fixed',
-      top: '0px',
-      left: '0px',
-      right: '0px',
-      padding: '8px 16px',
-      border: 'none',
-      outline: 'none'
-    }}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="bg-ocean-900 text-white shadow-lg fixed z-50 w-full top-0 left-0 right-0">
+      <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/">
             <img
               src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757807911/cruise-app/logos/atlantis-logo.png"
               alt="Atlantis Events"
-              className="h-6 w-auto brightness-0 invert hover:opacity-80 transition-opacity cursor-pointer"
+              className="h-5 sm:h-6 w-auto brightness-0 invert hover:opacity-80 transition-opacity cursor-pointer"
             />
           </Link>
           <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
             <img
               src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757807911/cruise-app/logos/kgay-logo.jpg"
               alt="KGay Travel"
-              className="h-8 w-auto hover:opacity-80 transition-opacity"
+              className="h-6 sm:h-8 w-auto hover:opacity-80 transition-opacity"
             />
           </a>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <TimeFormatToggle />
 
           {user ? (
@@ -59,20 +51,20 @@ export default function NavigationBanner() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="flex items-center space-x-2 text-white hover:bg-white/10 p-2"
+                  className="flex items-center space-x-1 sm:space-x-2 text-white hover:bg-white/10 p-2 touch-manipulation"
                 >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    <div className="w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
+                      <User className="w-3 sm:w-4 h-3 sm:h-4 text-white" />
                     </div>
                     <div className="hidden sm:block text-left">
-                      <p className="text-sm font-medium">{profile?.full_name || user.email?.split('@')[0] || 'User'}</p>
+                      <p className="text-xs sm:text-sm font-medium">{profile?.full_name || user.email?.split('@')[0] || 'User'}</p>
                     </div>
-                    <ChevronDown className="w-4 h-4 opacity-70" />
+                    <ChevronDown className="w-3 sm:w-4 h-3 sm:h-4 opacity-70" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>

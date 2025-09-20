@@ -267,7 +267,8 @@ export function registerAdminUsersRoutes(app: Express) {
           is_active: newUser.isActive,
           account_status: newUser.accountStatus,
           created_at: newUser.createdAt,
-          updated_at: newUser.updatedAt
+          updated_at: newUser.updatedAt,
+          last_sign_in_at: newUser.lastSignInAt
         }
       });
 
@@ -374,7 +375,8 @@ export function registerAdminUsersRoutes(app: Express) {
           is_active: updatedUser.isActive,
           account_status: updatedUser.accountStatus,
           created_at: updatedUser.createdAt,
-          updated_at: updatedUser.updatedAt
+          updated_at: updatedUser.updatedAt,
+          last_sign_in_at: updatedUser.lastSignInAt
         }
       });
 
@@ -436,7 +438,8 @@ export function registerAdminUsersRoutes(app: Express) {
           is_active: updatedUser.isActive,
           account_status: updatedUser.accountStatus,
           created_at: updatedUser.createdAt,
-          updated_at: updatedUser.updatedAt
+          updated_at: updatedUser.updatedAt,
+          last_sign_in_at: updatedUser.lastSignInAt
         }
       });
 
