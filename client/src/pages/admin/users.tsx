@@ -110,11 +110,16 @@ export default function UsersManagement() {
   // Create/Update user mutation
   const saveUser = useMutation({
     mutationFn: async (data: UserFormData) => {
+      console.log('Starting user save mutation...');
+      console.log('Edit mode:', editingUser ? 'UPDATE' : 'CREATE');
+
       // Get authentication token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
+        console.error('No authentication token found');
         throw new Error('No authentication token');
       }
+      console.log('Got auth token');
 
       const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
       const method = editingUser ? 'PUT' : 'POST';
@@ -124,6 +129,12 @@ export default function UsersManagement() {
       if (editingUser && !payload.password) {
         delete payload.password;
       }
+
+      console.log(`Making ${method} request to ${url}`);
+      console.log('Request payload:', {
+        ...payload,
+        password: payload.password ? '***' : undefined
+      });
 
       const response = await fetch(url, {
         method,
@@ -135,9 +146,21 @@ export default function UsersManagement() {
         body: JSON.stringify(payload),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to save user');
+        let errorMessage = 'Failed to save user';
+        try {
+          const errorData = await response.json();
+          console.error('Error response data:', errorData);
+          errorMessage = errorData.error || errorData.details || errorMessage;
+        } catch {
+          const errorText = await response.text();
+          console.error('Error response text:', errorText);
+          if (errorText) errorMessage = errorText;
+        }
+        console.error('Throwing error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       return response.json();
@@ -288,14 +311,26 @@ export default function UsersManagement() {
     setUserModalOpen(false);
     setEditingUser(null);
     setShowPassword(false);
+    // Reset form to initial empty state
+    setFormData({
+      username: '',
+      email: '',
+      full_name: '',
+      role: 'viewer',
+      password: '',
+      is_active: true,
+      account_status: 'active',
+    });
   };
 
   const handleInputChange = (field: keyof UserFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    if (!formData.username.trim()) {
+  const handleSave = (e?: React.MouseEvent | React.FormEvent) => {
+    e?.preventDefault();
+
+    if (!formData.username || !formData.username.trim()) {
       toast({
         title: 'Validation Error',
         description: 'Username is required',
@@ -304,7 +339,16 @@ export default function UsersManagement() {
       return;
     }
 
-    if (!formData.email.trim()) {
+    if (formData.username.trim().length < 3) {
+      toast({
+        title: 'Validation Error',
+        description: 'Username must be at least 3 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.email || !formData.email.trim()) {
       toast({
         title: 'Validation Error',
         description: 'Email is required',
@@ -313,7 +357,7 @@ export default function UsersManagement() {
       return;
     }
 
-    if (!editingUser && !formData.password) {
+    if (!editingUser && (!formData.password || !formData.password.trim())) {
       toast({
         title: 'Validation Error',
         description: 'Password is required for new users',
@@ -322,7 +366,30 @@ export default function UsersManagement() {
       return;
     }
 
-    saveUser.mutate(formData);
+    if (!editingUser && formData.password.trim().length < 8) {
+      toast({
+        title: 'Validation Error',
+        description: 'Password must be at least 8 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Trim all string fields before sending
+    const trimmedData = {
+      ...formData,
+      username: formData.username?.trim(),
+      email: formData.email.trim(),
+      full_name: formData.full_name?.trim(),
+      password: formData.password?.trim()
+    };
+
+    console.log('Sending user data:', {
+      ...trimmedData,
+      password: '***' // Hide password in logs
+    });
+
+    saveUser.mutate(trimmedData);
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -384,14 +451,23 @@ export default function UsersManagement() {
             {/* Search and Filters */}
             <Card>
               <CardContent className="p-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search users by username, email, name, or role..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="flex gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search users by username, email, name, or role..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => openUserModal()}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add User
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -577,7 +653,7 @@ export default function UsersManagement() {
             </DialogDescription>
           </DialogHeader>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(e); }}>
             {/* Username Field */}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium text-gray-700">
@@ -731,7 +807,8 @@ export default function UsersManagement() {
                 Cancel
               </Button>
               <Button
-                onClick={handleSave}
+                type="button"
+                onClick={(e) => handleSave(e)}
                 disabled={saveUser.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >

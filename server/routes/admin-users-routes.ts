@@ -163,9 +163,19 @@ export function registerAdminUsersRoutes(app: Express) {
   // POST /api/admin/users - Create new user
   app.post("/api/admin/users", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
     try {
+      console.log('[User Creation] Received request body:', {
+        ...req.body,
+        password: req.body.password ? '***' : undefined
+      });
+
       const userData = createUserSchema.parse(req.body);
+      console.log('[User Creation] Validated user data:', {
+        ...userData,
+        password: '***'
+      });
 
       // Check if user already exists by email
+      console.log('[User Creation] Checking for existing user with email:', userData.email);
       const existingUser = await db
         .select()
         .from(profiles)
@@ -173,6 +183,7 @@ export function registerAdminUsersRoutes(app: Express) {
         .limit(1);
 
       if (existingUser.length > 0) {
+        console.log('[User Creation] User already exists with email:', userData.email);
         return res.status(409).json({
           error: 'User already exists with this email'
         });
@@ -180,24 +191,41 @@ export function registerAdminUsersRoutes(app: Express) {
 
       // Create user in Supabase Auth (if available)
       if (!supabaseAdmin) {
+        console.log('[User Creation] Supabase Admin client not configured');
         return res.status(503).json({
           error: 'User management service is not configured. Please set up Supabase credentials.'
         });
       }
 
-      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      console.log('[User Creation] Creating user in Supabase Auth...');
+      console.log('[User Creation] Supabase Admin initialized:', !!supabaseAdmin);
+      console.log('[User Creation] Auth admin available:', !!supabaseAdmin.auth.admin);
+
+      const createUserParams = {
         email: userData.email,
         password: userData.password,
         email_confirm: true,
         user_metadata: {
-          username: userData.username,
-          full_name: userData.full_name,
+          username: userData.username || undefined,
+          full_name: userData.full_name || undefined,
           role: userData.role
         }
+      };
+
+      console.log('[User Creation] Parameters:', {
+        ...createUserParams,
+        password: '***'
       });
 
+      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser(createUserParams);
+
       if (authError) {
-        console.error('Supabase Auth error:', authError);
+        console.error('[User Creation] Supabase Auth error:', authError);
+        console.error('[User Creation] Error details:', {
+          code: authError.code,
+          status: authError.status,
+          message: authError.message
+        });
         return res.status(400).json({
           error: 'Failed to create user account',
           details: authError.message
@@ -208,19 +236,26 @@ export function registerAdminUsersRoutes(app: Express) {
         return res.status(400).json({ error: 'Failed to create user account' });
       }
 
-      // Update the existing profile record (created by Supabase trigger)
-      const [newUser] = await db
-        .update(profiles)
-        .set({
-          username: userData.username,
-          fullName: userData.full_name,
-          role: userData.role,
-          isActive: userData.is_active,
-          accountStatus: userData.account_status,
-          updatedAt: new Date()
-        })
+      // The trigger should have created the profile, now let's fetch it
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Get the created profile
+      const profileResult = await db
+        .select()
+        .from(profiles)
         .where(eq(profiles.id, authUser.user.id))
-        .returning();
+        .limit(1);
+
+      if (profileResult.length === 0) {
+        console.error('[User Creation] Profile not found after auth user creation');
+        return res.status(500).json({
+          error: 'Failed to create user profile',
+          details: 'Profile record was not created by database trigger'
+        });
+      }
+
+      const newUser = profileResult[0];
 
       res.status(201).json({
         user: {
