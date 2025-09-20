@@ -75,7 +75,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
       const response = await fetch(`/api/cruises/${cruiseId}`, {
         credentials: 'include'
       });
-      if (!response.ok) throw new Error('Failed to fetch cruise');
+      if (!response.ok) throw new Error('Failed to fetch trip');
       return response.json();
     },
     enabled: isEditing && !!cruiseId
@@ -150,21 +150,21 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
         body: JSON.stringify(data)
       });
 
-      if (!response.ok) throw new Error('Failed to save cruise');
+      if (!response.ok) throw new Error('Failed to save trip');
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['cruises'] });
       toast({
         title: 'Success',
-        description: `Cruise ${isEditing ? 'updated' : 'created'} successfully`,
+        description: `Trip ${isEditing ? 'updated' : 'created'} successfully`,
       });
       navigate('/admin');
     },
     onError: (error) => {
       toast({
         title: 'Error',
-        description: `Failed to ${isEditing ? 'update' : 'create'} cruise`,
+        description: `Failed to ${isEditing ? 'update' : 'create'} trip`,
         variant: 'destructive',
       });
     }
@@ -207,22 +207,12 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
       <div className="bg-white border-b">
         <div className="px-8 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-              >
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Dashboard
-              </Button>
-            </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {isEditing ? 'Edit Cruise' : 'Create New Cruise'}
+                {isEditing ? 'Edit Trip' : 'Create New Trip'}
               </h1>
               <p className="text-sm text-gray-500">
-                Complete all sections to {isEditing ? 'update' : 'create'} your cruise guide
+                Complete all sections to {isEditing ? 'update' : 'create'} your trip guide
               </p>
             </div>
             <Button
@@ -231,7 +221,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
               disabled={saveCruiseMutation.isPending}
             >
               <Save className="mr-2" size={20} />
-              {isEditing ? 'Update Cruise' : 'Create Cruise'}
+              {isEditing ? 'Update Trip' : 'Create Trip'}
             </Button>
           </div>
         </div>
@@ -258,7 +248,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Cruise Name *</Label>
+                    <Label htmlFor="name">Trip Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -269,7 +259,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
                           slug: generateSlug(e.target.value)
                         });
                       }}
-                      placeholder="e.g., Caribbean Paradise 2025"
+                      placeholder="e.g., Greek Isles Paradise 2025"
                       required
                     />
                   </div>
@@ -280,7 +270,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
                       id="slug"
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      placeholder="caribbean-paradise-2025"
+                      placeholder="greek-isles-paradise-2025"
                     />
                   </div>
 
@@ -314,7 +304,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    placeholder="Enter cruise description..."
+                    placeholder="Enter trip description..."
                   />
                 </div>
 
@@ -463,7 +453,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
                 <CardTitle>Information Sections</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Add and manage information sections for this cruise.</p>
+                <p className="text-gray-500">Add and manage information sections for this trip.</p>
                 <Button
                   variant="outline"
                   className="mt-4"

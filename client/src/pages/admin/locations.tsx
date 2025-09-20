@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -31,10 +32,10 @@ import {
   Search,
   Globe,
   Anchor,
-  ArrowLeft,
   Save,
   X,
-  Map
+  Map,
+  Eye
 } from 'lucide-react';
 
 interface Port {
@@ -221,132 +222,88 @@ export default function LocationsManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-              >
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Dashboard
-              </Button>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Locations</h1>
-              <p className="text-sm text-gray-500">Manage ports and destinations</p>
-            </div>
-            <Button
-              onClick={() => {
-                setEditingPort(null);
-                resetForm();
-                setShowAddModal(true);
-              }}
-              className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-            >
-              <Plus className="mr-2" size={20} />
-              Add New Location
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Locations Management</h1>
+          <p className="text-sm text-gray-600 mt-1">Manage ports and destinations across all cruises</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={() => {
+              setEditingPort(null);
+              resetForm();
+              setShowAddModal(true);
+            }}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Location
+          </Button>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="px-8 py-4 bg-white border-b">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input
-            placeholder="Search locations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Locations Grid */}
-      <div className="p-8">
-        {isLoading ? (
-          <div className="text-center py-12 text-gray-500">Loading locations...</div>
-        ) : filteredPorts.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <MapPin className="mx-auto mb-4 text-gray-400" size={48} />
-              <h3 className="text-lg font-semibold mb-2">No locations found</h3>
-              <p className="text-gray-500 mb-4">Start by adding your first location</p>
-              <Button
-                onClick={() => {
-                  setEditingPort(null);
-                  resetForm();
-                  setShowAddModal(true);
-                }}
-                className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-              >
-                <Plus className="mr-2" size={20} />
-                Add New Location
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPorts.map((port) => (
-              <Card key={port.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="h-32 bg-gradient-to-br from-[#1e3a5f] to-[#0f2238] flex items-center justify-center relative">
-                  {port.image_url ? (
-                    <img src={port.image_url} alt={port.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <MapPin className="text-white/20" size={64} />
-                  )}
-                  <Badge className={`absolute top-2 right-2 ${getTypeColor(port.port_type)}`}>
-                    {getTypeLabel(port.port_type)}
-                  </Badge>
-                </div>
-                <CardHeader>
-                  <CardTitle>{port.name}</CardTitle>
-                  <CardDescription>
-                    <div className="flex items-center gap-1">
-                      <Globe size={14} />
-                      {port.country}
-                      {port.region && ` • ${port.region}`}
-                    </div>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {port.description && (
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {port.description}
-                    </p>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(port)}
-                    >
-                      <Edit2 className="mr-1" size={16} />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(port.id!)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="mr-1" size={16} />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search locations by name, country, or region..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Locations Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Locations ({filteredPorts.length})</CardTitle>
+          <CardDescription>
+            Manage ports and destinations across all cruises
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <MapPin className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
+              <p>Loading locations...</p>
+            </div>
+          ) : filteredPorts.length === 0 ? (
+            <div className="text-center py-12">
+              <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No locations found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? 'Try adjusting your search criteria.' : 'Get started by creating your first location.'}
+              </p>
+              {!searchTerm && (
+                <Button
+                  onClick={() => {
+                    setEditingPort(null);
+                    resetForm();
+                    setShowAddModal(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Location
+                </Button>
+              )}
+            </div>
+          ) : (
+            <LocationsTable
+              ports={filteredPorts}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              getTypeColor={getTypeColor}
+              getTypeLabel={getTypeLabel}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add/Edit Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
@@ -480,6 +437,119 @@ export default function LocationsManagement() {
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Locations Table Component
+interface LocationsTableProps {
+  ports: Port[];
+  onEdit: (port: Port) => void;
+  onDelete: (id: number) => void;
+  getTypeColor: (type?: string) => string;
+  getTypeLabel: (type?: string) => string;
+}
+
+function LocationsTable({
+  ports,
+  onEdit,
+  onDelete,
+  getTypeColor,
+  getTypeLabel
+}: LocationsTableProps) {
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Location Details</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Type & Region</TableHead>
+            <TableHead>Coordinates</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {ports.map((port) => (
+            <TableRow key={port.id}>
+              <TableCell>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#1e3a5f] to-[#0f2238] rounded-lg flex items-center justify-center relative overflow-hidden">
+                    {port.image_url ? (
+                      <img src={port.image_url} alt={port.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <MapPin className="text-white/60 w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{port.name}</div>
+                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                      <Globe size={12} />
+                      {port.country}
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="max-w-xs">
+                  {port.description ? (
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {port.description}
+                    </p>
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">No description</span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-2">
+                  <Badge className={`text-white ${getTypeColor(port.port_type)}`}>
+                    {getTypeLabel(port.port_type)}
+                  </Badge>
+                  {port.region && (
+                    <div className="text-sm text-gray-500">{port.region}</div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {port.coordinates ? (
+                  <div className="text-sm space-y-1">
+                    <div className="text-gray-600">
+                      Lat: {port.coordinates.lat.toFixed(4)}
+                    </div>
+                    <div className="text-gray-600">
+                      Lng: {port.coordinates.lng.toFixed(4)}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-400 italic">Not set</span>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(port)}
+                    title="Edit Location"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(port.id!)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Delete Location"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

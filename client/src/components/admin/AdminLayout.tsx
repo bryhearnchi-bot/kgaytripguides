@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import React, { useState, useEffect, ReactNode } from 'react';
+import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard,
   Ship,
@@ -11,8 +11,12 @@ import {
   UserCircle,
   Menu,
   ChevronRight,
-  Anchor
+  Anchor,
+  LogOut,
+  Shield
 } from 'lucide-react';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import { usePersistentSidebar } from '@/hooks/usePersistentSidebar';
 
 interface NavItem {
   label: string;
@@ -25,31 +29,43 @@ interface NavSection {
   items: NavItem[];
 }
 
-export function AdminLayout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const location = useLocation();
+interface AdminLayoutProps {
+  children: ReactNode;
+}
 
-  // Persist sidebar state
-  useEffect(() => {
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState) {
-      setSidebarCollapsed(JSON.parse(savedState));
-    }
-  }, []);
+export function AdminLayout({ children }: AdminLayoutProps) {
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar, isMounted } = usePersistentSidebar(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [location] = useLocation();
+  const { logout } = useSupabaseAuthContext();
 
-  const toggleSidebar = () => {
-    const newState = !sidebarCollapsed;
-    setSidebarCollapsed(newState);
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(newState));
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
+
+  // Close mobile menu when navigating
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
+
+  // Handle mobile menu overlay click
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
 
   const navSections: NavSection[] = [
     {
-      title: 'CRUISES',
+      title: 'TRIPS',
       items: [
         { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
-        { label: 'Active Cruises', path: '/admin/cruises/active', icon: <Anchor size={20} /> },
-        { label: 'Past Cruises', path: '/admin/cruises/past', icon: <Anchor size={20} /> },
+        { label: 'Trips', path: '/admin/trips', icon: <Anchor size={20} /> },
       ]
     },
     {
@@ -74,323 +90,182 @@ export function AdminLayout() {
   };
 
   const isActive = (path: string) => {
-    if (path === '/admin' && location.pathname === '/admin') return true;
-    if (path !== '/admin' && location.pathname.startsWith(path)) return true;
+    if (path === '/admin' && location === '/admin') return true;
+    if (path !== '/admin' && location.startsWith(path)) return true;
     return false;
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
-    <div className="admin-layout">
-      {/* Sidebar */}
-      <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo">
-            <div className="logo-icon">⚓</div>
-            <span className="logo-text">CruiseGuides</span>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Mobile Header - Only visible on mobile */}
+      <header className="lg:hidden fixed top-10 left-0 right-0 h-14 bg-gradient-to-r from-ocean-900 to-ocean-800 flex items-center justify-between px-4 z-50 shadow-lg">
+        <button
+          onClick={toggleMobileMenu}
+          className="p-2 text-white hover:bg-white/10 rounded-md transition-colors touch-target"
+          aria-label="Open navigation menu"
+        >
+          <Menu size={24} />
+        </button>
+
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center">
+            <Shield className="w-5 h-5 text-white" />
           </div>
-          <button className="hamburger" onClick={toggleSidebar}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          <span className="text-white font-bold">Admin Panel</span>
         </div>
 
-        <nav className="nav-menu">
-          {navSections.map((section) => (
-            <div key={section.title} className="nav-section">
-              <div className="nav-label">{section.title}</div>
-              {section.items.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
-                  title={sidebarCollapsed ? item.label : undefined}
+        <div className="w-10"></div> {/* Spacer for centering */}
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-10"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - positioned below nav banner */}
+      <aside className={`fixed left-0 top-10 h-[calc(100vh-40px)] bg-gradient-to-b from-ocean-900 via-ocean-800 to-ocean-700 z-40 shadow-xl ${
+        // Only apply transition after component has mounted to prevent flicker
+        isMounted ? 'transition-all duration-300' : ''
+      } ${
+        sidebarCollapsed ? 'w-20' : 'w-[280px]'
+      } ${
+        // Mobile responsiveness
+        mobileMenuOpen ? 'lg:relative' : 'max-lg:transform max-lg:-translate-x-full'
+      }`}>
+        <div className="p-4 border-b border-white/10 lg:pt-4 pt-20">
+          <div className="flex items-center justify-between gap-2">
+            {sidebarCollapsed ? (
+              <>
+                <div className="w-8 h-8 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <button
+                  onClick={toggleSidebar}
+                  className="hidden lg:block p-1.5 hover:bg-white/10 rounded-md transition-colors flex-shrink-0"
+                  title="Expand sidebar"
                 >
-                  <span className="nav-icon">{item.icon}</span>
-                  <span className="nav-text">{item.label}</span>
-                  {!sidebarCollapsed && isActive(item.path) && (
-                    <ChevronRight className="nav-arrow" size={16} />
-                  )}
+                  <ChevronRight className="w-4 h-4 text-[#90E0EF]" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-white text-xl font-bold">Admin Panel</span>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleSidebar}
+                  className="hidden lg:block p-1.5 hover:bg-white/10 rounded-md transition-colors flex-shrink-0"
+                >
+                  <ChevronRight className="w-5 h-5 text-[#90E0EF] rotate-180" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <nav className="py-6 h-[calc(100%-88px)] overflow-y-auto">
+          {navSections.map((section) => (
+            <div key={section.title} className="mb-6">
+              {!sidebarCollapsed && (
+                <div className="px-6 mb-2 text-xs uppercase tracking-wider text-white/40">
+                  {section.title}
+                </div>
+              )}
+              {section.items.map((item) => (
+                <Link key={item.path} href={item.path}>
+                  <a
+                    className={`flex items-center px-6 py-3 mx-3 rounded-lg transition-all touch-target ${
+                      isActive(item.path)
+                        ? 'bg-white/15 text-white shadow-sm'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white/95'
+                    } ${sidebarCollapsed ? 'justify-center px-0' : ''}`}
+                    title={sidebarCollapsed ? item.label : undefined}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="ml-3">{item.label}</span>
+                        {isActive(item.path) && (
+                          <ChevronRight className="ml-auto" size={16} />
+                        )}
+                      </>
+                    )}
+                  </a>
                 </Link>
               ))}
             </div>
           ))}
 
-          <div className="nav-section">
-            <div className="nav-label">{adminSection.title}</div>
+          <div className="border-t border-white/10 pt-6 mt-auto">
+            {!sidebarCollapsed && (
+              <div className="px-6 mb-2 text-xs uppercase tracking-wider text-white/40">
+                {adminSection.title}
+              </div>
+            )}
             {adminSection.items.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
-                title={sidebarCollapsed ? item.label : undefined}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                <span className="nav-text">{item.label}</span>
-                {!sidebarCollapsed && isActive(item.path) && (
-                  <ChevronRight className="nav-arrow" size={16} />
-                )}
+              <Link key={item.path} href={item.path}>
+                <a
+                  className={`flex items-center px-6 py-3 mx-3 rounded-lg transition-all touch-target ${
+                    isActive(item.path)
+                      ? 'bg-white/15 text-white shadow-sm'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white/95'
+                  } ${sidebarCollapsed ? 'justify-center px-0' : ''}`}
+                  title={sidebarCollapsed ? item.label : undefined}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="ml-3">{item.label}</span>
+                      {isActive(item.path) && (
+                        <ChevronRight className="ml-auto" size={16} />
+                      )}
+                    </>
+                  )}
+                </a>
               </Link>
             ))}
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center px-6 py-3 mx-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white/95 transition-all w-[calc(100%-24px)] touch-target"
+            >
+              <LogOut size={20} />
+              {!sidebarCollapsed && <span className="ml-3">Logout</span>}
+            </button>
+
           </div>
         </nav>
       </aside>
 
-      {/* Main Content Area */}
-      <div className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <Outlet />
-      </div>
-
-      <style jsx>{`
-        .admin-layout {
-          display: flex;
-          min-height: 100vh;
-          background: #F8FAFC;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-          position: fixed;
-          left: 0;
-          top: 0;
-          height: 100vh;
-          width: 280px;
-          background: linear-gradient(180deg, #1e3a5f 0%, #0f2238 100%);
-          transition: all 0.3s ease;
-          z-index: 1000;
-          box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar.collapsed {
-          width: 80px;
-        }
-
-        .sidebar-header {
-          padding: 24px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          position: relative;
-        }
-
-        .sidebar.collapsed .sidebar-header {
-          padding: 24px 20px;
-          justify-content: center;
-        }
-
-        .logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: #00B4D8;
-          font-size: 20px;
-          font-weight: 700;
-        }
-
-        .logo-icon {
-          width: 40px;
-          height: 40px;
-          background: linear-gradient(135deg, #00B4D8 0%, #90E0EF 100%);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          font-size: 24px;
-        }
-
-        .logo-text {
-          color: white;
-          transition: opacity 0.3s ease;
-        }
-
-        .sidebar.collapsed .logo-text {
-          opacity: 0;
-          width: 0;
-          overflow: hidden;
-        }
-
-        .hamburger {
-          cursor: pointer;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          gap: 4px;
-          padding: 4px;
-          border-radius: 6px;
-          position: absolute;
-          right: 20px;
-          top: 50%;
-          transform: translateY(-50%);
-          transition: background 0.2s ease;
-          background: transparent;
-          border: none;
-        }
-
-        .hamburger:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar.collapsed .hamburger {
-          position: relative;
-          right: auto;
-          top: auto;
-          transform: none;
-        }
-
-        .hamburger span {
-          width: 100%;
-          height: 2px;
-          background: #90E0EF;
-          display: block;
-          transition: all 0.3s ease;
-        }
-
-        .nav-menu {
-          padding: 24px 0;
-          height: calc(100vh - 89px);
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .nav-menu::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .nav-menu::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-menu::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 3px;
-        }
-
-        .nav-section {
-          margin-bottom: 24px;
-        }
-
-        .nav-section:last-child {
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          padding-top: 24px;
-          margin-top: auto;
-        }
-
-        .nav-label {
-          padding: 0 24px;
-          margin-bottom: 8px;
-          font-size: 11px;
-          text-transform: uppercase;
-          color: rgba(255, 255, 255, 0.4);
-          letter-spacing: 1px;
-          transition: opacity 0.3s ease;
-        }
-
-        .sidebar.collapsed .nav-label {
-          opacity: 0;
-          height: 0;
-          margin: 0;
-          overflow: hidden;
-        }
-
-        .nav-item {
-          display: flex;
-          align-items: center;
-          padding: 12px 24px;
-          margin: 0 12px;
-          border-radius: 8px;
-          color: rgba(255, 255, 255, 0.7);
-          cursor: pointer;
-          transition: all 0.2s ease;
-          position: relative;
-          text-decoration: none;
-          gap: 12px;
-        }
-
-        .sidebar.collapsed .nav-item {
-          padding: 12px 0;
-          margin: 0 8px;
-          justify-content: center;
-        }
-
-        .nav-item:hover {
-          background: rgba(0, 180, 216, 0.1);
-          color: rgba(255, 255, 255, 0.95);
-        }
-
-        .nav-item.active {
-          background: rgba(0, 180, 216, 0.15);
-          color: #00B4D8;
-        }
-
-        .nav-item.active::before {
-          content: '';
-          position: absolute;
-          left: -12px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 4px;
-          height: 24px;
-          background: #00B4D8;
-          border-radius: 0 2px 2px 0;
-        }
-
-        .nav-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .nav-text {
-          transition: opacity 0.3s ease;
-        }
-
-        .sidebar.collapsed .nav-text {
-          opacity: 0;
-          width: 0;
-          overflow: hidden;
-        }
-
-        .nav-arrow {
-          margin-left: auto;
-        }
-
-        /* Main Content */
-        .main-content {
-          flex: 1;
-          margin-left: 280px;
-          transition: margin-left 0.3s ease;
-          min-height: 100vh;
-        }
-
-        .main-content.sidebar-collapsed {
-          margin-left: 80px;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-          .sidebar {
-            transform: translateX(-100%);
-          }
-
-          .sidebar.mobile-open {
-            transform: translateX(0);
-          }
-
-          .main-content {
-            margin-left: 0;
-          }
-
-          .main-content.sidebar-collapsed {
-            margin-left: 0;
-          }
-        }
-      `}</style>
+      {/* Main Content - positioned below nav banner and beside sidebar */}
+      <main className={`flex-1 pt-10 ${
+        // Only apply transition after component has mounted to prevent flicker
+        isMounted ? 'transition-all duration-300' : ''
+      } ${
+        sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[280px]'
+      } lg:mt-0 mt-14 mobile-content-padding-bottom`}>
+        <div className="p-4 lg:p-6">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

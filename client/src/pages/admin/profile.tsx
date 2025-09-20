@@ -12,7 +12,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { addCsrfToken } from '@/utils/csrf';
 import {
-  ArrowLeft,
   User,
   Save,
   Eye,
@@ -244,7 +243,7 @@ export default function AdminProfile() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-8">
         <div className="text-center">
           <User className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
           <p>Loading profile...</p>
@@ -254,35 +253,16 @@ export default function AdminProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/admin/dashboard')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="h-6 w-px bg-gray-300" />
-              <div className="flex items-center space-x-2">
-                <User className="w-6 h-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">My Profile</h1>
-              </div>
-            </div>
-          </div>
+    <div className="max-w-5xl space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+          <p className="text-sm text-gray-600 mt-1">Manage your account settings</p>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          {/* Profile Overview */}
-          <Card>
+      </div>
+      {/* Profile Overview */}
+      <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
@@ -309,8 +289,8 @@ export default function AdminProfile() {
             </CardHeader>
           </Card>
 
-          {/* Account Information */}
-          <Card>
+      {/* Account Information */}
+      <Card>
             <CardHeader>
               <CardTitle>Account Information</CardTitle>
               <CardDescription>
@@ -353,8 +333,8 @@ export default function AdminProfile() {
             </CardContent>
           </Card>
 
-          {/* Security Settings */}
-          <Card>
+      {/* Security Settings */}
+      <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Key className="w-5 h-5" />
@@ -496,8 +476,8 @@ export default function AdminProfile() {
             </CardContent>
           </Card>
 
-          {/* Account Details */}
-          <Card>
+      {/* Account Details */}
+      <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="w-5 h-5" />
@@ -548,8 +528,8 @@ export default function AdminProfile() {
             </CardContent>
           </Card>
 
-          {/* Danger Zone */}
-          <Card className="border-red-200">
+      {/* Danger Zone */}
+      <Card className="border-red-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-red-700">
                 <AlertTriangle className="w-5 h-5" />
@@ -594,8 +574,6 @@ export default function AdminProfile() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </main>
     </div>
   );
 }

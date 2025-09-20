@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
-  ArrowLeft,
   Ship,
   Save,
   Eye,
@@ -101,7 +100,7 @@ export default function CruiseDetail() {
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch cruise details');
+        throw new Error('Failed to fetch trip details');
       }
       return response.json();
     },
@@ -150,7 +149,7 @@ export default function CruiseDetail() {
     onSuccess: () => {
       toast({
         title: 'Success',
-        description: 'Cruise updated successfully',
+        description: 'Trip updated successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['admin-cruise-detail', cruiseId] });
       setIsEditing(false);
@@ -158,7 +157,7 @@ export default function CruiseDetail() {
     onError: (error) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update cruise',
+        description: error.message || 'Failed to update trip',
         variant: 'destructive',
       });
     },
@@ -172,7 +171,7 @@ export default function CruiseDetail() {
     if (!formData.name.trim()) {
       toast({
         title: 'Validation Error',
-        description: 'Cruise name is required',
+        description: 'Trip name is required',
         variant: 'destructive',
       });
       return;
@@ -220,10 +219,10 @@ export default function CruiseDetail() {
         <Card className="w-96">
           <CardContent className="text-center py-8">
             <Ship className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Cruise Selected</h3>
-            <p className="text-gray-500 mb-4">Please select a cruise to view details.</p>
-            <Button onClick={() => setLocation('/admin/cruises-active')}>
-              View Active Cruises
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Trip Selected</h3>
+            <p className="text-gray-500 mb-4">Please select a trip to view details.</p>
+            <Button onClick={() => setLocation('/admin/trips')}>
+              View All Trips
             </Button>
           </CardContent>
         </Card>
@@ -236,7 +235,7 @@ export default function CruiseDetail() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Ship className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
-          <p>Loading cruise details...</p>
+          <p>Loading trip details...</p>
         </div>
       </div>
     );
@@ -248,12 +247,12 @@ export default function CruiseDetail() {
         <Card className="w-96">
           <CardContent className="text-center py-8">
             <Ship className="w-12 h-12 mx-auto mb-4 text-red-400" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Cruise</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Trip</h3>
             <p className="text-gray-500 mb-4">
-              {cruiseError?.message || 'Failed to load cruise details'}
+              {cruiseError?.message || 'Failed to load trip details'}
             </p>
-            <Button onClick={() => setLocation('/admin/cruises-active')}>
-              Back to Cruises
+            <Button onClick={() => setLocation('/admin/trips')}>
+              View All Trips
             </Button>
           </CardContent>
         </Card>
@@ -267,21 +266,10 @@ export default function CruiseDetail() {
       <header className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/admin/cruises-active')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Cruises
-              </Button>
-              <div className="h-6 w-px bg-gray-300" />
-              <div className="flex items-center space-x-2">
-                <Ship className="w-6 h-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">{cruise.name}</h1>
-                {getStatusBadge(cruise.status)}
-              </div>
+            <div className="flex items-center space-x-2">
+              <Ship className="w-6 h-6 text-blue-600" />
+              <h1 className="text-xl font-semibold text-gray-900">{cruise.name}</h1>
+              {getStatusBadge(cruise.status)}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -298,7 +286,7 @@ export default function CruiseDetail() {
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit Cruise
+                  Edit Trip
                 </Button>
               ) : (
                 <div className="flex items-center space-x-2">
@@ -357,19 +345,19 @@ export default function CruiseDetail() {
               <div className="lg:col-span-2 space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Cruise Information</CardTitle>
+                    <CardTitle>Trip Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {isEditing ? (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="name">Cruise Name *</Label>
+                            <Label htmlFor="name">Trip Name *</Label>
                             <Input
                               id="name"
                               value={formData.name}
                               onChange={(e) => handleInputChange('name', e.target.value)}
-                              placeholder="Enter cruise name"
+                              placeholder="Enter trip name"
                             />
                           </div>
                           <div className="space-y-2">
@@ -399,7 +387,7 @@ export default function CruiseDetail() {
                             id="description"
                             value={formData.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
-                            placeholder="Enter cruise description"
+                            placeholder="Enter trip description"
                             rows={4}
                           />
                         </div>
@@ -573,7 +561,7 @@ export default function CruiseDetail() {
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        <span>Cruise created</span>
+                        <span>Trip created</span>
                         <span className="text-gray-500 ml-auto">
                           {format(dateOnly(cruise.createdAt), 'MMM dd')}
                         </span>
@@ -681,7 +669,7 @@ export default function CruiseDetail() {
             <Card>
               <CardContent className="text-center py-12">
                 <Settings className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Cruise Settings</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Trip Settings</h3>
                 <p className="text-gray-500">
                   Advanced settings and configuration options will be integrated here.
                 </p>

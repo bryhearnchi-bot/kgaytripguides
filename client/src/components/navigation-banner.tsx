@@ -86,7 +86,7 @@ export default function NavigationBanner() {
                 </DropdownMenuItem>
                 {profile?.role === 'admin' || profile?.role === 'super_admin' ? (
                   <>
-                    <DropdownMenuItem onClick={() => setLocation('/admin/dashboard')}>
+                    <DropdownMenuItem onClick={() => setLocation('/admin')}>
                       <Shield className="mr-2 h-4 w-4" />
                       <span>Admin Dashboard</span>
                     </DropdownMenuItem>

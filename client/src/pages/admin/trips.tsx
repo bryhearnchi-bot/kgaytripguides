@@ -14,16 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { 
-  Ship, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Ship,
+  Plus,
+  Edit,
+  Trash2,
   Calendar,
   MapPin,
   Users,
-  Search,
-  ArrowLeft
+  Search
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -132,21 +131,11 @@ function TripsManagementContent() {
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/admin/dashboard')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="flex items-center space-x-2">
-                <Ship className="w-6 h-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">
-                  Trip Management
-                </h1>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Ship className="w-6 h-6 text-blue-600" />
+              <h1 className="text-xl font-semibold text-gray-900">
+                Trip Management
+              </h1>
             </div>
             {canEdit && (
               <Button onClick={() => setLocation('/admin/trips/unified/new')}>

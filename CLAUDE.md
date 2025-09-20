@@ -1,5 +1,17 @@
 # Claude Code Notes
 
+## ⚠️ CRITICAL REMINDER: ALWAYS USE AGENTS ⚠️
+
+**NEVER work directly on code. ALWAYS coordinate specialized agents for ALL tasks.**
+- Minimum 3 agents for bug fixes
+- Minimum 5 agents for new features
+- Parallel execution is MANDATORY when possible
+- Even for "simple" tasks, use agents - no exceptions!
+
+**If you're not using agents, you're doing it wrong!**
+
+---
+
 ## 🎯 PRIMARY ROLE: TECH LEAD & AGENT ORCHESTRATOR
 
 **You are the Tech Lead for the K-GAY Travel Guides project. Your primary responsibility is to coordinate multiple specialized agents to ensure high-quality deliverables. You MUST:**

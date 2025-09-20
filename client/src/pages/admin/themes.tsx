@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -32,7 +33,6 @@ import {
   Clock,
   Users,
   MapPin,
-  ArrowLeft,
   Save,
   Sparkles,
   Copy
@@ -256,154 +256,89 @@ export default function ThemesManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-              >
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Dashboard
-              </Button>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Party Themes</h1>
-              <p className="text-sm text-gray-500">Create reusable party theme templates</p>
-            </div>
-            <Button
-              onClick={() => {
-                setEditingTheme(null);
-                resetForm();
-                setShowAddModal(true);
-              }}
-              className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-            >
-              <Plus className="mr-2" size={20} />
-              Add New Theme
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Party Themes Management</h1>
+          <p className="text-sm text-gray-600 mt-1">Create reusable party theme templates for events</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={() => {
+              setEditingTheme(null);
+              resetForm();
+              setShowAddModal(true);
+            }}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Theme
+          </Button>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="px-8 py-4 bg-white border-b">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input
-            placeholder="Search themes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Themes Grid */}
-      <div className="p-8">
-        {isLoading ? (
-          <div className="text-center py-12 text-gray-500">Loading party themes...</div>
-        ) : filteredThemes.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Palette className="mx-auto mb-4 text-gray-400" size={48} />
-              <h3 className="text-lg font-semibold mb-2">No party themes found</h3>
-              <p className="text-gray-500 mb-4">Start by creating your first party theme template</p>
-              <Button
-                onClick={() => {
-                  setEditingTheme(null);
-                  resetForm();
-                  setShowAddModal(true);
-                }}
-                className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-              >
-                <Plus className="mr-2" size={20} />
-                Add New Theme
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredThemes.map((theme) => (
-              <Card key={theme.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="h-32 bg-gradient-to-br from-[#1e3a5f] to-[#0f2238] flex items-center justify-center relative">
-                  {theme.image_url ? (
-                    <img src={theme.image_url} alt={theme.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-6xl">{getVenueIcon(theme.venue_type)}</div>
-                  )}
-                  <Badge className={`absolute top-2 right-2 ${getVenueColor(theme.venue_type)}`}>
-                    {theme.venue_type?.toUpperCase()}
-                  </Badge>
-                </div>
-                <CardHeader>
-                  <CardTitle>{theme.name}</CardTitle>
-                  {theme.theme && (
-                    <CardDescription className="flex items-center gap-1">
-                      <Sparkles size={14} />
-                      {theme.theme}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 mb-4">
-                    {theme.capacity && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Users size={16} />
-                        <span>Capacity: {theme.capacity}</span>
-                      </div>
-                    )}
-                    {theme.duration_hours && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock size={16} />
-                        <span>Duration: {theme.duration_hours}h</span>
-                      </div>
-                    )}
-                    {theme.usage_count !== undefined && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={16} />
-                        <span>Used {theme.usage_count} times</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(theme)}
-                    >
-                      <Edit2 className="mr-1" size={16} />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDuplicate(theme)}
-                    >
-                      <Copy className="mr-1" size={16} />
-                      Duplicate
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(theme.id!)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="mr-1" size={16} />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search themes by name, venue, or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Themes Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Party Themes ({filteredThemes.length})</CardTitle>
+          <CardDescription>
+            Manage reusable theme templates for all party events
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <Palette className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
+              <p>Loading party themes...</p>
+            </div>
+          ) : filteredThemes.length === 0 ? (
+            <div className="text-center py-12">
+              <Palette className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No party themes found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? 'Try adjusting your search criteria.' : 'Get started by creating your first party theme template.'}
+              </p>
+              {!searchTerm && (
+                <Button
+                  onClick={() => {
+                    setEditingTheme(null);
+                    resetForm();
+                    setShowAddModal(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Theme
+                </Button>
+              )}
+            </div>
+          ) : (
+            <ThemesTable
+              themes={filteredThemes}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+              getVenueColor={getVenueColor}
+              getVenueIcon={getVenueIcon}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add/Edit Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
@@ -528,6 +463,124 @@ export default function ThemesManagement() {
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Themes Table Component
+interface ThemesTableProps {
+  themes: PartyTheme[];
+  onEdit: (theme: PartyTheme) => void;
+  onDelete: (id: number) => void;
+  onDuplicate: (theme: PartyTheme) => void;
+  getVenueColor: (venue?: string) => string;
+  getVenueIcon: (venue?: string) => string;
+}
+
+function ThemesTable({
+  themes,
+  onEdit,
+  onDelete,
+  onDuplicate,
+  getVenueColor,
+  getVenueIcon
+}: ThemesTableProps) {
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Theme Details</TableHead>
+            <TableHead>Venue & Capacity</TableHead>
+            <TableHead>Usage Stats</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {themes.map((theme) => (
+            <TableRow key={theme.id}>
+              <TableCell>
+                <div className="flex items-center space-x-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg ${getVenueColor(theme.venue_type)}`}>
+                    {getVenueIcon(theme.venue_type)}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{theme.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {theme.theme && (
+                        <span className="flex items-center gap-1">
+                          <Sparkles size={12} />
+                          {theme.theme}
+                        </span>
+                      )}
+                      {theme.description && (
+                        <div className="mt-1 text-xs line-clamp-1">{theme.description}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-2">
+                  <Badge className={`text-white ${getVenueColor(theme.venue_type)}`}>
+                    {theme.venue_type?.toUpperCase()}
+                  </Badge>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    {theme.capacity && (
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        {theme.capacity}
+                      </div>
+                    )}
+                    {theme.duration_hours && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {theme.duration_hours}h
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{theme.usage_count || 0}</span>
+                  <span className="text-sm text-gray-500">events</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(theme)}
+                    title="Edit Theme"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDuplicate(theme)}
+                    title="Duplicate Theme"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(theme.id!)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Delete Theme"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

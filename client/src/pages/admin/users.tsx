@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
-  ArrowLeft,
   Users,
   Plus,
   Search,
@@ -66,7 +64,6 @@ const ROLES = [
 ];
 
 export default function UsersManagement() {
-  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('users');
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -350,43 +347,26 @@ export default function UsersManagement() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/admin/dashboard')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="h-6 w-px bg-gray-300" />
-              <div className="flex items-center space-x-2">
-                <Users className="w-6 h-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {activeTab === 'invitations' && (
-                <Button
-                  onClick={() => setInviteModalOpen(true)}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Send Invitation
-                </Button>
-              )}
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm text-gray-600 mt-1">Manage users and invitations</p>
         </div>
-      </header>
+        {activeTab === 'invitations' && (
+          <Button
+            onClick={() => setInviteModalOpen(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Send Invitation
+          </Button>
+        )}
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Content */}
+      <div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="users">
@@ -583,7 +563,7 @@ export default function UsersManagement() {
             <InvitationManagement />
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
 
       {/* User Modal */}
       <Dialog open={userModalOpen} onOpenChange={(open) => !open && closeUserModal()}>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +13,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
-  ArrowLeft,
   Settings,
   Plus,
   Edit,
@@ -95,7 +93,6 @@ const DEFAULT_SETTINGS = {
 };
 
 export default function AdminSettings() {
-  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('trip_types');
   const [settingModalOpen, setSettingModalOpen] = useState(false);
   const [editingSetting, setEditingSetting] = useState<Setting | null>(null);
@@ -374,50 +371,35 @@ export default function AdminSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/admin/dashboard')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="h-6 w-px bg-gray-300" />
-              <div className="flex items-center space-x-2">
-                <Settings className="w-6 h-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">Admin Settings</h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => exportSettings.mutate()}
-                disabled={exportSettings.isPending}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-              <Button
-                onClick={() => openSettingModal()}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Setting
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Settings</h1>
+          <p className="text-sm text-gray-600 mt-1">Configure system settings and preferences</p>
         </div>
-      </header>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportSettings.mutate()}
+            disabled={exportSettings.isPending}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Button
+            onClick={() => openSettingModal()}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Setting
+          </Button>
+        </div>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Content */}
+      <div>
         <div className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
@@ -573,7 +555,7 @@ export default function AdminSettings() {
             ))}
           </Tabs>
         </div>
-      </main>
+      </div>
 
       {/* Setting Modal */}
       <Dialog open={settingModalOpen} onOpenChange={(open) => !open && closeSettingModal()}>

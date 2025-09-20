@@ -3,8 +3,7 @@ import { useLocation } from 'wouter';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  ArrowLeft, 
+import {
   Users,
   Plus
 } from 'lucide-react';
@@ -14,9 +13,6 @@ function TalentManagementContent() {
   const { profile } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
 
-  const handleBack = () => {
-    setLocation('/admin/dashboard');
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -24,21 +20,9 @@ function TalentManagementContent() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="flex items-center"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Dashboard
-              </Button>
-              <div className="h-6 w-px bg-gray-300" />
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-green-600" />
-                <h1 className="text-xl font-semibold text-gray-900">Talent Directory</h1>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Users className="w-5 h-5 text-green-600" />
+              <h1 className="text-xl font-semibold text-gray-900">Talent Directory</h1>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">Logged in as</span>

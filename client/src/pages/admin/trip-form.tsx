@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Loader2, Upload, X } from 'lucide-react';
+import { Save, Loader2, Upload, X } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -257,19 +257,9 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/admin/trips')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Trips
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                {isEditing ? 'Edit Trip' : 'Create New Trip'}
-              </h1>
-            </div>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {isEditing ? 'Edit Trip' : 'Create New Trip'}
+            </h1>
             <Button
               type="submit"
               form="trip-form"

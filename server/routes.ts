@@ -126,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ IMAGE MANAGEMENT ROUTES ============
   
   // Upload image endpoint with type parameter
-  app.post("/api/images/upload/:type", uploadRateLimit, requireAuth, requireContentEditor, (req, res, next) => {
+  app.post("/api/images/upload/:type", uploadRateLimit, requireContentEditor, (req, res, next) => {
     const imageType = req.params.type;
     if (!['talent', 'event', 'itinerary', 'trip', 'cruise'].includes(imageType)) {
       return res.status(400).json({ error: 'Invalid image type. Must be one of: talent, event, itinerary, trip, cruise' });
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Download image from URL endpoint
-  app.post("/api/images/download-from-url", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/images/download-from-url", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { url, imageType, name } = req.body;
       
@@ -216,7 +216,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin dashboard statistics
   app.post("/api/admin/dashboard/stats",
     adminRateLimit,
-    requireAuth,
     requireContentEditor,
     validateBody(dashboardStatsSchema),
     async (req: AuthenticatedRequest, res) => {
@@ -556,7 +555,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export trip data
   app.post("/api/export/trips/:id",
     adminRateLimit,
-    requireAuth,
     requireContentEditor,
     validateParams(idParamSchema),
     validateBody(exportTripSchema),
@@ -618,7 +616,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import trip data
   app.post("/api/import/trips",
     bulkRateLimit,
-    requireAuth,
     requireSuperAdmin,
     validateBody(importTripSchema),
     async (req: AuthenticatedRequest, res) => {
@@ -682,8 +679,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // ============ ADMIN CRUISE ROUTES ============
+
+  // Get cruises filtered by status for admin panel
+  app.get("/api/admin/cruises", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const status = req.query.status as string;
+
+      let cruises: any[] = [];
+
+      if (status === 'active') {
+        // Get both upcoming and ongoing cruises
+        const now = new Date();
+        const allTrips = await tripStorage.getAllTrips();
+
+        // Filter for active cruises (upcoming or ongoing)
+        cruises = allTrips.filter(trip => {
+          const startDate = new Date(trip.startDate);
+          const endDate = new Date(trip.endDate);
+
+          // Upcoming: not started yet
+          const isUpcoming = startDate > now;
+
+          // Ongoing: started but not ended
+          const isOngoing = startDate <= now && endDate >= now;
+
+          return isUpcoming || isOngoing;
+        }).map(trip => ({
+          id: trip.id,
+          name: trip.name,
+          description: trip.description,
+          slug: trip.slug,
+          startDate: trip.startDate,
+          endDate: trip.endDate,
+          shipName: trip.shipName,
+          cruiseLine: trip.cruiseLine,
+          status: new Date(trip.startDate) > now ? 'upcoming' : 'ongoing',
+          heroImageUrl: trip.heroImageUrl,
+          guestCount: trip.maxGuests,
+          createdAt: trip.createdAt,
+          updatedAt: trip.updatedAt
+        }));
+
+        // Add port and event counts if needed
+        for (const cruise of cruises) {
+          const [itinerary, events] = await Promise.all([
+            itineraryStorage.getItineraryByCruise(cruise.id),
+            eventStorage.getEventsByCruise(cruise.id)
+          ]);
+          cruise.ports = itinerary.length;
+          cruise.eventsCount = events.length;
+        }
+      } else if (status === 'past') {
+        const pastTrips = await tripStorage.getPastTrips();
+        cruises = pastTrips.map(trip => ({
+          id: trip.id,
+          name: trip.name,
+          description: trip.description,
+          slug: trip.slug,
+          startDate: trip.startDate,
+          endDate: trip.endDate,
+          shipName: trip.shipName,
+          cruiseLine: trip.cruiseLine,
+          status: 'past',
+          heroImageUrl: trip.heroImageUrl,
+          guestCount: trip.maxGuests,
+          createdAt: trip.createdAt,
+          updatedAt: trip.updatedAt
+        }));
+      } else {
+        // Return all cruises
+        const allTrips = await tripStorage.getAllTrips();
+        cruises = allTrips.map(trip => {
+          const now = new Date();
+          const startDate = new Date(trip.startDate);
+          const endDate = new Date(trip.endDate);
+
+          let status: 'upcoming' | 'ongoing' | 'past';
+          if (endDate < now) {
+            status = 'past';
+          } else if (startDate > now) {
+            status = 'upcoming';
+          } else {
+            status = 'ongoing';
+          }
+
+          return {
+            id: trip.id,
+            name: trip.name,
+            description: trip.description,
+            slug: trip.slug,
+            startDate: trip.startDate,
+            endDate: trip.endDate,
+            shipName: trip.shipName,
+            cruiseLine: trip.cruiseLine,
+            status,
+            heroImageUrl: trip.heroImageUrl,
+            guestCount: trip.maxGuests,
+            createdAt: trip.createdAt,
+            updatedAt: trip.updatedAt
+          };
+        });
+      }
+
+      res.json(cruises);
+    } catch (error) {
+      console.error('Error fetching admin cruises:', error);
+      res.status(500).json({ error: 'Failed to fetch cruises' });
+    }
+  });
+
+  // Update cruise status
+  app.patch("/api/admin/cruises/:id/status", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const cruiseId = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!status || !['upcoming', 'ongoing', 'past'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be one of: upcoming, ongoing, past' });
+      }
+
+      // Get the trip
+      const trip = await tripStorage.getTripById(cruiseId);
+      if (!trip) {
+        return res.status(404).json({ error: 'Cruise not found' });
+      }
+
+      // Update the trip status
+      const updatedTrip = await tripStorage.updateTrip(cruiseId, {
+        status
+      });
+
+      res.json({
+        id: updatedTrip.id,
+        name: updatedTrip.name,
+        status: updatedTrip.status,
+        message: 'Cruise status updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating cruise status:', error);
+      res.status(500).json({ error: 'Failed to update cruise status' });
+    }
+  });
+
+  // Get cruise statistics
+  app.get("/api/admin/cruises/stats", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const allTrips = await tripStorage.getAllTrips();
+      const now = new Date();
+
+      // Calculate statistics
+      let upcoming = 0;
+      let ongoing = 0;
+      let past = 0;
+      let totalGuests = 0;
+      let totalEvents = 0;
+      let totalPorts = 0;
+
+      for (const trip of allTrips) {
+        const startDate = new Date(trip.startDate);
+        const endDate = new Date(trip.endDate);
+
+        if (endDate < now) {
+          past++;
+        } else if (startDate > now) {
+          upcoming++;
+        } else {
+          ongoing++;
+        }
+
+        totalGuests += trip.maxGuests || 0;
+
+        // Get counts for this trip
+        const [itinerary, events] = await Promise.all([
+          itineraryStorage.getItineraryByCruise(trip.id),
+          eventStorage.getEventsByCruise(trip.id)
+        ]);
+
+        totalPorts += itinerary.length;
+        totalEvents += events.length;
+      }
+
+      const stats = {
+        total: allTrips.length,
+        upcoming,
+        ongoing,
+        past,
+        active: upcoming + ongoing,
+        totalGuests,
+        totalEvents,
+        totalPorts,
+        avgGuestsPerCruise: allTrips.length > 0 ? Math.round(totalGuests / allTrips.length) : 0,
+        avgEventsPerCruise: allTrips.length > 0 ? Math.round(totalEvents / allTrips.length) : 0,
+        avgPortsPerCruise: allTrips.length > 0 ? Math.round(totalPorts / allTrips.length) : 0,
+        timestamp: new Date().toISOString()
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching cruise statistics:', error);
+      res.status(500).json({ error: 'Failed to fetch cruise statistics' });
+    }
+  });
+
   // ============ CRUISE ROUTES ============
-  
+
   // Get all cruises
   app.get("/api/cruises", async (req, res) => {
     try {
@@ -746,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new cruise (protected route)
-  app.post("/api/cruises", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/cruises", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruise = await cruiseStorage.createCruise(req.body);
       res.status(201).json(cruise);
@@ -757,7 +957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update cruise (protected route)
-  app.put("/api/cruises/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruise = await cruiseStorage.updateCruise(parseInt(req.params.id), req.body);
       if (!cruise) {
@@ -771,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete cruise (protected route)
-  app.delete("/api/cruises/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/cruises/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       await cruiseStorage.deleteCruise(parseInt(req.params.id));
       res.status(204).send();
@@ -850,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new trip (protected route)
-  app.post("/api/trips", adminRateLimit, requireAuth, requireContentEditor, validateBody(createTripSchema), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/trips", adminRateLimit, requireContentEditor, validateBody(createTripSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const trip = await tripStorage.createTrip(req.body);
       res.status(201).json(trip);
@@ -861,7 +1061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update trip (protected route)
-  app.put("/api/trips/:id", adminRateLimit, requireAuth, requireContentEditor, validateParams(idParamSchema), validateBody(updateTripSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/trips/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema), validateBody(updateTripSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const trip = await tripStorage.updateTrip(parseInt(req.params.id), req.body);
       if (!trip) {
@@ -875,7 +1075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete trip (protected route)
-  app.delete("/api/trips/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/trips/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       await tripStorage.deleteTrip(parseInt(req.params.id));
       res.status(204).send();
@@ -910,7 +1110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add itinerary stop (protected route)
-  app.post("/api/cruises/:cruiseId/itinerary", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/cruises/:cruiseId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const stop = await itineraryStorage.createItineraryStop({
         ...req.body,
@@ -924,7 +1124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update itinerary stop (protected route)
-  app.put("/api/itinerary/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/itinerary/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const stop = await itineraryStorage.updateItineraryStop(parseInt(req.params.id), req.body);
       if (!stop) {
@@ -938,7 +1138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete itinerary stop (protected route)
-  app.delete("/api/itinerary/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/itinerary/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await itineraryStorage.deleteItineraryStop(parseInt(req.params.id));
       res.status(204).send();
@@ -1042,7 +1242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create event (protected route)
-  app.post("/api/cruises/:cruiseId/events", adminRateLimit, requireAuth, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/cruises/:cruiseId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const event = await eventStorage.createEvent({
         ...req.body,
@@ -1056,7 +1256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update event (protected route)
-  app.put("/api/events/:id", adminRateLimit, requireAuth, requireContentEditor, validateParams(idParamSchema), validateBody(updateEventSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/events/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema), validateBody(updateEventSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const event = await eventStorage.updateEvent(parseInt(req.params.id), req.body);
       if (!event) {
@@ -1070,7 +1270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete event (protected route)
-  app.delete("/api/events/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/events/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await eventStorage.deleteEvent(parseInt(req.params.id));
       res.status(204).send();
@@ -1158,7 +1358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create talent (protected route)
-  app.post("/api/talent", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/talent", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const talent = await talentStorage.createTalent(req.body);
       res.status(201).json(talent);
@@ -1169,7 +1369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update talent (protected route)
-  app.put("/api/talent/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/talent/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const talent = await talentStorage.updateTalent(parseInt(req.params.id), req.body);
       if (!talent) {
@@ -1183,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete talent (protected route)
-  app.delete("/api/talent/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/talent/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       await talentStorage.deleteTalent(parseInt(req.params.id));
       res.status(204).send();
@@ -1194,7 +1394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assign talent to cruise (protected route)
-  app.post("/api/cruises/:cruiseId/talent/:talentId", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/cruises/:cruiseId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruiseId = parseInt(req.params.cruiseId);
       const talentId = parseInt(req.params.talentId);
@@ -1213,7 +1413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Remove talent from cruise (protected route)
-  app.delete("/api/cruises/:cruiseId/talent/:talentId", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/cruises/:cruiseId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruiseId = parseInt(req.params.cruiseId);
       const talentId = parseInt(req.params.talentId);
@@ -1282,7 +1482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create ship (protected route)
-  app.post("/api/ships", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/ships", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { shipStorage } = await import("./ships-storage");
       const ship = await shipStorage.create(req.body);
@@ -1294,7 +1494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update ship (protected route)
-  app.put("/api/ships/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/ships/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { shipStorage } = await import("./ships-storage");
       const ship = await shipStorage.update(parseInt(req.params.id), req.body);
@@ -1309,7 +1509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete ship (protected route)
-  app.delete("/api/ships/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/ships/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { shipStorage } = await import("./ships-storage");
       await shipStorage.delete(parseInt(req.params.id));
@@ -1376,7 +1576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create port (protected route)
-  app.post("/api/ports", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/ports", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const port = await portStorage.create(req.body);
       res.status(201).json(port);
@@ -1387,7 +1587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update port (protected route)
-  app.put("/api/ports/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/ports/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const port = await portStorage.update(parseInt(req.params.id), req.body);
       if (!port) {
@@ -1401,7 +1601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete port (protected route)
-  app.delete("/api/ports/:id", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/ports/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const deleted = await portStorage.delete(parseInt(req.params.id));
       if (!deleted) {
@@ -1442,7 +1642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload media (protected route)
-  app.post("/api/media", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/media", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const media = await mediaStorage.createMedia(req.body);
       res.status(201).json(media);
@@ -1453,7 +1653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete media (protected route)
-  app.delete("/api/media/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/media/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       await mediaStorage.deleteMedia(parseInt(req.params.id));
       res.status(204).send();
@@ -1550,7 +1750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create party template (protected route)
-  app.post("/api/party-templates", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/party-templates", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const partyTemplateSchema = z.object({
         name: z.string().min(1, 'Name is required').max(255),
@@ -1589,7 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update party template (protected route)
-  app.put("/api/party-templates/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/party-templates/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const templateId = parseInt(req.params.id);
       if (isNaN(templateId)) {
@@ -1640,7 +1840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete party template (protected route)
-  app.delete("/api/party-templates/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/party-templates/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const templateId = parseInt(req.params.id);
       if (isNaN(templateId)) {
@@ -1681,7 +1881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create info section (protected route)
-  app.post("/api/cruises/:cruiseId/info-sections", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/cruises/:cruiseId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const cruiseId = parseInt(req.params.cruiseId);
       const { title, content, orderIndex } = req.body;
@@ -1702,7 +1902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update info section (protected route)
-  app.put("/api/info-sections/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const sectionId = parseInt(req.params.id);
       const { title, content, orderIndex } = req.body;
@@ -1730,7 +1930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete info section (protected route)
-  app.delete("/api/info-sections/:id", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const sectionId = parseInt(req.params.id);
       
@@ -1793,7 +1993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a new setting (protected route)
-  app.post("/api/settings/:category", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/settings/:category", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { category } = req.params;
       const { key, label, value, metadata, orderIndex } = req.body;
@@ -1828,7 +2028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update a setting (protected route)
-  app.put("/api/settings/:category/:key", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/settings/:category/:key", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { category, key } = req.params;
       const { label, value, metadata, orderIndex, isActive } = req.body;
@@ -1853,7 +2053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a setting (protected route)
-  app.delete("/api/settings/:category/:key", requireAuth, requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/settings/:category/:key", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { category, key } = req.params;
       
@@ -1872,7 +2072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Deactivate a setting (protected route)
-  app.post("/api/settings/:category/:key/deactivate", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/settings/:category/:key/deactivate", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { category, key } = req.params;
       
@@ -1889,7 +2089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reorder settings in a category (protected route)
-  app.post("/api/settings/:category/reorder", requireAuth, requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/settings/:category/reorder", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { category } = req.params;
       const { orderedKeys } = req.body;

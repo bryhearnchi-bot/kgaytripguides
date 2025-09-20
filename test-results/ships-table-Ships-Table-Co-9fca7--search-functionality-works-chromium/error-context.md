@@ -1,0 +1,170 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - link "Atlantis Events" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "Atlantis Events" [ref=e8] [cursor=pointer]
+      - link "KGay Travel" [ref=e9] [cursor=pointer]:
+        - /url: https://kgaytravel.com/
+        - img "KGay Travel" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - button "AM/PM" [ref=e12] [cursor=pointer]:
+        - img
+        - generic [ref=e13] [cursor=pointer]: AM/PM
+      - button "Bryan Hearn" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15] [cursor=pointer]:
+          - generic [ref=e16] [cursor=pointer]:
+            - img
+          - paragraph [ref=e18] [cursor=pointer]: Bryan Hearn
+          - img
+  - generic [ref=e19]:
+    - region "Notifications (F8)":
+      - list
+    - generic [ref=e20]:
+      - complementary [ref=e21]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - img [ref=e26]
+            - generic [ref=e29]: Admin Panel
+          - button [ref=e30] [cursor=pointer]:
+            - img [ref=e31] [cursor=pointer]
+        - navigation [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: TRIPS
+            - link "Dashboard" [ref=e36] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e37] [cursor=pointer]:
+                - img [ref=e39] [cursor=pointer]
+                - generic [ref=e44] [cursor=pointer]: Dashboard
+            - link "Trips" [ref=e45] [cursor=pointer]:
+              - /url: /admin/trips
+              - generic [ref=e46] [cursor=pointer]:
+                - img [ref=e48] [cursor=pointer]
+                - generic [ref=e51] [cursor=pointer]: Trips
+          - generic [ref=e52]:
+            - generic [ref=e53]: CONTENT MANAGEMENT
+            - link "Ships" [ref=e54] [cursor=pointer]:
+              - /url: /admin/ships
+              - generic [ref=e55] [cursor=pointer]:
+                - img [ref=e57] [cursor=pointer]
+                - generic [ref=e61] [cursor=pointer]: Ships
+            - link "Locations" [ref=e62] [cursor=pointer]:
+              - /url: /admin/locations
+              - generic [ref=e63] [cursor=pointer]:
+                - img [ref=e65] [cursor=pointer]
+                - generic [ref=e68] [cursor=pointer]: Locations
+            - link "Artists/Talent" [ref=e69] [cursor=pointer]:
+              - /url: /admin/artists
+              - generic [ref=e70] [cursor=pointer]:
+                - img [ref=e72] [cursor=pointer]
+                - generic [ref=e77] [cursor=pointer]: Artists/Talent
+            - link "Party Themes" [ref=e78] [cursor=pointer]:
+              - /url: /admin/themes
+              - generic [ref=e79] [cursor=pointer]:
+                - img [ref=e81] [cursor=pointer]
+                - generic [ref=e87] [cursor=pointer]: Party Themes
+            - link "Info Sections" [ref=e88] [cursor=pointer]:
+              - /url: /admin/info-sections
+              - generic [ref=e89] [cursor=pointer]:
+                - img [ref=e91] [cursor=pointer]
+                - generic [ref=e94] [cursor=pointer]: Info Sections
+          - generic [ref=e95]:
+            - generic [ref=e96]: ADMINISTRATION
+            - link "Users" [ref=e97] [cursor=pointer]:
+              - /url: /admin/users
+              - generic [ref=e98] [cursor=pointer]:
+                - img [ref=e100] [cursor=pointer]
+                - generic [ref=e105] [cursor=pointer]: Users
+            - link "Settings" [ref=e106] [cursor=pointer]:
+              - /url: /admin/settings
+              - generic [ref=e107] [cursor=pointer]:
+                - img [ref=e109] [cursor=pointer]
+                - generic [ref=e112] [cursor=pointer]: Settings
+            - link "Profile" [ref=e113] [cursor=pointer]:
+              - /url: /admin/profile
+              - generic [ref=e114] [cursor=pointer]:
+                - img [ref=e116] [cursor=pointer]
+                - generic [ref=e120] [cursor=pointer]: Profile
+            - button "Logout" [ref=e121] [cursor=pointer]:
+              - img [ref=e122] [cursor=pointer]
+              - generic [ref=e125] [cursor=pointer]: Logout
+      - main [ref=e126]:
+        - generic [ref=e128]:
+          - generic [ref=e130]:
+            - heading "Dashboard Overview" [level=1] [ref=e131]
+            - paragraph [ref=e132]: Welcome back! Here's what's happening with your trips.
+          - generic [ref=e133]:
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: Active Trips
+                - img [ref=e137]
+              - generic [ref=e141]:
+                - generic [ref=e142]: "2"
+                - paragraph [ref=e143]: +12% from last month
+            - generic [ref=e144]:
+              - generic [ref=e145]:
+                - generic [ref=e146]: Talent Profiles
+                - img [ref=e147]
+              - generic [ref=e152]:
+                - generic [ref=e153]: "156"
+                - paragraph [ref=e154]: +23% from last month
+            - generic [ref=e155]:
+              - generic [ref=e156]:
+                - generic [ref=e157]: Engagement Rate
+                - img [ref=e158]
+              - generic [ref=e161]:
+                - generic [ref=e162]: 87%
+                - paragraph [ref=e163]: "-5% from last month"
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]: Upcoming Events
+                - img [ref=e167]
+              - generic [ref=e169]:
+                - generic [ref=e170]: "3"
+                - paragraph [ref=e171]: Today
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - generic [ref=e175]:
+                - img [ref=e176]
+                - text: Recent Activity
+              - generic [ref=e178]:
+                - generic [ref=e181]:
+                  - paragraph [ref=e182]: New trip created
+                  - paragraph [ref=e183]: Greek Isles 2025 - 2 minutes ago
+                - generic [ref=e186]:
+                  - paragraph [ref=e187]: Talent profile updated
+                  - paragraph [ref=e188]: Trixie Mattel - 15 minutes ago
+                - generic [ref=e191]:
+                  - paragraph [ref=e192]: Event published
+                  - paragraph [ref=e193]: Welcome Party - 1 hour ago
+                - generic [ref=e196]:
+                  - paragraph [ref=e197]: New review received
+                  - paragraph [ref=e198]: 5-star rating - 2 hours ago
+            - generic [ref=e199]:
+              - generic [ref=e201]:
+                - img [ref=e202]
+                - text: Quick Actions
+              - generic [ref=e203]:
+                - button "Create New Trip" [ref=e204] [cursor=pointer]:
+                  - img
+                  - text: Create New Trip
+                - button "Add Talent" [ref=e205] [cursor=pointer]:
+                  - img
+                  - text: Add Talent
+                - button "Schedule Event" [ref=e206] [cursor=pointer]:
+                  - img
+                  - text: Schedule Event
+                - button "Add Port" [ref=e207] [cursor=pointer]:
+                  - img
+                  - text: Add Port
+          - generic [ref=e208]:
+            - generic [ref=e209]:
+              - generic [ref=e211]: Trip Engagement Trends
+              - generic [ref=e213]: Chart visualization would go here
+            - generic [ref=e214]:
+              - generic [ref=e216]: Popular Destinations
+              - generic [ref=e218]: Chart visualization would go here
+```

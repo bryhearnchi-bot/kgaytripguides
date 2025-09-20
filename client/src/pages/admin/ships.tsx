@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -32,7 +32,6 @@ import {
   Users,
   Calendar,
   Anchor,
-  ArrowLeft,
   Save,
   X
 } from 'lucide-react';
@@ -59,7 +58,6 @@ interface ShipData {
 }
 
 export default function ShipsManagement() {
-  const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -206,60 +204,48 @@ export default function ShipsManagement() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-              >
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Dashboard
-              </Button>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Cruise Ships</h1>
-              <p className="text-sm text-gray-500">Manage your fleet information and specifications</p>
-            </div>
-            <Button
-              onClick={() => {
-                setEditingShip(null);
-                resetForm();
-                setShowAddModal(true);
-              }}
-              className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-            >
-              <Plus className="mr-2" size={20} />
-              Add New Ship
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Cruise Ships</h1>
+          <p className="text-sm text-gray-600 mt-1">Manage your fleet information and specifications</p>
         </div>
+        <Button
+          onClick={() => {
+            setEditingShip(null);
+            resetForm();
+            setShowAddModal(true);
+          }}
+          className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
+        >
+          <Plus className="mr-2" size={20} />
+          Add New Ship
+        </Button>
       </div>
 
       {/* Search */}
-      <div className="px-8 py-4 bg-white border-b">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input
-            placeholder="Search ships by name or cruise line..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Input
+              placeholder="Search ships by name or cruise line..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Ships Grid */}
-      <div className="p-8">
-        {isLoading ? (
-          <div className="text-center py-12 text-gray-500">Loading ships...</div>
-        ) : filteredShips.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
+      {/* Ships Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-500">Loading ships...</div>
+          ) : filteredShips.length === 0 ? (
+            <div className="text-center py-12">
               <Ship className="mx-auto mb-4 text-gray-400" size={48} />
               <h3 className="text-lg font-semibold mb-2">No ships found</h3>
               <p className="text-gray-500 mb-4">Start by adding your first ship</p>
@@ -274,66 +260,89 @@ export default function ShipsManagement() {
                 <Plus className="mr-2" size={20} />
                 Add New Ship
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredShips.map((ship) => (
-              <Card key={ship.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="h-32 bg-gradient-to-br from-[#1e3a5f] to-[#0f2238] flex items-center justify-center">
-                  <Ship className="text-white/20" size={64} />
-                </div>
-                <CardHeader>
-                  <CardTitle>{ship.name}</CardTitle>
-                  <CardDescription>{ship.cruiseLine}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 mb-4">
-                    {ship.capacity && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Users size={16} />
-                        <span>{ship.capacity.toLocaleString()} Guests</span>
-                      </div>
-                    )}
-                    {ship.decks && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Anchor size={16} />
-                        <span>{ship.decks} Decks</span>
-                      </div>
-                    )}
-                    {ship.builtYear && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar size={16} />
-                        <span>Built {ship.builtYear}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(ship)}
-                    >
-                      <Edit2 className="mr-1" size={16} />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(ship.id!)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="mr-1" size={16} />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ship Details</TableHead>
+                    <TableHead>Capacity</TableHead>
+                    <TableHead>Ports</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredShips.map((ship) => (
+                    <TableRow key={ship.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-[#1e3a5f] to-[#0f2238] rounded-lg flex items-center justify-center text-white">
+                            <Ship className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{ship.name}</div>
+                            <div className="text-sm text-gray-500">{ship.cruiseLine}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {ship.capacity ? (
+                            <div className="flex items-center space-x-1">
+                              <Users className="w-4 h-4 text-gray-500" />
+                              <span className="font-medium">{ship.capacity.toLocaleString()}</span>
+                              <span className="text-gray-500">guests</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">Not specified</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Anchor className="w-3 h-3 mr-1" />
+                            Multiple Ports
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="default" className="bg-green-100 text-green-800">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          Active
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(ship)}
+                            title="Edit Ship"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(ship.id!)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete Ship"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add/Edit Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
