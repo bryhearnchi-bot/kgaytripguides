@@ -147,11 +147,13 @@ export function useSupabaseAuth() {
     return data;
   };
 
-  const signInWithProvider = async (provider: 'google' | 'facebook' | 'github') => {
+  const signInWithProvider = async (provider: 'google' | 'facebook' | 'twitter') => {
+    // Map 'twitter' to 'twitter' for X (Twitter) OAuth
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
+      provider: provider as any,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: provider === 'google' ? 'email profile' : undefined,
       },
     });
 

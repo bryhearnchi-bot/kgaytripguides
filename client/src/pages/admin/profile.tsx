@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { addCsrfToken } from '@/utils/csrf';
 import {
   ArrowLeft,
   User,
@@ -76,13 +77,21 @@ export default function AdminProfile() {
   // Update profile mutation
   const updateProfile = useMutation({
     mutationFn: async (data: Partial<ProfileFormData>) => {
+      // Map camelCase to snake_case for server API
+      const serverData = {
+        full_name: data.fullName,
+        email: data.email,
+      };
+
+      const headers = await addCsrfToken({
+        'Content-Type': 'application/json',
+      });
+
       const response = await fetch('/api/admin/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: JSON.stringify(serverData),
       });
 
       if (!response.ok) {
@@ -111,11 +120,13 @@ export default function AdminProfile() {
   // Change password mutation
   const changePassword = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const headers = await addCsrfToken({
+        'Content-Type': 'application/json',
+      });
+
       const response = await fetch('/api/admin/change-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify(data),
       });

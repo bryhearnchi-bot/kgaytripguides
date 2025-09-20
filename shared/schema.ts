@@ -19,32 +19,30 @@ import { relations } from "drizzle-orm";
 
 // ============ PROFILES TABLE (Supabase Auth Integration) ============
 export const profiles = pgTable("profiles", {
-  id: text("id").primaryKey(), // References auth.users.id
+  id: text("id").primaryKey(), // References auth.profiles.id
   email: text("email").notNull(),
   fullName: text("full_name"),
-  role: text("role").default("user"), // admin, user
+  username: text("username"),
+  phoneNumber: text("phone_number"),
+  bio: text("bio"),
+  location: jsonb("location"), // { city, state, country }
+  communicationPreferences: jsonb("communication_preferences"), // { email, sms }
+  cruiseUpdatesOptIn: boolean("cruise_updates_opt_in").default(false),
+  marketingEmails: boolean("marketing_emails").default(false),
+  lastSignInAt: timestamp("last_sign_in_at"),
+  role: text("role").default("viewer"), // admin, content_manager, viewer
+  accountStatus: text("account_status").default("active"), // active, suspended, pending_verification
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// ============ USERS TABLE (Legacy - keeping for backward compatibility) ============
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  email: text("email").unique(),
-  fullName: text("full_name"),
-  role: text("role").default("viewer"), // super_admin, trip_admin, content_editor, media_manager, viewer
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  lastLogin: timestamp("last_login"),
-  isActive: boolean("is_active").default(true),
-});
+// Users table removed - using profiles table exclusively
 
 // ============ PASSWORD RESET TOKENS TABLE ============
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -53,6 +51,31 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   tokenIdx: index("password_reset_token_idx").on(table.token),
   userIdx: index("password_reset_user_idx").on(table.userId),
   expiresIdx: index("password_reset_expires_idx").on(table.expiresAt),
+}));
+
+// ============ INVITATIONS TABLE ============
+export const invitations = pgTable("invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  role: text("role").notNull(), // admin, content_editor, media_manager, viewer
+  invitedBy: text("invited_by").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  cruiseId: integer("cruise_id").references(() => trips.id, { onDelete: "set null" }), // Optional cruise-specific invitation
+  metadata: jsonb("metadata"), // Additional invitation data
+  tokenHash: text("token_hash").notNull(), // Hashed invitation token
+  salt: text("salt").notNull(), // Salt used for token hashing
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  used: boolean("used").default(false),
+  usedAt: timestamp("used_at"), // When invitation was accepted
+  usedBy: text("used_by").references(() => profiles.id, { onDelete: "set null" }), // Who accepted the invitation
+}, (table) => ({
+  emailIdx: index("invitation_email_idx").on(table.email),
+  inviterIdx: index("invitation_inviter_idx").on(table.invitedBy),
+  expiresIdx: index("invitation_expires_idx").on(table.expiresAt),
+  usedIdx: index("invitation_used_idx").on(table.used),
+  tokenHashIdx: index("invitation_token_hash_idx").on(table.tokenHash),
+  // Compound index for finding active invitations
+  activeInvitationsIdx: index("invitation_active_idx").on(table.email, table.used, table.expiresAt),
 }));
 
 // ============ SETTINGS TABLE ============
@@ -65,7 +88,7 @@ export const settings = pgTable("settings", {
   metadata: jsonb("metadata"), // Additional data like button text, colors, etc.
   isActive: boolean("is_active").default(true),
   orderIndex: integer("order_index").default(0), // For sorting within category
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: text("created_by").references(() => profiles.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -124,7 +147,7 @@ export const cruises = pgTable("cruises", {
   highlights: jsonb("highlights"), // Array of highlight strings
   includesInfo: jsonb("includes_info"), // What's included in the trip
   pricing: jsonb("pricing"), // Pricing tiers and info
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: text("created_by").references(() => profiles.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -231,7 +254,7 @@ export const media = pgTable("media", {
   caption: text("caption"),
   altText: text("alt_text"),
   credits: text("credits"), // Photographer/source credits
-  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  uploadedBy: text("uploaded_by").references(() => profiles.id),
   uploadedAt: timestamp("uploaded_at").defaultNow(),
   metadata: jsonb("metadata"), // Additional metadata like dimensions, file size, etc.
 }, (table) => ({
@@ -291,10 +314,10 @@ export const eventTalent = pgTable("event_talent", {
 
 // ============ USER_CRUISES TABLE (for permissions) ============
 export const userCruises = pgTable("user_cruises", {
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
   permissionLevel: text("permission_level").notNull(), // admin, editor, viewer
-  assignedBy: varchar("assigned_by").references(() => users.id),
+  assignedBy: text("assigned_by").references(() => profiles.id),
   assignedAt: timestamp("assigned_at").defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.cruiseId] }),
@@ -314,7 +337,7 @@ export const partyTemplates = pgTable("party_templates", {
   defaultImageUrl: text("default_image_url"),
   tags: jsonb("tags"), // Array of tags for searching
   defaults: jsonb("defaults"), // Default values for events using this template
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: text("created_by").references(() => profiles.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -328,7 +351,7 @@ export const tripInfoSections = pgTable("trip_info_sections", {
   title: text("title").notNull(),
   content: text("content"), // Rich text content
   orderIndex: integer("order_index").notNull(),
-  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedBy: text("updated_by").references(() => profiles.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
@@ -348,7 +371,7 @@ export const aiJobs = pgTable("ai_jobs", {
   status: text("status").default("queued"), // queued, processing, completed, failed
   result: jsonb("result"), // Extracted data
   error: text("error"),
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: text("created_by").references(() => profiles.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -363,7 +386,7 @@ export const aiDrafts = pgTable("ai_drafts", {
   draftType: text("draft_type").notNull(), // itinerary, events, info
   payload: jsonb("payload").notNull(), // Draft data to be reviewed
   createdFromJobId: integer("created_from_job_id").references(() => aiJobs.id),
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: text("created_by").references(() => profiles.id),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId),
@@ -373,7 +396,7 @@ export const aiDrafts = pgTable("ai_drafts", {
 // ============ AUDIT_LOG TABLE ============
 export const auditLog = pgTable("audit_log", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
+  userId: text("user_id").references(() => profiles.id),
   action: text("action").notNull(), // create, update, delete
   tableName: text("table_name").notNull(),
   recordId: text("record_id"),
@@ -391,6 +414,21 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
   // Future relations can be added here
 }));
 
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  inviter: one(profiles, {
+    fields: [invitations.invitedBy],
+    references: [profiles.id],
+  }),
+  cruise: one(trips, {
+    fields: [invitations.cruiseId],
+    references: [trips.id],
+  }),
+  acceptedBy: one(profiles, {
+    fields: [invitations.usedBy],
+    references: [profiles.id],
+  }),
+}));
+
 export const shipsRelations = relations(ships, ({ many }) => ({
   cruises: many(cruises),
 }));
@@ -404,9 +442,9 @@ export const tripsRelations = relations(trips, ({ many, one }) => ({
     fields: [trips.shipId],
     references: [ships.id],
   }),
-  creator: one(users, {
+  creator: one(profiles, {
     fields: [trips.createdBy],
-    references: [users.id],
+    references: [profiles.id],
   }),
 }));
 
@@ -448,9 +486,9 @@ export const tripTalentRelations = relations(tripTalent, ({ one }) => ({
 export const cruiseTalentRelations = tripTalentRelations;
 
 export const userTripsRelations = relations(userTrips, ({ one }) => ({
-  user: one(users, {
+  user: one(profiles, {
     fields: [userTrips.userId],
-    references: [users.id],
+    references: [profiles.id],
   }),
   cruise: one(trips, {
     fields: [userTrips.cruiseId],
@@ -462,9 +500,9 @@ export const userTripsRelations = relations(userTrips, ({ one }) => ({
 export const userCruisesRelations = userTripsRelations;
 
 export const partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
-  creator: one(users, {
+  creator: one(profiles, {
     fields: [partyTemplates.createdBy],
-    references: [users.id],
+    references: [profiles.id],
   }),
 }));
 
@@ -473,9 +511,9 @@ export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) =
     fields: [tripInfoSections.cruiseId],
     references: [trips.id],
   }),
-  updater: one(users, {
+  updater: one(profiles, {
     fields: [tripInfoSections.updatedBy],
-    references: [users.id],
+    references: [profiles.id],
   }),
 }));
 
@@ -487,9 +525,9 @@ export const aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
     fields: [aiJobs.cruiseId],
     references: [trips.id],
   }),
-  creator: one(users, {
+  creator: one(profiles, {
     fields: [aiJobs.createdBy],
-    references: [users.id],
+    references: [profiles.id],
   }),
   drafts: many(aiDrafts),
 }));
@@ -503,16 +541,16 @@ export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
     fields: [aiDrafts.createdFromJobId],
     references: [aiJobs.id],
   }),
-  creator: one(users, {
+  creator: one(profiles, {
     fields: [aiDrafts.createdBy],
-    references: [users.id],
+    references: [profiles.id],
   }),
 }));
 
 export const settingsRelations = relations(settings, ({ one }) => ({
-  creator: one(users, {
+  creator: one(profiles, {
     fields: [settings.createdBy],
-    references: [users.id],
+    references: [profiles.id],
   }),
 }));
 
@@ -528,12 +566,11 @@ export const insertShipSchema = createInsertSchema(ships).omit({
   updatedAt: true,
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  email: true,
-  fullName: true,
-  role: true,
+// User schema removed - using profiles table exclusively
+
+export const insertInvitationSchema = createInsertSchema(invitations).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertTripSchema = createInsertSchema(trips).omit({
@@ -600,10 +637,10 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({
 // ============ TYPE EXPORTS ============
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export type InsertShip = z.infer<typeof insertShipSchema>;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
 export type Profile = typeof profiles.$inferSelect;
 export type Ship = typeof ships.$inferSelect;
-export type User = typeof users.$inferSelect;
+export type User = Profile; // Legacy alias - now using Profile
 export type Trip = typeof trips.$inferSelect;
 export type Itinerary = typeof itinerary.$inferSelect;
 export type Event = typeof events.$inferSelect;
@@ -616,6 +653,7 @@ export type TripInfoSection = typeof tripInfoSections.$inferSelect;
 export type AiJob = typeof aiJobs.$inferSelect;
 export type AiDraft = typeof aiDrafts.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
+export type Invitation = typeof invitations.$inferSelect;
 
 // Backward compatibility aliases
 export type Cruise = Trip;

@@ -15,7 +15,7 @@ import TripDetailsTab from '@/components/admin/TripDetailsTab';
 import ItineraryTab from '@/components/admin/ItineraryTab';
 import EventsAndEntertainmentTab from '@/components/admin/EventsAndEntertainmentTab';
 import InfoAndUpdatesTab from '@/components/admin/InfoAndUpdatesTab';
-import UserManagement from '@/components/admin/UserManagement';
+import { EnhancedUserList } from '@/components/admin/UserManagement/EnhancedUserList';
 import SettingsTab from '@/components/admin/SettingsTab';
 import PortManagement from '@/components/admin/PortManagementSafe';
 import PartyManagement from '@/components/admin/PartyManagement';
@@ -171,8 +171,8 @@ export default function AdminDashboard() {
     (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
-  const canEdit = profile?.role && ['super_admin', 'trip_admin', 'content_editor', 'admin'].includes(profile.role);
-  const canDelete = profile?.role && ['super_admin', 'admin'].includes(profile.role);
+  const canEdit = profile?.role && ['admin', 'content_manager'].includes(profile.role);
+  const canDelete = profile?.role && ['admin'].includes(profile.role);
 
   const handleDeleteTrip = (trip: Trip) => {
     if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
@@ -255,7 +255,11 @@ export default function AdminDashboard() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id);
+                    if (item.id === 'users') {
+                      setLocation('/admin/users');
+                    } else {
+                      setActiveTab(item.id);
+                    }
                     if (isMobile) {
                       setMobileMenuOpen(false);
                     }
@@ -666,12 +670,7 @@ export default function AdminDashboard() {
           {/* User Management Section */}
           {activeTab === 'users' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">User Management</h2>
-                <p className="text-gray-600">Manage admin users, permissions, and access controls</p>
-              </div>
-
-              <UserManagement />
+              <EnhancedUserList />
             </div>
           )}
 

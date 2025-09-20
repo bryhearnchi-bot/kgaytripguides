@@ -1,0 +1,28 @@
+Welcome to K-GAY Travel Guides
+===============================
+
+Hello {{inviteeName}}!
+
+{{inviterName}} has invited you to join the K-GAY Travel Guides team as a {{role}}.
+
+YOUR ROLE: {{role}}
+You'll have access to exclusive features and tools to help manage our travel guides and cruise experiences.
+
+To accept this invitation and set up your account, click the link below:
+
+{{invitationLink}}
+
+SECURITY NOTICE
+---------------
+• This invitation expires on {{expiresAt}}
+• The link can only be used once
+• Never share this invitation link with others
+
+If you're having trouble with the link above, copy and paste the following URL into your browser:
+{{invitationLink}}
+
+Need help? Contact us at support@kgay.com
+
+© 2025 K-GAY Travel Guides. All rights reserved.
+
+This email was sent to {{inviteeName}} because an invitation was created for this email address. If you received this email by mistake, you can safely ignore it.

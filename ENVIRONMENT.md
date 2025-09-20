@@ -29,11 +29,12 @@
 - **Validation**: Zod schemas shared between frontend and backend
 
 ### Database & Authentication
-- **Primary Database**: Supabase PostgreSQL
-- **ORM**: Drizzle ORM 0.37.0 with node-postgres driver
-- **Authentication**: Supabase Auth (@supabase/supabase-js 2.48.1)
+- **Primary Database**: Supabase PostgreSQL with Transaction Pooler (port 6543)
+- **ORM**: Drizzle ORM 0.39.3 with node-postgres driver
+- **Authentication**: Supabase Auth (@supabase/supabase-js 2.57.4)
 - **Storage**: Supabase Storage for images and media
 - **Schema Location**: `shared/schema.ts`
+- **Connection**: Optimized for serverless deployment via transaction pooler
 
 ### Development Tools
 - **Package Manager**: npm
@@ -52,23 +53,34 @@
 
 ### Required Variables
 ```bash
-# Database
-DATABASE_URL=postgresql://[user]:[password]@[host]/[database]?sslmode=require
+# Database - CRITICAL: Use Transaction Pooler for serverless optimization
+# Port 6543 = Transaction Pooler (recommended for serverless)
+# Port 5432 = Direct connection (not recommended for serverless)
+# Host: db.bxiiodeyqvqqcgzzqzvt.supabase.co (direct database, NOT pooler endpoints)
+# Password: Real database password from Supabase dashboard (NOT JWT tokens)
+DATABASE_URL=postgresql://postgres:[REAL_PASSWORD]@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
 
-# Supabase
-SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co
-SUPABASE_ANON_KEY=[your-anon-key]
+# Supabase - Frontend Environment Variables
+VITE_SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co
+VITE_SUPABASE_ANON_KEY=[your-anon-key]
+
+# Supabase - Service Role Key (server-side only)
 SUPABASE_SERVICE_ROLE_KEY=[your-service-role-key]
 
-# Server
-PORT=5000
+# JWT Secrets (Strong cryptographically secure secrets)
+JWT_ACCESS_TOKEN_SECRET=[your-access-token-secret]
+JWT_REFRESH_TOKEN_SECRET=[your-refresh-token-secret]
+
+# Server Configuration
+PORT=3001
 NODE_ENV=development|production
 
-# Session
+# Session Secret (Strong cryptographically secure secret)
 SESSION_SECRET=[your-session-secret]
 
-# Optional - Development Only
-USE_MOCK_DATA=true|false  # Use mock data instead of real cruise data
+# Development Controls - NEVER use in production
+USE_MOCK_DATA=false  # ALWAYS false - real database connection required
+VITE_USE_MOCK_DATA=false  # ALWAYS false - real data required
 ```
 
 ## Data Configuration
@@ -260,10 +272,54 @@ npm run lint          # Run ESLint
 - Preconnect to external domains
 
 ### Backend
-- Database connection pooling
+- Database connection pooling via Supabase Transaction Pooler
 - Efficient query patterns with Drizzle
 - Response caching where appropriate
 - Gzip compression enabled
+
+## Database Troubleshooting
+
+### Common Connection Issues & Solutions
+
+#### "Tenant or user not found" Error
+- **Cause**: Using pooler endpoints or JWT tokens as password
+- **Solution**: Use direct database host (`db.bxiiodeyqvqqcgzzqzvt.supabase.co`) with real password
+
+#### "Permission denied for schema public" Error
+- **Cause**: Using JWT tokens instead of database password
+- **Solution**: Get real database password from Supabase dashboard
+
+#### Slow Connection Times
+- **Cause**: Using direct connection (port 5432) instead of transaction pooler
+- **Solution**: Use port 6543 for transaction pooler (serverless-optimized)
+
+### Correct vs Incorrect Database URLs
+
+#### ✅ CORRECT (Transaction Pooler)
+```bash
+DATABASE_URL=postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
+```
+
+#### ❌ INCORRECT Examples
+```bash
+# Wrong: Using pooler endpoint
+DATABASE_URL=postgresql://postgres:password@aws-0-us-east-2.pooler.supabase.com:5432/postgres
+
+# Wrong: Using JWT token as password
+DATABASE_URL=postgresql://postgres:eyJhbGciOiJIUzI1NiIs...@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
+
+# Wrong: Using direct connection port for serverless
+DATABASE_URL=postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:5432/postgres
+```
+
+### Database Connection Testing
+```bash
+# Test API endpoint
+curl -s http://localhost:3001/api/trips
+
+# Expected success response: Array of cruise trips with HTTP 200
+# Expected server logs: "Found X trips" and "GET /api/trips 200"
+```
 
 ## Monitoring & Logging
 

@@ -102,8 +102,8 @@ function TripsManagementContent() {
     (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
-  const canEdit = profile?.role && ['super_admin', 'trip_admin', 'content_editor'].includes(profile.role);
-  const canDelete = profile?.role && ['super_admin'].includes(profile.role);
+  const canEdit = profile?.role && ['admin', 'content_manager'].includes(profile.role);
+  const canDelete = profile?.role && ['admin'].includes(profile.role);
 
   if (isLoading) {
     return (

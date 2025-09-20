@@ -49,10 +49,8 @@ interface CreateUserData {
 
 const USER_ROLES = [
   { value: 'viewer', label: 'Viewer', description: 'Read-only access' },
-  { value: 'media_manager', label: 'Media Manager', description: 'Can manage media and content' },
-  { value: 'content_editor', label: 'Content Editor', description: 'Can edit trip content and events' },
-  { value: 'trip_admin', label: 'Trip Admin', description: 'Can manage trips and content' },
-  { value: 'super_admin', label: 'Super Admin', description: 'Full system access' },
+  { value: 'content_manager', label: 'Content Manager', description: 'Can edit content and manage trips' },
+  { value: 'admin', label: 'Admin', description: 'Full system access' },
 ];
 
 export default function UserManagement() {
@@ -270,10 +268,9 @@ export default function UserManagement() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'super_admin': return 'destructive';
-      case 'trip_admin': return 'default';
-      case 'content_editor': return 'secondary';
-      case 'media_manager': return 'outline';
+      case 'admin': return 'destructive';
+      case 'content_manager': return 'default';
+      case 'viewer': return 'secondary';
       default: return 'secondary';
     }
   };

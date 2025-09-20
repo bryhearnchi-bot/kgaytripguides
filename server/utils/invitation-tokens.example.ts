@@ -1,0 +1,217 @@
+/**
+ * EXAMPLE USAGE - Secure Invitation Token Utility
+ *
+ * This file demonstrates how to use the invitation-tokens utility
+ * for secure token generation and validation.
+ *
+ * DO NOT USE IN PRODUCTION - This is for documentation only.
+ */
+
+import {
+  generateInvitationToken,
+  hashToken,
+  validateTokenTiming,
+  createInvitationRecord,
+  isTokenExpired,
+  type InvitationData,
+  type InvitationRecord,
+} from './invitation-tokens';
+
+// =============================================================================
+// Example 1: Basic Token Generation and Validation
+// =============================================================================
+
+function exampleBasicTokenFlow() {
+  console.log('🔐 Example 1: Basic Token Generation and Validation');
+
+  // Generate a new secure token
+  const { token, hash, salt, expiresAt } = generateInvitationToken(48); // 48 hours
+
+  console.log('Generated token:', token.substring(0, 16) + '...');
+  console.log('Token hash:', hash.substring(0, 16) + '...');
+  console.log('Salt:', salt.substring(0, 16) + '...');
+  console.log('Expires at:', expiresAt);
+
+  // Validate the token
+  const isValid = validateTokenTiming(token, hash, salt);
+  console.log('Token is valid:', isValid);
+
+  // Check if expired
+  const expired = isTokenExpired(expiresAt);
+  console.log('Token is expired:', expired);
+
+  console.log('✅ Example 1 complete\n');
+}
+
+// =============================================================================
+// Example 2: Complete Invitation Workflow
+// =============================================================================
+
+function exampleInvitationWorkflow() {
+  console.log('📧 Example 2: Complete Invitation Workflow');
+
+  // Create invitation data
+  const invitationData: InvitationData = {
+    email: 'newuser@example.com',
+    role: 'admin',
+    invitedBy: 'admin-user-123',
+    cruiseId: 'atlantis-2025-greek-isles',
+    metadata: {
+      source: 'admin-panel',
+      adminName: 'John Doe',
+    },
+  };
+
+  // Create complete invitation record
+  const invitation = createInvitationRecord(invitationData, 72); // 72 hours
+
+  console.log('Invitation ID:', invitation.id);
+  console.log('Invited email:', invitation.email);
+  console.log('Role:', invitation.role);
+  console.log('Token (for email):', invitation.token.substring(0, 16) + '...');
+  console.log('Token hash (for DB):', invitation.tokenHash.substring(0, 16) + '...');
+  console.log('Expires at:', invitation.expiresAt);
+
+  // Simulate storing in database (you would store invitation without .token)
+  const dbRecord: InvitationRecord = {
+    id: invitation.id,
+    email: invitation.email,
+    role: invitation.role,
+    invitedBy: invitation.invitedBy,
+    cruiseId: invitation.cruiseId,
+    metadata: invitation.metadata,
+    tokenHash: invitation.tokenHash,
+    salt: invitation.salt,
+    expiresAt: invitation.expiresAt,
+    createdAt: invitation.createdAt,
+    used: invitation.used,
+  };
+
+  console.log('DB record created (without raw token)');
+
+  // Simulate user clicking invitation link with token
+  const userProvidedToken = invitation.token; // This comes from the URL
+
+  // Validate the token (retrieve hash and salt from DB)
+  const isValidInvitation = validateTokenTiming(
+    userProvidedToken,
+    dbRecord.tokenHash,
+    dbRecord.salt
+  );
+
+  const isNotExpired = !isTokenExpired(dbRecord.expiresAt);
+  const isNotUsed = !dbRecord.used;
+
+  console.log('Token validation results:');
+  console.log('- Token format valid:', isValidInvitation);
+  console.log('- Not expired:', isNotExpired);
+  console.log('- Not already used:', isNotUsed);
+  console.log('- Overall valid:', isValidInvitation && isNotExpired && isNotUsed);
+
+  console.log('✅ Example 2 complete\n');
+}
+
+// =============================================================================
+// Example 3: Security Testing
+// =============================================================================
+
+function exampleSecurityTests() {
+  console.log('🛡️ Example 3: Security Testing');
+
+  const invitation = createInvitationRecord({
+    email: 'test@example.com',
+    role: 'user',
+    invitedBy: 'admin-123',
+  });
+
+  // Test 1: Valid token
+  const validResult = validateTokenTiming(
+    invitation.token,
+    invitation.tokenHash,
+    invitation.salt
+  );
+  console.log('Valid token test:', validResult);
+
+  // Test 2: Modified token (should fail)
+  const modifiedToken = invitation.token.slice(0, -1) + 'x';
+  const invalidResult = validateTokenTiming(
+    modifiedToken,
+    invitation.tokenHash,
+    invitation.salt
+  );
+  console.log('Modified token test (should be false):', invalidResult);
+
+  // Test 3: Wrong salt (should fail)
+  const wrongSaltResult = validateTokenTiming(
+    invitation.token,
+    invitation.tokenHash,
+    'wrong-salt-that-is-long-enough-12345'
+  );
+  console.log('Wrong salt test (should be false):', wrongSaltResult);
+
+  // Test 4: Timing safety demonstration
+  console.log('Timing safety: All comparisons use constant-time algorithms');
+
+  console.log('✅ Example 3 complete\n');
+}
+
+// =============================================================================
+// Example 4: Error Handling
+// =============================================================================
+
+function exampleErrorHandling() {
+  console.log('⚠️ Example 4: Error Handling');
+
+  try {
+    // This should throw an error - invalid expiration
+    generateInvitationToken(200); // > 1 week
+  } catch (error) {
+    console.log('Expected error for invalid expiration:', error.message);
+  }
+
+  try {
+    // This should throw an error - invalid email
+    createInvitationRecord({
+      email: 'invalid-email',
+      role: 'user',
+      invitedBy: 'admin-123',
+    });
+  } catch (error) {
+    console.log('Expected error for invalid email:', error.message);
+  }
+
+  try {
+    // This should throw an error - short token
+    hashToken('short', 'valid-salt-long-enough');
+  } catch (error) {
+    console.log('Expected error for short token:', error.message);
+  }
+
+  // Graceful handling of invalid validation inputs
+  const malformedValidation = validateTokenTiming('', 'invalid', 'short');
+  console.log('Malformed validation (should be false):', malformedValidation);
+
+  console.log('✅ Example 4 complete\n');
+}
+
+// =============================================================================
+// Run Examples
+// =============================================================================
+
+if (import.meta.main) {
+  console.log('🚀 Running Invitation Token Examples\n');
+
+  exampleBasicTokenFlow();
+  exampleInvitationWorkflow();
+  exampleSecurityTests();
+  exampleErrorHandling();
+
+  console.log('🎉 All examples completed successfully!');
+  console.log('\n📚 Key Security Features:');
+  console.log('✓ Cryptographically secure random token generation');
+  console.log('✓ SHA-256 hashing with salt');
+  console.log('✓ Timing-safe comparison to prevent timing attacks');
+  console.log('✓ Input validation with Zod schemas');
+  console.log('✓ Comprehensive error handling');
+  console.log('✓ TypeScript type safety');
+}

@@ -27,6 +27,8 @@ import NotFound from "@/pages/not-found";
 import ImageTest from "@/pages/image-test";
 import { AuthCallback } from "@/pages/auth/AuthCallback";
 import LoginPage from "@/pages/auth/login";
+import AccountSetup from "@/pages/auth/AccountSetup";
+import UserProfilePage from "@/pages/user/profile";
 
 function Router() {
   return (
@@ -36,6 +38,8 @@ function Router() {
       <Route path="/trip/:slug" component={TripPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/setup-account/:token" component={AccountSetup} />
+      <Route path="/profile" component={() => <ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
       <Route path="/admin" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/ships" component={() => <ProtectedRoute><ShipsManagement /></ProtectedRoute>} />
@@ -51,29 +55,54 @@ function Router() {
       <Route path="/admin/cruises/:id" component={() => <ProtectedRoute><CruiseDetail /></ProtectedRoute>} />
       <Route path="/admin/cruises/active" component={() => <ProtectedRoute><ActiveCruises /></ProtectedRoute>} />
       <Route path="/admin/cruises/past" component={() => <ProtectedRoute><PastCruises /></ProtectedRoute>} />
-      <Route path="/admin" component={() => <ProtectedRoute><NewAdminDashboard /></ProtectedRoute>} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function App() {
-  // Unregister service worker to fix CSP blocking images
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => {
-          registration.unregister().then(() => {
-            console.log('Service Worker unregistered:', registration.scope);
-          });
-        });
-      });
-    }
-
     // Disable browser scroll restoration globally
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
+
+    // Add offline styles
+    const offlineStyles = document.createElement('style');
+    offlineStyles.textContent = `
+      .offline .offline-indicator {
+        display: block !important;
+      }
+      .offline-indicator {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #f59e0b;
+        color: white;
+        text-align: center;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        z-index: 9999;
+      }
+    `;
+    document.head.appendChild(offlineStyles);
+
+    // Add offline indicator to DOM
+    const indicator = document.createElement('div');
+    indicator.className = 'offline-indicator';
+    indicator.textContent = 'You are offline. Some features may be limited.';
+    document.body.appendChild(indicator);
+
+    return () => {
+      if (offlineStyles.parentNode) {
+        offlineStyles.parentNode.removeChild(offlineStyles);
+      }
+      if (indicator.parentNode) {
+        indicator.parentNode.removeChild(indicator);
+      }
+    };
   }, []);
 
   return (

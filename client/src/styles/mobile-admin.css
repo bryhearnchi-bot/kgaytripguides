@@ -582,6 +582,206 @@
 }
 
 /* ========================================
+   PWA SPECIFIC STYLES
+======================================== */
+
+/* PWA install banner */
+.pwa-install-banner {
+  @apply fixed bottom-4 left-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4;
+  animation: slideUpFadeIn 0.3s ease-out;
+}
+
+@keyframes slideUpFadeIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* PWA update notification */
+.pwa-update-notification {
+  @apply fixed top-4 left-4 right-4 bg-blue-600 text-white rounded-lg shadow-lg z-50 p-4;
+  animation: slideDownFadeIn 0.3s ease-out;
+}
+
+@keyframes slideDownFadeIn {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Offline indicator */
+.offline-indicator {
+  @apply hidden fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 text-sm z-50;
+}
+
+.offline .offline-indicator {
+  @apply block;
+}
+
+/* PWA safe area handling */
+.pwa-safe-area {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* iOS PWA status bar handling */
+@supports (-webkit-touch-callout: none) {
+  .ios-pwa-header {
+    padding-top: max(env(safe-area-inset-top), 44px);
+  }
+
+  .ios-pwa-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 34px);
+  }
+}
+
+/* ========================================
+   ENHANCED TOUCH INTERACTIONS
+======================================== */
+
+/* Better touch feedback */
+.touch-feedback {
+  @apply transition-all duration-150 active:scale-95 active:bg-gray-100;
+}
+
+.touch-feedback-primary {
+  @apply transition-all duration-150 active:scale-95 active:opacity-80;
+}
+
+/* Improved swipe indicators */
+.swipe-indicator {
+  @apply relative overflow-hidden;
+}
+
+.swipe-indicator::before {
+  content: '';
+  @apply absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-300;
+  width: var(--swipe-progress, 0%);
+}
+
+/* Enhanced pull-to-refresh */
+.pull-to-refresh-container {
+  @apply relative overflow-hidden;
+  overscroll-behavior-y: contain;
+}
+
+.pull-to-refresh-indicator {
+  @apply absolute top-0 left-0 right-0 flex items-center justify-center text-gray-600;
+  transform: translateY(-100%);
+  transition: transform 0.2s ease-out;
+}
+
+.pull-to-refresh-active .pull-to-refresh-indicator {
+  transform: translateY(0);
+}
+
+/* ========================================
+   MOBILE SPECIFIC ANIMATIONS
+======================================== */
+
+/* Optimized for mobile performance */
+.mobile-gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth scrolling momentum */
+.mobile-smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Mobile-friendly modal animations */
+.mobile-modal-overlay {
+  @apply fixed inset-0 bg-black/50 z-50;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobile-modal-content {
+  animation: slideUpScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUpScale {
+  from {
+    opacity: 0;
+    transform: translateY(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+======================================== */
+
+/* Reduce paint and layout thrashing */
+.mobile-optimized {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Hardware acceleration for smooth animations */
+.mobile-hardware-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Optimize images for mobile */
+.mobile-image-optimized {
+  @apply w-full h-auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* ========================================
+   ACCESSIBILITY ENHANCEMENTS
+======================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .mobile-high-contrast {
+    @apply border-2 border-black text-black bg-white;
+  }
+
+  .mobile-button-primary {
+    @apply bg-black text-white border-2 border-black;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-animation-safe {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .mobile-transition {
+    transition: none !important;
+  }
+}
+
+/* Focus visible improvements */
+.mobile-focus-enhanced:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #3b82f6;
+}
+
+/* ========================================
    PRINT STYLES
 ======================================== */
 
@@ -593,4 +793,39 @@
   .mobile-print-full-width {
     @apply w-full;
   }
+
+  .pwa-install-banner,
+  .pwa-update-notification,
+  .offline-indicator {
+    @apply hidden;
+  }
+}
+
+/* ========================================
+   CUSTOM SCROLLBARS FOR MOBILE
+======================================== */
+
+/* Webkit browsers (iOS Safari, Chrome) */
+.mobile-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.mobile-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 2px;
+}
+
+.mobile-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.8);
+}
+
+/* Firefox */
+.mobile-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
 }

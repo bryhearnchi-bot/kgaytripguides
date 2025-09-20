@@ -31,21 +31,27 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-md max-h-[90vh] overflow-auto mobile-card animate-slide-up">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b">
+          {/* Mobile handle for iOS-style sheet */}
+          <div className="sm:hidden absolute top-2 left-1/2 transform -translate-x-1/2">
+            <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+          </div>
+
+          <h2 className="mobile-heading-2 mt-4 sm:mt-0">
             {defaultView === 'sign_up' ? 'Create Account' : 'Sign In'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors touch-target mobile-focus"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6 safe-area-inset-bottom">
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -74,21 +80,21 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
                     anchorTextHoverColor: '#2563eb',
                   },
                   space: {
-                    spaceSmall: '0.5rem',
-                    spaceMedium: '1rem',
-                    spaceLarge: '1.5rem',
+                    spaceSmall: '0.75rem',
+                    spaceMedium: '1.25rem',
+                    spaceLarge: '1.75rem',
                     labelBottomMargin: '0.5rem',
-                    anchorBottomMargin: '0.5rem',
-                    emailInputSpacing: '0.5rem',
-                    socialAuthSpacing: '0.5rem',
-                    buttonPadding: '0.75rem 1rem',
-                    inputPadding: '0.75rem 1rem',
+                    anchorBottomMargin: '0.75rem',
+                    emailInputSpacing: '0.75rem',
+                    socialAuthSpacing: '1rem',
+                    buttonPadding: '1rem 1.25rem',
+                    inputPadding: '1rem 1.25rem',
                   },
                   fontSizes: {
-                    baseBodySize: '14px',
-                    baseInputSize: '14px',
-                    baseLabelSize: '14px',
-                    baseButtonSize: '14px',
+                    baseBodySize: '16px',
+                    baseInputSize: '16px',
+                    baseLabelSize: '16px',
+                    baseButtonSize: '16px',
                   },
                   fonts: {
                     bodyFontFamily: 'system-ui, -apple-system, sans-serif',

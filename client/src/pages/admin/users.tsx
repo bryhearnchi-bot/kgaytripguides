@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -24,53 +25,61 @@ import {
   UserX,
   Shield,
   Calendar,
+  Loader2,
   Mail,
-  User
+  User,
+  UserPlus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
+import { InviteUserModal } from '@/components/admin/InviteUserModal';
+import { InvitationManagement } from '@/components/admin/InvitationManagement';
+import { supabase } from '@/lib/supabase';
 
 interface UserData {
   id: string;
-  username: string;
-  email?: string;
-  fullName?: string;
+  username?: string;
+  email: string;
+  full_name?: string;
   role: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastLogin?: string;
+  is_active: boolean;
+  account_status: string;
+  created_at: string;
+  updated_at: string;
+  last_sign_in_at?: string;
 }
 
 interface UserFormData {
-  username: string;
+  username?: string;
   email: string;
-  fullName: string;
+  full_name?: string;
   role: string;
   password?: string;
-  isActive: boolean;
+  is_active: boolean;
+  account_status: string;
 }
 
 const ROLES = [
-  { value: 'super_admin', label: 'Super Admin', description: 'Full system access' },
-  { value: 'trip_admin', label: 'Trip Admin', description: 'Manage trips and content' },
-  { value: 'content_editor', label: 'Content Editor', description: 'Edit content and media' },
-  { value: 'media_manager', label: 'Media Manager', description: 'Manage images and media' },
   { value: 'viewer', label: 'Viewer', description: 'View-only access' },
+  { value: 'content_manager', label: 'Content Manager', description: 'Edit content and manage trips' },
+  { value: 'admin', label: 'Admin', description: 'Full system access' },
 ];
 
 export default function UsersManagement() {
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('users');
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
-    fullName: '',
+    full_name: '',
     role: 'viewer',
     password: '',
-    isActive: true,
+    is_active: true,
+    account_status: 'active',
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -81,19 +90,35 @@ export default function UsersManagement() {
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery<UserData[]>({
     queryKey: ['admin-users'],
     queryFn: async () => {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
         credentials: 'include',
       });
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
-      return response.json();
+      const data = await response.json();
+      return data.users || [];
     },
   });
 
   // Create/Update user mutation
   const saveUser = useMutation({
     mutationFn: async (data: UserFormData) => {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
       const method = editingUser ? 'PUT' : 'POST';
 
@@ -107,6 +132,7 @@ export default function UsersManagement() {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         credentials: 'include',
         body: JSON.stringify(payload),
@@ -139,12 +165,44 @@ export default function UsersManagement() {
   // Delete user mutation
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
+      // Get CSRF token from cookie
+      let csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('_csrf='))
+        ?.split('=')[1];
+
+      // If no token in cookie, fetch one first
+      if (!csrfToken) {
+        const csrfResponse = await fetch('/api/csrf-token', {
+          credentials: 'include',
+        });
+
+        if (!csrfResponse.ok) {
+          throw new Error('Failed to get CSRF token');
+        }
+
+        const data = await csrfResponse.json();
+        csrfToken = data.csrfToken;
+        document.cookie = `_csrf=${encodeURIComponent(csrfToken)}; path=/; max-age=3600; samesite=strict`;
+      }
+
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'x-csrf-token': csrfToken,
+        },
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete user');
       }
     },
     onSuccess: () => {
@@ -157,7 +215,7 @@ export default function UsersManagement() {
     onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Failed to delete user',
+        description: error.message || 'Failed to delete user',
         variant: 'destructive',
       });
     },
@@ -166,13 +224,20 @@ export default function UsersManagement() {
   // Toggle user status mutation
   const toggleUserStatus = useMutation({
     mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/admin/users/${userId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         credentials: 'include',
-        body: JSON.stringify({ isActive }),
+        body: JSON.stringify({ is_active: isActive }),
       });
       if (!response.ok) {
         throw new Error('Failed to update user status');
@@ -199,22 +264,24 @@ export default function UsersManagement() {
     if (user) {
       setEditingUser(user);
       setFormData({
-        username: user.username,
-        email: user.email || '',
-        fullName: user.fullName || '',
+        username: user.username || '',
+        email: user.email,
+        full_name: user.full_name || '',
         role: user.role,
         password: '',
-        isActive: user.isActive,
+        is_active: user.is_active,
+        account_status: user.account_status,
       });
     } else {
       setEditingUser(null);
       setFormData({
         username: '',
         email: '',
-        fullName: '',
+        full_name: '',
         role: 'viewer',
         password: '',
-        isActive: true,
+        is_active: true,
+        account_status: 'active',
       });
     }
     setUserModalOpen(true);
@@ -263,10 +330,9 @@ export default function UsersManagement() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'super_admin': return 'destructive';
-      case 'trip_admin': return 'default';
-      case 'content_editor': return 'secondary';
-      case 'media_manager': return 'outline';
+      case 'admin': return 'destructive';
+      case 'content_manager': return 'default';
+      case 'viewer': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -277,9 +343,9 @@ export default function UsersManagement() {
   };
 
   const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+(user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -304,44 +370,61 @@ export default function UsersManagement() {
                 <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
               </div>
             </div>
-            <Button
-              onClick={() => openUserModal()}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add User
-            </Button>
+            <div className="flex items-center space-x-2">
+              {activeTab === 'invitations' && (
+                <Button
+                  onClick={() => setInviteModalOpen(true)}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Send Invitation
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          {/* Search and Filters */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search users by username, email, name, or role..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="users">
+              <Users className="w-4 h-4 mr-2" />
+              Active Users
+            </TabsTrigger>
+            <TabsTrigger value="invitations">
+              <Mail className="w-4 h-4 mr-2" />
+              Invitations
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Users Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Users ({filteredUsers.length})</CardTitle>
-              <CardDescription>
-                Manage user accounts, roles, and permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            {/* Search and Filters */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search users by username, email, name, or role..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Users Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Users ({filteredUsers.length})</CardTitle>
+                <CardDescription>
+                  Manage user accounts, roles, and permissions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
               {usersLoading ? (
                 <div className="text-center py-8">
                   <Users className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
@@ -384,14 +467,14 @@ export default function UsersManagement() {
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                {user.fullName?.charAt(0) || user.username.charAt(0).toUpperCase()}
+                                {user.full_name?.charAt(0) || user.username?.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase()}
                               </div>
                               <div>
                                 <div className="font-medium text-gray-900">
-                                  {user.fullName || user.username}
+                                  {user.full_name || user.username || user.email}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                  {user.email || user.username}
+                                  {user.email}
                                 </div>
                               </div>
                             </div>
@@ -403,7 +486,7 @@ export default function UsersManagement() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-1">
-                              {user.isActive ? (
+                              {user.is_active ? (
                                 <>
                                   <UserCheck className="w-4 h-4 text-green-500" />
                                   <span className="text-green-700 text-sm">Active</span>
@@ -417,9 +500,9 @@ export default function UsersManagement() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {user.lastLogin ? (
+                            {user.last_sign_in_at ? (
                               <div className="text-sm text-gray-600">
-                                {format(dateOnly(user.lastLogin), 'MMM dd, yyyy')}
+                                {format(dateOnly(user.last_sign_in_at), 'MMM dd, yyyy')}
                               </div>
                             ) : (
                               <span className="text-gray-400 text-sm">Never</span>
@@ -427,7 +510,7 @@ export default function UsersManagement() {
                           </TableCell>
                           <TableCell>
                             <div className="text-sm text-gray-600">
-                              {format(dateOnly(user.createdAt), 'MMM dd, yyyy')}
+                              {format(dateOnly(user.created_at), 'MMM dd, yyyy')}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
@@ -437,11 +520,11 @@ export default function UsersManagement() {
                                 size="sm"
                                 onClick={() => toggleUserStatus.mutate({
                                   userId: user.id,
-                                  isActive: !user.isActive
+                                  isActive: !user.is_active
                                 })}
                                 disabled={toggleUserStatus.isPending}
                               >
-                                {user.isActive ? (
+                                {user.is_active ? (
                                   <EyeOff className="w-4 h-4" />
                                 ) : (
                                   <Eye className="w-4 h-4" />
@@ -468,7 +551,7 @@ export default function UsersManagement() {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete User</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Are you sure you want to delete "{user.fullName || user.username}"?
+                                      Are you sure you want to delete "{user.full_name || user.username || user.email}"?
                                       This action cannot be undone and will remove all associated data.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
@@ -491,67 +574,106 @@ export default function UsersManagement() {
                   </Table>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Invitations Tab */}
+          <TabsContent value="invitations">
+            <InvitationManagement />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* User Modal */}
       <Dialog open={userModalOpen} onOpenChange={(open) => !open && closeUserModal()}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-md bg-gradient-to-b from-white to-blue-50/50">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-gray-900">
               {editingUser ? 'Edit User' : 'Add New User'}
             </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {editingUser ? 'Update user information and permissions' : 'Create a new user account with appropriate permissions'}
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username *</Label>
+          <form className="space-y-4">
+            {/* Username Field */}
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+                Username <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 <Input
                   id="username"
                   value={formData.username}
                   onChange={(e) => handleInputChange('username', e.target.value)}
                   placeholder="Enter username"
+                  className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={saveUser.isPending}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+            </div>
+
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email Address <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="Enter email address"
+                  placeholder="user@example.com"
+                  className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={saveUser.isPending}
                 />
               </div>
             </div>
 
+            {/* Full Name Field */}
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={formData.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                placeholder="Enter full name"
-              />
+              <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+                Full Name <span className="text-gray-500">(optional)</span>
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                <Input
+                  id="fullName"
+                  value={formData.full_name}
+                  onChange={(e) => handleInputChange('full_name', e.target.value)}
+                  placeholder="John Doe"
+                  className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={saveUser.isPending}
+                />
+              </div>
             </div>
 
+            {/* Role Field */}
             <div className="space-y-2">
-              <Label htmlFor="role">Role *</Label>
-              <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+                User Role <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => handleInputChange('role', value)}
+                disabled={saveUser.isPending}
+              >
+                <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
                   {ROLES.map((role) => (
                     <SelectItem key={role.value} value={role.value}>
-                      <div className="flex items-center space-x-2">
-                        <Shield className="w-4 h-4" />
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-gray-500" />
                         <div>
                           <div className="font-medium">{role.label}</div>
-                          <div className="text-sm text-gray-500">{role.description}</div>
+                          <div className="text-xs text-gray-500">{role.description}</div>
                         </div>
                       </div>
                     </SelectItem>
@@ -560,9 +682,23 @@ export default function UsersManagement() {
               </Select>
             </div>
 
+            {/* Role Preview */}
+            {formData.role && (
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-900">{getRoleLabel(formData.role)} Role</p>
+                    <p className="text-sm text-blue-700">{ROLES.find(r => r.value === formData.role)?.description}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password">
-                Password {!editingUser && '*'}
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Password {!editingUser && <span className="text-red-500">*</span>}
               </Label>
               <div className="relative">
                 <Input
@@ -571,6 +707,8 @@ export default function UsersManagement() {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder={editingUser ? 'Leave blank to keep current password' : 'Enter password'}
+                  className="pr-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={saveUser.isPending}
                 />
                 <Button
                   type="button"
@@ -588,32 +726,57 @@ export default function UsersManagement() {
               </div>
             </div>
 
+            {/* Active Status */}
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => handleInputChange('isActive', e.target.checked)}
+                checked={formData.is_active}
+                onChange={(e) => handleInputChange('is_active', e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                disabled={saveUser.isPending}
               />
-              <Label htmlFor="isActive">Active user account</Label>
+              <Label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active user account</Label>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button variant="outline" onClick={closeUserModal}>
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeUserModal}
+                disabled={saveUser.isPending}
+                className="border-gray-300 hover:bg-gray-50"
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saveUser.isPending}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {saveUser.isPending ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}
+                {saveUser.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  editingUser ? 'Update User' : 'Create User'
+                )}
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
+
+      {/* Invite User Modal */}
+      <InviteUserModal
+        isOpen={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-invitations'] });
+        }}
+      />
     </div>
   );
 }

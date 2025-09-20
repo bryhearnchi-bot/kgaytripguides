@@ -138,8 +138,8 @@ export default function AdminDashboard() {
     (trip.cruiseLine && trip.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
-  const canEdit = profile?.role && ['super_admin', 'trip_admin', 'content_editor', 'admin'].includes(profile.role);
-  const canDelete = profile?.role && ['super_admin', 'admin'].includes(profile.role);
+  const canEdit = profile?.role && ['admin', 'content_manager'].includes(profile.role);
+  const canDelete = profile?.role && ['admin'].includes(profile.role);
 
   const handleDeleteTrip = (trip: Trip) => {
     if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {

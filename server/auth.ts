@@ -56,8 +56,8 @@ export class AuthService {
   }
 }
 
-// Authentication middleware
-export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+// Authentication middleware - Supports both Supabase and custom JWT tokens
+export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
 
@@ -65,6 +65,36 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
     return res.status(401).json({ error: 'Authentication required' });
   }
 
+  // First, try Supabase authentication
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://bxiiodeyqvqqcgzzqzvt.supabase.co';
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWlvZGV5cXZxcWNnenpxenZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NjcwMjksImV4cCI6MjA3MzU0MzAyOX0.Y9juoQm7q_6ky4EUvLI3YR9VIHuhJah5me85CwsKsVc';
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (user && !error) {
+      // Get user profile from database
+      const { profileStorage } = await import('./storage');
+      const profile = await profileStorage.getProfile(user.id);
+
+      if (profile) {
+        console.log(`Auth: User ${user.email} has profile role: ${profile.role}`);
+        req.user = {
+          id: user.id,
+          username: user.email || '',
+          email: user.email || '',
+          role: profile.role || 'viewer',
+        } as User;
+        return next();
+      }
+    }
+  } catch (supabaseError) {
+    console.debug('Supabase auth failed, trying custom JWT:', supabaseError);
+  }
+
+  // Fall back to custom JWT authentication
   const payload = AuthService.verifyAccessToken(token);
   if (!payload) {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -84,13 +114,17 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
 export function requireRole(allowedRoles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
+      console.log('Role check failed: No user in request');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    console.log(`Role check: User ${req.user.email} has role '${req.user.role}', allowed roles:`, allowedRoles);
     if (!allowedRoles.includes(req.user.role || '')) {
+      console.log(`Role check failed: '${req.user.role}' not in allowed roles:`, allowedRoles);
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
+    console.log('Role check passed');
     next();
   };
 }
@@ -105,11 +139,11 @@ function composeAuth(roleCheck: (req: AuthenticatedRequest, res: Response, next:
   };
 }
 
-// Specific role checks
-export const requireSuperAdmin = composeAuth(requireRole(['super_admin']));
-export const requireTripAdmin = composeAuth(requireRole(['super_admin', 'trip_admin']));
-export const requireContentEditor = composeAuth(requireRole(['super_admin', 'trip_admin', 'content_editor']));
-export const requireMediaManager = composeAuth(requireRole(['super_admin', 'trip_admin', 'content_editor', 'media_manager']));
+// Specific role checks - Updated for simplified role system
+export const requireSuperAdmin = composeAuth(requireRole(['admin']));
+export const requireTripAdmin = composeAuth(requireRole(['admin', 'content_manager']));
+export const requireContentEditor = composeAuth(requireRole(['admin', 'content_manager']));
+export const requireMediaManager = composeAuth(requireRole(['admin', 'content_manager']));
 
 // Backward compatibility alias
 export const requireCruiseAdmin = requireTripAdmin;

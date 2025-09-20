@@ -187,18 +187,39 @@ export function csrfTokenEndpoint(config: CSRFConfig = {}) {
 
   return async (req: Request, res: Response) => {
     try {
-      const sessionId = getSessionId(req, finalConfig.sessionKey);
-      const token = generateToken();
-      const tokenHash = createTokenHash(token, finalConfig.secret);
+      // Check if token already exists in cookie
+      const existingToken = req.cookies?.[finalConfig.cookieName];
 
-      // Store token hash
-      await finalConfig.tokenStore.set(sessionId, tokenHash);
+      if (existingToken) {
+        // Return the existing token from the cookie
+        res.json({
+          csrfToken: existingToken,
+          cookieName: finalConfig.cookieName,
+          headerName: finalConfig.tokenHeader
+        });
+      } else {
+        // Generate new token
+        const sessionId = getSessionId(req, finalConfig.sessionKey);
+        const token = generateToken();
+        const tokenHash = createTokenHash(token, finalConfig.secret);
 
-      res.json({
-        csrfToken: token,
-        cookieName: finalConfig.cookieName,
-        headerName: finalConfig.tokenHeader
-      });
+        // Store token hash
+        await finalConfig.tokenStore.set(sessionId, tokenHash);
+
+        // Set the cookie to match double-submit pattern
+        res.cookie(finalConfig.cookieName, token, {
+          httpOnly: false, // Must be accessible to JS for double-submit
+          secure: finalConfig.secure,
+          sameSite: finalConfig.sameSite,
+          maxAge: 3600000
+        });
+
+        res.json({
+          csrfToken: token,
+          cookieName: finalConfig.cookieName,
+          headerName: finalConfig.tokenHeader
+        });
+      }
     } catch (error) {
       console.error('CSRF token endpoint error:', error);
       res.status(500).json({

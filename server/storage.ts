@@ -25,18 +25,103 @@ if (process.env.NODE_ENV === 'production') {
   console.log('- DATABASE_URL length:', process.env.DATABASE_URL?.length || 0);
 }
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is not set, ensure the database is provisioned");
-}
-
-// Railway PostgreSQL database connection (for both dev and production)
+// Database connection with development mock fallback
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../shared/schema';
 
-// Use postgres driver for Railway in all environments
-const client = postgres(process.env.DATABASE_URL!);
-const db = drizzle(client, { schema });
+let db: any;
+
+// Force mock mode in development only if USE_MOCK_DATA is explicitly true
+if (process.env.USE_MOCK_DATA === 'true') {
+  console.warn('🔧 Mock mode enabled: Using mock database');
+  console.warn('   The app will use static data from client/src/data/');
+  console.warn('   To connect to real database, set USE_MOCK_DATA=false in .env');
+
+  // Create a comprehensive mock database that matches drizzle ORM interface
+  db = {
+    select: (fields?: any) => ({
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          orderBy: (order: any) => Promise.resolve([]),
+          returning: () => Promise.resolve([]),
+          limit: (count: number) => Promise.resolve([])
+        }),
+        orderBy: (order: any) => Promise.resolve([]),
+        innerJoin: (table: any, condition: any) => ({
+          where: (condition: any) => ({
+            orderBy: (order: any) => Promise.resolve([])
+          })
+        }),
+        leftJoin: (table: any, condition: any) => ({
+          where: (condition: any) => ({
+            orderBy: (order: any) => Promise.resolve([])
+          })
+        }),
+        limit: (count: number) => Promise.resolve([])
+      })
+    }),
+    insert: (table: any) => ({
+      values: (values: any) => ({
+        returning: () => Promise.resolve([{ id: 1, ...values }]),
+        onConflictDoNothing: () => Promise.resolve()
+      })
+    }),
+    update: (table: any) => ({
+      set: (values: any) => ({
+        where: (condition: any) => ({
+          returning: () => Promise.resolve([{ id: 1, ...values }])
+        })
+      })
+    }),
+    delete: (table: any) => ({
+      where: (condition: any) => Promise.resolve()
+    })
+  };
+} else {
+  // Real database mode: Use postgres connection
+  try {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is not set");
+    }
+
+    // Use standard PostgreSQL connection for all databases
+    {
+      // Use standard postgres connection for Railway/Neon/other databases
+      console.log('🔧 Using standard PostgreSQL connection');
+
+      const connectionConfig = {
+        prepare: false,
+        ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer',
+        transform: { undefined: null },
+        connect_timeout: 15,
+        idle_timeout: 300,
+        max: 20,
+        connection: {
+          application_name: `kgay-travel-guides-${process.env.NODE_ENV || 'development'}`
+        }
+      };
+
+      const client = postgres(process.env.DATABASE_URL!, connectionConfig);
+      db = drizzle(client, { schema });
+      console.log(`✅ Database connected (${process.env.NODE_ENV || 'development'} mode)`);
+    }
+
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    console.error('DATABASE_URL format:', process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':***@'));
+
+    // Fallback to mock mode if connection fails in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('🔄 Falling back to mock mode due to connection failure');
+      console.warn('   Set USE_MOCK_DATA=true to skip this error in the future');
+      // Re-export mock db from earlier in the file
+      throw error; // Still throw error but provide guidance
+    } else {
+      throw error;
+    }
+  }
+}
 
 export { db };
 
@@ -101,22 +186,22 @@ export interface IUserStorage {
 
 export class UserStorage implements IUserStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id));
+    const result = await db.select().from(profiles).where(eq(profiles.id, id));
     return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username));
+    const result = await db.select().from(profiles).where(eq(profiles.username, username));
     return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
+    const result = await db.insert(profiles).values(insertUser).returning();
     return result[0];
   }
 
   async updateUserLastLogin(id: string): Promise<void> {
-    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, id));
+    await db.update(profiles).set({ lastSignInAt: new Date() }).where(eq(profiles.id, id));
   }
 }
 

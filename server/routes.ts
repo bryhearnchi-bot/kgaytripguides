@@ -14,7 +14,7 @@ import {
   tripInfoStorage,
   portStorage
 } from "./storage";
-import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "./auth";
+import { requireAuth, requireContentEditor, requireSuperAdmin, requireTripAdmin, type AuthenticatedRequest } from "./auth";
 // DISABLED: Custom JWT auth system - using Supabase Auth exclusively
 // import { registerAuthRoutes } from "./auth-routes";
 import { db } from "./storage";
@@ -61,6 +61,8 @@ import {
   apiVersionsEndpoint,
   versionedRoute
 } from "./middleware/versioning";
+import invitationRoutes from "./routes/invitation-routes";
+import { registerAdminUsersRoutes } from "./routes/admin-users-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ MIDDLEWARE SETUP ============
@@ -71,10 +73,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API versioning support
   app.use('/api', validateVersion(['v1']));
 
-  // CSRF protection for unsafe methods (exclude auth routes for now)
+  // CSRF protection for unsafe methods (exclude auth, invitation, and admin user routes)
   app.use('/api', (req, res, next) => {
-    // Skip CSRF for auth routes initially
-    if (req.path.startsWith('/api/auth/')) {
+    // Skip CSRF for auth routes, invitation routes, and admin user management routes
+    const isAdminUserRoute = req.path.startsWith('/admin/users');
+
+    if (req.path.startsWith('/auth/') ||
+        req.path.startsWith('/admin/invitations') ||
+        req.path.startsWith('/admin/users')) {
       return next();
     }
     return doubleSubmitCsrf()(req, res, next);
@@ -777,11 +783,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ TRIP ROUTES (new trip-based API) ============
   
-  // Get all trips
+  // Get all trips using raw SQL with service role (bypassing RLS)
   app.get("/api/trips", async (req, res) => {
     try {
-      const trips = await tripStorage.getAllTrips();
-      res.json(trips);
+      console.log('Fetching trips using PostgreSQL connection...');
+
+      // Use direct database connection with proper credentials
+      const tripsData = await db.select().from(trips).orderBy(trips.startDate);
+
+      console.log(`Found ${tripsData?.length || 0} trips`);
+      res.json(tripsData || []);
     } catch (error) {
       console.error('Error fetching trips:', error);
       res.status(500).json({ error: 'Failed to fetch trips' });
@@ -1950,6 +1961,459 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount versioned router
   app.use('/api/v1', v1Router);
+
+  // ============ AUTH INVITATION ROUTES FOR ACCOUNT SETUP ============
+
+  // Auth-specific invitation validation endpoint
+  app.get('/api/auth/verify-invitation/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      if (!token || token.length < 32) {
+        return res.status(400).json({
+          error: 'Invalid token format',
+          message: 'The invitation token is malformed'
+        });
+      }
+
+      // Reuse the invitation validation logic
+      const response = await fetch(`${req.protocol}://${req.get('host')}/api/invitations/validate/${token}`);
+
+      if (response.status === 404) {
+        return res.status(404).json({
+          error: 'Invalid invitation',
+          message: 'The invitation token is invalid or has expired'
+        });
+      }
+
+      if (response.status === 410) {
+        return res.status(410).json({
+          error: 'Invitation expired',
+          message: 'This invitation has expired'
+        });
+      }
+
+      if (response.status === 409) {
+        return res.status(409).json({
+          error: 'User already exists',
+          message: 'An account with this email address already exists'
+        });
+      }
+
+      if (!response.ok) {
+        throw new Error('Invitation validation failed');
+      }
+
+      const data = await response.json();
+
+      res.json({
+        success: true,
+        invitation: {
+          email: data.invitation.email,
+          full_name: data.invitation.full_name || '',
+          role: data.invitation.role,
+          expires_at: data.invitation.expiresAt,
+        }
+      });
+
+    } catch (error) {
+      console.error('Error in auth invitation verification:', error);
+      res.status(500).json({
+        error: 'Validation failed',
+        message: 'An unexpected error occurred while validating the invitation'
+      });
+    }
+  });
+
+  // Auth-specific invitation consumption endpoint
+  app.post('/api/auth/consume-invitation', async (req, res) => {
+    try {
+      const { token, userId, fullName, phone, preferences } = req.body;
+
+      if (!token || !userId || !fullName) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          message: 'Token, userId, and fullName are required'
+        });
+      }
+
+      // Import invitation utilities dynamically
+      const { findInvitationByToken, isTokenExpired } = await import('./utils/invitation-tokens');
+      const { invitations } = await import('../shared/schema');
+      const { and, eq, gt } = await import('drizzle-orm');
+
+      // Find and validate invitation
+      const now = new Date();
+      const activeInvitations = await db.select()
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.used, false),
+            gt(invitations.expiresAt, now)
+          )
+        );
+
+      let matchingInvitation = null;
+      for (const invitation of activeInvitations) {
+        const { validateTokenTiming } = await import('./utils/invitation-tokens');
+        if (validateTokenTiming(token, invitation.tokenHash, invitation.salt)) {
+          matchingInvitation = invitation;
+          break;
+        }
+      }
+
+      if (!matchingInvitation) {
+        return res.status(404).json({
+          error: 'Invalid invitation',
+          message: 'The invitation token is invalid or has been used'
+        });
+      }
+
+      // Check if token is expired
+      if (isTokenExpired(matchingInvitation.expiresAt)) {
+        return res.status(410).json({
+          error: 'Invitation expired',
+          message: 'This invitation has expired'
+        });
+      }
+
+      // Create/update profile in database
+      const { profiles } = await import('../shared/schema');
+
+      await db.insert(profiles).values({
+        id: userId,
+        email: matchingInvitation.email,
+        fullName,
+        phone: phone || null,
+        role: matchingInvitation.role,
+        preferences: preferences || null,
+      }).onConflictDoUpdate({
+        target: profiles.id,
+        set: {
+          fullName,
+          phone: phone || null,
+          preferences: preferences || null,
+          updatedAt: new Date(),
+        }
+      });
+
+      // Mark invitation as used
+      await db.update(invitations)
+        .set({
+          used: true,
+          usedAt: new Date(),
+          usedBy: userId,
+        })
+        .where(eq(invitations.id, matchingInvitation.id));
+
+      // Audit log the consumption
+      console.log(`Invitation consumed: ${matchingInvitation.id} by user ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Account setup completed successfully',
+        profile: {
+          id: userId,
+          email: matchingInvitation.email,
+          fullName,
+          role: matchingInvitation.role,
+        }
+      });
+
+    } catch (error) {
+      console.error('Error consuming invitation:', error);
+      res.status(500).json({
+        error: 'Setup failed',
+        message: 'An unexpected error occurred while completing account setup'
+      });
+    }
+  });
+
+  // ============ PROFILE MANAGEMENT ROUTES ============
+
+  // Get current user profile endpoint (GET /api/admin/profile)
+  app.get("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Get profile from database
+      const profile = await profileStorage.getProfile(req.user.id);
+
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      // Map database camelCase to frontend snake_case
+      const responseProfile = {
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.fullName,
+        phone_number: profile.phoneNumber || null,
+        bio: profile.bio || null,
+        location: profile.location || null,
+        communication_preferences: profile.communicationPreferences || null,
+        cruise_updates_opt_in: profile.cruiseUpdatesOptIn || false,
+        marketing_emails: profile.marketingEmails || false,
+        role: profile.role,
+        created_at: profile.createdAt,
+        updated_at: profile.updatedAt,
+        last_sign_in_at: profile.lastSignInAt || null
+      };
+
+      res.json({
+        profile: responseProfile
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  // Update profile endpoint (PUT /api/admin/profile)
+  app.put("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const {
+        full_name,
+        email,
+        phone_number,
+        bio,
+        location,
+        communication_preferences,
+        cruise_updates_opt_in,
+        marketing_emails
+      } = req.body;
+
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Validate input - at least one field is required
+      const hasData = full_name !== undefined || email !== undefined || phone_number !== undefined ||
+                     bio !== undefined || location !== undefined || communication_preferences !== undefined ||
+                     cruise_updates_opt_in !== undefined || marketing_emails !== undefined;
+
+      if (!hasData) {
+        return res.status(400).json({ error: 'At least one field is required for update' });
+      }
+
+      // Map frontend snake_case to database camelCase
+      const updateData: any = {};
+      if (full_name !== undefined) updateData.fullName = full_name;
+      if (email !== undefined) updateData.email = email;
+      if (phone_number !== undefined) updateData.phoneNumber = phone_number;
+      if (bio !== undefined) updateData.bio = bio;
+      if (location !== undefined) updateData.location = location;
+      if (communication_preferences !== undefined) updateData.communicationPreferences = communication_preferences;
+      if (cruise_updates_opt_in !== undefined) updateData.cruiseUpdatesOptIn = cruise_updates_opt_in;
+      if (marketing_emails !== undefined) updateData.marketingEmails = marketing_emails;
+
+      // Update profile in database
+      const updatedProfile = await profileStorage.updateProfile(req.user.id, updateData);
+
+      if (!updatedProfile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      // Map database camelCase back to frontend snake_case
+      const responseProfile = {
+        id: updatedProfile.id,
+        email: updatedProfile.email,
+        full_name: updatedProfile.fullName,
+        phone_number: updatedProfile.phoneNumber || null,
+        bio: updatedProfile.bio || null,
+        location: updatedProfile.location || null,
+        communication_preferences: updatedProfile.communicationPreferences || null,
+        cruise_updates_opt_in: updatedProfile.cruiseUpdatesOptIn || false,
+        marketing_emails: updatedProfile.marketingEmails || false,
+        role: updatedProfile.role,
+        created_at: updatedProfile.createdAt,
+        updated_at: updatedProfile.updatedAt
+      };
+
+      res.json({
+        message: 'Profile updated successfully',
+        profile: responseProfile
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
+  // Admin endpoint to update any user's profile (PUT /api/admin/users/:userId/profile)
+  app.put("/api/admin/users/:userId/profile", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { userId } = req.params;
+      const {
+        full_name,
+        email,
+        phone_number,
+        bio,
+        location,
+        communication_preferences,
+        cruise_updates_opt_in,
+        marketing_emails,
+        role
+      } = req.body;
+
+      // Validate at least one field is provided
+      const hasData = full_name !== undefined || email !== undefined || phone_number !== undefined ||
+                     bio !== undefined || location !== undefined || communication_preferences !== undefined ||
+                     cruise_updates_opt_in !== undefined || marketing_emails !== undefined || role !== undefined;
+
+      if (!hasData) {
+        return res.status(400).json({ error: 'At least one field is required for update' });
+      }
+
+      // Map frontend snake_case to database camelCase
+      const updateData: any = {};
+      if (full_name !== undefined) updateData.fullName = full_name;
+      if (email !== undefined) updateData.email = email;
+      if (phone_number !== undefined) updateData.phoneNumber = phone_number;
+      if (bio !== undefined) updateData.bio = bio;
+      if (location !== undefined) updateData.location = location;
+      if (communication_preferences !== undefined) updateData.communicationPreferences = communication_preferences;
+      if (cruise_updates_opt_in !== undefined) updateData.cruiseUpdatesOptIn = cruise_updates_opt_in;
+      if (marketing_emails !== undefined) updateData.marketingEmails = marketing_emails;
+      if (role !== undefined) updateData.role = role;
+
+      // Update profile in database
+      const updatedProfile = await profileStorage.updateProfile(userId, updateData);
+
+      if (!updatedProfile) {
+        return res.status(404).json({ error: 'User profile not found' });
+      }
+
+      // Map database camelCase back to frontend snake_case
+      const responseProfile = {
+        id: updatedProfile.id,
+        email: updatedProfile.email,
+        full_name: updatedProfile.fullName,
+        phone_number: updatedProfile.phoneNumber || null,
+        bio: updatedProfile.bio || null,
+        location: updatedProfile.location || null,
+        communication_preferences: updatedProfile.communicationPreferences || null,
+        cruise_updates_opt_in: updatedProfile.cruiseUpdatesOptIn || false,
+        marketing_emails: updatedProfile.marketingEmails || false,
+        role: updatedProfile.role,
+        created_at: updatedProfile.createdAt,
+        updated_at: updatedProfile.updatedAt
+      };
+
+      res.json({
+        message: 'User profile updated successfully',
+        profile: responseProfile
+      });
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  });
+
+  // Change password endpoint (POST /api/admin/change-password)
+  app.post("/api/admin/change-password", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Validate input
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          error: 'Both currentPassword and newPassword are required'
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          error: 'New password must be at least 8 characters long'
+        });
+      }
+
+      // Get user profile to find email for Supabase auth
+      const userProfile = await profileStorage.getProfile(req.user.id);
+      if (!userProfile) {
+        return res.status(404).json({ error: 'User profile not found' });
+      }
+
+      // Create Supabase client for server-side operations
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://bxiiodeyqvqqcgzzqzvt.supabase.co';
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseServiceKey) {
+          return res.status(500).json({
+            error: 'Server configuration error',
+            message: 'Supabase service role key not configured'
+          });
+        }
+
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        });
+
+        // Verify current password by attempting to sign in
+        const { error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+          email: userProfile.email,
+          password: currentPassword
+        });
+
+        if (signInError) {
+          return res.status(400).json({
+            error: 'Current password is incorrect'
+          });
+        }
+
+        // Update password using admin privileges
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          req.user.id,
+          { password: newPassword }
+        );
+
+        if (updateError) {
+          console.error('Supabase password update error:', updateError);
+          return res.status(500).json({
+            error: 'Failed to update password',
+            message: updateError.message
+          });
+        }
+
+        res.json({
+          message: 'Password updated successfully'
+        });
+
+      } catch (importError) {
+        console.error('Error importing Supabase client:', importError);
+        return res.status(500).json({
+          error: 'Server configuration error',
+          message: 'Failed to load Supabase client'
+        });
+      }
+
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ error: 'Failed to change password' });
+    }
+  });
+
+  // ============ INVITATION SYSTEM ROUTES ============
+
+  // Mount invitation routes
+  app.use('/api', invitationRoutes);
+
+  // ============ ADMIN USER MANAGEMENT ROUTES ============
+
+  // Register admin user management routes
+  registerAdminUsersRoutes(app);
 
   // ============ ERROR HANDLING ============
 

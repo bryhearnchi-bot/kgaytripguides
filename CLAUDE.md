@@ -55,13 +55,87 @@ Before accepting any agent's work:
 
 ### Agent Team Assignments
 
-**Core Teams:**
-1. **UI/UX Team**: ui-ux-designer, mobile-developer, frontend-developer, ui-visual-validator
-2. **Backend Team**: backend-architect, database-optimizer, api-documenter, sql-pro
+**Core Teams (Relevant to React/TypeScript/Node.js/Express/Supabase/Railway Stack):**
+1. **UI/UX Team**: ui-ux-designer, mobile-developer, frontend-developer, ui-visual-validator, react-expert, react-performance-optimizer, react-native-expert
+2. **Backend Team**: backend-architect, database-optimizer, api-documenter, sql-pro, nodejs-expert, express-expert, postgres-expert, supabase-schema-architect, database-architect, supabase-realtime-optimizer
 3. **Security Team**: security-auditor, frontend-security-coder, backend-security-coder
-4. **Testing Team**: test-automator, tdd-orchestrator, ui-visual-validator
-5. **Performance Team**: performance-engineer, database-optimizer, frontend-developer
-6. **DevOps Team**: deployment-engineer, terraform-specialist, devops-troubleshooter
+4. **Testing Team**: test-automator, ui-visual-validator, playwright-expert, jest-expert, vitest-expert, tdd-usage
+5. **Performance Team**: performance-engineer, database-optimizer, react-performance-optimizer
+6. **DevOps Team**: deployment-engineer, devops-troubleshooter, github-actions-expert, gitlab-ci-expert
+
+**Language/Framework Specialists:**
+- **TypeScript**: typescript-expert, typescript-pro
+- **JavaScript**: javascript-expert, javascript-pro
+- **React**: react-expert, react-performance-optimizer, react-native-expert
+- **Node.js**: nodejs-expert
+- **Express**: express-expert
+- **Database**: postgres-expert, sql-expert, sql-pro, database-optimizer, database-architect, supabase-schema-architect, supabase-realtime-optimizer
+- **Styling**: tailwind-expert, css-expert, html-expert
+- **Testing**: playwright-expert, jest-expert, vitest-expert, tdd-usage
+- **API**: rest-expert, api-documenter
+
+**Quality & Architecture:**
+- **Review**: code-reviewer, architect-review
+- **Debug**: debugger, error-detective
+- **Performance**: performance-engineer
+- **Security**: security-auditor, frontend-security-coder, backend-security-coder
+- **Documentation**: docs-architect, api-documenter
+
+**Special Purpose Agents:**
+- **agent-expert**: Agent creation and prompt engineering specialist
+- **command-expert**: CLI command design and implementation
+- **mcp-expert**: Model Context Protocol integration specialist
+
+### Complete Agent Registry
+
+**All Available Agents (47 total):**
+- **agent-expert**: Agent creation and prompt engineering specialist
+- **api-documenter**: API documentation with OpenAPI/Swagger
+- **architect-review**: System architecture review and design patterns
+- **backend-architect**: Backend system design and API architecture
+- **backend-security-coder**: Secure backend coding practices
+- **code-reviewer**: Code quality and review specialist
+- **command-expert**: CLI command design and implementation
+- **css-expert**: CSS styling and responsive design
+- **database-architect**: Database design and scalability
+- **database-optimizer**: Query optimization and performance tuning
+- **debugger**: Systematic debugging and troubleshooting
+- **deployment-engineer**: CI/CD and deployment automation
+- **devops-troubleshooter**: Incident response and system reliability
+- **docs-architect**: Documentation strategy and systems
+- **error-detective**: Error investigation and resolution
+- **express-expert**: Express.js web application development
+- **frontend-developer**: React components and frontend architecture
+- **frontend-security-coder**: Secure frontend coding practices
+- **github-actions-expert**: GitHub Actions workflow automation
+- **gitlab-ci-expert**: GitLab CI/CD pipeline configuration
+- **html-expert**: HTML structure and semantics
+- **javascript-expert**: Modern JavaScript development
+- **javascript-pro**: Advanced JavaScript patterns
+- **jest-expert**: Jest testing framework specialist
+- **mcp-expert**: Model Context Protocol integration
+- **mobile-developer**: React Native and mobile development
+- **nodejs-expert**: Node.js server-side development
+- **performance-engineer**: Performance optimization and monitoring
+- **playwright-expert**: Playwright E2E testing
+- **postgres-expert**: PostgreSQL database management
+- **react-expert**: React development and optimization
+- **react-native-expert**: Cross-platform mobile development
+- **react-performance-optimizer**: React performance tuning
+- **rest-expert**: RESTful API design and implementation
+- **security-auditor**: Security analysis and vulnerability assessment
+- **sql-expert**: SQL query optimization
+- **sql-pro**: Advanced SQL and database operations
+- **supabase-realtime-optimizer**: Supabase realtime performance
+- **supabase-schema-architect**: Supabase database architecture
+- **tailwind-expert**: Tailwind CSS utility-first styling
+- **tdd-usage**: Test-driven development practices
+- **test-automator**: Automated testing strategies
+- **typescript-expert**: TypeScript development
+- **typescript-pro**: Advanced TypeScript patterns
+- **ui-ux-designer**: Interface design and user experience
+- **ui-visual-validator**: Visual testing and validation
+- **vitest-expert**: Vitest testing framework
 
 ### Escalation Protocol
 
@@ -99,24 +173,46 @@ All MCP servers are installed locally in the project's `node_modules` directory 
 
 ## Database Configuration
 
-**IMPORTANT**: This project uses **Supabase PostgreSQL** database, NOT SQLite, Neon, or Railway.
+**CRITICAL**: This project uses **Supabase PostgreSQL** with **Transaction Pooler** for serverless optimization.
 
-- All database calls/edits must be done through the Supabase PostgreSQL connection
-- The database connection is configured in `server/storage.ts`
-- Uses Drizzle ORM with node-postgres driver
-- Environment variable: `DATABASE_URL` points to the Supabase database
-- Schema is defined in `shared/schema.ts`
-- Authentication handled via Supabase Auth with `SupabaseAuthContext`
+**🚨 NEVER USE MOCK DATA 🚨** - The database connection must work with real Supabase data.
 
-### Never use SQLite commands like:
-- `sqlite3 database.db`
-- `better-sqlite3`
-- Direct SQL file access
+### ✅ CORRECT Database Setup (Transaction Pooler)
+- **Database URL Format**: `postgresql://postgres:[PASSWORD]@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres`
+- **Port 6543**: Transaction pooler (serverless-optimized)
+- **Port 5432**: Direct connection (not recommended for serverless)
+- **Host**: `db.bxiiodeyqvqqcgzzqzvt.supabase.co` (NOT pooler endpoints)
+- **Password**: Real database password from Supabase dashboard (NOT JWT tokens)
 
-### Always use:
-- The existing storage layer (`server/storage.ts`)
-- Drizzle ORM queries through the Supabase connection
-- Environment-based database URL configuration
+### Current Working Configuration:
+```bash
+DATABASE_URL=postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
+```
+
+### Database Architecture:
+- **Storage Layer**: `server/storage.ts` (Drizzle ORM with node-postgres)
+- **Schema**: `shared/schema.ts` (Drizzle schema definitions)
+- **Authentication**: `SupabaseAuthContext` (Supabase Auth)
+- **MCP Integration**: Supabase MCP tools for admin operations
+
+### Connection Requirements:
+- **MANDATORY**: Use transaction pooler (port 6543) for serverless deployment
+- **FORBIDDEN**: Mock data mode (`USE_MOCK_DATA=false` ALWAYS)
+- **REQUIRED**: Real database password (NOT JWT service role keys)
+- **PERFORMANCE**: Transaction pooler provides 20%+ faster response times
+
+### ❌ Common Mistakes to Avoid:
+- Using pooler endpoints like `aws-0-us-east-2.pooler.supabase.com`
+- Using JWT tokens as database passwords
+- Using port 5432 for serverless environments
+- Falling back to mock data when connection fails
+- Using SQLite commands or better-sqlite3
+
+### ✅ Always Use:
+- Transaction pooler on port 6543
+- Real database password from Supabase dashboard
+- Direct database host (`db.bxiiodeyqvqqcgzzqzvt.supabase.co`)
+- Drizzle ORM through existing storage layer
 - Supabase MCP tools for database operations
 
 ## Image Storage
@@ -283,7 +379,7 @@ npm run test:e2e:ui     # Run E2E tests with UI
 ### Minimum Agent Requirements by Task Type
 
 **Bug Fixes:**
-- Minimum 3 agents: debugger/error-detective → specialist → test-automator
+- Minimum 3 agents: debugger, error-detective → specialist → test-automator
 - Must include: security-auditor for any auth/data bugs
 
 **New Features:**
