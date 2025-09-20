@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { usePersistentSidebar } from '@/hooks/usePersistentSidebar';
+import { useLocation as useWouterLocation } from 'wouter';
 
 interface NavItem {
   label: string;
@@ -36,8 +37,9 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, isMounted } = usePersistentSidebar(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [location] = useLocation();
-  const { logout } = useSupabaseAuthContext();
+  const [location, setLocation] = useLocation();
+  const [, setWouterLocation] = useWouterLocation();
+  const { signOut } = useSupabaseAuthContext();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -97,7 +99,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
+      setWouterLocation('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
