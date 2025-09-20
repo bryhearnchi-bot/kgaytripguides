@@ -64,18 +64,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     {
       title: 'TRIPS',
       items: [
-        { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
-        { label: 'Trips', path: '/admin/trips', icon: <Anchor size={20} /> },
+        { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={18} /> },
+        { label: 'Trips', path: '/admin/trips', icon: <Anchor size={18} /> },
       ]
     },
     {
       title: 'CONTENT MANAGEMENT',
       items: [
-        { label: 'Ships', path: '/admin/ships', icon: <Ship size={20} /> },
-        { label: 'Locations', path: '/admin/locations', icon: <MapPin size={20} /> },
-        { label: 'Artists/Talent', path: '/admin/artists', icon: <Users size={20} /> },
-        { label: 'Party Themes', path: '/admin/themes', icon: <Palette size={20} /> },
-        { label: 'Info Sections', path: '/admin/info-sections', icon: <FileText size={20} /> },
+        { label: 'Ships', path: '/admin/ships', icon: <Ship size={18} /> },
+        { label: 'Locations', path: '/admin/locations', icon: <MapPin size={18} /> },
+        { label: 'Artists/Talent', path: '/admin/artists', icon: <Users size={18} /> },
+        { label: 'Party Themes', path: '/admin/themes', icon: <Palette size={18} /> },
+        { label: 'Info Sections', path: '/admin/info-sections', icon: <FileText size={18} /> },
       ]
     }
   ];
@@ -83,9 +83,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const adminSection: NavSection = {
     title: 'ADMINISTRATION',
     items: [
-      { label: 'Users', path: '/admin/users', icon: <Users size={20} /> },
-      { label: 'Settings', path: '/admin/settings', icon: <Settings size={20} /> },
-      { label: 'Profile', path: '/admin/profile', icon: <UserCircle size={20} /> },
+      { label: 'Users', path: '/admin/users', icon: <Users size={18} /> },
+      { label: 'Settings', path: '/admin/settings', icon: <Settings size={18} /> },
+      { label: 'Profile', path: '/admin/profile', icon: <UserCircle size={18} /> },
     ]
   };
 
@@ -116,10 +116,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
+          <div className="w-7 h-7 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
           </div>
-          <span className="text-white font-bold">Admin Panel</span>
+          <span className="text-white font-bold text-sm">Admin Panel</span>
         </div>
 
         <div className="w-10"></div> {/* Spacer for centering */}
@@ -138,7 +138,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         // Only apply transition after component has mounted to prevent flicker
         isMounted ? 'transition-all duration-300' : ''
       } ${
-        sidebarCollapsed ? 'w-20' : 'w-[280px]'
+        sidebarCollapsed ? 'w-20' : 'w-[220px]'
       } ${
         // Mobile responsiveness
         mobileMenuOpen ? 'lg:relative' : 'max-lg:transform max-lg:-translate-x-full'
@@ -147,8 +147,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex items-center justify-between gap-2">
             {sidebarCollapsed ? (
               <>
-                <div className="w-8 h-8 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-5 h-5 text-white" />
+                <div className="w-7 h-7 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 text-white" />
                 </div>
                 <button
                   onClick={toggleSidebar}
@@ -160,13 +160,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-6 h-6 text-white" />
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-4 h-4 text-white" />
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-white text-xl font-bold">Admin Panel</span>
-                  </div>
+                  <span className="text-white text-sm font-bold whitespace-nowrap">Admin Panel</span>
                 </div>
                 <button
                   onClick={toggleSidebar}
@@ -183,14 +181,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {navSections.map((section) => (
             <div key={section.title} className="mb-6">
               {!sidebarCollapsed && (
-                <div className="px-6 mb-2 text-xs uppercase tracking-wider text-white/40">
+                <div className="px-6 mb-2 text-[10px] uppercase tracking-wider text-white/40">
                   {section.title}
                 </div>
               )}
               {section.items.map((item) => (
                 <Link key={item.path} href={item.path}>
                   <a
-                    className={`flex items-center px-6 py-3 mx-3 rounded-lg transition-all touch-target ${
+                    className={`flex items-center px-6 py-1.5 mx-3 rounded-lg transition-all ${
                       isActive(item.path)
                         ? 'bg-white/15 text-white shadow-sm'
                         : 'text-white/70 hover:bg-white/10 hover:text-white/95'
@@ -201,7 +199,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     <span className="flex-shrink-0">{item.icon}</span>
                     {!sidebarCollapsed && (
                       <>
-                        <span className="ml-3">{item.label}</span>
+                        <span className="ml-3 text-sm">{item.label}</span>
                         {isActive(item.path) && (
                           <ChevronRight className="ml-auto" size={16} />
                         )}
@@ -222,7 +220,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {adminSection.items.map((item) => (
               <Link key={item.path} href={item.path}>
                 <a
-                  className={`flex items-center px-6 py-3 mx-3 rounded-lg transition-all touch-target ${
+                  className={`flex items-center px-6 py-1.5 mx-3 rounded-lg transition-all ${
                     isActive(item.path)
                       ? 'bg-white/15 text-white shadow-sm'
                       : 'text-white/70 hover:bg-white/10 hover:text-white/95'
@@ -233,7 +231,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <span className="flex-shrink-0">{item.icon}</span>
                   {!sidebarCollapsed && (
                     <>
-                      <span className="ml-3">{item.label}</span>
+                      <span className="ml-3 text-sm">{item.label}</span>
                       {isActive(item.path) && (
                         <ChevronRight className="ml-auto" size={16} />
                       )}
@@ -245,10 +243,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             <button
               onClick={handleLogout}
-              className="flex items-center px-6 py-3 mx-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white/95 transition-all w-[calc(100%-24px)] touch-target"
+              className="flex items-center px-6 py-1.5 mx-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white/95 transition-all w-[calc(100%-24px)]"
             >
-              <LogOut size={20} />
-              {!sidebarCollapsed && <span className="ml-3">Logout</span>}
+              <LogOut size={18} />
+              {!sidebarCollapsed && <span className="ml-3 text-sm">Logout</span>}
             </button>
 
           </div>
@@ -260,7 +258,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         // Only apply transition after component has mounted to prevent flicker
         isMounted ? 'transition-all duration-300' : ''
       } ${
-        sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[280px]'
+        sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[220px]'
       } lg:mt-0 mt-14 mobile-content-padding-bottom`}>
         <div className="p-4 lg:p-6">
           {children}
