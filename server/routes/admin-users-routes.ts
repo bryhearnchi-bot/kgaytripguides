@@ -19,17 +19,28 @@ import { profiles } from "../../shared/schema";
 import { eq, ilike, or, count } from "drizzle-orm";
 import { z } from "zod";
 
-// Initialize Supabase Admin Client
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+// Initialize Supabase Admin Client (only if credentials are available)
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Log environment check for debugging
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.warn('⚠️  Supabase credentials not found. Admin user management features will be limited.');
+  console.warn('    Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+}
+
+const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
+  ? createClient(
+      supabaseUrl,
+      supabaseServiceKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+  : null;
 
 // Validation schemas
 const createUserSchema = z.object({
@@ -167,7 +178,13 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      // Create user in Supabase Auth
+      // Create user in Supabase Auth (if available)
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'User management service is not configured. Please set up Supabase credentials.'
+        });
+      }
+
       const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: userData.email,
         password: userData.password,
@@ -276,6 +293,12 @@ export function registerAdminUsersRoutes(app: Express) {
           full_name: userData.full_name || existingUser[0].fullName,
           role: userData.role || existingUser[0].role
         };
+
+        if (!supabaseAdmin) {
+          return res.status(503).json({
+            error: 'User management service is not configured. Please set up Supabase credentials.'
+          });
+        }
 
         const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,
@@ -420,6 +443,12 @@ export function registerAdminUsersRoutes(app: Express) {
       }
 
       // Delete user from Supabase Auth (this will cascade to profiles via trigger)
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'User management service is not configured. Please set up Supabase credentials.'
+        });
+      }
+
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
       if (authError) {
         console.error('Supabase Auth delete error:', authError);
