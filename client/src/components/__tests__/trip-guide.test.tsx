@@ -70,7 +70,7 @@ const mockTripData = {
   itinerary: [
     {
       id: 1,
-      cruiseId: 1,
+      tripId: 1,
       date: '2025-10-12T00:00:00.000Z',
       day: 1,
       portName: 'Athens, Greece',
@@ -86,7 +86,7 @@ const mockTripData = {
   events: [
     {
       id: 1,
-      cruiseId: 1,
+      tripId: 1,
       date: '2025-10-12T00:00:00.000Z',
       time: '20:00',
       title: 'Welcome Party',
@@ -98,7 +98,7 @@ const mockTripData = {
     },
     {
       id: 2,
-      cruiseId: 1,
+      tripId: 1,
       date: '2025-10-12T00:00:00.000Z',
       time: '21:00',
       title: 'DJ Performance',

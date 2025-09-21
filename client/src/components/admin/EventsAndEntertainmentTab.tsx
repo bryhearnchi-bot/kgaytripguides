@@ -94,12 +94,12 @@ export default function EventsAndEntertainmentTab({
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <PartyPopper className="w-4 h-4 mr-2" />
-                Party Templates
+                Party Themes
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Party Templates</DialogTitle>
+                <DialogTitle>Party Themes</DialogTitle>
               </DialogHeader>
               <PartyTemplatesManager />
             </DialogContent>
@@ -225,12 +225,12 @@ export default function EventsAndEntertainmentTab({
             </CardContent>
           </Card>
 
-          {/* Party Templates */}
+          {/* Party Themes */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center space-x-2">
                 <PartyPopper className="w-4 h-4" />
-                <span>Party Templates</span>
+                <span>Party Themes</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -238,12 +238,12 @@ export default function EventsAndEntertainmentTab({
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full justify-start">
                     <Search className="w-4 h-4 mr-2" />
-                    Browse Templates
+                    Browse Themes
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Party Templates</DialogTitle>
+                    <DialogTitle>Party Themes</DialogTitle>
                   </DialogHeader>
                   <PartyTemplatesManager />
                 </DialogContent>
@@ -252,12 +252,12 @@ export default function EventsAndEntertainmentTab({
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full justify-start">
                     <Plus className="w-4 h-4 mr-2" />
-                    Create Template
+                    Create Theme
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Party Templates</DialogTitle>
+                    <DialogTitle>Party Themes</DialogTitle>
                   </DialogHeader>
                   <PartyTemplatesManager />
                 </DialogContent>

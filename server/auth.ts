@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 import { storage, db } from './storage';
 import type { User } from '@shared/schema';
+import { ApiError, ErrorCode } from './utils/ApiError';
 
 // JWT secret - in production this should come from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -42,7 +43,14 @@ export class AuthService {
   static verifyAccessToken(token: string): TokenPayload | null {
     try {
       return jwt.verify(token, JWT_SECRET) as TokenPayload;
-    } catch (error) {
+    } catch (error: any) {
+      // Provide more specific error information
+      if (error.name === 'TokenExpiredError') {
+        throw new ApiError(401, 'Token has expired', { code: ErrorCode.TOKEN_EXPIRED });
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new ApiError(401, 'Invalid token', { code: ErrorCode.INVALID_TOKEN });
+      }
       return null;
     }
   }
@@ -50,7 +58,13 @@ export class AuthService {
   static verifyRefreshToken(token: string): TokenPayload | null {
     try {
       return jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'TokenExpiredError') {
+        throw new ApiError(401, 'Refresh token has expired', { code: ErrorCode.TOKEN_EXPIRED });
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new ApiError(401, 'Invalid refresh token', { code: ErrorCode.INVALID_TOKEN });
+      }
       return null;
     }
   }
@@ -58,12 +72,13 @@ export class AuthService {
 
 // Authentication middleware - Supports both Supabase and custom JWT tokens
 export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
 
-  if (!token) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
+    if (!token) {
+      throw ApiError.unauthorized('Authentication required');
+    }
 
   // First, try Supabase authentication
   try {
@@ -95,37 +110,64 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
   }
 
   // Fall back to custom JWT authentication
-  const payload = AuthService.verifyAccessToken(token);
-  if (!payload) {
+  try {
+    const payload = AuthService.verifyAccessToken(token);
+    if (!payload) {
+      throw new ApiError(401, 'Invalid or expired token', { code: ErrorCode.INVALID_TOKEN });
+    }
+
+    // Add user info to request for use in subsequent middleware/routes
+    req.user = {
+      id: payload.userId,
+      username: payload.username,
+      role: payload.role,
+    } as User;
+
+    next();
+  } catch (error) {
+    // Pass JWT verification errors to the error handler
+    if (error instanceof ApiError) {
+      return next(error);
+    }
+    // For backwards compatibility, return standard error format
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
-
-  // Add user info to request for use in subsequent middleware/routes
-  req.user = {
-    id: payload.userId,
-    username: payload.username,
-    role: payload.role,
-  } as User;
-
-  next();
+  } catch (error) {
+    // Handle any errors in the auth middleware
+    if (error instanceof ApiError) {
+      return next(error);
+    }
+    return next(ApiError.unauthorized());
+  }
 }
 
 // Role-based authorization middleware
 export function requireRole(allowedRoles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      console.log('Role check failed: No user in request');
-      return res.status(401).json({ error: 'Authentication required' });
-    }
+    try {
+      if (!req.user) {
+        console.log('Role check failed: No user in request');
+        throw ApiError.unauthorized('Authentication required');
+      }
 
-    console.log(`Role check: User ${req.user.email} has role '${req.user.role}', allowed roles:`, allowedRoles);
-    if (!allowedRoles.includes(req.user.role || '')) {
-      console.log(`Role check failed: '${req.user.role}' not in allowed roles:`, allowedRoles);
+      console.log(`Role check: User ${req.user.email} has role '${req.user.role}', allowed roles:`, allowedRoles);
+      if (!allowedRoles.includes(req.user.role || '')) {
+        console.log(`Role check failed: '${req.user.role}' not in allowed roles:`, allowedRoles);
+        throw new ApiError(403, 'Insufficient permissions', {
+          code: ErrorCode.INSUFFICIENT_PERMISSIONS,
+          details: { userRole: req.user.role, requiredRoles: allowedRoles }
+        });
+      }
+
+      console.log('Role check passed');
+      next();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        // For backwards compatibility, return JSON response
+        return res.status(error.statusCode).json({ error: error.message });
+      }
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
-
-    console.log('Role check passed');
-    next();
   };
 }
 

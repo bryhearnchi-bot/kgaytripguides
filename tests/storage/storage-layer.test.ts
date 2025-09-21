@@ -6,12 +6,10 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../server/storage';
-import type { Port, Party, EventTalent } from '../../shared/schema';
+import type { Port } from '../../shared/schema';
 
-// These classes don't exist yet - will be created during migration
+// Storage class for ports
 import { PortStorage } from '../../server/storage/PortStorage';
-import { PartyStorage } from '../../server/storage/PartyStorage';
-import { EventTalentStorage } from '../../server/storage/EventTalentStorage';
 
 describe('PortStorage', () => {
   let portStorage: PortStorage;
@@ -161,7 +159,7 @@ describe('PortStorage', () => {
   });
 });
 
-describe('PartyStorage', () => {
+describe.skip('PartyStorage - Table Removed', () => {
   let partyStorage: PartyStorage;
 
   beforeEach(() => {
@@ -270,7 +268,7 @@ describe('PartyStorage', () => {
   });
 });
 
-describe('EventTalentStorage', () => {
+describe.skip('EventTalentStorage - Table Removed', () => {
   let eventTalentStorage: EventTalentStorage;
 
   beforeEach(() => {

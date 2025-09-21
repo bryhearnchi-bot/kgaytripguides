@@ -1,0 +1,68 @@
+# Codecov Configuration
+# Comprehensive coverage configuration for quality gates
+
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+        base: auto
+        paths:
+          - "client/src"
+          - "server"
+          - "shared"
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: 85%
+        threshold: 2%
+        base: auto
+        if_ci_failed: error
+
+  precision: 2
+  round: down
+  range: "70...100"
+
+  ignore:
+    - "tests/"
+    - "**/*.test.*"
+    - "**/*.spec.*"
+    - "coverage/"
+    - "dist/"
+    - "node_modules/"
+    - "archived/"
+    - "modelcontextprotocol/"
+    - "**/*.d.ts"
+    - "vitest.config.ts"
+    - "playwright.config.ts"
+    - "jest.config.js"
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+github_checks:
+  annotations: true
+
+flags:
+  unittests:
+    paths:
+      - tests/unit/
+      - client/src/
+    carryforward: true
+
+  integration:
+    paths:
+      - tests/integration/
+      - server/
+    carryforward: true
+
+  e2e:
+    paths:
+      - tests/e2e/
+    carryforward: false

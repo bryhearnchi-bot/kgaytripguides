@@ -16,13 +16,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Palette,
@@ -30,26 +23,21 @@ import {
   Edit2,
   Trash2,
   Search,
-  Clock,
-  Users,
-  MapPin,
   Save,
-  Sparkles,
   Copy
 } from 'lucide-react';
 
 interface PartyTheme {
   id?: number;
   name: string;
-  theme?: string;
-  venue_type?: 'pool' | 'deck' | 'club' | 'theater' | 'lounge';
-  capacity?: number;
-  duration_hours?: number;
-  requirements?: string[];
-  image_url?: string;
+  longDescription?: string;
+  shortDescription?: string;
+  costumeIdeas?: string;
+  imageUrl?: string;
+  amazonShoppingListUrl?: string;
   usage_count?: number;
-  description?: string;
-  dress_code?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export default function ThemesManagement() {
@@ -61,14 +49,18 @@ export default function ThemesManagement() {
   const [editingTheme, setEditingTheme] = useState<PartyTheme | null>(null);
   const [formData, setFormData] = useState<PartyTheme>({
     name: '',
-    venue_type: 'deck',
+    longDescription: '',
+    shortDescription: '',
+    costumeIdeas: '',
+    imageUrl: '',
+    amazonShoppingListUrl: '',
   });
 
   // Fetch themes
   const { data: themes = [], isLoading } = useQuery<PartyTheme[]>({
-    queryKey: ['parties'],
+    queryKey: ['party-themes'],
     queryFn: async () => {
-      const response = await fetch('/api/parties', {
+      const response = await fetch('/api/party-themes', {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch themes');
@@ -79,7 +71,7 @@ export default function ThemesManagement() {
   // Create theme mutation
   const createThemeMutation = useMutation({
     mutationFn: async (data: PartyTheme) => {
-      const response = await fetch('/api/parties', {
+      const response = await fetch('/api/party-themes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -89,7 +81,7 @@ export default function ThemesManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['parties'] });
+      queryClient.invalidateQueries({ queryKey: ['party-themes'] });
       setShowAddModal(false);
       resetForm();
       toast({
@@ -109,7 +101,7 @@ export default function ThemesManagement() {
   // Update theme mutation
   const updateThemeMutation = useMutation({
     mutationFn: async (data: PartyTheme) => {
-      const response = await fetch(`/api/parties/${data.id}`, {
+      const response = await fetch(`/api/party-themes/${data.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -119,7 +111,7 @@ export default function ThemesManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['parties'] });
+      queryClient.invalidateQueries({ queryKey: ['party-themes'] });
       setEditingTheme(null);
       resetForm();
       toast({
@@ -139,7 +131,7 @@ export default function ThemesManagement() {
   // Delete theme mutation
   const deleteThemeMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/parties/${id}`, {
+      const response = await fetch(`/api/party-themes/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -149,7 +141,7 @@ export default function ThemesManagement() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['parties'] });
+      queryClient.invalidateQueries({ queryKey: ['party-themes'] });
       toast({
         title: 'Success',
         description: 'Party theme deleted successfully',
@@ -169,18 +161,17 @@ export default function ThemesManagement() {
   // Duplicate theme mutation
   const duplicateThemeMutation = useMutation({
     mutationFn: async (theme: PartyTheme) => {
-      const newTheme = { ...theme, id: undefined, name: `${theme.name} (Copy)`, usage_count: 0 };
-      const response = await fetch('/api/parties', {
+      const response = await fetch(`/api/party-themes/${theme.id}/duplicate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(newTheme)
+        body: JSON.stringify({ name: `${theme.name} (Copy)` })
       });
       if (!response.ok) throw new Error('Failed to duplicate theme');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['parties'] });
+      queryClient.invalidateQueries({ queryKey: ['party-themes'] });
       toast({
         title: 'Success',
         description: 'Party theme duplicated successfully',
@@ -198,7 +189,11 @@ export default function ThemesManagement() {
   const resetForm = () => {
     setFormData({
       name: '',
-      venue_type: 'deck',
+      longDescription: '',
+      shortDescription: '',
+      costumeIdeas: '',
+      imageUrl: '',
+      amazonShoppingListUrl: '',
     });
   };
 
@@ -229,31 +224,11 @@ export default function ThemesManagement() {
 
   const filteredThemes = themes.filter(theme =>
     theme.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theme.theme?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theme.venue_type?.toLowerCase().includes(searchTerm.toLowerCase())
+    theme.longDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    theme.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    theme.costumeIdeas?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getVenueColor = (venue?: string) => {
-    switch (venue) {
-      case 'pool': return 'bg-blue-500';
-      case 'deck': return 'bg-green-500';
-      case 'club': return 'bg-purple-500';
-      case 'theater': return 'bg-red-500';
-      case 'lounge': return 'bg-orange-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getVenueIcon = (venue?: string) => {
-    switch (venue) {
-      case 'pool': return '🏊';
-      case 'deck': return '⚓';
-      case 'club': return '🎉';
-      case 'theater': return '🎭';
-      case 'lounge': return '🍸';
-      default: return '🎊';
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -333,8 +308,6 @@ export default function ThemesManagement() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onDuplicate={handleDuplicate}
-              getVenueColor={getVenueColor}
-              getVenueIcon={getVenueIcon}
             />
           )}
         </CardContent>
@@ -366,75 +339,56 @@ export default function ThemesManagement() {
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="theme">Theme Description</Label>
+                <Label htmlFor="shortDescription">Short Description</Label>
                 <Input
-                  id="theme"
-                  value={formData.theme || ''}
-                  onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
-                  placeholder="e.g., All white attire, UV lights and neon"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="venue_type">Venue Type</Label>
-                <Select
-                  value={formData.venue_type}
-                  onValueChange={(value) => setFormData({ ...formData, venue_type: value as PartyTheme['venue_type'] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pool">Pool Deck</SelectItem>
-                    <SelectItem value="deck">Main Deck</SelectItem>
-                    <SelectItem value="club">Night Club</SelectItem>
-                    <SelectItem value="theater">Theater</SelectItem>
-                    <SelectItem value="lounge">Lounge</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={formData.capacity || ''}
-                  onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || undefined })}
-                  placeholder="e.g., 500"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="duration">Duration (hours)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  step="0.5"
-                  value={formData.duration_hours || ''}
-                  onChange={(e) => setFormData({ ...formData, duration_hours: parseFloat(e.target.value) || undefined })}
-                  placeholder="e.g., 2.5"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="dress_code">Dress Code</Label>
-                <Input
-                  id="dress_code"
-                  value={formData.dress_code || ''}
-                  onChange={(e) => setFormData({ ...formData, dress_code: e.target.value })}
-                  placeholder="e.g., All White, Casual, Formal"
+                  id="shortDescription"
+                  value={formData.shortDescription || ''}
+                  onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                  placeholder="Brief theme summary"
                 />
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="longDescription">Long Description</Label>
                 <Textarea
-                  id="description"
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  id="longDescription"
+                  value={formData.longDescription || ''}
+                  onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+                  placeholder="Detailed description of the party theme"
                   rows={3}
-                  placeholder="Describe the party theme and atmosphere..."
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="costumeIdeas">Costume Ideas</Label>
+                <Textarea
+                  id="costumeIdeas"
+                  value={formData.costumeIdeas || ''}
+                  onChange={(e) => setFormData({ ...formData, costumeIdeas: e.target.value })}
+                  placeholder="e.g., All white attire, UV reactive clothing, neon accessories"
+                  rows={3}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  value={formData.imageUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="amazonShoppingListUrl">Amazon Shopping List URL</Label>
+                <Input
+                  id="amazonShoppingListUrl"
+                  type="url"
+                  value={formData.amazonShoppingListUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
+                  placeholder="https://www.amazon.com/shop/..."
                 />
               </div>
             </div>
@@ -473,26 +427,23 @@ interface ThemesTableProps {
   onEdit: (theme: PartyTheme) => void;
   onDelete: (id: number) => void;
   onDuplicate: (theme: PartyTheme) => void;
-  getVenueColor: (venue?: string) => string;
-  getVenueIcon: (venue?: string) => string;
 }
 
 function ThemesTable({
   themes,
   onEdit,
   onDelete,
-  onDuplicate,
-  getVenueColor,
-  getVenueIcon
+  onDuplicate
 }: ThemesTableProps) {
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Theme Details</TableHead>
-            <TableHead>Venue & Capacity</TableHead>
-            <TableHead>Usage Stats</TableHead>
+            <TableHead>Theme Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Costume Ideas</TableHead>
+            <TableHead>Shopping List</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -500,53 +451,49 @@ function ThemesTable({
           {themes.map((theme) => (
             <TableRow key={theme.id}>
               <TableCell>
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg ${getVenueColor(theme.venue_type)}`}>
-                    {getVenueIcon(theme.venue_type)}
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{theme.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {theme.theme && (
-                        <span className="flex items-center gap-1">
-                          <Sparkles size={12} />
-                          {theme.theme}
-                        </span>
-                      )}
-                      {theme.description && (
-                        <div className="mt-1 text-xs line-clamp-1">{theme.description}</div>
-                      )}
+                <div className="space-y-1">
+                  <div className="font-medium text-gray-900">{theme.name}</div>
+                  {theme.imageUrl && (
+                    <div className="text-xs text-blue-600 hover:underline truncate max-w-xs">
+                      <a href={theme.imageUrl} target="_blank" rel="noopener noreferrer">
+                        View Image
+                      </a>
                     </div>
-                  </div>
+                  )}
                 </div>
               </TableCell>
               <TableCell>
-                <div className="space-y-2">
-                  <Badge className={`text-white ${getVenueColor(theme.venue_type)}`}>
-                    {theme.venue_type?.toUpperCase()}
-                  </Badge>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    {theme.capacity && (
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {theme.capacity}
-                      </div>
-                    )}
-                    {theme.duration_hours && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {theme.duration_hours}h
-                      </div>
-                    )}
-                  </div>
+                <div className="space-y-1">
+                  {theme.shortDescription && (
+                    <div className="text-sm text-gray-700 line-clamp-1">{theme.shortDescription}</div>
+                  )}
+                  {theme.longDescription && (
+                    <div className="text-xs text-gray-500 line-clamp-2">{theme.longDescription}</div>
+                  )}
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{theme.usage_count || 0}</span>
-                  <span className="text-sm text-gray-500">events</span>
+                <div className="text-sm text-gray-600">
+                  {theme.costumeIdeas ? (
+                    <div className="line-clamp-2">{theme.costumeIdeas}</div>
+                  ) : (
+                    <span className="text-gray-400">No costume ideas</span>
+                  )}
                 </div>
+              </TableCell>
+              <TableCell>
+                {theme.amazonShoppingListUrl ? (
+                  <a
+                    href={theme.amazonShoppingListUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    View List
+                  </a>
+                ) : (
+                  <span className="text-gray-400 text-sm">Not set</span>
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end space-x-2">

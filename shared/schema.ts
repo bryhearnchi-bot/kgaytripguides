@@ -39,27 +39,13 @@ export const profiles = pgTable("profiles", {
 
 // Users table removed - using profiles table exclusively
 
-// ============ PASSWORD RESET TOKENS TABLE ============
-export const passwordResetTokens = pgTable("password_reset_tokens", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: text("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  usedAt: timestamp("used_at"), // null if not used yet
-}, (table) => ({
-  tokenIdx: index("password_reset_token_idx").on(table.token),
-  userIdx: index("password_reset_user_idx").on(table.userId),
-  expiresIdx: index("password_reset_expires_idx").on(table.expiresAt),
-}));
-
 // ============ INVITATIONS TABLE ============
 export const invitations = pgTable("invitations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull(),
   role: text("role").notNull(), // admin, content_editor, media_manager, viewer
   invitedBy: text("invited_by").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  cruiseId: integer("cruise_id").references(() => trips.id, { onDelete: "set null" }), // Optional cruise-specific invitation
+  tripId: integer("trip_id").references(() => trips.id, { onDelete: "set null" }), // Optional trip-specific invitation
   metadata: jsonb("metadata"), // Additional invitation data
   tokenHash: text("token_hash").notNull(), // Hashed invitation token
   salt: text("salt").notNull(), // Salt used for token hashing
@@ -76,6 +62,26 @@ export const invitations = pgTable("invitations", {
   tokenHashIdx: index("invitation_token_hash_idx").on(table.tokenHash),
   // Compound index for finding active invitations
   activeInvitationsIdx: index("invitation_active_idx").on(table.email, table.used, table.expiresAt),
+}));
+
+// ============ TRIP TYPES TABLE ============
+export const tripTypes = pgTable("trip_types", {
+  id: serial("id").primaryKey(),
+  tripType: varchar("trip_type", { length: 50 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  tripTypeUnique: unique("trip_types_trip_type_unique").on(table.tripType),
+}));
+
+// ============ TRIP STATUS TABLE ============
+export const tripStatus = pgTable("trip_status", {
+  id: serial("id").primaryKey(),
+  status: varchar("status", { length: 50 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  statusUnique: unique("trip_status_status_unique").on(table.status),
 }));
 
 // ============ SETTINGS TABLE ============
@@ -96,6 +102,8 @@ export const settings = pgTable("settings", {
   categoryKeyIdx: index("settings_category_key_idx").on(table.category, table.key),
   categoryIdx: index("settings_category_idx").on(table.category),
   activeIdx: index("settings_active_idx").on(table.isActive),
+  createdByIdx: index("settings_created_by_idx").on(table.createdBy),
+  categoryOrderIdx: index("settings_category_order_idx").on(table.category, table.orderIndex),
 }));
 
 // ============ SHIPS TABLE (NEW - Reusable) ============
@@ -130,18 +138,20 @@ export const ships = pgTable("ships", {
   nameLineUnique: unique("ships_name_cruise_line_unique").on(table.name, table.cruiseLine),
 }));
 
-// ============ CRUISES TABLE ============
-export const cruises = pgTable("cruises", {
+// ============ TRIPS TABLE (formerly cruises) ============
+export const trips = pgTable("trips", {
   id: serial("id").primaryKey(),
+  tripTypeId: integer("trip_type_id").notNull().references(() => tripTypes.id),
   name: text("name").notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   shipName: text("ship_name").notNull(), // Kept for backward compatibility, will be deprecated
   cruiseLine: text("cruise_line"), // Kept for backward compatibility, will be deprecated
-  shipId: integer("ship_id").references(() => ships.id), // NEW: Foreign key to ships table
-  tripType: text("trip_type").default("cruise").notNull(), // cruise, hotel, flight, etc. - references settings with category 'trip_types'
+  shipId: integer("ship_id").references(() => ships.id), // Foreign key to ships table
+  resortName: varchar("resort_name", { length: 255 }), // For resort trips
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  status: text("status").default("upcoming"), // upcoming, ongoing, past
+  tripStatusId: integer("trip_status_id").notNull().references(() => tripStatus.id),
+  status: text("status").default("upcoming"), // DEPRECATED: Use tripStatusId instead
   heroImageUrl: text("hero_image_url"),
   description: text("description"),
   highlights: jsonb("highlights"), // Array of highlight strings
@@ -151,23 +161,23 @@ export const cruises = pgTable("cruises", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  statusIdx: index("trip_status_idx").on(table.status),
-  slugIdx: index("trip_slug_idx").on(table.slug),
-  tripTypeIdx: index("trip_trip_type_idx").on(table.tripType),
-  shipIdx: index("cruises_ship_id_idx").on(table.shipId), // NEW: Index for ship foreign key
+  statusIdx: index("trips_status_idx").on(table.status), // DEPRECATED index
+  slugIdx: index("trips_slug_idx").on(table.slug),
+  tripTypeIdIdx: index("trips_trip_type_id_idx").on(table.tripTypeId),
+  tripStatusIdIdx: index("trips_trip_status_id_idx").on(table.tripStatusId),
+  shipIdx: index("trips_ship_id_idx").on(table.shipId),
 }));
 
-// Forward compatibility alias
-export const trips = cruises;
+// Backward compatibility alias
+export const cruises = trips;
 
 // ============ ITINERARY TABLE ============
 export const itinerary = pgTable("itinerary", {
   id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   day: integer("day").notNull(), // Day number of trip (1, 2, 3, etc.)
   portName: text("port_name").notNull(),
-  country: text("country"),
   arrivalTime: text("arrival_time"), // Stored as text for flexibility (e.g., "08:00", "—")
   departureTime: text("departure_time"),
   allAboardTime: text("all_aboard_time"),
@@ -176,44 +186,50 @@ export const itinerary = pgTable("itinerary", {
   highlights: jsonb("highlights"), // Port highlights
   orderIndex: integer("order_index").notNull(), // For sorting
   segment: text("segment").default("main"), // pre, main, post
-  port_id: integer("port_id"), // NEW: Foreign key to ports table
+  locationId: integer("location_id").references(() => locations.id), // Foreign key to locations table
+  locationTypeId: integer("location_type_id").notNull().references(() => locationTypes.id), // Foreign key to location_types table
 }, (table) => ({
-  cruiseIdx: index("itinerary_cruise_idx").on(table.cruiseId),
+  tripIdx: index("itinerary_trip_idx").on(table.tripId),
+  locationIdx: index("itinerary_location_idx").on(table.locationId),
+  locationTypeIdx: index("itinerary_location_type_id_idx").on(table.locationTypeId),
   dateIdx: index("itinerary_date_idx").on(table.date),
 }));
 
 // ============ EVENTS TABLE ============
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   time: text("time").notNull(), // "14:00", "21:30", etc.
   title: text("title").notNull(),
-  type: text("type").notNull(), // party, show, dining, lounge, fun, club, after
+  type: text("type").notNull(), // party, show, dining, lounge, fun, club, after, social
   venue: text("venue").notNull(),
-  deck: text("deck"),
-  description: text("description"),
-  shortDescription: text("short_description"),
-  imageUrl: text("image_url"),
-  themeDescription: text("theme_description"), // For parties
-  dressCode: text("dress_code"),
-  capacity: integer("capacity"),
-  requiresReservation: boolean("requires_reservation").default(false),
-  talentIds: jsonb("talent_ids"), // Array of talent IDs (deprecated - use event_talent table)
-  party_id: integer("party_id"), // NEW: Foreign key to parties table
+  talentIds: jsonb("talent_ids"), // Array of talent IDs
+  partyThemeId: integer("party_theme_id").references(() => partyThemes.id), // For party type events
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  cruiseIdx: index("events_cruise_idx").on(table.cruiseId),
+  tripIdx: index("events_trip_idx").on(table.tripId),
   dateIdx: index("events_date_idx").on(table.date),
   typeIdx: index("events_type_idx").on(table.type),
+  partyThemeIdx: index("events_party_theme_idx").on(table.partyThemeId),
+}));
+
+// ============ TALENT CATEGORIES TABLE ============
+export const talentCategories = pgTable("talent_categories", {
+  id: serial("id").primaryKey(),
+  category: varchar("category", { length: 50 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  categoryUnique: unique("talent_categories_category_unique").on(table.category),
 }));
 
 // ============ TALENT TABLE ============
 export const talent = pgTable("talent", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  category: text("category").notNull(), // Broadway, Drag, Comedy, Music, etc.
+  talentCategoryId: integer("talent_category_id").notNull().references(() => talentCategories.id),
   bio: text("bio"),
   knownFor: text("known_for"),
   profileImageUrl: text("profile_image_url"),
@@ -223,195 +239,104 @@ export const talent = pgTable("talent", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   nameIdx: index("talent_name_idx").on(table.name),
-  categoryIdx: index("talent_category_idx").on(table.category),
+  categoryIdx: index("idx_talent_category_id").on(table.talentCategoryId),
 }));
 
-// ============ CRUISE_TALENT JUNCTION TABLE ============
-export const cruiseTalent = pgTable("cruise_talent", {
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
+// ============ TRIP_TALENT JUNCTION TABLE (formerly cruise_talent) ============
+export const tripTalent = pgTable("trip_talent", {
+  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   talentId: integer("talent_id").notNull().references(() => talent.id, { onDelete: "cascade" }),
   role: text("role"), // Headliner, Special Guest, Host, etc.
   performanceCount: integer("performance_count"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
-  pk: primaryKey({ columns: [table.cruiseId, table.talentId] }),
-  cruiseIdx: index("cruise_talent_cruise_idx").on(table.cruiseId),
+  pk: primaryKey({ columns: [table.tripId, table.talentId] }),
+  tripIdx: index("trip_talent_trip_idx").on(table.tripId),
   talentIdx: index("cruise_talent_talent_idx").on(table.talentId),
 }));
 
-// Forward compatibility alias
-export const tripTalent = cruiseTalent;
+// Backward compatibility alias
+export const cruiseTalent = tripTalent;
 
-// ============ MEDIA TABLE ============
-export const media = pgTable("media", {
+// ============ LOCATION TYPES TABLE ============
+export const locationTypes = pgTable("location_types", {
   id: serial("id").primaryKey(),
-  url: text("url").notNull(),
-  thumbnailUrl: text("thumbnail_url"),
-  type: text("type").notNull(), // port, party, talent, trip, event, gallery
-  associatedType: text("associated_type"), // trip, event, talent, itinerary
-  associatedId: integer("associated_id"),
-  caption: text("caption"),
-  altText: text("alt_text"),
-  credits: text("credits"), // Photographer/source credits
-  uploadedBy: text("uploaded_by").references(() => profiles.id),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
-  metadata: jsonb("metadata"), // Additional metadata like dimensions, file size, etc.
-}, (table) => ({
-  typeIdx: index("media_type_idx").on(table.type),
-  associatedIdx: index("media_associated_idx").on(table.associatedType, table.associatedId),
-}));
-
-// ============ PORTS TABLE (NEW - Normalized) ============
-export const ports = pgTable("ports", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  country: varchar("country", { length: 100 }).notNull(),
-  region: varchar("region", { length: 100 }),
-  port_type: varchar("port_type", { length: 20 }).default('port'), // port, sea_day, embark, disembark
-  coordinates: jsonb("coordinates"), // { lat: number, lng: number }
-  description: text("description"),
-  image_url: text("image_url"),
-  created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  nameIdx: unique("ports_name_unique").on(table.name),
-  typeIdx: index("ports_type_idx").on(table.port_type),
-}));
-
-// ============ PARTIES TABLE (NEW - Normalized) ============
-export const parties = pgTable("parties", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  theme: text("theme"),
-  venue_type: varchar("venue_type", { length: 20 }).default('deck'), // pool, club, theater, deck, lounge
-  capacity: integer("capacity"),
-  duration_hours: decimal("duration_hours", { precision: 3, scale: 1 }),
-  requirements: jsonb("requirements"),
-  image_url: text("image_url"),
-  usage_count: integer("usage_count").default(0),
-  created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  nameIdx: unique("parties_name_unique").on(table.name),
-  venueIdx: index("parties_venue_idx").on(table.venue_type),
-  usageIdx: index("parties_usage_idx").on(table.usage_count),
-}));
-
-// ============ EVENT_TALENT TABLE (NEW - Junction) ============
-export const eventTalent = pgTable("event_talent", {
-  id: serial("id").primaryKey(),
-  event_id: integer("event_id").notNull(), // Will add FK reference after events table update
-  talent_id: integer("talent_id").notNull().references(() => talent.id, { onDelete: "cascade" }),
-  role: varchar("role", { length: 50 }).default('performer'),
-  performance_order: integer("performance_order"),
-  created_at: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  eventTalentUnique: unique("event_talent_unique").on(table.event_id, table.talent_id),
-  eventIdx: index("event_talent_event_idx").on(table.event_id),
-  talentIdx: index("event_talent_talent_idx").on(table.talent_id),
-}));
-
-// ============ USER_CRUISES TABLE (for permissions) ============
-export const userCruises = pgTable("user_cruises", {
-  userId: text("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  cruiseId: integer("cruise_id").notNull().references(() => cruises.id, { onDelete: "cascade" }),
-  permissionLevel: text("permission_level").notNull(), // admin, editor, viewer
-  assignedBy: text("assigned_by").references(() => profiles.id),
-  assignedAt: timestamp("assigned_at").defaultNow(),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.userId, table.cruiseId] }),
-  userIdx: index("user_cruises_user_idx").on(table.userId),
-  cruiseIdx: index("user_cruises_cruise_idx").on(table.cruiseId),
-}));
-
-// Forward compatibility alias
-export const userTrips = userCruises;
-
-// ============ PARTY TEMPLATES TABLE ============
-export const partyTemplates = pgTable("party_templates", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  themeDescription: text("theme_description"),
-  dressCode: text("dress_code"),
-  defaultImageUrl: text("default_image_url"),
-  tags: jsonb("tags"), // Array of tags for searching
-  defaults: jsonb("defaults"), // Default values for events using this template
-  createdBy: text("created_by").references(() => profiles.id),
+  type: varchar("type", { length: 50 }).notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  nameIdx: index("party_templates_name_idx").on(table.name),
+  typeUnique: unique("location_types_type_unique").on(table.type),
+}));
+
+// ============ LOCATIONS TABLE (formerly ports) ============
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  country: varchar("country", { length: 100 }).notNull(),
+  coordinates: jsonb("coordinates"), // { lat: number, lng: number }
+  description: text("description"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: unique("locations_name_unique").on(table.name),
+}));
+
+// Backward compatibility alias
+export const ports = locations;
+
+// ============ PARTY THEMES TABLE (NEW - Replaces parties) ============
+export const partyThemes = pgTable("party_themes", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  longDescription: text("long_description"),
+  shortDescription: text("short_description"),
+  costumeIdeas: text("costume_ideas"),
+  imageUrl: text("image_url"),
+  amazonShoppingListUrl: text("amazon_shopping_list_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: unique("party_themes_name_unique").on(table.name),
 }));
 
 // ============ TRIP INFO SECTIONS TABLE (formerly cruise_info_sections) ============
 export const tripInfoSections = pgTable("trip_info_sections", {
   id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   content: text("content"), // Rich text content
   orderIndex: integer("order_index").notNull(),
   updatedBy: text("updated_by").references(() => profiles.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  cruiseIdx: index("cruise_info_cruise_idx").on(table.cruiseId),
-  orderIdx: index("trip_info_order_idx").on(table.cruiseId, table.orderIndex),
+  tripIdx: index("trip_info_trip_idx").on(table.tripId),
+  orderIdx: index("trip_info_order_idx").on(table.tripId, table.orderIndex),
 }));
 
 // Backward compatibility alias
 export const cruiseInfoSections = tripInfoSections;
 
-// ============ AI JOBS TABLE ============
-export const aiJobs = pgTable("ai_jobs", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
-  sourceType: text("source_type").notNull(), // pdf, url
-  sourceRef: text("source_ref").notNull(), // URL or file path
-  task: text("task").notNull(), // extract
-  status: text("status").default("queued"), // queued, processing, completed, failed
-  result: jsonb("result"), // Extracted data
-  error: text("error"),
-  createdBy: text("created_by").references(() => profiles.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  cruiseIdx: index("ai_jobs_cruise_idx").on(table.cruiseId),
-  statusIdx: index("ai_jobs_status_idx").on(table.status),
-}));
-
-// ============ AI DRAFTS TABLE ============
-export const aiDrafts = pgTable("ai_drafts", {
-  id: serial("id").primaryKey(),
-  cruiseId: integer("cruise_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
-  draftType: text("draft_type").notNull(), // itinerary, events, info
-  payload: jsonb("payload").notNull(), // Draft data to be reviewed
-  createdFromJobId: integer("created_from_job_id").references(() => aiJobs.id),
-  createdBy: text("created_by").references(() => profiles.id),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  cruiseIdx: index("ai_drafts_cruise_idx").on(table.cruiseId),
-  typeIdx: index("ai_drafts_type_idx").on(table.draftType),
-}));
-
-// ============ AUDIT_LOG TABLE ============
-export const auditLog = pgTable("audit_log", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").references(() => profiles.id),
-  action: text("action").notNull(), // create, update, delete
-  tableName: text("table_name").notNull(),
-  recordId: text("record_id"),
-  oldValues: jsonb("old_values"),
-  newValues: jsonb("new_values"),
-  timestamp: timestamp("timestamp").defaultNow(),
-  ipAddress: text("ip_address"),
-}, (table) => ({
-  userIdx: index("audit_user_idx").on(table.userId),
-  timestampIdx: index("audit_timestamp_idx").on(table.timestamp),
-}));
 
 // ============ RELATIONS ============
 export const profilesRelations = relations(profiles, ({ many }) => ({
   // Future relations can be added here
+}));
+
+export const tripTypesRelations = relations(tripTypes, ({ many }) => ({
+  trips: many(trips),
+}));
+
+export const tripStatusRelations = relations(tripStatus, ({ many }) => ({
+  trips: many(trips),
+}));
+
+export const settingsRelations = relations(settings, ({ one }) => ({
+  creator: one(profiles, {
+    fields: [settings.createdBy],
+    references: [profiles.id],
+  }),
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
@@ -419,8 +344,8 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
     fields: [invitations.invitedBy],
     references: [profiles.id],
   }),
-  cruise: one(trips, {
-    fields: [invitations.cruiseId],
+  trip: one(trips, {
+    fields: [invitations.tripId],
     references: [trips.id],
   }),
   acceptedBy: one(profiles, {
@@ -430,17 +355,24 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
 }));
 
 export const shipsRelations = relations(ships, ({ many }) => ({
-  cruises: many(cruises),
+  trips: many(trips),
 }));
 
 export const tripsRelations = relations(trips, ({ many, one }) => ({
   itinerary: many(itinerary),
   events: many(events),
   tripTalent: many(tripTalent),
-  userTrips: many(userTrips),
   ship: one(ships, {
     fields: [trips.shipId],
     references: [ships.id],
+  }),
+  tripType: one(tripTypes, {
+    fields: [trips.tripTypeId],
+    references: [tripTypes.id],
+  }),
+  tripStatus: one(tripStatus, {
+    fields: [trips.tripStatusId],
+    references: [tripStatus.id],
   }),
   creator: one(profiles, {
     fields: [trips.createdBy],
@@ -451,29 +383,61 @@ export const tripsRelations = relations(trips, ({ many, one }) => ({
 // Backward compatibility alias
 export const cruisesRelations = tripsRelations;
 
+export const locationTypesRelations = relations(locationTypes, ({ many }) => ({
+  itineraries: many(itinerary),
+}));
+
+export const locationsRelations = relations(locations, ({ many }) => ({
+  itineraries: many(itinerary),
+}));
+
 export const itineraryRelations = relations(itinerary, ({ one }) => ({
-  cruise: one(trips, {
-    fields: [itinerary.cruiseId],
+  trip: one(trips, {
+    fields: [itinerary.tripId],
     references: [trips.id],
+  }),
+  location: one(locations, {
+    fields: [itinerary.locationId],
+    references: [locations.id],
+  }),
+  locationType: one(locationTypes, {
+    fields: [itinerary.locationTypeId],
+    references: [locationTypes.id],
   }),
 }));
 
 export const eventsRelations = relations(events, ({ one }) => ({
-  cruise: one(trips, {
-    fields: [events.cruiseId],
+  trip: one(trips, {
+    fields: [events.tripId],
     references: [trips.id],
+  }),
+  partyTheme: one(partyThemes, {
+    fields: [events.partyThemeId],
+    references: [partyThemes.id],
   }),
 }));
 
-export const talentRelations = relations(talent, ({ many }) => ({
+export const talentCategoriesRelations = relations(talentCategories, ({ many }) => ({
+  talent: many(talent),
+}));
+
+export const partyThemesRelations = relations(partyThemes, ({ many }) => ({
+  events: many(events),
+}));
+
+export const talentRelations = relations(talent, ({ many, one }) => ({
   tripTalent: many(tripTalent),
   // Backward compatibility
   cruiseTalent: many(tripTalent),
+  talentCategory: one(talentCategories, {
+    fields: [talent.talentCategoryId],
+    references: [talentCategories.id],
+  }),
 }));
 
 export const tripTalentRelations = relations(tripTalent, ({ one }) => ({
-  cruise: one(trips, {
-    fields: [tripTalent.cruiseId],
+  trip: one(trips, {
+    fields: [tripTalent.tripId],
     references: [trips.id],
   }),
   talent: one(talent, {
@@ -485,30 +449,10 @@ export const tripTalentRelations = relations(tripTalent, ({ one }) => ({
 // Backward compatibility alias
 export const cruiseTalentRelations = tripTalentRelations;
 
-export const userTripsRelations = relations(userTrips, ({ one }) => ({
-  user: one(profiles, {
-    fields: [userTrips.userId],
-    references: [profiles.id],
-  }),
-  cruise: one(trips, {
-    fields: [userTrips.cruiseId],
-    references: [trips.id],
-  }),
-}));
-
-// Backward compatibility alias
-export const userCruisesRelations = userTripsRelations;
-
-export const partyTemplatesRelations = relations(partyTemplates, ({ one }) => ({
-  creator: one(profiles, {
-    fields: [partyTemplates.createdBy],
-    references: [profiles.id],
-  }),
-}));
 
 export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) => ({
-  cruise: one(trips, {
-    fields: [tripInfoSections.cruiseId],
+  trip: one(trips, {
+    fields: [tripInfoSections.tripId],
     references: [trips.id],
   }),
   updater: one(profiles, {
@@ -520,41 +464,26 @@ export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) =
 // Backward compatibility alias
 export const cruiseInfoSectionsRelations = tripInfoSectionsRelations;
 
-export const aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
-  cruise: one(trips, {
-    fields: [aiJobs.cruiseId],
-    references: [trips.id],
-  }),
-  creator: one(profiles, {
-    fields: [aiJobs.createdBy],
-    references: [profiles.id],
-  }),
-  drafts: many(aiDrafts),
-}));
-
-export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
-  cruise: one(trips, {
-    fields: [aiDrafts.cruiseId],
-    references: [trips.id],
-  }),
-  job: one(aiJobs, {
-    fields: [aiDrafts.createdFromJobId],
-    references: [aiJobs.id],
-  }),
-  creator: one(profiles, {
-    fields: [aiDrafts.createdBy],
-    references: [profiles.id],
-  }),
-}));
-
-export const settingsRelations = relations(settings, ({ one }) => ({
-  creator: one(profiles, {
-    fields: [settings.createdBy],
-    references: [profiles.id],
-  }),
-}));
 
 // ============ INSERT SCHEMAS ============
+export const insertTripTypeSchema = createInsertSchema(tripTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTripStatusSchema = createInsertSchema(tripStatus).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSettingsSchema = createInsertSchema(settings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertProfileSchema = createInsertSchema(profiles).omit({
   createdAt: true,
   updatedAt: true,
@@ -592,18 +521,25 @@ export const insertEventSchema = createInsertSchema(events).omit({
   updatedAt: true,
 });
 
+export const insertTalentCategorySchema = createInsertSchema(talentCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertTalentSchema = createInsertSchema(talent).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertMediaSchema = createInsertSchema(media).omit({
+export const insertLocationTypeSchema = createInsertSchema(locationTypes).omit({
   id: true,
-  uploadedAt: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
-export const insertPartyTemplateSchema = createInsertSchema(partyTemplates).omit({
+export const insertLocationSchema = createInsertSchema(locations).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -617,45 +553,38 @@ export const insertTripInfoSectionSchema = createInsertSchema(tripInfoSections).
 // Backward compatibility alias
 export const insertCruiseInfoSectionSchema = insertTripInfoSectionSchema;
 
-export const insertAiJobSchema = createInsertSchema(aiJobs).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertAiDraftSchema = createInsertSchema(aiDrafts).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertSettingsSchema = createInsertSchema(settings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
 
 // ============ TYPE EXPORTS ============
+export type InsertTripType = z.infer<typeof insertTripTypeSchema>;
+export type InsertTripStatus = z.infer<typeof insertTripStatusSchema>;
+export type InsertSettings = z.infer<typeof insertSettingsSchema>;
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export type InsertShip = z.infer<typeof insertShipSchema>;
+export type InsertLocationType = z.infer<typeof insertLocationTypeSchema>;
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
+export type InsertTalentCategory = z.infer<typeof insertTalentCategorySchema>;
+export type InsertTalent = z.infer<typeof insertTalentSchema>;
 export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
+export type TripType = typeof tripTypes.$inferSelect;
+export type TripStatus = typeof tripStatus.$inferSelect;
+export type Settings = typeof settings.$inferSelect;
+export type LocationType = typeof locationTypes.$inferSelect;
+export type Location = typeof locations.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
 export type Ship = typeof ships.$inferSelect;
 export type User = Profile; // Legacy alias - now using Profile
 export type Trip = typeof trips.$inferSelect;
 export type Itinerary = typeof itinerary.$inferSelect;
 export type Event = typeof events.$inferSelect;
+export type TalentCategory = typeof talentCategories.$inferSelect;
 export type Talent = typeof talent.$inferSelect;
-export type Media = typeof media.$inferSelect;
-export type UserTrip = typeof userTrips.$inferSelect;
-export type AuditLog = typeof auditLog.$inferSelect;
-export type PartyTemplate = typeof partyTemplates.$inferSelect;
+export type PartyTheme = typeof partyThemes.$inferSelect;
 export type TripInfoSection = typeof tripInfoSections.$inferSelect;
-export type AiJob = typeof aiJobs.$inferSelect;
-export type AiDraft = typeof aiDrafts.$inferSelect;
-export type Settings = typeof settings.$inferSelect;
 export type Invitation = typeof invitations.$inferSelect;
+
+// Backward compatibility alias
+export type Port = Location;
 
 // Backward compatibility aliases
 export type Cruise = Trip;
-export type UserCruise = UserTrip;
 export type CruiseInfoSection = TripInfoSection;

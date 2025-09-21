@@ -1,5 +1,58 @@
 import { Request, Response, NextFunction } from 'express';
-import { z, ZodSchema } from 'zod';
+import { z, ZodSchema, ZodError } from 'zod';
+
+/**
+ * Format validation errors for better user experience
+ */
+function formatZodError(error: ZodError): any {
+  const formattedErrors: Record<string, string[]> = {};
+
+  error.errors.forEach(err => {
+    const path = err.path.join('.');
+    if (!formattedErrors[path]) {
+      formattedErrors[path] = [];
+    }
+
+    // Create user-friendly error messages
+    let message = err.message;
+
+    // Enhance common error messages
+    if (err.code === 'invalid_type') {
+      const expected = (err as any).expected;
+      const received = (err as any).received;
+      message = `Expected ${expected}, but received ${received}`;
+    } else if (err.code === 'too_small') {
+      const min = (err as any).minimum;
+      const type = (err as any).type;
+      if (type === 'string') {
+        message = `Must be at least ${min} character${min !== 1 ? 's' : ''} long`;
+      } else if (type === 'array') {
+        message = `Must contain at least ${min} item${min !== 1 ? 's' : ''}`;
+      } else if (type === 'number') {
+        message = `Must be at least ${min}`;
+      }
+    } else if (err.code === 'too_big') {
+      const max = (err as any).maximum;
+      const type = (err as any).type;
+      if (type === 'string') {
+        message = `Must be at most ${max} character${max !== 1 ? 's' : ''} long`;
+      } else if (type === 'array') {
+        message = `Must contain at most ${max} item${max !== 1 ? 's' : ''}`;
+      } else if (type === 'number') {
+        message = `Must be at most ${max}`;
+      }
+    }
+
+    formattedErrors[path].push(message);
+  });
+
+  return {
+    error: 'Validation failed',
+    message: 'Please check the following fields and try again',
+    errors: formattedErrors,
+    errorCount: error.errors.length
+  };
+}
 
 // Validation middleware factory
 export function validateBody<T>(schema: ZodSchema<T>) {
@@ -8,14 +61,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       const validationResult = schema.safeParse(req.body);
 
       if (!validationResult.success) {
-        return res.status(400).json({
-          error: 'Validation failed',
-          details: validationResult.error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message,
-            code: err.code
-          }))
-        });
+        return res.status(400).json(formatZodError(validationResult.error));
       }
 
       // Replace req.body with validated and transformed data
@@ -23,7 +69,10 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       next();
     } catch (error) {
       console.error('Validation middleware error:', error);
-      res.status(500).json({ error: 'Internal validation error' });
+      res.status(500).json({
+        error: 'Internal validation error',
+        message: 'An unexpected error occurred during validation'
+      });
     }
   };
 }
@@ -34,21 +83,20 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       const validationResult = schema.safeParse(req.query);
 
       if (!validationResult.success) {
-        return res.status(400).json({
-          error: 'Query validation failed',
-          details: validationResult.error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message,
-            code: err.code
-          }))
-        });
+        const formatted = formatZodError(validationResult.error);
+        formatted.error = 'Query parameter validation failed';
+        formatted.message = 'Invalid query parameters provided';
+        return res.status(400).json(formatted);
       }
 
       req.query = validationResult.data as any;
       next();
     } catch (error) {
       console.error('Query validation middleware error:', error);
-      res.status(500).json({ error: 'Internal validation error' });
+      res.status(500).json({
+        error: 'Internal validation error',
+        message: 'An unexpected error occurred during query validation'
+      });
     }
   };
 }
@@ -59,176 +107,101 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       const validationResult = schema.safeParse(req.params);
 
       if (!validationResult.success) {
-        return res.status(400).json({
-          error: 'Parameter validation failed',
-          details: validationResult.error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message,
-            code: err.code
-          }))
-        });
+        const formatted = formatZodError(validationResult.error);
+        formatted.error = 'URL parameter validation failed';
+        formatted.message = 'Invalid URL parameters provided';
+        return res.status(400).json(formatted);
       }
 
       req.params = validationResult.data as any;
       next();
     } catch (error) {
       console.error('Parameter validation middleware error:', error);
-      res.status(500).json({ error: 'Internal validation error' });
+      res.status(500).json({
+        error: 'Internal validation error',
+        message: 'An unexpected error occurred during parameter validation'
+      });
     }
   };
 }
 
-// Common validation schemas
-export const idParamSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'ID must be a number').transform(Number)
-});
+/**
+ * Composite validation middleware for validating multiple parts of the request
+ */
+export function validateRequest<TBody = any, TQuery = any, TParams = any>({
+  body,
+  query,
+  params
+}: {
+  body?: ZodSchema<TBody>;
+  query?: ZodSchema<TQuery>;
+  params?: ZodSchema<TParams>;
+}) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors: Record<string, any> = {};
+      let hasErrors = false;
 
-export const slugParamSchema = z.object({
-  slug: z.string().min(1, 'Slug is required')
-});
+      // Validate body if schema provided
+      if (body) {
+        const result = body.safeParse(req.body);
+        if (!result.success) {
+          errors.body = formatZodError(result.error).errors;
+          hasErrors = true;
+        } else {
+          req.body = result.data;
+        }
+      }
 
-export const paginationSchema = z.object({
-  page: z.string().optional().default('1').transform(Number),
-  limit: z.string().optional().default('20').transform(Number),
-  offset: z.string().optional().transform(val => val ? Number(val) : undefined)
-});
+      // Validate query if schema provided
+      if (query) {
+        const result = query.safeParse(req.query);
+        if (!result.success) {
+          errors.query = formatZodError(result.error).errors;
+          hasErrors = true;
+        } else {
+          req.query = result.data as any;
+        }
+      }
 
-export const searchSchema = z.object({
-  search: z.string().optional(),
-  sortBy: z.string().optional(),
-  sortOrder: z.enum(['asc', 'desc']).optional().default('asc')
-});
+      // Validate params if schema provided
+      if (params) {
+        const result = params.safeParse(req.params);
+        if (!result.success) {
+          errors.params = formatZodError(result.error).errors;
+          hasErrors = true;
+        } else {
+          req.params = result.data as any;
+        }
+      }
 
-// Trip/Cruise validation schemas
-export const createTripSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
-  slug: z.string().min(1, 'Slug is required').max(255),
-  shipName: z.string().min(1, 'Ship name is required'),
-  cruiseLine: z.string().optional(),
-  shipId: z.number().int().positive().optional(),
-  tripType: z.string().default('cruise'),
-  startDate: z.string().datetime('Invalid start date format'),
-  endDate: z.string().datetime('Invalid end date format'),
-  status: z.enum(['upcoming', 'ongoing', 'past']).optional().default('upcoming'),
-  heroImageUrl: z.string().url().optional().or(z.literal('')),
-  description: z.string().optional(),
-  highlights: z.array(z.string()).optional(),
-  includesInfo: z.record(z.any()).optional(),
-  pricing: z.record(z.any()).optional()
-});
+      if (hasErrors) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          message: 'Multiple validation errors occurred',
+          errors
+        });
+      }
 
-export const updateTripSchema = createTripSchema.partial();
+      next();
+    } catch (error) {
+      console.error('Request validation middleware error:', error);
+      res.status(500).json({
+        error: 'Internal validation error',
+        message: 'An unexpected error occurred during request validation'
+      });
+    }
+  };
+}
 
-// Event validation schemas
-export const createEventSchema = z.object({
-  cruiseId: z.number().int().positive(),
-  date: z.string().datetime('Invalid date format'),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Time must be in HH:MM format'),
-  title: z.string().min(1, 'Title is required').max(255),
-  type: z.enum(['party', 'show', 'dining', 'lounge', 'fun', 'club', 'after']),
-  venue: z.string().min(1, 'Venue is required').max(255),
-  deck: z.string().optional(),
-  description: z.string().optional(),
-  shortDescription: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
-  themeDescription: z.string().optional(),
-  dressCode: z.string().optional(),
-  capacity: z.number().int().positive().optional(),
-  requiresReservation: z.boolean().optional().default(false),
-  talentIds: z.array(z.number().int().positive()).optional(),
-  party_id: z.number().int().positive().optional()
-});
+// Re-export schemas from the organized schema files for backward compatibility
+export * from '../schemas/common';
+export * from '../schemas/trips';
+export * from '../schemas/media';
+export * from '../schemas/users';
+export * from '../schemas/locations';
 
-export const updateEventSchema = createEventSchema.partial().omit({ cruiseId: true });
-
-export const bulkEventsSchema = z.object({
-  events: z.array(createEventSchema).min(1, 'At least one event is required')
-});
-
-// Talent validation schemas
-export const createTalentSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
-  category: z.string().min(1, 'Category is required').max(100),
-  bio: z.string().optional(),
-  knownFor: z.string().optional(),
-  profileImageUrl: z.string().url().optional().or(z.literal('')),
-  socialLinks: z.record(z.string().url()).optional(),
-  website: z.string().url().optional().or(z.literal(''))
-});
-
-export const updateTalentSchema = createTalentSchema.partial();
-
-export const bulkTalentAssignSchema = z.object({
-  assignments: z.array(z.object({
-    cruiseId: z.number().int().positive(),
-    talentId: z.number().int().positive(),
-    role: z.string().optional()
-  })).min(1, 'At least one assignment is required')
-});
-
-// Itinerary validation schemas
-export const createItineraryStopSchema = z.object({
-  cruiseId: z.number().int().positive(),
-  date: z.string().datetime('Invalid date format'),
-  day: z.number().int().positive(),
-  portName: z.string().min(1, 'Port name is required').max(255),
-  country: z.string().optional(),
-  arrivalTime: z.string().optional(),
-  departureTime: z.string().optional(),
-  allAboardTime: z.string().optional(),
-  portImageUrl: z.string().url().optional().or(z.literal('')),
-  description: z.string().optional(),
-  highlights: z.array(z.string()).optional(),
-  orderIndex: z.number().int(),
-  segment: z.enum(['pre', 'main', 'post']).optional().default('main'),
-  port_id: z.number().int().positive().optional()
-});
-
-export const updateItineraryStopSchema = createItineraryStopSchema.partial().omit({ cruiseId: true });
-
-// Ship validation schemas
-export const createShipSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
-  cruiseLine: z.string().min(1, 'Cruise line is required').max(255),
-  shipCode: z.string().max(50).optional(),
-  capacity: z.number().int().positive().optional(),
-  crewSize: z.number().int().positive().optional(),
-  grossTonnage: z.number().int().positive().optional(),
-  lengthMeters: z.number().positive().optional(),
-  beamMeters: z.number().positive().optional(),
-  decks: z.number().int().positive().optional(),
-  builtYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  refurbishedYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  shipClass: z.string().max(100).optional(),
-  flag: z.string().max(100).optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
-  deckPlans: z.array(z.any()).optional(),
-  amenities: z.record(z.any()).optional(),
-  diningVenues: z.record(z.any()).optional(),
-  entertainmentVenues: z.record(z.any()).optional(),
-  stateroomCategories: z.record(z.any()).optional(),
-  description: z.string().optional(),
-  highlights: z.array(z.string()).optional()
-});
-
-export const updateShipSchema = createShipSchema.partial();
-
-// Port validation schemas
-export const createPortSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
-  country: z.string().min(1, 'Country is required').max(100),
-  region: z.string().max(100).optional(),
-  port_type: z.enum(['port', 'sea_day', 'embark', 'disembark']).optional().default('port'),
-  coordinates: z.object({
-    lat: z.number().min(-90).max(90),
-    lng: z.number().min(-180).max(180)
-  }).optional(),
-  description: z.string().optional(),
-  image_url: z.string().url().optional().or(z.literal(''))
-});
-
-export const updatePortSchema = createPortSchema.partial();
-
+// Additional schemas that don't fit in other categories
 // Settings validation schemas
 export const createSettingSchema = z.object({
   category: z.string().min(1, 'Category is required'),
@@ -247,20 +220,6 @@ export const globalSearchSchema = z.object({
   query: z.string().min(1, 'Search query is required'),
   types: z.array(z.enum(['trips', 'events', 'talent', 'ports', 'ships'])).optional(),
   limit: z.number().int().positive().max(100).optional().default(20)
-});
-
-// Export/import schemas
-export const exportTripSchema = z.object({
-  format: z.enum(['json', 'csv', 'excel']).optional().default('json'),
-  includeData: z.array(z.enum(['itinerary', 'events', 'talent', 'media'])).optional()
-});
-
-export const importTripSchema = z.object({
-  data: z.record(z.any()),
-  options: z.object({
-    overwrite: z.boolean().optional().default(false),
-    mergeStrategy: z.enum(['replace', 'merge', 'append']).optional().default('merge')
-  }).optional()
 });
 
 // Admin dashboard stats schema

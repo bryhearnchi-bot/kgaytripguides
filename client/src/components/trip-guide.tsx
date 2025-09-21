@@ -1366,7 +1366,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                     <div className="flex-1 p-3 lg:p-4">
                                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                          <h4 className="text-lg font-bold text-gray-900 break-words">{party.title}</h4>
+                                          <h4 className="text-lg font-bold text-gray-900 break-words flex items-center gap-2">
+                                            <PartyPopper className="w-5 h-5 text-ocean-600 flex-shrink-0" />
+                                            {party.title}
+                                          </h4>
                                           <div className="bg-gradient-to-r from-coral to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
                                             {globalFormatTime(party.time, timeFormat)}
                                           </div>
@@ -1382,6 +1385,27 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                             <span>{party.description.split('.').slice(1).join('.')}</span>
                                           }
                                         </p>
+                                      )}
+
+                                      {/* Party Theme Details */}
+                                      {party.partyTheme && (
+                                        <div className="mt-3 space-y-2 border-t pt-3">
+                                          {(party.partyTheme.longDescription || party.partyTheme.long_description || party.partyTheme.description) && (
+                                            <p className="text-xs text-gray-600 italic">
+                                              {party.partyTheme.longDescription || party.partyTheme.long_description || party.partyTheme.description}
+                                            </p>
+                                          )}
+
+                                          {(party.partyTheme.costumeIdeas || party.partyTheme.costume_ideas) && (
+                                            <div>
+                                              <p className="text-xs font-medium text-gray-700 mb-1">💡 Costume Ideas:</p>
+                                              <p className="text-xs text-gray-600">
+                                                {party.partyTheme.costumeIdeas || party.partyTheme.costume_ideas}
+                                              </p>
+                                            </div>
+                                          )}
+
+                                        </div>
                                       )}
                                     </div>
                                   </div>

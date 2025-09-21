@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { ApiError } from '../utils/ApiError';
+import { rateLimitErrorHandler } from './errorHandler';
 
 // In-memory store for development (should be replaced with Redis in production)
 interface RateLimitEntry {
@@ -238,13 +240,11 @@ export function createRateLimit(configName: keyof typeof rateLimitConfigs | Rate
       }
 
       if (!result.allowed) {
-        return res.status(429).json({
-          error: config.message || 'Rate limit exceeded',
-          retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-          limit: config.maxRequests,
-          used: result.count,
-          resetTime: new Date(result.resetTime).toISOString()
-        });
+        // Set Retry-After header
+        res.set('Retry-After', Math.ceil((result.resetTime - Date.now()) / 1000).toString());
+
+        // Use the standardized rate limit error handler
+        return rateLimitErrorHandler(req, res);
       }
 
       next();
@@ -311,12 +311,11 @@ export function createSlidingWindowRateLimit(config: RateLimitConfig & {
       }
 
       if (!result.allowed) {
-        return res.status(429).json({
-          error: config.message || 'Rate limit exceeded',
-          retryAfter: Math.ceil((result.resetTime - now) / 1000),
-          limit: config.maxRequests,
-          used: result.count
-        });
+        // Set Retry-After header
+        res.set('Retry-After', Math.ceil((result.resetTime - now) / 1000).toString());
+
+        // Use the standardized rate limit error handler
+        return rateLimitErrorHandler(req, res);
       }
 
       next();

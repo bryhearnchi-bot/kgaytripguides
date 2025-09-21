@@ -1,11 +1,42 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bxiiodeyqvqqcgzzqzvt.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWlvZGV5cXZxcWNnenpxenZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NjcwMjksImV4cCI6MjA3MzU0MzAyOX0.Y9juoQm7q_6ky4EUvLI3YR9VIHuhJah5me85CwsKsVc';
+// Supabase configuration with proper error handling
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Validate required environment variables
+if (!supabaseUrl) {
+  throw new Error(
+    'Missing required environment variable: VITE_SUPABASE_URL\n' +
+    'Please set VITE_SUPABASE_URL in your .env file.\n' +
+    'Example: VITE_SUPABASE_URL=https://your-project.supabase.co'
+  );
+}
 
 if (!supabaseAnonKey) {
-  console.warn('Supabase anon key not found. Authentication features will not work.');
+  throw new Error(
+    'Missing required environment variable: VITE_SUPABASE_ANON_KEY\n' +
+    'Please set VITE_SUPABASE_ANON_KEY in your .env file.\n' +
+    'You can find this key in your Supabase project settings under API.'
+  );
+}
+
+// Validate URL format
+try {
+  new URL(supabaseUrl);
+} catch (error) {
+  throw new Error(
+    `Invalid VITE_SUPABASE_URL format: ${supabaseUrl}\n` +
+    'Please ensure it is a valid URL starting with https://'
+  );
+}
+
+// Basic validation for anon key format (JWT structure)
+if (!supabaseAnonKey.includes('.') || supabaseAnonKey.split('.').length !== 3) {
+  throw new Error(
+    'Invalid VITE_SUPABASE_ANON_KEY format.\n' +
+    'The anon key should be a JWT token from your Supabase project settings.'
+  );
 }
 
 // Create Supabase client

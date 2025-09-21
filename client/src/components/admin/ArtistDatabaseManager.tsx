@@ -23,6 +23,11 @@ interface Artist {
   updatedAt?: string;
 }
 
+interface TalentCategory {
+  id: number;
+  category: string;
+}
+
 interface ArtistDatabaseManagerProps {
   onSelectArtist?: (artist: Artist) => void;
   showSelectMode?: boolean;
@@ -41,10 +46,20 @@ export default function ArtistDatabaseManager({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Performance types for filtering
-  const performanceTypes = [
-    'DJ', 'Singer', 'Dancer', 'Comedian', 'Drag Performer', 'Band', 'Host', 'Performer', 'Other'
-  ];
+  // Fetch talent categories from database
+  const { data: talentCategories = [] } = useQuery({
+    queryKey: ['talent-categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/talent-categories', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch talent categories');
+      return response.json();
+    },
+  });
+
+  // Map categories for dropdown
+  const performanceTypes = talentCategories.map((cat: TalentCategory) => cat.category);
 
   // Fetch artists with search and filters
   const { data: artists = [], isLoading } = useQuery({
@@ -158,9 +173,13 @@ export default function ArtistDatabaseManager({
     if (data.instagram) socialLinks.instagram = data.instagram;
     if (data.twitter) socialLinks.twitter = data.twitter;
 
+    // Find the category ID from the category name
+    const categoryObj = talentCategories.find((cat: TalentCategory) => cat.category === data.category);
+
     createMutation.mutate({
       name: data.name,
-      category: data.category || null,
+      talentCategoryId: categoryObj?.id || null,
+      category: data.category || null, // Keep for backwards compatibility
       bio: data.bio || null,
       knownFor: data.knownFor || null,
       profileImageUrl: data.profileImageUrl || null,
@@ -175,10 +194,14 @@ export default function ArtistDatabaseManager({
     if (data.instagram) socialLinks.instagram = data.instagram;
     if (data.twitter) socialLinks.twitter = data.twitter;
 
+    // Find the category ID from the category name
+    const categoryObj = talentCategories.find((cat: TalentCategory) => cat.category === data.category);
+
     updateMutation.mutate({
       id: editingArtist.id,
       name: data.name,
-      category: data.category || null,
+      talentCategoryId: categoryObj?.id || null,
+      category: data.category || null, // Keep for backwards compatibility
       bio: data.bio || null,
       knownFor: data.knownFor || null,
       profileImageUrl: data.profileImageUrl || null,
@@ -220,9 +243,10 @@ export default function ArtistDatabaseManager({
             <DialogHeader>
               <DialogTitle>Add New Artist</DialogTitle>
             </DialogHeader>
-            <ArtistForm 
+            <ArtistForm
               onSubmit={handleCreateArtist}
               isLoading={createMutation.isPending}
+              categories={talentCategories}
             />
           </DialogContent>
         </Dialog>
@@ -386,10 +410,11 @@ export default function ArtistDatabaseManager({
             <DialogHeader>
               <DialogTitle>Edit Artist</DialogTitle>
             </DialogHeader>
-            <ArtistForm 
+            <ArtistForm
               artist={editingArtist}
               onSubmit={handleUpdateArtist}
               isLoading={updateMutation.isPending}
+              categories={talentCategories}
             />
           </DialogContent>
         </Dialog>
@@ -399,14 +424,16 @@ export default function ArtistDatabaseManager({
 }
 
 // Form component for creating/editing artists
-function ArtistForm({ 
-  artist, 
-  onSubmit, 
-  isLoading 
-}: { 
-  artist?: Artist; 
-  onSubmit: (data: any) => void; 
-  isLoading: boolean; 
+function ArtistForm({
+  artist,
+  onSubmit,
+  isLoading,
+  categories = []
+}: {
+  artist?: Artist;
+  onSubmit: (data: any) => void;
+  isLoading: boolean;
+  categories?: TalentCategory[];
 }) {
   const [formData, setFormData] = useState(() => ({
     name: artist?.name || '',
@@ -419,9 +446,7 @@ function ArtistForm({
     website: artist?.website || '',
   }));
 
-  const performanceTypes = [
-    'DJ', 'Singer', 'Dancer', 'Comedian', 'Drag Performer', 'Band', 'Host', 'Performer', 'Other'
-  ];
+  const performanceTypes = categories.map(cat => cat.category);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

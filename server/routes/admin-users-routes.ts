@@ -18,6 +18,7 @@ import { db } from "../storage";
 import { profiles } from "../../shared/schema";
 import { eq, ilike, or, count } from "drizzle-orm";
 import { z } from "zod";
+import { auditLogger } from "../logging/middleware";
 
 // Initialize Supabase Admin Client (only if credentials are available)
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -161,7 +162,7 @@ export function registerAdminUsersRoutes(app: Express) {
   });
 
   // POST /api/admin/users - Create new user
-  app.post("/api/admin/users", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/admin/users", requireTripAdmin, auditLogger('admin.user.create'), async (req: AuthenticatedRequest, res) => {
     try {
       console.log('[User Creation] Received request body:', {
         ...req.body,
@@ -287,7 +288,7 @@ export function registerAdminUsersRoutes(app: Express) {
   });
 
   // PUT /api/admin/users/:id - Update user
-  app.put("/api/admin/users/:id", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/admin/users/:id", requireTripAdmin, auditLogger('admin.user.update'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.params.id;
       const userData = updateUserSchema.parse(req.body);
@@ -458,7 +459,7 @@ export function registerAdminUsersRoutes(app: Express) {
   });
 
   // DELETE /api/admin/users/:id - Delete user
-  app.delete("/api/admin/users/:id", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/admin/users/:id", requireTripAdmin, auditLogger('admin.user.delete'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.params.id;
 

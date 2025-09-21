@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, ilike, or } from 'drizzle-orm';
+import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
 
 // Load environment variables only for development
 if (process.env.NODE_ENV !== 'production') {
@@ -13,7 +13,7 @@ import type {
   Itinerary,
   Event,
   Talent,
-  Media,
+  TalentCategory,
   Settings
 } from "../shared/schema";
 
@@ -29,8 +29,12 @@ if (process.env.NODE_ENV === 'production') {
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../shared/schema';
+import { OptimizedDatabaseConnection, BatchQueryBuilder } from './storage/OptimizedStorage';
+import { cacheManager, CacheManager, Cacheable, CacheInvalidate } from './cache/CacheManager';
 
 let db: any;
+let batchQueryBuilder: BatchQueryBuilder;
+let optimizedConnection: OptimizedDatabaseConnection;
 
 // Force mock mode in development only if USE_MOCK_DATA is explicitly true
 if (process.env.USE_MOCK_DATA === 'true') {
@@ -90,21 +94,27 @@ if (process.env.USE_MOCK_DATA === 'true') {
       // Use standard postgres connection for Railway/Neon/other databases
       console.log('🔧 Using standard PostgreSQL connection');
 
-      const connectionConfig = {
-        prepare: false,
-        ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer',
-        transform: { undefined: null },
-        connect_timeout: 15,
-        idle_timeout: 300,
-        max: 20,
-        connection: {
-          application_name: `kgay-travel-guides-${process.env.NODE_ENV || 'development'}`
-        }
-      };
+      // Initialize optimized connection with connection pooling
+      optimizedConnection = OptimizedDatabaseConnection.getInstance();
+      db = await optimizedConnection.initialize(process.env.DATABASE_URL!, {
+        max: 30,                    // Increased for better concurrency
+        min: 5,                     // Maintain minimum connections
+        idleTimeout: 300,          // 5 minutes idle timeout
+        connectTimeout: 15,        // 15 seconds connect timeout
+        maxLifetime: 3600,         // 1 hour max connection lifetime
+        statementCacheSize: 200,   // Cache prepared statements
+        applicationName: `kgay-travel-guides-${process.env.NODE_ENV || 'development'}`
+      });
 
-      const client = postgres(process.env.DATABASE_URL!, connectionConfig);
-      db = drizzle(client, { schema });
-      console.log(`✅ Database connected (${process.env.NODE_ENV || 'development'} mode)`);
+      // Initialize batch query builder for N+1 query prevention
+      batchQueryBuilder = new BatchQueryBuilder(db);
+
+      console.log(`✅ Optimized database connected with connection pooling`);
+
+      // Warm up caches with frequently accessed data
+      if (process.env.NODE_ENV === 'production') {
+        await warmUpCaches();
+      }
     }
 
   } catch (error) {
@@ -123,7 +133,36 @@ if (process.env.USE_MOCK_DATA === 'true') {
   }
 }
 
-export { db };
+export { db, batchQueryBuilder, optimizedConnection };
+
+// Cache warm-up function
+export async function warmUpCaches() {
+  try {
+    console.log('🔥 Warming up caches...');
+
+    // Pre-load active trips
+    const activeTrips = await db.select().from(trips)
+      .where(eq(trips.status, 'published'))
+      .limit(10);
+
+    for (const trip of activeTrips) {
+      await cacheManager.set('trips', CacheManager.keys.trip(trip.id), trip);
+      if (trip.slug) {
+        await cacheManager.set('trips', CacheManager.keys.tripBySlug(trip.slug), trip);
+      }
+    }
+
+    // Pre-load all ports (rarely change)
+    const allPorts = await db.select().from(ports);
+    for (const port of allPorts) {
+      await cacheManager.set('ports', CacheManager.keys.port(port.id), port);
+    }
+
+    console.log('✅ Cache warm-up complete');
+  } catch (error) {
+    console.error('⚠️ Cache warm-up failed:', error);
+  }
+}
 
 // Export all schema tables for easy access
 export const {
@@ -134,14 +173,24 @@ export const {
   itinerary,
   events,
   talent,
-  media,
+  talentCategories,
   settings,
   cruiseTalent,
   tripInfoSections,
-  ports,
-  parties,
-  eventTalent
+  ports
 } = schema;
+
+// Performance monitoring endpoint
+export async function getPerformanceMetrics() {
+  if (optimizedConnection) {
+    return {
+      database: await optimizedConnection.getMetrics(),
+      pool: await optimizedConnection.getPoolStats(),
+      cache: cacheManager.getAllLayersStats()
+    };
+  }
+  return null;
+}
 
 // ============ PROFILE OPERATIONS (Supabase Auth Integration) ============
 export interface IProfileStorage {
@@ -218,17 +267,45 @@ export interface ITripStorage {
 }
 
 export class TripStorage implements ITripStorage {
+  // @Cacheable('trips', 1000 * 60 * 5) // Cache for 5 minutes - temporarily disabled
   async getAllTrips(): Promise<Trip[]> {
-    return await db.select().from(cruises).orderBy(desc(cruises.startDate));
+    return await optimizedConnection.executeWithMetrics(
+      () => db.select().from(cruises).orderBy(desc(cruises.startDate)),
+      'getAllTrips'
+    );
   }
 
   async getTripById(id: number): Promise<Trip | undefined> {
-    const result = await db.select().from(cruises).where(eq(cruises.id, id));
+    // Check cache first
+    const cacheKey = CacheManager.keys.trip(id);
+    const cached = await cacheManager.get<Trip>('trips', cacheKey);
+    if (cached) return cached;
+
+    const result = await optimizedConnection.executeWithMetrics(
+      () => db.select().from(cruises).where(eq(cruises.id, id)),
+      `getTripById(${id})`
+    );
+
+    if (result[0]) {
+      await cacheManager.set('trips', cacheKey, result[0]);
+    }
     return result[0];
   }
 
   async getTripBySlug(slug: string): Promise<Trip | undefined> {
-    const result = await db.select().from(cruises).where(eq(cruises.slug, slug));
+    // Check cache first
+    const cacheKey = CacheManager.keys.tripBySlug(slug);
+    const cached = await cacheManager.get<Trip>('trips', cacheKey);
+    if (cached) return cached;
+
+    const result = await optimizedConnection.executeWithMetrics(
+      () => db.select().from(cruises).where(eq(cruises.slug, slug)),
+      `getTripBySlug(${slug})`
+    );
+
+    if (result[0]) {
+      await cacheManager.set('trips', cacheKey, result[0]);
+    }
     return result[0];
   }
 
@@ -246,6 +323,7 @@ export class TripStorage implements ITripStorage {
       .orderBy(desc(cruises.startDate));
   }
 
+  // @CacheInvalidate('trips') // Invalidate trip cache on create - temporarily disabled
   async createTrip(trip: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>): Promise<Trip> {
     const values = { ...trip };
     
@@ -269,8 +347,12 @@ export class TripStorage implements ITripStorage {
     return result[0];
   }
 
+  // @CacheInvalidate('trips') // Invalidate trip cache on update - temporarily disabled
   async updateTrip(id: number, trip: Partial<Trip>): Promise<Trip | undefined> {
     const updates = { ...trip, updatedAt: new Date() };
+
+    // Invalidate specific cache entries
+    await cacheManager.delete('trips', CacheManager.keys.trip(id));
     
     // Convert date strings to Date objects for timestamp fields
     if (trip.startDate) {
@@ -295,8 +377,15 @@ export class TripStorage implements ITripStorage {
     return result[0];
   }
 
+  // @CacheInvalidate('trips') // Invalidate trip cache on delete - temporarily disabled
   async deleteTrip(id: number): Promise<void> {
-    await db.delete(cruises).where(eq(cruises.id, id));
+    // Invalidate specific cache entries
+    await cacheManager.delete('trips', CacheManager.keys.trip(id));
+
+    await optimizedConnection.executeWithMetrics(
+      () => db.delete(cruises).where(eq(cruises.id, id)),
+      `deleteTrip(${id})`
+    );
   }
 }
 
@@ -358,16 +447,30 @@ export interface IItineraryStorage {
 
 export class ItineraryStorage implements IItineraryStorage {
   async getItineraryByCruise(cruiseId: number): Promise<Itinerary[]> {
-    // For now, just return the itinerary items without port data
-    // to avoid circular import issues
-    return await db.select()
-      .from(itinerary)
-      .where(eq(itinerary.cruiseId, cruiseId))
-      .orderBy(asc(itinerary.orderIndex));
+    const cacheKey = CacheManager.keys.itinerary(cruiseId);
+    const cached = await cacheManager.get<Itinerary[]>('trips', cacheKey);
+    if (cached) return cached;
+
+    const result = await optimizedConnection.executeWithMetrics(
+      () => db.select()
+        .from(itinerary)
+        .where(eq(itinerary.cruiseId, cruiseId))
+        .orderBy(asc(itinerary.orderIndex)),
+      `getItineraryByCruise(${cruiseId})`
+    );
+
+    await cacheManager.set('trips', cacheKey, result);
+    return result;
   }
 
+  // @CacheInvalidate('trips', /itinerary:cruise:\d+/) - temporarily disabled
   async createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary> {
     const values = { ...stop };
+
+    // Invalidate specific cruise itinerary cache
+    if (stop.cruiseId) {
+      await cacheManager.delete('trips', CacheManager.keys.itinerary(stop.cruiseId));
+    }
     
     // Handle date conversion with better error handling  
     if (stop.date && (stop.date as any) !== '' && stop.date !== null) {
@@ -428,12 +531,20 @@ export interface IEventStorage {
 
 export class EventStorage implements IEventStorage {
   async getEventsByCruise(cruiseId: number): Promise<Event[]> {
-    // For now, just return the events without party data
-    // to avoid circular import issues
-    return await db.select()
-      .from(events)
-      .where(eq(events.cruiseId, cruiseId))
-      .orderBy(asc(events.date), asc(events.time));
+    const cacheKey = CacheManager.keys.eventsByCruise(cruiseId);
+    const cached = await cacheManager.get<Event[]>('events', cacheKey);
+    if (cached) return cached;
+
+    const result = await optimizedConnection.executeWithMetrics(
+      () => db.select()
+        .from(events)
+        .where(eq(events.cruiseId, cruiseId))
+        .orderBy(asc(events.date), asc(events.time)),
+      `getEventsByCruise(${cruiseId})`
+    );
+
+    await cacheManager.set('events', cacheKey, result);
+    return result;
   }
 
   async getEventsByDate(cruiseId: number, date: Date): Promise<Event[]> {
@@ -450,69 +561,135 @@ export class EventStorage implements IEventStorage {
       .orderBy(asc(events.date), asc(events.time));
   }
 
+  // @CacheInvalidate('events') - temporarily disabled
   async createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<Event> {
-    const result = await db.insert(events).values(event).returning();
+    // Invalidate specific cruise events cache
+    if (event.cruiseId) {
+      await cacheManager.delete('events', CacheManager.keys.eventsByCruise(event.cruiseId));
+    }
+
+    const result = await optimizedConnection.executeWithMetrics(
+      () => db.insert(events).values(event).returning(),
+      'createEvent'
+    );
     return result[0];
   }
 
+  // @CacheInvalidate('events') - temporarily disabled
   async updateEvent(id: number, event: Partial<Event>): Promise<Event | undefined> {
-    const result = await db.update(events)
-      .set({ ...event, updatedAt: new Date() })
-      .where(eq(events.id, id))
-      .returning();
+    // Invalidate event cache
+    await cacheManager.delete('events', CacheManager.keys.event(id));
+
+    const result = await optimizedConnection.executeWithMetrics(
+      () => db.update(events)
+        .set({ ...event, updatedAt: new Date() })
+        .where(eq(events.id, id))
+        .returning(),
+      `updateEvent(${id})`
+    );
     return result[0];
   }
 
+  // @CacheInvalidate('events') - temporarily disabled
   async deleteEvent(id: number): Promise<void> {
-    await db.delete(events).where(eq(events.id, id));
+    // Invalidate event cache
+    await cacheManager.delete('events', CacheManager.keys.event(id));
+
+    await optimizedConnection.executeWithMetrics(
+      () => db.delete(events).where(eq(events.id, id)),
+      `deleteEvent(${id})`
+    );
   }
 }
 
 // ============ TALENT OPERATIONS ============
+export interface TalentWithCategory extends Talent {
+  category?: string;  // Category name from joined table
+}
+
 export interface ITalentStorage {
-  getAllTalent(): Promise<Talent[]>;
-  getTalentById(id: number): Promise<Talent | undefined>;
-  getTalentByCruise(cruiseId: number): Promise<Talent[]>;
-  searchTalent(search?: string, performanceType?: string): Promise<Talent[]>;
+  getAllTalent(): Promise<TalentWithCategory[]>;
+  getTalentById(id: number): Promise<TalentWithCategory | undefined>;
+  getTalentByCruise(cruiseId: number): Promise<TalentWithCategory[]>;
+  searchTalent(search?: string, categoryId?: number): Promise<TalentWithCategory[]>;
   createTalent(talent: Omit<Talent, 'id' | 'createdAt' | 'updatedAt'>): Promise<Talent>;
   updateTalent(id: number, talent: Partial<Talent>): Promise<Talent | undefined>;
   deleteTalent(id: number): Promise<void>;
   assignTalentToCruise(cruiseId: number, talentId: number, role?: string): Promise<void>;
   removeTalentFromCruise(cruiseId: number, talentId: number): Promise<void>;
+  getAllTalentCategories(): Promise<schema.TalentCategories[]>;
+  createTalentCategory(category: string): Promise<schema.TalentCategories>;
+  updateTalentCategory(id: number, category: string): Promise<schema.TalentCategories | undefined>;
+  deleteTalentCategory(id: number): Promise<void>;
 }
 
 export class TalentStorage implements ITalentStorage {
-  async getAllTalent(): Promise<Talent[]> {
-    return await db.select().from(talent).orderBy(asc(talent.name));
-  }
-
-  async getTalentById(id: number): Promise<Talent | undefined> {
-    const result = await db.select().from(talent).where(eq(talent.id, id));
-    return result[0];
-  }
-
-  async getTalentByCruise(cruiseId: number): Promise<Talent[]> {
-    // Return only talent linked to this specific cruise through cruise_talent junction table
-    const result = await db.select({
+  async getAllTalent(): Promise<TalentWithCategory[]> {
+    const results = await db.select({
       id: talent.id,
       name: talent.name,
-      category: talent.category,
+      talentCategoryId: talent.talentCategoryId,
       bio: talent.bio,
       knownFor: talent.knownFor,
       profileImageUrl: talent.profileImageUrl,
       socialLinks: talent.socialLinks,
       website: talent.website,
       createdAt: talent.createdAt,
-      updatedAt: talent.updatedAt
+      updatedAt: talent.updatedAt,
+      category: talentCategories.category,
+    })
+    .from(talent)
+    .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id))
+    .orderBy(asc(talent.name));
+
+    return results as TalentWithCategory[];
+  }
+
+  async getTalentById(id: number): Promise<TalentWithCategory | undefined> {
+    const result = await db.select({
+      id: talent.id,
+      name: talent.name,
+      talentCategoryId: talent.talentCategoryId,
+      bio: talent.bio,
+      knownFor: talent.knownFor,
+      profileImageUrl: talent.profileImageUrl,
+      socialLinks: talent.socialLinks,
+      website: talent.website,
+      createdAt: talent.createdAt,
+      updatedAt: talent.updatedAt,
+      category: talentCategories.category,
+    })
+    .from(talent)
+    .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id))
+    .where(eq(talent.id, id));
+
+    return result[0] as TalentWithCategory | undefined;
+  }
+
+  async getTalentByCruise(cruiseId: number): Promise<TalentWithCategory[]> {
+    // Return only talent linked to this specific cruise through cruise_talent junction table
+    const result = await db.select({
+      id: talent.id,
+      name: talent.name,
+      talentCategoryId: talent.talentCategoryId,
+      bio: talent.bio,
+      knownFor: talent.knownFor,
+      profileImageUrl: talent.profileImageUrl,
+      socialLinks: talent.socialLinks,
+      website: talent.website,
+      createdAt: talent.createdAt,
+      updatedAt: talent.updatedAt,
+      category: talentCategories.category,
     })
       .from(talent)
       .innerJoin(cruiseTalent, eq(talent.id, cruiseTalent.talentId))
+      .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id))
       .where(eq(cruiseTalent.cruiseId, cruiseId))
       .orderBy(asc(talent.name));
-    return result;
+    return result as TalentWithCategory[];
   }
 
-  async searchTalent(search?: string, performanceType?: string): Promise<Talent[]> {
+  async searchTalent(search?: string, categoryId?: number): Promise<TalentWithCategory[]> {
     const conditions = [];
 
     // Add search conditions
@@ -526,17 +703,34 @@ export class TalentStorage implements ITalentStorage {
       );
     }
 
-    // Add performance type filter (using category field)
-    if (performanceType) {
-      conditions.push(eq(talent.category, performanceType));
+    // Add category filter
+    if (categoryId) {
+      conditions.push(eq(talent.talentCategoryId, categoryId));
     }
 
     // Build the query with optional conditions
-    const query = conditions.length > 0 
-      ? db.select().from(talent).where(conditions.length === 1 ? conditions[0] : and(...conditions))
-      : db.select().from(talent);
+    let query = db.select({
+      id: talent.id,
+      name: talent.name,
+      talentCategoryId: talent.talentCategoryId,
+      bio: talent.bio,
+      knownFor: talent.knownFor,
+      profileImageUrl: talent.profileImageUrl,
+      socialLinks: talent.socialLinks,
+      website: talent.website,
+      createdAt: talent.createdAt,
+      updatedAt: talent.updatedAt,
+      category: talentCategories.category,
+    })
+    .from(talent)
+    .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id));
 
-    return await query.orderBy(asc(talent.name));
+    if (conditions.length > 0) {
+      query = query.where(conditions.length === 1 ? conditions[0] : and(...conditions)) as typeof query;
+    }
+
+    const results = await query.orderBy(asc(talent.name));
+    return results as TalentWithCategory[];
   }
 
   async createTalent(talentData: Omit<Talent, 'id' | 'createdAt' | 'updatedAt'>): Promise<Talent> {
@@ -571,39 +765,35 @@ export class TalentStorage implements ITalentStorage {
         eq(cruiseTalent.talentId, talentId)
       ));
   }
-}
 
-// ============ MEDIA OPERATIONS ============
-export interface IMediaStorage {
-  getMediaByType(type: string): Promise<Media[]>;
-  getMediaByAssociation(associatedType: string, associatedId: number): Promise<Media[]>;
-  createMedia(media: Omit<Media, 'id' | 'uploadedAt'>): Promise<Media>;
-  deleteMedia(id: number): Promise<void>;
-}
-
-export class MediaStorage implements IMediaStorage {
-  async getMediaByType(type: string): Promise<Media[]> {
-    return await db.select().from(media).where(eq(media.type, type));
-  }
-
-  async getMediaByAssociation(associatedType: string, associatedId: number): Promise<Media[]> {
+  // Talent category methods
+  async getAllTalentCategories(): Promise<schema.TalentCategories[]> {
     return await db.select()
-      .from(media)
-      .where(and(
-        eq(media.associatedType, associatedType),
-        eq(media.associatedId, associatedId)
-      ));
+      .from(talentCategories)
+      .orderBy(asc(talentCategories.category));
   }
 
-  async createMedia(mediaData: Omit<Media, 'id' | 'uploadedAt'>): Promise<Media> {
-    const result = await db.insert(media).values(mediaData).returning();
+  async createTalentCategory(category: string): Promise<schema.TalentCategories> {
+    const result = await db.insert(talentCategories)
+      .values({ category })
+      .returning();
     return result[0];
   }
 
-  async deleteMedia(id: number): Promise<void> {
-    await db.delete(media).where(eq(media.id, id));
+  async updateTalentCategory(id: number, category: string): Promise<schema.TalentCategories | undefined> {
+    const result = await db.update(talentCategories)
+      .set({ category, updatedAt: new Date() })
+      .where(eq(talentCategories.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteTalentCategory(id: number): Promise<void> {
+    await db.delete(talentCategories)
+      .where(eq(talentCategories.id, id));
   }
 }
+
 
 // ============ SETTINGS OPERATIONS ============
 export interface ISettingsStorage {
@@ -681,14 +871,47 @@ export class SettingsStorage implements ISettingsStorage {
 // ============ TRIP INFO SECTIONS OPERATIONS ============
 export interface ITripInfoStorage {
   getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]>;
+  getCompleteInfo(slug: string, endpoint: 'cruises' | 'trips'): Promise<any>;
 }
 
 export class TripInfoStorage implements ITripInfoStorage {
+  // @Cacheable('trips', 1000 * 60 * 10) // Cache for 10 minutes - temporarily disabled
   async getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]> {
-    return await db.select()
-      .from(tripInfoSections)
-      .where(eq(tripInfoSections.cruiseId, cruiseId))
-      .orderBy(asc(tripInfoSections.orderIndex));
+    return await optimizedConnection.executeWithMetrics(
+      () => db.select()
+        .from(tripInfoSections)
+        .where(eq(tripInfoSections.tripId, cruiseId))
+        .orderBy(asc(tripInfoSections.orderIndex)),
+      `getTripInfoSectionsByCruise(${cruiseId})`
+    );
+  }
+
+  // Optimized method to get complete trip info without N+1 queries
+  async getCompleteInfo(slug: string, endpoint: 'cruises' | 'trips'): Promise<any> {
+    const cacheKey = `${endpoint}:complete:${slug}`;
+
+    // Try cache first
+    const cached = await cacheManager.get('trips', cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get the trip
+    const trip = await tripStorage.getTripBySlug(slug);
+    if (!trip) {
+      return null;
+    }
+
+    // Use batch loading to prevent N+1 queries
+    const [completeData] = await batchQueryBuilder.loadCompleteTripData([trip.id]);
+
+    if (completeData) {
+      // Cache the result
+      await cacheManager.set('trips', cacheKey, completeData, 1000 * 60 * 5); // 5 minutes
+      return completeData;
+    }
+
+    return null;
   }
 }
 
@@ -700,11 +923,8 @@ export const cruiseStorage = new CruiseStorage(); // Backward compatibility
 export const itineraryStorage = new ItineraryStorage();
 export const eventStorage = new EventStorage();
 export const talentStorage = new TalentStorage();
-export const mediaStorage = new MediaStorage();
 export const settingsStorage = new SettingsStorage();
 export const tripInfoStorage = new TripInfoStorage();
 
 // Export new storage classes
 export { portStorage, type Port, type NewPort } from './storage/PortStorage';
-export { partyStorage, type Party, type NewParty } from './storage/PartyStorage';
-export { eventTalentStorage, type EventTalent, type NewEventTalent, type EventTalentWithDetails } from './storage/EventTalentStorage';

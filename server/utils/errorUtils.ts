@@ -1,0 +1,223 @@
+/**
+ * Error handling utilities for route handlers
+ * Provides helper functions for common error scenarios
+ */
+
+import { Response } from 'express';
+import { ApiError, ErrorCode } from './ApiError';
+
+/**
+ * Try-catch wrapper for async operations with automatic error handling
+ */
+export async function tryOperation<T>(
+  operation: () => Promise<T>,
+  errorMessage?: string
+): Promise<T | null> {
+  try {
+    return await operation();
+  } catch (error) {
+    console.error(errorMessage || 'Operation failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Execute database operation with proper error handling
+ */
+export async function executeDbOperation<T>(
+  operation: () => Promise<T>,
+  errorMessage = 'Database operation failed'
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error: any) {
+    // Handle specific database errors
+    if (error.code === '23505') {
+      throw ApiError.conflict('Resource already exists');
+    }
+    if (error.code === '23503') {
+      throw ApiError.badRequest('Invalid reference - related resource does not exist');
+    }
+    if (error.code === '23502') {
+      throw ApiError.badRequest('Required field missing');
+    }
+
+    throw ApiError.databaseError(errorMessage, error);
+  }
+}
+
+/**
+ * Validate required fields in request body
+ */
+export function validateRequiredFields(
+  body: any,
+  requiredFields: string[]
+): void {
+  const missingFields = requiredFields.filter(field => !body[field]);
+
+  if (missingFields.length > 0) {
+    throw ApiError.validationError('Missing required fields', {
+      missingFields,
+      requiredFields
+    });
+  }
+}
+
+/**
+ * Validate ID parameter
+ */
+export function validateId(id: string | undefined, resourceName = 'Resource'): number {
+  if (!id) {
+    throw ApiError.badRequest(`${resourceName} ID is required`);
+  }
+
+  const parsedId = parseInt(id, 10);
+
+  if (isNaN(parsedId) || parsedId <= 0) {
+    throw ApiError.badRequest(`Invalid ${resourceName} ID`);
+  }
+
+  return parsedId;
+}
+
+/**
+ * Check if resource exists, throw error if not
+ */
+export function ensureResourceExists<T>(
+  resource: T | null | undefined,
+  resourceName = 'Resource'
+): T {
+  if (!resource) {
+    throw ApiError.notFound(resourceName);
+  }
+  return resource;
+}
+
+/**
+ * Ensure user has permission for resource
+ */
+export function ensurePermission(
+  hasPermission: boolean,
+  message = 'You do not have permission to perform this action'
+): void {
+  if (!hasPermission) {
+    throw ApiError.forbidden(message);
+  }
+}
+
+/**
+ * Handle pagination parameters
+ */
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  offset: number;
+}
+
+export function getPaginationParams(query: any): PaginationParams {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
+  const offset = (page - 1) * limit;
+
+  return { page, limit, offset };
+}
+
+/**
+ * Build pagination response
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export function buildPaginatedResponse<T>(
+  data: T[],
+  total: number,
+  params: PaginationParams
+): PaginatedResponse<T> {
+  const totalPages = Math.ceil(total / params.limit);
+
+  return {
+    data,
+    pagination: {
+      page: params.page,
+      limit: params.limit,
+      total,
+      totalPages,
+      hasNext: params.page < totalPages,
+      hasPrev: params.page > 1,
+    },
+  };
+}
+
+/**
+ * Handle external service errors
+ */
+export function handleExternalServiceError(
+  serviceName: string,
+  error: any
+): ApiError {
+  console.error(`External service error (${serviceName}):`, error);
+
+  if (error.response?.status === 429) {
+    return ApiError.rateLimitExceeded(`${serviceName} rate limit exceeded`);
+  }
+
+  if (error.response?.status >= 500) {
+    return ApiError.externalServiceError(serviceName, error);
+  }
+
+  if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+    return new ApiError(503, `${serviceName} is currently unavailable`, {
+      code: ErrorCode.SERVICE_UNAVAILABLE,
+      originalError: error,
+    });
+  }
+
+  return ApiError.externalServiceError(serviceName, error);
+}
+
+/**
+ * Sanitize error message for client response
+ */
+export function sanitizeErrorMessage(message: string): string {
+  // Remove sensitive information patterns
+  const patterns = [
+    /password[\s:=]*.+/gi,
+    /token[\s:=]*.+/gi,
+    /key[\s:=]*.+/gi,
+    /secret[\s:=]*.+/gi,
+    /database connection.+/gi,
+    /postgresql:\/\/.+/gi,
+  ];
+
+  let sanitized = message;
+  for (const pattern of patterns) {
+    sanitized = sanitized.replace(pattern, '[REDACTED]');
+  }
+
+  return sanitized;
+}
+
+/**
+ * Create error response for backwards compatibility
+ */
+export function createErrorResponse(error: ApiError | Error): any {
+  if (error instanceof ApiError) {
+    return error.toJSON();
+  }
+
+  // Backwards compatible format
+  return {
+    error: error.message || 'An error occurred',
+    message: error.message,
+    status: 'error',
+  };
+}

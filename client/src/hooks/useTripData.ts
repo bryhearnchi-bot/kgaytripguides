@@ -20,7 +20,7 @@ export interface TripData {
   };
   itinerary: Array<{
     id: number;
-    cruiseId: number;
+    tripId: number;
     date: string;
     day: number;
     portName: string;
@@ -36,7 +36,7 @@ export interface TripData {
   }>;
   events: Array<{
     id: number;
-    cruiseId: number;
+    tripId: number;
     date: string;
     time: string;
     title: string;
@@ -51,6 +51,7 @@ export interface TripData {
     capacity?: number | null;
     requiresReservation?: boolean;
     talentIds?: any;
+    partyThemeId?: number | null;
     createdAt?: string;
     updatedAt?: string;
   }>;
@@ -68,7 +69,7 @@ export interface TripData {
   }>;
   tripInfoSections?: Array<{
     id: number;
-    cruiseId: number;
+    tripId: number;
     title: string;
     content: string | null;
     orderIndex: number;
@@ -108,17 +109,18 @@ export function transformTripData(data: TripData) {
     
     dailyEvents[dateKey].push({
       time: event.time,
-      title: (event as any).party?.name || event.title, // Use party.name if available
+      title: event.title,
       type: event.type,
-      venue: (event as any).party?.venue_type || event.venue, // Use party.venue_type if available
+      venue: event.venue,
       deck: event.deck,
-      description: (event as any).party?.theme || event.description || event.themeDescription, // Use party.theme if available
+      description: event.description || event.themeDescription,
       shortDescription: event.shortDescription,
-      imageUrl: (event as any).party?.image_url || event.imageUrl, // Use party.image_url if available
-      dressCode: (event as any).party?.dress_code || event.dressCode, // Use party.dress_code if available
+      imageUrl: (event as any).partyTheme?.imageUrl || event.imageUrl,
+      dressCode: event.dressCode,
       requiresReservation: event.requiresReservation,
       talent: eventTalent,
-      partyDetails: (event as any).party // Include full party details if available
+      partyTheme: (event as any).partyTheme, // Include full party theme data if available
+      partyThemeId: event.partyThemeId
     });
   });
 
@@ -138,24 +140,33 @@ export function transformTripData(data: TripData) {
     social: t.socialLinks || {}
   }));
 
-  // Party themes (we'll keep these static for now as they're descriptive content)
-  const partyThemes = [
-    { key: "Sail-Away Party", desc: "Top-deck vibes as we depart on our adventure! Join us poolside for departure cocktails and ocean views.", shortDesc: "Top-deck departure celebration" },
-    { key: "Welcome Party", desc: "First night under the stars! Join your fellow travelers for cocktails, music, and the beginning of an unforgettable journey.", shortDesc: "First night celebration" },
-    { key: "Dog Tag", desc: "The legendary Dog Tag T-Dance is back! Celebrate your pride with thousands of men from around the world.", shortDesc: "The legendary pride celebration" },
-    { key: "UNITE", desc: "We Are Family! Let's celebrate our global LGBTQ+ community in this joyous evening of connection.", shortDesc: "Celebrating our global community" },
-    { key: "Atlantis Empires", desc: "A celebration of legendary civilizations and mythical realms. Choose your empire and rule the night!", shortDesc: "Choose your empire and rule" },
-    { key: "Greek Isles", desc: "Opa! Channel your inner Greek god in togas, gladiator gear, or mythological inspired looks.", shortDesc: "Channel your inner Greek god" },
-    { key: "Here We Go Again", desc: "Mamma Mia! A celebration of ABBA and all things disco. Dancing queens, this is your night!", shortDesc: "ABBA and disco celebration" },
-    { key: "Lost At Sea", desc: "From sailors to sea creatures, pirates to mermaids - embrace all things nautical and aquatic.", shortDesc: "Nautical and aquatic adventure" },
-    { key: "Neon", desc: "Glow up the night in your brightest neon colors, UV reactive gear, and fluorescent fashion.", shortDesc: "Glow in neon and UV" },
-    { key: "Think Pink", desc: "Pretty in pink! From blush to hot pink, show us your rosiest, most fabulous looks.", shortDesc: "Show your rosiest looks" },
-    { key: "Virgin White", desc: "The classic all-white party at sea. Crisp, clean, and sophisticated elegance required.", shortDesc: "Classic all-white elegance" },
-    { key: "Revival", desc: "A throwback celebration of disco, funk, and soul. Get down with your grooviest retro looks.", shortDesc: "Disco, funk, and soul throwback" },
-    { key: "Atlantis Classics", desc: "Celebrating the timeless anthems that have soundtracked our journeys together.", shortDesc: "Timeless Atlantis anthems" },
-    { key: "Off-White", desc: "Not quite white, not quite cream - explore the subtle shades of off-white elegance.", shortDesc: "Subtle off-white elegance" },
-    { key: "Last Dance", desc: "One final celebration under the stars. Make it count with your most memorable look!", shortDesc: "Final celebration under stars" }
-  ];
+  // Extract unique party themes from events
+  const uniquePartyThemes = new Map();
+  data.events.forEach(event => {
+    if ((event as any).partyTheme) {
+      const theme = (event as any).partyTheme;
+      if (!uniquePartyThemes.has(theme.id)) {
+        uniquePartyThemes.set(theme.id, {
+          key: theme.name,
+          desc: theme.longDescription || theme.long_description || theme.description || '',
+          shortDesc: theme.shortDescription || theme.short_description || (theme.longDescription ? theme.longDescription.substring(0, 50) + '...' : ''),
+          costumeIdeas: theme.costumeIdeas || theme.costume_ideas,
+          shoppingList: theme.amazonShoppingListUrl || theme.amazon_shopping_list_url || theme.shoppingList || theme.shopping_list,
+          imageUrl: theme.imageUrl || theme.image_url,
+          longDescription: theme.longDescription || theme.long_description,
+          shortDescription: theme.shortDescription || theme.short_description
+        });
+      }
+    }
+  });
+
+  // Convert to array
+  const partyThemes = Array.from(uniquePartyThemes.values());
+
+  // If no themes from database, use fallback (this shouldn't happen if data is loaded correctly)
+  if (partyThemes.length === 0) {
+    console.warn('No party themes found in database data, using fallback');
+  }
 
   // City attractions (keep static for now)
   const cityAttractions: any[] = [];
