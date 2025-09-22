@@ -36,7 +36,7 @@ interface Location {
   name: string;
   country: string;
   region?: string;
-  location_type: 'port' | 'sea_day' | 'embark' | 'disembark';
+  port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
   coordinates?: { lat: number; lng: number } | null;
   description?: string;
   image_url?: string;
@@ -273,7 +273,7 @@ export default function MobileLocationManagement({
         (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (location.region && location.region.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesType = !selectedType || location.location_type === selectedType;
+      const matchesType = !selectedType || location.port_type === selectedType;
       const matchesRegion = !selectedRegion || location.region === selectedRegion;
 
       return matchesSearch && matchesType && matchesRegion;
@@ -296,8 +296,8 @@ export default function MobileLocationManagement({
       primary: true,
       render: (value: string, row: Location) => (
         <div className="flex items-center gap-2">
-          {LOCATION_TYPES.find(t => t.value === row.location_type)?.icon &&
-            React.createElement(LOCATION_TYPES.find(t => t.value === row.location_type)!.icon, { className: "w-4 h-4 text-blue-600" })
+          {LOCATION_TYPES.find(t => t.value === row.port_type)?.icon &&
+            React.createElement(LOCATION_TYPES.find(t => t.value === row.port_type)!.icon, { className: "w-4 h-4 text-blue-600" })
           }
           <span className="font-medium">{value}</span>
         </div>
@@ -321,7 +321,7 @@ export default function MobileLocationManagement({
       )
     },
     {
-      key: 'location_type',
+      key: 'port_type',
       label: 'Type',
       render: (value: string) => {
         const locationType = LOCATION_TYPES.find(t => t.value === value);
@@ -379,7 +379,7 @@ export default function MobileLocationManagement({
           type: 'text' as const,
           placeholder: 'Enter location name',
           required: true,
-          icon: <Anchor className="w-4 h-4" />
+          icon: <MapPin className="w-4 h-4" />
         },
         {
           name: 'country',
@@ -397,7 +397,7 @@ export default function MobileLocationManagement({
           options: REGIONS.map(region => ({ value: region, label: region }))
         },
         {
-          name: 'location_type',
+          name: 'port_type',
           label: 'Location Type',
           type: 'select' as const,
           required: true,
@@ -448,7 +448,7 @@ export default function MobileLocationManagement({
       name: location?.name || '',
       country: location?.country || '',
       region: location?.region || '',
-      location_type: location?.location_type || 'port',
+      port_type: location?.port_type || 'port',
       coordinates_lat: location?.coordinates?.lat || '',
       coordinates_lng: location?.coordinates?.lng || '',
       description: location?.description || '',
@@ -480,11 +480,11 @@ export default function MobileLocationManagement({
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="mobile-heading-2 flex items-center gap-2">
-              <Anchor className="w-6 h-6" />
-              Port Management
+              <MapPin className="w-6 h-6" />
+              Location Management
             </h1>
             <p className="mobile-body text-blue-100 mt-1">
-              Manage ports, destinations, and sea days
+              Manage cruise destinations and ports of call
             </p>
           </div>
 
@@ -503,7 +503,7 @@ export default function MobileLocationManagement({
                 className="bg-white text-blue-600 hover:bg-gray-100 flex-1"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Port
+                Add Location
               </Button>
             )}
           </div>
@@ -515,7 +515,7 @@ export default function MobileLocationManagement({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Search ports, countries, or regions..."
+            placeholder="Search locations, countries, or regions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 mobile-input"
@@ -537,14 +537,14 @@ export default function MobileLocationManagement({
           <Card className="mobile-card">
             <CardContent className="mobile-card-content space-y-4">
               <div className="space-y-2">
-                <label className="mobile-form-label">Port Type</label>
+                <label className="mobile-form-label">Location Type</label>
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
                   className="mobile-select"
                 >
                   <option value="">All types</option>
-                  {PORT_TYPES.map(type => (
+                  {LOCATION_TYPES.map(type => (
                     <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
@@ -584,7 +584,7 @@ export default function MobileLocationManagement({
       {/* Results Summary */}
       <div className="flex items-center justify-between text-sm text-gray-600">
         <span>
-          Showing {filteredPorts.length} of {ports.length} ports
+          Showing {filteredLocations.length} of {locations.length} locations
         </span>
         {(selectedType || selectedRegion || searchQuery) && (
           <Badge variant="secondary">Filters active</Badge>
@@ -593,32 +593,32 @@ export default function MobileLocationManagement({
 
       {/* Mobile Data Table */}
       <MobileDataTable
-        data={filteredPorts}
+        data={filteredLocations}
         columns={columns}
         actions={showSelectMode ? selectActions : actions}
         loading={isLoading}
         emptyMessage={
           searchQuery || selectedType || selectedRegion
-            ? "No ports match your current filters."
-            : "Get started by adding your first port."
+            ? "No locations match your current filters."
+            : "Get started by adding your first location."
         }
         enableSearch={false} // We handle search above
         enableExpandableRows={true}
         keyField="id"
-        expandedRowRender={(port) => (
+        expandedRowRender={(location) => (
           <div className="space-y-2">
-            {port.description && (
+            {location.description && (
               <div>
                 <span className="text-sm font-medium text-gray-700">Description:</span>
-                <p className="text-sm text-gray-600 mt-1">{port.description}</p>
+                <p className="text-sm text-gray-600 mt-1">{location.description}</p>
               </div>
             )}
-            {port.image_url && (
+            {location.image_url && (
               <div>
                 <span className="text-sm font-medium text-gray-700">Image:</span>
                 <img
-                  src={port.image_url}
-                  alt={port.name}
+                  src={location.image_url}
+                  alt={location.name}
                   className="w-full h-32 object-cover rounded-lg mt-1"
                 />
               </div>

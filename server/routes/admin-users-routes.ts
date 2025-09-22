@@ -16,7 +16,7 @@ import { requireAuth, requireTripAdmin, type AuthenticatedRequest } from "../aut
 import { createClient } from '@supabase/supabase-js';
 import { db } from "../storage";
 import { profiles } from "../../shared/schema";
-import { eq, ilike, or, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auditLogger } from "../logging/middleware";
 
@@ -43,30 +43,55 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
     )
   : null;
 
-// Validation schemas
+// Validation schemas - accept both camelCase and snake_case
 const createUserSchema = z.object({
   username: z.string().min(3).max(50).optional(),
   email: z.string().email(),
+  fullName: z.string().optional(),
   full_name: z.string().optional(),
   role: z.enum(['admin', 'content_manager', 'viewer']),
   password: z.string().min(8),
+  isActive: z.boolean().default(true),
   is_active: z.boolean().default(true),
+  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).default('active'),
   account_status: z.enum(['active', 'suspended', 'pending_verification']).default('active')
-});
+}).transform(data => ({
+  username: data.username,
+  email: data.email,
+  full_name: data.fullName || data.full_name,
+  role: data.role,
+  password: data.password,
+  is_active: data.isActive ?? data.is_active,
+  account_status: data.accountStatus || data.account_status
+}));
 
 const updateUserSchema = z.object({
   username: z.string().min(3).max(50).optional(),
   email: z.string().email().optional(),
+  fullName: z.string().optional(),
   full_name: z.string().optional(),
   role: z.enum(['admin', 'content_manager', 'viewer']).optional(),
   password: z.string().min(8).optional(),
+  isActive: z.boolean().optional(),
   is_active: z.boolean().optional(),
+  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).optional(),
   account_status: z.enum(['active', 'suspended', 'pending_verification']).optional()
-});
+}).transform(data => ({
+  username: data.username,
+  email: data.email,
+  full_name: data.fullName || data.full_name,
+  role: data.role,
+  password: data.password,
+  is_active: data.isActive ?? data.is_active,
+  account_status: data.accountStatus || data.account_status
+}));
 
 const userStatusSchema = z.object({
-  is_active: z.boolean()
-});
+  isActive: z.boolean().optional(),
+  is_active: z.boolean().optional()
+}).transform(data => ({
+  is_active: data.isActive ?? data.is_active
+}));
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -83,62 +108,56 @@ export function registerAdminUsersRoutes(app: Express) {
     try {
       const query = querySchema.parse(req.query);
 
-      // Build query conditions
-      let conditions = [];
+      // Use Supabase Admin client to bypass RLS
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'Database service is not configured. Please set up Supabase credentials.'
+        });
+      }
 
+      // Build the query for Supabase
+      let supabaseQuery = supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact' });
+
+      // Apply filters
       if (query.search) {
-        conditions.push(
-          or(
-            ilike(profiles.username, `%${query.search}%`),
-            ilike(profiles.email, `%${query.search}%`),
-            ilike(profiles.fullName, `%${query.search}%`)
-          )
-        );
+        supabaseQuery = supabaseQuery.or(`username.ilike.%${query.search}%,email.ilike.%${query.search}%,full_name.ilike.%${query.search}%`);
       }
 
-      if (query.role) {
-        conditions.push(eq(profiles.role, query.role));
+      if (query.role && query.role !== 'all') {
+        supabaseQuery = supabaseQuery.eq('role', query.role);
       }
 
-      if (query.status) {
-        conditions.push(eq(profiles.isActive, query.status === 'active'));
+      if (query.status && query.status !== 'all') {
+        if (query.status === 'active') {
+          supabaseQuery = supabaseQuery.eq('is_active', true);
+        } else if (query.status === 'inactive') {
+          supabaseQuery = supabaseQuery.eq('is_active', false);
+        }
       }
 
-      // Get total count for pagination
-      const totalQuery = db.select({ count: count() }).from(profiles);
-      if (conditions.length > 0) {
-        conditions.forEach(condition => totalQuery.where(condition));
-      }
-      const [{ count: total }] = await totalQuery;
-
-      // Get users with pagination
+      // Apply pagination
       const offset = (query.page - 1) * query.limit;
-      let usersQuery = db
-        .select({
-          id: profiles.id,
-          username: profiles.username,
-          email: profiles.email,
-          full_name: profiles.fullName,
-          role: profiles.role,
-          is_active: profiles.isActive,
-          account_status: profiles.accountStatus,
-          created_at: profiles.createdAt,
-          updated_at: profiles.updatedAt,
-          last_sign_in_at: profiles.lastSignInAt
-        })
-        .from(profiles)
-        .limit(query.limit)
-        .offset(offset)
-        .orderBy(profiles.createdAt);
+      supabaseQuery = supabaseQuery
+        .range(offset, offset + query.limit - 1)
+        .order('created_at', { ascending: false });
 
-      if (conditions.length > 0) {
-        conditions.forEach(condition => usersQuery.where(condition));
+      const { data: usersList, count: total, error } = await supabaseQuery;
+
+      if (error) {
+        console.error('Error fetching users from Supabase:', error);
+        return res.status(500).json({
+          error: 'Failed to fetch users',
+          details: error.message
+        });
       }
 
-      const usersList = await usersQuery;
+      // Data from Supabase is already in snake_case, just pass it through
+      const transformedUsers = usersList || [];
 
       res.json({
-        users: usersList,
+        users: transformedUsers,
         pagination: {
           page: query.page,
           limit: query.limit,
@@ -175,15 +194,23 @@ export function registerAdminUsersRoutes(app: Express) {
         password: '***'
       });
 
-      // Check if user already exists by email
+      // Check if user already exists by email using Supabase Admin
       console.log('[User Creation] Checking for existing user with email:', userData.email);
-      const existingUser = await db
-        .select()
-        .from(profiles)
-        .where(eq(profiles.email, userData.email))
-        .limit(1);
 
-      if (existingUser.length > 0) {
+      if (!supabaseAdmin) {
+        console.log('[User Creation] Supabase Admin client not configured');
+        return res.status(503).json({
+          error: 'User management service is not configured. Please set up Supabase credentials.'
+        });
+      }
+
+      const { data: existingUser, error: checkError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('email', userData.email)
+        .single();
+
+      if (existingUser && !checkError) {
         console.log('[User Creation] User already exists with email:', userData.email);
         return res.status(409).json({
           error: 'User already exists with this email'
@@ -237,40 +264,62 @@ export function registerAdminUsersRoutes(app: Express) {
         return res.status(400).json({ error: 'Failed to create user account' });
       }
 
-      // The trigger should have created the profile, now let's fetch it
-      // Wait a moment for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('[User Creation] Auth user created successfully, ID:', authUser.user.id);
 
-      // Get the created profile
-      const profileResult = await db
-        .select()
-        .from(profiles)
-        .where(eq(profiles.id, authUser.user.id))
-        .limit(1);
+      // The trigger should have created the profile, let's wait and fetch it
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (profileResult.length === 0) {
-        console.error('[User Creation] Profile not found after auth user creation');
-        return res.status(500).json({
-          error: 'Failed to create user profile',
-          details: 'Profile record was not created by database trigger'
+      // Get the created profile using Supabase Admin
+      const { data: newUser, error: fetchError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.user.id)
+        .single();
+
+      if (fetchError || !newUser) {
+        console.error('[User Creation] Profile not found after auth user creation:', fetchError);
+
+        // If profile wasn't created by trigger, create it manually
+        console.log('[User Creation] Creating profile manually...');
+        const profileData = {
+          id: authUser.user.id,
+          email: authUser.user.email,
+          full_name: userData.full_name || null,
+          username: userData.username || null,
+          role: userData.role || 'user',
+          is_active: true,
+          account_status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: createdProfile, error: createError } = await supabaseAdmin
+          .from('profiles')
+          .insert(profileData)
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('[User Creation] Failed to create profile manually:', createError);
+          // Try to clean up the auth user
+          await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch(console.error);
+          return res.status(500).json({
+            error: 'Failed to create user profile',
+            details: createError.message
+          });
+        }
+
+        console.log('[User Creation] Profile created manually');
+        return res.status(201).json({
+          user: createdProfile
         });
       }
 
-      const newUser = profileResult[0];
+      console.log('[User Creation] User created successfully with trigger');
 
+      // Return the user data in snake_case as expected by frontend
       res.status(201).json({
-        user: {
-          id: newUser.id,
-          username: newUser.username,
-          email: newUser.email,
-          full_name: newUser.fullName,
-          role: newUser.role,
-          is_active: newUser.isActive,
-          account_status: newUser.accountStatus,
-          created_at: newUser.createdAt,
-          updated_at: newUser.updatedAt,
-          last_sign_in_at: newUser.lastSignInAt
-        }
+        user: newUser  // Supabase already returns snake_case
       });
 
     } catch (error) {
@@ -293,26 +342,32 @@ export function registerAdminUsersRoutes(app: Express) {
       const userId = req.params.id;
       const userData = updateUserSchema.parse(req.body);
 
-      // Check if user exists
-      const existingUser = await db
-        .select()
-        .from(profiles)
-        .where(eq(profiles.id, userId))
-        .limit(1);
+      // Check if user exists using Supabase Admin
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'User management service is not configured. Please set up Supabase credentials.'
+        });
+      }
 
-      if (existingUser.length === 0) {
+      const { data: existingUser, error: fetchError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError || !existingUser) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // Check for email conflicts
-      if (userData.email) {
-        const conflicts = await db
-          .select()
-          .from(profiles)
-          .where(eq(profiles.email, userData.email))
-          .limit(1);
+      // Check for email conflicts using Supabase Admin
+      if (userData.email && userData.email !== existingUser.email) {
+        const { data: conflicts } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .eq('email', userData.email)
+          .single();
 
-        if (conflicts.length > 0 && conflicts[0].id !== userId) {
+        if (conflicts && conflicts.id !== userId) {
           return res.status(409).json({
             error: 'Email already taken by another user'
           });
@@ -326,9 +381,9 @@ export function registerAdminUsersRoutes(app: Express) {
         if (userData.password) updateData.password = userData.password;
 
         updateData.user_metadata = {
-          username: userData.username || existingUser[0].username,
-          full_name: userData.full_name || existingUser[0].fullName,
-          role: userData.role || existingUser[0].role
+          username: userData.username || existingUser.username,
+          full_name: userData.full_name || existingUser.full_name,
+          role: userData.role || existingUser.role
         };
 
         if (!supabaseAdmin) {
@@ -351,34 +406,53 @@ export function registerAdminUsersRoutes(app: Express) {
         }
       }
 
-      // Update user in profiles table
-      const updateFields: any = { updatedAt: new Date() };
+      // Update user in profiles table using Supabase Admin to bypass RLS
+      const updateFields: any = { updated_at: new Date().toISOString() };
+
+      // Map fields to database column names (snake_case)
       if (userData.username !== undefined) updateFields.username = userData.username;
       if (userData.email !== undefined) updateFields.email = userData.email;
-      if (userData.full_name !== undefined) updateFields.fullName = userData.full_name;
+      if (userData.full_name !== undefined) updateFields.full_name = userData.full_name;
+      if (userData.fullName !== undefined) updateFields.full_name = userData.fullName;
       if (userData.role !== undefined) updateFields.role = userData.role;
-      if (userData.is_active !== undefined) updateFields.isActive = userData.is_active;
-      if (userData.account_status !== undefined) updateFields.accountStatus = userData.account_status;
+      if (userData.is_active !== undefined) updateFields.is_active = userData.is_active;
+      if (userData.isActive !== undefined) updateFields.is_active = userData.isActive;
+      if (userData.account_status !== undefined) updateFields.account_status = userData.account_status;
+      if (userData.accountStatus !== undefined) updateFields.account_status = userData.accountStatus;
 
-      const [updatedUser] = await db
-        .update(profiles)
-        .set(updateFields)
-        .where(eq(profiles.id, userId))
-        .returning();
+      // Use Supabase Admin client to bypass RLS
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'Database service is not configured. Please set up Supabase credentials.'
+        });
+      }
 
+      console.log('[User Update] Updating user:', userId);
+      console.log('[User Update] Update fields:', updateFields);
+
+      const { data: updatedUser, error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update(updateFields)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      console.log('[User Update] Result:', updatedUser ? 'Success' : 'Failed');
+      if (updatedUser) {
+        console.log('[User Update] Updated role:', updatedUser.role);
+      }
+
+      if (updateError || !updatedUser) {
+        console.error('Profile update error:', updateError);
+        return res.status(500).json({
+          error: 'Failed to update user profile',
+          details: updateError?.message
+        });
+      }
+
+      // Return the user data directly from Supabase (already in snake_case)
       res.json({
-        user: {
-          id: updatedUser.id,
-          username: updatedUser.username,
-          email: updatedUser.email,
-          full_name: updatedUser.fullName,
-          role: updatedUser.role,
-          is_active: updatedUser.isActive,
-          account_status: updatedUser.accountStatus,
-          created_at: updatedUser.createdAt,
-          updated_at: updatedUser.updatedAt,
-          last_sign_in_at: updatedUser.lastSignInAt
-        }
+        user: updatedUser
       });
 
     } catch (error) {
@@ -434,13 +508,13 @@ export function registerAdminUsersRoutes(app: Express) {
           id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
-          full_name: updatedUser.fullName,
+          fullName: updatedUser.fullName,
           role: updatedUser.role,
-          is_active: updatedUser.isActive,
-          account_status: updatedUser.accountStatus,
-          created_at: updatedUser.createdAt,
-          updated_at: updatedUser.updatedAt,
-          last_sign_in_at: updatedUser.lastSignInAt
+          isActive: updatedUser.isActive,
+          accountStatus: updatedUser.accountStatus,
+          createdAt: updatedUser.createdAt,
+          updatedAt: updatedUser.updatedAt,
+          lastSignInAt: updatedUser.lastSignInAt
         }
       });
 

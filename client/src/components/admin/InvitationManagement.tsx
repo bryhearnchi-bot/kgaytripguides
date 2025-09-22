@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { getCsrfToken } from '@/utils/csrf';
+// CSRF token not needed with Bearer authentication
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -131,29 +131,10 @@ export function InvitationManagement() {
         throw new Error('No authentication token');
       }
 
-      // Get CSRF token from cookie
-      let csrfToken = getCsrfToken();
-
-      // If no token in cookie, fetch one first
-      if (!csrfToken) {
-        const csrfResponse = await fetch('/api/csrf-token', {
-          credentials: 'include',
-        });
-
-        if (!csrfResponse.ok) {
-          throw new Error('Failed to get CSRF token');
-        }
-
-        const data = await csrfResponse.json();
-        csrfToken = data.csrfToken;
-        document.cookie = `_csrf=${encodeURIComponent(csrfToken)}; path=/; max-age=3600; samesite=strict`;
-      }
-
       const response = await fetch(`/api/admin/invitations/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'x-csrf-token': csrfToken,
+          'Authorization': `Bearer ${session.access_token}`
         },
         credentials: 'include',
       });
@@ -195,29 +176,10 @@ export function InvitationManagement() {
         throw new Error('No authentication token');
       }
 
-      // Get CSRF token from cookie
-      let csrfToken = getCsrfToken();
-
-      // If no token in cookie, fetch one first
-      if (!csrfToken) {
-        const csrfResponse = await fetch('/api/csrf-token', {
-          credentials: 'include',
-        });
-
-        if (!csrfResponse.ok) {
-          throw new Error('Failed to get CSRF token');
-        }
-
-        const data = await csrfResponse.json();
-        csrfToken = data.csrfToken;
-        document.cookie = `_csrf=${encodeURIComponent(csrfToken)}; path=/; max-age=3600; samesite=strict`;
-      }
-
       const response = await fetch(`/api/admin/invitations/${id}/resend`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'x-csrf-token': csrfToken,
+          'Authorization': `Bearer ${session.access_token}`
         },
         credentials: 'include',
       });

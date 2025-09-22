@@ -19,7 +19,7 @@ interface Location {
   name: string;
   country: string;
   region?: string;
-  location_type: 'port' | 'sea_day' | 'embark' | 'disembark';
+  port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
   coordinates?: { lat: number; lng: number } | null;
   description?: string;
   image_url?: string;
@@ -136,7 +136,7 @@ export default function LocationManagementSafe() {
                   </p>
                 </div>
                 <Badge variant="outline">
-                  {location.location_type || 'port'}
+                  {location.port_type || 'port'}
                 </Badge>
               </div>
             </CardHeader>

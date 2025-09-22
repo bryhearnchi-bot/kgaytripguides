@@ -251,12 +251,12 @@ export const publicPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       }
     }
   },
-  '/api/ports': {
+  '/api/locations': {
     get: {
       tags: ['Locations'],
-      summary: 'List ports',
-      description: 'Retrieve list of cruise ports',
-      operationId: 'listPorts',
+      summary: 'List locations',
+      description: 'Retrieve list of cruise locations',
+      operationId: 'listLocations',
       security: [],
       parameters: [
         {
@@ -283,13 +283,13 @@ export const publicPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       ],
       responses: {
         '200': {
-          description: 'List of ports',
+          description: 'List of locations',
           content: {
             'application/json': {
               schema: {
                 type: 'array',
                 items: {
-                  $ref: '#/components/schemas/Port'
+                  $ref: '#/components/schemas/Location'
                 }
               }
             }
@@ -298,12 +298,12 @@ export const publicPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       }
     }
   },
-  '/api/ports/{id}': {
+  '/api/locations/{id}': {
     get: {
       tags: ['Locations'],
-      summary: 'Get port by ID',
-      description: 'Retrieve specific port information',
-      operationId: 'getPortById',
+      summary: 'Get location by ID',
+      description: 'Retrieve specific location information',
+      operationId: 'getLocationById',
       security: [],
       parameters: [
         {
@@ -312,11 +312,11 @@ export const publicPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       ],
       responses: {
         '200': {
-          description: 'Port details',
+          description: 'Location details',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Port'
+                $ref: '#/components/schemas/Location'
               }
             }
           }

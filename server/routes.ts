@@ -17,6 +17,7 @@ import { registerLocationRoutes } from "./routes/locations";
 import { registerPublicRoutes } from "./routes/public";
 import { registerPerformanceRoutes } from "./routes/performance";
 import { registerPartyThemeRoutes } from "./routes/party-themes";
+import { registerAuthRoutes } from "./auth-routes";
 import { setupSwaggerDocs } from "./openapi";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -28,16 +29,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API versioning support
   app.use('/api', validateVersion(['v1']));
 
-  // CSRF protection for unsafe methods (exclude auth, invitation, and admin user routes)
+  // CSRF protection for unsafe methods
   app.use('/api', (req, res, next) => {
-    // Skip CSRF for auth routes, invitation routes, and admin user management routes
-    const isAdminUserRoute = req.path.startsWith('/admin/users');
-
-    if (req.path.startsWith('/auth/') ||
-        req.path.startsWith('/admin/invitations') ||
-        req.path.startsWith('/admin/users')) {
+    // Skip CSRF for auth routes
+    if (req.path.startsWith('/auth/')) {
       return next();
     }
+
+    // Skip CSRF for all admin routes when using Bearer token authentication
+    // This includes: /admin/users, /admin/invitations, and operations on /ports, /ships, /party-themes
+    // Bearer token authentication (Supabase Auth) provides sufficient security for admin operations
+    const authHeader = req.headers.authorization;
+    const hasBearerToken = authHeader?.startsWith('Bearer ');
+
+    // Debug logging for CSRF middleware
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+      console.log(`[CSRF Debug] ${req.method} ${req.path}`);
+      console.log(`[CSRF Debug] Authorization header:`, authHeader ? 'Present' : 'Missing');
+      console.log(`[CSRF Debug] Has Bearer token:`, hasBearerToken);
+    }
+
+    if (hasBearerToken) {
+      // For authenticated requests with Bearer token, skip CSRF
+      // The Supabase Auth token is sufficient security
+      return next();
+    }
+
+    // Apply CSRF protection for non-authenticated requests (cookie-based sessions)
     return doubleSubmitCsrf()(req, res, next);
   });
 
@@ -73,6 +91,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   // ============ REGISTER MODULAR ROUTES ============
+
+  // Register authentication routes
+  registerAuthRoutes(app);
 
   // Register public/general routes (settings, search, dashboard, profile)
   registerPublicRoutes(app);

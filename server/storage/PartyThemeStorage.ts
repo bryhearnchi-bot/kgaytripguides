@@ -2,19 +2,62 @@ import { db } from '../storage';
 import { partyThemes, events } from '../../shared/schema';
 import { eq, like, or, sql, desc, and } from 'drizzle-orm';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import { getSupabaseAdmin, handleSupabaseError, isSupabaseAdminAvailable } from '../supabase-admin';
 
 export type PartyTheme = InferSelectModel<typeof partyThemes>;
 export type NewPartyTheme = InferInsertModel<typeof partyThemes>;
 
 export class PartyThemeStorage {
   /**
+   * Transform snake_case DB fields to camelCase for frontend
+   */
+  private transformToFrontend(theme: any): any {
+    return {
+      id: theme.id,
+      name: theme.name,
+      longDescription: theme.long_description || theme.longDescription,
+      shortDescription: theme.short_description || theme.shortDescription,
+      costumeIdeas: theme.costume_ideas || theme.costumeIdeas,
+      imageUrl: theme.image_url || theme.imageUrl,
+      amazonShoppingListUrl: theme.amazon_shopping_list_url || theme.amazonShoppingListUrl,
+      createdAt: theme.created_at || theme.createdAt,
+      updatedAt: theme.updated_at || theme.updatedAt
+    };
+  }
+
+  /**
+   * Transform camelCase frontend fields to snake_case for DB
+   */
+  private transformToDatabase(data: any): any {
+    const dbData: any = {};
+    if (data.name !== undefined) dbData.name = data.name;
+    if (data.longDescription !== undefined || data.long_description !== undefined) {
+      dbData.long_description = data.longDescription || data.long_description;
+    }
+    if (data.shortDescription !== undefined || data.short_description !== undefined) {
+      dbData.short_description = data.shortDescription || data.short_description;
+    }
+    if (data.costumeIdeas !== undefined || data.costume_ideas !== undefined) {
+      dbData.costume_ideas = data.costumeIdeas || data.costume_ideas;
+    }
+    if (data.imageUrl !== undefined || data.image_url !== undefined) {
+      dbData.image_url = data.imageUrl || data.image_url;
+    }
+    if (data.amazonShoppingListUrl !== undefined || data.amazon_shopping_list_url !== undefined) {
+      dbData.amazon_shopping_list_url = data.amazonShoppingListUrl || data.amazon_shopping_list_url;
+    }
+    return dbData;
+  }
+
+  /**
    * Get all party themes
    */
   async getAll(): Promise<PartyTheme[]> {
     try {
-      return await db.select()
+      const themes = await db.select()
         .from(partyThemes)
         .orderBy(partyThemes.name);
+      return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error fetching party themes:', error);
       throw new Error('Failed to fetch party themes');
@@ -31,7 +74,7 @@ export class PartyThemeStorage {
         .where(eq(partyThemes.id, id))
         .limit(1);
 
-      return result[0] || null;
+      return result[0] ? this.transformToFrontend(result[0]) : null;
     } catch (error) {
       console.error('Error fetching party theme by ID:', error);
       throw new Error('Failed to fetch party theme');
@@ -48,7 +91,7 @@ export class PartyThemeStorage {
         .where(eq(partyThemes.name, name))
         .limit(1);
 
-      return result[0] || null;
+      return result[0] ? this.transformToFrontend(result[0]) : null;
     } catch (error) {
       console.error('Error fetching party theme by name:', error);
       throw new Error('Failed to fetch party theme');
@@ -61,7 +104,7 @@ export class PartyThemeStorage {
   async search(query: string): Promise<PartyTheme[]> {
     try {
       const searchPattern = `%${query}%`;
-      return await db.select()
+      const themes = await db.select()
         .from(partyThemes)
         .where(
           or(
@@ -72,6 +115,7 @@ export class PartyThemeStorage {
           )
         )
         .orderBy(partyThemes.name);
+      return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error searching party themes:', error);
       throw new Error('Failed to search party themes');
@@ -83,10 +127,11 @@ export class PartyThemeStorage {
    */
   async getWithCostumeIdeas(): Promise<PartyTheme[]> {
     try {
-      return await db.select()
+      const themes = await db.select()
         .from(partyThemes)
         .where(sql`${partyThemes.costumeIdeas} IS NOT NULL`)
         .orderBy(partyThemes.name);
+      return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error fetching party themes with costume ideas:', error);
       throw new Error('Failed to fetch party themes with costume ideas');
@@ -103,17 +148,40 @@ export class PartyThemeStorage {
         throw new Error('Name is required');
       }
 
-      const result = await db.insert(partyThemes)
-        .values(data)
-        .returning();
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        throw new Error('Admin service not configured. Please configure SUPABASE_SERVICE_ROLE_KEY environment variable');
+      }
 
-      return result[0];
+      // Transform to database format
+      const dbData = this.transformToDatabase(data);
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: theme, error } = await supabaseAdmin
+        .from('party_themes')
+        .insert(dbData)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Party theme with this name already exists');
+        }
+        handleSupabaseError(error, 'create party theme');
+      }
+
+      if (!theme) {
+        throw new Error('Failed to create party theme');
+      }
+
+      return this.transformToFrontend(theme);
     } catch (error: any) {
-      if (error.code === '23505') { // Unique constraint violation
-        throw new Error('Party theme with this name already exists');
+      if (error.message?.includes('already exists')) {
+        throw error;
       }
       console.error('Error creating party theme:', error);
-      throw new Error('Failed to create party theme');
+      throw error;
     }
   }
 
@@ -122,25 +190,45 @@ export class PartyThemeStorage {
    */
   async update(id: number, data: Partial<NewPartyTheme>): Promise<PartyTheme> {
     try {
-      const result = await db.update(partyThemes)
-        .set({
-          ...data,
-          updatedAt: new Date()
-        })
-        .where(eq(partyThemes.id, id))
-        .returning();
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        throw new Error('Admin service not configured. Please configure SUPABASE_SERVICE_ROLE_KEY environment variable');
+      }
 
-      if (!result[0]) {
+      // Transform to database format
+      const dbData = this.transformToDatabase(data);
+      dbData.updated_at = new Date().toISOString();
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: theme, error } = await supabaseAdmin
+        .from('party_themes')
+        .update(dbData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Party theme not found');
+        }
+        if (error.code === '23505') {
+          throw new Error('Party theme with this name already exists');
+        }
+        handleSupabaseError(error, 'update party theme');
+      }
+
+      if (!theme) {
         throw new Error('Party theme not found');
       }
 
-      return result[0];
+      return this.transformToFrontend(theme);
     } catch (error: any) {
-      if (error.code === '23505') {
-        throw new Error('Party theme with this name already exists');
+      if (error.message?.includes('not found') || error.message?.includes('already exists')) {
+        throw error;
       }
       console.error('Error updating party theme:', error);
-      throw new Error('Failed to update party theme');
+      throw error;
     }
   }
 
@@ -155,11 +243,23 @@ export class PartyThemeStorage {
         throw new Error(`Cannot delete party theme: used in ${usage.eventCount} events`);
       }
 
-      const result = await db.delete(partyThemes)
-        .where(eq(partyThemes.id, id))
-        .returning();
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        throw new Error('Admin service not configured. Please configure SUPABASE_SERVICE_ROLE_KEY environment variable');
+      }
 
-      return result.length > 0;
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('party_themes')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        handleSupabaseError(error, 'delete party theme');
+      }
+
+      return true;
     } catch (error) {
       console.error('Error deleting party theme:', error);
       throw error;
@@ -178,6 +278,7 @@ export class PartyThemeStorage {
 
       const { id: _, createdAt, updatedAt, ...themeData } = original;
 
+      // Note: themeData is already in frontend format from getById
       return await this.create({
         ...themeData,
         name: newName
@@ -285,14 +386,33 @@ export class PartyThemeStorage {
    */
   async bulkCreate(themesData: NewPartyTheme[]): Promise<PartyTheme[]> {
     try {
-      const result = await db.insert(partyThemes)
-        .values(themesData)
-        .returning();
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        throw new Error('Admin service not configured. Please configure SUPABASE_SERVICE_ROLE_KEY environment variable');
+      }
 
-      return result;
+      // Transform all data to database format
+      const dbData = themesData.map(theme => this.transformToDatabase(theme));
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: themes, error } = await supabaseAdmin
+        .from('party_themes')
+        .insert(dbData)
+        .select();
+
+      if (error) {
+        handleSupabaseError(error, 'bulk create party themes');
+      }
+
+      if (!themes) {
+        throw new Error('Failed to bulk create party themes');
+      }
+
+      return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error bulk creating party themes:', error);
-      throw new Error('Failed to bulk create party themes');
+      throw error;
     }
   }
 }

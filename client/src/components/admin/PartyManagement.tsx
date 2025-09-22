@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
+import { supabase } from '../../lib/supabase';
+// CSRF token not needed with Bearer authentication
 import {
   Search,
   Plus,
@@ -71,6 +74,7 @@ export default function PartyManagement({
   const [imageUrl, setImageUrl] = useState('');
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useSupabaseAuth();
 
   // Form state for create/edit
   const [formData, setFormData] = useState<Partial<Talent>>({
@@ -92,8 +96,21 @@ export default function PartyManagement({
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       if (filterRole && filterRole !== 'all') params.append('role', filterRole);
-      
-      const response = await fetch(`/api/talent?${params}`);
+
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`/api/talent?${params}`, {
+        credentials: 'include',
+        headers,
+      });
       if (!response.ok) throw new Error('Failed to fetch talent');
       return response.json();
     }
@@ -103,7 +120,20 @@ export default function PartyManagement({
   const { data: stats } = useQuery({
     queryKey: ['talent-stats'],
     queryFn: async () => {
-      const response = await fetch('/api/talent/stats');
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch('/api/talent/stats', {
+        credentials: 'include',
+        headers,
+      });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     }
@@ -112,12 +142,25 @@ export default function PartyManagement({
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Talent>) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch('/api/talent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
-      if (!response.ok) throw new Error('Failed to create talent');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to create talent' }));
+        throw new Error(error.error || 'Failed to create talent');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -142,12 +185,25 @@ export default function PartyManagement({
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Talent> }) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/talent/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
-      if (!response.ok) throw new Error('Failed to update talent');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to update talent' }));
+        throw new Error(error.error || 'Failed to update talent');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -172,10 +228,23 @@ export default function PartyManagement({
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/talent/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to delete talent');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to delete talent' }));
+        throw new Error(error.error || 'Failed to delete talent');
+      }
       return response.json();
     },
     onSuccess: () => {

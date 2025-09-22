@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { api } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,9 +73,7 @@ export default function ShipsManagement() {
   const { data: ships = [], isLoading } = useQuery<ShipData[]>({
     queryKey: ['ships'],
     queryFn: async () => {
-      const response = await fetch('/api/ships', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/ships');
       if (!response.ok) throw new Error('Failed to fetch ships');
       return response.json();
     }
@@ -83,12 +82,7 @@ export default function ShipsManagement() {
   // Create ship mutation
   const createShipMutation = useMutation({
     mutationFn: async (data: ShipData) => {
-      const response = await fetch('/api/ships', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/ships', data);
       if (!response.ok) throw new Error('Failed to create ship');
       return response.json();
     },
@@ -113,12 +107,7 @@ export default function ShipsManagement() {
   // Update ship mutation
   const updateShipMutation = useMutation({
     mutationFn: async (data: ShipData) => {
-      const response = await fetch(`/api/ships/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/ships/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update ship');
       return response.json();
     },
@@ -143,10 +132,7 @@ export default function ShipsManagement() {
   // Delete ship mutation
   const deleteShipMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/ships/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/ships/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete ship');

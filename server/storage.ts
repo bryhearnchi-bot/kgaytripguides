@@ -95,14 +95,15 @@ if (process.env.USE_MOCK_DATA === 'true') {
       console.log('🔧 Using standard PostgreSQL connection');
 
       // Initialize optimized connection with connection pooling
+      // Optimized for Supabase transaction pooler (port 6543)
       optimizedConnection = OptimizedDatabaseConnection.getInstance();
       db = await optimizedConnection.initialize(process.env.DATABASE_URL!, {
-        max: 30,                    // Increased for better concurrency
-        min: 5,                     // Maintain minimum connections
-        idleTimeout: 300,          // 5 minutes idle timeout
-        connectTimeout: 15,        // 15 seconds connect timeout
-        maxLifetime: 3600,         // 1 hour max connection lifetime
-        statementCacheSize: 200,   // Cache prepared statements
+        max: 10,                   // Reduced for transaction pooler compatibility
+        min: 2,                    // Lower minimum to avoid idle connections
+        idleTimeout: 60,           // 1 minute idle timeout (shorter for serverless)
+        connectTimeout: 10,        // 10 seconds connect timeout
+        maxLifetime: 600,          // 10 minutes max connection lifetime
+        statementCacheSize: 100,   // Moderate statement cache
         applicationName: `kgay-travel-guides-${process.env.NODE_ENV || 'development'}`
       });
 
@@ -152,10 +153,10 @@ export async function warmUpCaches() {
       }
     }
 
-    // Pre-load all ports (rarely change)
-    const allPorts = await db.select().from(ports);
-    for (const port of allPorts) {
-      await cacheManager.set('ports', CacheManager.keys.port(port.id), port);
+    // Pre-load all locations (rarely change)
+    const allLocations = await db.select().from(locations);
+    for (const location of allLocations) {
+      await cacheManager.set('locations', CacheManager.keys.location(location.id), location);
     }
 
     console.log('✅ Cache warm-up complete');
@@ -177,7 +178,7 @@ export const {
   settings,
   cruiseTalent,
   tripInfoSections,
-  ports
+  locations
 } = schema;
 
 // Performance monitoring endpoint
@@ -927,4 +928,4 @@ export const settingsStorage = new SettingsStorage();
 export const tripInfoStorage = new TripInfoStorage();
 
 // Export new storage classes
-export { portStorage, type Port, type NewPort } from './storage/PortStorage';
+export { locationStorage, type Location, type NewLocation } from './storage/LocationStorage';

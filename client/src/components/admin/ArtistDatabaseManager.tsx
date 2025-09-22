@@ -9,6 +9,8 @@ import { Badge } from '../ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useToast } from '../../hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
+import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
+import { supabase } from '../../lib/supabase';
 
 interface Artist {
   id: number;
@@ -34,8 +36,8 @@ interface ArtistDatabaseManagerProps {
   allowInlineCreate?: boolean;
 }
 
-export default function ArtistDatabaseManager({ 
-  onSelectArtist, 
+export default function ArtistDatabaseManager({
+  onSelectArtist,
   showSelectMode = false,
   allowInlineCreate = false
 }: ArtistDatabaseManagerProps) {
@@ -45,13 +47,25 @@ export default function ArtistDatabaseManager({
   const [selectedPerformanceType, setSelectedPerformanceType] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useSupabaseAuth();
 
   // Fetch talent categories from database
   const { data: talentCategories = [] } = useQuery({
     queryKey: ['talent-categories'],
     queryFn: async () => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/talent-categories', {
         credentials: 'include',
+        headers,
       });
       if (!response.ok) throw new Error('Failed to fetch talent categories');
       return response.json();
@@ -68,9 +82,20 @@ export default function ArtistDatabaseManager({
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       if (selectedPerformanceType) params.append('type', selectedPerformanceType);
-      
+
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(`/api/talent?${params.toString()}`, {
         credentials: 'include',
+        headers,
       });
       if (!response.ok) throw new Error('Failed to fetch artists');
       return response.json();
@@ -80,13 +105,25 @@ export default function ArtistDatabaseManager({
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (artistData: Partial<Artist>) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch('/api/talent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         credentials: 'include',
         body: JSON.stringify(artistData),
       });
-      if (!response.ok) throw new Error('Failed to create artist');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to create artist' }));
+        throw new Error(error.error || 'Failed to create artist');
+      }
       return response.json();
     },
     onSuccess: (newArtist) => {
@@ -114,13 +151,25 @@ export default function ArtistDatabaseManager({
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...artistData }: Partial<Artist> & { id: number }) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/talent/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         credentials: 'include',
         body: JSON.stringify(artistData),
       });
-      if (!response.ok) throw new Error('Failed to update artist');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to update artist' }));
+        throw new Error(error.error || 'Failed to update artist');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -143,11 +192,23 @@ export default function ArtistDatabaseManager({
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/talent/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to delete artist');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to delete artist' }));
+        throw new Error(error.error || 'Failed to delete artist');
+      }
       // Handle 204 No Content response (no JSON body)
       if (response.status === 204) return;
       return response.json();

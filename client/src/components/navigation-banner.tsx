@@ -17,9 +17,14 @@ export default function NavigationBanner() {
   const { user, profile, signOut } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
 
-  const handleLogout = () => {
-    signOut();
-    setLocation('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // The signOut function already navigates to '/'
+      // No need to call setLocation here
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (

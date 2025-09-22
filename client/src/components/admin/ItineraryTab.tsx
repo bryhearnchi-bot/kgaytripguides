@@ -30,14 +30,14 @@ import {
 import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
-import PortManagement from './PortManagement';
+import LocationManagement from './LocationManagement';
 
-interface Port {
+interface Location {
   id: number;
   name: string;
   country: string;
   region?: string;
-  port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
+  location_type: 'port' | 'sea_day' | 'embark' | 'disembark';
   coordinates?: { lat: number; lng: number } | null;
   description?: string;
   image_url?: string;
@@ -384,7 +384,7 @@ interface ItineraryDayFormProps {
 
 function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
   const [formData, setFormData] = useState<ItineraryDay>(day);
-  const [showPortSelector, setShowPortSelector] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -395,14 +395,14 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePortSelection = (port: Port) => {
+  const handleLocationSelection = (location: Location) => {
     setFormData(prev => ({
       ...prev,
-      portName: port.name,
-      country: port.country,
-      portImageUrl: port.image_url || ''
+      portName: location.name,
+      country: location.country,
+      portImageUrl: location.image_url || ''
     }));
-    setShowPortSelector(false);
+    setShowLocationSelector(false);
   };
 
   return (
@@ -433,7 +433,7 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="portName">Port/Location Name *</Label>
+          <Label htmlFor="portName">Location Name *</Label>
           <div className="flex gap-2">
             <Input
               id="portName"
@@ -445,15 +445,15 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setShowPortSelector(true)}
+              onClick={() => setShowLocationSelector(true)}
               className="flex-shrink-0"
             >
               <Search className="w-4 h-4 mr-2" />
-              Browse Ports
+              Browse Locations
             </Button>
           </div>
           <p className="text-xs text-gray-500">
-            Enter manually or browse from the port database
+            Enter manually or browse from the location database
           </p>
         </div>
 
@@ -534,7 +534,7 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
         onImageChange={(imageUrl) => {
           setFormData(prev => ({ ...prev, portImageUrl: imageUrl || '' }));
         }}
-        label="Port Image"
+        label="Location Image"
       />
 
       <DialogFooter>
@@ -548,22 +548,22 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
       </DialogFooter>
     </form>
 
-      {/* Port Selector Dialog */}
-      <Dialog open={showPortSelector} onOpenChange={setShowPortSelector}>
+      {/* Location Selector Dialog */}
+      <Dialog open={showLocationSelector} onOpenChange={setShowLocationSelector}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Anchor className="w-5 h-5" />
-              Select Port from Database
+              Select Location from Database
             </DialogTitle>
             <DialogDescription>
-              Choose a port from our database to automatically fill port details.
+              Choose a location from our database to automatically fill location details.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
-            <PortManagement
-              mode="select"
-              onPortSelect={handlePortSelection}
+            <LocationManagement
+              showSelectMode={true}
+              onSelectLocation={handleLocationSelection}
             />
           </div>
         </DialogContent>

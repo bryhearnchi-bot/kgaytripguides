@@ -178,7 +178,7 @@ export interface Talent {
   updatedAt: string;
 }
 
-export interface Port {
+export interface Location {
   id: number;
   name: string;
   country: string;
@@ -241,7 +241,7 @@ export interface SearchResult {
     trips: Trip[];
     events: Event[];
     talent: Talent[];
-    ports: Port[];
+    locations: Location[];
   };
 }
 `;

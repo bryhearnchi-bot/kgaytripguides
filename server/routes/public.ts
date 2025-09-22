@@ -8,7 +8,7 @@ import {
   db
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
-import { trips, events, talent, ports } from "../../shared/schema";
+import { trips, events, talent, locations } from "../../shared/schema";
 import { eq, ilike, or, count, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -76,11 +76,11 @@ export function registerPublicRoutes(app: Express) {
           stats.talent = talentStats[0];
         }
 
-        if (metrics.includes('ports')) {
-          const portStats = await db.select({
+        if (metrics.includes('locations')) {
+          const locationStats = await db.select({
             total: count()
-          }).from(ports);
-          stats.ports = portStats[0];
+          }).from(locations);
+          stats.locations = locationStats[0];
         }
 
         res.json(stats);
@@ -151,7 +151,7 @@ export function registerPublicRoutes(app: Express) {
       try {
         const {
           q = '',
-          types = ['trips', 'events', 'talent', 'ports'],
+          types = ['trips', 'events', 'talent', 'locations'],
           limit = '10'
         } = req.query;
 
@@ -203,18 +203,18 @@ export function registerPublicRoutes(app: Express) {
           results.talent = talentResults;
         }
 
-        // Search ports
-        if (searchTypes.includes('ports')) {
-          const portResults = await db.select()
-            .from(ports)
+        // Search locations
+        if (searchTypes.includes('locations')) {
+          const locationResults = await db.select()
+            .from(locations)
             .where(
               or(
-                ilike(ports.name, `%${searchTerm}%`),
-                ilike(ports.description, `%${searchTerm}%`)
+                ilike(locations.name, `%${searchTerm}%`),
+                ilike(locations.description, `%${searchTerm}%`)
               )
             )
             .limit(limitNum);
-          results.ports = portResults;
+          results.locations = locationResults;
         }
 
         res.json(results);

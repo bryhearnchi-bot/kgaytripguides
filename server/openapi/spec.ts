@@ -355,34 +355,34 @@ The API uses standard HTTP status codes and returns consistent error responses w
           }
         }
       },
-      Port: {
+      Location: {
         type: 'object',
         required: ['name', 'country'],
         properties: {
           id: {
             type: 'integer',
-            description: 'Unique identifier for the port',
+            description: 'Unique identifier for the location',
             example: 1
           },
           name: {
             type: 'string',
-            description: 'Port name',
+            description: 'Location name',
             example: 'Santorini'
           },
           country: {
             type: 'string',
-            description: 'Country where the port is located',
+            description: 'Country where the location is located',
             example: 'Greece'
           },
           description: {
             type: 'string',
             nullable: true,
-            description: 'Port description'
+            description: 'Location description'
           },
           imageUrl: {
             type: 'string',
             nullable: true,
-            description: 'URL to port image'
+            description: 'URL to location image'
           },
           coordinates: {
             type: 'object',
@@ -391,23 +391,23 @@ The API uses standard HTTP status codes and returns consistent error responses w
               latitude: { type: 'number', format: 'float' },
               longitude: { type: 'number', format: 'float' }
             },
-            description: 'Port coordinates'
+            description: 'Location coordinates'
           },
           timezone: {
             type: 'string',
             nullable: true,
-            description: 'Port timezone',
+            description: 'Location timezone',
             example: 'Europe/Athens'
           },
           metadata: {
             type: 'object',
             nullable: true,
-            description: 'Additional port metadata'
+            description: 'Additional location metadata'
           },
           createdAt: {
             type: 'string',
             format: 'date-time',
-            description: 'Port creation timestamp'
+            description: 'Location creation timestamp'
           },
           updatedAt: {
             type: 'string',

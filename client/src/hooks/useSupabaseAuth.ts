@@ -115,7 +115,19 @@ export function useSupabaseAuth() {
         return;
       }
 
-      setProfile(data);
+      // Ensure the profile has all required fields
+      if (data) {
+        setProfile({
+          id: data.id,
+          email: data.email,
+          full_name: data.full_name || null,
+          role: data.role || 'user',
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+        });
+      } else {
+        setProfile(null);
+      }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
       setProfile(null);
@@ -162,9 +174,48 @@ export function useSupabaseAuth() {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    navigate('/');
+    try {
+      // Clear profile immediately
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+
+      // Clear all Supabase auth data from localStorage
+      // This ensures the session is not restored on reload
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+      const projectId = supabaseUrl.split('//')[1]?.split('.')[0] || '';
+      if (projectId) {
+        const storageKey = `sb-${projectId}-auth-token`;
+        localStorage.removeItem(storageKey);
+      }
+
+      // Also clear any other potential Supabase storage keys
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Attempt to sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('Logout error:', error);
+      }
+
+      // Navigate to home page without reload
+      // The auth state change listener will handle the UI update
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out failed:', error);
+      // Clear storage even on error
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      navigate('/');
+    }
   };
 
   const resetPassword = async (email: string) => {

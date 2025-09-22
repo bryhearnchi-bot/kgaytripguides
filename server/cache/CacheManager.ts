@@ -94,7 +94,7 @@ export class CacheManager {
     }));
 
     // Port data cache
-    this.cacheLayers.set('ports', new LRUCache<string, any>({
+    this.cacheLayers.set('locations', new LRUCache<string, any>({
       max: 50,
       ttl: 1000 * 60 * 60 * 24,  // 24 hours (rarely changes)
       allowStale: true,
@@ -317,8 +317,8 @@ export class CacheManager {
     eventsByCruise: (cruiseId: number) => `events:cruise:${cruiseId}`,
     talent: (id: number) => `talent:${id}`,
     talentByCruise: (cruiseId: number) => `talent:cruise:${cruiseId}`,
-    port: (id: number) => `port:${id}`,
-    portList: () => 'ports:list',
+    location: (id: number) => `location:${id}`,
+    locationList: () => 'locations:list',
     party: (id: number) => `party:${id}`,
     itinerary: (cruiseId: number) => `itinerary:cruise:${cruiseId}`,
     user: (id: string) => `user:${id}`,

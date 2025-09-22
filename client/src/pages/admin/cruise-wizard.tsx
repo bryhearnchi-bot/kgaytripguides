@@ -55,7 +55,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState('basic');
-  const [selectedPorts, setSelectedPorts] = useState<number[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<number[]>([]);
 
   const [formData, setFormData] = useState<CruiseFormData>({
@@ -93,14 +93,14 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
     }
   });
 
-  // Fetch ports
-  const { data: ports = [] } = useQuery({
-    queryKey: ['ports'],
+  // Fetch locations
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
     queryFn: async () => {
-      const response = await fetch('/api/ports', {
+      const response = await fetch('/api/locations', {
         credentials: 'include'
       });
-      if (!response.ok) throw new Error('Failed to fetch ports');
+      if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
     }
   });
@@ -372,32 +372,32 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
           <TabsContent value="itinerary">
             <Card>
               <CardHeader>
-                <CardTitle>Itinerary & Ports</CardTitle>
+                <CardTitle>Itinerary & Locations</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Label>Select Ports</Label>
+                  <Label>Select Locations</Label>
                   <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                    {ports.map((port) => (
+                    {locations.map((location) => (
                       <label
-                        key={port.id}
+                        key={location.id}
                         className="flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer"
                       >
                         <input
                           type="checkbox"
-                          checked={selectedPorts.includes(port.id)}
+                          checked={selectedLocations.includes(location.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedPorts([...selectedPorts, port.id]);
+                              setSelectedLocations([...selectedLocations, location.id]);
                             } else {
-                              setSelectedPorts(selectedPorts.filter(id => id !== port.id));
+                              setSelectedLocations(selectedLocations.filter(id => id !== location.id));
                             }
                           }}
                           className="mr-2"
                         />
                         <div>
-                          <div className="font-medium">{port.name}</div>
-                          <div className="text-sm text-gray-500">{port.country}</div>
+                          <div className="font-medium">{location.name}</div>
+                          <div className="text-sm text-gray-500">{location.country}</div>
                         </div>
                       </label>
                     ))}

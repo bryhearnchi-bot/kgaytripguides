@@ -8,12 +8,12 @@
 import { z } from 'zod';
 import { paginationSchema, searchSchema, sortingSchema, urlSchema, coordinatesSchema } from './common';
 
-// ============ PORT SCHEMAS ============
+// ============ LOCATION SCHEMAS ============
 
 /**
- * Port type enum
+ * Location type enum
  */
-export const portTypeEnum = z.enum(['port', 'sea_day', 'embark', 'disembark', 'private_island']);
+export const locationTypeEnum = z.enum(['port', 'sea_day', 'embark', 'disembark', 'private_island']);
 
 /**
  * Region enum
@@ -35,11 +35,11 @@ export const regionEnum = z.enum([
 ]);
 
 /**
- * Create port schema
+ * Create location schema
  */
-export const createPortSchema = z.object({
+export const createLocationSchema = z.object({
   name: z.string()
-    .min(1, 'Port name is required')
+    .min(1, 'Location name is required')
     .max(255, 'Name must be less than 255 characters')
     .trim(),
 
@@ -50,11 +50,11 @@ export const createPortSchema = z.object({
 
   region: regionEnum.optional(),
 
-  portType: portTypeEnum.optional().default('port'),
+  locationType: locationTypeEnum.optional().default('port'),
 
-  portCode: z.string()
-    .length(3, 'Port code must be 3 characters (IATA/UN/LOCODE)')
-    .regex(/^[A-Z]{3}$/, 'Port code must be 3 uppercase letters')
+  locationCode: z.string()
+    .length(3, 'Location code must be 3 characters (IATA/UN/LOCODE)')
+    .regex(/^[A-Z]{3}$/, 'Location code must be 3 uppercase letters')
     .optional(),
 
   coordinates: coordinatesSchema.optional(),
@@ -75,7 +75,7 @@ export const createPortSchema = z.object({
 
   thumbnailUrl: urlSchema.optional().or(z.literal('')),
 
-  // Port facilities
+  // Location facilities
   facilities: z.object({
     terminal: z.boolean().optional(),
     shuttleService: z.boolean().optional(),
@@ -144,14 +144,14 @@ export const createPortSchema = z.object({
 });
 
 /**
- * Update port schema
+ * Update location schema
  */
-export const updatePortSchema = createPortSchema.partial();
+export const updateLocationSchema = createLocationSchema.partial();
 
 /**
- * Port filter schema
+ * Location filter schema
  */
-export const portFilterSchema = z.object({})
+export const locationFilterSchema = z.object({})
   .merge(paginationSchema)
   .merge(searchSchema)
   .merge(sortingSchema)
@@ -160,7 +160,7 @@ export const portFilterSchema = z.object({})
 
     region: regionEnum.optional(),
 
-    portType: portTypeEnum.optional(),
+    locationType: locationTypeEnum.optional(),
 
     isPopular: z.string()
       .transform(val => val === 'true')
@@ -624,11 +624,11 @@ export const createVenueSchema = z.object({
 export const updateVenueSchema = createVenueSchema.partial().omit({ shipId: true });
 
 export default {
-  // Port schemas
-  createPortSchema,
-  updatePortSchema,
-  portFilterSchema,
-  portTypeEnum,
+  // Location schemas
+  createLocationSchema,
+  updateLocationSchema,
+  locationFilterSchema,
+  locationTypeEnum,
   regionEnum,
 
   // Ship schemas

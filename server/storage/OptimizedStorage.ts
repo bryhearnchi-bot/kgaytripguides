@@ -161,16 +161,41 @@ export class OptimizedDatabaseConnection {
 
   async transaction<T>(fn: (tx: any) => Promise<T>): Promise<T> {
     const start = Date.now();
-    try {
-      const result = await this.db.transaction(fn);
-      const duration = Date.now() - start;
-      this.monitor.logQuery('TRANSACTION', duration);
-      return result;
-    } catch (error) {
-      const duration = Date.now() - start;
-      this.monitor.logQuery('TRANSACTION (FAILED)', duration);
-      throw error;
+    let retries = 3;
+    let lastError: any;
+
+    while (retries > 0) {
+      try {
+        const result = await this.db.transaction(async (tx) => {
+          // Set transaction isolation level for better consistency
+          await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+          return await fn(tx);
+        });
+        const duration = Date.now() - start;
+        this.monitor.logQuery('TRANSACTION', duration);
+        return result;
+      } catch (error: any) {
+        const duration = Date.now() - start;
+        lastError = error;
+
+        // Check for serialization errors and deadlocks
+        if (error?.code === '40001' || error?.code === '40P01') {
+          retries--;
+          if (retries > 0) {
+            console.log(`Transaction failed with ${error.code}, retrying... (${retries} retries left)`);
+            // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 100));
+            continue;
+          }
+        }
+
+        this.monitor.logQuery('TRANSACTION (FAILED)', duration);
+        console.error('Transaction failed:', error);
+        throw error;
+      }
     }
+
+    throw lastError;
   }
 
   async executeWithMetrics<T>(

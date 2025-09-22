@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
+import { supabase } from '../../lib/supabase';
+// CSRF token not needed with Bearer authentication
 
 interface User {
   id: string;
@@ -68,13 +71,25 @@ export default function UserManagement() {
   });
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useSupabaseAuth();
 
   // Fetch users
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery<User[]>({
     queryKey: ['admin-users'],
     queryFn: async () => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/auth/users', {
         credentials: 'include',
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to fetch users');
@@ -86,16 +101,23 @@ export default function UserManagement() {
   // Create user mutation
   const createUser = useMutation({
     mutationFn: async (userData: CreateUserData) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch('/api/auth/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         credentials: 'include',
         body: JSON.stringify(userData),
       });
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ error: 'Failed to create user' }));
         throw new Error(error.error || 'Failed to create user');
       }
       return response.json();
@@ -120,16 +142,23 @@ export default function UserManagement() {
   // Update user mutation
   const updateUser = useMutation({
     mutationFn: async ({ id, userData }: { id: string; userData: Partial<CreateUserData> }) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/auth/users/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         credentials: 'include',
         body: JSON.stringify(userData),
       });
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ error: 'Failed to update user' }));
         throw new Error(error.error || 'Failed to update user');
       }
       return response.json();
@@ -154,12 +183,22 @@ export default function UserManagement() {
   // Delete user mutation
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
+      // Get fresh session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
       const response = await fetch(`/api/auth/users/${userId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        const error = await response.json().catch(() => ({ error: 'Failed to delete user' }));
+        throw new Error(error.error || 'Failed to delete user');
       }
     },
     onSuccess: () => {

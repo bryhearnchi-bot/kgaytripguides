@@ -33,7 +33,7 @@ interface Location {
   name: string;
   country: string;
   region?: string;
-  location_type: 'port' | 'sea_day' | 'embark' | 'disembark';
+  port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
   coordinates?: { lat: number; lng: number } | null;
   description?: string;
   image_url?: string;
@@ -271,7 +271,7 @@ export default function LocationManagement({
         (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (location.region && location.region.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesType = !selectedType || location.location_type === selectedType;
+      const matchesType = !selectedType || location.port_type === selectedType;
       const matchesRegion = !selectedRegion || location.region === selectedRegion;
 
       return matchesSearch && matchesType && matchesRegion;
@@ -295,7 +295,7 @@ export default function LocationManagement({
       name: location?.name || '',
       country: location?.country || '',
       region: location?.region || '',
-      location_type: location?.location_type || 'port',
+      port_type: location?.port_type || 'port',
       description: location?.description || '',
       image_url: location?.image_url || '',
       coordinates: location?.coordinates || null,
@@ -361,8 +361,8 @@ export default function LocationManagement({
           <div className="space-y-2">
             <label className="text-sm font-medium">Location Type *</label>
             <Select
-              value={formData.location_type}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, location_type: value as Location['location_type'] }))}
+              value={formData.port_type}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, port_type: value as Location['port_type'] }))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -444,7 +444,7 @@ export default function LocationManagement({
   };
 
   const LocationCard = ({ location }: { location: Location }) => {
-    const locationType = LOCATION_TYPES.find(t => t.value === location.location_type);
+    const locationType = LOCATION_TYPES.find(t => t.value === location.port_type);
     const Icon = locationType?.icon || Anchor;
 
     return (
@@ -455,8 +455,8 @@ export default function LocationManagement({
               <Icon className="w-5 h-5 text-blue-600" />
               <CardTitle className="text-lg">{location.name}</CardTitle>
             </div>
-            <Badge variant={location.location_type === 'sea_day' ? 'secondary' : 'default'}>
-              {locationType?.label || location.location_type}
+            <Badge variant={location.port_type === 'sea_day' ? 'secondary' : 'default'}>
+              {locationType?.label || location.port_type}
             </Badge>
           </div>
         </CardHeader>
@@ -611,11 +611,11 @@ export default function LocationManagement({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Anchor className="w-6 h-6" />
+              <MapPin className="w-6 h-6" />
               Location Management
             </h1>
             <p className="text-blue-100 mt-1">
-              Manage locations, destinations, and sea days for your cruises
+              Manage cruise destinations, ports of call, and sea days
             </p>
           </div>
           <div className="flex gap-2">
@@ -734,7 +734,7 @@ export default function LocationManagement({
         )}
       </div>
 
-      {/* Port Grid */}
+      {/* Location Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
@@ -754,7 +754,7 @@ export default function LocationManagement({
         </div>
       ) : filteredLocations.length === 0 ? (
         <Card className="p-8 text-center">
-          <Anchor className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <MapPin className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold mb-2">No locations found</h3>
           <p className="text-gray-600 mb-4">
             {searchQuery || selectedType || selectedRegion
