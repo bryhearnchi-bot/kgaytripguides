@@ -85,6 +85,18 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Explicitly serve PWA files with correct MIME types to avoid HTML fallthrough
+  app.get('/manifest.json', (_req, res) => {
+    res.type('application/manifest+json');
+    res.sendFile(path.resolve(distPath, 'manifest.json'));
+  });
+
+  app.get('/sw.js', (_req, res) => {
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.type('application/javascript');
+    res.sendFile(path.resolve(distPath, 'sw.js'));
+  });
+
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
