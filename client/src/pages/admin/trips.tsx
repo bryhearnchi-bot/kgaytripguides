@@ -102,7 +102,7 @@ function TripsManagementContent() {
   ) || [];
 
   const canEdit = profile?.role && ['admin', 'content_manager'].includes(profile.role);
-  const canDelete = profile?.role && ['admin'].includes(profile.role);
+  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
 
   if (isLoading) {
     return (
@@ -283,6 +283,7 @@ function TripsManagementContent() {
                           <Button
                             variant="outline"
                             size="sm"
+                            title="Delete Trip (Admins & Content Managers)"
                             onClick={() => {
                               if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
                                 deleteTrip.mutate(trip.id, {

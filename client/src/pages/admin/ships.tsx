@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import {
   Ship,
   Plus,
@@ -68,6 +69,8 @@ export default function ShipsManagement() {
     name: '',
     cruiseLine: '',
   });
+  const { profile } = useSupabaseAuthContext();
+  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
 
   // Fetch ships
   const { data: ships = [], isLoading } = useQuery<ShipData[]>({
@@ -315,7 +318,8 @@ export default function ShipsManagement() {
                             size="sm"
                             onClick={() => handleDelete(ship.id!)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            title="Delete Ship"
+                            title="Delete Ship (Admins & Content Managers)"
+                            disabled={!canDelete}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

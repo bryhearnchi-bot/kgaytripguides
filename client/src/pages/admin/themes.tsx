@@ -26,6 +26,7 @@ import {
   Save,
   Copy
 } from 'lucide-react';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 interface PartyTheme {
   id?: number;
@@ -41,6 +42,8 @@ interface PartyTheme {
 }
 
 export default function ThemesManagement() {
+  const { profile } = useSupabaseAuthContext();
+  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -435,6 +438,8 @@ function ThemesTable({
   onDelete,
   onDuplicate
 }: ThemesTableProps) {
+  const { profile } = useSupabaseAuthContext();
+  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -518,7 +523,8 @@ function ThemesTable({
                     size="sm"
                     onClick={() => onDelete(theme.id!)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    title="Delete Theme"
+                    title="Delete Theme (Admins & Content Managers)"
+                    disabled={!canDelete}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

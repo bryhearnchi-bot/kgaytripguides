@@ -87,7 +87,8 @@ export default function LocationManagement({
   const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { session } = useSupabaseAuth();
+  const { session, profile } = useSupabaseAuth();
+  const canDelete = (role?: string) => role && ['admin', 'content_manager', 'super_admin'].includes(role);
 
   // Fetch locations with search and filters
   const { data: locations = [], isLoading } = useQuery({
@@ -522,6 +523,8 @@ export default function LocationManagement({
                   size="sm"
                   onClick={() => deleteMutation.mutate(location.id)}
                   className="text-red-600 hover:text-red-700"
+                  title="Delete Location (Admins & Content Managers)"
+                  disabled={!canDelete((profile as any)?.role)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
