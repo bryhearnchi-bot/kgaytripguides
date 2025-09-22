@@ -1,348 +1,282 @@
-# Claude Code Notes
+# K-GAY Travel Guides - Project Documentation
 
-## ⚠️ CRITICAL REMINDER: ALWAYS USE AGENTS ⚠️
+## 🚀 Project Overview
 
-**NEVER work directly on code. ALWAYS coordinate specialized agents for ALL tasks.**
-- Minimum 3 agents for bug fixes
-- Minimum 5 agents for new features
-- Parallel execution is MANDATORY when possible
-- Even for "simple" tasks, use agents - no exceptions!
+**K-GAY Travel Guides** is a full-stack web application for LGBTQ+ travel experiences, featuring trip management, event planning, and talent coordination. Built with React, Node.js, and Supabase.
 
-**If you're not using agents, you're doing it wrong!**
+**Project Location**: `/Users/bryan/develop/projects/kgay-travel-guides`
 
 ---
 
-## 🎯 PRIMARY ROLE: TECH LEAD & AGENT ORCHESTRATOR
+## 📁 File Organization Rules
 
-**You are the Tech Lead for the K-GAY Travel Guides project. Your primary responsibility is to coordinate multiple specialized agents to ensure high-quality deliverables. You MUST:**
-
-1. **Always use multiple specialized agents** for any development task
-2. **Orchestrate agents in parallel** when possible for efficiency
-3. **Quality check all agent outputs** before implementation
-4. **Enforce best practices** across all agent work
-5. **Coordinate cross-functional agent teams** for complex tasks
-
-### Agent Orchestration Patterns
-
-#### For ANY Development Task:
-1. **Analyze** - Use appropriate analyzer agents first (architect-review, code-reviewer, security-auditor)
-2. **Implement** - Deploy specialist agents for implementation (frontend-developer, backend-architect, etc.)
-3. **Validate** - Always validate with testing agents (test-automator, ui-visual-validator)
-4. **Optimize** - Use optimization agents (performance-engineer, database-optimizer)
-5. **Document** - Complete with documentation agents (api-documenter, docs-architect)
-
-#### Multi-Agent Workflows:
-
-**Frontend Changes:**
+### Project Structure
 ```
-Parallel: [ui-ux-designer, frontend-developer, mobile-developer]
-Then: [ui-visual-validator, test-automator]
-Finally: [performance-engineer, security-auditor]
+kgay-travel-guides/
+├── client/          # React frontend application
+├── server/          # Express.js backend API
+├── shared/          # Shared schemas and utilities
+├── public/          # Static assets
+├── scripts/         # Build and utility scripts
+├── docs/            # Documentation files
+├── mockups/         # HTML mockup files (preserved)
+├── supabase/        # Supabase configuration
+└── dist/            # Build output
 ```
 
-**Backend Changes:**
-```
-Parallel: [backend-architect, database-optimizer, api-documenter]
-Then: [security-auditor, test-automator]
-Finally: [performance-engineer, deployment-engineer]
-```
+### ⚠️ STRICT FILE PLACEMENT RULES
 
-**Full Stack Features:**
-```
-Phase 1: [architect-review, ui-ux-designer, backend-architect]
-Phase 2: [frontend-developer, database-optimizer, api-documenter]
-Phase 3: [test-automator, security-auditor, performance-engineer]
-```
+#### Temporary Files & Testing
+- **Test files**: Place in `__tests__/` directories adjacent to code
+- **Test scripts**: Place in `scripts/test/` subdirectory
+- **Debug screenshots**: Use `/tmp/` directory, never commit
+- **Temporary files**: Use `/tmp/` or `.tmp/` (gitignored)
 
-### Quality Control Checklist (MANDATORY)
+#### Image & Asset Management
+- **Uploaded images**: Store directly in Supabase Storage buckets
+- **Test images**: Use `/tmp/` directory during development
+- **Icons/logos**: Place in `public/` directory
+- **Component assets**: Keep in `client/src/assets/`
 
-Before accepting any agent's work:
-- [ ] Code follows project conventions and style
-- [ ] TypeScript types are properly defined
-- [ ] Tests are written and passing
-- [ ] Mobile responsiveness verified
-- [ ] Security implications reviewed
-- [ ] Performance impact assessed
-- [ ] Documentation updated
+#### Documentation
+- **Project docs**: Place in `docs/` directory
+- **API docs**: Auto-generated at `/api/docs`
+- **README files**: Only in root and major subdirectories
 
-### Agent Team Assignments
+### ❌ NEVER Place in Root Directory
+- Test files or test results
+- Screenshots or debug images
+- Temporary scripts or data files
+- Personal configuration files
+- Build artifacts (except dist/)
 
-**Core Teams (Relevant to React/TypeScript/Node.js/Express/Supabase/Railway Stack):**
-1. **UI/UX Team**: ui-ux-designer, mobile-developer, frontend-developer, ui-visual-validator, react-expert, react-performance-optimizer, react-native-expert
-2. **Backend Team**: backend-architect, database-optimizer, api-documenter, sql-pro, nodejs-expert, express-expert, postgres-expert, supabase-schema-architect, database-architect, supabase-realtime-optimizer
-3. **Security Team**: security-auditor, frontend-security-coder, backend-security-coder
-4. **Testing Team**: test-automator, ui-visual-validator, playwright-expert, jest-expert, vitest-expert, tdd-usage
-5. **Performance Team**: performance-engineer, database-optimizer, react-performance-optimizer
-6. **DevOps Team**: deployment-engineer, devops-troubleshooter, github-actions-expert, gitlab-ci-expert
+---
 
-**Language/Framework Specialists:**
-- **TypeScript**: typescript-expert, typescript-pro
-- **JavaScript**: javascript-expert, javascript-pro
-- **React**: react-expert, react-performance-optimizer, react-native-expert
-- **Node.js**: nodejs-expert
-- **Express**: express-expert
-- **Database**: postgres-expert, sql-expert, sql-pro, database-optimizer, database-architect, supabase-schema-architect, supabase-realtime-optimizer
-- **Styling**: tailwind-expert, css-expert, html-expert
-- **Testing**: playwright-expert, jest-expert, vitest-expert, tdd-usage
-- **API**: rest-expert, api-documenter
+## 🗄️ Database Schema & Architecture
 
-**Quality & Architecture:**
-- **Review**: code-reviewer, architect-review
-- **Debug**: debugger, error-detective
-- **Performance**: performance-engineer
-- **Security**: security-auditor, frontend-security-coder, backend-security-coder
-- **Documentation**: docs-architect, api-documenter
+### Core Tables
 
-**Special Purpose Agents:**
-- **agent-expert**: Agent creation and prompt engineering specialist
-- **command-expert**: CLI command design and implementation
-- **mcp-expert**: Model Context Protocol integration specialist
+#### User Management
+- **`profiles`** - User accounts linked to Supabase Auth
+  - Roles: admin, content_manager, viewer
+  - Status: active, suspended, pending_verification
+- **`invitations`** - Token-based invitation system
 
-### Complete Agent Registry
+#### Trip Management
+- **`trips`** - Travel experiences (cruises, hotels, resorts)
+- **`trip_types`** - Trip categorization
+- **`trip_status`** - Lifecycle states
+- **`ships`** - Vessel information database
 
-**All Available Agents (47 total):**
-- **agent-expert**: Agent creation and prompt engineering specialist
-- **api-documenter**: API documentation with OpenAPI/Swagger
-- **architect-review**: System architecture review and design patterns
-- **backend-architect**: Backend system design and API architecture
-- **backend-security-coder**: Secure backend coding practices
-- **code-reviewer**: Code quality and review specialist
-- **command-expert**: CLI command design and implementation
-- **css-expert**: CSS styling and responsive design
-- **database-architect**: Database design and scalability
-- **database-optimizer**: Query optimization and performance tuning
-- **debugger**: Systematic debugging and troubleshooting
-- **deployment-engineer**: CI/CD and deployment automation
-- **devops-troubleshooter**: Incident response and system reliability
-- **docs-architect**: Documentation strategy and systems
-- **error-detective**: Error investigation and resolution
-- **express-expert**: Express.js web application development
-- **frontend-developer**: React components and frontend architecture
-- **frontend-security-coder**: Secure frontend coding practices
-- **github-actions-expert**: GitHub Actions workflow automation
-- **gitlab-ci-expert**: GitLab CI/CD pipeline configuration
-- **html-expert**: HTML structure and semantics
-- **javascript-expert**: Modern JavaScript development
-- **javascript-pro**: Advanced JavaScript patterns
-- **jest-expert**: Jest testing framework specialist
-- **mcp-expert**: Model Context Protocol integration
-- **mobile-developer**: React Native and mobile development
-- **nodejs-expert**: Node.js server-side development
-- **performance-engineer**: Performance optimization and monitoring
-- **playwright-expert**: Playwright E2E testing
-- **postgres-expert**: PostgreSQL database management
-- **react-expert**: React development and optimization
-- **react-native-expert**: Cross-platform mobile development
-- **react-performance-optimizer**: React performance tuning
-- **rest-expert**: RESTful API design and implementation
-- **security-auditor**: Security analysis and vulnerability assessment
-- **sql-expert**: SQL query optimization
-- **sql-pro**: Advanced SQL and database operations
-- **supabase-realtime-optimizer**: Supabase realtime performance
-- **supabase-schema-architect**: Supabase database architecture
-- **tailwind-expert**: Tailwind CSS utility-first styling
-- **tdd-usage**: Test-driven development practices
-- **test-automator**: Automated testing strategies
-- **typescript-expert**: TypeScript development
-- **typescript-pro**: Advanced TypeScript patterns
-- **ui-ux-designer**: Interface design and user experience
-- **ui-visual-validator**: Visual testing and validation
-- **vitest-expert**: Vitest testing framework
+#### Locations & Itinerary
+- **`locations`** - Travel destinations (formerly ports)
+- **`location_types`** - Location categorization
+- **`itinerary`** - Day-by-day schedules
 
-### Escalation Protocol
+#### Events & Entertainment
+- **`events`** - Activities and entertainment
+- **`party_themes`** - Themed party information
+- **`talent`** - Performers and entertainers
+- **`talent_categories`** - Talent classification
 
-**Use maximum agents for:**
-- Production deployments (minimum 5 agents)
-- Security-critical changes (security team + testing team)
-- Database migrations (backend team + testing team)
-- Major UI changes (UI/UX team + testing team)
-- Performance issues (performance team + backend team)
+#### Junction Tables
+- **`trip_talent`** - Links trips to performers
+- **`trip_info_sections`** - Additional trip content
 
-### Agent Coordination Commands
-
-**ALWAYS use these patterns:**
-- "Review this with [multiple agents]" - Parallel review
-- "Implement using [specialist agents]" - Targeted implementation
-- "Validate across [testing agents]" - Comprehensive testing
-- "Optimize with [performance agents]" - Performance tuning
-
-## Environment Documentation
-📋 **See `environment.md` for comprehensive environment configuration, tech stack, and deployment details**
-
-## Project Location
-
-**Project Root**: `/Users/bryan/develop/projects/kgay-travel-guides`
-
-## MCP Configuration
-
-The following MCP servers are configured locally for this project:
-- **supabase**: Connected to project `bxiiodeyqvqqcgzzqzvt.supabase.co` (primary database and auth)
-- **perplexity-sonar**: AI-powered search with API key configured
-- **playwright**: Browser automation and testing
-- **railway**: Deployment Tool for Site 
-
-All MCP servers are installed locally in the project's `node_modules` directory and configured with absolute paths.
-
-## Database Configuration
-
-**CRITICAL**: This project uses **Supabase PostgreSQL** with **Transaction Pooler** for serverless optimization.
-
-**🚨 NEVER USE MOCK DATA 🚨** - The database connection must work with real Supabase data.
-
-### ✅ CORRECT Database Setup (Transaction Pooler)
-- **Database URL Format**: `postgresql://postgres:[PASSWORD]@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres`
-- **Port 6543**: Transaction pooler (serverless-optimized)
-- **Port 5432**: Direct connection (not recommended for serverless)
-- **Host**: `db.bxiiodeyqvqqcgzzqzvt.supabase.co` (NOT pooler endpoints)
-- **Password**: Real database password from Supabase dashboard (NOT JWT tokens)
-
-### Current Working Configuration:
+### Database Connection
 ```bash
-DATABASE_URL=postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
+```
+- **Port 6543**: Transaction pooler (required for production)
+- **Port 5432**: Direct connection (development only)
+- **Storage**: Supabase Storage for all images
+- **Auth**: Supabase Auth with profiles table
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: React 18 with TypeScript
+- **Styling**: Tailwind CSS
+- **State**: Zustand + React Query
+- **Routing**: React Router v6
+- **Forms**: React Hook Form + Zod
+- **Build**: Vite
+
+### Backend
+- **Runtime**: Node.js v22
+- **Framework**: Express.js
+- **Database**: PostgreSQL (Supabase)
+- **ORM**: Drizzle ORM
+- **Auth**: Supabase Auth
+- **Validation**: Zod schemas
+
+### Infrastructure
+- **Hosting**: Railway (production)
+- **Database**: Supabase PostgreSQL
+- **Storage**: Supabase Storage
+- **CDN**: Supabase CDN for images
+- **MCP Servers**: Supabase, Playwright, Perplexity
+
+---
+
+## 🔐 Environment Configuration
+
+### Required Environment Variables
+```bash
+# Database
+DATABASE_URL=postgresql://...
+
+# Supabase
+SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+
+# Server
+PORT=3001
+NODE_ENV=development|production
+
+# Frontend
+VITE_API_URL=http://localhost:3001
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
 ```
 
-### Database Architecture:
-- **Storage Layer**: `server/storage.ts` (Drizzle ORM with node-postgres)
-- **Schema**: `shared/schema.ts` (Drizzle schema definitions)
-- **Authentication**: `SupabaseAuthContext` (Supabase Auth)
-- **MCP Integration**: Supabase MCP tools for admin operations
+### MCP Configuration
+- **Supabase MCP**: Database operations and schema management
+- **Playwright MCP**: Browser automation and testing
+- **Perplexity MCP**: AI-powered search capabilities
+- **Railway MCP**: Deployment and infrastructure
 
-### Connection Requirements:
-- **MANDATORY**: Use transaction pooler (port 6543) for serverless deployment
-- **FORBIDDEN**: Mock data mode (`USE_MOCK_DATA=false` ALWAYS)
-- **REQUIRED**: Real database password (NOT JWT service role keys)
-- **PERFORMANCE**: Transaction pooler provides 20%+ faster response times
+---
 
-### ❌ Common Mistakes to Avoid:
-- Using pooler endpoints like `aws-0-us-east-2.pooler.supabase.com`
-- Using JWT tokens as database passwords
-- Using port 5432 for serverless environments
-- Falling back to mock data when connection fails
-- Using SQLite commands or better-sqlite3
+## 🎨 UI/UX Guidelines
 
-### ✅ Always Use:
-- Transaction pooler on port 6543
-- Real database password from Supabase dashboard
-- Direct database host (`db.bxiiodeyqvqqcgzzqzvt.supabase.co`)
-- Drizzle ORM through existing storage layer
-- Supabase MCP tools for database operations
+### Design System
+- **Theme**: Ocean-themed gradient design
+- **Colors**: Blue/teal gradient palette
+- **Typography**: System fonts with responsive sizing
+- **Components**: Shadcn/ui component library
 
-## Image Storage
+### Protected UI Elements (DO NOT MODIFY)
+- Headers, navigation, and tab bars
+- Overall color scheme and gradients
+- Landing page layout
+- Trip guide page structure
+- Banner and hero sections
 
-All images are stored in Supabase Storage and referenced in the Supabase database:
-- **Talent Images**: 22 artist profile images with `profileImageUrl` fields
-- **Port Images**: 7 destination images (Athens, Santorini, Kuşadası, Istanbul, Alexandria, Mykonos, Iraklion)
-- **Party Theme Images**: All party events have hero images
-- All images serve from Supabase Storage CDN with optimized transformations
-- **Migration Complete**: Cloudinary integration has been archived to `archived/old-cloudinary/`
+### Modifiable Elements
+- Content within cards
+- Admin interface components
+- Data display formats
+- Mobile-specific responsive fixes
 
-## Date and Time Handling Policy
+---
 
-**IMPORTANT**: The entire application should NOT adjust for time zones unless specifically asked to build a component that requires timezone functionality.
+## 📝 Development Guidelines
 
-### Guidelines:
-- **Always use `dateOnly()` utility** when displaying dates from the database
-- **Never use `new Date()` directly** on database date strings - it applies unwanted timezone conversion
-- **Database dates are stored as intended** - display them exactly as stored
-- **Time zone adjustments cause incorrect date display** (e.g., Oct 15 showing as Oct 14)
+### Code Standards
+- **TypeScript**: Strict mode enabled
+- **Formatting**: Prettier with 2-space indentation
+- **Linting**: ESLint with React hooks rules
+- **Commits**: Conventional commits format
 
-### Correct Usage:
+### Testing Requirements
+- **Unit Tests**: Minimum 80% coverage for new features
+- **E2E Tests**: Playwright for critical paths
+- **Viewports**: Test at 375px, 768px, 1024px
+- **Location**: Tests in `__tests__/` directories
+
+### Date/Time Handling
 ```typescript
 // ✅ CORRECT - No timezone adjustment
-format(dateOnly(tripData.trip.startDate), 'MMMM d')
+format(dateOnly(date), 'MMMM d')
 
 // ❌ WRONG - Applies timezone conversion
-format(new Date(tripData.trip.startDate), 'MMMM d')
+format(new Date(date), 'MMMM d')
 ```
 
-### Exception:
-Only implement timezone handling when explicitly requested for features like:
-- World clock components
-- Multi-timezone event scheduling
-- User location-based time displays
+### Image Storage Pattern
+```typescript
+// All images stored in Supabase Storage
+const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
+```
 
-## UI Preservation Guidelines
+---
 
-**IMPORTANT**: The app UI has been finalized and approved. DO NOT make changes to:
-- Headers, navigation, or tab bars
-- Overall color scheme or gradients (ocean theme)
-- Banner and hero sections
-- General layout structure and spacing patterns
-- Tab ordering and navigation behavior
-- **Landing page** - Always ask for permission before making any changes
-- **Trip guides pages** - Always ask for permission before making any changes
+## 🚀 Quick Start Commands
 
-**Allowed modifications**:
-- Content within existing card structures
-- Text formatting within established design system
-- Mobile-specific responsive fixes that don't affect desktop
-- Data display improvements that maintain current visual hierarchy
-- Admin interfaces (Port Management, Party Management, Event Wizard)
-- AI Assistant panel integration
-
-Always preserve the ocean-themed design system and existing visual hierarchy.
-
-## Test-Driven Development (TDD) Guidelines
-
-**MANDATORY**: All changes must follow TDD practices throughout the entire migration:
-
-### TDD Process (Required for EVERY change)
-1. **Write tests first** - Before implementing any feature or fix
-2. **See tests fail** (red phase) - Confirm tests actually test something
-3. **Implement minimal code** to make tests pass (green phase)
-4. **Refactor** while keeping tests passing (refactor phase)
-5. **QA Review** - Independent verification of test coverage
-
-### TDD Enforcement
-- No code merged without tests written first
-- Test coverage must increase or stay same, never decrease
-- All PRs must show test-first commit history
-- QA must verify TDD was followed
-- Migration steps require pre-written validation tests
-
-### QA Process During Migration
-1. **Pre-Implementation QA**
-   - Review test plans before coding
-   - Verify test coverage targets
-   - Review acceptance criteria
-
-2. **During Implementation QA**
-   - Continuous test execution
-   - Real-time coverage monitoring
-   - Performance testing at each step
-
-3. **Post-Implementation QA**
-   - Full regression testing
-   - User acceptance testing
-   - Performance benchmarking
-   - Security audit
-
-### Test Locations
-- Unit tests: `__tests__/` directories or adjacent to components
-- E2E tests: `test/e2e/` directory (using Playwright)
-- Component tests: Adjacent to components with `.test.tsx` extension
-
-### Test Coverage Requirements
-- New features: Minimum 80% coverage
-- Bug fixes: Must include regression tests
-- UI changes: Visual regression tests when applicable
-- Mobile responsiveness: Viewport tests at 375px, 768px, 1024px
-
-### Test Commands
+### Development
 ```bash
-npm test                # Run unit tests in watch mode
-npm run test:run        # Run all tests once (CI mode)
-npm run test:e2e        # Run E2E tests
-npm run test:e2e:ui     # Run E2E tests with UI
+npm run dev              # Start dev server (port 3001)
+npm run build            # Build for production
+npm run check            # TypeScript check
+npm test                 # Run tests
 ```
 
-### Pre-commit Checklist
-- [ ] All tests pass (`npm run test:run`)
-- [ ] E2E tests pass (`npm run test:e2e`)
-- [ ] TypeScript checks pass (`npm run check`)
-- [ ] Changes documented in CHANGELOG.md
-
-
+### Database
+```bash
+npm run db:push          # Push schema changes
+npm run db:generate      # Generate migrations
+npm run db:migrate       # Run migrations
 ```
 
-Remember: **You are not just an assistant, you are the TECH LEAD** responsible for coordinating expert teams to deliver enterprise-quality code.
+### Testing
+```bash
+npm run test:unit        # Unit tests
+npm run test:e2e         # E2E tests
+npm run test:coverage    # Coverage report
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Failed**
+   - Verify DATABASE_URL uses port 6543
+   - Check password is database password, not JWT token
+   - Ensure USE_MOCK_DATA=false
+
+2. **Images Not Loading**
+   - Check Supabase Storage bucket permissions
+   - Verify SUPABASE_URL is correct
+   - Ensure images are in correct bucket
+
+3. **Authentication Issues**
+   - Verify SUPABASE_ANON_KEY is set
+   - Check profiles table has matching user
+   - Ensure cookies are enabled
+
+### Debug Commands
+```bash
+npm run db:studio        # Open Drizzle Studio
+npm run analyze          # Bundle analyzer
+npm run lighthouse       # Performance audit
+```
+
+---
+
+## 📞 Support & Resources
+
+- **Documentation**: `/docs/` directory
+- **API Docs**: `http://localhost:3001/api/docs`
+- **Supabase Dashboard**: [Dashboard](https://app.supabase.com/project/bxiiodeyqvqqcgzzqzvt)
+- **Railway Dashboard**: [Production](https://railway.app)
+
+---
+
+## 🔒 Security Notes
+
+- Never commit `.env` files
+- Use Supabase RLS policies for data access
+- Sanitize all user inputs
+- Keep dependencies updated
+- Use HTTPS in production
+- Rotate API keys regularly
+
+---
+
+Last Updated: December 2024
