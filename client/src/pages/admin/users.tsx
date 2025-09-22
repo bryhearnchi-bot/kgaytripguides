@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,11 +57,11 @@ interface UserFormData {
   account_status: string;
 }
 
-const ROLES = [
+const BASE_ROLES = [
   { value: 'viewer', label: 'Viewer', description: 'View-only access' },
   { value: 'content_manager', label: 'Content Manager', description: 'Edit content and manage trips' },
   { value: 'admin', label: 'Admin', description: 'Full system access' },
-];
+] as const;
 
 export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,6 +82,24 @@ export default function UsersManagement() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Compute role options based on current user role
+  const ROLE_OPTIONS = isSuperAdmin
+    ? [...BASE_ROLES, { value: 'super_admin', label: 'Super Admin', description: 'Highest privileges for destructive actions' }]
+    : [...BASE_ROLES];
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const metaRole = (user?.user_metadata as any)?.role as string | undefined;
+        setIsSuperAdmin(metaRole === 'super_admin');
+      } catch {
+        setIsSuperAdmin(false);
+      }
+    })();
+  }, []);
 
   // Fetch users
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery<UserData[]>({
@@ -394,6 +412,7 @@ export default function UsersManagement() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
+      case 'super_admin': return 'destructive';
       case 'admin': return 'destructive';
       case 'content_manager': return 'default';
       case 'viewer': return 'secondary';
@@ -402,7 +421,7 @@ export default function UsersManagement() {
   };
 
   const getRoleLabel = (role: string) => {
-    const roleData = ROLES.find(r => r.value === role);
+    const roleData = ROLE_OPTIONS.find(r => r.value === role);
     return roleData?.label || role;
   };
 
@@ -735,7 +754,7 @@ export default function UsersManagement() {
               <Label htmlFor="role" className="text-sm font-medium text-gray-700">
                 User Role <span className="text-red-500">*</span>
               </Label>
-              <Select
+                  <Select
                 value={formData.role}
                 onValueChange={(value) => handleInputChange('role', value)}
                 disabled={saveUser.isPending}
@@ -743,8 +762,8 @@ export default function UsersManagement() {
                 <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((role) => (
+                  <SelectContent>
+                  {ROLE_OPTIONS.map((role) => (
                     <SelectItem key={role.value} value={role.value}>
                       <div className="flex items-center gap-2">
                         <Shield className="h-4 w-4 text-gray-500" />
@@ -766,7 +785,7 @@ export default function UsersManagement() {
                   <Shield className="h-5 w-5 text-blue-600" />
                   <div>
                     <p className="font-medium text-blue-900">{getRoleLabel(formData.role)} Role</p>
-                    <p className="text-sm text-blue-700">{ROLES.find(r => r.value === formData.role)?.description}</p>
+                    <p className="text-sm text-blue-700">{ROLE_OPTIONS.find(r => r.value === formData.role)?.description}</p>
                   </div>
                 </div>
               </div>
