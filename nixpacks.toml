@@ -5,4 +5,4 @@ NIXPACKS_NODE_VERSION = "20"
 cmds = ["npm run build"]
 
 [start]
-cmd = "npx tsx server/index.ts"
+cmd = "NODE_ENV=production npx tsx server/index.ts"
