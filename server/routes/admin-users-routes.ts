@@ -49,7 +49,7 @@ const createUserSchema = z.object({
   email: z.string().email(),
   fullName: z.string().optional(),
   full_name: z.string().optional(),
-  role: z.enum(['admin', 'content_manager', 'viewer']),
+  role: z.enum(['admin', 'content_manager', 'viewer', 'super_admin']),
   password: z.string().min(8),
   isActive: z.boolean().default(true),
   is_active: z.boolean().default(true),
@@ -70,7 +70,7 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   fullName: z.string().optional(),
   full_name: z.string().optional(),
-  role: z.enum(['admin', 'content_manager', 'viewer']).optional(),
+  role: z.enum(['admin', 'content_manager', 'viewer', 'super_admin']).optional(),
   password: z.string().min(8).optional(),
   isActive: z.boolean().optional(),
   is_active: z.boolean().optional(),
@@ -189,6 +189,11 @@ export function registerAdminUsersRoutes(app: Express) {
       });
 
       const userData = createUserSchema.parse(req.body);
+
+      // Only a super admin can create another super admin
+      if (userData.role === 'super_admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admin can assign super_admin role' });
+      }
       console.log('[User Creation] Validated user data:', {
         ...userData,
         password: '***'
@@ -359,6 +364,14 @@ export function registerAdminUsersRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // Guard: only super admin can promote to super_admin or modify a super_admin
+      if (!supabaseAdmin) {
+        return res.status(503).json({ error: 'User management service is not configured. Please set up Supabase credentials.' });
+      }
+
+      // Fetch existing user (already done below), then enforce role change constraints
+      // (We fetch first to know current role)
+      
       // Check for email conflicts using Supabase Admin
       if (userData.email && userData.email !== existingUser.email) {
         const { data: conflicts } = await supabaseAdmin
@@ -372,6 +385,16 @@ export function registerAdminUsersRoutes(app: Express) {
             error: 'Email already taken by another user'
           });
         }
+      }
+
+      // If attempting to set role to super_admin, require requester to be super_admin
+      if (userData.role === 'super_admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admin can assign super_admin role' });
+      }
+
+      // If target is currently super_admin, only super_admin may modify
+      if (existingUser.role === 'super_admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admin can modify a super_admin account' });
       }
 
       // Update user in Supabase Auth if email or password changed
