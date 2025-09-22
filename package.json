@@ -12,7 +12,7 @@
     "build": "vite build",
     "build:netlify": "vite build",
     "db:push:conditional": "if [ \"$CONTEXT\" = \"production\" ]; then npm run db:push; else echo 'Skipping database migration - not in production context'; fi",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production tsx server/index.ts",
     "production:seed": "tsx server/production-seed.ts",
     "check": "tsc",
     "test": "vitest",
