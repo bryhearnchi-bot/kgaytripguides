@@ -115,7 +115,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Delete party theme
-  app.delete("/api/party-themes/:id", requireSuperAdmin, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const deleted = await partyThemeStorage.delete(parseInt(req.params.id));
 
@@ -228,7 +228,7 @@ export function registerPartyThemeRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/parties/:id", requireSuperAdmin, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/parties/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     res.redirect(307, `/api/party-themes/${req.params.id}`);
   });
 }

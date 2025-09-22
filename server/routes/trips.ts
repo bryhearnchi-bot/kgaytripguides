@@ -387,7 +387,7 @@ export function registerTripRoutes(app: Express) {
   });
 
   // Delete cruise
-  app.delete("/api/cruises/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     await cruiseStorage.deleteCruise(parseInt(req.params.id));
     res.json({ message: "Cruise deleted" });
   });
@@ -451,7 +451,7 @@ export function registerTripRoutes(app: Express) {
   });
 
   // Delete trip
-  app.delete("/api/trips/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     await tripStorage.deleteTrip(parseInt(req.params.id));
     res.json({ message: "Trip deleted" });
   });

@@ -251,7 +251,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Delete location
-  app.delete("/api/locations/:id", requireSuperAdmin, auditLogger('admin.location.delete'), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/locations/:id", requireContentEditor, auditLogger('admin.location.delete'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
@@ -611,7 +611,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Delete ship
-  app.delete("/api/ships/:id", requireSuperAdmin, auditLogger('admin.ship.delete'), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/ships/:id", requireContentEditor, auditLogger('admin.ship.delete'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
