@@ -33,6 +33,7 @@ import { dateOnly } from '@/lib/utils';
 import { InviteUserModal } from '@/components/admin/InviteUserModal';
 import { InvitationManagement } from '@/components/admin/InvitationManagement';
 import { supabase } from '@/lib/supabase';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface UserData {
   id: string;
@@ -83,6 +84,7 @@ export default function UsersManagement() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const { profile } = useSupabaseAuth();
 
   // Compute role options based on current user role
   const ROLE_OPTIONS = isSuperAdmin
@@ -90,16 +92,8 @@ export default function UsersManagement() {
     : [...BASE_ROLES];
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const metaRole = (user?.user_metadata as any)?.role as string | undefined;
-        setIsSuperAdmin(metaRole === 'super_admin');
-      } catch {
-        setIsSuperAdmin(false);
-      }
-    })();
-  }, []);
+    setIsSuperAdmin(profile?.role === 'super_admin');
+  }, [profile]);
 
   // Fetch users
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery<UserData[]>({
@@ -421,7 +415,8 @@ export default function UsersManagement() {
   };
 
   const getRoleLabel = (role: string) => {
-    const roleData = ROLE_OPTIONS.find(r => r.value === role);
+    if (role === 'super_admin') return 'Super Admin';
+    const roleData = BASE_ROLES.find(r => r.value === role);
     return roleData?.label || role;
   };
 
