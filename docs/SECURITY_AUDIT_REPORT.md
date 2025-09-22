@@ -1,3 +1,21 @@
+## Super Admin Enforcement
+
+To require `super_admin` for destructive admin routes set:
+
+```
+ENFORCE_SUPER_ADMIN=1
+```
+
+Ensure at least one user has role `super_admin` in `public.profiles`. If the role constraint excludes it, run:
+
+```sql
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS valid_role;
+ALTER TABLE public.profiles ADD CONSTRAINT valid_role CHECK (
+  role IS NULL OR role = ANY (ARRAY['user','viewer','content_manager','admin','super_admin'])
+);
+UPDATE public.profiles SET role = 'super_admin' WHERE lower(email)=lower('admin@yourdomain.com');
+```
+
 # Security Audit Report - User Invitation System
 K-GAY Travel Guides
 Date: January 2025

@@ -12,7 +12,7 @@
  */
 
 import type { Express } from "express";
-import { requireAuth, requireTripAdmin, type AuthenticatedRequest } from "../auth";
+import { requireAuth, requireTripAdmin, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { createClient } from '@supabase/supabase-js';
 import { db } from "../storage";
 import { profiles } from "../../shared/schema";
@@ -532,8 +532,8 @@ export function registerAdminUsersRoutes(app: Express) {
     }
   });
 
-  // DELETE /api/admin/users/:id - Delete user
-  app.delete("/api/admin/users/:id", requireTripAdmin, auditLogger('admin.user.delete'), async (req: AuthenticatedRequest, res) => {
+  // DELETE /api/admin/users/:id - Delete user (super admin)
+  app.delete("/api/admin/users/:id", requireSuperAdmin, auditLogger('admin.user.delete'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.params.id;
 
