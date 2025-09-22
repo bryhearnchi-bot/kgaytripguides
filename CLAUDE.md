@@ -19,7 +19,7 @@ kgay-travel-guides/
 ├── public/          # Static assets
 ├── scripts/         # Build and utility scripts
 ├── docs/            # Documentation files
-├── mockups/         # HTML mockup files (preserved)
+├── mockups/         # HTML mockup and design reference files
 ├── supabase/        # Supabase configuration
 └── dist/            # Build output
 ```
@@ -38,10 +38,12 @@ kgay-travel-guides/
 - **Icons/logos**: Place in `public/` directory
 - **Component assets**: Keep in `client/src/assets/`
 
-#### Documentation
+#### Documentation & Design
 - **Project docs**: Place in `docs/` directory
 - **API docs**: Auto-generated at `/api/docs`
 - **README files**: Only in root and major subdirectories
+- **HTML mockups**: Place in `mockups/` directory
+- **Design references**: Keep in `mockups/` directory
 
 ### ❌ NEVER Place in Root Directory
 - Test files or test results
