@@ -174,6 +174,54 @@ VITE_SUPABASE_ANON_KEY=...
 
 ---
 
+## 🤖 Agent Orchestration Rules
+
+### When to Use Specialized Agents
+
+**ALWAYS use specialized agents for:**
+- Code reviews and architecture decisions
+- Performance optimization
+- Security audits
+- Database migrations
+- Complex feature implementation
+
+### Recommended Agent Patterns
+
+#### Bug Fixes (Minimum 3 agents)
+1. `code-reviewer` - Analyze the issue
+2. `[specialist]` - Implement the fix (e.g., frontend-developer, backend-architect)
+3. `test-automator` - Verify the fix
+
+#### New Features (Minimum 5 agents)
+1. `architect-review` - Review architecture
+2. `ui-ux-designer` - Design interface (if UI)
+3. `[specialists]` - Implementation (frontend/backend)
+4. `test-automator` - Write tests
+5. `security-auditor` - Security review
+
+#### Database Changes
+- Always use: `database-optimizer`, `sql-expert`, `security-auditor`
+
+#### Performance Issues
+- Always use: `performance-engineer`, `database-optimizer`, `code-reviewer`
+
+### Key Specialist Agents
+
+**Frontend**: `frontend-developer`, `react-expert`, `ui-ux-designer`, `mobile-developer`
+**Backend**: `backend-architect`, `nodejs-expert`, `express-expert`, `api-documenter`
+**Database**: `postgres-expert`, `sql-expert`, `database-optimizer`
+**Testing**: `test-automator`, `playwright-expert`, `jest-expert`
+**Security**: `security-auditor`, `frontend-security-coder`, `backend-security-coder`
+**Performance**: `performance-engineer`, `react-performance-optimizer`
+
+### Parallel Execution
+When possible, run agents in parallel for efficiency:
+```
+Parallel: [code-reviewer, security-auditor, test-automator]
+```
+
+---
+
 ## 📝 Development Guidelines
 
 ### Code Standards
