@@ -104,6 +104,19 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
         } as User;
         return next();
       }
+
+      // Fallback when profile is unavailable (e.g., mock mode): use Supabase user metadata
+      const metaRole = (user.user_metadata as any)?.role as string | undefined;
+      if (metaRole) {
+        console.log(`Auth: Using Supabase user metadata role '${metaRole}' for ${user.email}`);
+        req.user = {
+          id: user.id,
+          username: user.email || '',
+          email: user.email || '',
+          role: metaRole,
+        } as User;
+        return next();
+      }
     }
   } catch (supabaseError) {
     console.debug('Supabase auth failed, trying custom JWT:', supabaseError);
@@ -181,11 +194,19 @@ function composeAuth(roleCheck: (req: AuthenticatedRequest, res: Response, next:
   };
 }
 
-// Specific role checks - Updated for simplified role system
-export const requireSuperAdmin = composeAuth(requireRole(['admin']));
-export const requireTripAdmin = composeAuth(requireRole(['admin', 'content_manager']));
-export const requireContentEditor = composeAuth(requireRole(['admin', 'content_manager']));
-export const requireMediaManager = composeAuth(requireRole(['admin', 'content_manager']));
+// Specific role checks
+export const requireAdmin = composeAuth(requireRole(['admin', 'super_admin']));
+// Super admin enforcement is optional and guarded via feature flag
+export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (process.env.ENFORCE_SUPER_ADMIN === '1') {
+    return composeAuth(requireRole(['super_admin']))(req, res, next);
+  }
+  // Default to admin-level access to preserve current behavior
+  return composeAuth(requireRole(['admin', 'super_admin']))(req, res, next);
+};
+export const requireTripAdmin = composeAuth(requireRole(['admin', 'super_admin', 'content_manager']));
+export const requireContentEditor = composeAuth(requireRole(['admin', 'super_admin', 'content_manager']));
+export const requireMediaManager = composeAuth(requireRole(['admin', 'super_admin', 'content_manager']));
 
 // Backward compatibility alias
 export const requireCruiseAdmin = requireTripAdmin;

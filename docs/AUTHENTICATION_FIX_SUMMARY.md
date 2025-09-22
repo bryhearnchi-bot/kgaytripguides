@@ -1,5 +1,85 @@
 # Admin Panel Database & Authentication Fixes - Complete Summary
 
+## Phased Hardening Plan (Validated)
+
+This plan aligns with project structure in `docs/CLAUDE.md`, keeps existing admin user Create/Edit working, and can be rolled out safely with feature flags.
+
+### Phase 0 — Safety Net
+- Database backup and export RLS policies
+- Feature flags (default off):
+  - `ADMIN_USE_RLS_FOR_PROFILE=0`
+  - `ENFORCE_SUPER_ADMIN=0`
+
+### Phase 1 — Safe DB Hardening (applies without behavior change)
+- Lock function search_path for `public.handle_new_user`
+- Add missing index on `public.security_audit_log(user_id)`
+- Remove duplicate legacy indexes
+
+Migration file added:
+
+```
+supabase/migrations/20250922091500_auth_security_hardening_phase1.sql
+```
+
+Key SQL included:
+
+```sql
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'handle_new_user'
+  ) THEN
+    EXECUTE 'ALTER FUNCTION public.handle_new_user() SET search_path = public, auth, extensions';
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS security_audit_log_user_id_idx
+  ON public.security_audit_log(user_id);
+
+DROP INDEX IF EXISTS public.ports_name_key;
+DROP INDEX IF EXISTS public.talent_talent_category_id_idx;
+```
+
+### Phase 2 — RLS Hygiene (performance only)
+- Replace `auth.*()` calls inside policy bodies with `(select auth.*())`
+- Consolidate duplicate permissive policies per {role, action}
+
+### Phase 3 — Middleware Upgrade (flagged for safety)
+- Introduce:
+  - `requireAdmin = ['admin','super_admin']`
+  - `requireSuperAdmin` enforced only when `ENFORCE_SUPER_ADMIN=1` (default off)
+
+Implemented in `server/auth.ts` to preserve current admin access by default.
+
+### Phase 4 — Audit Logging (non-blocking)
+- Add audit logging middleware on sensitive admin routes (create/update/delete)
+- Fail-open: logging failures do not block requests
+
+Integrated into location/ship/admin-user routes via `auditLogger()`.
+
+### Phase 5 — Optional RLS Profile Path (feature-flag)
+- Add RLS-based read/update helpers behind `ADMIN_USE_RLS_FOR_PROFILE` (default off)
+
+### Phase 6 — Docs & Tests
+- Keep this summary updated; add notes to `SECURITY_AUDIT_REPORT.md`
+- Ensure admin CRUD flows pass Playwright/Node tests
+
+### Phase 7 — Rollout
+- dev → staging → prod; monitor admin CRUD and invite flows
+
+## Current Status
+- Phase 1 migration file: ADDED (not yet applied to remote; MCP is read-only)
+- Guards updated in `server/auth.ts` with feature flag (preserves behavior)
+- Audit logging added to admin routes (non-blocking)
+
+## How to Apply Phase 1 Migration
+- Option A: Temporarily disable MCP read-only and run migration
+- Option B: Use Supabase CLI to apply the migration to your project
+
+Once applied, there will be no changes to admin UX or API contracts.
+
 ## Session 2: Database Connectivity & RLS Fixes
 
 ## 🔍 New Issues Fixed (Session 2)

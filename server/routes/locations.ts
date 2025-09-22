@@ -3,6 +3,7 @@ import {
   db
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
+import { auditLogger } from "../logging/middleware";
 import { locations, ships } from "../../shared/schema";
 import { eq, ilike, or, count, sql } from "drizzle-orm";
 import {
@@ -70,7 +71,7 @@ export function registerLocationRoutes(app: Express) {
       const results = await query;
 
       // Transform snake_case to camelCase for frontend compatibility
-      const transformedResults = results.map(location => ({
+      const transformedResults = results.map((location: any) => ({
         ...location,
         imageUrl: location.image_url,
         portType: location.port_type,
@@ -90,7 +91,7 @@ export function registerLocationRoutes(app: Express) {
     try {
       const [location] = await db.select()
         .from(locations)
-        .where(eq(locations.id, req.params.id))
+        .where(eq(locations.id, Number(req.params.id)))
         .limit(1);
 
       if (!location) {
@@ -105,7 +106,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Create location
-  app.post("/api/locations", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/locations", requireContentEditor, auditLogger('admin.location.create'), async (req: AuthenticatedRequest, res) => {
     try {
       // Validate required fields
       if (!req.body.name || !req.body.country) {
@@ -177,7 +178,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Update location
-  app.put("/api/locations/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/locations/:id", requireContentEditor, validateParams(idParamSchema as any), auditLogger('admin.location.update'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
@@ -203,7 +204,7 @@ export function registerLocationRoutes(app: Express) {
       const { data: location, error } = await supabaseAdmin
         .from('locations')
         .update(updateData)
-        .eq('id', req.params.id)
+        .eq('id', Number(req.params.id))
         .select()
         .single();
 
@@ -250,7 +251,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Delete location
-  app.delete("/api/locations/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/locations/:id", requireSuperAdmin, auditLogger('admin.location.delete'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
@@ -265,7 +266,7 @@ export function registerLocationRoutes(app: Express) {
       const { error } = await supabaseAdmin
         .from('locations')
         .delete()
-        .eq('id', req.params.id);
+        .eq('id', Number(req.params.id));
 
       if (error) {
         handleSupabaseError(error, 'delete location');
@@ -339,7 +340,7 @@ export function registerLocationRoutes(app: Express) {
       const results = await query;
 
       // Transform snake_case to camelCase for frontend compatibility
-      const transformedResults = results.map(ship => ({
+      const transformedResults = results.map((ship: any) => ({
         id: ship.id,
         name: ship.name,
         cruiseLine: ship.cruise_line,
@@ -374,7 +375,7 @@ export function registerLocationRoutes(app: Express) {
     try {
       const [ship] = await db.select()
         .from(ships)
-        .where(eq(ships.id, req.params.id))
+        .where(eq(ships.id, Number(req.params.id)))
         .limit(1);
 
       if (!ship) {
@@ -413,7 +414,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Create ship
-  app.post("/api/ships", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/ships", requireContentEditor, auditLogger('admin.ship.create'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
@@ -501,7 +502,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Update ship
-  app.put("/api/ships/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/ships/:id", requireContentEditor, validateParams(idParamSchema as any), auditLogger('admin.ship.update'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
@@ -560,7 +561,7 @@ export function registerLocationRoutes(app: Express) {
       const { data: ship, error } = await supabaseAdmin
         .from('ships')
         .update(updateData)
-        .eq('id', req.params.id)
+        .eq('id', Number(req.params.id))
         .select()
         .single();
 
@@ -610,7 +611,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Delete ship
-  app.delete("/api/ships/:id", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/ships/:id", requireSuperAdmin, auditLogger('admin.ship.delete'), async (req: AuthenticatedRequest, res) => {
     try {
       // Check if Supabase admin is available
       if (!isSupabaseAdminAvailable()) {
@@ -625,7 +626,7 @@ export function registerLocationRoutes(app: Express) {
       const { error } = await supabaseAdmin
         .from('ships')
         .delete()
-        .eq('id', req.params.id);
+        .eq('id', Number(req.params.id));
 
       if (error) {
         handleSupabaseError(error, 'delete ship');
