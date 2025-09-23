@@ -64,11 +64,51 @@ app.use(cookieParser());
 // Serve PWA files early in production
 if (process.env.NODE_ENV === 'production') {
   // Use process.cwd() for reliable path resolution in production
-const distPath = path.join(process.cwd(), 'dist', 'public');
+  const distPath = path.join(process.cwd(), 'dist', 'public');
   const clientPublicPath = path.join(process.cwd(), 'client', 'public');
   
   // Log the path for debugging
   logger.info('Serving static files from:', { distPath, clientPublicPath, cwd: process.cwd() });
+  
+  // Debug endpoint to check file paths and existence
+  app.get('/api/debug/pwa-paths', (_req, res) => {
+    const manifestDistPath = path.join(distPath, 'manifest.json');
+    const swDistPath = path.join(distPath, 'sw.js');
+    const manifestClientPath = path.join(clientPublicPath, 'manifest.json');
+    const swClientPath = path.join(clientPublicPath, 'sw.js');
+    
+    res.json({
+      cwd: process.cwd(),
+      paths: {
+        dist: {
+          path: distPath,
+          exists: fs.existsSync(distPath),
+          manifest: {
+            path: manifestDistPath,
+            exists: fs.existsSync(manifestDistPath)
+          },
+          sw: {
+            path: swDistPath,
+            exists: fs.existsSync(swDistPath)
+          }
+        },
+        client: {
+          path: clientPublicPath,
+          exists: fs.existsSync(clientPublicPath),
+          manifest: {
+            path: manifestClientPath,
+            exists: fs.existsSync(manifestClientPath)
+          },
+          sw: {
+            path: swClientPath,
+            exists: fs.existsSync(swClientPath)
+          }
+        }
+      },
+      distContents: fs.existsSync(distPath) ? fs.readdirSync(distPath).slice(0, 10) : null,
+      clientContents: fs.existsSync(clientPublicPath) ? fs.readdirSync(clientPublicPath).slice(0, 10) : null
+    });
+  });
 
 
   // Explicitly serve PWA files with correct MIME types
@@ -81,12 +121,17 @@ let manifestPath = path.join(distPath, 'manifest.json');
     res.type('application/manifest+json');
     res.sendFile(manifestPath, (err) => {
       if (err) {
-        logger.error('Failed to serve manifest.json', err, { 
+        logger.error('Failed to serve manifest.json', {
+          error: err.message,
+          code: err.code,
           path: manifestPath, 
           exists: fs.existsSync(manifestPath),
-          cwd: process.cwd() 
+          distExists: fs.existsSync(distPath),
+          clientExists: fs.existsSync(clientPublicPath),
+          cwd: process.cwd(),
+          stack: err.stack
         });
-        res.status(500).json({ error: 'Failed to load manifest.json' });
+        res.status(500).json({ error: 'Failed to load manifest.json', details: err.message });
       }
     });
   });
@@ -100,10 +145,15 @@ let swPath = path.join(distPath, 'sw.js');
     res.type('application/javascript');
     res.sendFile(swPath, (err) => {
       if (err) {
-        logger.error('Failed to serve sw.js', err, { 
+        logger.error('Failed to serve sw.js', {
+          error: err.message,
+          code: err.code,
           path: swPath,
           exists: fs.existsSync(swPath),
-          cwd: process.cwd()
+          distExists: fs.existsSync(distPath),
+          clientExists: fs.existsSync(clientPublicPath),
+          cwd: process.cwd(),
+          stack: err.stack
         });
         res.status(500).send('// Service worker failed to load');
       }
