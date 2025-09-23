@@ -1,8 +1,8 @@
-const CACHE_NAME = 'k-gay-travel-guide-v1';
-const STATIC_CACHE = 'static-v2';
-const API_CACHE = 'api-v2';
-const IMAGE_CACHE = 'images-v1';
-const FONT_CACHE = 'fonts-v1';
+const CACHE_NAME = 'k-gay-travel-guide-v2';
+const STATIC_CACHE = 'static-v3';
+const API_CACHE = 'api-v3';
+const IMAGE_CACHE = 'images-v2';
+const FONT_CACHE = 'fonts-v2';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -62,6 +62,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip broken Unsplash URLs
+  if (url.hostname === 'images.unsplash.com') {
     return;
   }
 
