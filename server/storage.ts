@@ -142,8 +142,8 @@ export async function warmUpCaches() {
     console.log('🔥 Warming up caches...');
 
     // Pre-load active trips
-    const activeTrips = await db.select().from(trips)
-      .where(eq(trips.status, 'published'))
+    const activeTrips = await db.select().from(schema.trips)
+      .where(eq(schema.trips.status, 'published'))
       .limit(10);
 
     for (const trip of activeTrips) {
@@ -154,7 +154,7 @@ export async function warmUpCaches() {
     }
 
     // Pre-load all locations (rarely change)
-    const allLocations = await db.select().from(locations);
+    const allLocations = await db.select().from(schema.locations);
     for (const location of allLocations) {
       await cacheManager.set('locations', CacheManager.keys.location(location.id), location);
     }
