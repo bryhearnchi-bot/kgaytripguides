@@ -22,7 +22,10 @@ import { z } from 'zod';
 import { eq, and, desc, count, or, lt, gt, ilike } from 'drizzle-orm';
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from '../auth';
 import { db } from '../storage';
-import { profiles, invitations, users, type Invitation } from '../../shared/schema';
+import * as schema from '../../shared/schema';
+import type { InferSelectModel } from 'drizzle-orm';
+
+type Invitation = InferSelectModel<typeof schema.invitations>;
 import {
   generateInvitationToken,
   validateTokenTiming,
@@ -122,8 +125,8 @@ const invitationAcceptRateLimit = createRateLimit({
 async function getInvitationById(id: string): Promise<InvitationTable | null> {
   try {
     const result = await db.select()
-      .from(invitations)
-      .where(eq(invitations.id, id))
+      .from(schema.invitations)
+      .where(eq(schema.invitations.id, id))
       .limit(1);
 
     return result.length > 0 ? result[0] as InvitationTable : null;
@@ -138,7 +141,7 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
  */
 async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'createdAt'>): Promise<InvitationTable> {
   try {
-    const result = await db.insert(invitations).values({
+    const result = await db.insert(schema.invitations).values({
       email: invitation.email,
       role: invitation.role,
       invitedBy: invitation.invitedBy,
@@ -164,9 +167,9 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
  */
 async function updateInvitationInDb(id: string, updates: Partial<InvitationTable>): Promise<InvitationTable | null> {
   try {
-    const result = await db.update(invitations)
+    const result = await db.update(schema.invitations)
       .set(updates)
-      .where(eq(invitations.id, id))
+      .where(eq(schema.invitations.id, id))
       .returning();
 
     return result.length > 0 ? result[0] as InvitationTable : null;
@@ -183,11 +186,11 @@ async function checkExistingInvitation(email: string): Promise<boolean> {
   try {
     const now = new Date();
     const result = await db.select()
-      .from(invitations)
+      .from(schema.invitations)
       .where(
         and(
-          eq(invitations.email, email.toLowerCase()),
-          eq(invitations.used, false),
+          eq(schema.invitations.email, email.toLowerCase()),
+          eq(schema.invitations.used, false),
           gt(invitations.expiresAt, now)
         )
       )
@@ -206,8 +209,8 @@ async function checkExistingInvitation(email: string): Promise<boolean> {
 async function checkUserExists(email: string): Promise<boolean> {
   try {
     const existingProfile = await db.select()
-      .from(profiles)
-      .where(eq(profiles.email, email.toLowerCase()))
+      .from(schema.profiles)
+      .where(eq(schema.profiles.email, email.toLowerCase()))
       .limit(1);
 
     return existingProfile.length > 0;
@@ -246,10 +249,10 @@ async function findInvitationByToken(token: string): Promise<InvitationTable | n
     // Get all active (unused, non-expired) invitations
     const now = new Date();
     const activeInvitations = await db.select()
-      .from(invitations)
+      .from(schema.invitations)
       .where(
         and(
-          eq(invitations.used, false),
+          eq(schema.invitations.used, false),
           gt(invitations.expiresAt, now)
         )
       );
@@ -439,7 +442,7 @@ router.get(
         case 'active':
           conditions.push(
             and(
-              eq(invitations.used, false),
+              eq(schema.invitations.used, false),
               gt(invitations.expiresAt, now)
             )
           );
@@ -447,20 +450,20 @@ router.get(
         case 'expired':
           conditions.push(
             and(
-              eq(invitations.used, false),
+              eq(schema.invitations.used, false),
               lt(invitations.expiresAt, now)
             )
           );
           break;
         case 'used':
-          conditions.push(eq(invitations.used, true));
+          conditions.push(eq(schema.invitations.used, true));
           break;
         // 'all' - no additional filtering
       }
 
       // Apply role filter
       if (role) {
-        conditions.push(eq(invitations.role, role));
+        conditions.push(eq(schema.invitations.role, role));
       }
 
       // Apply search filter
@@ -473,13 +476,13 @@ router.get(
 
       // Get total count
       const [totalResult] = await db.select({ count: count() })
-        .from(invitations)
+        .from(schema.invitations)
         .where(whereClause);
       const total = totalResult.count;
 
       // Get paginated results
       const invitationResults = await db.select()
-        .from(invitations)
+        .from(schema.invitations)
         .where(whereClause)
         .orderBy(desc(invitations.createdAt))
         .limit(limit)
@@ -564,8 +567,8 @@ router.delete(
       }
 
       // Delete invitation from database
-      const deletedInvitation = await db.delete(invitations)
-        .where(eq(invitations.id, id))
+      const deletedInvitation = await db.delete(schema.invitations)
+        .where(eq(schema.invitations.id, id))
         .returning();
 
       if (deletedInvitation.length === 0) {

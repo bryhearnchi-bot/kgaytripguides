@@ -1,10 +1,10 @@
 import { db } from '../storage';
-import { locations } from '../../shared/schema';
+import * as schema from '../../shared/schema';
 import { eq, like, or, sql } from 'drizzle-orm';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 
-export type Location = InferSelectModel<typeof locations>;
-export type NewLocation = InferInsertModel<typeof locations>;
+export type Location = InferSelectModel<typeof schema.locations>;
+export type NewLocation = InferInsertModel<typeof schema.locations>;
 
 export class LocationStorage {
   /**
@@ -12,7 +12,7 @@ export class LocationStorage {
    */
   async getAll(): Promise<Location[]> {
     try {
-      return await db.select().from(locations).orderBy(locations.name);
+      return await db.select().from(schema.locations).orderBy(schema.locations.name);
     } catch (error) {
       console.error('Error fetching locations:', error);
       throw new Error('Failed to fetch locations');
@@ -25,8 +25,8 @@ export class LocationStorage {
   async getById(id: number): Promise<Location | null> {
     try {
       const result = await db.select()
-        .from(locations)
-        .where(eq(locations.id, id))
+        .from(schema.locations)
+        .where(eq(schema.locations.id, id))
         .limit(1);
 
       return result[0] || null;
@@ -42,8 +42,8 @@ export class LocationStorage {
   async getByName(name: string): Promise<Location | null> {
     try {
       const result = await db.select()
-        .from(locations)
-        .where(eq(locations.name, name))
+        .from(schema.locations)
+        .where(eq(schema.locations.name, name))
         .limit(1);
 
       return result[0] || null;
@@ -60,11 +60,11 @@ export class LocationStorage {
     try {
       const searchPattern = `%${query}%`;
       return await db.select()
-        .from(locations)
+        .from(schema.locations)
         .where(
           or(
-            like(locations.name, searchPattern),
-            like(locations.country, searchPattern)
+            like(schema.locations.name, searchPattern),
+            like(schema.locations.country, searchPattern)
           )
         );
     } catch (error) {
@@ -79,9 +79,9 @@ export class LocationStorage {
   async getByCountry(country: string): Promise<Location[]> {
     try {
       return await db.select()
-        .from(locations)
-        .where(eq(locations.country, country))
-        .orderBy(locations.name);
+        .from(schema.locations)
+        .where(eq(schema.locations.country, country))
+        .orderBy(schema.locations.name);
     } catch (error) {
       console.error('Error fetching locations by country:', error);
       throw new Error('Failed to fetch locations');
@@ -95,9 +95,9 @@ export class LocationStorage {
     try {
       const result = await db.selectDistinct({
         country: locations.country
-      }).from(locations)
+      }).from(schema.locations)
         .where(sql`${locations.country} IS NOT NULL`)
-        .orderBy(locations.country);
+        .orderBy(schema.locations.country);
 
       return result.map(r => r.country).filter(Boolean) as string[];
     } catch (error) {

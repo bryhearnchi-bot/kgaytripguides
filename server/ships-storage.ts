@@ -1,16 +1,20 @@
 import { db } from "./storage";
-import { ships, type Ship, type InsertShip } from "../shared/schema";
+import * as schema from "../shared/schema";
+import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
+
+type Ship = InferSelectModel<typeof schema.ships>;
+type InsertShip = InferInsertModel<typeof schema.ships>;
 import { eq, ilike, or, and, sql } from "drizzle-orm";
 
 export const shipStorage = {
   // Get all ships
   async getAll() {
-    return await db.select().from(ships).orderBy(ships.cruiseLine, ships.name);
+    return await db.select().from(schema.ships).orderBy(ships.cruiseLine, ships.name);
   },
 
   // Get ship by ID
   async getById(id: number) {
-    const result = await db.select().from(ships).where(eq(ships.id, id)).limit(1);
+    const result = await db.select().from(schema.ships).where(eq(schema.ships.id, id)).limit(1);
     return result[0] || null;
   },
 
@@ -19,12 +23,12 @@ export const shipStorage = {
     const searchPattern = `%${query}%`;
     return await db
       .select()
-      .from(ships)
+      .from(schema.ships)
       .where(
         or(
-          ilike(ships.name, searchPattern),
-          ilike(ships.cruiseLine, searchPattern),
-          ilike(ships.shipClass, searchPattern)
+          ilike(schema.ships.name, searchPattern),
+          ilike(schema.ships.cruiseLine, searchPattern),
+          ilike(schema.ships.shipClass, searchPattern)
         )
       )
       .orderBy(ships.cruiseLine, ships.name);
@@ -34,23 +38,23 @@ export const shipStorage = {
   async getByCruiseLine(cruiseLine: string) {
     return await db
       .select()
-      .from(ships)
-      .where(eq(ships.cruiseLine, cruiseLine))
+      .from(schema.ships)
+      .where(eq(schema.ships.cruiseLine, cruiseLine))
       .orderBy(ships.name);
   },
 
   // Create a new ship
   async create(data: InsertShip) {
-    const result = await db.insert(ships).values(data).returning();
+    const result = await db.insert(schema.ships).values(data).returning();
     return result[0];
   },
 
   // Update a ship
   async update(id: number, data: Partial<InsertShip>) {
     const result = await db
-      .update(ships)
+      .update(schema.ships)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(ships.id, id))
+      .where(eq(schema.ships.id, id))
       .returning();
     return result[0] || null;
   },
@@ -66,19 +70,19 @@ export const shipStorage = {
       throw new Error(`Cannot delete ship. It is being used by ${cruisesUsingShip.rows[0].count} cruise(s).`);
     }
 
-    const result = await db.delete(ships).where(eq(ships.id, id)).returning();
+    const result = await db.delete(schema.ships).where(eq(schema.ships.id, id)).returning();
     return result[0] || null;
   },
 
   // Get ship statistics
   async getStatistics() {
-    const totalShips = await db.select({ count: sql<number>`count(*)` }).from(ships);
+    const totalShips = await db.select({ count: sql<number>`count(*)` }).from(schema.ships);
     const shipsByCruiseLine = await db
       .select({
         cruiseLine: ships.cruiseLine,
         count: sql<number>`count(*)`,
       })
-      .from(ships)
+      .from(schema.ships)
       .groupBy(ships.cruiseLine);
 
     const shipsWithCruises = await db.execute(
@@ -106,8 +110,8 @@ export const shipStorage = {
   async exists(name: string, cruiseLine: string) {
     const result = await db
       .select({ count: sql<number>`count(*)` })
-      .from(ships)
-      .where(and(eq(ships.name, name), eq(ships.cruiseLine, cruiseLine)));
+      .from(schema.ships)
+      .where(and(eq(schema.ships.name, name), eq(schema.ships.cruiseLine, cruiseLine)));
     return (result[0]?.count || 0) > 0;
   },
 
@@ -116,8 +120,8 @@ export const shipStorage = {
     // First try to find existing ship
     const existing = await db
       .select()
-      .from(ships)
-      .where(and(eq(ships.name, name), eq(ships.cruiseLine, cruiseLine)))
+      .from(schema.ships)
+      .where(and(eq(schema.ships.name, name), eq(schema.ships.cruiseLine, cruiseLine)))
       .limit(1);
 
     if (existing[0]) {

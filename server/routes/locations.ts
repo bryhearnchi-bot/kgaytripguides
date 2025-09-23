@@ -4,7 +4,7 @@ import {
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { auditLogger } from "../logging/middleware";
-import { locations, ships } from "../../shared/schema";
+import * as schema from "../../shared/schema";
 import { eq, ilike, or, count, sql } from "drizzle-orm";
 import {
   validateBody,
@@ -25,7 +25,7 @@ export function registerLocationRoutes(app: Express) {
       const stats = await db.select({
         total: count(),
         byCountry: sql<any>`json_object_agg(country, country_count) FROM (SELECT country, COUNT(*) as country_count FROM ${locations} GROUP BY country) t`
-      }).from(locations);
+      }).from(schema.locations);
 
       res.json(stats[0] || { total: 0, byCountry: {} });
     } catch (error) {
@@ -44,21 +44,21 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(locations);
+      let query = db.select().from(schema.locations);
 
       // Apply filters
       const conditions = [];
       if (search) {
         conditions.push(
           or(
-            ilike(locations.name, `%${search}%`),
-            ilike(locations.country, `%${search}%`),
-            ilike(locations.description, `%${search}%`)
+            ilike(schema.locations.name, `%${search}%`),
+            ilike(schema.locations.country, `%${search}%`),
+            ilike(schema.locations.description, `%${search}%`)
           )
         );
       }
       if (country) {
-        conditions.push(eq(locations.country, country as string));
+        conditions.push(eq(schema.locations.country, country as string));
       }
 
       if (conditions.length > 0) {
@@ -90,8 +90,8 @@ export function registerLocationRoutes(app: Express) {
   app.get("/api/locations/:id", async (req, res) => {
     try {
       const [location] = await db.select()
-        .from(locations)
-        .where(eq(locations.id, Number(req.params.id)))
+        .from(schema.locations)
+        .where(eq(schema.locations.id, Number(req.params.id)))
         .limit(1);
 
       if (!location) {
@@ -291,7 +291,7 @@ export function registerLocationRoutes(app: Express) {
         total: count(),
         totalCapacity: sql<number>`SUM(capacity)`,
         avgCapacity: sql<number>`AVG(capacity)`
-      }).from(ships);
+      }).from(schema.ships);
 
       res.json(stats[0] || { total: 0, totalCapacity: 0, avgCapacity: 0 });
     } catch (error) {
@@ -311,7 +311,7 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(ships);
+      let query = db.select().from(schema.ships);
 
       // Apply filters
       const conditions = [];
@@ -374,8 +374,8 @@ export function registerLocationRoutes(app: Express) {
   app.get("/api/ships/:id", async (req, res) => {
     try {
       const [ship] = await db.select()
-        .from(ships)
-        .where(eq(ships.id, Number(req.params.id)))
+        .from(schema.ships)
+        .where(eq(schema.ships.id, Number(req.params.id)))
         .limit(1);
 
       if (!ship) {

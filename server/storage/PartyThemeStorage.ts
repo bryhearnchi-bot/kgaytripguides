@@ -1,11 +1,11 @@
 import { db } from '../storage';
-import { partyThemes, events } from '../../shared/schema';
+import * as schema from '../../shared/schema';
 import { eq, like, or, sql, desc, and } from 'drizzle-orm';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { getSupabaseAdmin, handleSupabaseError, isSupabaseAdminAvailable } from '../supabase-admin';
 
-export type PartyTheme = InferSelectModel<typeof partyThemes>;
-export type NewPartyTheme = InferInsertModel<typeof partyThemes>;
+export type PartyTheme = InferSelectModel<typeof schema.partyThemes>;
+export type NewPartyTheme = InferInsertModel<typeof schema.partyThemes>;
 
 export class PartyThemeStorage {
   /**
@@ -55,8 +55,8 @@ export class PartyThemeStorage {
   async getAll(): Promise<PartyTheme[]> {
     try {
       const themes = await db.select()
-        .from(partyThemes)
-        .orderBy(partyThemes.name);
+        .from(schema.partyThemes)
+        .orderBy(schema.partyThemes.name);
       return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error fetching party themes:', error);
@@ -70,8 +70,8 @@ export class PartyThemeStorage {
   async getById(id: number): Promise<PartyTheme | null> {
     try {
       const result = await db.select()
-        .from(partyThemes)
-        .where(eq(partyThemes.id, id))
+        .from(schema.partyThemes)
+        .where(eq(schema.partyThemes.id, id))
         .limit(1);
 
       return result[0] ? this.transformToFrontend(result[0]) : null;
@@ -87,8 +87,8 @@ export class PartyThemeStorage {
   async getByName(name: string): Promise<PartyTheme | null> {
     try {
       const result = await db.select()
-        .from(partyThemes)
-        .where(eq(partyThemes.name, name))
+        .from(schema.partyThemes)
+        .where(eq(schema.partyThemes.name, name))
         .limit(1);
 
       return result[0] ? this.transformToFrontend(result[0]) : null;
@@ -105,7 +105,7 @@ export class PartyThemeStorage {
     try {
       const searchPattern = `%${query}%`;
       const themes = await db.select()
-        .from(partyThemes)
+        .from(schema.partyThemes)
         .where(
           or(
             like(partyThemes.name, searchPattern),
@@ -114,7 +114,7 @@ export class PartyThemeStorage {
             like(partyThemes.costumeIdeas, searchPattern)
           )
         )
-        .orderBy(partyThemes.name);
+        .orderBy(schema.partyThemes.name);
       return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error searching party themes:', error);
@@ -128,9 +128,9 @@ export class PartyThemeStorage {
   async getWithCostumeIdeas(): Promise<PartyTheme[]> {
     try {
       const themes = await db.select()
-        .from(partyThemes)
+        .from(schema.partyThemes)
         .where(sql`${partyThemes.costumeIdeas} IS NOT NULL`)
-        .orderBy(partyThemes.name);
+        .orderBy(schema.partyThemes.name);
       return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error fetching party themes with costume ideas:', error);
@@ -300,8 +300,8 @@ export class PartyThemeStorage {
         tripId: events.tripId,
         date: events.date
       })
-      .from(events)
-      .where(eq(events.partyThemeId, id));
+      .from(schema.events)
+      .where(eq(schema.events.partyThemeId, id));
 
       return {
         eventCount: result.length,
@@ -319,8 +319,8 @@ export class PartyThemeStorage {
   async getEvents(themeId: number): Promise<any[]> {
     try {
       return await db.select()
-        .from(events)
-        .where(eq(events.partyThemeId, themeId))
+        .from(schema.events)
+        .where(eq(schema.events.partyThemeId, themeId))
         .orderBy(events.date);
     } catch (error) {
       console.error('Error fetching events for party theme:', error);
@@ -350,7 +350,7 @@ export class PartyThemeStorage {
         themeId: events.partyThemeId,
         count: sql<number>`COUNT(*)::int`
       })
-      .from(events)
+      .from(schema.events)
       .where(sql`${events.partyThemeId} IS NOT NULL`)
       .groupBy(events.partyThemeId);
 

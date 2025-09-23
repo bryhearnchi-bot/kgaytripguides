@@ -1,10 +1,10 @@
 import { db } from '../storage';
-import { ports } from '../../shared/schema';
+import * as schema from '../../shared/schema';
 import { eq, like, or, sql } from 'drizzle-orm';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 
-export type Port = InferSelectModel<typeof ports>;
-export type NewPort = InferInsertModel<typeof ports>;
+export type Port = InferSelectModel<typeof schema.ports>;
+export type NewPort = InferInsertModel<typeof schema.ports>;
 
 export class PortStorage {
   /**
@@ -12,7 +12,7 @@ export class PortStorage {
    */
   async getAll(): Promise<Port[]> {
     try {
-      return await db.select().from(ports).orderBy(ports.name);
+      return await db.select().from(schema.ports).orderBy(schema.ports.name);
     } catch (error) {
       console.error('Error fetching ports:', error);
       throw new Error('Failed to fetch ports');
@@ -25,8 +25,8 @@ export class PortStorage {
   async getById(id: number): Promise<Port | null> {
     try {
       const result = await db.select()
-        .from(ports)
-        .where(eq(ports.id, id))
+        .from(schema.ports)
+        .where(eq(schema.ports.id, id))
         .limit(1);
 
       return result[0] || null;
@@ -42,8 +42,8 @@ export class PortStorage {
   async getByName(name: string): Promise<Port | null> {
     try {
       const result = await db.select()
-        .from(ports)
-        .where(eq(ports.name, name))
+        .from(schema.ports)
+        .where(eq(schema.ports.name, name))
         .limit(1);
 
       return result[0] || null;
@@ -60,15 +60,15 @@ export class PortStorage {
     try {
       const searchPattern = `%${query}%`;
       return await db.select()
-        .from(ports)
+        .from(schema.ports)
         .where(
           or(
-            like(ports.name, searchPattern),
-            like(ports.country, searchPattern),
-            like(ports.region, searchPattern)
+            like(schema.ports.name, searchPattern),
+            like(schema.ports.country, searchPattern),
+            like(schema.ports.region, searchPattern)
           )
         )
-        .orderBy(ports.name);
+        .orderBy(schema.ports.name);
     } catch (error) {
       console.error('Error searching ports:', error);
       throw new Error('Failed to search ports');
@@ -81,9 +81,9 @@ export class PortStorage {
   async getByType(portType: 'port' | 'sea_day' | 'embark' | 'disembark'): Promise<Port[]> {
     try {
       return await db.select()
-        .from(ports)
-        .where(eq(ports.port_type, portType))
-        .orderBy(ports.name);
+        .from(schema.ports)
+        .where(eq(schema.ports.port_type, portType))
+        .orderBy(schema.ports.name);
     } catch (error) {
       console.error('Error fetching ports by type:', error);
       throw new Error('Failed to fetch ports by type');
@@ -100,7 +100,7 @@ export class PortStorage {
         throw new Error('Name and country are required');
       }
 
-      const result = await db.insert(ports)
+      const result = await db.insert(schema.ports)
         .values({
           ...data,
           port_type: data.port_type || 'port'
@@ -122,9 +122,9 @@ export class PortStorage {
    */
   async update(id: number, data: Partial<NewPort>): Promise<Port> {
     try {
-      const result = await db.update(ports)
+      const result = await db.update(schema.ports)
         .set(data)
-        .where(eq(ports.id, id))
+        .where(eq(schema.ports.id, id))
         .returning();
 
       if (!result[0]) {
@@ -152,8 +152,8 @@ export class PortStorage {
         throw new Error(`Cannot delete port: used in ${usage.itineraryCount} itinerary items`);
       }
 
-      const result = await db.delete(ports)
-        .where(eq(ports.id, id))
+      const result = await db.delete(schema.ports)
+        .where(eq(schema.ports.id, id))
         .returning();
 
       return result.length > 0;

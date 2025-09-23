@@ -5,7 +5,7 @@ import {
   talentCategories
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
-import { talent } from "../../shared/schema";
+import * as schema from "../../shared/schema";
 import { eq, ilike, or, count, sql, asc, and } from "drizzle-orm";
 import { upload, getPublicImageUrl, deleteImage, isValidImageUrl, uploadToCloudinary } from "../image-utils";
 import {
@@ -138,7 +138,7 @@ export function registerMediaRoutes(app: Express) {
           LEFT JOIN ${talentCategories} tc ON t.talent_category_id = tc.id
           GROUP BY tc.category
         ) subq`
-      }).from(talent);
+      }).from(schema.talent);
 
       res.json(stats[0] || { total: 0, byCategory: {} });
     } catch (error) {
@@ -172,8 +172,8 @@ export function registerMediaRoutes(app: Express) {
         updatedAt: talent.updatedAt,
         category: talentCategories.category
       })
-      .from(talent)
-      .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id));
+      .from(schema.talent)
+      .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id));
 
       // Apply filters
       const conditions = [];
@@ -188,7 +188,7 @@ export function registerMediaRoutes(app: Express) {
 
       // Handle category filter by ID
       if (categoryId) {
-        conditions.push(eq(talent.talentCategoryId, parseInt(categoryId as string)));
+        conditions.push(eq(schema.talent.talentCategoryId, parseInt(categoryId as string)));
       }
       // Handle category filter by name (backward compatibility)
       else if (category) {

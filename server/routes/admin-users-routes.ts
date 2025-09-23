@@ -15,7 +15,7 @@ import type { Express } from "express";
 import { requireAuth, requireTripAdmin, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { createClient } from '@supabase/supabase-js';
 import { db } from "../storage";
-import { profiles } from "../../shared/schema";
+import * as schema from "../../shared/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auditLogger } from "../logging/middleware";
@@ -501,8 +501,8 @@ export function registerAdminUsersRoutes(app: Express) {
       // Check if user exists
       const existingUser = await db
         .select()
-        .from(profiles)
-        .where(eq(profiles.id, userId))
+        .from(schema.profiles)
+        .where(eq(schema.profiles.id, userId))
         .limit(1);
 
       if (existingUser.length === 0) {
@@ -518,12 +518,12 @@ export function registerAdminUsersRoutes(app: Express) {
 
       // Update user status
       const [updatedUser] = await db
-        .update(profiles)
+        .update(schema.profiles)
         .set({
           isActive: is_active,
           updatedAt: new Date()
         })
-        .where(eq(profiles.id, userId))
+        .where(eq(schema.profiles.id, userId))
         .returning();
 
       res.json({
@@ -563,8 +563,8 @@ export function registerAdminUsersRoutes(app: Express) {
       // Check if user exists
       const existingUser = await db
         .select()
-        .from(profiles)
-        .where(eq(profiles.id, userId))
+        .from(schema.profiles)
+        .where(eq(schema.profiles.id, userId))
         .limit(1);
 
       if (existingUser.length === 0) {
