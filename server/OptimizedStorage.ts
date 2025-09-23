@@ -264,7 +264,7 @@ export class OptimizedEventStorage {
     if (searchTerm) {
       // Use the full-text search index we created
       conditions.push(
-        db.sql`to_tsvector('english', ${events.title} || ' ' || COALESCE(${events.description}, '')) @@ plainto_tsquery('english', ${searchTerm})`
+sql`to_tsvector('english', ${schema.events.title} || ' ' || COALESCE(${schema.events.description}, '')) @@ plainto_tsquery('english', ${searchTerm})`
       );
     }
 
@@ -309,7 +309,7 @@ export class OptimizedTalentStorage {
     if (searchTerm) {
       // Use the full-text search index we created
       conditions.push(
-        db.sql`to_tsvector('english', ${talent.name} || ' ' || COALESCE(${talent.bio}, '')) @@ plainto_tsquery('english', ${searchTerm})`
+sql`to_tsvector('english', ${schema.talent.name} || ' ' || COALESCE(${schema.talent.bio}, '')) @@ plainto_tsquery('english', ${searchTerm})`
       );
     }
 
