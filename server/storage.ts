@@ -222,24 +222,24 @@ export interface IProfileStorage {
 
 export class ProfileStorage implements IProfileStorage {
   async getProfile(id: string): Promise<schema.Profile | undefined> {
-    const result = await db.select().from(profiles).where(eq(profiles.id, id));
+    const result = await db.select().from(schema.profiles).where(eq(schema.profiles.id, id));
     return result[0];
   }
 
   async getProfileByEmail(email: string): Promise<schema.Profile | undefined> {
-    const result = await db.select().from(profiles).where(eq(profiles.email, email));
+    const result = await db.select().from(schema.profiles).where(eq(schema.profiles.email, email));
     return result[0];
   }
 
   async createProfile(insertProfile: schema.InsertProfile): Promise<schema.Profile> {
-    const result = await db.insert(profiles).values(insertProfile).returning();
+    const result = await db.insert(schema.profiles).values(insertProfile).returning();
     return result[0];
   }
 
   async updateProfile(id: string, profileData: Partial<schema.Profile>): Promise<schema.Profile | undefined> {
-    const result = await db.update(profiles)
+    const result = await db.update(schema.profiles)
       .set({ ...profileData, updatedAt: new Date() })
-      .where(eq(profiles.id, id))
+      .where(eq(schema.profiles.id, id))
       .returning();
     return result[0];
   }
@@ -255,22 +255,22 @@ export interface IUserStorage {
 
 export class UserStorage implements IUserStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(profiles).where(eq(profiles.id, id));
+    const result = await db.select().from(schema.profiles).where(eq(schema.profiles.id, id));
     return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(profiles).where(eq(profiles.username, username));
+    const result = await db.select().from(schema.profiles).where(eq(schema.profiles.username, username));
     return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(profiles).values(insertUser).returning();
+    const result = await db.insert(schema.profiles).values(insertUser).returning();
     return result[0];
   }
 
   async updateUserLastLogin(id: string): Promise<void> {
-    await db.update(profiles).set({ lastSignInAt: new Date() }).where(eq(profiles.id, id));
+    await db.update(schema.profiles).set({ lastSignInAt: new Date() }).where(eq(schema.profiles.id, id));
   }
 }
 
@@ -290,7 +290,7 @@ export class TripStorage implements ITripStorage {
   // @Cacheable('trips', 1000 * 60 * 5) // Cache for 5 minutes - temporarily disabled
   async getAllTrips(): Promise<Trip[]> {
     return await optimizedConnection.executeWithMetrics(
-      () => db.select().from(cruises).orderBy(desc(cruises.startDate)),
+      () => db.select().from(schema.trips).orderBy(desc(schema.trips.startDate)),
       'getAllTrips'
     );
   }
@@ -302,7 +302,7 @@ export class TripStorage implements ITripStorage {
     if (cached) return cached;
 
     const result = await optimizedConnection.executeWithMetrics(
-      () => db.select().from(cruises).where(eq(cruises.id, id)),
+      () => db.select().from(schema.trips).where(eq(schema.trips.id, id)),
       `getTripById(${id})`
     );
 
@@ -319,7 +319,7 @@ export class TripStorage implements ITripStorage {
     if (cached) return cached;
 
     const result = await optimizedConnection.executeWithMetrics(
-      () => db.select().from(cruises).where(eq(cruises.slug, slug)),
+      () => db.select().from(schema.trips).where(eq(schema.trips.slug, slug)),
       `getTripBySlug(${slug})`
     );
 
@@ -331,16 +331,16 @@ export class TripStorage implements ITripStorage {
 
   async getUpcomingTrips(): Promise<Trip[]> {
     return await db.select()
-      .from(cruises)
-      .where(eq(cruises.status, 'upcoming'))
-      .orderBy(asc(cruises.startDate));
+      .from(schema.trips)
+      .where(eq(schema.trips.status, 'upcoming'))
+      .orderBy(asc(schema.trips.startDate));
   }
 
   async getPastTrips(): Promise<Trip[]> {
     return await db.select()
-      .from(cruises)
-      .where(eq(cruises.status, 'past'))
-      .orderBy(desc(cruises.startDate));
+      .from(schema.trips)
+      .where(eq(schema.trips.status, 'past'))
+      .orderBy(desc(schema.trips.startDate));
   }
 
   // @CacheInvalidate('trips') // Invalidate trip cache on create - temporarily disabled
@@ -363,7 +363,7 @@ export class TripStorage implements ITripStorage {
       }
     }
     
-    const result = await db.insert(cruises).values(values).returning();
+    const result = await db.insert(schema.trips).values(values).returning();
     return result[0];
   }
 
@@ -390,9 +390,9 @@ export class TripStorage implements ITripStorage {
       }
     }
     
-    const result = await db.update(cruises)
+    const result = await db.update(schema.trips)
       .set(updates)
-      .where(eq(cruises.id, id))
+      .where(eq(schema.trips.id, id))
       .returning();
     return result[0];
   }
@@ -403,7 +403,7 @@ export class TripStorage implements ITripStorage {
     await cacheManager.delete('trips', CacheManager.keys.trip(id));
 
     await optimizedConnection.executeWithMetrics(
-      () => db.delete(cruises).where(eq(cruises.id, id)),
+      () => db.delete(schema.trips).where(eq(schema.trips.id, id)),
       `deleteTrip(${id})`
     );
   }

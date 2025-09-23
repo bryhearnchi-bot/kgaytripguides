@@ -52,13 +52,18 @@ export function registerPublicRoutes(app: Express) {
         const stats: any = {};
 
         if (metrics.includes('trips')) {
-          const tripStats = await db.select({
-            total: count(),
-            upcoming: sql<number>`COUNT(CASE WHEN start_date > CURRENT_DATE THEN 1 END)`,
-            active: sql<number>`COUNT(CASE WHEN start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE THEN 1 END)`,
-            past: sql<number>`COUNT(CASE WHEN end_date < CURRENT_DATE THEN 1 END)`
-          }).from(trips);
-          stats.trips = tripStats[0];
+          try {
+            const tripStats = await db.select({
+              total: count(),
+              upcoming: sql<number>`COUNT(CASE WHEN start_date > CURRENT_DATE THEN 1 END)`,
+              active: sql<number>`COUNT(CASE WHEN start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE THEN 1 END)`,
+              past: sql<number>`COUNT(CASE WHEN end_date < CURRENT_DATE THEN 1 END)`
+            }).from(trips);
+            stats.trips = tripStats[0];
+          } catch (err) {
+            console.error('Error fetching trip stats:', err);
+            stats.trips = { total: 0, upcoming: 0, active: 0, past: 0 };
+          }
         }
 
         if (metrics.includes('events')) {
