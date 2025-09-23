@@ -69,26 +69,6 @@ if (process.env.NODE_ENV === 'production') {
   // Log the path for debugging
   logger.info('Serving static files from:', { distPath, cwd: process.cwd() });
 
-  // Debug endpoint to check file paths
-  app.get('/debug/pwa-files', (_req, res) => {
-    const manifestPath = path.join(distPath, 'manifest.json');
-    const swPath = path.join(distPath, 'sw.js');
-    res.json({
-      cwd: process.cwd(),
-      distPath,
-      files: {
-        'manifest.json': {
-          path: manifestPath,
-          exists: fs.existsSync(manifestPath)
-        },
-        'sw.js': {
-          path: swPath,
-          exists: fs.existsSync(swPath)
-        }
-      },
-      distContents: fs.existsSync(distPath) ? fs.readdirSync(distPath) : 'dist path not found'
-    });
-  });
 
   // Explicitly serve PWA files with correct MIME types
   app.get('/manifest.json', (_req, res) => {
