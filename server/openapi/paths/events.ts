@@ -5,14 +5,14 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
     get: {
       tags: ['Events'],
       summary: 'List events with filtering',
-      description: 'Retrieve events with optional filtering by cruise, type, and date range',
+      description: 'Retrieve events with optional filtering by trip, type, and date range',
       operationId: 'listEvents',
       security: [],
       parameters: [
         {
-          name: 'cruiseId',
+          name: 'tripId',
           in: 'query',
-          description: 'Filter by cruise ID',
+          description: 'Filter by trip ID',
           schema: {
             type: 'integer'
           }
@@ -145,9 +145,9 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['cruiseId', 'events'],
+              required: ['tripId', 'events'],
               properties: {
-                cruiseId: {
+                tripId: {
                   type: 'integer',
                   description: 'ID of the cruise to associate events with'
                 },
@@ -332,7 +332,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       }
     }
   },
-  '/api/cruises/{cruiseId}/events': {
+  '/api/trips/{tripId}/events': {
     get: {
       tags: ['Events'],
       summary: 'Get events for a cruise',
@@ -341,7 +341,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       security: [],
       parameters: [
         {
-          name: 'cruiseId',
+          name: 'tripId',
           in: 'path',
           required: true,
           description: 'Cruise ID',
@@ -374,7 +374,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       security: [{ BearerAuth: [] }],
       parameters: [
         {
-          name: 'cruiseId',
+          name: 'tripId',
           in: 'path',
           required: true,
           description: 'Cruise ID',
@@ -490,7 +490,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       }
     }
   },
-  '/api/cruises/{cruiseId}/events/date/{date}': {
+  '/api/trips/{tripId}/events/date/{date}': {
     get: {
       tags: ['Events'],
       summary: 'Get events by date',
@@ -499,7 +499,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       security: [],
       parameters: [
         {
-          name: 'cruiseId',
+          name: 'tripId',
           in: 'path',
           required: true,
           description: 'Cruise ID',
@@ -535,7 +535,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       }
     }
   },
-  '/api/cruises/{cruiseId}/events/type/{type}': {
+  '/api/trips/{tripId}/events/type/{type}': {
     get: {
       tags: ['Events'],
       summary: 'Get events by type',
@@ -544,7 +544,7 @@ export const eventPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
       security: [],
       parameters: [
         {
-          name: 'cruiseId',
+          name: 'tripId',
           in: 'path',
           required: true,
           description: 'Cruise ID',

@@ -283,6 +283,33 @@ export function registerLocationRoutes(app: Express) {
     }
   });
 
+  // ============ PORT ENDPOINTS (Backward Compatibility) ============
+
+  // List all ports (redirect to locations)
+  app.get("/api/ports", async (req, res) => {
+    res.redirect(301, '/api/locations');
+  });
+
+  // Get port by ID (redirect to locations)
+  app.get("/api/ports/:id", async (req, res) => {
+    res.redirect(301, `/api/locations/${req.params.id}`);
+  });
+
+  // Create port (redirect to locations)
+  app.post("/api/ports", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, '/api/locations');
+  });
+
+  // Update port (redirect to locations)
+  app.put("/api/ports/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, `/api/locations/${req.params.id}`);
+  });
+
+  // Delete port (redirect to locations)
+  app.delete("/api/ports/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, `/api/locations/${req.params.id}`);
+  });
+
   // ============ SHIP ENDPOINTS ============
 
   // Get ship statistics

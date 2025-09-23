@@ -266,8 +266,8 @@ export const tripPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
                       type: 'object',
                       properties: {
                         id: { type: 'integer' },
-                        cruiseId: { type: 'integer' },
-                        portId: { type: 'integer' },
+                        tripId: { type: 'integer' },
+                        locationId: { type: 'integer' },
                         dayNumber: { type: 'integer' },
                         date: { type: 'string', format: 'date' },
                         arrivalTime: { type: 'string', format: 'time' },
@@ -289,7 +289,7 @@ export const tripPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
                       type: 'object',
                       properties: {
                         id: { type: 'string' },
-                        cruiseId: { type: 'string' },
+                        tripId: { type: 'string' },
                         title: { type: 'string' },
                         content: { type: 'string' },
                         order: { type: 'integer' },
@@ -504,8 +504,8 @@ export const tripPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
                   type: 'object',
                   properties: {
                     id: { type: 'integer' },
-                    cruiseId: { type: 'integer' },
-                    portId: { type: 'integer' },
+                    tripId: { type: 'integer' },
+                    locationId: { type: 'integer' },
                     dayNumber: { type: 'integer' },
                     date: { type: 'string', format: 'date' },
                     arrivalTime: { type: 'string', format: 'time' },

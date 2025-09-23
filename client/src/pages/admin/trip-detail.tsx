@@ -32,7 +32,7 @@ import {
 import { format, differenceInDays } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
 
-interface CruiseDetail {
+interface TripDetail {
   id: number;
   name: string;
   description?: string;
@@ -55,7 +55,7 @@ interface CruiseDetail {
   updatedAt: string;
 }
 
-interface CruiseFormData {
+interface TripFormData {
   name: string;
   description: string;
   startDate: string;
@@ -67,12 +67,12 @@ interface CruiseFormData {
   heroImageUrl: string;
 }
 
-export default function CruiseDetail() {
+export default function TripDetail() {
   const [, setLocation] = useLocation();
-  const [cruise, setCruise] = useState<CruiseDetail | null>(null);
+  const [cruise, setCruise] = useState<TripDetail | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<CruiseFormData>({
+  const [formData, setFormData] = useState<TripFormData>({
     name: '',
     description: '',
     startDate: '',
@@ -87,16 +87,16 @@ export default function CruiseDetail() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Get cruise ID from URL params
-  const cruiseId = new URLSearchParams(window.location.search).get('id');
+  // Get trip ID from URL params
+  const tripId = new URLSearchParams(window.location.search).get('id');
 
-  // Fetch cruise details
-  const { data: cruiseData, isLoading: cruiseLoading, error: cruiseError } = useQuery<CruiseDetail>({
-    queryKey: ['admin-cruise-detail', cruiseId],
+  // Fetch trip details
+  const { data: tripData, isLoading: tripLoading, error: tripError } = useQuery<TripDetail>({
+    queryKey: ['admin-trip-detail', tripId],
     queryFn: async () => {
-      if (!cruiseId) throw new Error('No cruise ID provided');
+      if (!tripId) throw new Error('No trip ID provided');
 
-      const response = await fetch(`/api/admin/cruises/${cruiseId}`, {
+      const response = await fetch(`/api/admin/trips/${tripId}`, {
         credentials: 'include',
       });
       if (!response.ok) {
@@ -104,33 +104,33 @@ export default function CruiseDetail() {
       }
       return response.json();
     },
-    enabled: !!cruiseId,
+    enabled: !!tripId,
   });
 
-  // Initialize form data when cruise data loads
+  // Initialize form data when trip data loads
   useEffect(() => {
-    if (cruiseData) {
-      setCruise(cruiseData);
+    if (tripData) {
+      setCruise(tripData);
       setFormData({
-        name: cruiseData.name,
-        description: cruiseData.description || '',
-        startDate: cruiseData.startDate,
-        endDate: cruiseData.endDate,
-        shipName: cruiseData.shipName,
-        cruiseLine: cruiseData.cruiseLine || '',
-        guestCount: cruiseData.guestCount || 0,
-        maxCapacity: cruiseData.maxCapacity || 0,
-        heroImageUrl: cruiseData.heroImageUrl || '',
+        name: tripData.name,
+        description: tripData.description || '',
+        startDate: tripData.startDate,
+        endDate: tripData.endDate,
+        shipName: tripData.shipName,
+        cruiseLine: tripData.cruiseLine || '',
+        guestCount: tripData.guestCount || 0,
+        maxCapacity: tripData.maxCapacity || 0,
+        heroImageUrl: tripData.heroImageUrl || '',
       });
     }
-  }, [cruiseData]);
+  }, [tripData]);
 
-  // Update cruise mutation
-  const updateCruise = useMutation({
-    mutationFn: async (data: Partial<CruiseFormData>) => {
-      if (!cruiseId) throw new Error('No cruise ID');
+  // Update trip mutation
+  const updateTrip = useMutation({
+    mutationFn: async (data: Partial<TripFormData>) => {
+      if (!tripId) throw new Error('No trip ID');
 
-      const response = await fetch(`/api/admin/cruises/${cruiseId}`, {
+      const response = await fetch(`/api/admin/trips/${tripId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export default function CruiseDetail() {
 
       if (!response.ok) {
         const error = await response.text();
-        throw new Error(error || 'Failed to update cruise');
+        throw new Error(error || 'Failed to update trip');
       }
 
       return response.json();
@@ -151,7 +151,7 @@ export default function CruiseDetail() {
         title: 'Success',
         description: 'Trip updated successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ['admin-cruise-detail', cruiseId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trip-detail', tripId] });
       setIsEditing(false);
     },
     onError: (error) => {
@@ -163,7 +163,7 @@ export default function CruiseDetail() {
     },
   });
 
-  const handleInputChange = (field: keyof CruiseFormData, value: any) => {
+  const handleInputChange = (field: keyof TripFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -195,7 +195,7 @@ export default function CruiseDetail() {
       return;
     }
 
-    updateCruise.mutate(formData);
+    updateTrip.mutate(formData);
   };
 
   const getStatusBadge = (status: string) => {
@@ -213,7 +213,7 @@ export default function CruiseDetail() {
     }
   };
 
-  if (!cruiseId) {
+  if (!tripId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <Card className="w-96">
@@ -230,7 +230,7 @@ export default function CruiseDetail() {
     );
   }
 
-  if (cruiseLoading) {
+  if (tripLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -241,7 +241,7 @@ export default function CruiseDetail() {
     );
   }
 
-  if (cruiseError || !cruise) {
+  if (tripError || !cruise) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <Card className="w-96">
@@ -249,7 +249,7 @@ export default function CruiseDetail() {
             <Ship className="w-12 h-12 mx-auto mb-4 text-red-400" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Trip</h3>
             <p className="text-gray-500 mb-4">
-              {cruiseError?.message || 'Failed to load trip details'}
+              {tripError?.message || 'Failed to load trip details'}
             </p>
             <Button onClick={() => setLocation('/admin/trips')}>
               View All Trips
@@ -295,11 +295,11 @@ export default function CruiseDetail() {
                   </Button>
                   <Button
                     onClick={handleSave}
-                    disabled={updateCruise.isPending}
+                    disabled={updateTrip.isPending}
                     className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {updateCruise.isPending ? 'Saving...' : 'Save Changes'}
+                    {updateTrip.isPending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               )}

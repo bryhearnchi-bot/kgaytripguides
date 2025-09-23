@@ -1,4 +1,4 @@
-import { ItineraryStop, Talent, DailySchedule, PartyTheme, CityAttraction } from './cruise-data';
+import { ItineraryStop, Talent, DailySchedule, PartyTheme, CityAttraction } from './trip-data';
 
 // Mock data for testing purposes only - simplified test cruise
 export const MOCK_ITINERARY: ItineraryStop[] = [

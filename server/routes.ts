@@ -60,29 +60,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============ STATIC FILE SERVING ============
-  // Serve cruise hero images from local filesystem
-  app.use('/cruise-images', express.static('server/public/cruise-images', {
+  // Serve app images from single bucket with folders
+  app.use('/app-images', express.static('server/public/app-images', {
     maxAge: '24h', // Cache for 24 hours
     etag: false
   }));
 
-  // Serve talent profile images from local filesystem
-  app.use('/talent-images', express.static('server/public/talent-images', {
-    maxAge: '24h',
-    etag: false
-  }));
+  // Backward compatibility redirects for old image paths
+  app.use('/cruise-images', (req, res) => {
+    res.redirect(301, `/app-images/trips${req.url}`);
+  });
 
-  // Serve port images from local filesystem
-  app.use('/port-images', express.static('server/public/port-images', {
-    maxAge: '24h',
-    etag: false
-  }));
+  app.use('/talent-images', (req, res) => {
+    res.redirect(301, `/app-images/talent${req.url}`);
+  });
 
-  // Serve party theme images from local filesystem
-  app.use('/party-images', express.static('server/public/party-images', {
-    maxAge: '24h',
-    etag: false
-  }));
+  app.use('/port-images', (req, res) => {
+    res.redirect(301, `/app-images/locations${req.url}`);
+  });
+
+  app.use('/party-images', (req, res) => {
+    res.redirect(301, `/app-images/parties${req.url}`);
+  });
+
+  app.use('/ship-images', (req, res) => {
+    res.redirect(301, `/app-images/ships${req.url}`);
+  });
 
   // Serve general images from uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {

@@ -20,8 +20,8 @@ import InfoSectionsManagement from "@/pages/admin/info-sections";
 import UsersManagement from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
 import AdminProfile from "@/pages/admin/profile";
-import CruiseWizard from "@/pages/admin/cruise-wizard";
-import CruiseDetail from "@/pages/admin/cruise-detail";
+import TripWizard from "@/pages/admin/trip-wizard";
+import TripDetail from "@/pages/admin/trip-detail";
 import TripsManagement from "@/pages/admin/trips-management";
 import NotFound from "@/pages/not-found";
 import ImageTest from "@/pages/image-test";
@@ -51,9 +51,9 @@ function Router() {
       <Route path="/admin/settings" component={() => <ProtectedRoute><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/profile" component={() => <ProtectedRoute><AdminLayout><AdminProfile /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/trips" component={() => <ProtectedRoute><AdminLayout><TripsManagement /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/trips/new" component={() => <ProtectedRoute><AdminLayout><CruiseWizard /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/trips/:id/edit" component={() => <ProtectedRoute><AdminLayout><CruiseWizard isEditing={true} /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/trips/:id" component={() => <ProtectedRoute><AdminLayout><CruiseDetail /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/trips/new" component={() => <ProtectedRoute><AdminLayout><TripWizard /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/trips/:id/edit" component={() => <ProtectedRoute><AdminLayout><TripWizard isEditing={true} /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/trips/:id" component={() => <ProtectedRoute><AdminLayout><TripDetail /></AdminLayout></ProtectedRoute>} />
       <Route component={NotFound} />
     </Switch>
   );

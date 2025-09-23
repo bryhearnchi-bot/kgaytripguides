@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import {
   tripStorage,
-  cruiseStorage,
   itineraryStorage,
   eventStorage,
   tripInfoStorage,
@@ -72,12 +71,12 @@ export function registerTripRoutes(app: Express) {
         const duplicatedTrip = await tripStorage.createTrip(newTrip as any);
 
         // Copy related data (itinerary, events, etc.)
-        const itinerary = await itineraryStorage.getItineraryByCruise(parseInt(id));
+        const itinerary = await itineraryStorage.getItineraryByTrip(parseInt(id));
         for (const item of itinerary) {
           await itineraryStorage.createItineraryStop({
             ...item,
             id: undefined,
-            cruiseId: duplicatedTrip.id
+            tripId: duplicatedTrip.id
           } as any);
         }
 
@@ -91,7 +90,7 @@ export function registerTripRoutes(app: Express) {
     requireContentEditor,
     validateBody(bulkEventsSchema),
     asyncHandler(async (req: AuthenticatedRequest, res) => {
-      const { cruiseId, events } = req.body;
+      const { tripId, events } = req.body;
       const results = [];
 
       for (const event of events) {
@@ -105,7 +104,7 @@ export function registerTripRoutes(app: Express) {
         } else {
           // Create new event
           const created = await executeDbOperation(
-            () => eventStorage.createEvent({ ...event, cruiseId }),
+            () => eventStorage.createEvent({ ...event, tripId }),
             'Failed to create event'
           );
           results.push(created);
@@ -135,8 +134,8 @@ export function registerTripRoutes(app: Express) {
         let exportData: any = { trip };
 
         if (includeRelated) {
-          exportData.itinerary = await itineraryStorage.getItineraryByCruise(parseInt(id));
-          exportData.events = await eventStorage.getEventsByCruise(parseInt(id));
+          exportData.itinerary = await itineraryStorage.getItineraryByTrip(parseInt(id));
+          exportData.events = await eventStorage.getEventsByTrip(parseInt(id));
           // Add more related data as needed
         }
 
@@ -192,7 +191,7 @@ export function registerTripRoutes(app: Express) {
           for (const item of itinerary) {
             await itineraryStorage.createItineraryStop({
               ...item,
-              cruiseId: importedTrip.id
+              tripId: importedTrip.id
             });
           }
         }
@@ -201,7 +200,7 @@ export function registerTripRoutes(app: Express) {
           for (const event of events) {
             await eventStorage.createEvent({
               ...event,
-              cruiseId: importedTrip.id
+              tripId: importedTrip.id
             });
           }
         }
@@ -212,7 +211,7 @@ export function registerTripRoutes(app: Express) {
 
   // ============ ADMIN CRUISE MANAGEMENT ============
 
-  app.get("/api/admin/cruises", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/admin/trips", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { page = '1', limit = '20', search = '', status = '' } = req.query;
       const pageNum = parseInt(page as string);
@@ -293,7 +292,7 @@ export function registerTripRoutes(app: Express) {
   });
 
   // Update cruise status
-  app.patch("/api/admin/cruises/:id/status", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.patch("/api/admin/trips/:id/status", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -311,7 +310,7 @@ export function registerTripRoutes(app: Express) {
   });
 
   // Get cruise statistics for admin dashboard
-  app.get("/api/admin/cruises/stats", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/admin/trips/stats", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const stats = await db.select({
         total: count(),
@@ -335,61 +334,83 @@ export function registerTripRoutes(app: Express) {
 
   // ============ PUBLIC CRUISE ENDPOINTS (Backward Compatibility) ============
 
-  // List all cruises (public)
+  // List all cruises (redirect to trips)
   app.get("/api/cruises", async (req, res) => {
-    const cruises = await cruiseStorage.getAllCruises();
-    res.json(cruises);
+    res.redirect(301, '/api/trips');
   });
 
-  // Get upcoming cruises
+  // Get upcoming cruises (redirect to trips)
   app.get("/api/cruises/upcoming", async (req, res) => {
-    const cruises = await cruiseStorage.getUpcomingCruises();
-    res.json(cruises);
+    res.redirect(301, '/api/trips/upcoming');
   });
 
-  // Get past cruises
+  // Get past cruises (redirect to trips)
   app.get("/api/cruises/past", async (req, res) => {
-    const cruises = await cruiseStorage.getPastCruises();
-    res.json(cruises);
+    res.redirect(301, '/api/trips/past');
+  });
+
+  // Get cruise by id (redirect to trips)
+  app.get("/api/cruises/id/:id", async (req, res) => {
+    res.redirect(301, `/api/trips/id/${req.params.id}`);
+  });
+
+  // Get cruise by slug (redirect to trips)
+  app.get("/api/cruises/:slug", async (req, res) => {
+    res.redirect(301, `/api/trips/${req.params.slug}`);
+  });
+
+  // Create cruise (redirect to trips)
+  app.post("/api/cruises", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, '/api/trips');
+  });
+
+  // Update cruise (redirect to trips)
+  app.put("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, `/api/trips/${req.params.id}`);
+  });
+
+  // Delete cruise (redirect to trips)
+  app.delete("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, `/api/trips/${req.params.id}`);
   });
 
   // Get cruise by ID
-  app.get("/api/cruises/id/:id", async (req, res) => {
-    const cruise = await cruiseStorage.getCruiseById(parseInt(req.params.id));
-    if (!cruise) {
-      return res.status(404).send("Cruise not found");
+  app.get("/api/trips/id/:id", async (req, res) => {
+    const trip = await tripStorage.getTripById(parseInt(req.params.id));
+    if (!trip) {
+      return res.status(404).send("Trip not found");
     }
-    res.json(cruise);
+    res.json(trip);
   });
 
-  // Get cruise by slug
-  app.get("/api/cruises/:slug", async (req, res) => {
-    const cruise = await cruiseStorage.getCruiseBySlug(req.params.slug);
-    if (!cruise) {
-      return res.status(404).send("Cruise not found");
+  // Get trip by slug
+  app.get("/api/trips/:slug", async (req, res) => {
+    const trip = await tripStorage.getTripBySlug(req.params.slug);
+    if (!trip) {
+      return res.status(404).send("Trip not found");
     }
-    res.json(cruise);
+    res.json(trip);
   });
 
-  // Create cruise
-  app.post("/api/cruises", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const cruise = await cruiseStorage.createCruise(req.body);
-    res.json(cruise);
+  // Create trip
+  app.post("/api/trips", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    const trip = await tripStorage.createTrip(req.body);
+    res.json(trip);
   });
 
-  // Update cruise
-  app.put("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const cruise = await cruiseStorage.updateCruise(parseInt(req.params.id), req.body);
-    if (!cruise) {
-      return res.status(404).send("Cruise not found");
+  // Update trip
+  app.put("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    const trip = await tripStorage.updateTrip(parseInt(req.params.id), req.body);
+    if (!trip) {
+      return res.status(404).send("Trip not found");
     }
-    res.json(cruise);
+    res.json(trip);
   });
 
-  // Delete cruise
-  app.delete("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    await cruiseStorage.deleteCruise(parseInt(req.params.id));
-    res.json({ message: "Cruise deleted" });
+  // Delete trip
+  app.delete("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    await tripStorage.deleteTrip(parseInt(req.params.id));
+    res.json({ message: "Trip deleted" });
   });
 
   // ============ TRIP ENDPOINTS ============
@@ -458,23 +479,29 @@ export function registerTripRoutes(app: Express) {
 
   // ============ ITINERARY ENDPOINTS ============
 
-  // Get itinerary for a cruise (backward compatibility)
+  // Get itinerary for a trip (backward compatibility endpoint)
   app.get("/api/cruises/:cruiseId/itinerary", async (req, res) => {
-    const itinerary = await itineraryStorage.getItineraryByCruise(parseInt(req.params.cruiseId));
-    res.json(itinerary);
+    // Redirect to new endpoint
+    res.redirect(301, `/api/trips/${req.params.cruiseId}/itinerary`);
   });
 
   // Get itinerary for a trip
   app.get("/api/trips/:tripId/itinerary", async (req, res) => {
-    const itinerary = await itineraryStorage.getItineraryByCruise(parseInt(req.params.tripId));
+    const itinerary = await itineraryStorage.getItineraryByTrip(parseInt(req.params.tripId));
     res.json(itinerary);
   });
 
-  // Create itinerary item for a cruise
+  // Create itinerary item for a trip (backward compatibility endpoint)
   app.post("/api/cruises/:cruiseId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    // Redirect to new endpoint
+    res.redirect(307, `/api/trips/${req.params.cruiseId}/itinerary`);
+  });
+
+  // Create itinerary item for a trip
+  app.post("/api/trips/:tripId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     const item = await itineraryStorage.createItineraryStop({
       ...req.body,
-      cruiseId: parseInt(req.params.cruiseId),
+      tripId: parseInt(req.params.tripId),
     });
     res.json(item);
   });
@@ -549,29 +576,49 @@ export function registerTripRoutes(app: Express) {
     }
   });
 
-  // Get events for a cruise
+  // Get events for a trip (backward compatibility)
   app.get("/api/cruises/:cruiseId/events", async (req, res) => {
-    const eventsList = await eventStorage.getEventsByCruise(parseInt(req.params.cruiseId));
+    res.redirect(301, `/api/trips/${req.params.cruiseId}/events`);
+  });
+
+  // Get events for a trip
+  app.get("/api/trips/:tripId/events", async (req, res) => {
+    const eventsList = await eventStorage.getEventsByTrip(parseInt(req.params.tripId));
     res.json(eventsList);
+  });
+
+  // Get events by date (backward compatibility)
+  app.get("/api/cruises/:cruiseId/events/date/:date", async (req, res) => {
+    res.redirect(301, `/api/trips/${req.params.cruiseId}/events/date/${req.params.date}`);
   });
 
   // Get events by date
-  app.get("/api/cruises/:cruiseId/events/date/:date", async (req, res) => {
-    const eventsList = await eventStorage.getEventsByDate(parseInt(req.params.cruiseId), new Date(req.params.date));
+  app.get("/api/trips/:tripId/events/date/:date", async (req, res) => {
+    const eventsList = await eventStorage.getEventsByDate(parseInt(req.params.tripId), new Date(req.params.date));
     res.json(eventsList);
+  });
+
+  // Get events by type (backward compatibility)
+  app.get("/api/cruises/:cruiseId/events/type/:type", async (req, res) => {
+    res.redirect(301, `/api/trips/${req.params.cruiseId}/events/type/${req.params.type}`);
   });
 
   // Get events by type
-  app.get("/api/cruises/:cruiseId/events/type/:type", async (req, res) => {
-    const eventsList = await eventStorage.getEventsByType(parseInt(req.params.cruiseId), req.params.type);
+  app.get("/api/trips/:tripId/events/type/:type", async (req, res) => {
+    const eventsList = await eventStorage.getEventsByType(parseInt(req.params.tripId), req.params.type);
     res.json(eventsList);
   });
 
-  // Create event
+  // Create event (backward compatibility)
   app.post("/api/cruises/:cruiseId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, `/api/trips/${req.params.cruiseId}/events`);
+  });
+
+  // Create event
+  app.post("/api/trips/:tripId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
     const event = await eventStorage.createEvent({
       ...req.body,
-      cruiseId: parseInt(req.params.cruiseId),
+      tripId: parseInt(req.params.tripId),
     });
     res.json(event);
   });
@@ -593,14 +640,9 @@ export function registerTripRoutes(app: Express) {
 
   // ============ CRUISE INFO SECTIONS ============
 
-  // Get complete trip info with all sections
+  // Get complete trip info (backward compatibility)
   app.get("/api/cruises/:slug/complete", async (req, res) => {
-    const { slug } = req.params;
-    const tripData = await tripInfoStorage.getCompleteInfo(slug, 'cruises');
-    if (!tripData) {
-      return res.status(404).json({ error: "Trip not found" });
-    }
-    res.json(tripData);
+    res.redirect(301, `/api/trips/${req.params.slug}/complete`);
   });
 
   // Get complete trip info with all sections (trips endpoint)
@@ -613,12 +655,17 @@ export function registerTripRoutes(app: Express) {
     res.json(tripData);
   });
 
-  // Get info sections for a cruise
+  // Get info sections (backward compatibility)
   app.get("/api/cruises/:cruiseId/info-sections", async (req, res) => {
+    res.redirect(301, `/api/trips/${req.params.cruiseId}/info-sections`);
+  });
+
+  // Get info sections for a trip
+  app.get("/api/trips/:tripId/info-sections", async (req, res) => {
     try {
       const sections = await db.select()
         .from(schema.tripInfoSections)
-        .where(eq(schema.tripInfoSections.tripId, req.params.cruiseId));
+        .where(eq(schema.tripInfoSections.tripId, req.params.tripId));
       res.json(sections);
     } catch (error) {
       console.error('Error fetching info sections:', error);
@@ -626,12 +673,17 @@ export function registerTripRoutes(app: Express) {
     }
   });
 
-  // Create info section
+  // Create info section (backward compatibility)
   app.post("/api/cruises/:cruiseId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    res.redirect(307, `/api/trips/${req.params.cruiseId}/info-sections`);
+  });
+
+  // Create info section
+  app.post("/api/trips/:tripId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const [section] = await db.insert(schema.tripInfoSections).values({
         ...req.body,
-        tripId: req.params.cruiseId
+        tripId: req.params.tripId
       }).returning();
       res.json(section);
     } catch (error) {

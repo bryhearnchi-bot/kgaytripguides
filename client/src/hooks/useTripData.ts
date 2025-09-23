@@ -85,14 +85,14 @@ export function transformTripData(data: TripData) {
     key: stop.date.split('T')[0],
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
-    port: (stop as any).port?.name || stop.portName, // Use port.name if available, fallback to portName
+    port: (stop as any).location?.name || stop.portName, // Use location.name if available, fallback to portName
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
-    imageUrl: (stop as any).port?.image_url || stop.portImageUrl, // Use port.image_url if available
-    description: (stop as any).port?.description || stop.description, // Use port.description if available
-    highlights: (stop as any).port?.highlights || stop.highlights, // Use port.highlights if available
-    portDetails: (stop as any).port // Include full port details if available
+    imageUrl: (stop as any).location?.imageUrl || (stop as any).location?.image_url || stop.portImageUrl, // Use location.imageUrl if available
+    description: (stop as any).location?.description || stop.description, // Use location.description if available
+    highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
+    portDetails: (stop as any).location // Include full location details (renamed from port)
   }));
 
   // Group events by date

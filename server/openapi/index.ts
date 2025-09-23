@@ -138,7 +138,7 @@ export interface Trip {
 
 export interface Event {
   id: number;
-  cruiseId: number;
+  tripId: number;
   title: string;
   description?: string;
   date: string;

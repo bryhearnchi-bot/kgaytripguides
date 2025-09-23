@@ -29,11 +29,11 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface CruiseWizardProps {
+interface TripWizardProps {
   isEditing?: boolean;
 }
 
-interface CruiseFormData {
+interface TripFormData {
   name: string;
   slug: string;
   startDate: string;
@@ -48,17 +48,17 @@ interface CruiseFormData {
   pricing?: any;
 }
 
-export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
+export default function TripWizard({ isEditing = false }: TripWizardProps) {
   const [, navigate] = useLocation();
   const params = useParams();
-  const cruiseId = params.id ? parseInt(params.id) : undefined;
+  const tripId = params.id ? parseInt(params.id) : undefined;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState('basic');
   const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<number[]>([]);
 
-  const [formData, setFormData] = useState<CruiseFormData>({
+  const [formData, setFormData] = useState<TripFormData>({
     name: '',
     slug: '',
     startDate: '',
@@ -67,18 +67,18 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
     cruiseLine: '',
   });
 
-  // Fetch existing cruise data if editing
-  const { data: existingCruise } = useQuery({
-    queryKey: ['cruise', cruiseId],
+  // Fetch existing trip data if editing
+  const { data: existingTrip } = useQuery({
+    queryKey: ['trip', tripId],
     queryFn: async () => {
-      if (!cruiseId) return null;
-      const response = await fetch(`/api/cruises/${cruiseId}`, {
+      if (!tripId) return null;
+      const response = await fetch(`/api/trips/${tripId}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch trip');
       return response.json();
     },
-    enabled: isEditing && !!cruiseId
+    enabled: isEditing && !!tripId
   });
 
   // Fetch ships
@@ -119,28 +119,28 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
 
   // Populate form with existing data
   useEffect(() => {
-    if (existingCruise) {
+    if (existingTrip) {
       setFormData({
-        name: existingCruise.name,
-        slug: existingCruise.slug,
-        startDate: existingCruise.startDate,
-        endDate: existingCruise.endDate,
-        shipId: existingCruise.shipId,
-        shipName: existingCruise.shipName,
-        cruiseLine: existingCruise.cruiseLine,
-        description: existingCruise.description,
-        heroImageUrl: existingCruise.heroImageUrl,
-        highlights: existingCruise.highlights,
-        includesInfo: existingCruise.includesInfo,
-        pricing: existingCruise.pricing,
+        name: existingTrip.name,
+        slug: existingTrip.slug,
+        startDate: existingTrip.startDate,
+        endDate: existingTrip.endDate,
+        shipId: existingTrip.shipId,
+        shipName: existingTrip.shipName,
+        cruiseLine: existingTrip.cruiseLine,
+        description: existingTrip.description,
+        heroImageUrl: existingTrip.heroImageUrl,
+        highlights: existingTrip.highlights,
+        includesInfo: existingTrip.includesInfo,
+        pricing: existingTrip.pricing,
       });
     }
-  }, [existingCruise]);
+  }, [existingTrip]);
 
-  // Create/Update cruise mutation
-  const saveCruiseMutation = useMutation({
-    mutationFn: async (data: CruiseFormData) => {
-      const url = isEditing ? `/api/cruises/${cruiseId}` : '/api/cruises';
+  // Create/Update trip mutation
+  const saveTripMutation = useMutation({
+    mutationFn: async (data: TripFormData) => {
+      const url = isEditing ? `/api/trips/${tripId}` : '/api/trips';
       const method = isEditing ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -154,7 +154,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['cruises'] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
       toast({
         title: 'Success',
         description: `Trip ${isEditing ? 'updated' : 'created'} successfully`,
@@ -171,7 +171,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
   });
 
   const handleSubmit = () => {
-    saveCruiseMutation.mutate(formData);
+    saveTripMutation.mutate(formData);
   };
 
   const generateSlug = (name: string) => {
@@ -218,7 +218,7 @@ export default function CruiseWizard({ isEditing = false }: CruiseWizardProps) {
             <Button
               onClick={handleSubmit}
               className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-              disabled={saveCruiseMutation.isPending}
+              disabled={saveTripMutation.isPending}
             >
               <Save className="mr-2" size={20} />
               {isEditing ? 'Update Trip' : 'Create Trip'}

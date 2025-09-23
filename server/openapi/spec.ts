@@ -176,9 +176,9 @@ The API uses standard HTTP status codes and returns consistent error responses w
             description: 'Unique identifier for the event',
             example: 1
           },
-          cruiseId: {
+          tripId: {
             type: 'integer',
-            description: 'ID of the associated cruise/trip',
+            description: 'ID of the associated trip',
             example: 1
           },
           title: {
