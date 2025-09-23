@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, log } from "./vite";
 import { securityHeaders, rateLimit } from "./middleware/security";
 import { cdnHeaders } from "./lib/cdn";
 
@@ -49,7 +49,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// Serve PWA files early in production
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
 
+  // Explicitly serve PWA files with correct MIME types
+  app.get('/manifest.json', (_req, res) => {
+    res.type('application/manifest+json');
+    res.sendFile(path.join(distPath, 'manifest.json'));
+  });
+
+  app.get('/sw.js', (_req, res) => {
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.type('application/javascript');
+    res.sendFile(path.join(distPath, 'sw.js'));
+  });
+
+  // Serve other static assets from dist/public
+  app.use(express.static(distPath));
+}
 
 (async () => {
   const server = await registerRoutes(app);
@@ -83,7 +101,11 @@ app.use(cookieParser());
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // In production, add the fallback to index.html for client-side routing
+    const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+    app.use("*", (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
   }
 
   const port = parseInt(process.env.PORT || '3001', 10);
