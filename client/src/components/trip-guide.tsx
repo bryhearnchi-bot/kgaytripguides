@@ -1109,14 +1109,14 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden">
                               <img
                                 src={stop.imageUrl || (() => {
-                                  if (stop.port.includes('Santorini')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/santorini-greece_cuv35p.jpg';
-                                  if (stop.port.includes('Athens')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/athens-greece_cuv35p.jpg';
-                                  if (stop.port.includes('Mykonos')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/mykonos-greece_cuv35p.jpg';
-                                  if (stop.port.includes('Istanbul')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/istanbul-turkey_cuv35p.jpg';
-                                  if (stop.port.includes('Kuşadası')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/kusadasi-turkey_cuv35p.jpg';
-                                  if (stop.port.includes('Alexandria') || stop.port.includes('Cairo')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/alexandria-cairo-egypt_cuv35p.jpg';
-                                  if (stop.port.includes('Iraklion') || stop.port.includes('Crete')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/iraklion-crete_cuv35p.jpg';
-                                  if (stop.port.includes('Day at Sea')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/celebrity-cruise-lines_celebrity-solstice_wake_article_article-2997_5685_1757732437578_cuv35p.jpg';
+                                  if (stop.port?.includes('Santorini')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/santorini-greece_cuv35p.jpg';
+                                  if (stop.port?.includes('Athens')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/athens-greece_cuv35p.jpg';
+                                  if (stop.port?.includes('Mykonos')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/mykonos-greece_cuv35p.jpg';
+                                  if (stop.port?.includes('Istanbul')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/istanbul-turkey_cuv35p.jpg';
+                                  if (stop.port?.includes('Kuşadası')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/kusadasi-turkey_cuv35p.jpg';
+                                  if (stop.port?.includes('Alexandria') || stop.port?.includes('Cairo')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/alexandria-cairo-egypt_cuv35p.jpg';
+                                  if (stop.port?.includes('Iraklion') || stop.port?.includes('Crete')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/iraklion-crete_cuv35p.jpg';
+                                  if (stop.port?.includes('Day at Sea')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/celebrity-cruise-lines_celebrity-solstice_wake_article_article-2997_5685_1757732437578_cuv35p.jpg';
                                   return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg';
                                 })()}
                                 alt={stop.port}
