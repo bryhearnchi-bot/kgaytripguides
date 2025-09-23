@@ -113,9 +113,10 @@ if (process.env.USE_MOCK_DATA === 'true') {
       console.log(`✅ Optimized database connected with connection pooling`);
 
       // Warm up caches with frequently accessed data
-      if (process.env.NODE_ENV === 'production') {
-        await warmUpCaches();
-      }
+      // TODO: Re-enable once schema issue is resolved
+      // if (process.env.NODE_ENV === 'production') {
+      //   await warmUpCaches();
+      // }
     }
 
   } catch (error) {
@@ -141,27 +142,45 @@ export async function warmUpCaches() {
   try {
     console.log('🔥 Warming up caches...');
 
-    // Pre-load active trips
-    const activeTrips = await db.select().from(schema.trips)
-      .where(eq(schema.trips.status, 'published'))
-      .limit(10);
-
-    for (const trip of activeTrips) {
-      await cacheManager.set('trips', CacheManager.keys.trip(trip.id), trip);
-      if (trip.slug) {
-        await cacheManager.set('trips', CacheManager.keys.tripBySlug(trip.slug), trip);
-      }
+    // Verify schema tables are properly initialized
+    if (!schema.trips || !schema.locations) {
+      console.warn('⚠️ Schema tables not properly initialized, skipping cache warm-up');
+      return;
     }
 
-    // Pre-load all locations (rarely change)
-    const allLocations = await db.select().from(schema.locations);
-    for (const location of allLocations) {
-      await cacheManager.set('locations', CacheManager.keys.location(location.id), location);
+    try {
+      // Pre-load active trips
+      const activeTrips = await db.select().from(schema.trips)
+        .where(eq(schema.trips.status, 'published'))
+        .limit(10);
+
+      for (const trip of activeTrips) {
+        await cacheManager.set('trips', CacheManager.keys.trip(trip.id), trip);
+        if (trip.slug) {
+          await cacheManager.set('trips', CacheManager.keys.tripBySlug(trip.slug), trip);
+        }
+      }
+    } catch (tripError) {
+      console.error('Failed to warm up trips cache:', tripError);
+    }
+
+    try {
+      // Pre-load all locations (rarely change)
+      const allLocations = await db.select().from(schema.locations);
+      for (const location of allLocations) {
+        await cacheManager.set('locations', CacheManager.keys.location(location.id), location);
+      }
+    } catch (locationError) {
+      console.error('Failed to warm up locations cache:', locationError);
     }
 
     console.log('✅ Cache warm-up complete');
-  } catch (error) {
+  } catch (error: any) {
     console.error('⚠️ Cache warm-up failed:', error);
+    // Log more details about the error
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
   }
 }
 
