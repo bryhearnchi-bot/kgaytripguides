@@ -5,6 +5,7 @@ import {
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { auditLogger } from "../logging/middleware";
 import * as schema from "../../shared/schema";
+const locations = schema.locations;
 import { eq, ilike, or, count, sql } from "drizzle-orm";
 import {
   validateBody,
