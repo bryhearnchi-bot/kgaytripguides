@@ -177,11 +177,11 @@ export const itinerary = pgTable("itinerary", {
   tripId: integer("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   day: integer("day").notNull(), // Day number of trip (1, 2, 3, etc.)
-  portName: text("port_name").notNull(),
+  locationName: text("location_name").notNull(),
   arrivalTime: text("arrival_time"), // Stored as text for flexibility (e.g., "08:00", "—")
   departureTime: text("departure_time"),
   allAboardTime: text("all_aboard_time"),
-  portImageUrl: text("port_image_url"),
+  locationImageUrl: text("location_image_url"),
   description: text("description"),
   highlights: jsonb("highlights"), // Port highlights
   orderIndex: integer("order_index").notNull(), // For sorting
