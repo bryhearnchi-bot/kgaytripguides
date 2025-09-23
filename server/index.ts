@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { securityHeaders, rateLimit } from "./middleware/security";
@@ -16,8 +17,14 @@ import { httpMetrics, metricsHandler } from "./monitoring/metrics";
 const app = express();
 
 // Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let __dirname: string;
+try {
+  const __filename = fileURLToPath(import.meta.url);
+  __dirname = path.dirname(__filename);
+} catch (e) {
+  // Fallback for tsx runtime
+  __dirname = path.join(process.cwd(), 'server');
+}
 
 // Health check endpoints - these come before logging middleware
 app.get('/healthz', healthCheck);
@@ -56,7 +63,11 @@ app.use(cookieParser());
 
 // Serve PWA files early in production
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.resolve(__dirname, "..", "dist", "public");
+  // Use process.cwd() for reliable path resolution in production
+  const distPath = path.join(process.cwd(), 'dist', 'public');
+  
+  // Log the path for debugging
+  logger.info('Serving static files from:', { distPath, cwd: process.cwd() });
 
   // Explicitly serve PWA files with correct MIME types
   app.get('/manifest.json', (_req, res) => {
@@ -64,7 +75,11 @@ if (process.env.NODE_ENV === 'production') {
     res.type('application/manifest+json');
     res.sendFile(manifestPath, (err) => {
       if (err) {
-        logger.error('Failed to serve manifest.json', err, { path: manifestPath });
+        logger.error('Failed to serve manifest.json', err, { 
+          path: manifestPath, 
+          exists: fs.existsSync(manifestPath),
+          cwd: process.cwd() 
+        });
         res.status(500).json({ error: 'Failed to load manifest.json' });
       }
     });
@@ -76,7 +91,11 @@ if (process.env.NODE_ENV === 'production') {
     res.type('application/javascript');
     res.sendFile(swPath, (err) => {
       if (err) {
-        logger.error('Failed to serve sw.js', err, { path: swPath });
+        logger.error('Failed to serve sw.js', err, { 
+          path: swPath,
+          exists: fs.existsSync(swPath),
+          cwd: process.cwd()
+        });
         res.status(500).send('// Service worker failed to load');
       }
     });
@@ -119,7 +138,7 @@ if (process.env.NODE_ENV === 'production') {
     await setupVite(app, server);
   } else {
     // In production, add the fallback to index.html for client-side routing
-    const distPath = path.resolve(__dirname, "..", "dist", "public");
+    const distPath = path.join(process.cwd(), 'dist', 'public');
     app.use("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
