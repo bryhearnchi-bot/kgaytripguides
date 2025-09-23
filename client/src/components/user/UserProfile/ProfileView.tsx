@@ -176,8 +176,8 @@ export function ProfileView({ onEdit }: ProfileViewProps) {
                 <p className="font-medium">Cruise Updates</p>
                 <p className="text-sm text-gray-500">Notifications about cruises you're following</p>
               </div>
-              <Badge variant={(profile as any).cruise_updates_opt_in ? 'default' : 'secondary'}>
-                {(profile as any).cruise_updates_opt_in ? 'Subscribed' : 'Unsubscribed'}
+              <Badge variant={(profile as any).trip_updates_opt_in ? 'default' : 'secondary'}>
+                {(profile as any).trip_updates_opt_in ? 'Subscribed' : 'Unsubscribed'}
               </Badge>
             </div>
           </div>

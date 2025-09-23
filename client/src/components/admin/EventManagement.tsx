@@ -260,7 +260,7 @@ export default function EventManagement({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // In production, this would upload to Cloudinary
+    // In production, this would upload to Supabase Storage
     const url = URL.createObjectURL(file);
     setImageUrl(url);
     toast({

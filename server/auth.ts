@@ -95,7 +95,6 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
       const profile = await profileStorage.getProfile(user.id);
 
       if (profile) {
-        console.log(`Auth: User ${user.email} has profile role: ${profile.role}`);
         req.user = {
           id: user.id,
           username: user.email || '',
@@ -108,7 +107,6 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
       // Fallback when profile is unavailable (e.g., mock mode): use Supabase user metadata
       const metaRole = (user.user_metadata as any)?.role as string | undefined;
       if (metaRole) {
-        console.log(`Auth: Using Supabase user metadata role '${metaRole}' for ${user.email}`);
         req.user = {
           id: user.id,
           username: user.email || '',
@@ -119,7 +117,7 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
       }
     }
   } catch (supabaseError) {
-    console.debug('Supabase auth failed, trying custom JWT:', supabaseError);
+    // Supabase auth failed, try custom JWT
   }
 
   // Fall back to custom JWT authentication
@@ -159,20 +157,16 @@ export function requireRole(allowedRoles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
-        console.log('Role check failed: No user in request');
         throw ApiError.unauthorized('Authentication required');
       }
 
-      console.log(`Role check: User ${req.user.email} has role '${req.user.role}', allowed roles:`, allowedRoles);
       if (!allowedRoles.includes(req.user.role || '')) {
-        console.log(`Role check failed: '${req.user.role}' not in allowed roles:`, allowedRoles);
         throw new ApiError(403, 'Insufficient permissions', {
           code: ErrorCode.INSUFFICIENT_PERMISSIONS,
           details: { userRole: req.user.role, requiredRoles: allowedRoles }
         });
       }
 
-      console.log('Role check passed');
       next();
     } catch (error) {
       if (error instanceof ApiError) {

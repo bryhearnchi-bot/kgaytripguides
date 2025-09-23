@@ -64,7 +64,7 @@ export function ProfileEditForm({ onCancel, onSuccess }: ProfileEditFormProps) {
       country: (profile as any)?.location?.country || '',
       emailUpdates: (profile as any)?.communication_preferences?.email ?? true,
       textMessages: (profile as any)?.communication_preferences?.sms ?? false,
-      cruiseNotifications: (profile as any)?.cruise_updates_opt_in ?? true,
+      cruiseNotifications: (profile as any)?.trip_updates_opt_in ?? true,
       marketingEmails: (profile as any)?.marketing_emails ?? false,
     },
   });
@@ -103,7 +103,7 @@ export function ProfileEditForm({ onCancel, onSuccess }: ProfileEditFormProps) {
             email: data.emailUpdates,
             sms: data.textMessages,
           },
-          cruise_updates_opt_in: data.cruiseNotifications,
+          trip_updates_opt_in: data.cruiseNotifications,
           marketing_emails: data.marketingEmails,
         })
       });

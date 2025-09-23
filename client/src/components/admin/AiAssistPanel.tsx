@@ -41,7 +41,6 @@ export default function AiAssistPanel({
     
     setIsProcessing(true);
     // TODO: Implement AI extraction from URL
-    console.log('Extracting from URL:', extractUrl);
     setTimeout(() => {
       setIsProcessing(false);
       setExtractUrl('');
@@ -60,7 +59,6 @@ export default function AiAssistPanel({
     
     setIsProcessing(true);
     // TODO: Implement AI extraction from file
-    console.log('Extracting from file:', extractFile.name);
     setTimeout(() => {
       setIsProcessing(false);
       setExtractFile(null);
@@ -72,7 +70,6 @@ export default function AiAssistPanel({
     
     setIsProcessing(true);
     // TODO: Implement AI image generation
-    console.log('Generating image:', imagePrompt);
     setTimeout(() => {
       setIsProcessing(false);
       setImagePrompt('');

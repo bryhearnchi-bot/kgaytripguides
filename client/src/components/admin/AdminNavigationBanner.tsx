@@ -50,14 +50,14 @@ export default function AdminNavigationBanner() {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/">
               <img
-                src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757807911/cruise-app/logos/atlantis-logo.png"
+                src="/logos/atlantis-logo.png"
                 alt="Atlantis Events"
-                className="h-5 sm:h-6 w-auto brightness-0 invert hover:opacity-80 transition-opacity cursor-pointer"
+                className="h-5 sm:h-6 w-auto hover:opacity-80 transition-opacity cursor-pointer"
               />
             </Link>
             <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
               <img
-                src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757807911/cruise-app/logos/kgay-logo.jpg"
+                src="/logos/kgay-logo.jpg"
                 alt="KGay Travel"
                 className="h-6 sm:h-8 w-auto hover:opacity-80 transition-opacity"
               />

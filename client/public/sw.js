@@ -81,7 +81,7 @@ self.addEventListener('fetch', (event) => {
   // Handle image requests with cache-first strategy
   if (request.destination === 'image' ||
       url.pathname.includes('/images/') ||
-      url.hostname.includes('cloudinary.com') ||
+      url.hostname.includes('supabase.co') ||
       url.hostname.includes('kgaytravel.com') ||
       url.hostname.includes('freepik.com')) {
     event.respondWith(

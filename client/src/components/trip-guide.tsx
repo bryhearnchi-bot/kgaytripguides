@@ -1109,21 +1109,21 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden">
                               <img
                                 src={stop.imageUrl || (() => {
-                                  if (stop.port?.includes('Santorini')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/santorini-greece_cuv35p.jpg';
-                                  if (stop.port?.includes('Athens')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/athens-greece_cuv35p.jpg';
-                                  if (stop.port?.includes('Mykonos')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/mykonos-greece_cuv35p.jpg';
-                                  if (stop.port?.includes('Istanbul')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/istanbul-turkey_cuv35p.jpg';
-                                  if (stop.port?.includes('Kuşadası')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/kusadasi-turkey_cuv35p.jpg';
-                                  if (stop.port?.includes('Alexandria') || stop.port?.includes('Cairo')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/alexandria-cairo-egypt_cuv35p.jpg';
-                                  if (stop.port?.includes('Iraklion') || stop.port?.includes('Crete')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/iraklion-crete_cuv35p.jpg';
-                                  if (stop.port?.includes('Day at Sea')) return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/assets/celebrity-cruise-lines_celebrity-solstice_wake_article_article-2997_5685_1757732437578_cuv35p.jpg';
-                                  return 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg';
+                                  if (stop.port?.includes('Santorini')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/santorini-greece.jpg';
+                                  if (stop.port?.includes('Athens')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/athens-greece.jpg';
+                                  if (stop.port?.includes('Mykonos')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/mykonos-greece.jpg';
+                                  if (stop.port?.includes('Istanbul')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/istanbul-turkey.jpg';
+                                  if (stop.port?.includes('Kuşadası')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/kusadasi-turkey.jpg';
+                                  if (stop.port?.includes('Alexandria') || stop.port?.includes('Cairo')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/alexandria-cairo-egypt.jpg';
+                                  if (stop.port?.includes('Iraklion') || stop.port?.includes('Crete')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/location-images/iraklion-crete.jpg';
+                                  if (stop.port?.includes('Day at Sea')) return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/day-at-sea.jpg';
+                                  return 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
                                 })()}
                                 alt={stop.port}
                                 className="w-full h-full object-cover"
                                 style={{ objectFit: 'cover' }}
                                 onError={(e) => {
-                                  e.currentTarget.src = 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg';
+                                  e.currentTarget.src = 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
                                 }}
                               />
                             </div>
@@ -1234,7 +1234,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                       alt={talent.name}
                                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                                       onError={(e) => {
-                                        e.currentTarget.src = "https://res.cloudinary.com/dfqoebbyj/image/upload/w_400,h_400,c_fill,g_center,q_auto,f_auto/v1757773863/cruise-app/ships/virgin-resilient-lady.jpg";
+                                        e.currentTarget.src = "https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg";
                                       }}
                                     />
                                   </div>
@@ -1352,12 +1352,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                     {/* Hero Image */}
                                     <div className="w-full h-48 lg:w-48 lg:h-32 flex-shrink-0 overflow-hidden">
                                       <img
-                                        src={party.imageUrl || 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg'}
+                                        src={party.imageUrl || 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'}
                                         alt={party.title}
                                         className="w-full h-full object-cover"
                                         style={{ objectFit: 'cover' }}
                                         onError={(e) => {
-                                          e.currentTarget.src = 'https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757789604/cruise-app/ships/virgin-resilient-lady.jpg';
+                                          e.currentTarget.src = 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
                                         }}
                                       />
                                     </div>

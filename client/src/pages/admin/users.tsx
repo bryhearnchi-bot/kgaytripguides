@@ -122,16 +122,12 @@ export default function UsersManagement() {
   // Create/Update user mutation
   const saveUser = useMutation({
     mutationFn: async (data: UserFormData) => {
-      console.log('Starting user save mutation...');
-      console.log('Edit mode:', editingUser ? 'UPDATE' : 'CREATE');
-
       // Get authentication token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         console.error('No authentication token found');
         throw new Error('No authentication token');
       }
-      console.log('Got auth token');
 
       const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
       const method = editingUser ? 'PUT' : 'POST';
@@ -142,12 +138,6 @@ export default function UsersManagement() {
         delete payload.password;
       }
 
-      console.log(`Making ${method} request to ${url}`);
-      console.log('Request payload:', {
-        ...payload,
-        password: payload.password ? '***' : undefined
-      });
-
       const response = await fetch(url, {
         method,
         headers: {
@@ -157,8 +147,6 @@ export default function UsersManagement() {
         credentials: 'include',
         body: JSON.stringify(payload),
       });
-
-      console.log('Response status:', response.status);
 
       if (!response.ok) {
         let errorMessage = 'Failed to save user';
@@ -395,11 +383,6 @@ export default function UsersManagement() {
       full_name: formData.full_name?.trim(),
       password: formData.password?.trim()
     };
-
-    console.log('Sending user data:', {
-      ...trimmedData,
-      password: '***' // Hide password in logs
-    });
 
     saveUser.mutate(trimmedData);
   };

@@ -73,11 +73,7 @@ const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ tripName, tripSlug 
     if (deferredPrompt) {
       // For browsers that support the install prompt
       deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      }
+      await deferredPrompt.userChoice;
 
       setDeferredPrompt(null);
       setCanInstall(false);

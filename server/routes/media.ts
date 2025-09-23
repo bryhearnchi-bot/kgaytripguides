@@ -3,23 +3,18 @@ import {
   talentStorage,
   db
 } from "../storage";
-import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
+import { requireContentEditor, type AuthenticatedRequest } from "../auth";
 import * as schema from "../../shared/schema";
 const talentCategories = schema.talentCategories;
 const talent = schema.talent;
 import { eq, ilike, or, count, sql, asc, and } from "drizzle-orm";
-import { upload, getPublicImageUrl, deleteImage, isValidImageUrl, uploadToCloudinary } from "../image-utils";
+import { upload, uploadToSupabase, getPublicImageUrl, deleteImage, isValidImageUrl, downloadImageFromUrl } from "../image-utils";
 import {
   validateBody,
-  validateParams,
-  idParamSchema,
-  createTalentSchema,
-  updateTalentSchema,
   bulkTalentAssignSchema
 } from "../middleware/validation";
 import {
   uploadRateLimit,
-  adminRateLimit,
   bulkRateLimit
 } from "../middleware/rate-limiting";
 
@@ -27,11 +22,10 @@ export function registerMediaRoutes(app: Express) {
   // ============ IMAGE UPLOAD ENDPOINTS ============
 
   // Upload an image
-  app.post("/api/images/upload/:type", uploadRateLimit, requireContentEditor, (req, res, next) => {
+  app.post("/api/images/upload/:type", uploadRateLimit, requireContentEditor, async (req, res, next) => {
     const uploadHandler = upload.single('image');
-    uploadHandler(req, res, (err: any) => {
+    uploadHandler(req, res, async (err: any) => {
       if (err) {
-        console.error('Upload error:', err);
         return res.status(400).json({
           error: err.message || 'Failed to upload image'
         });
@@ -42,31 +36,40 @@ export function registerMediaRoutes(app: Express) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      const publicUrl = getPublicImageUrl(file.filename);
-      res.json({
-        url: publicUrl,
-        filename: file.filename,
-        originalName: file.originalname,
-        size: file.size,
-        type: req.params.type
-      });
+      try {
+        // Upload to Supabase Storage
+        const publicUrl = await uploadToSupabase(file, req.params.type);
+
+        res.json({
+          url: publicUrl,
+          filename: file.originalname,
+          originalName: file.originalname,
+          size: file.size,
+          type: req.params.type
+        });
+      } catch (uploadError: any) {
+        return res.status(500).json({
+          error: uploadError.message || 'Failed to upload image to storage'
+        });
+      }
     });
   });
 
   // Download image from URL
   app.post("/api/images/download-from-url", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const { url, type = 'general' } = req.body;
+      const { url, type = 'general', name = 'image' } = req.body;
 
       if (!url || !isValidImageUrl(url)) {
         return res.status(400).json({ error: 'Invalid image URL' });
       }
 
-      const uploadedUrl = await uploadToCloudinary(url, type);
-      res.json({ url: uploadedUrl });
-    } catch (error) {
+      // Download and upload to Supabase Storage
+      const publicUrl = await downloadImageFromUrl(url, type, name);
+      res.json({ url: publicUrl });
+    } catch (error: any) {
       console.error('Error downloading image from URL:', error);
-      res.status(500).json({ error: 'Failed to download image' });
+      res.status(500).json({ error: error.message || 'Failed to download image' });
     }
   });
 
@@ -107,23 +110,23 @@ export function registerMediaRoutes(app: Express) {
     validateBody(bulkTalentAssignSchema),
     async (req: AuthenticatedRequest, res) => {
       try {
-        const { cruiseId, talentIds, action = 'add' } = req.body;
+        const { tripId, talentIds, action = 'add' } = req.body;
 
-        if (!cruiseId || !talentIds || !Array.isArray(talentIds)) {
+        if (!tripId || !talentIds || !Array.isArray(talentIds)) {
           return res.status(400).json({ error: 'Invalid request data' });
         }
 
-        // This would need to be implemented based on how talent is linked to cruises
+        // This would need to be implemented based on how talent is linked to trips
         // For now, returning a placeholder response
-        res.json({
+        return res.json({
           success: true,
-          message: `${action === 'add' ? 'Added' : 'Removed'} ${talentIds.length} talent to/from cruise`,
-          cruiseId,
+          message: `${action === 'add' ? 'Added' : 'Removed'} ${talentIds.length} talent to/from trip`,
+          tripId,
           talentIds
         });
       } catch (error) {
         console.error('Error bulk assigning talent:', error);
-        res.status(500).json({ error: 'Failed to assign talent' });
+        return res.status(500).json({ error: 'Failed to assign talent' });
       }
     }
   );
@@ -229,25 +232,30 @@ export function registerMediaRoutes(app: Express) {
     }
   });
 
-  // Get talent for a cruise
-  app.get("/api/cruises/:cruiseId/talent", async (req, res) => {
+  // Get talent for a trip
+  app.get("/api/trips/:tripId/talent", async (req, res) => {
     try {
-      const cruiseId = parseInt(req.params.cruiseId);
-      if (isNaN(cruiseId)) {
-        return res.status(400).json({ error: "Invalid cruise ID" });
+      const tripId = parseInt(req.params.tripId);
+      if (isNaN(tripId)) {
+        return res.status(400).json({ error: "Invalid trip ID" });
       }
-      const talentList = await talentStorage.getTalentByCruise(cruiseId);
+      const talentList = await talentStorage.getTalentByTrip(tripId);
       res.json(talentList);
     } catch (error) {
-      console.error('Error fetching talent for cruise:', error);
-      res.status(500).json({ error: 'Failed to fetch talent for cruise' });
+      console.error('Error fetching talent for trip:', error);
+      res.status(500).json({ error: 'Failed to fetch talent for trip' });
     }
   });
 
   // Create talent
   app.post("/api/talent", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const talentItem = await talentStorage.createTalent(req.body);
-    res.json(talentItem);
+    try {
+      const talentItem = await talentStorage.createTalent(req.body);
+      return res.json(talentItem);
+    } catch (error) {
+      console.error('Error creating talent:', error);
+      return res.status(500).json({ error: 'Failed to create talent' });
+    }
   });
 
   // Update talent
@@ -283,35 +291,35 @@ export function registerMediaRoutes(app: Express) {
     }
   });
 
-  // Assign talent to cruise
-  app.post("/api/cruises/:cruiseId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  // Assign talent to trip
+  app.post("/api/trips/:tripId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const cruiseId = parseInt(req.params.cruiseId);
+      const tripId = parseInt(req.params.tripId);
       const talentId = parseInt(req.params.talentId);
-      if (isNaN(cruiseId) || isNaN(talentId)) {
-        return res.status(400).json({ error: "Invalid cruise or talent ID" });
+      if (isNaN(tripId) || isNaN(talentId)) {
+        return res.status(400).json({ error: "Invalid trip or talent ID" });
       }
-      await talentStorage.assignTalentToCruise(cruiseId, talentId, req.body.role);
-      res.json({ message: "Talent assigned to cruise" });
+      await talentStorage.assignTalentToTrip(tripId, talentId, req.body.role);
+      res.json({ message: "Talent assigned to trip" });
     } catch (error) {
-      console.error('Error assigning talent to cruise:', error);
-      res.status(500).json({ error: 'Failed to assign talent to cruise' });
+      console.error('Error assigning talent to trip:', error);
+      res.status(500).json({ error: 'Failed to assign talent to trip' });
     }
   });
 
-  // Remove talent from cruise
-  app.delete("/api/cruises/:cruiseId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  // Remove talent from trip
+  app.delete("/api/trips/:tripId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const cruiseId = parseInt(req.params.cruiseId);
+      const tripId = parseInt(req.params.tripId);
       const talentId = parseInt(req.params.talentId);
-      if (isNaN(cruiseId) || isNaN(talentId)) {
-        return res.status(400).json({ error: "Invalid cruise or talent ID" });
+      if (isNaN(tripId) || isNaN(talentId)) {
+        return res.status(400).json({ error: "Invalid trip or talent ID" });
       }
-      await talentStorage.removeTalentFromCruise(cruiseId, talentId);
-      res.json({ message: "Talent removed from cruise" });
+      await talentStorage.removeTalentFromTrip(tripId, talentId);
+      res.json({ message: "Talent removed from trip" });
     } catch (error) {
-      console.error('Error removing talent from cruise:', error);
-      res.status(500).json({ error: 'Failed to remove talent from cruise' });
+      console.error('Error removing talent from trip:', error);
+      res.status(500).json({ error: 'Failed to remove talent from trip' });
     }
   });
 

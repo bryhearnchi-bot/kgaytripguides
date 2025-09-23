@@ -34,7 +34,6 @@ export async function sendInvitationEmail(
   try {
     // Validate required environment variables
     if (!process.env.RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY not configured, email sending disabled');
       return {
         success: false,
         error: 'Email service not configured'
@@ -84,7 +83,6 @@ export async function sendInvitationEmail(
       };
     }
 
-    console.log(`Invitation email sent successfully to ${recipientEmail}, message ID: ${result.data?.id}`);
     return {
       success: true,
       messageId: result.data?.id
@@ -358,7 +356,6 @@ export async function sendPasswordResetEmail(
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY not configured, email sending disabled');
       return {
         success: false,
         error: 'Email service not configured'

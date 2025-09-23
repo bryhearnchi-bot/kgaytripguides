@@ -25,15 +25,12 @@ export function getSupabaseAdmin(): SupabaseClient {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Supabase Admin: Missing required environment variables');
-      console.error('   Required: SUPABASE_URL or VITE_SUPABASE_URL');
-      console.error('   Required: SUPABASE_SERVICE_ROLE_KEY');
       throw new Error('Supabase admin credentials not configured');
     }
 
     // Validate that we're using the service role key (it should be longer than anon key)
     if (supabaseServiceKey.length < 200) {
-      console.warn('⚠️  Warning: Service role key seems too short. Make sure you are using the service role key, not the anon key.');
+      // Service role key might be too short
     }
 
     supabaseAdmin = createClient(
@@ -50,8 +47,6 @@ export function getSupabaseAdmin(): SupabaseClient {
         }
       }
     );
-
-    console.log('✅ Supabase Admin client initialized with service role');
   }
 
   return supabaseAdmin;
@@ -74,7 +69,6 @@ export function isSupabaseAdminAvailable(): boolean {
  * Helper function to handle Supabase errors consistently
  */
 export function handleSupabaseError(error: any, operation: string): never {
-  console.error(`Supabase Admin Error during ${operation}:`, error);
 
   // Check for common Supabase error codes
   if (error?.code === '23505') {
@@ -110,14 +104,11 @@ export async function testAdminConnection(): Promise<boolean> {
       .select('*', { count: 'exact', head: true });
 
     if (error) {
-      console.error('Admin connection test failed:', error);
       return false;
     }
 
-    console.log(`✅ Admin connection test successful. Found ${count} profiles.`);
     return true;
   } catch (error) {
-    console.error('Admin connection test error:', error);
     return false;
   }
 }

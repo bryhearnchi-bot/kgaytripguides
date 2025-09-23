@@ -26,19 +26,12 @@ import { useToast } from '../../hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
 import { supabase } from '../../lib/supabase';
+import type { Location as SchemaLocation } from '../../../../shared/schema';
 // CSRF token not needed with Bearer authentication
 
-interface Location {
-  id: number;
-  name: string;
-  country: string;
-  region?: string;
+// Extended Location type that includes the type information used by this component
+interface Location extends SchemaLocation {
   port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
-  coordinates?: { lat: number; lng: number } | null;
-  description?: string;
-  image_url?: string;
-  created_at?: string;
-  updated_at?: string;
 }
 
 interface LocationStatistics {

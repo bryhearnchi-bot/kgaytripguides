@@ -108,10 +108,10 @@ export class PartyThemeStorage {
         .from(schema.partyThemes)
         .where(
           or(
-            like(partyThemes.name, searchPattern),
-            like(partyThemes.longDescription, searchPattern),
-            like(partyThemes.shortDescription, searchPattern),
-            like(partyThemes.costumeIdeas, searchPattern)
+            like(schema.partyThemes.name, searchPattern),
+            like(schema.partyThemes.longDescription, searchPattern),
+            like(schema.partyThemes.shortDescription, searchPattern),
+            like(schema.partyThemes.costumeIdeas, searchPattern)
           )
         )
         .orderBy(schema.partyThemes.name);
@@ -129,7 +129,7 @@ export class PartyThemeStorage {
     try {
       const themes = await db.select()
         .from(schema.partyThemes)
-        .where(sql`${partyThemes.costumeIdeas} IS NOT NULL`)
+        .where(sql`${schema.partyThemes.costumeIdeas} IS NOT NULL`)
         .orderBy(schema.partyThemes.name);
       return themes.map(theme => this.transformToFrontend(theme));
     } catch (error) {
@@ -295,10 +295,10 @@ export class PartyThemeStorage {
   async checkUsage(id: number): Promise<{ eventCount: number; events: any[] }> {
     try {
       const result = await db.select({
-        id: events.id,
-        title: events.title,
-        tripId: events.tripId,
-        date: events.date
+        id: schema.events.id,
+        title: schema.events.title,
+        tripId: schema.events.tripId,
+        date: schema.events.date
       })
       .from(schema.events)
       .where(eq(schema.events.partyThemeId, id));
@@ -321,7 +321,7 @@ export class PartyThemeStorage {
       return await db.select()
         .from(schema.events)
         .where(eq(schema.events.partyThemeId, themeId))
-        .orderBy(events.date);
+        .orderBy(schema.events.date);
     } catch (error) {
       console.error('Error fetching events for party theme:', error);
       throw new Error('Failed to fetch events');
@@ -347,12 +347,12 @@ export class PartyThemeStorage {
 
       // Get usage counts
       const usageCounts = await db.select({
-        themeId: events.partyThemeId,
+        themeId: schema.events.partyThemeId,
         count: sql<number>`COUNT(*)::int`
       })
       .from(schema.events)
-      .where(sql`${events.partyThemeId} IS NOT NULL`)
-      .groupBy(events.partyThemeId);
+      .where(sql`${schema.events.partyThemeId} IS NOT NULL`)
+      .groupBy(schema.events.partyThemeId);
 
       // Map theme names to usage counts
       const mostUsedThemes = await Promise.all(

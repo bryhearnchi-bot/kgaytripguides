@@ -168,7 +168,6 @@ export class CacheManager {
     const cache = this.cacheLayers.get(layer);
     if (cache) {
       cache.clear();
-      console.log(`✅ Cache layer '${layer}' cleared`);
     }
   }
 
@@ -177,7 +176,6 @@ export class CacheManager {
     this.memoryCache.clear();
     for (const [name, cache] of this.cacheLayers) {
       cache.clear();
-      console.log(`✅ Cache layer '${name}' cleared`);
     }
     this.resetStats();
   }
@@ -254,7 +252,6 @@ export class CacheManager {
 
   // Warm up cache with preloaded data
   async warmUp(layer: string, data: Map<string, any>): Promise<void> {
-    console.log(`🔥 Warming up cache layer '${layer}' with ${data.size} entries`);
     await this.batchSet(layer, data);
   }
 

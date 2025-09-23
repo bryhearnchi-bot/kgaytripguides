@@ -106,7 +106,9 @@ export class OptimizedDatabaseConnection {
       debug: process.env.DEBUG_SQL === 'true',
       // Connection pool callbacks
       onclose: () => {
-        console.log('Database connection closed');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Database connection closed');
+        }
       },
       onconnect: () => {
         if (process.env.NODE_ENV === 'development') {
@@ -184,7 +186,9 @@ export class OptimizedDatabaseConnection {
         if (error?.code === '40001' || error?.code === '40P01') {
           retries--;
           if (retries > 0) {
-            console.log(`Transaction failed with ${error.code}, retrying... (${retries} retries left)`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Transaction failed with ${error.code}, retrying... (${retries} retries left)`);
+            }
             // Exponential backoff
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 100));
             continue;
@@ -241,7 +245,9 @@ export class OptimizedDatabaseConnection {
   async closeConnection() {
     if (this.client) {
       await this.client.end();
-      console.log('Database connection closed');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Database connection closed');
+      }
     }
   }
 }
@@ -265,10 +271,11 @@ export class BatchQueryBuilder {
         tripId: schema.itinerary.tripId,
         date: schema.itinerary.date,
         day: schema.itinerary.day,
+        locationName: schema.itinerary.locationName,
         arrivalTime: schema.itinerary.arrivalTime,
         departureTime: schema.itinerary.departureTime,
         allAboardTime: schema.itinerary.allAboardTime,
-locationImageUrl: schema.itinerary.locationImageUrl,
+        locationImageUrl: schema.itinerary.locationImageUrl,
         description: schema.itinerary.description,
         highlights: schema.itinerary.highlights,
         orderIndex: schema.itinerary.orderIndex,

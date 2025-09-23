@@ -18,13 +18,6 @@ import type {
   Settings
 } from "../shared/schema";
 
-// Debug environment variables in production
-if (process.env.NODE_ENV === 'production') {
-  console.log('Environment check:');
-  console.log('- NODE_ENV:', process.env.NODE_ENV);
-  console.log('- DATABASE_URL exists:', !!process.env.DATABASE_URL);
-  console.log('- DATABASE_URL length:', process.env.DATABASE_URL?.length || 0);
-}
 
 // Database connection with development mock fallback
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -44,9 +37,6 @@ let optimizedConnection: OptimizedDatabaseConnection;
 
 // Force mock mode in development only if USE_MOCK_DATA is explicitly true
 if (process.env.USE_MOCK_DATA === 'true') {
-  console.warn('🔧 Mock mode enabled: Using mock database');
-  console.warn('   The app will use static data from client/src/data/');
-  console.warn('   To connect to real database, set USE_MOCK_DATA=false in .env');
 
   // Create a comprehensive mock database that matches drizzle ORM interface
   db = {
@@ -97,7 +87,7 @@ if (process.env.USE_MOCK_DATA === 'true') {
 
     // Use standard PostgreSQL connection for all databases
     {
-      // Use standard postgres connection for Railway/Neon/other databases
+      // Use standard postgres connection for Supabase
       console.log('🔧 Using standard PostgreSQL connection');
 
       // Initialize optimized connection with connection pooling
@@ -476,6 +466,8 @@ export interface IItineraryStorage {
   createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary>;
   updateItineraryStop(id: number, stop: Partial<Itinerary>): Promise<Itinerary | undefined>;
   deleteItineraryStop(id: number): Promise<void>;
+  // Batch operations for N+1 query prevention
+  bulkCreateItineraryStops(stops: Array<Omit<Itinerary, 'id'>>): Promise<Itinerary[]>;
 }
 
 export class ItineraryStorage implements IItineraryStorage {
@@ -584,26 +576,85 @@ export class ItineraryStorage implements IItineraryStorage {
       .set(updates)
       .where(eq(schema.itinerary.id, id))
       .returning({
-        id: itinerary.id,
-        tripId: itinerary.tripId,
-        date: itinerary.date,
-        day: itinerary.day,
-        arrivalTime: itinerary.arrivalTime,
-        departureTime: itinerary.departureTime,
-        allAboardTime: itinerary.allAboardTime,
-        portImageUrl: itinerary.portImageUrl,
-        description: itinerary.description,
-        highlights: itinerary.highlights,
-        orderIndex: itinerary.orderIndex,
-        segment: itinerary.segment,
-        locationId: itinerary.locationId,
-        locationTypeId: itinerary.locationTypeId,
+        id: schema.itinerary.id,
+        tripId: schema.itinerary.tripId,
+        date: schema.itinerary.date,
+        day: schema.itinerary.day,
+        arrivalTime: schema.itinerary.arrivalTime,
+        departureTime: schema.itinerary.departureTime,
+        allAboardTime: schema.itinerary.allAboardTime,
+        portImageUrl: schema.itinerary.portImageUrl,
+        description: schema.itinerary.description,
+        highlights: schema.itinerary.highlights,
+        orderIndex: schema.itinerary.orderIndex,
+        segment: schema.itinerary.segment,
+        locationId: schema.itinerary.locationId,
+        locationTypeId: schema.itinerary.locationTypeId,
       });
     return result[0] as any;
   }
 
   async deleteItineraryStop(id: number): Promise<void> {
     await db.delete(schema.itinerary).where(eq(schema.itinerary.id, id));
+  }
+
+  // Batch operations for N+1 query prevention
+  async bulkCreateItineraryStops(stops: Array<Omit<Itinerary, 'id'>>): Promise<Itinerary[]> {
+    if (stops.length === 0) return [];
+
+    try {
+      // Process dates and clean up data
+      const processedStops = stops.map(stop => {
+        const values = { ...stop };
+
+        // Handle date conversion
+        if (stop.date && (stop.date as any) !== '' && stop.date !== null) {
+          if (typeof stop.date === 'string') {
+            values.date = new Date(stop.date);
+          }
+        } else if ('date' in values) {
+          delete (values as any).date;
+        }
+
+        // Remove legacy columns
+        if ('portName' in values) {
+          delete (values as any).portName;
+        }
+
+        return values;
+      });
+
+      // Invalidate cache for affected trips
+      const uniqueTripIds = [...new Set(stops.map(s => (s as any).tripId).filter(Boolean))];
+      for (const tripId of uniqueTripIds) {
+        await cacheManager.delete('trips', CacheManager.keys.itinerary(tripId));
+      }
+
+      // Use transaction for atomic bulk insert
+      const result = await db.transaction(async (tx) => {
+        return await tx.insert(schema.itinerary).values(processedStops).returning({
+          id: schema.itinerary.id,
+          tripId: schema.itinerary.tripId,
+          date: schema.itinerary.date,
+          day: schema.itinerary.day,
+          arrivalTime: schema.itinerary.arrivalTime,
+          departureTime: schema.itinerary.departureTime,
+          allAboardTime: schema.itinerary.allAboardTime,
+          portImageUrl: schema.itinerary.portImageUrl,
+          description: schema.itinerary.description,
+          highlights: schema.itinerary.highlights,
+          orderIndex: schema.itinerary.orderIndex,
+          segment: schema.itinerary.segment,
+          locationId: schema.itinerary.locationId,
+          locationTypeId: schema.itinerary.locationTypeId,
+        });
+      });
+
+      return result as any[];
+    } catch (error) {
+      console.error(`❌ Failed to bulk create itinerary stops:`, error);
+      throw error;
+    }
   }
 }
 
@@ -615,6 +666,10 @@ export interface IEventStorage {
   createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<Event>;
   updateEvent(id: number, event: Partial<Event>): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<void>;
+  // Batch operations for N+1 query prevention
+  bulkCreateEvents(events: Array<Omit<Event, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Event[]>;
+  bulkUpdateEvents(updates: Array<{id: number, data: Partial<Event>}>): Promise<Event[]>;
+  bulkUpsertEvents(tripId: number, events: Array<Partial<Event>>): Promise<Event[]>;
 }
 
 export class EventStorage implements IEventStorage {
@@ -627,7 +682,7 @@ export class EventStorage implements IEventStorage {
       () => db.select()
         .from(schema.events)
         .where(eq(schema.events.tripId, tripId))
-        .orderBy(asc(events.date), asc(events.time)),
+        .orderBy(asc(schema.events.date), asc(schema.events.time)),
       `getEventsByTrip(${tripId})`
     );
 
@@ -639,14 +694,14 @@ export class EventStorage implements IEventStorage {
     return await db.select()
       .from(schema.events)
       .where(and(eq(schema.events.tripId, tripId), eq(schema.events.date, date)))
-      .orderBy(asc(events.time));
+      .orderBy(asc(schema.events.time));
   }
 
   async getEventsByType(tripId: number, type: string): Promise<Event[]> {
     return await db.select()
       .from(schema.events)
       .where(and(eq(schema.events.tripId, tripId), eq(schema.events.type, type)))
-      .orderBy(asc(events.date), asc(events.time));
+      .orderBy(asc(schema.events.date), asc(schema.events.time));
   }
 
   // @CacheInvalidate('events') - temporarily disabled
@@ -687,6 +742,91 @@ export class EventStorage implements IEventStorage {
       () => db.delete(schema.events).where(eq(schema.events.id, id)),
       `deleteEvent(${id})`
     );
+  }
+
+  // Batch operations for N+1 query prevention
+  async bulkCreateEvents(events: Array<Omit<Event, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Event[]> {
+    if (events.length === 0) return [];
+
+    try {
+      // Invalidate cache for affected trips
+      const uniqueTripIds = [...new Set(events.map(e => (e as any).tripId).filter(Boolean))];
+      for (const tripId of uniqueTripIds) {
+        await cacheManager.delete('events', CacheManager.keys.eventsByCruise(tripId));
+      }
+
+      // Use transaction for atomic bulk insert
+      const result = await db.transaction(async (tx) => {
+        return await tx.insert(schema.events).values(events).returning();
+      });
+
+      return result;
+    } catch (error) {
+      console.error(`❌ Failed to bulk create events:`, error);
+      throw error;
+    }
+  }
+
+  async bulkUpdateEvents(updates: Array<{id: number, data: Partial<Event>}>): Promise<Event[]> {
+    if (updates.length === 0) return [];
+
+    try {
+      const results: Event[] = [];
+
+      // Use transaction for atomic updates
+      await db.transaction(async (tx) => {
+        // Process updates in batches of 100 to avoid query size limits
+        const batchSize = 100;
+        for (let i = 0; i < updates.length; i += batchSize) {
+          const batch = updates.slice(i, i + batchSize);
+
+          for (const { id, data } of batch) {
+            // Invalidate cache for each event
+            await cacheManager.delete('events', CacheManager.keys.event(id));
+
+            const [updated] = await tx.update(schema.events)
+              .set({ ...data, updatedAt: new Date() })
+              .where(eq(schema.events.id, id))
+              .returning();
+
+            if (updated) {
+              results.push(updated);
+            }
+          }
+        }
+      });
+
+      return results;
+    } catch (error) {
+      console.error(`❌ Failed to bulk update events:`, error);
+      throw error;
+    }
+  }
+
+  async bulkUpsertEvents(tripId: number, events: Array<Partial<Event>>): Promise<Event[]> {
+    if (events.length === 0) return [];
+
+    const toCreate: Array<Omit<Event, 'id' | 'createdAt' | 'updatedAt'>> = [];
+    const toUpdate: Array<{id: number, data: Partial<Event>}> = [];
+
+    // Separate events into creates and updates
+    for (const event of events) {
+      if (event.id) {
+        toUpdate.push({ id: event.id, data: event });
+      } else {
+        // Remove id field and add tripId for creation
+        const { id, ...eventWithoutId } = event;
+        toCreate.push({ ...eventWithoutId, tripId } as any);
+      }
+    }
+
+    // Execute both operations
+    const [created, updated] = await Promise.all([
+      toCreate.length > 0 ? this.bulkCreateEvents(toCreate) : Promise.resolve([]),
+      toUpdate.length > 0 ? this.bulkUpdateEvents(toUpdate) : Promise.resolve([])
+    ]);
+
+    return [...created, ...updated];
   }
 }
 
@@ -770,7 +910,7 @@ export class TalentStorage implements ITalentStorage {
       category: talentCategories.category,
     })
       .from(schema.talent)
-      .innerJoin(cruiseTalent, eq(schema.talent.id, cruiseTalent.talentId))
+      .innerJoin(schema.tripTalent, eq(schema.talent.id, schema.tripTalent.talentId))
       .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id))
       .where(eq(schema.tripTalent.tripId, tripId))
       .orderBy(asc(talent.name));

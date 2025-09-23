@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 
 // CDN configuration
 const CDN_CONFIG = {
-  // Example CDN URLs - replace with actual CDN endpoints
-  cloudinary: process.env.CLOUDINARY_BASE_URL || 'https://res.cloudinary.com',
+  // Supabase Storage as primary CDN for images
+  supabaseStorage: process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL}/storage/v1/object/public` : '',
   jsDelivr: 'https://cdn.jsdelivr.net',
   unpkg: 'https://unpkg.com',
   googleFonts: 'https://fonts.googleapis.com',
@@ -27,8 +27,16 @@ export const getCDNUrl = (assetPath: string, assetType?: string): string => {
 
   // Route to appropriate CDN based on file type
   if (CDN_ASSET_TYPES.images.includes(extension)) {
-    // For images, use Cloudinary or primary image CDN
-    return `${CDN_CONFIG.cloudinary}${assetPath}`;
+    // For images, use Supabase Storage as primary CDN
+    if (CDN_CONFIG.supabaseStorage) {
+      // If it's already a Supabase URL, return as-is
+      if (assetPath.includes('/storage/v1/object/public/')) {
+        return assetPath;
+      }
+      // Otherwise construct Supabase Storage URL
+      return `${CDN_CONFIG.supabaseStorage}/images${assetPath}`;
+    }
+    return assetPath;
   }
 
   if (CDN_ASSET_TYPES.fonts.includes(extension)) {
@@ -135,23 +143,24 @@ export const optimizeAssetUrl = (url: string, options?: {
   quality?: number;
   format?: 'webp' | 'avif' | 'jpg' | 'png';
 }): string => {
-  // This would integrate with Cloudinary or similar service for image optimization
+  // Supabase Storage provides automatic image optimization via transform parameters
   if (!options) return getCDNUrl(url);
 
   const { width, height, quality = 80, format } = options;
   const cdnUrl = getCDNUrl(url);
 
-  // Example Cloudinary transformation URL structure
-  if (cdnUrl.includes('cloudinary.com')) {
-    let transformation = '';
-    if (width) transformation += `w_${width},`;
-    if (height) transformation += `h_${height},`;
-    if (quality) transformation += `q_${quality},`;
-    if (format) transformation += `f_${format},`;
+  // Supabase Storage transformation parameters
+  if (cdnUrl.includes('/storage/v1/object/public/')) {
+    const params: string[] = [];
+    if (width) params.push(`width=${width}`);
+    if (height) params.push(`height=${height}`);
+    if (quality) params.push(`quality=${quality}`);
+    if (format) params.push(`format=${format}`);
 
-    transformation = transformation.slice(0, -1); // Remove trailing comma
-
-    return cdnUrl.replace('/image/upload/', `/image/upload/${transformation}/`);
+    if (params.length > 0) {
+      // Supabase uses render endpoint for transformations
+      return cdnUrl.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?' + params.join('&');
+    }
   }
 
   return cdnUrl;
@@ -163,8 +172,8 @@ export const getCDNConfig = () => {
 
   return {
     enabled: isProduction || process.env.FORCE_CDN === 'true',
-    baseUrl: process.env.CDN_BASE_URL || CDN_CONFIG.cloudinary,
-    imageCDN: process.env.IMAGE_CDN_URL || CDN_CONFIG.cloudinary,
+    baseUrl: process.env.CDN_BASE_URL || CDN_CONFIG.supabaseStorage,
+    imageCDN: process.env.IMAGE_CDN_URL || CDN_CONFIG.supabaseStorage,
     staticCDN: process.env.STATIC_CDN_URL || CDN_CONFIG.jsDelivr,
     fontCDN: process.env.FONT_CDN_URL || CDN_CONFIG.googleFonts,
   };

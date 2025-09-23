@@ -31,12 +31,11 @@ import type { Express } from "express";
 // import { AuthService, type AuthenticatedRequest } from "./auth";
 // import { insertUserSchema, users, passwordResetTokens } from "@shared/schema";
 // import { eq, gt } from "drizzle-orm";
-// import { sendEmail } from "./utils/replitmail";
 // import { randomBytes, createHash } from 'crypto';
 
 export function registerAuthRoutes(app: Express) {
   // DISABLED: All custom JWT auth routes disabled in favor of Supabase Auth
-  console.log('Custom JWT auth routes are disabled - using Supabase Auth');
+  // Custom JWT auth routes are disabled - using Supabase Auth
   return;
 
   /*
@@ -535,7 +534,7 @@ export function registerAuthRoutes(app: Express) {
         });
 
       // Send email with reset link
-      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:3001'}/admin/reset-password/${resetToken}`;
+      const resetUrl = `${process.env.APP_URL || 'http://localhost:3001'}/admin/reset-password/${resetToken}`;
       
       try {
         await sendEmail({

@@ -44,9 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Debug logging for CSRF middleware
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
-      console.log(`[CSRF Debug] ${req.method} ${req.path}`);
-      console.log(`[CSRF Debug] Authorization header:`, authHeader ? 'Present' : 'Missing');
-      console.log(`[CSRF Debug] Has Bearer token:`, hasBearerToken);
+      // CSRF debug information available if needed
     }
 
     if (hasBearerToken) {
@@ -90,6 +88,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve general images from uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
     maxAge: '7d',
+    etag: true
+  }));
+
+  // Serve logos from logos directory
+  app.use('/logos', express.static(path.join(process.cwd(), 'logos'), {
+    maxAge: '30d',
     etag: true
   }));
 

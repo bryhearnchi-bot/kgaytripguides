@@ -323,7 +323,7 @@ export function UserProfileModal({ isOpen, onClose, user, onEdit }: UserProfileM
                         <Activity className="w-4 h-4 text-gray-500" />
                         <span className="text-sm">Cruise Notifications</span>
                       </div>
-                      {user.cruise_updates_opt_in ? (
+                      {user.trip_updates_opt_in ? (
                         <Badge variant="default">Subscribed</Badge>
                       ) : (
                         <Badge variant="secondary">Unsubscribed</Badge>

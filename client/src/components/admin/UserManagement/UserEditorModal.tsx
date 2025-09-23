@@ -91,7 +91,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
       country: user?.location?.country || '',
       email_updates: user?.communication_preferences?.email ?? true,
       text_messages: user?.communication_preferences?.sms ?? false,
-      cruise_notifications: user?.cruise_updates_opt_in ?? true,
+      cruise_notifications: user?.trip_updates_opt_in ?? true,
       marketing_emails: user?.marketing_emails ?? false,
     },
   });
@@ -110,7 +110,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
         country: user.location?.country || '',
         email_updates: user.communication_preferences?.email ?? true,
         text_messages: user.communication_preferences?.sms ?? false,
-        cruise_notifications: user.cruise_updates_opt_in ?? true,
+        cruise_notifications: user.trip_updates_opt_in ?? true,
         marketing_emails: user.marketing_emails ?? false,
       });
     }
@@ -148,7 +148,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
             email: data.email_updates,
             sms: data.text_messages,
           },
-          cruise_updates_opt_in: data.cruise_notifications,
+          trip_updates_opt_in: data.cruise_notifications,
           marketing_emails: data.marketing_emails,
           updated_at: new Date().toISOString(),
         })
@@ -208,7 +208,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
             email: data.email_updates,
             sms: data.text_messages,
           },
-          cruise_updates_opt_in: data.cruise_notifications,
+          trip_updates_opt_in: data.cruise_notifications,
           marketing_emails: data.marketing_emails,
         })
       });

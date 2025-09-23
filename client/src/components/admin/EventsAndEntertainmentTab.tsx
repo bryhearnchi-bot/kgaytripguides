@@ -194,10 +194,9 @@ export default function EventsAndEntertainmentTab({
                   <DialogHeader>
                     <DialogTitle>Select Artist for Event</DialogTitle>
                   </DialogHeader>
-                  <ArtistDatabaseManager 
+                  <ArtistDatabaseManager
                     showSelectMode={true}
                     onSelectArtist={(artist) => {
-                      console.log('Selected artist:', artist);
                       // TODO: Associate artist with current trip/event
                       setShowArtistDatabase(false);
                       onDataChange();

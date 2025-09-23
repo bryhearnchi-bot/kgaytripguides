@@ -305,7 +305,7 @@ export default function PartyManagement({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // In production, this would upload to Cloudinary
+    // In production, this would upload to Supabase Storage
     // For now, we'll create a local URL
     const url = URL.createObjectURL(file);
     setImageUrl(url);
@@ -318,7 +318,7 @@ export default function PartyManagement({
   const handleImageUrlDownload = async () => {
     if (!imageUrl) return;
     
-    // In production, this would download and re-upload to Cloudinary
+    // In production, this would download and re-upload to Supabase Storage
     toast({
       title: 'Image processed',
       description: 'Image URL saved successfully'

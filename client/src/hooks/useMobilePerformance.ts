@@ -103,7 +103,7 @@ export function useMobilePerformance() {
         };
       }
     } catch (error) {
-      console.warn('Battery API not supported:', error);
+      // Battery API not supported
     }
     return { level: null, charging: null };
   }, []);
@@ -202,16 +202,14 @@ export function useMobilePerformance() {
       performanceObserver.current = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
-          if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
-            console.log('First Contentful Paint:', entry.startTime);
-          }
+          // Track performance metrics
         });
       });
 
       try {
         performanceObserver.current.observe({ entryTypes: ['paint', 'navigation'] });
       } catch (error) {
-        console.warn('Performance Observer not fully supported:', error);
+        // Performance Observer not fully supported
       }
     }
 

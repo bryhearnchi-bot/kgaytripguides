@@ -31,18 +31,11 @@ import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 import LocationManagement from './LocationManagement';
+import type { Location as SchemaLocation } from '../../../../shared/schema';
 
-interface Location {
-  id: number;
-  name: string;
-  country: string;
-  region?: string;
+// Extended Location type that includes the type information used by this component
+interface Location extends SchemaLocation {
   location_type: 'port' | 'sea_day' | 'embark' | 'disembark';
-  coordinates?: { lat: number; lng: number } | null;
-  description?: string;
-  image_url?: string;
-  created_at?: string;
-  updated_at?: string;
 }
 
 interface ItineraryDay {

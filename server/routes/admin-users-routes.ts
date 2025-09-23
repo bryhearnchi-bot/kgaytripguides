@@ -26,8 +26,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Log environment check for debugging
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.warn('⚠️  Supabase credentials not found. Admin user management features will be limited.');
-  console.warn('    Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
 }
 
 const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
@@ -183,27 +181,16 @@ export function registerAdminUsersRoutes(app: Express) {
   // POST /api/admin/users - Create new user
   app.post("/api/admin/users", requireTripAdmin, auditLogger('admin.user.create'), async (req: AuthenticatedRequest, res) => {
     try {
-      console.log('[User Creation] Received request body:', {
-        ...req.body,
-        password: req.body.password ? '***' : undefined
-      });
-
       const userData = createUserSchema.parse(req.body);
 
       // Only a super admin can create another super admin
       if (userData.role === 'super_admin' && req.user?.role !== 'super_admin') {
         return res.status(403).json({ error: 'Only super admin can assign super_admin role' });
       }
-      console.log('[User Creation] Validated user data:', {
-        ...userData,
-        password: '***'
-      });
 
       // Check if user already exists by email using Supabase Admin
-      console.log('[User Creation] Checking for existing user with email:', userData.email);
 
       if (!supabaseAdmin) {
-        console.log('[User Creation] Supabase Admin client not configured');
         return res.status(503).json({
           error: 'User management service is not configured. Please set up Supabase credentials.'
         });
@@ -216,7 +203,6 @@ export function registerAdminUsersRoutes(app: Express) {
         .single();
 
       if (existingUser && !checkError) {
-        console.log('[User Creation] User already exists with email:', userData.email);
         return res.status(409).json({
           error: 'User already exists with this email'
         });
@@ -224,15 +210,11 @@ export function registerAdminUsersRoutes(app: Express) {
 
       // Create user in Supabase Auth (if available)
       if (!supabaseAdmin) {
-        console.log('[User Creation] Supabase Admin client not configured');
         return res.status(503).json({
           error: 'User management service is not configured. Please set up Supabase credentials.'
         });
       }
 
-      console.log('[User Creation] Creating user in Supabase Auth...');
-      console.log('[User Creation] Supabase Admin initialized:', !!supabaseAdmin);
-      console.log('[User Creation] Auth admin available:', !!supabaseAdmin.auth.admin);
 
       const createUserParams = {
         email: userData.email,
@@ -244,11 +226,6 @@ export function registerAdminUsersRoutes(app: Express) {
           role: userData.role
         }
       };
-
-      console.log('[User Creation] Parameters:', {
-        ...createUserParams,
-        password: '***'
-      });
 
       const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser(createUserParams);
 
@@ -269,7 +246,6 @@ export function registerAdminUsersRoutes(app: Express) {
         return res.status(400).json({ error: 'Failed to create user account' });
       }
 
-      console.log('[User Creation] Auth user created successfully, ID:', authUser.user.id);
 
       // The trigger should have created the profile, let's wait and fetch it
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -285,7 +261,6 @@ export function registerAdminUsersRoutes(app: Express) {
         console.error('[User Creation] Profile not found after auth user creation:', fetchError);
 
         // If profile wasn't created by trigger, create it manually
-        console.log('[User Creation] Creating profile manually...');
         const profileData = {
           id: authUser.user.id,
           email: authUser.user.email,
@@ -314,13 +289,11 @@ export function registerAdminUsersRoutes(app: Express) {
           });
         }
 
-        console.log('[User Creation] Profile created manually');
         return res.status(201).json({
           user: createdProfile
         });
       }
 
-      console.log('[User Creation] User created successfully with trigger');
 
       // Return the user data in snake_case as expected by frontend
       res.status(201).json({
@@ -450,8 +423,6 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      console.log('[User Update] Updating user:', userId);
-      console.log('[User Update] Update fields:', updateFields);
 
       const { data: updatedUser, error: updateError } = await supabaseAdmin
         .from('profiles')
@@ -460,9 +431,7 @@ export function registerAdminUsersRoutes(app: Express) {
         .select()
         .single();
 
-      console.log('[User Update] Result:', updatedUser ? 'Success' : 'Failed');
       if (updatedUser) {
-        console.log('[User Update] Updated role:', updatedUser.role);
       }
 
       if (updateError || !updatedUser) {
@@ -602,5 +571,4 @@ export function registerAdminUsersRoutes(app: Express) {
     }
   });
 
-  console.log('✅ Admin user management routes registered (using profiles table)');
 }

@@ -61,7 +61,7 @@ interface UserData {
   phone_number: string | null;
   phone_verified: boolean;
   account_status: string;
-  cruise_updates_opt_in: boolean;
+  trip_updates_opt_in: boolean;
   created_at: string;
   last_active: string | null;
   communication_preferences: any;

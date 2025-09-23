@@ -77,10 +77,6 @@ class Analytics {
       });
     }
 
-    // Console log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Analytics Event:', eventData);
-    }
   }
 
   pageView(page: string, title?: string, properties: Record<string, any> = {}) {
@@ -119,7 +115,6 @@ class Analytics {
       });
     } catch (error) {
       // Silently fail - don't let analytics errors break the app
-      console.warn('Failed to send analytics event:', error);
     }
   }
 }
@@ -253,7 +248,6 @@ export const usePerformanceTracking = () => {
         clsObserver.observe({ type: 'layout-shift', buffered: true });
       } catch (error) {
         // Browser doesn't support these metrics
-        console.warn('Performance Observer not supported:', error);
       }
 
       // Send CLS when page is hidden

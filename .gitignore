@@ -19,7 +19,7 @@ dist/
 build/
 *.tsbuildinfo
 
-# Local images (use Cloudinary instead)
+# Local images (use Supabase Storage instead)
 client/public/images/
 !client/public/images/.gitkeep
 # But allow PWA icons (required for manifest)
@@ -111,18 +111,13 @@ Thumbs.db
 *_backup.sql
 development_db_backup.sql
 
-# Cloudinary migration mapping (contains URLs but not sensitive)
-# cloudinary-migration-mapping.json
+# Supabase migration mapping (contains URLs but not sensitive)
+# supabase-migration-mapping.json
 
 # Local configuration files that might contain sensitive data
 drizzle.config.local.ts
 
-# Replit specific
-.replit
-replit.nix
-.upm/
-# Local Netlify folder
-.netlify
+# Railway deployment (current platform)
 modelcontextprotocol/
 .claude/
 

@@ -264,7 +264,7 @@ export class OptimizedEventStorage {
     if (searchTerm) {
       // Use the full-text search index we created
       conditions.push(
-sql`to_tsvector('english', ${schema.events.title} || ' ' || COALESCE(${schema.events.description}, '')) @@ plainto_tsquery('english', ${searchTerm})`
+sql`to_tsvector('english', ${schema.events.title}) @@ plainto_tsquery('english', ${searchTerm})`
       );
     }
 
@@ -463,12 +463,12 @@ export class PerformanceMonitor {
     const endTime = process.hrtime.bigint();
     const duration = Number(endTime - startTime) / 1000000; // Convert to milliseconds
 
-    console.log(`🚀 Query Performance: ${queryName} - ${duration.toFixed(2)}ms`);
+    // Performance tracking can be logged externally if needed
     return { result, duration };
   }
 
   static logSlowQueries(threshold = 1000) {
     // This would be implemented with actual query logging
-    console.log(`🐌 Monitoring for queries slower than ${threshold}ms`);
+    // Monitoring for queries slower than threshold
   }
 }

@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import * as fsSync from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
 // Configure multer for temporary uploads
 const storage = multer.memoryStorage(); // Use memory storage
@@ -53,7 +54,7 @@ const baseUpload = multer({
   }
 });
 
-// Export the upload middleware - we'll handle Cloudinary in routes
+// Export the upload middleware - we'll handle Supabase Storage in routes
 export const upload = baseUpload;
 
 // Malware scanning placeholder - integrate with actual antivirus service in production
@@ -78,37 +79,150 @@ async function scanFileForMalware(buffer: Buffer): Promise<boolean> {
 }
 
 // Upload image to Supabase Storage with security checks
-export async function uploadToCloudinary(file: Express.Multer.File, imageType: string): Promise<string> {
+export async function uploadToSupabase(file: Express.Multer.File, imageType: string): Promise<string> {
   // Perform malware scan
   const isSafe = await scanFileForMalware(file.buffer);
   if (!isSafe) {
     throw new Error('File failed security scan. Upload rejected.');
   }
 
-  // Additional content validation could be added here
-  // e.g., using sharp or jimp to verify it's a valid image
+  // Initialize Supabase client
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // TODO: Implement actual Supabase Storage upload
-  // For now, return a placeholder URL
-  const filename = `${imageType}-${randomUUID()}.jpg`;
-  return `https://placeholder.com/${imageType}/${filename}`;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Supabase configuration missing');
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Generate unique filename with proper extension
+  const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+  const filename = `${imageType}-${randomUUID()}${ext}`;
+
+  // Determine bucket based on image type
+  let bucket = 'images';
+  let folderPath = imageType;
+
+  switch (imageType) {
+    case 'talent':
+      bucket = 'talent-images';
+      folderPath = '';
+      break;
+    case 'event':
+      bucket = 'event-images';
+      folderPath = '';
+      break;
+    case 'itinerary':
+      bucket = 'itinerary-images';
+      folderPath = '';
+      break;
+    case 'cruise':
+    case 'trip':
+      bucket = 'trip-images';
+      folderPath = '';
+      break;
+    default:
+      bucket = 'images';
+      folderPath = imageType;
+  }
+
+  // Construct full path
+  const fullPath = folderPath ? `${folderPath}/${filename}` : filename;
+
+  // Upload to Supabase Storage
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(fullPath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false
+    });
+
+  if (error) {
+    throw new Error(`Failed to upload image: ${error.message}`);
+  }
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(fullPath);
+
+  return publicUrl;
 }
 
-// Download image from URL (stub - replaces image-migration function)
+// Download image from URL and upload to Supabase Storage
 export async function downloadImageFromUrl(url: string, type: string, name: string): Promise<string> {
-  // TODO: Implement actual download and Supabase Storage upload
-  // For now, just return the original URL
-  return url;
+  try {
+    // Validate URL
+    if (!isValidImageUrl(url)) {
+      throw new Error('Invalid image URL');
+    }
+
+    // Fetch image from URL
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    // Get image buffer and content type
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    // Create a mock Express.Multer.File object
+    const file: Express.Multer.File = {
+      buffer,
+      originalname: name || 'downloaded-image.jpg',
+      mimetype: contentType,
+      size: buffer.length,
+      fieldname: 'image',
+      encoding: '7bit',
+      stream: null as any,
+      destination: '',
+      filename: '',
+      path: ''
+    };
+
+    // Upload to Supabase Storage
+    return await uploadToSupabase(file, type);
+  } catch (error) {
+    throw error;
+  }
 }
 
-// Get public URL for uploaded image (now returns Cloudinary URLs)
+// Get public URL for uploaded image (now returns Supabase Storage URLs)
 export function getPublicImageUrl(imageType: string, filename: string): string {
-  // For backward compatibility, but new uploads will return full Cloudinary URLs
+  // For backward compatibility, if already a full URL, return as-is
   if (filename.startsWith('http')) {
     return filename; // Already a full URL
   }
 
-  // Legacy local file URLs (for migration period)
+  // If we have Supabase configured, construct the URL
+  const supabaseUrl = process.env.SUPABASE_URL;
+  if (supabaseUrl) {
+    // Determine bucket based on image type
+    let bucket = 'images';
+    switch (imageType) {
+      case 'talent':
+        bucket = 'talent-images';
+        break;
+      case 'event':
+        bucket = 'event-images';
+        break;
+      case 'itinerary':
+        bucket = 'itinerary-images';
+        break;
+      case 'cruise':
+      case 'trip':
+        bucket = 'trip-images';
+        break;
+      default:
+        bucket = 'images';
+    }
+
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filename}`;
+  }
+
+  // Legacy fallback for local development
   switch (imageType) {
     case 'talent':
       return `/talent-images/${filename}`;
@@ -123,10 +237,37 @@ export function getPublicImageUrl(imageType: string, filename: string): string {
   }
 }
 
-// Delete image file
+// Delete image file from Supabase Storage
 export async function deleteImage(imageUrl: string): Promise<void> {
   try {
-    // Extract filename from URL
+    // Check if this is a Supabase Storage URL
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (supabaseUrl && imageUrl.includes(supabaseUrl) && supabaseServiceKey) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Extract bucket and path from Supabase URL
+      // Format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
+      const urlPattern = new RegExp(`${supabaseUrl}/storage/v1/object/public/([^/]+)/(.+)`);
+      const match = imageUrl.match(urlPattern);
+
+      if (match) {
+        const bucket = match[1];
+        const filePath = match[2];
+
+        const { error } = await supabase.storage
+          .from(bucket)
+          .remove([filePath]);
+
+        if (error) {
+          // Deletion failed but don't throw
+        }
+        return;
+      }
+    }
+
+    // Legacy: Try to delete from local filesystem (for backward compatibility)
     const urlPath = new URL(imageUrl, 'http://localhost').pathname;
     const segments = urlPath.split('/');
     const filename = segments[segments.length - 1];
@@ -153,7 +294,6 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     const filePath = path.join(process.cwd(), directory, filename);
     await fs.unlink(filePath);
   } catch (error) {
-    console.error('Error deleting image:', error);
     // Don't throw - file might already be deleted
   }
 }

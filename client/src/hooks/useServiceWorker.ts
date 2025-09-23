@@ -21,12 +21,10 @@ export function useServiceWorker() {
 
   useEffect(() => {
     // TEMPORARILY DISABLED - Service Worker is blocking images due to CSP
-    console.log('Service Worker registration disabled to fix image loading');
     return;
 
     // Check if service workers are supported
     if (!('serviceWorker' in navigator)) {
-      console.log('Service Worker not supported');
       return;
     }
 
@@ -45,7 +43,6 @@ export function useServiceWorker() {
       scope: '/',
     })
       .then((reg) => {
-        console.log('Service Worker registered:', reg);
         setRegistration(reg);
 
         // Check if there's a waiting service worker
@@ -55,7 +52,6 @@ export function useServiceWorker() {
 
         // Listen for service worker state changes
         reg.addEventListener('updatefound', () => {
-          console.log('Service Worker update found');
           const newWorker = reg.installing;
 
           if (newWorker) {
@@ -74,12 +70,11 @@ export function useServiceWorker() {
         });
       })
       .catch((error) => {
-        console.error('Service Worker registration failed:', error);
+        // Service Worker registration failed
       });
 
     // Listen for service worker controller change
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('Service Worker controller changed - reloading');
       window.location.reload();
     });
 
@@ -120,9 +115,8 @@ export function useServiceWorker() {
     if (registration) {
       try {
         await registration.update();
-        console.log('Service Worker update check completed');
       } catch (error) {
-        console.error('Service Worker update check failed:', error);
+        // Update check failed
       }
     }
   };

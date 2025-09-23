@@ -70,14 +70,15 @@ export function registerTripRoutes(app: Express) {
         // Save the new trip
         const duplicatedTrip = await tripStorage.createTrip(newTrip as any);
 
-        // Copy related data (itinerary, events, etc.)
-        const itinerary = await itineraryStorage.getItineraryByTrip(parseInt(id));
-        for (const item of itinerary) {
-          await itineraryStorage.createItineraryStop({
+        // Copy related data (itinerary, events, etc.) using batch operations
+        const itinerary = await itineraryStorage.getItineraryByTrip(tripId);
+        if (itinerary.length > 0) {
+          const itineraryToCopy = itinerary.map(item => ({
             ...item,
             id: undefined,
             tripId: duplicatedTrip.id
-          } as any);
+          }));
+          await itineraryStorage.bulkCreateItineraryStops(itineraryToCopy as any[]);
         }
 
         res.json(duplicatedTrip);
@@ -93,23 +94,12 @@ export function registerTripRoutes(app: Express) {
       const { tripId, events } = req.body;
       const results = [];
 
-      for (const event of events) {
-        if (event.id) {
-          // Update existing event
-          const updated = await executeDbOperation(
-            () => eventStorage.updateEvent(event.id, event),
-            `Failed to update event ${event.id}`
-          );
-          results.push(updated);
-        } else {
-          // Create new event
-          const created = await executeDbOperation(
-            () => eventStorage.createEvent({ ...event, tripId }),
-            'Failed to create event'
-          );
-          results.push(created);
-        }
-      }
+      // Use bulk upsert for better performance
+      const upsertedEvents = await executeDbOperation(
+        () => eventStorage.bulkUpsertEvents(tripId, events),
+        'Failed to bulk upsert events'
+      );
+      results.push(...upsertedEvents);
 
       res.json({ success: true, events: results });
     })
@@ -186,30 +176,30 @@ export function registerTripRoutes(app: Express) {
           importedTrip = await tripStorage.createTrip(trip);
         }
 
-        // Import related data
-        if (itinerary) {
-          for (const item of itinerary) {
-            await itineraryStorage.createItineraryStop({
-              ...item,
-              tripId: importedTrip.id
-            });
-          }
+        // Import related data using batch operations
+        if (itinerary && itinerary.length > 0) {
+          const itineraryToImport = itinerary.map(item => ({
+            ...item,
+            id: undefined,
+            tripId: importedTrip.id
+          }));
+          await itineraryStorage.bulkCreateItineraryStops(itineraryToImport);
         }
 
-        if (events) {
-          for (const event of events) {
-            await eventStorage.createEvent({
-              ...event,
-              tripId: importedTrip.id
-            });
-          }
+        if (events && events.length > 0) {
+          const eventsToImport = events.map(event => ({
+            ...event,
+            id: undefined,
+            tripId: importedTrip.id
+          }));
+          await eventStorage.bulkCreateEvents(eventsToImport);
         }
 
         res.json({ success: true, trip: importedTrip });
     })
   );
 
-  // ============ ADMIN CRUISE MANAGEMENT ============
+  // ============ ADMIN TRIP MANAGEMENT ============
 
   app.get("/api/admin/trips", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
@@ -255,29 +245,8 @@ export function registerTripRoutes(app: Express) {
 
       const results = await query;
 
-      // Transform results to match cruise structure (for backward compatibility)
-      const cruises = results.map(trip => ({
-        id: trip.id,
-        name: trip.name,
-        slug: trip.slug,
-        subtitle: trip.subtitle,
-        description: trip.description,
-        startDate: trip.startDate,
-        endDate: trip.endDate,
-        status: trip.status,
-        price: trip.price,
-        duration: trip.duration,
-        shipName: trip.shipName,
-        featuredImage: trip.featuredImage,
-        maxCapacity: trip.maxCapacity,
-        currentBookings: trip.currentBookings,
-        createdAt: trip.createdAt,
-        updatedAt: trip.updatedAt,
-        metadata: trip.metadata
-      }));
-
       res.json({
-        cruises,
+        trips: results,
         pagination: {
           total,
           page: pageNum,
@@ -286,12 +255,12 @@ export function registerTripRoutes(app: Express) {
         }
       });
     } catch (error) {
-      console.error('Error fetching admin cruises:', error);
-      res.status(500).json({ error: 'Failed to fetch cruises' });
+      console.error('Error fetching admin trips:', error);
+      res.status(500).json({ error: 'Failed to fetch trips' });
     }
   });
 
-  // Update cruise status
+  // Update trip status
   app.patch("/api/admin/trips/:id/status", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
@@ -301,15 +270,15 @@ export function registerTripRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid status' });
       }
 
-      const cruise = await tripStorage.updateTrip(parseInt(id), { status });
-      res.json(cruise);
+      const trip = await tripStorage.updateTrip(parseInt(id), { status });
+      res.json(trip);
     } catch (error) {
-      console.error('Error updating cruise status:', error);
-      res.status(500).json({ error: 'Failed to update cruise status' });
+      console.error('Error updating trip status:', error);
+      res.status(500).json({ error: 'Failed to update trip status' });
     }
   });
 
-  // Get cruise statistics for admin dashboard
+  // Get trip statistics for admin dashboard
   app.get("/api/admin/trips/stats", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
       const stats = await db.select({
@@ -327,52 +296,11 @@ export function registerTripRoutes(app: Express) {
 
       res.json(stats[0]);
     } catch (error) {
-      console.error('Error fetching cruise stats:', error);
-      res.status(500).json({ error: 'Failed to fetch cruise statistics' });
+      console.error('Error fetching trip stats:', error);
+      res.status(500).json({ error: 'Failed to fetch trip statistics' });
     }
   });
 
-  // ============ PUBLIC CRUISE ENDPOINTS (Backward Compatibility) ============
-
-  // List all cruises (redirect to trips)
-  app.get("/api/cruises", async (req, res) => {
-    res.redirect(301, '/api/trips');
-  });
-
-  // Get upcoming cruises (redirect to trips)
-  app.get("/api/cruises/upcoming", async (req, res) => {
-    res.redirect(301, '/api/trips/upcoming');
-  });
-
-  // Get past cruises (redirect to trips)
-  app.get("/api/cruises/past", async (req, res) => {
-    res.redirect(301, '/api/trips/past');
-  });
-
-  // Get cruise by id (redirect to trips)
-  app.get("/api/cruises/id/:id", async (req, res) => {
-    res.redirect(301, `/api/trips/id/${req.params.id}`);
-  });
-
-  // Get cruise by slug (redirect to trips)
-  app.get("/api/cruises/:slug", async (req, res) => {
-    res.redirect(301, `/api/trips/${req.params.slug}`);
-  });
-
-  // Create cruise (redirect to trips)
-  app.post("/api/cruises", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    res.redirect(307, '/api/trips');
-  });
-
-  // Update cruise (redirect to trips)
-  app.put("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    res.redirect(307, `/api/trips/${req.params.id}`);
-  });
-
-  // Delete cruise (redirect to trips)
-  app.delete("/api/cruises/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    res.redirect(307, `/api/trips/${req.params.id}`);
-  });
 
   // Get cruise by ID
   app.get("/api/trips/id/:id", async (req, res) => {
@@ -479,11 +407,6 @@ export function registerTripRoutes(app: Express) {
 
   // ============ ITINERARY ENDPOINTS ============
 
-  // Get itinerary for a trip (backward compatibility endpoint)
-  app.get("/api/cruises/:cruiseId/itinerary", async (req, res) => {
-    // Redirect to new endpoint
-    res.redirect(301, `/api/trips/${req.params.cruiseId}/itinerary`);
-  });
 
   // Get itinerary for a trip
   app.get("/api/trips/:tripId/itinerary", async (req, res) => {
@@ -491,11 +414,6 @@ export function registerTripRoutes(app: Express) {
     res.json(itinerary);
   });
 
-  // Create itinerary item for a trip (backward compatibility endpoint)
-  app.post("/api/cruises/:cruiseId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    // Redirect to new endpoint
-    res.redirect(307, `/api/trips/${req.params.cruiseId}/itinerary`);
-  });
 
   // Create itinerary item for a trip
   app.post("/api/trips/:tripId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
@@ -542,7 +460,7 @@ export function registerTripRoutes(app: Express) {
   app.get("/api/events", async (req, res) => {
     try {
       const {
-        cruiseId,
+        tripId,
         type,
         startDate,
         endDate,
@@ -554,8 +472,8 @@ export function registerTripRoutes(app: Express) {
 
       // Apply filters
       const conditions = [];
-      if (cruiseId) {
-        conditions.push(eq(schema.events.cruiseId, cruiseId as string));
+      if (tripId) {
+        conditions.push(eq(schema.events.tripId, tripId as string));
       }
       if (type) {
         conditions.push(eq(schema.events.type, type as any));
@@ -576,10 +494,6 @@ export function registerTripRoutes(app: Express) {
     }
   });
 
-  // Get events for a trip (backward compatibility)
-  app.get("/api/cruises/:cruiseId/events", async (req, res) => {
-    res.redirect(301, `/api/trips/${req.params.cruiseId}/events`);
-  });
 
   // Get events for a trip
   app.get("/api/trips/:tripId/events", async (req, res) => {
@@ -587,10 +501,6 @@ export function registerTripRoutes(app: Express) {
     res.json(eventsList);
   });
 
-  // Get events by date (backward compatibility)
-  app.get("/api/cruises/:cruiseId/events/date/:date", async (req, res) => {
-    res.redirect(301, `/api/trips/${req.params.cruiseId}/events/date/${req.params.date}`);
-  });
 
   // Get events by date
   app.get("/api/trips/:tripId/events/date/:date", async (req, res) => {
@@ -598,10 +508,6 @@ export function registerTripRoutes(app: Express) {
     res.json(eventsList);
   });
 
-  // Get events by type (backward compatibility)
-  app.get("/api/cruises/:cruiseId/events/type/:type", async (req, res) => {
-    res.redirect(301, `/api/trips/${req.params.cruiseId}/events/type/${req.params.type}`);
-  });
 
   // Get events by type
   app.get("/api/trips/:tripId/events/type/:type", async (req, res) => {
@@ -609,10 +515,6 @@ export function registerTripRoutes(app: Express) {
     res.json(eventsList);
   });
 
-  // Create event (backward compatibility)
-  app.post("/api/cruises/:cruiseId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
-    res.redirect(307, `/api/trips/${req.params.cruiseId}/events`);
-  });
 
   // Create event
   app.post("/api/trips/:tripId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
@@ -638,14 +540,9 @@ export function registerTripRoutes(app: Express) {
     res.json({ message: "Event deleted" });
   });
 
-  // ============ CRUISE INFO SECTIONS ============
+  // ============ TRIP INFO SECTIONS ============
 
-  // Get complete trip info (backward compatibility)
-  app.get("/api/cruises/:slug/complete", async (req, res) => {
-    res.redirect(301, `/api/trips/${req.params.slug}/complete`);
-  });
-
-  // Get complete trip info with all sections (trips endpoint)
+  // Get complete trip info with all sections
   app.get("/api/trips/:slug/complete", async (req, res) => {
     const { slug } = req.params;
     const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
@@ -655,10 +552,6 @@ export function registerTripRoutes(app: Express) {
     res.json(tripData);
   });
 
-  // Get info sections (backward compatibility)
-  app.get("/api/cruises/:cruiseId/info-sections", async (req, res) => {
-    res.redirect(301, `/api/trips/${req.params.cruiseId}/info-sections`);
-  });
 
   // Get info sections for a trip
   app.get("/api/trips/:tripId/info-sections", async (req, res) => {
@@ -673,10 +566,6 @@ export function registerTripRoutes(app: Express) {
     }
   });
 
-  // Create info section (backward compatibility)
-  app.post("/api/cruises/:cruiseId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    res.redirect(307, `/api/trips/${req.params.cruiseId}/info-sections`);
-  });
 
   // Create info section
   app.post("/api/trips/:tripId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {

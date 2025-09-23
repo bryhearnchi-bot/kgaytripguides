@@ -11,8 +11,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         updateViaCache: 'none'
       });
 
-      console.log('SW registered: ', registration);
-
       // Check for updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
@@ -109,8 +107,7 @@ function showInstallPrompt() {
   installBtn?.addEventListener('click', async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to install prompt: ${outcome}`);
+      await deferredPrompt.userChoice;
       deferredPrompt = null;
     }
     prompt.remove();

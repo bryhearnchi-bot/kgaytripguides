@@ -77,7 +77,7 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
           email: data.communicationPreference === 'email' || data.communicationPreference === 'both',
           sms: data.communicationPreference === 'sms' || data.communicationPreference === 'both',
         },
-        cruise_updates_opt_in: data.cruiseUpdates,
+        trip_updates_opt_in: data.cruiseUpdates,
         marketing_emails: data.marketingEmails,
       };
 

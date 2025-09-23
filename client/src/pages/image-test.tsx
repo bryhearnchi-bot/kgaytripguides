@@ -3,16 +3,16 @@ export default function ImageTest() {
     <div style={{ padding: '20px', background: 'white' }}>
       <h1>Image Test Page</h1>
 
-      <h2>Test 1: Inline Cloudinary Image</h2>
+      <h2>Test 1: Inline Supabase Storage Image</h2>
       <img
-        src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757789602/cruise-app/ships/virgin-scarlet-lady.jpg"
+        src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-scarlet-lady.jpg"
         alt="Test Ship"
         style={{ width: '300px', border: '2px solid red' }}
       />
 
-      <h2>Test 2: Logo from Cloudinary</h2>
+      <h2>Test 2: Logo from Supabase Storage</h2>
       <img
-        src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757807911/cruise-app/logos/atlantis-logo.png"
+        src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/logos/atlantis-logo.png"
         alt="Logo"
         style={{ width: '200px', border: '2px solid blue' }}
       />
@@ -23,7 +23,7 @@ export default function ImageTest() {
           width: '300px',
           height: '200px',
           border: '2px solid green',
-          backgroundImage: 'url(https://res.cloudinary.com/dfqoebbyj/image/upload/v1757804284/unite_af3vyi.jpg)',
+          backgroundImage: 'url(https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/unite.jpg)',
           backgroundSize: 'cover'
         }}
       >

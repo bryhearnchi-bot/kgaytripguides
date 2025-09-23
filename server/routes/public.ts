@@ -185,10 +185,7 @@ export function registerPublicRoutes(app: Express) {
           const eventResults = await db.select()
             .from(schema.events)
             .where(
-              or(
-                ilike(schema.events.title, `%${searchTerm}%`),
-                ilike(schema.events.description, `%${searchTerm}%`)
-              )
+              ilike(schema.events.title, `%${searchTerm}%`)
             )
             .limit(limitNum);
           results.events = eventResults;

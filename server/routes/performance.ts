@@ -101,11 +101,9 @@ export function registerPerformanceRoutes(app: Express) {
   // Warm up caches
   app.post("/api/admin/performance/cache/warmup", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const { layers = ['trips', 'ports', 'talent'] } = req.body;
+      const { layers = ['trips', 'locations', 'talent'] } = req.body;
 
       // Trigger cache warm-up
-      console.log(`🔥 Warming up cache layers: ${layers.join(', ')}`);
-
       // Import the warmUpCaches function
       const { warmUpCaches } = await import('../storage');
       await warmUpCaches();

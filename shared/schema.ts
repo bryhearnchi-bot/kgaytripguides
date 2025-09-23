@@ -27,7 +27,7 @@ export const profiles = pgTable("profiles", {
   bio: text("bio"),
   location: jsonb("location"), // { city, state, country }
   communicationPreferences: jsonb("communication_preferences"), // { email, sms }
-  cruiseUpdatesOptIn: boolean("cruise_updates_opt_in").default(false),
+  tripUpdatesOptIn: boolean("trip_updates_opt_in").default(false),
   marketingEmails: boolean("marketing_emails").default(false),
   lastSignInAt: timestamp("last_sign_in_at"),
   role: text("role").default("viewer"), // admin, content_manager, viewer
@@ -144,14 +144,11 @@ export const trips = pgTable("trips", {
   tripTypeId: integer("trip_type_id").notNull().references(() => tripTypes.id),
   name: text("name").notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
-  shipName: text("ship_name").notNull(), // Kept for backward compatibility, will be deprecated
-  cruiseLine: text("cruise_line"), // Kept for backward compatibility, will be deprecated
   shipId: integer("ship_id").references(() => ships.id), // Foreign key to ships table
   resortName: varchar("resort_name", { length: 255 }), // For resort trips
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   tripStatusId: integer("trip_status_id").notNull().references(() => tripStatus.id),
-  status: text("status").default("upcoming"), // DEPRECATED: Use tripStatusId instead
   heroImageUrl: text("hero_image_url"),
   description: text("description"),
   highlights: jsonb("highlights"), // Array of highlight strings
@@ -161,18 +158,12 @@ export const trips = pgTable("trips", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  statusIdx: index("trips_status_idx").on(table.status), // DEPRECATED index
   slugIdx: index("trips_slug_idx").on(table.slug),
   tripTypeIdIdx: index("trips_trip_type_id_idx").on(table.tripTypeId),
   tripStatusIdIdx: index("trips_trip_status_id_idx").on(table.tripStatusId),
   shipIdx: index("trips_ship_id_idx").on(table.shipId),
 }));
 
-/**
- * @deprecated Use 'trips' instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export const cruises = trips;
 
 // ============ ITINERARY TABLE ============
 export const itinerary = pgTable("itinerary", {
@@ -256,14 +247,9 @@ export const tripTalent = pgTable("trip_talent", {
 }, (table) => ({
   pk: primaryKey({ columns: [table.tripId, table.talentId] }),
   tripIdx: index("trip_talent_trip_idx").on(table.tripId),
-  talentIdx: index("cruise_talent_talent_idx").on(table.talentId),
+  talentIdx: index("trip_talent_talent_idx").on(table.talentId),
 }));
 
-/**
- * @deprecated Use 'tripTalent' instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export const cruiseTalent = tripTalent;
 
 // ============ LOCATION TYPES TABLE ============
 export const locationTypes = pgTable("location_types", {
@@ -289,11 +275,6 @@ export const locations = pgTable("locations", {
   nameIdx: unique("locations_name_unique").on(table.name),
 }));
 
-/**
- * @deprecated Use 'locations' instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export const ports = locations;
 
 // ============ PARTY THEMES TABLE (NEW - Replaces parties) ============
 export const partyThemes = pgTable("party_themes", {
@@ -324,11 +305,6 @@ export const tripInfoSections = pgTable("trip_info_sections", {
   orderIdx: index("trip_info_order_idx").on(table.tripId, table.orderIndex),
 }));
 
-/**
- * @deprecated Use 'tripInfoSections' instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export const cruiseInfoSections = tripInfoSections;
 
 
 // ============ RELATIONS ============
@@ -392,8 +368,6 @@ export const tripsRelations = relations(trips, ({ many, one }) => ({
   }),
 }));
 
-// Backward compatibility alias
-export const cruisesRelations = tripsRelations;
 
 export const locationTypesRelations = relations(locationTypes, ({ many }) => ({
   itineraries: many(itinerary),
@@ -439,8 +413,6 @@ export const partyThemesRelations = relations(partyThemes, ({ many }) => ({
 
 export const talentRelations = relations(talent, ({ many, one }) => ({
   tripTalent: many(tripTalent),
-  // Backward compatibility
-  cruiseTalent: many(tripTalent),
   talentCategory: one(talentCategories, {
     fields: [talent.talentCategoryId],
     references: [talentCategories.id],
@@ -458,8 +430,6 @@ export const tripTalentRelations = relations(tripTalent, ({ one }) => ({
   }),
 }));
 
-// Backward compatibility alias
-export const cruiseTalentRelations = tripTalentRelations;
 
 
 export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) => ({
@@ -473,8 +443,6 @@ export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) =
   }),
 }));
 
-// Backward compatibility alias
-export const cruiseInfoSectionsRelations = tripInfoSectionsRelations;
 
 
 // ============ INSERT SCHEMAS ============
@@ -520,8 +488,6 @@ export const insertTripSchema = createInsertSchema(trips).omit({
   updatedAt: true,
 });
 
-// Backward compatibility alias
-export const insertCruiseSchema = insertTripSchema;
 
 export const insertItinerarySchema = createInsertSchema(itinerary).omit({
   id: true,
@@ -562,8 +528,6 @@ export const insertTripInfoSectionSchema = createInsertSchema(tripInfoSections).
   updatedAt: true,
 });
 
-// Backward compatibility alias
-export const insertCruiseInfoSectionSchema = insertTripInfoSectionSchema;
 
 
 // ============ TYPE EXPORTS ============
@@ -584,10 +548,6 @@ export type LocationType = typeof locationTypes.$inferSelect;
 export type Location = typeof locations.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
 export type Ship = typeof ships.$inferSelect;
-/**
- * @deprecated Use 'Profile' type instead - will be removed in Phase 5
- */
-export type User = Profile;
 export type Trip = typeof trips.$inferSelect;
 export type Itinerary = typeof itinerary.$inferSelect;
 export type Event = typeof events.$inferSelect;
@@ -597,20 +557,3 @@ export type PartyTheme = typeof partyThemes.$inferSelect;
 export type TripInfoSection = typeof tripInfoSections.$inferSelect;
 export type Invitation = typeof invitations.$inferSelect;
 
-/**
- * @deprecated Use 'Location' type instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export type Port = Location;
-
-/**
- * @deprecated Use 'Trip' type instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export type Cruise = Trip;
-
-/**
- * @deprecated Use 'TripInfoSection' type instead - will be removed in Phase 5
- * Backward compatibility alias for migration
- */
-export type CruiseInfoSection = TripInfoSection;

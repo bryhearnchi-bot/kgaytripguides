@@ -49,7 +49,6 @@ export default function LocationManagementSafe() {
           throw new Error(`Failed to fetch locations: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Fetched locations:', data);
         return data;
       } catch (err) {
         console.error('Error fetching locations:', err);

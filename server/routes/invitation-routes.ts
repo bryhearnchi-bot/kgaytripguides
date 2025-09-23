@@ -229,7 +229,6 @@ async function sendInvitationEmail(email: string, token: string, inviterName: st
     const result = await sendEmail(email, token, inviterName, role);
 
     if (result.success) {
-      console.log(`Invitation email sent successfully to ${email}, message ID: ${result.messageId}`);
       return true;
     } else {
       console.error('Failed to send invitation email:', result.error);
@@ -282,7 +281,6 @@ async function createUserFromInvitation(
 ): Promise<{ id: string; email: string; fullName: string; role: string }> {
   try {
     // TODO: Implement actual user creation with Supabase Auth
-    console.log(`Creating user account for ${email} with role ${role}`);
 
     // For now, create a profile entry (requires Supabase Auth user first)
     // This is a placeholder - in production, this would integrate with Supabase Auth
@@ -393,7 +391,6 @@ router.post(
       }
 
       // Audit log the invitation creation
-      console.log(`Invitation created: ${storedInvitation.id} for ${email} by ${inviter.id}`);
 
       res.status(201).json({
         success: true,
@@ -579,7 +576,6 @@ router.delete(
       }
 
       // Audit log the cancellation
-      console.log(`Invitation cancelled: ${id} by ${admin.id}`);
 
       res.json({
         success: true,
@@ -663,7 +659,6 @@ router.post(
       );
 
       // Audit log the resend
-      console.log(`Invitation resent: ${id} by ${admin.id}`);
 
       res.json({
         success: true,
@@ -801,7 +796,6 @@ router.post(
       });
 
       // Audit log the acceptance
-      console.log(`Invitation accepted: ${matchingInvitation.id} by new user ${newUser.id}`);
 
       res.status(201).json({
         success: true,

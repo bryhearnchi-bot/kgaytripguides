@@ -157,7 +157,6 @@ export default function TripDetailsTab({
   });
 
   const onSubmit = (data: SetupFormData) => {
-    console.log('Setup form submitted:', data);
     if (isEditing) {
       updateTrip.mutate(data);
     } else {
