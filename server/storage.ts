@@ -151,21 +151,34 @@ if (process.env.USE_MOCK_DATA === 'true') {
 }
 
 // Wrap db.select to fail fast if any selected field is undefined (development & debug only)
+// This will be applied after db is initialized in the async block above
 if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SQL === 'true') {
-  // Preserve original
-  const originalSelect = db.select.bind(db);
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - monkey-patch allowed only in debug mode
-  db.select = function(map?: any, ...rest: any[]) {
-    if (map && typeof map === 'object') {
-      for (const key in map) {
-        if (map[key] === undefined) {
-          throw new Error(`Undefined field '${key}' in select() map. Check table aliases/imports.`);
+  // Wait for db to be initialized before monkey-patching
+  const patchDbSelect = () => {
+    if (db && db.select) {
+      // Preserve original
+      const originalSelect = db.select.bind(db);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - monkey-patch allowed only in debug mode
+      db.select = function(map?: any, ...rest: any[]) {
+        if (map && typeof map === 'object') {
+          for (const key in map) {
+            if (map[key] === undefined) {
+              throw new Error(`Undefined field '${key}' in select() map. Check table aliases/imports.`);
+            }
+          }
         }
-      }
+        return originalSelect(map as any, ...rest);
+      } as any;
     }
-    return originalSelect(map as any, ...rest);
-  } as any;
+  };
+
+  // Try to patch immediately if db is ready, otherwise wait a bit
+  if (db && db.select) {
+    patchDbSelect();
+  } else {
+    setTimeout(patchDbSelect, 100);
+  }
 }
 
 export { db, batchQueryBuilder, optimizedConnection };
