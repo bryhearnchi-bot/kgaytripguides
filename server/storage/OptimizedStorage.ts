@@ -268,7 +268,7 @@ export class BatchQueryBuilder {
         arrivalTime: schema.itinerary.arrivalTime,
         departureTime: schema.itinerary.departureTime,
         allAboardTime: schema.itinerary.allAboardTime,
-        portImageUrl: schema.itinerary.portImageUrl,
+locationImageUrl: schema.itinerary.locationImageUrl,
         description: schema.itinerary.description,
         highlights: schema.itinerary.highlights,
         orderIndex: schema.itinerary.orderIndex,
