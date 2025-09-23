@@ -5,6 +5,8 @@
 
 import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
 import { db, schema } from './storage';
+// Local table aliases to ensure proper initialization
+const { cruises, ships, events, parties, ports, itinerary, talent, tripTalent: cruiseTalent, eventTalent, tripTalent } = schema;
 import type { Trip, Event, Talent, Itinerary } from '../shared/schema';
 
 // ============ OPTIMIZED TRIP OPERATIONS ============
