@@ -332,7 +332,26 @@ describe('TripGuide Component', () => {
         data: undefined,
         isLoading: true,
         error: null,
-      });
+        isError: false,
+        isPending: true,
+        isLoadingError: false,
+        isRefetchError: false,
+        isSuccess: false,
+        isFetching: true,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isRefetching: false,
+        isStale: false,
+        isPlaceholderData: false,
+        status: 'pending',
+        fetchStatus: 'fetching',
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        dataUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        refetch: vi.fn(),
+      } as any);
 
       renderTripGuide();
 
@@ -344,7 +363,26 @@ describe('TripGuide Component', () => {
         data: undefined,
         isLoading: false,
         error: new Error('Failed to load trip data'),
-      });
+        isError: true,
+        isPending: false,
+        isLoadingError: true,
+        isRefetchError: false,
+        isSuccess: false,
+        isFetching: false,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isRefetching: false,
+        isStale: false,
+        isPlaceholderData: false,
+        status: 'error',
+        fetchStatus: 'idle',
+        errorUpdateCount: 1,
+        errorUpdatedAt: Date.now(),
+        dataUpdatedAt: 0,
+        failureCount: 1,
+        failureReason: new Error('Failed to load trip data'),
+        refetch: vi.fn(),
+      } as any);
 
       renderTripGuide();
 

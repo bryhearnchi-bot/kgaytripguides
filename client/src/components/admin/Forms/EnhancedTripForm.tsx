@@ -104,6 +104,18 @@ const validateSlugUniqueness = async (slug: string): Promise<ValidationResult[]>
   }];
 };
 
+// Debounced version for better UX
+let slugValidationTimeout: NodeJS.Timeout;
+const debouncedSlugValidation = (slug: string): Promise<ValidationResult[]> => {
+  return new Promise((resolve) => {
+    clearTimeout(slugValidationTimeout);
+    slugValidationTimeout = setTimeout(async () => {
+      const results = await validateSlugUniqueness(slug);
+      resolve(results);
+    }, 1000); // Wait 1 second after user stops typing
+  });
+};
+
 const validateTripName = (name: string): ValidationResult[] => {
   if (!name) return [];
 
@@ -173,7 +185,7 @@ const formFields: FormField[] = [
       minLength: 3,
       maxLength: 50,
       pattern: /^[a-z0-9-]+$/,
-      custom: validateSlugUniqueness,
+      custom: debouncedSlugValidation,
     },
   },
   {

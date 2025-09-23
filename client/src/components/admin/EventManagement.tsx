@@ -306,9 +306,11 @@ export default function EventManagement({
   // Calendar View Component
   const CalendarView = () => {
     const eventsByDate = events.reduce((acc: Record<string, Event[]>, event: Event) => {
-      const date = event.date.split('T')[0];
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(event);
+      const date = event.date?.split('T')[0];
+      if (date) {
+        if (!acc[date]) acc[date] = [];
+        acc[date].push(event);
+      }
       return acc;
     }, {});
 
@@ -322,15 +324,17 @@ export default function EventManagement({
               </div>
             ))}
             {/* Simplified calendar grid - in production would show proper calendar */}
-            {Object.entries(eventsByDate).map(([date, dateEvents]) => (
-              <div key={date} className="border rounded-lg p-2 min-h-[80px]">
-                <div className="text-xs font-medium mb-1">
-                  {format(dateOnly(date), 'MMM d')}
-                </div>
-                <div className="space-y-1">
-                  {dateEvents.slice(0, 3).map((event: Event) => {
-                    const Icon = getEventIcon(event.type);
-                    return (
+            {Object.entries(eventsByDate).map(([date, dateEvents]) => {
+              const typedDateEvents = dateEvents as Event[];
+              return (
+                <div key={date} className="border rounded-lg p-2 min-h-[80px]">
+                  <div className="text-xs font-medium mb-1">
+                    {format(dateOnly(date), 'MMM d')}
+                  </div>
+                  <div className="space-y-1">
+                    {typedDateEvents.slice(0, 3).map((event: Event) => {
+                      const Icon = getEventIcon(event.type);
+                      return (
                       <div
                         key={event.id}
                         className={`text-xs p-1 rounded ${getEventColor(event.type)} text-white cursor-pointer`}
@@ -341,14 +345,15 @@ export default function EventManagement({
                           <span className="truncate">{event.title}</span>
                         </div>
                       </div>
-                    );
-                  })}
-                  {dateEvents.length > 3 && (
-                    <div className="text-xs text-gray-500">+{dateEvents.length - 3} more</div>
-                  )}
+                      );
+                    })}
+                    {typedDateEvents.length > 3 && (
+                      <div className="text-xs text-gray-500">+{typedDateEvents.length - 3} more</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

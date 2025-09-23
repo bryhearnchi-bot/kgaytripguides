@@ -32,7 +32,6 @@ import type { Location } from '../../types/api';
 interface LocationStatistics {
   total: number;
   byType: Record<string, number>;
-  byRegion: Record<string, number>;
   byCountry: Record<string, number>;
 }
 
@@ -49,17 +48,6 @@ const LOCATION_TYPES = [
   { value: 'disembark', label: 'Disembarkation', icon: Download },
 ];
 
-const REGIONS = [
-  'Mediterranean',
-  'Caribbean',
-  'Northern Europe',
-  'Alaska',
-  'Asia',
-  'Australia & New Zealand',
-  'South America',
-  'Transatlantic',
-  'Other'
-];
 
 export default function LocationManagement({
   onSelectLocation,
@@ -71,7 +59,6 @@ export default function LocationManagement({
   const [showStatsDialog, setShowStatsDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,12 +67,11 @@ export default function LocationManagement({
 
   // Fetch locations with search and filters
   const { data: locations = [], isLoading } = useQuery({
-    queryKey: ['locations', searchQuery, selectedType, selectedRegion],
+    queryKey: ['locations', searchQuery, selectedType],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       if (selectedType) params.append('type', selectedType);
-      if (selectedRegion) params.append('region', selectedRegion);
 
       // Get fresh session token
       const { data: { session } } = await supabase.auth.getSession();
@@ -254,17 +240,16 @@ export default function LocationManagement({
 
   // Filter locations based on search and filters
   const filteredLocations = useMemo(() => {
-    return locations.filter(location => {
+    return locations.filter((location: Location) => {
       const matchesSearch = !searchQuery ||
         location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesType = !selectedType; // Location type filtering removed since schema doesn't have port_type
-      const matchesRegion = true; // Region field removed from schema
 
-      return matchesSearch && matchesType && matchesRegion;
+      return matchesSearch && matchesType;
     });
-  }, [locations, searchQuery, selectedType, selectedRegion]);
+  }, [locations, searchQuery, selectedType]);
 
   const handleSubmit = (formData: Partial<Location>) => {
     if (editingLocation) {
@@ -327,24 +312,7 @@ export default function LocationManagement({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Region</label>
-            <Select
-              value={formData.region || ''}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, region: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select region" />
-              </SelectTrigger>
-              <SelectContent>
-                {REGIONS.map(region => (
-                  <SelectItem key={region} value={region}>{region}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
+        <div className="space-y-2">
             <label className="text-sm font-medium">Location Type *</label>
             <Select
               value="port"
@@ -368,7 +336,6 @@ export default function LocationManagement({
                 })}
               </SelectContent>
             </Select>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -377,7 +344,7 @@ export default function LocationManagement({
             <Input
               type="number"
               step="any"
-              value={formData.coordinates?.lat || ''}
+              value={formData.coordinates?.lat?.toString() || ''}
               onChange={(e) => handleCoordinatesChange(e.target.value, formData.coordinates?.lng?.toString() || '')}
               placeholder="e.g., 40.7128"
             />
@@ -387,7 +354,7 @@ export default function LocationManagement({
             <Input
               type="number"
               step="any"
-              value={formData.coordinates?.lng || ''}
+              value={formData.coordinates?.lng?.toString() || ''}
               onChange={(e) => handleCoordinatesChange(formData.coordinates?.lat?.toString() || '', e.target.value)}
               placeholder="e.g., -74.0060"
             />
@@ -463,12 +430,6 @@ export default function LocationManagement({
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Globe className="w-4 h-4" />
               <span>{location.country || 'N/A'}</span>
-              {location.region && (
-                <>
-                  <span>•</span>
-                  <span>{location.region}</span>
-                </>
-              )}
             </div>
 
             {location.coordinates && (
@@ -551,7 +512,7 @@ export default function LocationManagement({
                       <div className="flex items-center justify-center mb-2">
                         <Icon className="w-5 h-5 text-gray-500" />
                       </div>
-                      <div className="text-xl font-bold">{count}</div>
+                      <div className="text-xl font-bold">{count as number}</div>
                       <div className="text-xs text-gray-600">{locationType?.label}</div>
                     </CardContent>
                   </Card>
@@ -559,32 +520,18 @@ export default function LocationManagement({
               })}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold mb-3">By Region</h4>
-                <div className="space-y-2">
-                  {Object.entries(stats.byRegion).map(([region, count]) => (
-                    <div key={region} className="flex justify-between">
-                      <span className="text-sm">{region}</span>
-                      <Badge variant="secondary">{count}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-3">Top Countries</h4>
-                <div className="space-y-2">
-                  {Object.entries(stats.byCountry)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 8)
-                    .map(([country, count]) => (
-                    <div key={country} className="flex justify-between">
-                      <span className="text-sm">{country}</span>
-                      <Badge variant="secondary">{count}</Badge>
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <h4 className="font-semibold mb-3">Top Countries</h4>
+              <div className="space-y-2">
+                {Object.entries(stats.byCountry)
+                  .sort(([,a], [,b]) => (b as number) - (a as number))
+                  .slice(0, 8)
+                  .map(([country, count]) => (
+                  <div key={country} className="flex justify-between">
+                    <span className="text-sm">{country}</span>
+                    <Badge variant="secondary">{count as number}</Badge>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -635,7 +582,7 @@ export default function LocationManagement({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search locations, countries, or regions..."
+              placeholder="Search locations and countries..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -656,7 +603,7 @@ export default function LocationManagement({
       {/* Filters */}
       {showFilters && (
         <Card className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Location Type</label>
               <Select value={selectedType} onValueChange={setSelectedType}>
@@ -680,27 +627,11 @@ export default function LocationManagement({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Region</label>
-              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All regions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All regions</SelectItem>
-                  {REGIONS.map(region => (
-                    <SelectItem key={region} value={region}>{region}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="flex items-end">
               <Button
                 variant="outline"
                 onClick={() => {
                   setSelectedType('');
-                  setSelectedRegion('');
                   setSearchQuery('');
                 }}
                 className="w-full"
@@ -718,7 +649,7 @@ export default function LocationManagement({
         <span>
           Showing {filteredLocations.length} of {locations.length} locations
         </span>
-        {(selectedType || selectedRegion || searchQuery) && (
+        {(selectedType || searchQuery) && (
           <span>Filters active</span>
         )}
       </div>
@@ -746,7 +677,7 @@ export default function LocationManagement({
           <MapPin className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold mb-2">No locations found</h3>
           <p className="text-gray-600 mb-4">
-            {searchQuery || selectedType || selectedRegion
+            {searchQuery || selectedType
               ? "No locations match your current filters."
               : "Get started by adding your first location."
             }
@@ -763,7 +694,7 @@ export default function LocationManagement({
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLocations.map((location) => (
+          {filteredLocations.map((location: Location) => (
             <LocationCard key={location.id} location={location} />
           ))}
         </div>

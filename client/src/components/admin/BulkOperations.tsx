@@ -549,8 +549,21 @@ export default function BulkOperations({
         const aValue = a[sortConfig.key as keyof BulkOperationItem];
         const bValue = b[sortConfig.key as keyof BulkOperationItem];
 
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        // Handle undefined values - undefined values sort to the end
+        if (aValue === undefined && bValue === undefined) return 0;
+        if (aValue === undefined) return sortConfig.direction === 'asc' ? 1 : -1;
+        if (bValue === undefined) return sortConfig.direction === 'asc' ? -1 : 1;
+
+        // Convert to strings for safe comparison if they're not primitive types
+        const aCompareValue = typeof aValue === 'string' || typeof aValue === 'number'
+          ? aValue
+          : String(aValue ?? '');
+        const bCompareValue = typeof bValue === 'string' || typeof bValue === 'number'
+          ? bValue
+          : String(bValue ?? '');
+
+        if (aCompareValue < bCompareValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aCompareValue > bCompareValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }

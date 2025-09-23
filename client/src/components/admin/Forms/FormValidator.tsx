@@ -45,7 +45,7 @@ export interface FormField {
     minLength?: number;
     maxLength?: number;
     pattern?: RegExp;
-    custom?: (value: any) => ValidationResult[];
+    custom?: (value: any) => ValidationResult[] | Promise<ValidationResult[]>;
   };
 }
 
@@ -287,8 +287,17 @@ export default function FormValidator<T extends FieldValues>({
 
       // Custom validation
       if (field.validation?.custom) {
-        const customResults = field.validation.custom(value);
-        validations.push(...customResults);
+        try {
+          const customResults = await field.validation.custom(value);
+          validations.push(...customResults);
+        } catch (error) {
+          console.error('Custom validation error:', error);
+          validations.push({
+            level: 'error',
+            message: 'Validation error occurred',
+            suggestion: 'Please try again or contact support'
+          });
+        }
       }
     }
 
