@@ -140,6 +140,25 @@ if (process.env.USE_MOCK_DATA === 'true') {
   }
 }
 
+// Wrap db.select to fail fast if any selected field is undefined (development & debug only)
+if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SQL === 'true') {
+  // Preserve original
+  const originalSelect = db.select.bind(db);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - monkey-patch allowed only in debug mode
+  db.select = (map?: any) => {
+    if (map && typeof map === 'object') {
+      for (const key in map) {
+        if (map[key] === undefined) {
+          throw new Error(`Undefined field '${key}' in select() map. Check table aliases/imports.`);
+        }
+      }
+    }
+    // eslint-disable-next-line prefer-rest-params
+    return originalSelect.apply(db, arguments as any);
+  };
+}
+
 export { db, batchQueryBuilder, optimizedConnection };
 
 // Cache warm-up function
