@@ -90,7 +90,7 @@ export class OptimizedQueryPatterns {
         const newItinerary = itinerary.map(item => ({
           ...item,
           id: undefined as any,
-          tripId: newTrip.id,
+          tripId: newTrip!.id,  // Non-null assertion - already checked above
         }));
         insertPromises.push(
           tx.insert(schema.itinerary).values(newItinerary)
@@ -102,7 +102,7 @@ export class OptimizedQueryPatterns {
         const newEvents = events.map(event => ({
           ...event,
           id: undefined as any,
-          tripId: newTrip.id,
+          tripId: newTrip!.id,  // Non-null assertion - already checked above
           createdAt: new Date(),
           updatedAt: new Date(),
         }));
@@ -115,7 +115,7 @@ export class OptimizedQueryPatterns {
       if (tripTalent.length > 0) {
         const newTalentAssignments = tripTalent.map(assignment => ({
           ...assignment,
-          tripId: newTrip.id,
+          tripId: newTrip!.id,  // Non-null assertion - already checked above
           createdAt: new Date(),
         }));
         insertPromises.push(
@@ -128,7 +128,7 @@ export class OptimizedQueryPatterns {
         const newInfoSections = infoSections.map(section => ({
           ...section,
           id: undefined as any,
-          tripId: newTrip.id,
+          tripId: newTrip!.id,  // Non-null assertion - already checked above
           updatedAt: new Date(),
         }));
         insertPromises.push(
@@ -191,22 +191,30 @@ export class OptimizedQueryPatterns {
 
       // Batch insert new events
       if (toInsert.length > 0) {
+        // Validate and prepare insert data
+        const validInsertData = toInsert
+          .filter(event => event.time && event.title && event.type && event.venue)
+          .map(event => ({
+            tripId,
+            date: event.date || new Date(),
+            time: event.time!,  // Non-null assertion after filter
+            title: event.title!,
+            type: event.type!,
+            venue: event.venue!,
+            talentIds: event.talentIds || null,
+            partyThemeId: event.partyThemeId || null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }));
+
+        if (validInsertData.length === 0) {
+          console.warn('No valid events to insert - all events missing required fields');
+          return existingEvents;
+        }
+
         const inserted = await tx
           .insert(schema.events)
-          .values(
-            toInsert.map(event => ({
-              tripId,
-              date: event.date || new Date(),
-              time: event.time || '00:00',
-              title: event.title || 'Untitled Event',
-              type: event.type || 'social',
-              venue: event.venue || 'TBD',
-              talentIds: event.talentIds,
-              partyThemeId: event.partyThemeId,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }))
-          )
+          .values(validInsertData)
           .returning();
         results.push(...inserted);
       }

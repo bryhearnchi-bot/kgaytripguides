@@ -26,11 +26,8 @@ import { useToast } from '../../hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
 import { supabase } from '../../lib/supabase';
-import type { Location as SchemaLocation } from '../../../../shared/schema';
+import type { Location } from '../../types/api';
 // CSRF token not needed with Bearer authentication
-
-// Use the schema Location type directly
-type Location = SchemaLocation;
 
 interface LocationStatistics {
   total: number;
@@ -260,11 +257,10 @@ export default function LocationManagement({
     return locations.filter(location => {
       const matchesSearch = !searchQuery ||
         location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (location.region && location.region.toLowerCase().includes(searchQuery.toLowerCase()));
+        (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesType = !selectedType; // Location type filtering removed since schema doesn't have port_type
-      const matchesRegion = !selectedRegion || location.region === selectedRegion;
+      const matchesRegion = true; // Region field removed from schema
 
       return matchesSearch && matchesType && matchesRegion;
     });
@@ -286,7 +282,6 @@ export default function LocationManagement({
     const [formData, setFormData] = useState<Partial<Location>>({
       name: location?.name || '',
       country: location?.country || '',
-      region: location?.region || '',
       description: location?.description || '',
       imageUrl: location?.imageUrl || '',
       coordinates: location?.coordinates || null,

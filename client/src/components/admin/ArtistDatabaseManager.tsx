@@ -11,24 +11,10 @@ import { useToast } from '../../hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
 import { supabase } from '../../lib/supabase';
+import type { Talent, TalentCategory } from '../../types/api';
 
-interface Artist {
-  id: number;
-  name: string;
-  talentCategoryId: number;
+interface Artist extends Talent {
   category?: string; // Derived from talentCategory for display
-  bio?: string;
-  knownFor?: string;
-  profileImageUrl?: string;
-  socialLinks?: Record<string, string>;
-  website?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface TalentCategory {
-  id: number;
-  category: string;
 }
 
 interface ArtistDatabaseManagerProps {
@@ -347,7 +333,7 @@ export default function ArtistDatabaseManager({
           className="px-3 py-2 border border-gray-200 rounded-md bg-white"
         >
           <option value="">All Performance Types</option>
-          {performanceTypes.map(type => (
+          {performanceTypes.map((type: string) => (
             <option key={type} value={type}>{type}</option>
           ))}
         </select>
@@ -361,7 +347,7 @@ export default function ArtistDatabaseManager({
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <Avatar className="w-12 h-12">
-                    <AvatarImage src={artist.profileImageUrl} alt={artist.name} />
+                    <AvatarImage src={artist.profileImageUrl || undefined} alt={artist.name} />
                     <AvatarFallback>
                       {artist.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
@@ -589,7 +575,7 @@ function ArtistForm({
             className="w-full p-3 border border-gray-200 rounded-md bg-white"
           >
             <option value="">Select Category</option>
-            {performanceTypes.map(type => (
+            {performanceTypes.map((type: string) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>

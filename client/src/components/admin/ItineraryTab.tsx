@@ -31,11 +31,11 @@ import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 import LocationManagement from './LocationManagement';
-import type { Location as SchemaLocation } from '../../../../shared/schema';
+import type { Location } from '../../types/api';
 
-// Extended Location type that matches the schema
-interface LocationWithType extends SchemaLocation {
-  // Use the actual schema fields - no location_type field exists in the schema
+// Extended Location type that matches the API
+interface LocationWithType extends Location {
+  // Use the actual API fields - no location_type field exists in the schema
 }
 
 interface ItineraryDay {

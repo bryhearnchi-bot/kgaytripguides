@@ -113,6 +113,7 @@ const mockTripData: TripData = {
       id: 1,
       name: 'DJ Test',
       bio: 'Amazing DJ from somewhere',
+      knownFor: 'Electronic Dance Music',
       category: 'DJs',
       profileImageUrl: 'https://example.com/dj.jpg',
       socialLinks: {
@@ -328,7 +329,7 @@ describe('TripGuide Component', () => {
   describe('Loading and Error States', () => {
     it('should show loading state', () => {
       (useTripData as jest.MockedFunction<typeof useTripData>).mockReturnValue({
-        data: null,
+        data: undefined,
         isLoading: true,
         error: null,
       });
@@ -340,7 +341,7 @@ describe('TripGuide Component', () => {
 
     it('should show error state', () => {
       (useTripData as jest.MockedFunction<typeof useTripData>).mockReturnValue({
-        data: null,
+        data: undefined,
         isLoading: false,
         error: new Error('Failed to load trip data'),
       });

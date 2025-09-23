@@ -58,3 +58,62 @@ export interface ImportMetaEnv {
 export interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// ============ API Entity Types ============
+
+export interface Location {
+  id: number;
+  name: string;
+  country: string;
+  coordinates: { lat: number; lng: number } | null;
+  description: string | null;
+  imageUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LocationType {
+  id: number;
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Talent {
+  id: number;
+  name: string;
+  talentCategoryId: number;
+  bio: string | null;
+  knownFor: string | null;
+  profileImageUrl: string | null;
+  socialLinks: any;
+  website: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TalentCategory {
+  id: number;
+  category: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Form types for client-side components
+export interface LocationFormData {
+  name: string;
+  country: string;
+  description: string;
+  imageUrl: string;
+  coordinates: { lat: number; lng: number } | null;
+}
+
+export interface TalentFormData {
+  name: string;
+  talentCategoryId: number;
+  bio: string;
+  knownFor: string;
+  profileImageUrl: string;
+  socialLinks: any;
+  website: string;
+}
