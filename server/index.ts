@@ -64,15 +64,20 @@ app.use(cookieParser());
 // Serve PWA files early in production
 if (process.env.NODE_ENV === 'production') {
   // Use process.cwd() for reliable path resolution in production
-  const distPath = path.join(process.cwd(), 'dist', 'public');
+const distPath = path.join(process.cwd(), 'dist', 'public');
+  const clientPublicPath = path.join(process.cwd(), 'client', 'public');
   
   // Log the path for debugging
-  logger.info('Serving static files from:', { distPath, cwd: process.cwd() });
+  logger.info('Serving static files from:', { distPath, clientPublicPath, cwd: process.cwd() });
 
 
   // Explicitly serve PWA files with correct MIME types
   app.get('/manifest.json', (_req, res) => {
-    const manifestPath = path.join(distPath, 'manifest.json');
+let manifestPath = path.join(distPath, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) {
+      // Fallback to client/public during runtime if file missing in dist
+      manifestPath = path.join(clientPublicPath, 'manifest.json');
+    }
     res.type('application/manifest+json');
     res.sendFile(manifestPath, (err) => {
       if (err) {
@@ -87,7 +92,10 @@ if (process.env.NODE_ENV === 'production') {
   });
 
   app.get('/sw.js', (_req, res) => {
-    const swPath = path.join(distPath, 'sw.js');
+let swPath = path.join(distPath, 'sw.js');
+    if (!fs.existsSync(swPath)) {
+      swPath = path.join(clientPublicPath, 'sw.js');
+    }
     res.setHeader('Service-Worker-Allowed', '/');
     res.type('application/javascript');
     res.sendFile(swPath, (err) => {
