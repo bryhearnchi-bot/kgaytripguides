@@ -30,7 +30,7 @@ export interface Trip {
 
 export interface Event {
   id?: number;
-  cruiseId?: number;
+  tripId?: number;
   title: string;
   description?: string;
   date: string;
@@ -70,7 +70,7 @@ export interface Talent {
   updatedAt?: string;
 }
 
-export interface Port {
+export interface Location {
   id?: number;
   name: string;
   country: string;
@@ -86,7 +86,7 @@ export interface Port {
   updatedAt?: string;
 }
 
-export interface User {
+export interface Profile {
   id?: string;
   email?: string;
   fullName?: string;
@@ -175,15 +175,15 @@ export const API_OPERATIONS = {
     path: '/api/talent/{id}',
     summary: 'Get talent by ID'
   },
-  listPorts: {
+  listLocations: {
     method: 'GET' as const,
-    path: '/api/ports',
-    summary: 'List ports'
+    path: '/api/locations',
+    summary: 'List locations'
   },
-  getPortById: {
+  getLocationById: {
     method: 'GET' as const,
-    path: '/api/ports/{id}',
-    summary: 'Get port by ID'
+    path: '/api/locations/{id}',
+    summary: 'Get location by ID'
   },
   getMetrics: {
     method: 'GET' as const,
@@ -285,40 +285,40 @@ export const API_OPERATIONS = {
     path: '/api/events/{id}',
     summary: 'Delete event'
   },
-  getCruiseEvents: {
+  getTripEvents: {
     method: 'GET' as const,
-    path: '/api/cruises/{cruiseId}/events',
-    summary: 'Get events for a cruise'
+    path: '/api/trips/{tripId}/events',
+    summary: 'Get events for a trip'
   },
-  createCruiseEvent: {
+  createTripEvent: {
     method: 'POST' as const,
-    path: '/api/cruises/{cruiseId}/events',
-    summary: 'Create event for cruise'
+    path: '/api/trips/{tripId}/events',
+    summary: 'Create event for trip'
   },
-  getCruiseEventsByDate: {
+  getTripEventsByDate: {
     method: 'GET' as const,
-    path: '/api/cruises/{cruiseId}/events/date/{date}',
+    path: '/api/trips/{tripId}/events/date/{date}',
     summary: 'Get events by date'
   },
-  getCruiseEventsByType: {
+  getTripEventsByType: {
     method: 'GET' as const,
-    path: '/api/cruises/{cruiseId}/events/type/{type}',
+    path: '/api/trips/{tripId}/events/type/{type}',
     summary: 'Get events by type'
   },
-  getAdminCruises: {
+  getAdminTrips: {
     method: 'GET' as const,
-    path: '/api/admin/cruises',
-    summary: 'Get admin cruise list'
+    path: '/api/admin/trips',
+    summary: 'Get admin trip list'
   },
-  updateCruiseStatus: {
+  updateTripStatus: {
     method: 'PATCH' as const,
-    path: '/api/admin/cruises/{id}/status',
-    summary: 'Update cruise status'
+    path: '/api/admin/trips/{id}/status',
+    summary: 'Update trip status'
   },
-  getCruiseStats: {
+  getTripStats: {
     method: 'GET' as const,
-    path: '/api/admin/cruises/stats',
-    summary: 'Get cruise statistics'
+    path: '/api/admin/trips/stats',
+    summary: 'Get trip statistics'
   },
   getDashboardStats: {
     method: 'POST' as const,
@@ -330,25 +330,25 @@ export const API_OPERATIONS = {
     path: '/api/admin/system/health',
     summary: 'System health check'
   },
-  listAdminUsers: {
+  listAdminProfiles: {
     method: 'GET' as const,
-    path: '/api/admin/users',
-    summary: 'List admin users'
+    path: '/api/admin/profiles',
+    summary: 'List admin profiles'
   },
-  createAdminUser: {
+  createAdminProfile: {
     method: 'POST' as const,
-    path: '/api/admin/users',
-    summary: 'Create admin user'
+    path: '/api/admin/profiles',
+    summary: 'Create admin profile'
   },
-  updateAdminUser: {
+  updateAdminProfile: {
     method: 'PUT' as const,
-    path: '/api/admin/users/{id}',
-    summary: 'Update admin user'
+    path: '/api/admin/profiles/{id}',
+    summary: 'Update admin profile'
   },
-  deleteAdminUser: {
+  deleteAdminProfile: {
     method: 'DELETE' as const,
-    path: '/api/admin/users/{id}',
-    summary: 'Delete admin user'
+    path: '/api/admin/profiles/{id}',
+    summary: 'Delete admin profile'
   }
 } as const;
 

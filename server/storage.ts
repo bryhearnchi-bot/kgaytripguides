@@ -425,13 +425,13 @@ export class TripStorage implements ITripStorage {
  * This is a backward compatibility wrapper that delegates to TripStorage
  */
 export interface ICruiseStorage {
-  getAllCruises(): Promise<Cruise[]>;
-  getCruiseById(id: number): Promise<Cruise | undefined>;
-  getCruiseBySlug(slug: string): Promise<Cruise | undefined>;
-  getUpcomingCruises(): Promise<Cruise[]>;
-  getPastCruises(): Promise<Cruise[]>;
-  createCruise(cruise: Omit<Cruise, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cruise>;
-  updateCruise(id: number, cruise: Partial<Cruise>): Promise<Cruise | undefined>;
+  getAllCruises(): Promise<Trip[]>;
+  getCruiseById(id: number): Promise<Trip | undefined>;
+  getCruiseBySlug(slug: string): Promise<Trip | undefined>;
+  getUpcomingCruises(): Promise<Trip[]>;
+  getPastCruises(): Promise<Trip[]>;
+  createCruise(cruise: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>): Promise<Trip>;
+  updateCruise(id: number, cruise: Partial<Trip>): Promise<Trip | undefined>;
   deleteCruise(id: number): Promise<void>;
 }
 
@@ -442,31 +442,31 @@ export interface ICruiseStorage {
 export class CruiseStorage implements ICruiseStorage {
   private tripStorage = new TripStorage();
 
-  async getAllCruises(): Promise<Cruise[]> {
+  async getAllCruises(): Promise<Trip[]> {
     return await this.tripStorage.getAllTrips();
   }
 
-  async getCruiseById(id: number): Promise<Cruise | undefined> {
+  async getCruiseById(id: number): Promise<Trip | undefined> {
     return await this.tripStorage.getTripById(id);
   }
 
-  async getCruiseBySlug(slug: string): Promise<Cruise | undefined> {
+  async getCruiseBySlug(slug: string): Promise<Trip | undefined> {
     return await this.tripStorage.getTripBySlug(slug);
   }
 
-  async getUpcomingCruises(): Promise<Cruise[]> {
+  async getUpcomingCruises(): Promise<Trip[]> {
     return await this.tripStorage.getUpcomingTrips();
   }
 
-  async getPastCruises(): Promise<Cruise[]> {
+  async getPastCruises(): Promise<Trip[]> {
     return await this.tripStorage.getPastTrips();
   }
 
-  async createCruise(cruise: Omit<Cruise, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cruise> {
+  async createCruise(cruise: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>): Promise<Trip> {
     return await this.tripStorage.createTrip(cruise);
   }
 
-  async updateCruise(id: number, cruise: Partial<Cruise>): Promise<Cruise | undefined> {
+  async updateCruise(id: number, cruise: Partial<Trip>): Promise<Trip | undefined> {
     return await this.tripStorage.updateTrip(id, cruise);
   }
 

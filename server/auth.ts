@@ -2,7 +2,7 @@ import * as argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 import { storage, db } from './storage';
-import type { User } from '@shared/schema';
+import type { Profile } from '@shared/schema';
 import { ApiError, ErrorCode } from './utils/ApiError';
 
 // JWT secret - in production this should come from environment variables
@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
 
 export interface AuthenticatedRequest extends Request {
-  user?: User;
+  user?: Profile;
 }
 
 export interface TokenPayload {
@@ -101,7 +101,7 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
           username: user.email || '',
           email: user.email || '',
           role: profile.role || 'viewer',
-        } as User;
+        } as Profile;
         return next();
       }
 
@@ -114,7 +114,7 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
           username: user.email || '',
           email: user.email || '',
           role: metaRole,
-        } as User;
+        } as Profile;
         return next();
       }
     }

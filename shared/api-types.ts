@@ -30,7 +30,7 @@ export interface Trip {
 
 export interface Event {
   id: number;
-  cruiseId: number;
+  tripId: number;
   title: string;
   description?: string;
   date: string;
@@ -70,7 +70,7 @@ export interface Talent {
   updatedAt: string;
 }
 
-export interface Port {
+export interface Location {
   id: number;
   name: string;
   country: string;
@@ -86,7 +86,7 @@ export interface Port {
   updatedAt: string;
 }
 
-export interface User {
+export interface Profile {
   id: string;
   email: string;
   fullName?: string;
@@ -100,8 +100,8 @@ export interface User {
 
 export interface ItineraryItem {
   id: number;
-  cruiseId: number;
-  portId?: number;
+  tripId: number;
+  locationId?: number;
   dayNumber: number;
   date: string;
   arrivalTime?: string;
@@ -112,7 +112,7 @@ export interface ItineraryItem {
 
 export interface InfoSection {
   id: string;
-  cruiseId: string;
+  tripId: string;
   title: string;
   content: string;
   order: number;
@@ -218,7 +218,7 @@ export interface UpdateEventRequest {
 }
 
 export interface BulkEventsRequest {
-  cruiseId: number;
+  tripId: number;
   events: (CreateEventRequest & { id?: number })[];
 }
 
@@ -227,7 +227,7 @@ export interface DuplicateTripRequest {
   newSlug: string;
 }
 
-export interface CreateUserRequest {
+export interface CreateProfileRequest {
   email: string;
   fullName: string;
   username?: string;
@@ -236,7 +236,7 @@ export interface CreateUserRequest {
   bio?: string;
 }
 
-export interface UpdateUserRequest {
+export interface UpdateProfileRequest {
   fullName?: string;
   username?: string;
   role?: 'viewer' | 'content_manager' | 'admin';
@@ -255,13 +255,13 @@ export interface SearchResult {
     trips: Trip[];
     events: Event[];
     talent: Talent[];
-    ports: Port[];
+    locations: Location[];
   };
 }
 
 export interface SearchParams {
   q: string;
-  type?: 'trips' | 'events' | 'talent' | 'ports' | 'all';
+  type?: 'trips' | 'events' | 'talent' | 'locations' | 'all';
   limit?: number;
 }
 
@@ -273,7 +273,7 @@ export interface TripFilters {
 }
 
 export interface EventFilters {
-  cruiseId?: number;
+  tripId?: number;
   type?: 'party' | 'show' | 'activity' | 'dining' | 'meeting' | 'other';
   startDate?: string;
   endDate?: string;
@@ -288,13 +288,13 @@ export interface TalentFilters {
   offset?: number;
 }
 
-export interface PortFilters {
+export interface LocationFilters {
   country?: string;
   limit?: number;
   offset?: number;
 }
 
-export interface UserFilters {
+export interface ProfileFilters {
   page?: number;
   limit?: number;
   search?: string;
@@ -304,7 +304,7 @@ export interface UserFilters {
 
 // ============ STATISTICS AND ANALYTICS ============
 
-export interface CruiseStats {
+export interface TripStats {
   total: number;
   published: number;
   draft: number;
@@ -327,7 +327,7 @@ export interface DashboardStatsRequest {
     start: string;
     end: string;
   };
-  metrics: ('trips' | 'events' | 'talent' | 'ports')[];
+  metrics: ('trips' | 'events' | 'talent' | 'locations')[];
 }
 
 export interface DashboardStats {
@@ -344,7 +344,7 @@ export interface DashboardStats {
     total: number;
     featured: number;
   };
-  ports?: {
+  locations?: {
     total: number;
   };
 }
@@ -434,8 +434,8 @@ export interface ImportTripRequest {
 export type TripStatus = Trip['status'];
 export type EventType = Event['type'];
 export type TalentType = Talent['type'];
-export type UserRole = User['role'];
-export type AccountStatus = User['accountStatus'];
+export type UserRole = Profile['role'];
+export type AccountStatus = Profile['accountStatus'];
 export type SystemHealthStatus = SystemHealth['status'];
 
 // ============ API ENDPOINT OPERATIONS ============
@@ -453,7 +453,7 @@ export interface ApiOperations {
 
   // Event operations
   listEvents: (filters?: EventFilters) => Promise<Event[]>;
-  createEvent: (cruiseId: number, data: CreateEventRequest) => Promise<Event>;
+  createEvent: (tripId: number, data: CreateEventRequest) => Promise<Event>;
   updateEvent: (id: number, data: UpdateEventRequest) => Promise<Event>;
   deleteEvent: (id: number) => Promise<void>;
   bulkCreateUpdateEvents: (data: BulkEventsRequest) => Promise<{ success: boolean; events: Event[] }>;
@@ -463,7 +463,7 @@ export interface ApiOperations {
 
   // Admin operations
   getAdminCruises: (filters?: TripFilters) => Promise<PaginationResponse<Trip>>;
-  getCruiseStats: () => Promise<CruiseStats>;
+  getTripStats: () => Promise<TripStats>;
   getDashboardStats: (request: DashboardStatsRequest) => Promise<DashboardStats>;
   getSystemHealth: (detailed?: boolean) => Promise<SystemHealth>;
 
@@ -472,16 +472,4 @@ export interface ApiOperations {
   getApiVersions: () => Promise<ApiVersions>;
 }
 
-// Re-export all types for convenience
-export type {
-  Trip,
-  Event,
-  Talent,
-  Port,
-  User,
-  ApiResponse,
-  ErrorResponse,
-  PaginationResponse,
-  SearchResult,
-  CompleteTripInfo
-};
+// Types are already exported as interfaces above, no need for re-export
