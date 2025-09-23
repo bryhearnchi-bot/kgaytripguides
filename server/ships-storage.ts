@@ -9,7 +9,7 @@ import { eq, ilike, or, and, sql } from "drizzle-orm";
 export const shipStorage = {
   // Get all ships
   async getAll() {
-    return await db.select().from(schema.ships).orderBy(ships.cruiseLine, ships.name);
+    return await db.select().from(schema.ships).orderBy(schema.ships.cruiseLine, schema.ships.name);
   },
 
   // Get ship by ID
@@ -31,7 +31,7 @@ export const shipStorage = {
           ilike(schema.ships.shipClass, searchPattern)
         )
       )
-      .orderBy(ships.cruiseLine, ships.name);
+      .orderBy(schema.ships.cruiseLine, schema.ships.name);
   },
 
   // Get ships by cruise line
@@ -40,7 +40,7 @@ export const shipStorage = {
       .select()
       .from(schema.ships)
       .where(eq(schema.ships.cruiseLine, cruiseLine))
-      .orderBy(ships.name);
+      .orderBy(schema.ships.name);
   },
 
   // Create a new ship
@@ -79,11 +79,11 @@ export const shipStorage = {
     const totalShips = await db.select({ count: sql<number>`count(*)` }).from(schema.ships);
     const shipsByCruiseLine = await db
       .select({
-        cruiseLine: ships.cruiseLine,
+        cruiseLine: schema.ships.cruiseLine,
         count: sql<number>`count(*)`,
       })
       .from(schema.ships)
-      .groupBy(ships.cruiseLine);
+      .groupBy(schema.ships.cruiseLine);
 
     const shipsWithCruises = await db.execute(
       sql`

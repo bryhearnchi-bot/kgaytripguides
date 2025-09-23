@@ -1,10 +1,12 @@
 import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
 
 // Load environment variables only for development
-if (process.env.NODE_ENV !== 'production') {
-  const { config } = await import('dotenv');
-  config();
-}
+(async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    const { config } = await import('dotenv');
+    config();
+  }
+})();
 import type {
   Profile,
   InsertProfile,
@@ -101,20 +103,29 @@ if (process.env.USE_MOCK_DATA === 'true') {
       // Initialize optimized connection with connection pooling
       // Optimized for Supabase transaction pooler (port 6543)
       optimizedConnection = OptimizedDatabaseConnection.getInstance();
-      db = await optimizedConnection.initialize(process.env.DATABASE_URL!, {
-        max: 10,                   // Reduced for transaction pooler compatibility
-        min: 2,                    // Lower minimum to avoid idle connections
-        idleTimeout: 60,           // 1 minute idle timeout (shorter for serverless)
-        connectTimeout: 10,        // 10 seconds connect timeout
-        maxLifetime: 600,          // 10 minutes max connection lifetime
-        statementCacheSize: 100,   // Moderate statement cache
-        applicationName: `kgay-travel-guides-${process.env.NODE_ENV || 'development'}`
-      });
 
-      // Initialize batch query builder for N+1 query prevention
-      batchQueryBuilder = new BatchQueryBuilder(db);
+      // Wrap async initialization in IIFE
+      (async () => {
+        try {
+          db = await optimizedConnection.initialize(process.env.DATABASE_URL!, {
+            max: 10,                   // Reduced for transaction pooler compatibility
+            min: 2,                    // Lower minimum to avoid idle connections
+            idleTimeout: 60,           // 1 minute idle timeout (shorter for serverless)
+            connectTimeout: 10,        // 10 seconds connect timeout
+            maxLifetime: 600,          // 10 minutes max connection lifetime
+            statementCacheSize: 100,   // Moderate statement cache
+            applicationName: `kgay-travel-guides-${process.env.NODE_ENV || 'development'}`
+          });
 
-      console.log(`✅ Optimized database connected with connection pooling`);
+          // Initialize batch query builder for N+1 query prevention
+          batchQueryBuilder = new BatchQueryBuilder(db);
+
+          console.log(`✅ Optimized database connected with connection pooling`);
+        } catch (initError) {
+          console.error('❌ Database initialization failed:', initError);
+          throw initError;
+        }
+      })();
 
       // Warm up caches with frequently accessed data
       // TODO: Re-enable once schema issue is resolved
