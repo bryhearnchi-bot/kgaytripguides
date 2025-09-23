@@ -79,6 +79,7 @@ export interface TripData {
 }
 
 // Transform database data to match the existing component format
+// v2.0: Phase 4 migration - using location fields instead of port fields
 export function transformTripData(data: TripData) {
   // Transform itinerary
   const itinerary = data.itinerary.map(stop => ({
