@@ -29,6 +29,11 @@ if (process.env.NODE_ENV === 'production') {
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../shared/schema';
+// Local aliases to avoid long schema prefix and maintain backward compatibility
+const talentCategories = schema.talentCategories;
+const settings = schema.settings;
+const tripInfoSections = schema.tripInfoSections;
+const talent = schema.talent;
 import { OptimizedDatabaseConnection, BatchQueryBuilder } from './storage/OptimizedStorage';
 import { cacheManager, CacheManager, Cacheable, CacheInvalidate } from './cache/CacheManager';
 

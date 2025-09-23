@@ -1,11 +1,12 @@
 import type { Express } from "express";
 import {
   talentStorage,
-  db,
-  talentCategories
+  db
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import * as schema from "../../shared/schema";
+const talentCategories = schema.talentCategories;
+const talent = schema.talent;
 import { eq, ilike, or, count, sql, asc, and } from "drizzle-orm";
 import { upload, getPublicImageUrl, deleteImage, isValidImageUrl, uploadToCloudinary } from "../image-utils";
 import {
