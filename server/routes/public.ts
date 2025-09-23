@@ -8,7 +8,7 @@ import {
   db
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
-import { trips, events, talent, locations } from "../../shared/schema";
+import * as schema from "../../shared/schema";
 import { eq, ilike, or, count, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -58,7 +58,7 @@ export function registerPublicRoutes(app: Express) {
               upcoming: sql<number>`COUNT(CASE WHEN start_date > CURRENT_DATE THEN 1 END)`,
               active: sql<number>`COUNT(CASE WHEN start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE THEN 1 END)`,
               past: sql<number>`COUNT(CASE WHEN end_date < CURRENT_DATE THEN 1 END)`
-            }).from(trips);
+            }).from(schema.trips);
             stats.trips = tripStats[0];
           } catch (err) {
             console.error('Error fetching trip stats:', err);
@@ -69,7 +69,7 @@ export function registerPublicRoutes(app: Express) {
         if (metrics.includes('events')) {
           const eventStats = await db.select({
             total: count()
-          }).from(events);
+          }).from(schema.events);
           stats.events = eventStats[0];
         }
 
@@ -77,14 +77,14 @@ export function registerPublicRoutes(app: Express) {
           const talentStats = await db.select({
             total: count(),
             featured: sql<number>`COUNT(CASE WHEN featured = true THEN 1 END)`
-          }).from(talent);
+          }).from(schema.talent);
           stats.talent = talentStats[0];
         }
 
         if (metrics.includes('locations')) {
           const locationStats = await db.select({
             total: count()
-          }).from(locations);
+          }).from(schema.locations);
           stats.locations = locationStats[0];
         }
 
@@ -112,7 +112,7 @@ export function registerPublicRoutes(app: Express) {
         if (detailed === 'true') {
           // Database health check
           try {
-            await db.select({ test: sql`1` }).from(trips).limit(1);
+            await db.select({ test: sql`1` }).from(schema.trips).limit(1);
             health.database = { status: 'connected' };
           } catch (error) {
             health.database = { status: 'disconnected', error: (error as Error).message };
@@ -169,11 +169,11 @@ export function registerPublicRoutes(app: Express) {
         // Search trips
         if (searchTypes.includes('trips')) {
           const tripResults = await db.select()
-            .from(trips)
+            .from(schema.trips)
             .where(
               or(
-                ilike(trips.name, `%${searchTerm}%`),
-                ilike(trips.description, `%${searchTerm}%`)
+                ilike(schema.trips.name, `%${searchTerm}%`),
+                ilike(schema.trips.description, `%${searchTerm}%`)
               )
             )
             .limit(limitNum);
@@ -183,11 +183,11 @@ export function registerPublicRoutes(app: Express) {
         // Search events
         if (searchTypes.includes('events')) {
           const eventResults = await db.select()
-            .from(events)
+            .from(schema.events)
             .where(
               or(
-                ilike(events.title, `%${searchTerm}%`),
-                ilike(events.description, `%${searchTerm}%`)
+                ilike(schema.events.title, `%${searchTerm}%`),
+                ilike(schema.events.description, `%${searchTerm}%`)
               )
             )
             .limit(limitNum);
@@ -197,11 +197,11 @@ export function registerPublicRoutes(app: Express) {
         // Search talent
         if (searchTypes.includes('talent')) {
           const talentResults = await db.select()
-            .from(talent)
+            .from(schema.talent)
             .where(
               or(
-                ilike(talent.name, `%${searchTerm}%`),
-                ilike(talent.bio, `%${searchTerm}%`)
+                ilike(schema.talent.name, `%${searchTerm}%`),
+                ilike(schema.talent.bio, `%${searchTerm}%`)
               )
             )
             .limit(limitNum);
@@ -211,11 +211,11 @@ export function registerPublicRoutes(app: Express) {
         // Search locations
         if (searchTypes.includes('locations')) {
           const locationResults = await db.select()
-            .from(locations)
+            .from(schema.locations)
             .where(
               or(
-                ilike(locations.name, `%${searchTerm}%`),
-                ilike(locations.description, `%${searchTerm}%`)
+                ilike(schema.locations.name, `%${searchTerm}%`),
+                ilike(schema.locations.description, `%${searchTerm}%`)
               )
             )
             .limit(limitNum);

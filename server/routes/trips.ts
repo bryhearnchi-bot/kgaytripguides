@@ -8,7 +8,7 @@ import {
   db
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, requireTripAdmin, type AuthenticatedRequest } from "../auth";
-import { trips, cruiseInfoSections, events } from "../../shared/schema";
+import * as schema from "../../shared/schema";
 import { eq, ilike, or, count, sql } from "drizzle-orm";
 import {
   validateBody,
@@ -219,34 +219,34 @@ export function registerTripRoutes(app: Express) {
       const limitNum = parseInt(limit as string);
       const offset = (pageNum - 1) * limitNum;
 
-      let query = db.select().from(trips);
+      let query = db.select().from(schema.trips);
 
       // Apply filters
       if (search) {
         query = query.where(
           or(
-            ilike(trips.name, `%${search}%`),
-            ilike(trips.slug, `%${search}%`)
+            ilike(schema.trips.name, `%${search}%`),
+            ilike(schema.trips.slug, `%${search}%`)
           )
         ) as typeof query;
       }
 
       if (status) {
-        query = query.where(eq(trips.status, status as any)) as typeof query;
+        query = query.where(eq(schema.trips.status, status as any)) as typeof query;
       }
 
       // Get total count
-      const countQuery = db.select({ count: count() }).from(trips);
+      const countQuery = db.select({ count: count() }).from(schema.trips);
       if (search) {
         countQuery.where(
           or(
-            ilike(trips.name, `%${search}%`),
-            ilike(trips.slug, `%${search}%`)
+            ilike(schema.trips.name, `%${search}%`),
+            ilike(schema.trips.slug, `%${search}%`)
           )
         );
       }
       if (status) {
-        countQuery.where(eq(trips.status, status as any));
+        countQuery.where(eq(schema.trips.status, status as any));
       }
 
       const [{ count: total }] = await countQuery;
@@ -324,7 +324,7 @@ export function registerTripRoutes(app: Express) {
         totalCapacity: sql<number>`SUM(max_capacity)`,
         totalBookings: sql<number>`SUM(current_bookings)`,
         avgOccupancy: sql<number>`AVG(CASE WHEN max_capacity > 0 THEN (current_bookings::float / max_capacity * 100) ELSE 0 END)`
-      }).from(trips);
+      }).from(schema.trips);
 
       res.json(stats[0]);
     } catch (error) {
@@ -501,8 +501,8 @@ export function registerTripRoutes(app: Express) {
     try {
       const stats = await db.select({
         total: count(),
-        byType: sql<any>`json_object_agg(type, type_count) FROM (SELECT type, COUNT(*) as type_count FROM ${events} GROUP BY type) t`
-      }).from(events);
+        byType: sql<any>`json_object_agg(type, type_count) FROM (SELECT type, COUNT(*) as type_count FROM ${schema.events} GROUP BY type) t`
+      }).from(schema.events);
 
       res.json(stats[0] || { total: 0, byType: {} });
     } catch (error) {
@@ -523,15 +523,15 @@ export function registerTripRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(events);
+      let query = db.select().from(schema.events);
 
       // Apply filters
       const conditions = [];
       if (cruiseId) {
-        conditions.push(eq(events.cruiseId, cruiseId as string));
+        conditions.push(eq(schema.events.cruiseId, cruiseId as string));
       }
       if (type) {
-        conditions.push(eq(events.type, type as any));
+        conditions.push(eq(schema.events.type, type as any));
       }
 
       if (conditions.length > 0) {
@@ -617,8 +617,8 @@ export function registerTripRoutes(app: Express) {
   app.get("/api/cruises/:cruiseId/info-sections", async (req, res) => {
     try {
       const sections = await db.select()
-        .from(cruiseInfoSections)
-        .where(eq(cruiseInfoSections.cruiseId, req.params.cruiseId));
+        .from(schema.tripInfoSections)
+        .where(eq(schema.tripInfoSections.tripId, req.params.cruiseId));
       res.json(sections);
     } catch (error) {
       console.error('Error fetching info sections:', error);
@@ -629,9 +629,9 @@ export function registerTripRoutes(app: Express) {
   // Create info section
   app.post("/api/cruises/:cruiseId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const [section] = await db.insert(cruiseInfoSections).values({
+      const [section] = await db.insert(schema.tripInfoSections).values({
         ...req.body,
-        cruiseId: req.params.cruiseId
+        tripId: req.params.cruiseId
       }).returning();
       res.json(section);
     } catch (error) {
@@ -643,9 +643,9 @@ export function registerTripRoutes(app: Express) {
   // Update info section
   app.put("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const [section] = await db.update(cruiseInfoSections)
+      const [section] = await db.update(schema.tripInfoSections)
         .set(req.body)
-        .where(eq(cruiseInfoSections.id, req.params.id))
+        .where(eq(schema.tripInfoSections.id, req.params.id))
         .returning();
 
       if (!section) {
@@ -662,8 +662,8 @@ export function registerTripRoutes(app: Express) {
   // Delete info section
   app.delete("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      await db.delete(cruiseInfoSections)
-        .where(eq(cruiseInfoSections.id, req.params.id));
+      await db.delete(schema.tripInfoSections)
+        .where(eq(schema.tripInfoSections.id, req.params.id));
       res.json({ message: 'Info section deleted' });
     } catch (error) {
       console.error('Error deleting info section:', error);
