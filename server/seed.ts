@@ -1,4 +1,4 @@
-import { db, cruises, itinerary, events, talent } from './storage';
+import { db, schema } from './storage';
 import { eq } from 'drizzle-orm';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../client/src/data/mock-data';
@@ -19,7 +19,7 @@ async function seedDatabase() {
 
   try {
     // Check if Greek cruise already exists
-    const existingCruise = await db.select().from(cruises).where(eq(cruises.slug, useMockData ? 'mock-cruise-2024' : 'greek-isles-2025'));
+    const existingCruise = await db.select().from(schema.trips).where(eq(cruises.slug, useMockData ? 'mock-cruise-2024' : 'greek-isles-2025'));
     
     if (existingCruise.length > 0) {
       console.log('✅ Cruise already exists, skipping seed...');
@@ -28,7 +28,7 @@ async function seedDatabase() {
     }
     // Create the cruise
     console.log(useMockData ? 'Creating mock test cruise...' : 'Creating Greek Isles cruise...');
-    const [cruise] = await db.insert(cruises).values({
+    const [cruise] = await db.insert(schema.trips).values({
       name: useMockData ? 'Mock Test Cruise' : 'Greek Isles Atlantis Cruise',
       slug: useMockData ? 'mock-cruise-2024' : 'greek-isles-2025',
       shipName: useMockData ? 'Test Ship' : 'Virgin Resilient Lady',
@@ -69,7 +69,7 @@ async function seedDatabase() {
       const [year, month, day] = stop.key.split('-').map(Number);
       const stopDate = new Date(year, month - 1, day);
 
-      return db.insert(itinerary).values({
+      return db.insert(schema.itinerary).values({
         cruiseId: cruise.id,
         date: stopDate,
         day: index + 1,
@@ -99,7 +99,7 @@ async function seedDatabase() {
     const talentMap = new Map();
     
     for (const t of selectedTalent) {
-      const [talentRecord] = await db.insert(talent).values({
+      const [talentRecord] = await db.insert(schema.talent).values({
         name: t.name,
         category: t.cat,
         bio: t.bio,
@@ -135,7 +135,7 @@ async function seedDatabase() {
           themeDesc = theme?.desc || null;
         }
 
-        await db.insert(events).values({
+        await db.insert(schema.events).values({
           cruiseId: cruise.id,
           date: eventDate,
           time: item.time,

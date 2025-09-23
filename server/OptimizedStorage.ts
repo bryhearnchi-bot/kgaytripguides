@@ -4,7 +4,7 @@
 // ===============================================
 
 import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
-import { db, cruises, events, talent, cruiseTalent, itinerary, ships, parties, ports, eventTalent } from './storage';
+import { db, schema } from './storage';
 import type { Trip, Event, Talent, Itinerary } from '../shared/schema';
 
 // ============ OPTIMIZED TRIP OPERATIONS ============
@@ -21,9 +21,9 @@ export class OptimizedTripStorage {
         trip: cruises,
         ship: ships
       })
-        .from(cruises)
-        .leftJoin(ships, eq(cruises.shipId, ships.id))
-        .where(eq(cruises.id, tripId))
+        .from(schema.trips)
+        .leftJoin(ships, eq(schema.trips.shipId, ships.id))
+        .where(eq(schema.trips.id, tripId))
         .then(results => results[0]),
 
       // Events with party information (optimized join)
@@ -31,9 +31,9 @@ export class OptimizedTripStorage {
         event: events,
         party: parties
       })
-        .from(events)
-        .leftJoin(parties, eq(events.party_id, parties.id))
-        .where(eq(events.cruiseId, tripId))
+        .from(schema.events)
+        .leftJoin(parties, eq(schema.events.party_id, parties.id))
+        .where(eq(schema.events.cruiseId, tripId))
         .orderBy(asc(events.date), asc(events.time)),
 
       // Itinerary with port information (optimized join)
@@ -41,9 +41,9 @@ export class OptimizedTripStorage {
         itinerary: itinerary,
         port: ports
       })
-        .from(itinerary)
-        .leftJoin(ports, eq(itinerary.port_id, ports.id))
-        .where(eq(itinerary.cruiseId, tripId))
+        .from(schema.itinerary)
+        .leftJoin(ports, eq(schema.itinerary.port_id, ports.id))
+        .where(eq(schema.itinerary.cruiseId, tripId))
         .orderBy(asc(itinerary.orderIndex)),
 
       // Talent with role information (optimized join)
@@ -51,9 +51,9 @@ export class OptimizedTripStorage {
         talent: talent,
         cruiseTalent: cruiseTalent
       })
-        .from(talent)
+        .from(schema.talent)
         .innerJoin(cruiseTalent, eq(talent.id, cruiseTalent.talentId))
-        .where(eq(cruiseTalent.cruiseId, tripId))
+        .where(eq(schema.tripTalent.cruiseId, tripId))
         .orderBy(asc(talent.name))
     ]);
 
@@ -87,14 +87,14 @@ export class OptimizedTripStorage {
     let query = db.select({
       trip: cruises,
       ship: ships,
-      eventCount: db.$count(events, eq(events.cruiseId, cruises.id)),
-      talentCount: db.$count(cruiseTalent, eq(cruiseTalent.cruiseId, cruises.id))
+      eventCount: db.$count(events, eq(schema.events.cruiseId, cruises.id)),
+      talentCount: db.$count(cruiseTalent, eq(schema.tripTalent.cruiseId, cruises.id))
     })
-      .from(cruises)
-      .leftJoin(ships, eq(cruises.shipId, ships.id));
+      .from(schema.trips)
+      .leftJoin(ships, eq(schema.trips.shipId, ships.id));
 
     if (status) {
-      query = query.where(eq(cruises.status, status));
+      query = query.where(eq(schema.trips.status, status));
     }
 
     query = query.orderBy(desc(cruises.startDate));
@@ -116,17 +116,17 @@ export class OptimizedTripStorage {
         trip: cruises,
         ship: ships
       })
-        .from(cruises)
-        .leftJoin(ships, eq(cruises.shipId, ships.id))
-        .where(inArray(cruises.id, tripIds)),
+        .from(schema.trips)
+        .leftJoin(ships, eq(schema.trips.shipId, ships.id))
+        .where(inArray(schema.trips.id, tripIds)),
 
       // All events for these trips
       db.select({
         event: events,
         party: parties
       })
-        .from(events)
-        .leftJoin(parties, eq(events.party_id, parties.id))
+        .from(schema.events)
+        .leftJoin(parties, eq(schema.events.party_id, parties.id))
         .where(inArray(events.cruiseId, tripIds))
         .orderBy(asc(events.date), asc(events.time)),
 
@@ -135,9 +135,9 @@ export class OptimizedTripStorage {
         itinerary: itinerary,
         port: ports
       })
-        .from(itinerary)
-        .leftJoin(ports, eq(itinerary.port_id, ports.id))
-        .where(inArray(itinerary.cruiseId, tripIds))
+        .from(schema.itinerary)
+        .leftJoin(ports, eq(schema.itinerary.port_id, ports.id))
+        .where(inArray(schema.itinerary.cruiseId, tripIds))
         .orderBy(asc(itinerary.orderIndex)),
 
       // All talent for these trips
@@ -145,7 +145,7 @@ export class OptimizedTripStorage {
         talent: talent,
         cruiseTalent: cruiseTalent
       })
-        .from(talent)
+        .from(schema.talent)
         .innerJoin(cruiseTalent, eq(talent.id, cruiseTalent.talentId))
         .where(inArray(cruiseTalent.cruiseId, tripIds))
         .orderBy(asc(talent.name))
@@ -209,9 +209,9 @@ export class OptimizedEventStorage {
       // Get talent count for each event
       talentCount: db.$count(eventTalent, eq(eventTalent.event_id, events.id))
     })
-      .from(events)
-      .leftJoin(parties, eq(events.party_id, parties.id))
-      .where(eq(events.cruiseId, cruiseId))
+      .from(schema.events)
+      .leftJoin(parties, eq(schema.events.party_id, parties.id))
+      .where(eq(schema.events.cruiseId, cruiseId))
       .orderBy(asc(events.date), asc(events.time));
 
     // Batch load talent for all events
@@ -220,7 +220,7 @@ export class OptimizedEventStorage {
       eventTalent: eventTalent,
       talent: talent
     })
-      .from(eventTalent)
+      .from(schema.eventTalent)
       .innerJoin(talent, eq(eventTalent.talent_id, talent.id))
       .where(inArray(eventTalent.event_id, eventIds))
       .orderBy(asc(eventTalent.performance_order)) : [];
@@ -251,12 +251,12 @@ export class OptimizedEventStorage {
     let query = db.select({
       event: events,
       party: parties
-    }).from(events).leftJoin(parties, eq(events.party_id, parties.id));
+    }).from(schema.events).leftJoin(parties, eq(schema.events.party_id, parties.id));
 
     const conditions = [];
 
     if (cruiseId) {
-      conditions.push(eq(events.cruiseId, cruiseId));
+      conditions.push(eq(schema.events.cruiseId, cruiseId));
     }
 
     if (searchTerm) {
@@ -267,7 +267,7 @@ export class OptimizedEventStorage {
     }
 
     if (eventType) {
-      conditions.push(eq(events.type, eventType));
+      conditions.push(eq(schema.events.type, eventType));
     }
 
     if (conditions.length > 0) {
@@ -286,10 +286,10 @@ export class OptimizedTalentStorage {
   async getTalentWithStats() {
     return await db.select({
       talent: talent,
-      cruiseCount: db.$count(cruiseTalent, eq(cruiseTalent.talentId, talent.id)),
+      cruiseCount: db.$count(cruiseTalent, eq(schema.tripTalent.talentId, talent.id)),
       eventCount: db.$count(eventTalent, eq(eventTalent.talent_id, talent.id))
     })
-      .from(talent)
+      .from(schema.talent)
       .orderBy(asc(talent.name));
   }
 
@@ -299,8 +299,8 @@ export class OptimizedTalentStorage {
   async searchTalentOptimized(searchTerm?: string, category?: string) {
     let query = db.select({
       talent: talent,
-      cruiseCount: db.$count(cruiseTalent, eq(cruiseTalent.talentId, talent.id))
-    }).from(talent);
+      cruiseCount: db.$count(cruiseTalent, eq(schema.tripTalent.talentId, talent.id))
+    }).from(schema.talent);
 
     const conditions = [];
 
@@ -331,8 +331,8 @@ export class OptimizedTalentStorage {
         cruiseTalent: cruiseTalent,
         cruise: cruises
       })
-        .from(cruiseTalent)
-        .innerJoin(cruises, eq(cruiseTalent.cruiseId, cruises.id))
+        .from(schema.tripTalent)
+        .innerJoin(cruises, eq(schema.tripTalent.cruiseId, cruises.id))
         .where(inArray(cruiseTalent.talentId, talentIds))
         .orderBy(desc(cruises.startDate)),
 
@@ -340,7 +340,7 @@ export class OptimizedTalentStorage {
         eventTalent: eventTalent,
         event: events
       })
-        .from(eventTalent)
+        .from(schema.eventTalent)
         .innerJoin(events, eq(eventTalent.event_id, events.id))
         .where(inArray(eventTalent.talent_id, talentIds))
         .orderBy(asc(events.date))
@@ -391,7 +391,7 @@ export class OptimizedAdminStorage {
         date: events.date,
         cruise_id: events.cruiseId
       })
-        .from(events)
+        .from(schema.events)
         .orderBy(desc(events.date))
         .limit(limit),
 
@@ -402,7 +402,7 @@ export class OptimizedAdminStorage {
         date: talent.createdAt,
         cruise_id: db.sql`NULL`.as('cruise_id')
       })
-        .from(talent)
+        .from(schema.talent)
         .orderBy(desc(talent.createdAt))
         .limit(limit),
 
@@ -413,7 +413,7 @@ export class OptimizedAdminStorage {
         date: cruises.startDate,
         cruise_id: cruises.id
       })
-        .from(cruises)
+        .from(schema.trips)
         .orderBy(desc(cruises.startDate))
         .limit(limit)
     ]);

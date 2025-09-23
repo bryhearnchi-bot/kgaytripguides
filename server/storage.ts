@@ -184,21 +184,9 @@ export async function warmUpCaches() {
   }
 }
 
-// Export all schema tables for easy access
-export const {
-  profiles,
-  users,
-  trips,
-  cruises,
-  itinerary,
-  events,
-  talent,
-  talentCategories,
-  settings,
-  cruiseTalent,
-  tripInfoSections,
-  locations
-} = schema;
+// Export schema namespace instead of destructuring to avoid initialization issues
+// DO NOT destructure schema tables - it causes initialization errors in production
+export { schema };
 
 // Performance monitoring endpoint
 export async function getPerformanceMetrics() {
@@ -473,24 +461,24 @@ export class ItineraryStorage implements IItineraryStorage {
 
     const result = await optimizedConnection.executeWithMetrics(
       () => db.select({
-        id: itinerary.id,
-        tripId: itinerary.tripId,
-        date: itinerary.date,
-        day: itinerary.day,
-        arrivalTime: itinerary.arrivalTime,
-        departureTime: itinerary.departureTime,
-        allAboardTime: itinerary.allAboardTime,
-        portImageUrl: itinerary.portImageUrl,
-        description: itinerary.description,
-        highlights: itinerary.highlights,
-        orderIndex: itinerary.orderIndex,
-        segment: itinerary.segment,
-        locationId: itinerary.locationId,
-        locationTypeId: itinerary.locationTypeId,
+        id: schema.itinerary.id,
+        tripId: schema.itinerary.tripId,
+        date: schema.itinerary.date,
+        day: schema.itinerary.day,
+        arrivalTime: schema.itinerary.arrivalTime,
+        departureTime: schema.itinerary.departureTime,
+        allAboardTime: schema.itinerary.allAboardTime,
+        portImageUrl: schema.itinerary.portImageUrl,
+        description: schema.itinerary.description,
+        highlights: schema.itinerary.highlights,
+        orderIndex: schema.itinerary.orderIndex,
+        segment: schema.itinerary.segment,
+        locationId: schema.itinerary.locationId,
+        locationTypeId: schema.itinerary.locationTypeId,
       })
-        .from(itinerary)
-        .where(eq(itinerary.tripId, cruiseId))
-        .orderBy(asc(itinerary.orderIndex)),
+        .from(schema.itinerary)
+        .where(eq(schema.itinerary.tripId, cruiseId))
+        .orderBy(asc(schema.itinerary.orderIndex)),
       `getItineraryByCruise(${cruiseId})`
     );
 
@@ -526,21 +514,21 @@ export class ItineraryStorage implements IItineraryStorage {
       delete (values as any).portName;
     }
 
-    const result = await db.insert(itinerary).values(values).returning({
-      id: itinerary.id,
-      tripId: itinerary.tripId,
-      date: itinerary.date,
-      day: itinerary.day,
-      arrivalTime: itinerary.arrivalTime,
-      departureTime: itinerary.departureTime,
-      allAboardTime: itinerary.allAboardTime,
-      portImageUrl: itinerary.portImageUrl,
-      description: itinerary.description,
-      highlights: itinerary.highlights,
-      orderIndex: itinerary.orderIndex,
-      segment: itinerary.segment,
-      locationId: itinerary.locationId,
-      locationTypeId: itinerary.locationTypeId,
+    const result = await db.insert(schema.itinerary).values(values).returning({
+      id: schema.itinerary.id,
+      tripId: schema.itinerary.tripId,
+      date: schema.itinerary.date,
+      day: schema.itinerary.day,
+      arrivalTime: schema.itinerary.arrivalTime,
+      departureTime: schema.itinerary.departureTime,
+      allAboardTime: schema.itinerary.allAboardTime,
+      portImageUrl: schema.itinerary.portImageUrl,
+      description: schema.itinerary.description,
+      highlights: schema.itinerary.highlights,
+      orderIndex: schema.itinerary.orderIndex,
+      segment: schema.itinerary.segment,
+      locationId: schema.itinerary.locationId,
+      locationTypeId: schema.itinerary.locationTypeId,
     });
     return result[0] as any;
   }
@@ -567,9 +555,9 @@ export class ItineraryStorage implements IItineraryStorage {
       delete (updates as any).portName;
     }
 
-    const result = await db.update(itinerary)
+    const result = await db.update(schema.itinerary)
       .set(updates)
-      .where(eq(itinerary.id, id))
+      .where(eq(schema.itinerary.id, id))
       .returning({
         id: itinerary.id,
         tripId: itinerary.tripId,
@@ -590,7 +578,7 @@ export class ItineraryStorage implements IItineraryStorage {
   }
 
   async deleteItineraryStop(id: number): Promise<void> {
-    await db.delete(itinerary).where(eq(itinerary.id, id));
+    await db.delete(schema.itinerary).where(eq(schema.itinerary.id, id));
   }
 }
 
@@ -612,8 +600,8 @@ export class EventStorage implements IEventStorage {
 
     const result = await optimizedConnection.executeWithMetrics(
       () => db.select()
-        .from(events)
-        .where(eq(events.tripId, cruiseId))
+        .from(schema.events)
+        .where(eq(schema.events.tripId, cruiseId))
         .orderBy(asc(events.date), asc(events.time)),
       `getEventsByCruise(${cruiseId})`
     );
@@ -624,15 +612,15 @@ export class EventStorage implements IEventStorage {
 
   async getEventsByDate(cruiseId: number, date: Date): Promise<Event[]> {
     return await db.select()
-      .from(events)
-      .where(and(eq(events.tripId, cruiseId), eq(events.date, date)))
+      .from(schema.events)
+      .where(and(eq(schema.events.tripId, cruiseId), eq(schema.events.date, date)))
       .orderBy(asc(events.time));
   }
 
   async getEventsByType(cruiseId: number, type: string): Promise<Event[]> {
     return await db.select()
-      .from(events)
-      .where(and(eq(events.tripId, cruiseId), eq(events.type, type)))
+      .from(schema.events)
+      .where(and(eq(schema.events.tripId, cruiseId), eq(schema.events.type, type)))
       .orderBy(asc(events.date), asc(events.time));
   }
 
@@ -644,7 +632,7 @@ export class EventStorage implements IEventStorage {
     }
 
     const result = await optimizedConnection.executeWithMetrics(
-      () => db.insert(events).values(event).returning(),
+      () => db.insert(schema.events).values(event).returning(),
       'createEvent'
     );
     return result[0];
@@ -656,9 +644,9 @@ export class EventStorage implements IEventStorage {
     await cacheManager.delete('events', CacheManager.keys.event(id));
 
     const result = await optimizedConnection.executeWithMetrics(
-      () => db.update(events)
+      () => db.update(schema.events)
         .set({ ...event, updatedAt: new Date() })
-        .where(eq(events.id, id))
+        .where(eq(schema.events.id, id))
         .returning(),
       `updateEvent(${id})`
     );
@@ -671,7 +659,7 @@ export class EventStorage implements IEventStorage {
     await cacheManager.delete('events', CacheManager.keys.event(id));
 
     await optimizedConnection.executeWithMetrics(
-      () => db.delete(events).where(eq(events.id, id)),
+      () => db.delete(schema.events).where(eq(schema.events.id, id)),
       `deleteEvent(${id})`
     );
   }
@@ -713,8 +701,8 @@ export class TalentStorage implements ITalentStorage {
       updatedAt: talent.updatedAt,
       category: talentCategories.category,
     })
-    .from(talent)
-    .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id))
+    .from(schema.talent)
+    .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id))
     .orderBy(asc(talent.name));
 
     return results as TalentWithCategory[];
@@ -734,9 +722,9 @@ export class TalentStorage implements ITalentStorage {
       updatedAt: talent.updatedAt,
       category: talentCategories.category,
     })
-    .from(talent)
-    .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id))
-    .where(eq(talent.id, id));
+    .from(schema.talent)
+    .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id))
+    .where(eq(schema.talent.id, id));
 
     return result[0] as TalentWithCategory | undefined;
   }
@@ -756,10 +744,10 @@ export class TalentStorage implements ITalentStorage {
       updatedAt: talent.updatedAt,
       category: talentCategories.category,
     })
-      .from(talent)
-      .innerJoin(cruiseTalent, eq(talent.id, cruiseTalent.talentId))
-      .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id))
-      .where(eq(cruiseTalent.cruiseId, cruiseId))
+      .from(schema.talent)
+      .innerJoin(cruiseTalent, eq(schema.talent.id, cruiseTalent.talentId))
+      .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id))
+      .where(eq(schema.tripTalent.cruiseId, cruiseId))
       .orderBy(asc(talent.name));
     return result as TalentWithCategory[];
   }
@@ -780,7 +768,7 @@ export class TalentStorage implements ITalentStorage {
 
     // Add category filter
     if (categoryId) {
-      conditions.push(eq(talent.talentCategoryId, categoryId));
+      conditions.push(eq(schema.talent.talentCategoryId, categoryId));
     }
 
     // Build the query with optional conditions
@@ -797,8 +785,8 @@ export class TalentStorage implements ITalentStorage {
       updatedAt: talent.updatedAt,
       category: talentCategories.category,
     })
-    .from(talent)
-    .leftJoin(talentCategories, eq(talent.talentCategoryId, talentCategories.id));
+    .from(schema.talent)
+    .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id));
 
     if (conditions.length > 0) {
       query = query.where(conditions.length === 1 ? conditions[0] : and(...conditions)) as typeof query;
@@ -809,24 +797,24 @@ export class TalentStorage implements ITalentStorage {
   }
 
   async createTalent(talentData: Omit<Talent, 'id' | 'createdAt' | 'updatedAt'>): Promise<Talent> {
-    const result = await db.insert(talent).values(talentData).returning();
+    const result = await db.insert(schema.talent).values(talentData).returning();
     return result[0];
   }
 
   async updateTalent(id: number, talentData: Partial<Talent>): Promise<Talent | undefined> {
-    const result = await db.update(talent)
+    const result = await db.update(schema.talent)
       .set({ ...talentData, updatedAt: new Date() })
-      .where(eq(talent.id, id))
+      .where(eq(schema.talent.id, id))
       .returning();
     return result[0];
   }
 
   async deleteTalent(id: number): Promise<void> {
-    await db.delete(talent).where(eq(talent.id, id));
+    await db.delete(schema.talent).where(eq(schema.talent.id, id));
   }
 
   async assignTalentToCruise(cruiseId: number, talentId: number, role?: string): Promise<void> {
-    await db.insert(cruiseTalent).values({
+    await db.insert(schema.tripTalent).values({
       cruiseId,
       talentId,
       role,
@@ -834,17 +822,17 @@ export class TalentStorage implements ITalentStorage {
   }
 
   async removeTalentFromCruise(cruiseId: number, talentId: number): Promise<void> {
-    await db.delete(cruiseTalent)
+    await db.delete(schema.tripTalent)
       .where(and(
-        eq(cruiseTalent.cruiseId, cruiseId),
-        eq(cruiseTalent.talentId, talentId)
+        eq(schema.tripTalent.cruiseId, cruiseId),
+        eq(schema.tripTalent.talentId, talentId)
       ));
   }
 
   // Talent category methods
   async getAllTalentCategories(): Promise<schema.TalentCategories[]> {
     return await db.select()
-      .from(talentCategories)
+      .from(schema.talentCategories)
       .orderBy(asc(talentCategories.category));
   }
 
@@ -858,14 +846,14 @@ export class TalentStorage implements ITalentStorage {
   async updateTalentCategory(id: number, category: string): Promise<schema.TalentCategories | undefined> {
     const result = await db.update(talentCategories)
       .set({ category, updatedAt: new Date() })
-      .where(eq(talentCategories.id, id))
+      .where(eq(schema.talentCategories.id, id))
       .returning();
     return result[0];
   }
 
   async deleteTalentCategory(id: number): Promise<void> {
     await db.delete(talentCategories)
-      .where(eq(talentCategories.id, id));
+      .where(eq(schema.talentCategories.id, id));
   }
 }
 
@@ -885,50 +873,50 @@ export interface ISettingsStorage {
 export class SettingsStorage implements ISettingsStorage {
   async getSettingsByCategory(category: string): Promise<Settings[]> {
     return await db.select()
-      .from(settings)
-      .where(eq(settings.category, category))
+      .from(schema.settings)
+      .where(eq(schema.settings.category, category))
       .orderBy(asc(settings.orderIndex), asc(settings.label));
   }
 
   async getSettingByCategoryAndKey(category: string, key: string): Promise<Settings | undefined> {
     const result = await db.select()
-      .from(settings)
-      .where(and(eq(settings.category, category), eq(settings.key, key)));
+      .from(schema.settings)
+      .where(and(eq(schema.settings.category, category), eq(schema.settings.key, key)));
     return result[0];
   }
 
   async getAllActiveSettingsByCategory(category: string): Promise<Settings[]> {
     return await db.select()
-      .from(settings)
+      .from(schema.settings)
       .where(and(
-        eq(settings.category, category), 
-        eq(settings.isActive, true)
+        eq(schema.settings.category, category), 
+        eq(schema.settings.isActive, true)
       ))
       .orderBy(asc(settings.orderIndex), asc(settings.label));
   }
 
   async createSetting(settingData: Omit<Settings, 'id' | 'createdAt' | 'updatedAt'>): Promise<Settings> {
-    const result = await db.insert(settings).values(settingData).returning();
+    const result = await db.insert(schema.settings).values(settingData).returning();
     return result[0];
   }
 
   async updateSetting(category: string, key: string, settingData: Partial<Settings>): Promise<Settings | undefined> {
-    const result = await db.update(settings)
+    const result = await db.update(schema.settings)
       .set({ ...settingData, updatedAt: new Date() })
-      .where(and(eq(settings.category, category), eq(settings.key, key)))
+      .where(and(eq(schema.settings.category, category), eq(schema.settings.key, key)))
       .returning();
     return result[0];
   }
 
   async deleteSetting(category: string, key: string): Promise<void> {
     await db.delete(settings)
-      .where(and(eq(settings.category, category), eq(settings.key, key)));
+      .where(and(eq(schema.settings.category, category), eq(schema.settings.key, key)));
   }
 
   async deactivateSetting(category: string, key: string): Promise<Settings | undefined> {
-    const result = await db.update(settings)
+    const result = await db.update(schema.settings)
       .set({ isActive: false, updatedAt: new Date() })
-      .where(and(eq(settings.category, category), eq(settings.key, key)))
+      .where(and(eq(schema.settings.category, category), eq(schema.settings.key, key)))
       .returning();
     return result[0];
   }
@@ -936,9 +924,9 @@ export class SettingsStorage implements ISettingsStorage {
   async reorderSettings(category: string, orderedKeys: string[]): Promise<void> {
     // Update order index for each setting in the category
     for (let i = 0; i < orderedKeys.length; i++) {
-      await db.update(settings)
+      await db.update(schema.settings)
         .set({ orderIndex: i, updatedAt: new Date() })
-        .where(and(eq(settings.category, category), eq(settings.key, orderedKeys[i])));
+        .where(and(eq(schema.settings.category, category), eq(schema.settings.key, orderedKeys[i])));
     }
   }
 }
@@ -954,8 +942,8 @@ export class TripInfoStorage implements ITripInfoStorage {
   async getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]> {
     return await optimizedConnection.executeWithMetrics(
       () => db.select()
-        .from(tripInfoSections)
-        .where(eq(tripInfoSections.tripId, cruiseId))
+        .from(schema.tripInfoSections)
+        .where(eq(schema.tripInfoSections.tripId, cruiseId))
         .orderBy(asc(tripInfoSections.orderIndex)),
       `getTripInfoSectionsByCruise(${cruiseId})`
     );

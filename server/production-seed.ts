@@ -1,4 +1,4 @@
-import { db, cruises, itinerary, events, talent, cruiseTalent, settings } from './storage';
+import { db, schema } from './storage';
 import { eq, and } from 'drizzle-orm';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 
@@ -65,14 +65,14 @@ async function seedProduction() {
   try {
     // 1. Check if Greek Isles cruise exists
     console.log('🔍 Checking existing cruise data...');
-    const existingCruise = await db.select().from(cruises).where(eq(cruises.slug, 'greek-isles-2025'));
+    const existingCruise = await db.select().from(schema.trips).where(eq(cruises.slug, 'greek-isles-2025'));
     
     let cruise;
     
     if (existingCruise.length === 0) {
       // First time deployment - create the main cruise
       console.log('🆕 First deployment detected - creating Greek Isles cruise...');
-      [cruise] = await db.insert(cruises).values({
+      [cruise] = await db.insert(schema.trips).values({
         name: 'Greek Isles Atlantis Cruise',
         slug: 'greek-isles-2025',
         shipName: 'Virgin Resilient Lady',
@@ -114,7 +114,7 @@ async function seedProduction() {
 
     // 2. Seed/Update Settings (check for new trip type settings)
     console.log('⚙️ Checking trip type settings...');
-    const existingSettings = await db.select().from(settings).where(eq(settings.category, 'trip_types'));
+    const existingSettings = await db.select().from(schema.settings).where(eq(schema.settings.category, 'trip_types'));
     const existingSettingKeys = existingSettings.map(s => s.key);
     
     let newSettingsCount = 0;
@@ -122,7 +122,7 @@ async function seedProduction() {
       if (!existingSettingKeys.includes(settingData.key)) {
         console.log(`➕ Adding new trip type setting: ${settingData.label}`);
         
-        await db.insert(settings).values({
+        await db.insert(schema.settings).values({
           category: 'trip_types',
           key: settingData.key,
           label: settingData.label,
@@ -140,7 +140,7 @@ async function seedProduction() {
 
     // 3. Seed/Update Talent (check for new talent)
     console.log('🎭 Checking talent data...');
-    const existingTalent = await db.select().from(talent);
+    const existingTalent = await db.select().from(schema.talent);
     const existingTalentNames = existingTalent.map(t => t.name);
     const talentMap = new Map(existingTalent.map(t => [t.name, t.id]));
     
@@ -148,7 +148,7 @@ async function seedProduction() {
     for (const t of TALENT) {
       if (!existingTalentNames.includes(t.name)) {
         console.log(`➕ Adding new talent: ${t.name}`);
-        const [talentRecord] = await db.insert(talent).values({
+        const [talentRecord] = await db.insert(schema.talent).values({
           name: t.name,
           category: t.cat,
           bio: t.bio,
@@ -161,7 +161,7 @@ async function seedProduction() {
         talentMap.set(t.name, talentRecord.id);
         
         // Link new talent to cruise
-        await db.insert(cruiseTalent).values({
+        await db.insert(schema.tripTalent).values({
           cruiseId: cruise.id,
           talentId: talentRecord.id,
           role: t.cat === 'Broadway' ? 'Headliner' : 
@@ -176,7 +176,7 @@ async function seedProduction() {
 
     // 4. Seed/Update Itinerary (check for new stops)
     console.log('🗺️ Checking itinerary data...');
-    const existingItinerary = await db.select().from(itinerary).where(eq(itinerary.cruiseId, cruise.id));
+    const existingItinerary = await db.select().from(schema.itinerary).where(eq(itinerary.cruiseId, cruise.id));
     const existingPorts = existingItinerary.map(i => `${i.date?.toISOString().split('T')[0]}-${i.portName}`);
     
     let newItineraryCount = 0;
@@ -198,7 +198,7 @@ async function seedProduction() {
           allAboardTime = stop.depart; // Simplified - use departure time as all aboard
         }
         
-        await db.insert(itinerary).values({
+        await db.insert(schema.itinerary).values({
           cruiseId: cruise.id,
           date: stopDate,
           day: dayNumber,
@@ -217,7 +217,7 @@ async function seedProduction() {
 
     // 5. Seed/Update Events (check for new events)
     console.log('🎉 Checking events data...');
-    const existingEvents = await db.select().from(events).where(eq(events.cruiseId, cruise.id));
+    const existingEvents = await db.select().from(schema.events).where(eq(events.cruiseId, cruise.id));
     const existingEventKeys = existingEvents.map(e => 
       `${e.date?.toISOString().split('T')[0]}-${e.time}-${e.title}`
     );
@@ -249,7 +249,7 @@ async function seedProduction() {
             themeDesc = theme?.desc || null;
           }
 
-          await db.insert(events).values({
+          await db.insert(schema.events).values({
             cruiseId: cruise.id,
             date: eventDate,
             time: item.time,
