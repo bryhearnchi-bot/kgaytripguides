@@ -168,7 +168,10 @@ export const trips = pgTable("trips", {
   shipIdx: index("trips_ship_id_idx").on(table.shipId),
 }));
 
-// Backward compatibility alias
+/**
+ * @deprecated Use 'trips' instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export const cruises = trips;
 
 // ============ ITINERARY TABLE ============
@@ -256,7 +259,10 @@ export const tripTalent = pgTable("trip_talent", {
   talentIdx: index("cruise_talent_talent_idx").on(table.talentId),
 }));
 
-// Backward compatibility alias
+/**
+ * @deprecated Use 'tripTalent' instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export const cruiseTalent = tripTalent;
 
 // ============ LOCATION TYPES TABLE ============
@@ -283,7 +289,10 @@ export const locations = pgTable("locations", {
   nameIdx: unique("locations_name_unique").on(table.name),
 }));
 
-// Backward compatibility alias
+/**
+ * @deprecated Use 'locations' instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export const ports = locations;
 
 // ============ PARTY THEMES TABLE (NEW - Replaces parties) ============
@@ -315,7 +324,10 @@ export const tripInfoSections = pgTable("trip_info_sections", {
   orderIdx: index("trip_info_order_idx").on(table.tripId, table.orderIndex),
 }));
 
-// Backward compatibility alias
+/**
+ * @deprecated Use 'tripInfoSections' instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export const cruiseInfoSections = tripInfoSections;
 
 
@@ -572,7 +584,10 @@ export type LocationType = typeof locationTypes.$inferSelect;
 export type Location = typeof locations.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
 export type Ship = typeof ships.$inferSelect;
-export type User = Profile; // Legacy alias - now using Profile
+/**
+ * @deprecated Use 'Profile' type instead - will be removed in Phase 5
+ */
+export type User = Profile;
 export type Trip = typeof trips.$inferSelect;
 export type Itinerary = typeof itinerary.$inferSelect;
 export type Event = typeof events.$inferSelect;
@@ -582,9 +597,20 @@ export type PartyTheme = typeof partyThemes.$inferSelect;
 export type TripInfoSection = typeof tripInfoSections.$inferSelect;
 export type Invitation = typeof invitations.$inferSelect;
 
-// Backward compatibility alias
+/**
+ * @deprecated Use 'Location' type instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export type Port = Location;
 
-// Backward compatibility aliases
+/**
+ * @deprecated Use 'Trip' type instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export type Cruise = Trip;
+
+/**
+ * @deprecated Use 'TripInfoSection' type instead - will be removed in Phase 5
+ * Backward compatibility alias for migration
+ */
 export type CruiseInfoSection = TripInfoSection;

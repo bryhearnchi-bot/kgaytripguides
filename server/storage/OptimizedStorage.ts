@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../../shared/schema';
 // Local aliases for all tables to prevent undefined references
-const { events, talent, cruises, ships, parties, ports, itinerary, tripTalent, eventTalent, talentCategories, settings, tripInfoSections } = schema;
+const { events, talent, trips, ships, partyThemes, locations, itinerary, tripTalent, talentCategories, settings, tripInfoSections } = schema;
 import { eq, and, or, inArray, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -389,7 +389,7 @@ locationImageUrl: schema.itinerary.locationImageUrl,
 
     // Execute all queries in parallel
     const [trips, itineraryMap, eventsMap, talentMap, infoSections] = await Promise.all([
-      this.db.select().from(schema.cruises).where(inArray(schema.cruises.id, tripIds)),
+      this.db.select().from(schema.trips).where(inArray(schema.trips.id, tripIds)),
       this.batchLoadItinerary(tripIds),
       this.batchLoadEvents(tripIds),
       this.batchLoadTalent(tripIds),

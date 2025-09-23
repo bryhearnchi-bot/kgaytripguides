@@ -177,6 +177,15 @@ Instead of updating files individually (which caused the current mess), we're ta
 3. Skipping testing checkpoints
 4. Leaving console.logs in code
 5. Forgetting to update documentation
+6. **Making ANY UI/UX design changes** - Only update data layer and API calls
+
+### ⚠️ UI/UX Lock Warning
+**The UI design is LOCKED DOWN. During migration:**
+- ❌ DO NOT modify component styling, CSS, or visual design
+- ❌ DO NOT change layouts, positioning, or page structure
+- ❌ DO NOT alter colors, fonts, themes, or animations
+- ✅ ONLY update API endpoints and data field references
+- ✅ ONLY change type/interface usage and imports
 
 ---
 

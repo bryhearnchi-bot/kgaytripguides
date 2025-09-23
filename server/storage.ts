@@ -6,10 +6,9 @@ if (process.env.NODE_ENV !== 'production') {
   config();
 }
 import type {
-  User,
-  InsertUser,
+  Profile,
+  InsertProfile,
   Trip,
-  Cruise, // Backward compatibility
   Itinerary,
   Event,
   Talent,
@@ -257,30 +256,30 @@ export class ProfileStorage implements IProfileStorage {
 }
 
 // ============ USER OPERATIONS (Legacy) ============
-export interface IUserStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUserLastLogin(id: string): Promise<void>;
+export interface IProfileStorage {
+  getProfile(id: string): Promise<Profile | undefined>;
+  getProfileByUsername(username: string): Promise<Profile | undefined>;
+  createProfile(profile: InsertProfile): Promise<Profile>;
+  updateProfileLastLogin(id: string): Promise<void>;
 }
 
-export class UserStorage implements IUserStorage {
-  async getUser(id: string): Promise<User | undefined> {
+export class ProfileStorage implements IProfileStorage {
+  async getProfile(id: string): Promise<Profile | undefined> {
     const result = await db.select().from(schema.profiles).where(eq(schema.profiles.id, id));
     return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getProfileByUsername(username: string): Promise<Profile | undefined> {
     const result = await db.select().from(schema.profiles).where(eq(schema.profiles.username, username));
     return result[0];
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(schema.profiles).values(insertUser).returning();
+  async createProfile(insertProfile: InsertProfile): Promise<Profile> {
+    const result = await db.insert(schema.profiles).values(insertProfile).returning();
     return result[0];
   }
 
-  async updateUserLastLogin(id: string): Promise<void> {
+  async updateProfileLastLogin(id: string): Promise<void> {
     await db.update(schema.profiles).set({ lastSignInAt: new Date() }).where(eq(schema.profiles.id, id));
   }
 }
@@ -421,6 +420,10 @@ export class TripStorage implements ITripStorage {
 }
 
 // ============ BACKWARD COMPATIBILITY: CRUISE OPERATIONS ============
+/**
+ * @deprecated Use ITripStorage and TripStorage instead - will be removed in Phase 5
+ * This is a backward compatibility wrapper that delegates to TripStorage
+ */
 export interface ICruiseStorage {
   getAllCruises(): Promise<Cruise[]>;
   getCruiseById(id: number): Promise<Cruise | undefined>;
@@ -432,6 +435,10 @@ export interface ICruiseStorage {
   deleteCruise(id: number): Promise<void>;
 }
 
+/**
+ * @deprecated Use TripStorage instead - will be removed in Phase 5
+ * This is a backward compatibility wrapper that delegates to TripStorage
+ */
 export class CruiseStorage implements ICruiseStorage {
   private tripStorage = new TripStorage();
 
@@ -470,15 +477,15 @@ export class CruiseStorage implements ICruiseStorage {
 
 // ============ ITINERARY OPERATIONS ============
 export interface IItineraryStorage {
-  getItineraryByCruise(cruiseId: number): Promise<Itinerary[]>;
+  getItineraryByTrip(tripId: number): Promise<Itinerary[]>;
   createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary>;
   updateItineraryStop(id: number, stop: Partial<Itinerary>): Promise<Itinerary | undefined>;
   deleteItineraryStop(id: number): Promise<void>;
 }
 
 export class ItineraryStorage implements IItineraryStorage {
-  async getItineraryByCruise(cruiseId: number): Promise<Itinerary[]> {
-    const cacheKey = CacheManager.keys.itinerary(cruiseId);
+  async getItineraryByTrip(tripId: number): Promise<Itinerary[]> {
+    const cacheKey = CacheManager.keys.itinerary(tripId);
     const cached = await cacheManager.get<Itinerary[]>('trips', cacheKey);
     if (cached) return cached;
 
@@ -500,9 +507,9 @@ export class ItineraryStorage implements IItineraryStorage {
         locationTypeId: schema.itinerary.locationTypeId,
       })
         .from(schema.itinerary)
-        .where(eq(schema.itinerary.tripId, cruiseId))
+        .where(eq(schema.itinerary.tripId, tripId))
         .orderBy(asc(schema.itinerary.orderIndex)),
-      `getItineraryByCruise(${cruiseId})`
+      `getItineraryByTrip(${tripId})`
     );
 
     await cacheManager.set('trips', cacheKey, result);
@@ -607,43 +614,43 @@ export class ItineraryStorage implements IItineraryStorage {
 
 // ============ EVENT OPERATIONS ============
 export interface IEventStorage {
-  getEventsByCruise(cruiseId: number): Promise<Event[]>;
-  getEventsByDate(cruiseId: number, date: Date): Promise<Event[]>;
-  getEventsByType(cruiseId: number, type: string): Promise<Event[]>;
+  getEventsByTrip(tripId: number): Promise<Event[]>;
+  getEventsByDate(tripId: number, date: Date): Promise<Event[]>;
+  getEventsByType(tripId: number, type: string): Promise<Event[]>;
   createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<Event>;
   updateEvent(id: number, event: Partial<Event>): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<void>;
 }
 
 export class EventStorage implements IEventStorage {
-  async getEventsByCruise(cruiseId: number): Promise<Event[]> {
-    const cacheKey = CacheManager.keys.eventsByCruise(cruiseId);
+  async getEventsByTrip(tripId: number): Promise<Event[]> {
+    const cacheKey = CacheManager.keys.eventsByCruise(tripId);
     const cached = await cacheManager.get<Event[]>('events', cacheKey);
     if (cached) return cached;
 
     const result = await optimizedConnection.executeWithMetrics(
       () => db.select()
         .from(schema.events)
-        .where(eq(schema.events.tripId, cruiseId))
+        .where(eq(schema.events.tripId, tripId))
         .orderBy(asc(events.date), asc(events.time)),
-      `getEventsByCruise(${cruiseId})`
+      `getEventsByTrip(${tripId})`
     );
 
     await cacheManager.set('events', cacheKey, result);
     return result;
   }
 
-  async getEventsByDate(cruiseId: number, date: Date): Promise<Event[]> {
+  async getEventsByDate(tripId: number, date: Date): Promise<Event[]> {
     return await db.select()
       .from(schema.events)
-      .where(and(eq(schema.events.tripId, cruiseId), eq(schema.events.date, date)))
+      .where(and(eq(schema.events.tripId, tripId), eq(schema.events.date, date)))
       .orderBy(asc(events.time));
   }
 
-  async getEventsByType(cruiseId: number, type: string): Promise<Event[]> {
+  async getEventsByType(tripId: number, type: string): Promise<Event[]> {
     return await db.select()
       .from(schema.events)
-      .where(and(eq(schema.events.tripId, cruiseId), eq(schema.events.type, type)))
+      .where(and(eq(schema.events.tripId, tripId), eq(schema.events.type, type)))
       .orderBy(asc(events.date), asc(events.time));
   }
 
@@ -696,13 +703,13 @@ export interface TalentWithCategory extends Talent {
 export interface ITalentStorage {
   getAllTalent(): Promise<TalentWithCategory[]>;
   getTalentById(id: number): Promise<TalentWithCategory | undefined>;
-  getTalentByCruise(cruiseId: number): Promise<TalentWithCategory[]>;
+  getTalentByTrip(tripId: number): Promise<TalentWithCategory[]>;
   searchTalent(search?: string, categoryId?: number): Promise<TalentWithCategory[]>;
   createTalent(talent: Omit<Talent, 'id' | 'createdAt' | 'updatedAt'>): Promise<Talent>;
   updateTalent(id: number, talent: Partial<Talent>): Promise<Talent | undefined>;
   deleteTalent(id: number): Promise<void>;
-  assignTalentToCruise(cruiseId: number, talentId: number, role?: string): Promise<void>;
-  removeTalentFromCruise(cruiseId: number, talentId: number): Promise<void>;
+  assignTalentToTrip(tripId: number, talentId: number, role?: string): Promise<void>;
+  removeTalentFromTrip(tripId: number, talentId: number): Promise<void>;
   getAllTalentCategories(): Promise<schema.TalentCategories[]>;
   createTalentCategory(category: string): Promise<schema.TalentCategories>;
   updateTalentCategory(id: number, category: string): Promise<schema.TalentCategories | undefined>;
@@ -752,8 +759,8 @@ export class TalentStorage implements ITalentStorage {
     return result[0] as TalentWithCategory | undefined;
   }
 
-  async getTalentByCruise(cruiseId: number): Promise<TalentWithCategory[]> {
-    // Return only talent linked to this specific cruise through cruise_talent junction table
+  async getTalentByTrip(tripId: number): Promise<TalentWithCategory[]> {
+    // Return only talent linked to this specific trip through trip_talent junction table
     const result = await db.select({
       id: talent.id,
       name: talent.name,
@@ -770,7 +777,7 @@ export class TalentStorage implements ITalentStorage {
       .from(schema.talent)
       .innerJoin(cruiseTalent, eq(schema.talent.id, cruiseTalent.talentId))
       .leftJoin(talentCategories, eq(schema.talent.talentCategoryId, talentCategories.id))
-      .where(eq(schema.tripTalent.cruiseId, cruiseId))
+      .where(eq(schema.tripTalent.tripId, tripId))
       .orderBy(asc(talent.name));
     return result as TalentWithCategory[];
   }
@@ -836,18 +843,18 @@ export class TalentStorage implements ITalentStorage {
     await db.delete(schema.talent).where(eq(schema.talent.id, id));
   }
 
-  async assignTalentToCruise(cruiseId: number, talentId: number, role?: string): Promise<void> {
+  async assignTalentToTrip(tripId: number, talentId: number, role?: string): Promise<void> {
     await db.insert(schema.tripTalent).values({
-      cruiseId,
+      tripId,
       talentId,
       role,
     }).onConflictDoNothing();
   }
 
-  async removeTalentFromCruise(cruiseId: number, talentId: number): Promise<void> {
+  async removeTalentFromTrip(tripId: number, talentId: number): Promise<void> {
     await db.delete(schema.tripTalent)
       .where(and(
-        eq(schema.tripTalent.cruiseId, cruiseId),
+        eq(schema.tripTalent.tripId, tripId),
         eq(schema.tripTalent.talentId, talentId)
       ));
   }
@@ -956,19 +963,19 @@ export class SettingsStorage implements ISettingsStorage {
 
 // ============ TRIP INFO SECTIONS OPERATIONS ============
 export interface ITripInfoStorage {
-  getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]>;
+  getTripInfoSectionsByTrip(tripId: number): Promise<schema.TripInfoSection[]>;
   getCompleteInfo(slug: string, endpoint: 'cruises' | 'trips'): Promise<any>;
 }
 
 export class TripInfoStorage implements ITripInfoStorage {
   // @Cacheable('trips', 1000 * 60 * 10) // Cache for 10 minutes - temporarily disabled
-  async getTripInfoSectionsByCruise(cruiseId: number): Promise<schema.TripInfoSection[]> {
+  async getTripInfoSectionsByTrip(tripId: number): Promise<schema.TripInfoSection[]> {
     return await optimizedConnection.executeWithMetrics(
       () => db.select()
         .from(schema.tripInfoSections)
-        .where(eq(schema.tripInfoSections.tripId, cruiseId))
+        .where(eq(schema.tripInfoSections.tripId, tripId))
         .orderBy(asc(tripInfoSections.orderIndex)),
-      `getTripInfoSectionsByCruise(${cruiseId})`
+      `getTripInfoSectionsByTrip(${tripId})`
     );
   }
 
@@ -1003,9 +1010,12 @@ export class TripInfoStorage implements ITripInfoStorage {
 
 // Create storage instances
 export const profileStorage = new ProfileStorage();
-export const storage = new UserStorage();
+export const storage = new ProfileStorage();
 export const tripStorage = new TripStorage();
-export const cruiseStorage = new CruiseStorage(); // Backward compatibility
+/**
+ * @deprecated Use tripStorage instead - will be removed in Phase 5
+ */
+export const cruiseStorage = new CruiseStorage();
 export const itineraryStorage = new ItineraryStorage();
 export const eventStorage = new EventStorage();
 export const talentStorage = new TalentStorage();
