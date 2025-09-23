@@ -256,8 +256,24 @@ export class BatchQueryBuilder {
   async batchLoadItinerary(tripIds: number[]): Promise<Map<number, schema.Itinerary[]>> {
     if (tripIds.length === 0) return new Map();
 
+    // Select only columns that exist in the current DB schema
     const items = await this.db
-      .select()
+      .select({
+        id: schema.itinerary.id,
+        tripId: schema.itinerary.tripId,
+        date: schema.itinerary.date,
+        day: schema.itinerary.day,
+        arrivalTime: schema.itinerary.arrivalTime,
+        departureTime: schema.itinerary.departureTime,
+        allAboardTime: schema.itinerary.allAboardTime,
+        portImageUrl: schema.itinerary.portImageUrl,
+        description: schema.itinerary.description,
+        highlights: schema.itinerary.highlights,
+        orderIndex: schema.itinerary.orderIndex,
+        segment: schema.itinerary.segment,
+        locationId: schema.itinerary.locationId,
+        locationTypeId: schema.itinerary.locationTypeId,
+      })
       .from(schema.itinerary)
       .where(inArray(schema.itinerary.tripId, tripIds))
       .orderBy(schema.itinerary.orderIndex);

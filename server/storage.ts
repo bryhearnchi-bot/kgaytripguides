@@ -453,9 +453,24 @@ export class ItineraryStorage implements IItineraryStorage {
     if (cached) return cached;
 
     const result = await optimizedConnection.executeWithMetrics(
-      () => db.select()
+      () => db.select({
+        id: itinerary.id,
+        tripId: itinerary.tripId,
+        date: itinerary.date,
+        day: itinerary.day,
+        arrivalTime: itinerary.arrivalTime,
+        departureTime: itinerary.departureTime,
+        allAboardTime: itinerary.allAboardTime,
+        portImageUrl: itinerary.portImageUrl,
+        description: itinerary.description,
+        highlights: itinerary.highlights,
+        orderIndex: itinerary.orderIndex,
+        segment: itinerary.segment,
+        locationId: itinerary.locationId,
+        locationTypeId: itinerary.locationTypeId,
+      })
         .from(itinerary)
-        .where(eq(itinerary.cruiseId, cruiseId))
+        .where(eq(itinerary.tripId, cruiseId))
         .orderBy(asc(itinerary.orderIndex)),
       `getItineraryByCruise(${cruiseId})`
     );
@@ -468,9 +483,9 @@ export class ItineraryStorage implements IItineraryStorage {
   async createItineraryStop(stop: Omit<Itinerary, 'id'>): Promise<Itinerary> {
     const values = { ...stop };
 
-    // Invalidate specific cruise itinerary cache
-    if (stop.cruiseId) {
-      await cacheManager.delete('trips', CacheManager.keys.itinerary(stop.cruiseId));
+    // Invalidate specific trip itinerary cache
+    if ((stop as any).tripId) {
+      await cacheManager.delete('trips', CacheManager.keys.itinerary((stop as any).tripId));
     }
     
     // Handle date conversion with better error handling  
@@ -487,8 +502,28 @@ export class ItineraryStorage implements IItineraryStorage {
       }
     }
     
-    const result = await db.insert(itinerary).values(values).returning();
-    return result[0];
+    // Remove legacy/non-existent columns to avoid DB errors
+    if ('portName' in values) {
+      delete (values as any).portName;
+    }
+
+    const result = await db.insert(itinerary).values(values).returning({
+      id: itinerary.id,
+      tripId: itinerary.tripId,
+      date: itinerary.date,
+      day: itinerary.day,
+      arrivalTime: itinerary.arrivalTime,
+      departureTime: itinerary.departureTime,
+      allAboardTime: itinerary.allAboardTime,
+      portImageUrl: itinerary.portImageUrl,
+      description: itinerary.description,
+      highlights: itinerary.highlights,
+      orderIndex: itinerary.orderIndex,
+      segment: itinerary.segment,
+      locationId: itinerary.locationId,
+      locationTypeId: itinerary.locationTypeId,
+    });
+    return result[0] as any;
   }
 
   async updateItineraryStop(id: number, stop: Partial<Itinerary>): Promise<Itinerary | undefined> {
@@ -508,11 +543,31 @@ export class ItineraryStorage implements IItineraryStorage {
       }
     }
     
+    // Remove legacy/non-existent columns to avoid DB errors
+    if ('portName' in updates) {
+      delete (updates as any).portName;
+    }
+
     const result = await db.update(itinerary)
       .set(updates)
       .where(eq(itinerary.id, id))
-      .returning();
-    return result[0];
+      .returning({
+        id: itinerary.id,
+        tripId: itinerary.tripId,
+        date: itinerary.date,
+        day: itinerary.day,
+        arrivalTime: itinerary.arrivalTime,
+        departureTime: itinerary.departureTime,
+        allAboardTime: itinerary.allAboardTime,
+        portImageUrl: itinerary.portImageUrl,
+        description: itinerary.description,
+        highlights: itinerary.highlights,
+        orderIndex: itinerary.orderIndex,
+        segment: itinerary.segment,
+        locationId: itinerary.locationId,
+        locationTypeId: itinerary.locationTypeId,
+      });
+    return result[0] as any;
   }
 
   async deleteItineraryStop(id: number): Promise<void> {
@@ -539,7 +594,7 @@ export class EventStorage implements IEventStorage {
     const result = await optimizedConnection.executeWithMetrics(
       () => db.select()
         .from(events)
-        .where(eq(events.cruiseId, cruiseId))
+        .where(eq(events.tripId, cruiseId))
         .orderBy(asc(events.date), asc(events.time)),
       `getEventsByCruise(${cruiseId})`
     );
@@ -551,22 +606,22 @@ export class EventStorage implements IEventStorage {
   async getEventsByDate(cruiseId: number, date: Date): Promise<Event[]> {
     return await db.select()
       .from(events)
-      .where(and(eq(events.cruiseId, cruiseId), eq(events.date, date)))
+      .where(and(eq(events.tripId, cruiseId), eq(events.date, date)))
       .orderBy(asc(events.time));
   }
 
   async getEventsByType(cruiseId: number, type: string): Promise<Event[]> {
     return await db.select()
       .from(events)
-      .where(and(eq(events.cruiseId, cruiseId), eq(events.type, type)))
+      .where(and(eq(events.tripId, cruiseId), eq(events.type, type)))
       .orderBy(asc(events.date), asc(events.time));
   }
 
   // @CacheInvalidate('events') - temporarily disabled
   async createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<Event> {
     // Invalidate specific cruise events cache
-    if (event.cruiseId) {
-      await cacheManager.delete('events', CacheManager.keys.eventsByCruise(event.cruiseId));
+    if ((event as any).tripId) {
+      await cacheManager.delete('events', CacheManager.keys.eventsByCruise((event as any).tripId));
     }
 
     const result = await optimizedConnection.executeWithMetrics(
