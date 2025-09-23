@@ -15,7 +15,8 @@ import { supabase } from '../../lib/supabase';
 interface Artist {
   id: number;
   name: string;
-  category?: string; // Maps to performanceType in UI
+  talentCategoryId: number;
+  category?: string; // Derived from talentCategory for display
   bio?: string;
   knownFor?: string;
   profileImageUrl?: string;
@@ -237,10 +238,18 @@ export default function ArtistDatabaseManager({
     // Find the category ID from the category name
     const categoryObj = talentCategories.find((cat: TalentCategory) => cat.category === data.category);
 
+    if (!categoryObj?.id) {
+      toast({
+        title: "Error",
+        description: "Please select a valid category.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createMutation.mutate({
       name: data.name,
-      talentCategoryId: categoryObj?.id || null,
-      category: data.category || null, // Keep for backwards compatibility
+      talentCategoryId: categoryObj.id,
       bio: data.bio || null,
       knownFor: data.knownFor || null,
       profileImageUrl: data.profileImageUrl || null,
@@ -258,11 +267,19 @@ export default function ArtistDatabaseManager({
     // Find the category ID from the category name
     const categoryObj = talentCategories.find((cat: TalentCategory) => cat.category === data.category);
 
+    if (!categoryObj?.id) {
+      toast({
+        title: "Error",
+        description: "Please select a valid category.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     updateMutation.mutate({
       id: editingArtist.id,
       name: data.name,
-      talentCategoryId: categoryObj?.id || null,
-      category: data.category || null, // Keep for backwards compatibility
+      talentCategoryId: categoryObj.id,
       bio: data.bio || null,
       knownFor: data.knownFor || null,
       profileImageUrl: data.profileImageUrl || null,

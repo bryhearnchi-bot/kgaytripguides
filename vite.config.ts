@@ -20,6 +20,9 @@ export default defineConfig({
     emptyOutDir: true,
 sourcemap: true,
     rollupOptions: {
+      treeshake: {
+        moduleSideEffects: false
+      },
       output: {
         manualChunks: {
           // Core React chunks
@@ -91,11 +94,7 @@ sourcemap: true,
     minify: 'esbuild',
     // Optimize for mobile
     chunkSizeWarningLimit: 600,
-    cssCodeSplit: true,
-    // Enable tree shaking
-    treeshake: {
-      moduleSideEffects: false
-    }
+    cssCodeSplit: true
   },
   server: {
     fs: {

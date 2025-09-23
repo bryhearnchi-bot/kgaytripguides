@@ -57,7 +57,7 @@ export class PartyThemeStorage {
       const themes = await db.select()
         .from(schema.partyThemes)
         .orderBy(schema.partyThemes.name);
-      return themes.map(theme => this.transformToFrontend(theme));
+      return themes.map((theme: PartyTheme) => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error fetching party themes:', error);
       throw new Error('Failed to fetch party themes');
@@ -115,7 +115,7 @@ export class PartyThemeStorage {
           )
         )
         .orderBy(schema.partyThemes.name);
-      return themes.map(theme => this.transformToFrontend(theme));
+      return themes.map((theme: PartyTheme) => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error searching party themes:', error);
       throw new Error('Failed to search party themes');
@@ -131,7 +131,7 @@ export class PartyThemeStorage {
         .from(schema.partyThemes)
         .where(sql`${schema.partyThemes.costumeIdeas} IS NOT NULL`)
         .orderBy(schema.partyThemes.name);
-      return themes.map(theme => this.transformToFrontend(theme));
+      return themes.map((theme: PartyTheme) => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error fetching party themes with costume ideas:', error);
       throw new Error('Failed to fetch party themes with costume ideas');
@@ -357,9 +357,9 @@ export class PartyThemeStorage {
       // Map theme names to usage counts
       const mostUsedThemes = await Promise.all(
         usageCounts
-          .sort((a, b) => b.count - a.count)
+          .sort((a: {themeId: number | null, count: number}, b: {themeId: number | null, count: number}) => b.count - a.count)
           .slice(0, 5)
-          .map(async (usage) => {
+          .map(async (usage: {themeId: number | null, count: number}) => {
             const theme = await this.getById(usage.themeId!);
             return {
               themeId: usage.themeId!,
@@ -409,7 +409,7 @@ export class PartyThemeStorage {
         throw new Error('Failed to bulk create party themes');
       }
 
-      return themes.map(theme => this.transformToFrontend(theme));
+      return themes.map((theme: PartyTheme) => this.transformToFrontend(theme));
     } catch (error) {
       console.error('Error bulk creating party themes:', error);
       throw error;

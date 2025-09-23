@@ -33,9 +33,9 @@ import { ImageUpload } from './ImageUpload';
 import LocationManagement from './LocationManagement';
 import type { Location as SchemaLocation } from '../../../../shared/schema';
 
-// Extended Location type that includes the type information used by this component
-interface Location extends SchemaLocation {
-  location_type: 'port' | 'sea_day' | 'embark' | 'disembark';
+// Extended Location type that matches the schema
+interface LocationWithType extends SchemaLocation {
+  // Use the actual schema fields - no location_type field exists in the schema
 }
 
 interface ItineraryDay {
@@ -388,12 +388,12 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLocationSelection = (location: Location) => {
+  const handleLocationSelection = (location: LocationWithType) => {
     setFormData(prev => ({
       ...prev,
       portName: location.name,
       country: location.country,
-      portImageUrl: location.image_url || ''
+      portImageUrl: location.imageUrl || ''
     }));
     setShowLocationSelector(false);
   };

@@ -44,8 +44,8 @@ export class OptimizedTripStorage {
         port: ports
       })
         .from(schema.itinerary)
-        .leftJoin(ports, eq(schema.itinerary.port_id, ports.id))
-        .where(eq(schema.itinerary.cruiseId, tripId))
+        .leftJoin(ports, eq(schema.itinerary.locationId, ports.id))
+        .where(eq(schema.itinerary.tripId, tripId))
         .orderBy(asc(itinerary.orderIndex)),
 
       // Talent with role information (optimized join)
@@ -138,8 +138,8 @@ export class OptimizedTripStorage {
         port: ports
       })
         .from(schema.itinerary)
-        .leftJoin(ports, eq(schema.itinerary.port_id, ports.id))
-        .where(inArray(schema.itinerary.cruiseId, tripIds))
+        .leftJoin(ports, eq(schema.itinerary.locationId, ports.id))
+        .where(inArray(schema.itinerary.tripId, tripIds))
         .orderBy(asc(itinerary.orderIndex)),
 
       // All talent for these trips

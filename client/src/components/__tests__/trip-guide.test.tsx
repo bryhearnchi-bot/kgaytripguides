@@ -2,14 +2,14 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import TripGuide from '../trip-guide';
-import { useTripData } from '../../hooks/useTripData';
+import { useTripData, type TripData } from '../../hooks/useTripData';
 import { TimeFormatProvider } from '../../contexts/TimeFormatContext';
 
 // Mock the useTripData hook
 vi.mock('../../hooks/useTripData', () => ({
   useTripData: vi.fn(),
-  transformTripData: vi.fn((data) => ({
-    ITINERARY: data.itinerary.map(stop => ({
+  transformTripData: vi.fn((data: any) => ({
+    ITINERARY: data.itinerary.map((stop: any) => ({
       key: stop.date.split('T')[0],
       date: 'Oct 12',
       rawDate: stop.date,
@@ -22,17 +22,17 @@ vi.mock('../../hooks/useTripData', () => ({
     })),
     DAILY: [{
       key: '2025-10-12',
-      items: data.events.map(event => ({
+      items: data.events.map((event: any) => ({
         time: event.time,
         title: event.title,
         type: event.type,
         venue: event.venue,
         description: event.description,
         imageUrl: event.imageUrl,
-        talent: event.talentIds ? data.talent.filter(t => event.talentIds.includes(t.id)) : []
+        talent: event.talentIds ? data.talent.filter((t: any) => event.talentIds.includes(t.id)) : []
       }))
     }],
-    TALENT: data.talent.map(t => ({
+    TALENT: data.talent.map((t: any) => ({
       name: t.name,
       bio: t.bio,
       cat: t.category,
@@ -49,12 +49,12 @@ vi.mock('../../hooks/useTripData', () => ({
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: React.PropsWithChildren<any>) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => children,
+  AnimatePresence: ({ children }: React.PropsWithChildren) => children,
 }));
 
-const mockTripData = {
+const mockTripData: TripData = {
   trip: {
     id: 1,
     name: 'Greek Isles October 2025',
@@ -115,14 +115,14 @@ const mockTripData = {
       bio: 'Amazing DJ from somewhere',
       category: 'DJs',
       profileImageUrl: 'https://example.com/dj.jpg',
-      social: {
+      socialLinks: {
         instagram: 'https://instagram.com/djtest',
       },
     },
   ],
 };
 
-const renderTripGuide = (props = {}) => {
+const renderTripGuide = (props: Record<string, any> = {}) => {
   return render(
     <TimeFormatProvider>
       <TripGuide slug="greek-isles-october-2025" {...props} />
@@ -133,11 +133,13 @@ const renderTripGuide = (props = {}) => {
 describe('TripGuide Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useTripData as any).mockReturnValue({
+    (useTripData as jest.MockedFunction<typeof useTripData>).mockReturnValue({
       data: mockTripData,
       isLoading: false,
       error: null,
-    });
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
   });
 
   describe('Party Events - Image Borders', () => {
@@ -296,7 +298,7 @@ describe('TripGuide Component', () => {
     });
 
     it('should filter past events for current cruise', async () => {
-      (useTripData as any).mockReturnValue({
+      (useTripData as jest.MockedFunction<typeof useTripData>).mockReturnValue({
         data: {
           ...mockTripData,
           trip: {
@@ -306,7 +308,9 @@ describe('TripGuide Component', () => {
         },
         isLoading: false,
         error: null,
-      });
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
 
       renderTripGuide();
 
@@ -323,7 +327,7 @@ describe('TripGuide Component', () => {
 
   describe('Loading and Error States', () => {
     it('should show loading state', () => {
-      (useTripData as any).mockReturnValue({
+      (useTripData as jest.MockedFunction<typeof useTripData>).mockReturnValue({
         data: null,
         isLoading: true,
         error: null,
@@ -335,7 +339,7 @@ describe('TripGuide Component', () => {
     });
 
     it('should show error state', () => {
-      (useTripData as any).mockReturnValue({
+      (useTripData as jest.MockedFunction<typeof useTripData>).mockReturnValue({
         data: null,
         isLoading: false,
         error: new Error('Failed to load trip data'),

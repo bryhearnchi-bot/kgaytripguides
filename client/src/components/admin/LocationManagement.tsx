@@ -29,10 +29,8 @@ import { supabase } from '../../lib/supabase';
 import type { Location as SchemaLocation } from '../../../../shared/schema';
 // CSRF token not needed with Bearer authentication
 
-// Extended Location type that includes the type information used by this component
-interface Location extends SchemaLocation {
-  port_type: 'port' | 'sea_day' | 'embark' | 'disembark';
-}
+// Use the schema Location type directly
+type Location = SchemaLocation;
 
 interface LocationStatistics {
   total: number;
@@ -265,7 +263,7 @@ export default function LocationManagement({
         (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (location.region && location.region.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesType = !selectedType || location.port_type === selectedType;
+      const matchesType = !selectedType; // Location type filtering removed since schema doesn't have port_type
       const matchesRegion = !selectedRegion || location.region === selectedRegion;
 
       return matchesSearch && matchesType && matchesRegion;
@@ -289,9 +287,8 @@ export default function LocationManagement({
       name: location?.name || '',
       country: location?.country || '',
       region: location?.region || '',
-      port_type: location?.port_type || 'port',
       description: location?.description || '',
-      image_url: location?.image_url || '',
+      imageUrl: location?.imageUrl || '',
       coordinates: location?.coordinates || null,
     });
 
@@ -355,8 +352,9 @@ export default function LocationManagement({
           <div className="space-y-2">
             <label className="text-sm font-medium">Location Type *</label>
             <Select
-              value={formData.port_type}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, port_type: value as Location['port_type'] }))}
+              value="port"
+              onValueChange={() => {}} // Disabled since schema doesn't have port_type
+              disabled
             >
               <SelectTrigger>
                 <SelectValue />
@@ -415,9 +413,9 @@ export default function LocationManagement({
           <label className="text-sm font-medium">Location Image</label>
           <ImageUpload
             imageType="itinerary"
-            onImageUploaded={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
-            currentImageUrl={formData.image_url}
-            allowUrlInput={true}
+            onImageChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url || '' }))}
+            currentImageUrl={formData.imageUrl}
+            label="Location Image"
           />
         </div>
 
@@ -438,7 +436,7 @@ export default function LocationManagement({
   };
 
   const LocationCard = ({ location }: { location: Location }) => {
-    const locationType = LOCATION_TYPES.find(t => t.value === location.port_type);
+    const locationType = LOCATION_TYPES[0]; // Default to port since schema doesn't have port_type
     const Icon = locationType?.icon || Anchor;
 
     return (
@@ -449,17 +447,17 @@ export default function LocationManagement({
               <Icon className="w-5 h-5 text-blue-600" />
               <CardTitle className="text-lg">{location.name}</CardTitle>
             </div>
-            <Badge variant={location.port_type === 'sea_day' ? 'secondary' : 'default'}>
-              {locationType?.label || location.port_type}
+            <Badge variant="default">
+              {locationType?.label || 'Port'}
             </Badge>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {location.image_url && (
+          {location.imageUrl && (
             <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
               <img
-                src={location.image_url}
+                src={location.imageUrl}
                 alt={location.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               />

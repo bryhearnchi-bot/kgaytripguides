@@ -51,6 +51,10 @@ export class OptimizedQueryPatterns {
         })
         .returning();
 
+      if (!newTrip) {
+        throw new Error('Failed to create new trip');
+      }
+
       // 3. Batch copy all related data in parallel
       const [itinerary, events, tripTalent, infoSections] = await Promise.all([
         // Get all itinerary items
@@ -191,8 +195,14 @@ export class OptimizedQueryPatterns {
           .insert(schema.events)
           .values(
             toInsert.map(event => ({
-              ...event,
               tripId,
+              date: event.date || new Date(),
+              time: event.time || '00:00',
+              title: event.title || 'Untitled Event',
+              type: event.type || 'social',
+              venue: event.venue || 'TBD',
+              talentIds: event.talentIds,
+              partyThemeId: event.partyThemeId,
               createdAt: new Date(),
               updatedAt: new Date(),
             }))

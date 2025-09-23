@@ -305,7 +305,7 @@ export default function EventManagement({
 
   // Calendar View Component
   const CalendarView = () => {
-    const eventsByDate = events.reduce((acc: any, event: Event) => {
+    const eventsByDate = events.reduce((acc: Record<string, Event[]>, event: Event) => {
       const date = event.date.split('T')[0];
       if (!acc[date]) acc[date] = [];
       acc[date].push(event);
@@ -322,7 +322,7 @@ export default function EventManagement({
               </div>
             ))}
             {/* Simplified calendar grid - in production would show proper calendar */}
-            {Object.entries(eventsByDate).map(([date, dateEvents]: [string, any]) => (
+            {Object.entries(eventsByDate).map(([date, dateEvents]) => (
               <div key={date} className="border rounded-lg p-2 min-h-[80px]">
                 <div className="text-xs font-medium mb-1">
                   {format(dateOnly(date), 'MMM d')}
