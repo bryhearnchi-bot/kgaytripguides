@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { securityHeaders, rateLimit } from "./middleware/security";
@@ -13,6 +14,10 @@ import { healthCheck, livenessProbe, readinessProbe, startupProbe } from "./moni
 import { httpMetrics, metricsHandler } from "./monitoring/metrics";
 
 const app = express();
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Health check endpoints - these come before logging middleware
 app.get('/healthz', healthCheck);
@@ -51,18 +56,30 @@ app.use(cookieParser());
 
 // Serve PWA files early in production
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+  const distPath = path.resolve(__dirname, "..", "dist", "public");
 
   // Explicitly serve PWA files with correct MIME types
   app.get('/manifest.json', (_req, res) => {
+    const manifestPath = path.join(distPath, 'manifest.json');
     res.type('application/manifest+json');
-    res.sendFile(path.join(distPath, 'manifest.json'));
+    res.sendFile(manifestPath, (err) => {
+      if (err) {
+        logger.error('Failed to serve manifest.json', err, { path: manifestPath });
+        res.status(500).json({ error: 'Failed to load manifest.json' });
+      }
+    });
   });
 
   app.get('/sw.js', (_req, res) => {
+    const swPath = path.join(distPath, 'sw.js');
     res.setHeader('Service-Worker-Allowed', '/');
     res.type('application/javascript');
-    res.sendFile(path.join(distPath, 'sw.js'));
+    res.sendFile(swPath, (err) => {
+      if (err) {
+        logger.error('Failed to serve sw.js', err, { path: swPath });
+        res.status(500).send('// Service worker failed to load');
+      }
+    });
   });
 
   // Serve other static assets from dist/public
@@ -102,7 +119,7 @@ if (process.env.NODE_ENV === 'production') {
     await setupVite(app, server);
   } else {
     // In production, add the fallback to index.html for client-side routing
-    const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+    const distPath = path.resolve(__dirname, "..", "dist", "public");
     app.use("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
