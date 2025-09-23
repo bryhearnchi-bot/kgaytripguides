@@ -1,6 +1,8 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../../shared/schema';
+// Local aliases for all tables to prevent undefined references
+const { events, talent, cruises, ships, parties, ports, itinerary, tripTalent, eventTalent, talentCategories, settings, tripInfoSections } = schema;
 import { eq, and, or, inArray, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
