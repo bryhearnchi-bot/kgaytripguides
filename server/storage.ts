@@ -144,9 +144,9 @@ if (process.env.USE_MOCK_DATA === 'true') {
 if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SQL === 'true') {
   // Preserve original
   const originalSelect = db.select.bind(db);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore - monkey-patch allowed only in debug mode
-  db.select = (map?: any) => {
+  db.select = function(map?: any, ...rest: any[]) {
     if (map && typeof map === 'object') {
       for (const key in map) {
         if (map[key] === undefined) {
@@ -154,9 +154,8 @@ if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SQL === 'true') {
         }
       }
     }
-    // eslint-disable-next-line prefer-rest-params
-    return originalSelect.apply(db, arguments as any);
-  };
+    return originalSelect(map as any, ...rest);
+  } as any;
 }
 
 export { db, batchQueryBuilder, optimizedConnection };
