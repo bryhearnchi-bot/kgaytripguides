@@ -266,35 +266,6 @@ export class ProfileStorage implements IProfileStorage {
   }
 }
 
-// ============ USER OPERATIONS (Legacy) ============
-export interface IProfileStorage {
-  getProfile(id: string): Promise<Profile | undefined>;
-  getProfileByUsername(username: string): Promise<Profile | undefined>;
-  createProfile(profile: InsertProfile): Promise<Profile>;
-  updateProfileLastLogin(id: string): Promise<void>;
-}
-
-export class ProfileStorage implements IProfileStorage {
-  async getProfile(id: string): Promise<Profile | undefined> {
-    const result = await db.select().from(schema.profiles).where(eq(schema.profiles.id, id));
-    return result[0];
-  }
-
-  async getProfileByUsername(username: string): Promise<Profile | undefined> {
-    const result = await db.select().from(schema.profiles).where(eq(schema.profiles.username, username));
-    return result[0];
-  }
-
-  async createProfile(insertProfile: InsertProfile): Promise<Profile> {
-    const result = await db.insert(schema.profiles).values(insertProfile).returning();
-    return result[0];
-  }
-
-  async updateProfileLastLogin(id: string): Promise<void> {
-    await db.update(schema.profiles).set({ lastSignInAt: new Date() }).where(eq(schema.profiles.id, id));
-  }
-}
-
 // ============ TRIP OPERATIONS (formerly cruise operations) ============
 export interface ITripStorage {
   getAllTrips(): Promise<Trip[]>;
