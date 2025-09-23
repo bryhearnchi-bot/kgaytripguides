@@ -22,6 +22,11 @@ build/
 # Local images (use Cloudinary instead)
 client/public/images/
 !client/public/images/.gitkeep
+# But allow PWA icons (required for manifest)
+!client/public/images/icons/
+!client/public/images/icons/*.png
+!client/public/images/screenshots/
+!client/public/images/screenshots/*.png
 
 # Database files (local development)
 *.db
@@ -74,7 +79,8 @@ jspm_packages/
 
 # Gatsby files
 .cache/
-public
+# Only ignore top-level public directory (for Gatsby), not client/public
+/public
 
 # Storybook build outputs
 .out

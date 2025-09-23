@@ -198,10 +198,9 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('https://images.unsplash.com/photo-1520637836862-4d197d17c8a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&h=400');
-  background-blend-mode: overlay;
-  background-size: cover;
-  background-position: center;
+  /* Wave pattern overlay instead of external image */
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='wave' patternUnits='userSpaceOnUse' width='100' height='100'%3E%3Cpath d='M0 50c25-10 25 10 50 0s25-10 50 0' stroke='%23ffffff' stroke-width='0.5' fill='none' opacity='0.2'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23wave)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
   opacity: 0.3;
   z-index: -1;
 }

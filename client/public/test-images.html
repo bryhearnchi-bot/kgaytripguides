@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Test</title>
+</head>
+<body>
+    <h1>Testing Images</h1>
+
+    <h2>Logo from atlantisevents.com:</h2>
+    <img src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" alt="Atlantis" style="height: 50px;">
+
+    <h2>Logo from kgaytravel.com:</h2>
+    <img src="https://kgaytravel.com/wp-content/uploads/2019/05/k-gay-logo-blue1-hi-res.jpg" alt="KGay" style="height: 50px;">
+
+    <h2>Image from Cloudinary:</h2>
+    <img src="https://res.cloudinary.com/dfqoebbyj/image/upload/v1757789602/cruise-app/ships/virgin-scarlet-lady.jpg" alt="Ship" style="height: 200px;">
+
+    <h2>Party Image from Cloudinary:</h2>
+    <img src="https://res.cloudinary.com/dfqoebbyj/image/upload/w_600,h_400,c_fill,g_center,q_auto,f_auto/v1757804284/unite_af3vyi.jpg" alt="UNITE Party" style="height: 200px;">
+
+    <script>
+        console.log('Test page loaded');
+        document.querySelectorAll('img').forEach((img, index) => {
+            img.onload = () => console.log(`Image ${index + 1} loaded successfully:`, img.src);
+            img.onerror = () => console.error(`Image ${index + 1} failed to load:`, img.src);
+        });
+    </script>
+</body>
+</html>
