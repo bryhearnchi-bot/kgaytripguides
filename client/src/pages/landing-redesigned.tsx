@@ -61,7 +61,7 @@ function TripCard({ trip }: { trip: Trip }) {
           </div>
         </div>
       </Link>
-      
+
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
           {trip.name}
@@ -70,21 +70,21 @@ function TripCard({ trip }: { trip: Trip }) {
           {trip.description}
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <Ship className="h-3.5 w-3.5" />
             <span>{trip.shipName} • {trip.cruiseLine}</span>
           </div>
-          
+
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <CalendarDays className="h-3.5 w-3.5" />
             <span>
               {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {duration} days
             </span>
           </div>
-          
+
           {trip.highlights && trip.highlights.length > 0 && (
             <div className="flex items-start gap-1.5 text-xs text-ocean-700">
               <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
@@ -92,7 +92,7 @@ function TripCard({ trip }: { trip: Trip }) {
             </div>
           )}
         </div>
-        
+
         <div className="mt-auto">
           <Link
             href={`/trip/${trip.slug}`}
@@ -119,7 +119,7 @@ function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'curren
   now.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
   const start = dateOnly(startDate);
   const end = dateOnly(endDate);
-  
+
   if (now < start) {
     return 'upcoming';
   } else if (now >= start && now <= end) {
@@ -129,9 +129,9 @@ function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'curren
   }
 }
 
-export default function LandingPage() {
+export default function LandingPageRedesigned() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
-  
+
   const { data: trips, isLoading, error } = useQuery<Trip[]>({
     queryKey: ["trips"],
     queryFn: async () => {
@@ -180,7 +180,7 @@ export default function LandingPage() {
           <Ship className="h-16 w-16 mx-auto mb-4 text-red-400" />
           <h2 className="text-2xl font-bold mb-2">Unable to load trip guides</h2>
           <p className="text-lg mb-4">Please try refreshing the page</p>
-          <Button 
+          <Button
             onClick={() => window.location.reload()}
             className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
           >
@@ -192,7 +192,7 @@ export default function LandingPage() {
   }
 
   // Filter trips based on active filter
-  const filteredTrips = trips?.filter(trip => 
+  const filteredTrips = trips?.filter(trip =>
     activeFilter === 'all' ? true : trip.status === activeFilter
   ) || [];
 
@@ -250,119 +250,119 @@ export default function LandingPage() {
       {/* Main Content - positioned exactly like trip guide */}
       <div className="bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 pt-16 pb-[2px]">
-        {/* Filtered Trips */}
-        {filteredTrips.length > 0 ? (
-          <section>
-            {activeFilter === 'all' ? (
-              // Sectioned view for "All" filter
-              <div>
-                <div className="text-center mb-8">
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <Grid3X3 className="w-6 h-6 text-white/70" />
-                    <h2 className="text-2xl font-semibold text-white">All Trip Guides</h2>
+          {/* Filtered Trips */}
+          {filteredTrips.length > 0 ? (
+            <section>
+              {activeFilter === 'all' ? (
+                // Sectioned view for "All" filter
+                <div>
+                  <div className="text-center mb-8">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <Grid3X3 className="w-6 h-6 text-white/70" />
+                      <h2 className="text-2xl font-semibold text-white">All Trip Guides</h2>
+                    </div>
+                    <p className="text-sm text-white/70">Explore all available trip guides and experiences</p>
                   </div>
-                  <p className="text-sm text-white/70">Explore all available trip guides and experiences</p>
+
+                  {/* Current Trips Section */}
+                  {groupedTrips.current.length > 0 && (
+                    <div className="mb-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
+                        <h3 className="text-lg font-semibold text-white">Currently Sailing</h3>
+                        <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                        {groupedTrips.current.map((trip) => (
+                          <TripCard key={trip.id} trip={trip} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upcoming Trips Section */}
+                  {groupedTrips.upcoming.length > 0 && (
+                    <div className="mb-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                        <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
+                        <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                        {groupedTrips.upcoming.map((trip) => (
+                          <TripCard key={trip.id} trip={trip} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Past Trips Section */}
+                  {groupedTrips.past.length > 0 && (
+                    <div className="mb-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <History className="w-4 h-4 text-amber-400" />
+                        <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
+                        <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                        {groupedTrips.past.map((trip) => (
+                          <TripCard key={trip.id} trip={trip} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                {/* Current Trips Section */}
-                {groupedTrips.current.length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-6">
-                      <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
-                      <h3 className="text-lg font-semibold text-white">Currently Sailing</h3>
-                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
+              ) : (
+                // Single section view for specific filters
+                <div>
+                  <div className="text-center mb-8">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white/70" />}
+                      {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
+                      {activeFilter === 'past' && <History className="w-6 h-6 text-white/70" />}
+                      <h2 className="text-2xl font-semibold text-white">
+                        {activeFilter === 'upcoming' && 'Upcoming Trips'}
+                        {activeFilter === 'current' && 'Current Trips'}
+                        {activeFilter === 'past' && 'Past Adventures'}
+                      </h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedTrips.current.map((trip) => (
-                        <TripCard key={trip.id} trip={trip} />
-                      ))}
-                    </div>
+                    <p className="text-sm text-white/70">
+                      {activeFilter === 'upcoming' && 'Access your trip guide and plan your adventure'}
+                      {activeFilter === 'current' && 'Currently sailing - access your trip guide'}
+                      {activeFilter === 'past' && 'Relive the memories and revisit your trip guides'}
+                    </p>
                   </div>
-                )}
 
-                {/* Upcoming Trips Section */}
-                {groupedTrips.upcoming.length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-6">
-                      <Calendar className="w-4 h-4 text-blue-400" />
-                      <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
-                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedTrips.upcoming.map((trip) => (
-                        <TripCard key={trip.id} trip={trip} />
-                      ))}
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                    {filteredTrips.map((trip) => (
+                      <TripCard key={trip.id} trip={trip} />
+                    ))}
                   </div>
-                )}
-
-                {/* Past Trips Section */}
-                {groupedTrips.past.length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-6">
-                      <History className="w-4 h-4 text-amber-400" />
-                      <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
-                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedTrips.past.map((trip) => (
-                        <TripCard key={trip.id} trip={trip} />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                </div>
+              )}
+            </section>
+          ) : (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-6">
+                {activeFilter === 'all' && <Grid3X3 className="h-8 w-8 text-white" />}
+                {activeFilter === 'upcoming' && <Calendar className="h-8 w-8 text-white" />}
+                {activeFilter === 'current' && <Clock className="h-8 w-8 text-white" />}
+                {activeFilter === 'past' && <History className="h-8 w-8 text-white" />}
               </div>
-            ) : (
-              // Single section view for specific filters
-              <div>
-                <div className="text-center mb-8">
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white/70" />}
-                    {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
-                    {activeFilter === 'past' && <History className="w-6 h-6 text-white/70" />}
-                    <h2 className="text-2xl font-semibold text-white">
-                      {activeFilter === 'upcoming' && 'Upcoming Trips'}
-                      {activeFilter === 'current' && 'Current Trips'}
-                      {activeFilter === 'past' && 'Past Adventures'}
-                    </h2>
-                  </div>
-                  <p className="text-sm text-white/70">
-                    {activeFilter === 'upcoming' && 'Access your trip guide and plan your adventure'}
-                    {activeFilter === 'current' && 'Currently sailing - access your trip guide'}
-                    {activeFilter === 'past' && 'Relive the memories and revisit your trip guides'}
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                  {filteredTrips.map((trip) => (
-                    <TripCard key={trip.id} trip={trip} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-              {activeFilter === 'all' && <Grid3X3 className="h-8 w-8 text-white" />}
-              {activeFilter === 'upcoming' && <Calendar className="h-8 w-8 text-white" />}
-              {activeFilter === 'current' && <Clock className="h-8 w-8 text-white" />}
-              {activeFilter === 'past' && <History className="h-8 w-8 text-white" />}
+              <h2 className="text-3xl font-bold text-white mb-4">
+                {activeFilter === 'all' && 'No Trip Guides Available'}
+                {activeFilter === 'upcoming' && 'No Upcoming Trips'}
+                {activeFilter === 'current' && 'No Current Trips'}
+                {activeFilter === 'past' && 'No Past Trips'}
+              </h2>
+              <p className="text-white/80 text-lg">
+                {activeFilter === 'all' && 'No trip guides are currently available'}
+                {activeFilter === 'upcoming' && 'Check back soon for new trip announcements!'}
+                {activeFilter === 'current' && 'No trips are currently sailing'}
+                {activeFilter === 'past' && 'No past trip guides available'}
+              </p>
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {activeFilter === 'all' && 'No Trip Guides Available'}
-              {activeFilter === 'upcoming' && 'No Upcoming Trips'}
-              {activeFilter === 'current' && 'No Current Trips'}
-              {activeFilter === 'past' && 'No Past Trips'}
-            </h2>
-            <p className="text-white/80 text-lg">
-              {activeFilter === 'all' && 'No trip guides are currently available'}
-              {activeFilter === 'upcoming' && 'Check back soon for new trip announcements!'}
-              {activeFilter === 'current' && 'No trips are currently sailing'}
-              {activeFilter === 'past' && 'No past trip guides available'}
-            </p>
-          </div>
-        )}
+          )}
         </div>
       </div>
 
@@ -370,9 +370,9 @@ export default function LandingPage() {
       <footer className="atlantis-gradient wave-pattern text-white py-6 mt-6">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center mb-4">
-            <img 
-              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-              alt="Atlantis Events" 
+            <img
+              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png"
+              alt="Atlantis Events"
               className="h-8 w-auto mr-3 brightness-0 invert"
             />
             <div className="text-left">
