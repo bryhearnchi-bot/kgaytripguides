@@ -867,10 +867,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
         variant="trip"
         tripImageUrl={tripData?.trip?.heroImageUrl}
         title={tripData?.trip?.name || "Trip Guide"}
-        subtitle={tripData?.trip?.shipName && tripData?.trip?.cruiseLine
-          ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
-          : "Your Adventure Awaits"
-        }
+        subtitle=""
         additionalInfo={tripData?.trip?.startDate && tripData?.trip?.endDate
           ? `${format(dateOnly(tripData.trip.startDate), 'MMMM d')} - ${format(dateOnly(tripData.trip.endDate), 'MMMM d, yyyy')}`
           : undefined
@@ -910,7 +907,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Daily Schedule Tab */}
             <TabsContent value="schedule">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+              <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
                 <div className="flex items-center justify-between mb-4 -mt-2">
                   <div className="flex items-center space-x-2">
                     <CalendarDays className="w-5 h-5 text-white/80" />
@@ -1036,7 +1033,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Itinerary Tab */}
             <TabsContent value="itinerary">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+              <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <Map className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Trip Itinerary</h2>
@@ -1168,7 +1165,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             
             {/* Talent Tab */}
             <TabsContent value="talent">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+              <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <Star className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Featured Talent</h2>
@@ -1243,7 +1240,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Parties Tab */}
             <TabsContent value="parties">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+              <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <PartyPopper className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Party Events</h2>
@@ -1395,7 +1392,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             {/* Important Info Tab */}
             <TabsContent value="info">
-              <div className="max-w-6xl mx-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+              <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
                 <div className="flex items-center space-x-2 mb-2 -mt-2">
                   <Info className="w-5 h-5 text-white/80" />
                   <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Important Trip Information</h2>

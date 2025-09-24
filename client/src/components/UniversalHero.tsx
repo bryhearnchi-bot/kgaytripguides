@@ -18,7 +18,7 @@ export function UniversalHero({
   tabSection
 }: UniversalHeroProps) {
   return (
-    <header className="relative overflow-hidden text-white fixed top-0 left-0 right-0 z-40 h-[300px]">
+    <header className="relative overflow-hidden text-white fixed top-[18px] left-0 right-0 z-40 h-[250px]">
       {/* Background Layer */}
       <div className="absolute inset-0 z-0">
         {variant === 'landing' ? (
@@ -55,9 +55,11 @@ export function UniversalHero({
             <h1 className="text-4xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">
               {title}
             </h1>
-            <p className="text-white/90 text-lg font-medium drop-shadow-md">
-              {subtitle}
-            </p>
+            {subtitle && (
+              <p className="text-white/90 text-lg font-medium drop-shadow-md">
+                {subtitle}
+              </p>
+            )}
             {additionalInfo && (
               <p className="text-white/80 text-base font-medium drop-shadow-md mt-2">
                 {additionalInfo}
@@ -69,8 +71,8 @@ export function UniversalHero({
         {/* Flexible spacer to center title */}
         <div className="flex-1"></div>
 
-        {/* Tab Section - 24px from bottom */}
-        <div className="flex-shrink-0 px-4 pb-6">
+        {/* Tab Section - 18px from bottom */}
+        <div className="flex-shrink-0 px-4 pb-[18px]">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center">
               {tabSection}
