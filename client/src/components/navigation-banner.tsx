@@ -1,17 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, User, Settings, ChevronDown } from "lucide-react";
-import TimeFormatToggle from "@/components/TimeFormatToggle";
+import { Shield } from "lucide-react";
 import { useSupabaseAuthContext } from "@/contexts/SupabaseAuthContext";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import KokonutProfileDropdown from "@/components/ui/kokonut-profile-dropdown";
 
 export default function NavigationBanner() {
   const { user, profile, signOut } = useSupabaseAuthContext();
@@ -28,7 +19,7 @@ export default function NavigationBanner() {
   };
 
   return (
-    <div className="bg-ocean-900 text-white shadow-lg fixed z-50 w-full top-0 left-0 right-0">
+    <div className="bg-ocean-900 text-white shadow-lg fixed z-[60] w-full top-0 left-0 right-0">
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/">
@@ -48,66 +39,13 @@ export default function NavigationBanner() {
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">
-          <TimeFormatToggle />
-
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center space-x-1 sm:space-x-2 text-white hover:bg-white/10 p-2 touch-manipulation"
-                >
-                  <div className="flex items-center space-x-1 sm:space-x-2">
-                    <div className="w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
-                      <User className="w-3 sm:w-4 h-3 sm:h-4 text-white" />
-                    </div>
-                    <div className="hidden sm:block text-left">
-                      <p className="text-xs sm:text-sm font-medium">{profile?.full_name || user.email?.split('@')[0] || 'User'}</p>
-                    </div>
-                    <ChevronDown className="w-3 sm:w-4 h-3 sm:h-4 opacity-70" />
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 sm:w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation('/profile')}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                {profile?.role === 'admin' || profile?.role === 'super_admin' ? (
-                  <>
-                    <DropdownMenuItem onClick={() => setLocation('/admin')}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Admin Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                ) : null}
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link href="/login">
-              <Button
-                variant="outline"
-                size="sm"
-                className="!text-gray-800 !border-gray-300 !bg-white hover:!bg-gray-100 hover:!text-gray-900 transition-colors"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Login
-              </Button>
-            </Link>
-          )}
+          <KokonutProfileDropdown
+            user={user || { id: 'demo', email: 'demo@atlantis.com', avatar_url: '' }}
+            profile={profile || { full_name: 'Demo User', role: 'admin', status: 'active' }}
+            onLogout={handleLogout}
+            onNavigate={setLocation}
+            className="touch-manipulation"
+          />
         </div>
       </div>
     </div>

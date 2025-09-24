@@ -109,7 +109,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Mobile Header - Only visible on mobile */}
-      <header className="lg:hidden fixed top-10 left-0 right-0 h-14 bg-gradient-to-r from-ocean-900 to-ocean-800 flex items-center justify-between px-4 z-50 shadow-lg">
+      <header className="lg:hidden fixed top-12 left-0 right-0 h-14 bg-gradient-to-r from-ocean-900 to-ocean-800 flex items-center justify-between px-4 z-50 shadow-lg">
         <button
           onClick={toggleMobileMenu}
           className="p-2 text-white hover:bg-white/10 rounded-md transition-colors touch-target"
@@ -131,13 +131,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-10"
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-12"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar - positioned below nav banner */}
-      <aside className={`fixed left-0 top-10 h-[calc(100vh-40px)] bg-gradient-to-b from-ocean-900 via-ocean-800 to-ocean-700 z-40 shadow-xl ${
+      <aside className={`fixed left-0 top-12 h-[calc(100vh-48px)] bg-gradient-to-b from-ocean-900 via-ocean-800 to-ocean-700 z-40 shadow-xl ${
         // Only apply transition after component has mounted to prevent flicker
         isMounted ? 'transition-all duration-300' : ''
       } ${
@@ -257,7 +257,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content - positioned below nav banner and beside sidebar */}
-      <main className={`flex-1 pt-10 ${
+      <main className={`flex-1 pt-12 ${
         // Only apply transition after component has mounted to prevent flicker
         isMounted ? 'transition-all duration-300' : ''
       } ${
