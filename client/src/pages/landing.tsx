@@ -10,7 +10,9 @@ import { useState } from "react";
 import React from "react";
 import { dateOnly } from "@/lib/utils";
 import { getTripButtonText } from "@/lib/tripUtils";
-import { StandardizedHero } from "@/components/StandardizedHero";
+import { UniversalHero } from "@/components/UniversalHero";
+import { StandardizedTabContainer } from "@/components/StandardizedTabContainer";
+import { StandardizedContentLayout } from "@/components/StandardizedContentLayout";
 
 interface Trip {
   id: number;
@@ -37,7 +39,6 @@ function TripCard({ trip }: { trip: Trip }) {
       <Link
         href={`/trip/${trip.slug}`}
         onClick={() => {
-          // Force scroll to top immediately on navigation
           window.scrollTo(0, 0);
           document.documentElement.scrollTop = 0;
           document.body.scrollTop = 0;
@@ -61,7 +62,7 @@ function TripCard({ trip }: { trip: Trip }) {
           </div>
         </div>
       </Link>
-      
+
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
           {trip.name}
@@ -70,21 +71,21 @@ function TripCard({ trip }: { trip: Trip }) {
           {trip.description}
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <Ship className="h-3.5 w-3.5" />
             <span>{trip.shipName} • {trip.cruiseLine}</span>
           </div>
-          
+
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <CalendarDays className="h-3.5 w-3.5" />
             <span>
               {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {duration} days
             </span>
           </div>
-          
+
           {trip.highlights && trip.highlights.length > 0 && (
             <div className="flex items-start gap-1.5 text-xs text-ocean-700">
               <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
@@ -92,12 +93,11 @@ function TripCard({ trip }: { trip: Trip }) {
             </div>
           )}
         </div>
-        
+
         <div className="mt-auto">
           <Link
             href={`/trip/${trip.slug}`}
             onClick={() => {
-              // Force scroll to top immediately on navigation
               window.scrollTo(0, 0);
               document.documentElement.scrollTop = 0;
               document.body.scrollTop = 0;
@@ -113,13 +113,12 @@ function TripCard({ trip }: { trip: Trip }) {
   );
 }
 
-// Function to determine trip status based on dates
 function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'current' | 'past' {
   const now = new Date();
-  now.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
+  now.setHours(0, 0, 0, 0);
   const start = dateOnly(startDate);
   const end = dateOnly(endDate);
-  
+
   if (now < start) {
     return 'upcoming';
   } else if (now >= start && now <= end) {
@@ -131,7 +130,7 @@ function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'curren
 
 export default function LandingPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
-  
+
   const { data: trips, isLoading, error } = useQuery<Trip[]>({
     queryKey: ["trips"],
     queryFn: async () => {
@@ -140,21 +139,18 @@ export default function LandingPage() {
         throw new Error("Failed to fetch trips");
       }
       const data = await response.json();
-      // Calculate status for each trip based on dates
       return data.map((trip: Trip) => ({
         ...trip,
         status: getTripStatus(trip.startDate, trip.endDate)
       }));
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  // Determine if there are current trips
   const hasCurrent = trips?.some(trip => trip.status === 'current') || false;
   const [hasSetDefault, setHasSetDefault] = useState(false);
 
-  // Set default filter when data loads
   React.useEffect(() => {
     if (trips && !hasSetDefault) {
       setActiveFilter('all');
@@ -180,7 +176,7 @@ export default function LandingPage() {
           <Ship className="h-16 w-16 mx-auto mb-4 text-red-400" />
           <h2 className="text-2xl font-bold mb-2">Unable to load trip guides</h2>
           <p className="text-lg mb-4">Please try refreshing the page</p>
-          <Button 
+          <Button
             onClick={() => window.location.reload()}
             className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
           >
@@ -191,12 +187,10 @@ export default function LandingPage() {
     );
   }
 
-  // Filter trips based on active filter
-  const filteredTrips = trips?.filter(trip => 
+  const filteredTrips = trips?.filter(trip =>
     activeFilter === 'all' ? true : trip.status === activeFilter
   ) || [];
 
-  // Group trips by status for "all" view
   const groupedTrips = trips ? {
     current: trips.filter(trip => trip.status === 'current'),
     upcoming: trips.filter(trip => trip.status === 'upcoming'),
@@ -205,21 +199,13 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-      {/* Standardized Hero Header */}
-      <StandardizedHero variant="landing">
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-            Atlantis Events Guides
-          </h1>
-          <p className="text-white/80 text-base">
-            Your complete guide to unforgettable trip experiences
-          </p>
-        </div>
-
-        {/* Navigation Tabs with Frosted Glass Background */}
-        <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as 'all' | 'upcoming' | 'current' | 'past')}>
-          <div className="flex justify-center">
-            <div className="bg-gray-100/90 backdrop-blur-sm rounded-md p-1">
+      <UniversalHero
+        variant="landing"
+        title="Atlantis Events Guides"
+        subtitle="Your complete guide to unforgettable trip experiences"
+        tabSection={
+          <StandardizedTabContainer>
+            <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as 'all' | 'upcoming' | 'current' | 'past')}>
               <TabsList className={`grid w-full ${hasCurrent ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <TabsTrigger value="all" className="flex items-center gap-2">
                   <Grid3X3 className="w-4 h-4" />
@@ -242,29 +228,16 @@ export default function LandingPage() {
                   <span className="hidden sm:inline">Past</span>
                 </TabsTrigger>
               </TabsList>
-            </div>
-          </div>
-        </Tabs>
-      </StandardizedHero>
+            </Tabs>
+          </StandardizedTabContainer>
+        }
+      />
 
-      {/* Main Content - positioned exactly like trip guide */}
-      <div className="bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 pt-16 pb-[2px]">
-        {/* Filtered Trips */}
+      <StandardizedContentLayout>
         {filteredTrips.length > 0 ? (
           <section>
             {activeFilter === 'all' ? (
-              // Sectioned view for "All" filter
               <div>
-                <div className="text-center mb-8">
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <Grid3X3 className="w-6 h-6 text-white/70" />
-                    <h2 className="text-2xl font-semibold text-white">All Trip Guides</h2>
-                  </div>
-                  <p className="text-sm text-white/70">Explore all available trip guides and experiences</p>
-                </div>
-
-                {/* Current Trips Section */}
                 {groupedTrips.current.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
@@ -280,7 +253,6 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                {/* Upcoming Trips Section */}
                 {groupedTrips.upcoming.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
@@ -296,11 +268,10 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                {/* Past Trips Section */}
                 {groupedTrips.past.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
-                      <History className="w-4 h-4 text-amber-400" />
+                      <History className="w-4 h-4 text-purple-400" />
                       <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
@@ -313,26 +284,23 @@ export default function LandingPage() {
                 )}
               </div>
             ) : (
-              // Single section view for specific filters
               <div>
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-white/70" />}
                     {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
-                    {activeFilter === 'past' && <History className="w-6 h-6 text-white/70" />}
-                    <h2 className="text-2xl font-semibold text-white">
-                      {activeFilter === 'upcoming' && 'Upcoming Trips'}
-                      {activeFilter === 'current' && 'Current Trips'}
-                      {activeFilter === 'past' && 'Past Adventures'}
+                    {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-blue-400" />}
+                    {activeFilter === 'past' && <History className="w-6 h-6 text-purple-400" />}
+                    <h2 className="text-2xl font-semibold text-white capitalize">
+                      {activeFilter === 'current' ? 'Currently Sailing' : `${activeFilter} Adventures`}
                     </h2>
                   </div>
                   <p className="text-sm text-white/70">
-                    {activeFilter === 'upcoming' && 'Access your trip guide and plan your adventure'}
-                    {activeFilter === 'current' && 'Currently sailing - access your trip guide'}
-                    {activeFilter === 'past' && 'Relive the memories and revisit your trip guides'}
+                    {activeFilter === 'current' && 'Experience the journey as it unfolds'}
+                    {activeFilter === 'upcoming' && 'Get ready for your next adventure'}
+                    {activeFilter === 'past' && 'Relive the memories of past adventures'}
                   </p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                   {filteredTrips.map((trip) => (
                     <TripCard key={trip.id} trip={trip} />
@@ -342,48 +310,28 @@ export default function LandingPage() {
             )}
           </section>
         ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-              {activeFilter === 'all' && <Grid3X3 className="h-8 w-8 text-white" />}
-              {activeFilter === 'upcoming' && <Calendar className="h-8 w-8 text-white" />}
-              {activeFilter === 'current' && <Clock className="h-8 w-8 text-white" />}
-              {activeFilter === 'past' && <History className="h-8 w-8 text-white" />}
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {activeFilter === 'all' && 'No Trip Guides Available'}
-              {activeFilter === 'upcoming' && 'No Upcoming Trips'}
-              {activeFilter === 'current' && 'No Current Trips'}
-              {activeFilter === 'past' && 'No Past Trips'}
-            </h2>
-            <p className="text-white/80 text-lg">
-              {activeFilter === 'all' && 'No trip guides are currently available'}
-              {activeFilter === 'upcoming' && 'Check back soon for new trip announcements!'}
-              {activeFilter === 'current' && 'No trips are currently sailing'}
-              {activeFilter === 'past' && 'No past trip guides available'}
+          <div className="text-center py-16">
+            <Ship className="h-16 w-16 mx-auto mb-4 text-white/40" />
+            <h3 className="text-xl font-semibold text-white mb-2">
+              No {activeFilter === 'all' ? '' : activeFilter} trips found
+            </h3>
+            <p className="text-white/70 mb-4">
+              {activeFilter === 'all'
+                ? 'Check back soon for exciting new adventures!'
+                : `No ${activeFilter} trips are currently available.`
+              }
             </p>
+            {activeFilter !== 'all' && (
+              <Button
+                onClick={() => setActiveFilter('all')}
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
+              >
+                View All Trips
+              </Button>
+            )}
           </div>
         )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="atlantis-gradient wave-pattern text-white py-6 mt-6">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <img 
-              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png" 
-              alt="Atlantis Events" 
-              className="h-8 w-auto mr-3 brightness-0 invert"
-            />
-            <div className="text-left">
-              <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
-            </div>
-          </div>
-          <p className="text-sm text-white/80">
-            Your ultimate resource for cruise information and planning
-          </p>
-        </div>
-      </footer>
+      </StandardizedContentLayout>
     </div>
   );
 }

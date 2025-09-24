@@ -9,6 +9,8 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
+    "dev:main": "./scripts/start-dev.sh",
+    "dev:redesign": "./scripts/start-redesign-dev.sh",
     "build": "vite build && node scripts/copy-pwa-files.js",
     "build:railway": "vite build",
     "db:push:conditional": "if [ \"$CONTEXT\" = \"production\" ]; then npm run db:push; else echo 'Skipping database migration - not in production context'; fi",

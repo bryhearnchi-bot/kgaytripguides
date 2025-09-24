@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { dateOnly } from "@/lib/utils";
-import { StandardizedHero } from "@/components/StandardizedHero";
+import { UniversalHero } from "@/components/UniversalHero";
+import { StandardizedTabContainer } from "@/components/StandardizedTabContainer";
+import { StandardizedContentLayout } from "@/components/StandardizedContentLayout";
 import {
   ChevronDown, 
   ChevronUp, 
@@ -861,33 +863,21 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-      {/* Standardized Hero Header */}
-      <StandardizedHero variant="trip" tripImageUrl={tripData?.trip?.heroImageUrl}>
-        <div className="text-center mb-4">
-          <div className="inline-block bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/20 shadow-lg">
-            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight drop-shadow-lg">
-              {tripData?.trip?.name || "Trip Guide"}
-            </h1>
-            <p className="text-white text-base font-medium drop-shadow-md">
-              {tripData?.trip?.shipName && tripData?.trip?.cruiseLine
-                ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
-                : "Your Adventure Awaits"
-              }
-            </p>
-            {tripData?.trip?.startDate && tripData?.trip?.endDate && (
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-white text-sm font-medium drop-shadow-md">
-                  {format(dateOnly(tripData.trip.startDate), 'MMMM d')} - {format(dateOnly(tripData.trip.endDate), 'MMMM d, yyyy')}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex justify-center">
-            <div className="bg-gray-100/90 backdrop-blur-sm rounded-md p-1">
+      <UniversalHero
+        variant="trip"
+        tripImageUrl={tripData?.trip?.heroImageUrl}
+        title={tripData?.trip?.name || "Trip Guide"}
+        subtitle={tripData?.trip?.shipName && tripData?.trip?.cruiseLine
+          ? `Aboard ${tripData.trip.shipName} • ${tripData.trip.cruiseLine}`
+          : "Your Adventure Awaits"
+        }
+        additionalInfo={tripData?.trip?.startDate && tripData?.trip?.endDate
+          ? `${format(dateOnly(tripData.trip.startDate), 'MMMM d')} - ${format(dateOnly(tripData.trip.endDate), 'MMMM d, yyyy')}`
+          : undefined
+        }
+        tabSection={
+          <StandardizedTabContainer>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="itinerary" className="flex items-center gap-2">
                   <Map className="w-4 h-4" />
@@ -910,14 +900,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
                   <span className="hidden sm:inline">Info</span>
                 </TabsTrigger>
               </TabsList>
-            </div>
-          </div>
-        </Tabs>
-      </StandardizedHero>
+            </Tabs>
+          </StandardizedTabContainer>
+        }
+      />
 
-      <div className="bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 pt-16 pb-[2px]">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <StandardizedContentLayout>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
             {/* Daily Schedule Tab */}
             <TabsContent value="schedule">
@@ -1513,9 +1502,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
               </div>
             </TabsContent>
 
-          </Tabs>
-        </div>
-      </div>
+        </Tabs>
+      </StandardizedContentLayout>
 
       {/* Talent Modal */}
       <Dialog open={showTalentModal} onOpenChange={handleTalentModalClose}>

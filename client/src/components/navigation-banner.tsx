@@ -39,13 +39,23 @@ export default function NavigationBanner() {
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">
-          <KokonutProfileDropdown
-            user={user || { id: 'demo', email: 'demo@atlantis.com', avatar_url: '' }}
-            profile={profile || { full_name: 'Demo User', role: 'admin', status: 'active' }}
-            onLogout={handleLogout}
-            onNavigate={setLocation}
-            className="touch-manipulation"
-          />
+          {user && profile ? (
+            <KokonutProfileDropdown
+              user={user}
+              profile={profile}
+              onLogout={handleLogout}
+              onNavigate={setLocation}
+              className="touch-manipulation"
+            />
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+                  Login
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
