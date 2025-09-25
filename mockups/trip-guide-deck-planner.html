@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trip Guide Mockup – Deck Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#2563eb',
+              midnight: '#0f172a',
+              mint: '#34d399',
+              lavender: '#c4b5fd'
+            },
+            fontFamily: {
+              display: ['"Clash Display"', 'sans-serif'],
+              body: ['"Inter"', 'sans-serif']
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');
+    </style>
+  </head>
+  <body class="bg-midnight text-white font-body">
+    <div class="relative min-h-screen overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.25),_transparent_65%)]"></div>
+      <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+      <div class="relative z-10">
+        <header class="border-b border-white/10 bg-black/50 backdrop-blur">
+          <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="space-y-3">
+              <p class="text-xs uppercase tracking-[0.35em] text-white/40">Trip Guide</p>
+              <h1 class="text-4xl md:text-5xl font-display">Greek Isles 2025 • Deck Planner</h1>
+              <p class="max-w-xl text-sm text-white/70">A modular layout with sticky tab navigation and immersive content blocks powered by shadcn primitives.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="rounded-full border border-white/25 px-4 py-2 text-sm text-white/70 hover:bg-white/10">Share</button>
+              <button class="rounded-full bg-white text-midnight px-4 py-2 text-sm font-semibold shadow">Book Concierge</button>
+            </div>
+          </div>
+        </header>
+
+        <main class="max-w-6xl mx-auto px-6 py-10 grid gap-8 lg:grid-cols-[260px_1fr]">
+          <aside class="sticky top-10 h-fit space-y-6 rounded-3xl border border-white/10 bg-black/40 p-5">
+            <nav class="space-y-2" id="page-tabs">
+              <button data-pane="info" class="tab flex w-full items-center gap-3 rounded-xl bg-white text-midnight px-4 py-3 text-sm font-semibold">
+                <span class="h-2.5 w-2.5 rounded-full bg-mint"></span>
+                Info
+              </button>
+              <button data-pane="itinerary" class="tab flex w-full items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm text-white/80 hover:bg-white/20">
+                <span class="h-2.5 w-2.5 rounded-full bg-lavender"></span>
+                Itinerary
+              </button>
+              <button data-pane="events" class="tab flex w-full items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm text-white/80 hover:bg-white/20">
+                <span class="h-2.5 w-2.5 rounded-full bg-sky-300"></span>
+                Events
+              </button>
+              <button data-pane="parties" class="tab flex w-full items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm text-white/80 hover:bg-white/20">
+                <span class="h-2.5 w-2.5 rounded-full bg-rose-300"></span>
+                Parties
+              </button>
+              <button data-pane="talent" class="tab flex w-full items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm text-white/80 hover:bg-white/20">
+                <span class="h-2.5 w-2.5 rounded-full bg-amber-300"></span>
+                Talent
+              </button>
+            </nav>
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-xs text-white/60">
+              <p class="uppercase tracking-[0.35em] text-white/40">Quick facts</p>
+              <ul class="mt-3 space-y-2">
+                <li>7 nights • 6 ports</li>
+                <li>Ship: Scarlet Odyssey</li>
+                <li>Live: June 14 – 21</li>
+              </ul>
+            </div>
+          </aside>
+
+          <section class="space-y-10">
+            <div data-pane-content="info" class="rounded-3xl border border-white/10 bg-black/40 p-8 space-y-8">
+              <div class="grid gap-6 md:grid-cols-[1.5fr_1fr]">
+                <div class="space-y-4">
+                  <h2 class="text-3xl font-display">Overview</h2>
+                  <p class="text-sm text-white/70">Sail through turquoise waters, sunset amphitheater shows, and neon cove parties. The Info tab uses shadcn cards, accordions, and badges for modular storytelling.</p>
+                  <div class="flex flex-wrap gap-3 text-xs text-white/60">
+                    <span class="rounded-full border border-white/20 px-3 py-1">Mediterranean</span>
+                    <span class="rounded-full border border-white/20 px-3 py-1">Dance heavy</span>
+                    <span class="rounded-full border border-white/20 px-3 py-1">Inclusive wellness</span>
+                  </div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <p class="text-xs uppercase tracking-[0.4em] text-white/40">Cabin Snapshot</p>
+                  <p class="mt-3 text-3xl font-display">$2,550</p>
+                  <p class="text-xs text-white/60">Avg per traveler · Payment plans available</p>
+                </div>
+              </div>
+              <div class="grid gap-6 md:grid-cols-3">
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs text-white/50">Sail-away</p>
+                  <p class="mt-2 text-lg font-semibold">Sunset drag parade with DJ Shangela</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs text-white/50">Wellness</p>
+                  <p class="mt-2 text-lg font-semibold">Dockside sunrise yoga & sound baths</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs text-white/50">Excursion</p>
+                  <p class="mt-2 text-lg font-semibold">Secret coves swim with underwater disco</p>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <details>
+                  <summary class="cursor-pointer text-sm font-semibold">Frequently Asked (tap to expand)</summary>
+                  <div class="mt-3 space-y-3 text-sm text-white/70">
+                    <p><span class="font-semibold text-white">Dress codes:</span> Glam deck looks, neon whites, themed eveningwear.</p>
+                    <p><span class="font-semibold text-white">Dining:</span> Inclusive shared tables + queer chef residencies.</p>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <div data-pane-content="itinerary" class="hidden rounded-3xl border border-white/10 bg-black/40 p-8 space-y-8">
+              <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-3xl font-display">Itinerary Steps</h2>
+                  <p class="text-sm text-white/70">Each day expands with highlights. Stepper is styled with shadcn `Steps` vibe.</p>
+                </div>
+                <button class="rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Add to Calendar</button>
+              </header>
+              <ol class="space-y-4">
+                <li class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center gap-3 text-sm">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-midnight font-semibold">Day 1</span>
+                    <div>
+                      <p class="text-sm font-semibold">Mykonos Launch</p>
+                      <p class="text-xs text-white/60">Sail away 5pm • Sunset drag revue • Welcome dinner</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center gap-3 text-sm">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-midnight font-semibold">Day 2</span>
+                    <div>
+                      <p class="text-sm font-semibold">Santorini Glow</p>
+                      <p class="text-xs text-white/60">Caldera brunch • Blue grotto swim • Deck neon rave</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center gap-3 text-sm">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/40 text-midnight font-semibold">Day 3</span>
+                    <div>
+                      <p class="text-sm font-semibold">Rhodes Legends</p>
+                      <p class="text-xs text-white/60">Historic tours • Ballroom battle • Rooftop jazz lounge</p>
+                    </div>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <div data-pane-content="events" class="hidden rounded-3xl border border-white/10 bg-black/40 p-8 space-y-6">
+              <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-3xl font-display">Events</h2>
+                  <p class="text-sm text-white/70">Filterable cards with type badges.</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-white/60">
+                  <button class="rounded-full border border-white/20 px-3 py-1">All</button>
+                  <button class="rounded-full border border-white/20 px-3 py-1">Shows</button>
+                  <button class="rounded-full border border-white/20 px-3 py-1">Workshops</button>
+                  <button class="rounded-full border border-white/20 px-3 py-1">Social</button>
+                </div>
+              </header>
+              <div class="grid gap-4 md:grid-cols-2">
+                <article class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center justify-between">
+                    <span class="rounded-full bg-mint/20 px-3 py-1 text-xs text-mint">Show</span>
+                    <span class="text-xs text-white/60">Day 2 · 9:00 PM</span>
+                  </div>
+                  <h3 class="mt-3 text-xl font-display">Supernova Stage with Jinkx Monsoon</h3>
+                  <p class="mt-2 text-xs text-white/70">Open-air amphitheater, live vocals & orchestra.</p>
+                </article>
+                <article class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center justify-between">
+                    <span class="rounded-full bg-lavender/20 px-3 py-1 text-xs text-lavender">Workshop</span>
+                    <span class="text-xs text-white/60">Day 3 · 11:00 AM</span>
+                  </div>
+                  <h3 class="mt-3 text-xl font-display">Body Electric Movement Lab</h3>
+                  <p class="mt-2 text-xs text-white/70">Immersive vogue masterclass by Legendary house.</p>
+                </article>
+              </div>
+            </div>
+
+            <div data-pane-content="parties" class="hidden rounded-3xl border border-white/10 bg-black/40 p-8 space-y-6">
+              <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-3xl font-display">Parties</h2>
+                  <p class="text-sm text-white/70">Carousel-inspired cards for nightly themes.</p>
+                </div>
+                <button class="rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 hover:bg-white/10">View Dress Codes</button>
+              </header>
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-primary/40 via-white/5 to-primary/10 p-4">
+                  <p class="text-xs uppercase tracking-[0.3em] text-white/50">Night 1</p>
+                  <h3 class="mt-3 text-xl font-display">Celestial Sail</h3>
+                  <p class="mt-2 text-xs text-white/70">Silver + stardust with live string house set.</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-rose-400/30 via-white/5 to-rose-500/10 p-4">
+                  <p class="text-xs uppercase tracking-[0.3em] text-white/50">Night 2</p>
+                  <h3 class="mt-3 text-xl font-display">Neon Odyssey</h3>
+                  <p class="mt-2 text-xs text-white/70">Glow-suit runway + vogue battles.</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-lavender/30 via-white/5 to-primary/10 p-4">
+                  <p class="text-xs uppercase tracking-[0.3em] text-white/50">Night 3</p>
+                  <h3 class="mt-3 text-xl font-display">Siren Soirée</h3>
+                  <p class="mt-2 text-xs text-white/70">Aquatic couture & bioluminescent bar.</p>
+                </div>
+              </div>
+            </div>
+
+            <div data-pane-content="talent" class="hidden rounded-3xl border border-white/10 bg-black/40 p-8 space-y-6">
+              <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-3xl font-display">Talent</h2>
+                  <p class="text-sm text-white/70">Avatar cards with hover reveals.</p>
+                </div>
+                <button class="rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 hover:bg-white/10">See full roster</button>
+              </header>
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="group rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/80?u=jinkx" alt="Jinkx Monsoon" class="h-14 w-14 rounded-full border-2 border-white/30" />
+                    <div>
+                      <p class="text-sm font-semibold">Jinkx Monsoon</p>
+                      <p class="text-xs text-white/50">Headliner</p>
+                    </div>
+                  </div>
+                  <p class="mt-3 text-xs text-white/60">Two-night cabaret + meet & greet.</p>
+                  <div class="mt-4 hidden text-xs text-white/50 group-hover:block">
+                    <p>Pronouns: she/they</p>
+                    <p>IG: @thejinkx</p>
+                  </div>
+                </div>
+                <div class="group rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/80?u=tinashe" alt="Tinashe" class="h-14 w-14 rounded-full border-2 border-white/30" />
+                    <div>
+                      <p class="text-sm font-semibold">Tinashe</p>
+                      <p class="text-xs text-white/50">Headliner</p>
+                    </div>
+                  </div>
+                  <p class="mt-3 text-xs text-white/60">Sunset concert + wellness DJ set.</p>
+                  <div class="mt-4 hidden text-xs text-white/50 group-hover:block">
+                    <p>Pronouns: she/her</p>
+                    <p>IG: @tinashenow</p>
+                  </div>
+                </div>
+                <div class="group rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/80?u=bob" alt="Bob the Drag Queen" class="h-14 w-14 rounded-full border-2 border-white/30" />
+                    <div>
+                      <p class="text-sm font-semibold">Bob the Drag Queen</p>
+                      <p class="text-xs text-white/50">Host</p>
+                    </div>
+                  </div>
+                  <p class="mt-3 text-xs text-white/60">Daily comedy drop-ins + brunch MC.</p>
+                  <div class="mt-4 hidden text-xs text-white/50 group-hover:block">
+                    <p>Pronouns: he/she</p>
+                    <p>IG: @bobthedragqueen</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script>
+      const tabs = document.querySelectorAll('#page-tabs .tab');
+      const panes = document.querySelectorAll('[data-pane-content]');
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((btn) => {
+            btn.classList.remove('bg-white', 'text-midnight', 'font-semibold');
+            btn.classList.add('bg-white/10', 'text-white/80');
+          });
+          tab.classList.add('bg-white', 'text-midnight', 'font-semibold');
+          tab.classList.remove('text-white/80', 'bg-white/10');
+          const target = tab.getAttribute('data-pane');
+          panes.forEach((pane) => {
+            pane.classList.toggle('hidden', pane.getAttribute('data-pane-content') !== target);
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

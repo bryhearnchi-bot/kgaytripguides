@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin Table Mockup – Elevated</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              midnight: '#0f172a',
+              panel: '#111c33',
+              accent: '#2563eb',
+              accentSoft: 'rgba(37,99,235,0.08)',
+              success: '#22c55e',
+              danger: '#ef4444'
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['"Inter"', 'sans-serif']
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+    </style>
+  </head>
+  <body class="bg-midnight text-white font-body">
+    <div class="flex min-h-screen">
+      <aside class="hidden w-64 flex-shrink-0 border-r border-white/10 bg-panel/80 px-6 py-8 backdrop-blur lg:block">
+        <div class="space-y-6">
+          <div class="space-y-3">
+            <img src="https://atlantisevents.com/wp-content/uploads/2021/12/atlantis_logo.svg" alt="Atlantis Events" class="h-10" />
+            <img src="https://images.squarespace-cdn.com/content/v1/5df2e8cf18db210c1b17f9de/1697844920842-8VJZ3MH74TDL2766HHTD/KGAY-Travel-Logo.png" alt="KGAY Travel" class="h-14 rounded-md" />
+          </div>
+          <nav class="space-y-2 text-sm text-white/60">
+            <p class="uppercase tracking-[0.25em] text-white/30">Navigation</p>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white hover:bg-white/10">Dashboard</a>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">Trips</a>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">Ships</a>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">Artists</a>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">Locations</a>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">Users</a>
+            <a href="#" class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">Party Themes</a>
+          </nav>
+        </div>
+      </aside>
+
+      <div class="flex-1 px-6 py-10">
+        <div class="mx-auto max-w-6xl space-y-6">
+          <header class="flex flex-col gap-4 rounded-3xl border border-white/10 bg-panel/80 p-6 shadow-lg shadow-black/40 backdrop-blur">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/50">Artists</p>
+              <h1 class="text-3xl font-display">Artists & Talent Management</h1>
+              <p class="text-sm text-white/60">Track performers, categories, and availability across Atlantis sailings.</p>
+            </div>
+            <button class="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold shadow-lg shadow-accent/30">
+              <span>＋</span>
+              Add New Artist
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[240px]">
+              <input type="search" placeholder="Search artists by name, category, or sailing" class="w-full rounded-full border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-accent focus:outline-none" />
+              <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40">⌘K</span>
+            </div>
+            <button class="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/70 hover:bg-white/10">Category</button>
+            <button class="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/70 hover:bg-white/10">Status</button>
+            <button class="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/70 hover:bg-white/10">Cruise</button>
+          </div>
+        </header>
+
+        <section class="rounded-3xl border border-white/10 bg-panel/70 shadow-2xl shadow-black/30 backdrop-blur">
+          <header class="flex flex-col gap-2 border-b border-white/10 px-6 pb-4 pt-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 class="text-xl font-display">All Artists (31)</h2>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/40">Manage talent across voyages</p>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-white/60">
+                <span>Sort by:</span>
+                <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 hover:bg-white/10">Last onboard</button>
+                <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 hover:bg-white/10">Category</button>
+              </div>
+            </div>
+          </header>
+
+          <table class="w-full table-fixed">
+            <thead>
+              <tr class="text-sm text-white/50">
+                <th class="w-6 px-6 py-3 text-left"> </th>
+                <th class="w-7/12 px-3 py-3 text-left">Artist Details</th>
+                <th class="w-1/5 px-3 py-3 text-left">Category</th>
+                <th class="w-1/6 px-3 py-3 text-left">Status</th>
+                <th class="w-20 px-3 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5 text-sm">
+              <tr class="hover:bg-white/5">
+                <td class="px-6 py-4 align-top text-white/40">●</td>
+                <td class="px-3 py-4 align-top">
+                  <div class="flex items-start gap-3">
+                    <img src="https://i.pravatar.cc/64?u=abel" class="h-10 w-10 rounded-full border border-white/20" alt="Abel" />
+                    <div>
+                      <p class="font-medium">Abel</p>
+                      <p class="text-xs text-white/60">Grammy-nominated DJ and producer from Miami, headline resident for Atlantis main stage.</p>
+                      <div class="mt-2 flex flex-wrap gap-2 text-xs text-white/50">
+                        <span class="rounded-full border border-white/15 px-3 py-1">Booked: Caribbean 2025</span>
+                        <span class="rounded-full border border-white/15 px-3 py-1">Last sailed: Resilient Med Glow</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
+                    <span>🎧</span>
+                    DJs
+                  </span>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">Active</span>
+                </td>
+                <td class="px-3 py-4 align-top text-right text-white/50">
+                  <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs hover:bg-white/10">Edit</button>
+                  <button class="ml-2 rounded-full border border-danger/20 bg-danger/10 px-3 py-1 text-xs text-danger hover:bg-danger/20">Delete</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-white/5">
+                <td class="px-6 py-4 align-top text-white/40">●</td>
+                <td class="px-3 py-4 align-top">
+                  <div class="flex items-start gap-3">
+                    <img src="https://i.pravatar.cc/64?u=airo" class="h-10 w-10 rounded-full border border-white/20" alt="AirOtic" />
+                    <div>
+                      <p class="font-medium">AirOtic</p>
+                      <p class="text-xs text-white/60">High-energy circus cabaret show created by Les Farfadais featuring aerialists and acrobatics.</p>
+                      <div class="mt-2 flex flex-wrap gap-2 text-xs text-white/50">
+                        <span class="rounded-full border border-white/15 px-3 py-1">Booked: Southern Legends</span>
+                        <span class="rounded-full border border-white/15 px-3 py-1">Tech rehearsal: Day 1</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
+                    <span>🎭</span>
+                    Shows
+                  </span>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">Active</span>
+                </td>
+                <td class="px-3 py-4 align-top text-right text-white/50">
+                  <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs hover:bg-white/10">Edit</button>
+                  <button class="ml-2 rounded-full border border-danger/20 bg-danger/10 px-3 py-1 text-xs text-danger hover:bg-danger/20">Delete</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-white/5">
+                <td class="px-6 py-4 align-top text-white/40">●</td>
+                <td class="px-3 py-4 align-top">
+                  <div class="flex items-start gap-3">
+                    <img src="https://i.pravatar.cc/64?u=alexis" class="h-10 w-10 rounded-full border border-white/20" alt="Alexis Michelle" />
+                    <div>
+                      <p class="font-medium">Alexis Michelle</p>
+                      <p class="text-xs text-white/60">Broadway-trained drag performer from Drag Race. Hosting daily story hour and cabaret.</p>
+                      <div class="mt-2 flex flex-wrap gap-2 text-xs text-white/50">
+                        <span class="rounded-full border border-white/15 px-3 py-1">Booked: Med Glow</span>
+                        <span class="rounded-full border border-white/15 px-3 py-1">Meet & greet schedule ready</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
+                    <span>💃</span>
+                    Drag & Variety
+                  </span>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">Active</span>
+                </td>
+                <td class="px-3 py-4 align-top text-right text-white/50">
+                  <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs hover:bg-white/10">Edit</button>
+                  <button class="ml-2 rounded-full border border-danger/20 bg-danger/10 px-3 py-1 text-xs text-danger hover:bg-danger/20">Delete</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-white/5">
+                <td class="px-6 py-4 align-top text-white/40">●</td>
+                <td class="px-3 py-4 align-top">
+                  <div class="flex items-start gap-3">
+                    <img src="https://i.pravatar.cc/64?u=alyssa" class="h-10 w-10 rounded-full border border-white/20" alt="Alyssa Edwards" />
+                    <div>
+                      <p class="font-medium">Alyssa Edwards</p>
+                      <p class="text-xs text-white/60">Fan-favorite from Drag Race, hosting dance clinics and comedy brunches.</p>
+                      <div class="mt-2 flex flex-wrap gap-2 text-xs text-white/50">
+                        <span class="rounded-full border border-white/15 px-3 py-1">Booked: Halloween Mexico</span>
+                        <span class="rounded-full border border-white/15 px-3 py-1">Special event: Ballroom battle</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
+                    <span>💃</span>
+                    Drag & Variety
+                  </span>
+                </td>
+                <td class="px-3 py-4 align-top">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">Active</span>
+                </td>
+                <td class="px-3 py-4 align-top text-right text-white/50">
+                  <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs hover:bg-white/10">Edit</button>
+                  <button class="ml-2 rounded-full border border-danger/20 bg-danger/10 px-3 py-1 text-xs text-danger hover:bg-danger/20">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <footer class="flex items-center justify-between border-t border-white/10 px-6 py-4 text-xs text-white/50">
+            <span>Showing 1–4 of 31 artists</span>
+            <div class="flex items-center gap-2">
+              <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 hover:bg-white/10">Prev</button>
+              <button class="rounded-full border border-white/15 bg-white/5 px-3 py-1 hover:bg-white/10">Next</button>
+            </div>
+          </footer>
+        </section>
+      </div>
+      <header class="fixed top-0 left-0 right-0 z-30 border-b border-white/10 bg-panel/90 px-6 py-4 backdrop-blur">
+        <div class="mx-auto flex max-w-6xl items-center justify-between">
+          <div class="flex items-center gap-6">
+            <img src="https://atlantisevents.com/wp-content/uploads/2021/12/atlantis_logo.svg" alt="Atlantis" class="h-8" />
+            <img src="https://images.squarespace-cdn.com/content/v1/5df2e8cf18db210c1b17f9de/1697844920842-8VJZ3MH74TDL2766HHTD/KGAY-Travel-Logo.png" alt="KGAY Travel" class="h-10 rounded" />
+            <span class="text-sm text-white/50">Admin Control Center</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm">
+            <span class="text-white/60">Bryan Hearn</span>
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white font-semibold">BH</div>
+          </div>
+        </div>
+      </header>
+      </div>
+    </div>
+  </body>
+</html>

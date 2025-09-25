@@ -3,8 +3,6 @@ import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
   Table,
@@ -20,7 +18,6 @@ import {
   Edit,
   Trash2,
   Calendar,
-  MapPin,
   Users,
   Search
 } from 'lucide-react';

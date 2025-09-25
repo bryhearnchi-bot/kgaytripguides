@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trip Guide Mockup – Nightlife Navigator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#020617',
+              sapphire: '#312e81',
+              cyan: '#22d3ee',
+              fuchsia: '#c026d3',
+              amber: '#f59e0b'
+            },
+            fontFamily: {
+              display: ['"Supreme"', 'sans-serif'],
+              body: ['"Inter"', 'sans-serif']
+            },
+            boxShadow: {
+              glow: '0 0 35px rgba(34,211,238,0.35)',
+              neon: '0 0 25px rgba(192,38,211,0.35)'
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      @font-face {
+        font-family: 'Supreme';
+        src: url('https://fonts.cdnfonts.com/s/101960/Supreme-Variable.woff') format('woff');
+      }
+      .floating-panel {
+        animation: float 6s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+    </style>
+  </head>
+  <body class="bg-ink text-white font-body">
+    <div class="relative min-h-screen overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_transparent_65%)]"></div>
+      <div class="absolute inset-0 opacity-30" style="background-image: linear-gradient(135deg, rgba(192,38,211,0.05) 0%, transparent 40%), linear-gradient(-135deg, rgba(34,211,238,0.05) 0%, transparent 40%);"></div>
+
+      <header class="relative z-10 border-b border-white/10 bg-ink/80 backdrop-blur">
+        <div class="max-w-6xl mx-auto px-6 py-10 flex flex-wrap items-center gap-6 justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.4em] text-white/50">Trip Guide • Nightlife Navigator</p>
+            <h1 class="mt-2 text-4xl md:text-5xl font-display">Greek Isles 2025</h1>
+            <p class="mt-3 max-w-xl text-sm text-white/70">Two-column layout with floating utility rail, gradient hero, and quick actions. Perfect for guests plotting nightlife moves.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Save Guide</button>
+            <button class="rounded-full bg-cyan px-4 py-2 text-sm font-semibold text-ink shadow-glow hover:shadow-neon">Launch Command Menu</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="relative z-10 max-w-6xl mx-auto px-6 py-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section class="space-y-10">
+          <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-sapphire/60 via-ink/90 to-ink/90 p-8">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div class="max-w-2xl space-y-3">
+                <h2 class="text-3xl font-display">Hero Overview</h2>
+                <p class="text-sm text-white/70">Hero card with quick action buttons and CTA chips. Build using shadcn `Card`, `Button`, and `Badge` components.</p>
+                <div class="flex flex-wrap gap-3 text-xs text-white/60">
+                  <span class="rounded-full border border-white/20 px-3 py-1">Sail dates: June 14 – 21</span>
+                  <span class="rounded-full border border-white/20 px-3 py-1">Crew: 18 headliners</span>
+                  <span class="rounded-full border border-white/20 px-3 py-1">Cabins: from $2,550</span>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <button class="rounded-full bg-white text-ink px-4 py-2 text-sm font-semibold shadow">Book Now</button>
+                <button class="rounded-full border border-white/25 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Download Deck</button>
+              </div>
+            </div>
+            <div class="mt-6 grid gap-4 md:grid-cols-3 text-sm text-white/70">
+              <div class="rounded-2xl border border-white/10 bg-white/10 p-4">Daytime: queer-led excursions + wellness mornings.</div>
+              <div class="rounded-2xl border border-white/10 bg-white/10 p-4">Night: 5 deck parties, secret lounge, after-hours speakeasy.</div>
+              <div class="rounded-2xl border border-white/10 bg-white/10 p-4">Talent: drag icons, DJs, live vocalists, ballroom houses.</div>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-white/10 bg-ink/70 p-8" id="trip-tabs">
+            <nav class="flex flex-wrap gap-3">
+              <button data-tab="info" class="tab active rounded-full bg-white text-ink px-4 py-2 text-sm font-semibold">Info</button>
+              <button data-tab="itinerary" class="tab rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Itinerary</button>
+              <button data-tab="events" class="tab rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Events</button>
+              <button data-tab="parties" class="tab rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Parties</button>
+              <button data-tab="talent" class="tab rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Talent</button>
+            </nav>
+
+            <div class="mt-6 space-y-6" data-tab-pane="info">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h3 class="text-xl font-display">Overview</h3>
+                <p class="mt-2 text-sm text-white/70">This tab houses segmented content sections using shadcn `Tabs` inside for Overview, Packages, FAQ.</p>
+                <div class="mt-4 grid gap-4 md:grid-cols-3 text-xs text-white/60">
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">Overview: highlight the vibe, ship amenities, and itineraries.</div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">Packages: premium suites, party passes, wellness bundles.</div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">FAQ: cabins, dining, dress codes, accessibility.</div>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h3 class="text-xl font-display">Key Stats</h3>
+                <div class="mt-4 grid gap-4 md:grid-cols-4 text-sm text-white/70">
+                  <div>
+                    <p class="text-xs text-white/50">Passengers</p>
+                    <p class="text-2xl font-display">2,800</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-white/50">Parties</p>
+                    <p class="text-2xl font-display">5</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-white/50">Shows</p>
+                    <p class="text-2xl font-display">12</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-white/50">Crew</p>
+                    <p class="text-2xl font-display">1,100</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 hidden space-y-6" data-tab-pane="itinerary">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h3 class="text-xl font-display">Itinerary</h3>
+                <p class="mt-2 text-sm text-white/70">Two-column timeline with map chip for each day.</p>
+                <div class="mt-4 space-y-4">
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p class="text-xs uppercase tracking-[0.3em] text-white/50">Day 2 · Santorini</p>
+                      <p class="text-sm text-white/70">Brunch at caldera, volcanic beach swim, neon promenade.</p>
+                    </div>
+                    <button class="rounded-full border border-white/20 px-3 py-1 text-xs">Add to plan</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 hidden space-y-6" data-tab-pane="events">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h3 class="text-xl font-display">Events</h3>
+                <p class="mt-2 text-sm text-white/70">Timeline of shows + interactive popovers.</p>
+                <div class="mt-4 space-y-4">
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center justify-between text-xs text-white/60">
+                      <span>Day 3 · 9:30 PM</span>
+                      <span class="rounded-full border border-white/20 px-3 py-1">Show</span>
+                    </div>
+                    <p class="mt-2 text-sm font-semibold">Ballroom Legends Showcase</p>
+                    <p class="text-xs text-white/60">Atrium stage · Hosted by Bob the Drag Queen</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 hidden space-y-6" data-tab-pane="parties">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h3 class="text-xl font-display">Parties</h3>
+                <p class="mt-2 text-sm text-white/70">Detailed party cards with `Sheet` for packing list.</p>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                  <div class="rounded-xl border border-white/10 bg-gradient-to-br from-fuchsia/30 via-white/5 to-transparent p-4">
+                    <p class="text-xs uppercase tracking-[0.3em] text-white/50">Night 2</p>
+                    <p class="text-lg font-semibold">Neon Tide</p>
+                    <p class="mt-2 text-xs text-white/70">Glow body paint, LED runway, sunrise encore.</p>
+                    <button class="mt-4 rounded-full border border-white/30 px-3 py-1 text-xs">Open sheet</button>
+                  </div>
+                  <div class="rounded-xl border border-white/10 bg-gradient-to-br from-amber/30 via-white/5 to-transparent p-4">
+                    <p class="text-xs uppercase tracking-[0.3em] text-white/50">Night 3</p>
+                    <p class="text-lg font-semibold">Siren’s Call</p>
+                    <p class="mt-2 text-xs text-white/70">Underwater lounge, mer-looks encouraged.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 hidden space-y-6" data-tab-pane="talent">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h3 class="text-xl font-display">Talent</h3>
+                <p class="mt-2 text-sm text-white/70">Masonry grid using `Card` + `Tooltip` for socials.</p>
+                <div class="mt-4 grid gap-4 md:grid-cols-3">
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center gap-3">
+                      <img src="https://i.pravatar.cc/80?u=shangela" class="h-12 w-12 rounded-full" alt="Shangela" />
+                      <div>
+                        <p class="text-sm font-semibold">Shangela</p>
+                        <p class="text-xs text-white/60">Host</p>
+                      </div>
+                    </div>
+                    <p class="mt-3 text-xs text-white/70">Hosting main stage, midnight pop-ins.</p>
+                  </div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center gap-3">
+                      <img src="https://i.pravatar.cc/80?u=sofia" class="h-12 w-12 rounded-full" alt="Sofia" />
+                      <div>
+                        <p class="text-sm font-semibold">DJ Sofia Rivera</p>
+                        <p class="text-xs text-white/60">DJ</p>
+                      </div>
+                    </div>
+                    <p class="mt-3 text-xs text-white/70">Closing sunrise set + pool warmup.</p>
+                  </div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center gap-3">
+                      <img src="https://i.pravatar.cc/80?u=mizrah" class="h-12 w-12 rounded-full" alt="House of Mizrahi" />
+                      <div>
+                        <p class="text-sm font-semibold">House of Mizrahi</p>
+                        <p class="text-xs text-white/60">Ballroom</p>
+                      </div>
+                    </div>
+                    <p class="mt-3 text-xs text-white/70">Ballroom ball + vogue labs.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="floating-panel space-y-6 rounded-3xl border border-white/10 bg-ink/70 p-6 backdrop-blur">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p class="text-xs uppercase tracking-[0.35em] text-white/50">Quick Actions</p>
+            <div class="mt-4 grid gap-3 text-sm text-white/70">
+              <button class="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-left hover:bg-white/20">Open Command (⌘K)</button>
+              <button class="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-left hover:bg-white/20">Share itinerary</button>
+              <button class="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-left hover:bg-white/20">Request concierge</button>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p class="text-xs uppercase tracking-[0.35em] text-white/50">Daily Energy Meter</p>
+            <div class="mt-4 space-y-3 text-xs text-white/60">
+              <div class="flex items-center justify-between"><span>Day 1</span><span class="rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-200">Chill</span></div>
+              <div class="flex items-center justify-between"><span>Day 2</span><span class="rounded-full bg-fuchsia/20 px-2 py-0.5 text-fuchsia">Amped</span></div>
+              <div class="flex items-center justify-between"><span>Day 3</span><span class="rounded-full bg-amber/20 px-2 py-0.5 text-amber">Balanced</span></div>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p class="text-xs uppercase tracking-[0.35em] text-white/50">Travel Vibes</p>
+            <div class="mt-4 space-y-3">
+              <div class="rounded-xl border border-white/10 bg-ink/80 p-3 shadow-neon">
+                <p class="text-xs text-white/50">Playlist</p>
+                <p class="text-sm font-semibold">Afterglow Grooves</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-ink/80 p-3 shadow-glow">
+                <p class="text-xs text-white/50">Podcast</p>
+                <p class="text-sm font-semibold">Queer Port Stories</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script>
+      const tabButtons = document.querySelectorAll('#trip-tabs .tab');
+      const tabPanes = document.querySelectorAll('[data-tab-pane]');
+      tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          tabButtons.forEach((tab) => tab.classList.remove('bg-white', 'text-ink', 'font-semibold', 'active'));
+          btn.classList.add('bg-white', 'text-ink', 'font-semibold', 'active');
+          const target = btn.dataset.tab;
+          tabPanes.forEach((pane) => pane.classList.toggle('hidden', pane.dataset.tabPane !== target));
+        });
+      });
+    </script>
+  </body>
+</html>

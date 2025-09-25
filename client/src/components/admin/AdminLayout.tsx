@@ -1,272 +1,167 @@
-import React, { useState, useEffect, ReactNode } from 'react';
-import { Link, useLocation } from 'wouter';
+import { ReactNode, useState } from 'react';
+import { useLocation } from 'wouter';
 import {
   LayoutDashboard,
+  Anchor,
   Ship,
   MapPin,
   Users,
   Palette,
   FileText,
   Settings,
-  UserCircle,
+  Shield,
   Menu,
-  ChevronRight,
-  Anchor,
-  LogOut,
-  Shield
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { usePersistentSidebar } from '@/hooks/usePersistentSidebar';
-import { useLocation as useWouterLocation } from 'wouter';
-
-interface NavItem {
-  label: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
+import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
+interface NavItem {
+  label: string;
+  path: string;
+  icon: ReactNode;
+}
+
+const managementNav: NavItem[] = [
+  { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-4 w-4" /> },
+  { label: 'Trips', path: '/admin/trips', icon: <Anchor className="h-4 w-4" /> },
+  { label: 'Ships', path: '/admin/ships', icon: <Ship className="h-4 w-4" /> },
+  { label: 'Locations', path: '/admin/locations', icon: <MapPin className="h-4 w-4" /> },
+  { label: 'Artists', path: '/admin/artists', icon: <Users className="h-4 w-4" /> },
+  { label: 'Party Themes', path: '/admin/themes', icon: <Palette className="h-4 w-4" /> },
+  { label: 'Info Sections', path: '/admin/info-sections', icon: <FileText className="h-4 w-4" /> },
+];
+
+const adminNav: NavItem[] = [
+  { label: 'Users', path: '/admin/users', icon: <Users className="h-4 w-4" /> },
+  { label: 'Settings', path: '/admin/settings', icon: <Settings className="h-4 w-4" /> },
+  { label: 'Profile', path: '/admin/profile', icon: <Shield className="h-4 w-4" /> },
+];
+
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { collapsed: sidebarCollapsed, toggle: toggleSidebar, isMounted } = usePersistentSidebar(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, profile, signOut } = useSupabaseAuthContext();
   const [location, setLocation] = useLocation();
-  const [, setWouterLocation] = useWouterLocation();
-  const { signOut } = useSupabaseAuthContext();
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  // Close mobile menu when navigating
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location]);
-
-  // Handle mobile menu overlay click
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [mobileMenuOpen]);
-
-  const navSections: NavSection[] = [
-    {
-      title: 'TRIPS',
-      items: [
-        { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={18} /> },
-        { label: 'Trips', path: '/admin/trips', icon: <Anchor size={18} /> },
-      ]
-    },
-    {
-      title: 'CONTENT MANAGEMENT',
-      items: [
-        { label: 'Ships', path: '/admin/ships', icon: <Ship size={18} /> },
-        { label: 'Locations', path: '/admin/locations', icon: <MapPin size={18} /> },
-        { label: 'Artists/Talent', path: '/admin/artists', icon: <Users size={18} /> },
-        { label: 'Party Themes', path: '/admin/themes', icon: <Palette size={18} /> },
-        { label: 'Info Sections', path: '/admin/info-sections', icon: <FileText size={18} /> },
-      ]
-    }
-  ];
-
-  const adminSection: NavSection = {
-    title: 'ADMINISTRATION',
-    items: [
-      { label: 'Users', path: '/admin/users', icon: <Users size={18} /> },
-      { label: 'Settings', path: '/admin/settings', icon: <Settings size={18} /> },
-      { label: 'Profile', path: '/admin/profile', icon: <UserCircle size={18} /> },
-    ]
-  };
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const isActive = (path: string) => {
-    if (path === '/admin' && location === '/admin') return true;
-    if (path !== '/admin' && location.startsWith(path)) return true;
-    return false;
+    if (path === '/admin') return location === '/admin';
+    return location.startsWith(path);
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      setWouterLocation('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+  const handleNavigate = (path: string) => {
+    const routeMap: Record<string, string> = {
+      '/profile': '/admin/profile',
+      '/settings': '/admin/settings',
+      '/notifications': '/admin',
+      '/help': '/docs',
+      '/admin-dashboard': '/admin'
+    };
+
+    const target = routeMap[path] || path;
+    setLocation(target);
+    if (mobileOpen) setMobileOpen(false);
   };
+
+  const renderNavButton = (item: NavItem) => (
+    <button
+      key={item.path}
+      onClick={() => handleNavigate(item.path)}
+      className={`flex w-full items-center gap-3 rounded-full border px-4 py-2 text-sm transition ${
+        isActive(item.path)
+          ? 'border-white/20 bg-white/15 text-white shadow-lg shadow-blue-900/20'
+          : 'border-white/10 bg-white/5 text白/70 hover:bg白/10 hover:text白'
+      } ${sidebarCollapsed ? 'justify-center px-0' : ''}`}
+      title={sidebarCollapsed ? item.label : undefined}
+    >
+      {item.icon}
+      {!sidebarCollapsed && <span>{item.label}</span>}
+    </button>
+  );
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Mobile Header - Only visible on mobile */}
-      <header className="lg:hidden fixed top-12 left-0 right-0 h-14 bg-gradient-to-r from-ocean-900 to-ocean-800 flex items-center justify-between px-4 z-50 shadow-lg">
-        <button
-          onClick={toggleMobileMenu}
-          className="p-2 text-white hover:bg-white/10 rounded-md transition-colors touch-target"
-          aria-label="Open navigation menu"
-        >
-          <Menu size={24} />
-        </button>
-
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-white font-bold text-sm">Admin Panel</span>
+    <div className="flex min-h-screen bg-[#0b1222] text-white">
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-[#10192f]/95 py-8 backdrop-blur-lg transition-all duration-300 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 ${sidebarCollapsed ? 'w-20' : 'w-64'} lg:static`}
+      >
+        <div className={sidebarCollapsed ? 'px-2' : 'px-6'}>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="mb-6 flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 py-2 text-xs text白/60 hover:bg白/10"
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {!sidebarCollapsed && <span className="ml-2">Collapse</span>}
+          </button>
         </div>
 
-        <div className="w-10"></div> {/* Spacer for centering */}
-      </header>
+        <div className={`space-y-6 ${sidebarCollapsed ? 'px-2' : 'px-6'} overflow-y-auto`}>
+          <div>
+            <p className={`text-xs uppercase tracking-[0.3em] text白/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}>Management</p>
+            <div className="space-y-2">{managementNav.map(renderNavButton)}</div>
+          </div>
 
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
+          <div>
+            <p className={`text-xs uppercase tracking-[0.3em] text白/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}>Administration</p>
+            <div className="space-y-2">{adminNav.map(renderNavButton)}</div>
+          </div>
+        </div>
+      </aside>
+
+      {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-12"
-          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar - positioned below nav banner */}
-      <aside className={`fixed left-0 top-12 h-[calc(100vh-48px)] bg-gradient-to-b from-ocean-900 via-ocean-800 to-ocean-700 z-40 shadow-xl ${
-        // Only apply transition after component has mounted to prevent flicker
-        isMounted ? 'transition-all duration-300' : ''
-      } ${
-        sidebarCollapsed ? 'w-20' : 'w-[220px]'
-      } ${
-        // Mobile responsiveness
-        mobileMenuOpen ? 'lg:relative' : 'max-lg:transform max-lg:-translate-x-full'
-      }`}>
-        <div className="p-4 border-b border-white/10 lg:pt-4 pt-20">
-          <div className="flex items-center justify-between gap-2">
-            {sidebarCollapsed ? (
-              <>
-                <div className="w-7 h-7 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-4 h-4 text-white" />
-                </div>
-                <button
-                  onClick={toggleSidebar}
-                  className="hidden lg:block p-1.5 hover:bg-white/10 rounded-md transition-colors flex-shrink-0"
-                  title="Expand sidebar"
-                >
-                  <ChevronRight className="w-4 h-4 text-[#90E0EF]" />
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 flex-1">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#00B4D8] to-[#90E0EF] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-white text-sm font-bold whitespace-nowrap">Admin Panel</span>
-                </div>
-                <button
-                  onClick={toggleSidebar}
-                  className="hidden lg:block p-1.5 hover:bg-white/10 rounded-md transition-colors flex-shrink-0"
-                >
-                  <ChevronRight className="w-5 h-5 text-[#90E0EF] rotate-180" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <nav className="py-6 h-[calc(100%-88px)] overflow-y-auto">
-          {navSections.map((section) => (
-            <div key={section.title} className="mb-6">
-              {!sidebarCollapsed && (
-                <div className="px-6 mb-2 text-[10px] uppercase tracking-wider text-white/40">
-                  {section.title}
-                </div>
-              )}
-              {section.items.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <a
-                    className={`flex items-center px-6 py-1.5 mx-3 rounded-lg transition-all ${
-                      isActive(item.path)
-                        ? 'bg-white/15 text-white shadow-sm'
-                        : 'text-white/70 hover:bg-white/10 hover:text-white/95'
-                    } ${sidebarCollapsed ? 'justify-center px-0' : ''}`}
-                    title={sidebarCollapsed ? item.label : undefined}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <span className="flex-shrink-0">{item.icon}</span>
-                    {!sidebarCollapsed && (
-                      <>
-                        <span className="ml-3 text-sm">{item.label}</span>
-                        {isActive(item.path) && (
-                          <ChevronRight className="ml-auto" size={16} />
-                        )}
-                      </>
-                    )}
-                  </a>
-                </Link>
-              ))}
-            </div>
-          ))}
-
-          <div className="border-t border-white/10 pt-6 mt-auto">
-            {!sidebarCollapsed && (
-              <div className="px-6 mb-2 text-xs uppercase tracking-wider text-white/40">
-                {adminSection.title}
-              </div>
-            )}
-            {adminSection.items.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={`flex items-center px-6 py-1.5 mx-3 rounded-lg transition-all ${
-                    isActive(item.path)
-                      ? 'bg-white/15 text-white shadow-sm'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white/95'
-                  } ${sidebarCollapsed ? 'justify-center px-0' : ''}`}
-                  title={sidebarCollapsed ? item.label : undefined}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {!sidebarCollapsed && (
-                    <>
-                      <span className="ml-3 text-sm">{item.label}</span>
-                      {isActive(item.path) && (
-                        <ChevronRight className="ml-auto" size={16} />
-                      )}
-                    </>
-                  )}
-                </a>
-              </Link>
-            ))}
-
+      <div className="flex flex-1 flex-col transition-all duration-300">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#10192f]/90 px-4 py-3 backdrop-blur lg:hidden">
+          <div className="flex items-center justify-between">
             <button
-              onClick={handleLogout}
-              className="flex items-center px-6 py-1.5 mx-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white/95 transition-all w-[calc(100%-24px)]"
+              onClick={() => setMobileOpen(true)}
+              className="rounded-full border border-white/10 bg白/5 p-2 text白 hover:bg白/10"
+              aria-label="Open navigation"
             >
-              <LogOut size={18} />
-              {!sidebarCollapsed && <span className="ml-3 text-sm">Logout</span>}
+              <Menu className="h-5 w-5" />
             </button>
-
+            <span className="text-xs uppercase tracking-[0.3em] text-white/40">Admin</span>
+            {user && profile ? (
+              <KokonutProfileDropdown
+                user={user}
+                profile={profile}
+                onLogout={async () => {
+                  await signOut();
+                  setMobileOpen(false);
+                }}
+                onNavigate={handleNavigate}
+              />
+            ) : (
+              <ButtonFallback />
+            )}
           </div>
-        </nav>
-      </aside>
+        </header>
 
-      {/* Main Content - positioned below nav banner and beside sidebar */}
-      <main className={`flex-1 pt-12 ${
-        // Only apply transition after component has mounted to prevent flicker
-        isMounted ? 'transition-all duration-300' : ''
-      } ${
-        sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[220px]'
-      } lg:mt-0 mt-14 mobile-content-padding-bottom`}>
-        <div className="p-4 lg:p-6">
-          {children}
-        </div>
-      </main>
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="space-y-8">{children}</div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function ButtonFallback() {
+  return (
+    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text白/60">
+      Loading…
     </div>
   );
 }

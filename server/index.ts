@@ -1,3 +1,7 @@
+// Load environment variables first
+import { config } from 'dotenv';
+config();
+
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import path from "path";

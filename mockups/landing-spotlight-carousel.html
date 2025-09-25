@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Landing Mockup – Spotlight Carousel v3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              midnight: '#070921',
+              lagoon: '#3B82F6',
+              magenta: '#F72585',
+              aqua: '#4FF2F2',
+              glow: '#A855F7'
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['"Inter"', 'sans-serif']
+            },
+            boxShadow: {
+              neon: '0 0 35px rgba(79,242,242,0.35)'
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+      .carousel-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+      .carousel-card.is-active {
+        transform: translateY(-10px);
+        border-color: rgba(79, 242, 242, 0.6);
+        box-shadow: 0 35px 80px -45px rgba(79, 242, 242, 0.65);
+      }
+      .carousel-card.is-active .card-glow {
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body class="bg-midnight text-white font-body">
+    <div class="relative min-h-screen overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(71,103,255,0.2),_transparent_65%)]"></div>
+      <div class="absolute inset-0 opacity-10" style="background-image: url('https://www.transparenttextures.com/patterns/hexellence.png');"></div>
+
+      <header class="relative z-10">
+        <div class="border-b border-white/10 bg-black/50 backdrop-blur">
+          <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4 text-sm text-white/70">
+            <div class="flex items-center gap-2">
+              <span class="h-2 w-2 animate-pulse rounded-full bg-aqua"></span>
+              Trip pulse live · 8 sailings tracking high demand
+            </div>
+            <button class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/60 hover:bg-white/20">
+              Join discord crew
+            </button>
+          </div>
+        </div>
+
+        <div class="relative max-w-6xl mx-auto px-6 pt-8 pb-12">
+          <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div class="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.35em] text-white/60">
+                <span class="inline-flex h-2 w-2 rounded-full bg-magenta"></span>
+                K-GAY Trip Guides
+              </div>
+              <h1 class="mt-4 text-4xl md:text-5xl font-display font-semibold leading-tight">Atlantis Events Trip Guides</h1>
+            </div>
+            <div class="w-full max-w-sm rounded-3xl border border-white/15 bg-gradient-to-br from-magenta/35 via-transparent to-aqua/35 p-5 text-sm backdrop-blur shadow-lg shadow-black/30">
+              <p class="text-xs uppercase tracking-[0.3em] text-white/70">Cruise timeline</p>
+              <div class="mt-4 space-y-5 text-white/80">
+                <div class="flex items-center gap-4">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-xs">APR</span>
+                  <div>
+                    <p class="font-semibold">Miami Launch Weeks</p>
+                    <p class="text-xs text-white/60">VIP rooftops & pool battles</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-xs">MAY</span>
+                  <div>
+                    <p class="font-semibold">Ibiza Warmups</p>
+                    <p class="text-xs text-white/60">Sunrise sound baths + intimacy workshops</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-xs">JUN</span>
+                  <div>
+                    <p class="font-semibold">Sail Week</p>
+                    <p class="text-xs text-white/60">Daily pop-up drag revues</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="relative z-10 max-w-6xl mx-auto px-6 pb-24 space-y-20">
+        <section class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="text-xs uppercase tracking-[0.3em] text-white/50">Featured Sailings</div>
+            <button class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] text-white/70 hover:bg-white/20">Auto-cycle</button>
+          </div>
+          <div class="relative">
+            <div class="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-10" id="carousel-track">
+              <article class="carousel-card group relative snap-start shrink-0 w-[320px] md:w-[360px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-black p-5">
+                <div class="card-glow pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,242,242,0.35),transparent_70%)] opacity-0 transition"></div>
+                <div class="relative z-10 flex flex-col gap-4">
+                  <header class="flex items-center justify-between text-xs text-white/60">
+                    <span class="rounded-full bg-emerald-400/20 px-3 py-1 font-semibold text-emerald-200">Sailing soon</span>
+                    <span>12 days out</span>
+                  </header>
+                  <div class="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10">
+                    <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=80" class="h-full w-full object-cover" alt="Caribbean cruise ship at sunset" />
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase tracking-[0.3em] text-white/50">Caribbean</p>
+                    <h2 class="text-2xl font-display">Atlantis Caribbean Cruise 2025</h2>
+                    <p class="mt-2 text-sm text-white/70">Celebrity Ascent • Jan 19 – 26 • Fort Lauderdale roundtrip with Puerto Plata, San Juan, St. Maarten, Turks & Caicos.</p>
+                  </div>
+                  <ul class="space-y-2 text-sm text-white/80">
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-aqua"></span> Headliners: Todrick Hall · Nina West · DJ Abel</li>
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-aqua"></span> Sea day festivals + rooftop sunset concerts</li>
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-aqua"></span> Shore experiences: Old San Juan takeover & Turks beach party</li>
+                  </ul>
+                  <div class="flex items-center justify-between text-xs text-white/60">
+                    <div class="flex -space-x-2">
+                      <img src="https://i.pravatar.cc/32?u=queue1" class="h-9 w-9 rounded-full border-2 border-slate-950" alt="crew" />
+                      <img src="https://i.pravatar.cc/32?u=queue2" class="h-9 w-9 rounded-full border-2 border-slate-950" alt="crew" />
+                      <div class="h-9 w-9 rounded-full border-2 border-slate-950 bg-white/10 flex items-center justify-center text-[11px]">+62</div>
+                    </div>
+                    <span>Cabins · 92% sold</span>
+                  </div>
+                  <div class="flex flex-wrap gap-3">
+                    <button class="rounded-full bg-white text-slate-900 px-4 py-2 text-sm font-semibold">View trip guide →</button>
+                    <button class="rounded-full border border-white/30 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Add to watchlist</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="carousel-card group relative snap-start shrink-0 w-[320px] md:w-[360px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-black p-5">
+                <div class="card-glow pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(247,37,133,0.35),transparent_70%)] opacity-0 transition"></div>
+                <div class="relative z-10 flex flex-col gap-4">
+                  <header class="flex items-center justify-between text-xs text-white/60">
+                    <span class="rounded-full bg-magenta/25 px-3 py-1 font-semibold text-magenta">New drop</span>
+                    <span>18 days out</span>
+                  </header>
+                  <div class="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10">
+                    <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80" class="h-full w-full object-cover" alt="Mediterranean coastline" />
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase tracking-[0.3em] text-white/50">Mediterranean</p>
+                    <h2 class="text-2xl font-display">Virgin Voyages Adriatic & Greek Glow</h2>
+                    <p class="mt-2 text-sm text-white/70">Resilient Lady • July 13 – 20 • Barcelona, Sardinia, Split, Dubrovnik, Corfu with night-time sail aways.</p>
+                  </div>
+                  <ul class="space-y-2 text-sm text-white/80">
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-magenta"></span> Parties hosted by Bianca Del Rio & Violet Chachki</li>
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-magenta"></span> Sail-away balcony disco + Split fortress takeover</li>
+                  </ul>
+                  <div class="flex items-center justify-between text-xs text-white/60">
+                    <span>Cabins from $3,050</span>
+                    <span>Watchers · 124</span>
+                  </div>
+                  <div class="flex flex-wrap gap-3">
+                    <button class="rounded-full border border-white/30 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Add to watchlist</button>
+                    <button class="rounded-full border border-white/30 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Share</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="carousel-card group relative snap-start shrink-0 w-[320px] md:w-[360px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-black p-5">
+                <div class="card-glow pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(149,114,255,0.35),transparent_70%)] opacity-0 transition"></div>
+                <div class="relative z-10 flex flex-col gap-4">
+                  <header class="flex items-center justify-between text-xs text-white/60">
+                    <span class="rounded-full bg-purple-400/25 px-3 py-1 font-semibold text-purple-200">Almost full</span>
+                    <span>25 days out</span>
+                  </header>
+                  <div class="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10">
+                    <img src="https://images.unsplash.com/photo-1523633589114-89b3fe0193af?auto=format&fit=crop&w=800&q=80" class="h-full w-full object-cover" alt="Mexico coastline at dusk" />
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase tracking-[0.3em] text-white/50">Mexico</p>
+                    <h2 class="text-2xl font-display">Halloween Mexico Cruise 2025</h2>
+                    <p class="mt-2 text-sm text-white/70">Royal Caribbean Navigator • Oct 27 – Nov 3 • Los Angeles, Cabo, Puerto Vallarta, Ensenada with costume megafloats.</p>
+                  </div>
+                  <ul class="space-y-2 text-sm text-white/80">
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-purple-300"></span> Three-night costume festival & drag super show</li>
+                    <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-purple-300"></span> Día de los Muertos celebration in Puerto Vallarta</li>
+                  </ul>
+                  <div class="flex items-center justify-between text-xs text-white/60">
+                    <span>Waitlist available</span>
+                    <span>Open suites: 12</span>
+                  </div>
+                  <div class="flex flex-wrap gap-3">
+                    <button class="rounded-full bg-white text-slate-900 px-4 py-2 text-sm font-semibold">View trip guide →</button>
+                    <button class="rounded-full border border-white/30 px-4 py-2 text-sm text-white/80 hover:bg-white/10">Notify me</button>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <div class="flex items-center justify-center gap-2 pb-2">
+              <button class="h-2 w-8 rounded-full bg-white/40 transition" data-carousel-dot="0"></button>
+              <button class="h-2 w-8 rounded-full bg-white/20 transition" data-carousel-dot="1"></button>
+              <button class="h-2 w-8 rounded-full bg-white/20 transition" data-carousel-dot="2"></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-6">
+          <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-2xl font-display">All Sailings</h2>
+              <p class="text-sm text-white/60">Command palette friendly grid – tie into shadcn `Card`, `Badge`, and `HoverCard` components.</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/50">
+              <span class="text-white">Upcoming (8)</span>
+              <span class="h-px w-6 bg-white/20"></span>
+              <span>Current</span>
+              <span class="h-px w-6 bg-white/20"></span>
+              <span>Past</span>
+            </div>
+          </header>
+          <div class="grid gap-4 md:grid-cols-2">
+            <article class="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-aqua/40">
+              <div class="flex items-center justify-between text-xs text-white/60">
+                <span>Jan 19 – 26 · 7 nights</span>
+                <span class="rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-200">Sailing</span>
+              </div>
+              <h3 class="mt-3 text-xl font-display">Atlantis Caribbean Cruise</h3>
+              <p class="mt-2 text-sm text-white/70">Celebrity Ascent • Fort Lauderdale • Puerto Plata • San Juan • St. Maarten</p>
+              <div class="mt-4 flex items-center justify-between text-xs text-white/60">
+                <span>Cabins from $2,799</span>
+                <button class="text-aqua hover:text-white">Open guide →</button>
+              </div>
+            </article>
+            <article class="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-aqua/40">
+              <div class="flex items-center justify-between text-xs text-white/60">
+                <span>Feb 9 – 16 · 7 nights</span>
+                <span class="rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-200">Booking</span>
+              </div>
+              <h3 class="mt-3 text-xl font-display">Southern Caribbean Legends</h3>
+              <p class="mt-2 text-sm text-white/70">Celebrity Beyond • Oranjestad overnight • Curaçao • Bonaire</p>
+              <div class="mt-4 flex items-center justify-between text-xs text-white/60">
+                <span>Cabins from $3,099</span>
+                <button class="text-aqua hover:text-white">Open guide →</button>
+              </div>
+            </article>
+            <article class="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-aqua/40">
+              <div class="flex items-center justify-between text-xs text-white/60">
+                <span>Jul 13 – 20 · 7 nights</span>
+                <span class="rounded-full bg-purple-400/25 px-3 py-1 text-purple-200">Limited</span>
+              </div>
+              <h3 class="mt-3 text-xl font-display">Virgin Voyages Med Glow</h3>
+              <p class="mt-2 text-sm text-white/70">Resilient Lady • Barcelona • Sardinia • Split • Dubrovnik • Corfu</p>
+              <div class="mt-4 flex items-center justify-between text-xs text-white/60">
+                <span>Cabins from $3,250</span>
+                <button class="text-aqua hover:text-white">Open guide →</button>
+              </div>
+            </article>
+            <article class="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-aqua/40">
+              <div class="flex items-center justify-between text-xs text-white/60">
+                <span>Oct 27 – Nov 3 · 7 nights</span>
+                <span class="rounded-full bg-orange-400/30 px-3 py-1 text-orange-200">Waitlist</span>
+              </div>
+              <h3 class="mt-3 text-xl font-display">Halloween Mexico Cruise</h3>
+              <p class="mt-2 text-sm text-white/70">Navigator of the Seas • Los Angeles • Cabo • Puerto Vallarta • Ensenada</p>
+              <div class="mt-4 flex items-center justify-between text-xs text-white/60">
+                <span>Cabins from $2,180</span>
+                <button class="text-aqua hover:text-white">Open guide →</button>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <footer class="relative z-10 border-t border-white/10 bg-black/50 backdrop-blur">
+        <div class="max-w-6xl mx-auto flex flex-col gap-4 px-6 py-10 text-sm text-white/60 md:flex-row md:items-center md:justify-between">
+          <p>© 2025 K-GAY Trip Guides · Crafted for queer wanderers</p>
+          <div class="flex items-center gap-3">
+            <button class="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/15">Media kit</button>
+            <button class="rounded-full bg-aqua px-4 py-2 text-sm font-semibold text-slate-900 shadow-neon">Subscribe</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const cards = document.querySelectorAll('.carousel-card');
+      const dots = document.querySelectorAll('[data-carousel-dot]');
+      function setActive(index) {
+        cards.forEach((card, i) => card.classList.toggle('is-active', i === index));
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('bg-white/40', i === index);
+          dot.classList.toggle('bg-white/20', i !== index);
+        });
+      }
+      setActive(0);
+      dots.forEach((dot) => dot.addEventListener('click', () => setActive(Number(dot.dataset.carouselDot))));
+    </script>
+  </body>
+</html>

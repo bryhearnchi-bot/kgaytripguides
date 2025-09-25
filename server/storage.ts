@@ -1,12 +1,8 @@
-import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
+// Load environment variables first
+import { config } from 'dotenv';
+config();
 
-// Load environment variables only for development
-(async () => {
-  if (process.env.NODE_ENV !== 'production') {
-    const { config } = await import('dotenv');
-    config();
-  }
-})();
+import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
 import type {
   Profile,
   InsertProfile,
