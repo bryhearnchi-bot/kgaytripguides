@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { api } from '@/lib/api-client';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -25,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import { StatusBadge } from '@/components/admin/StatusBadge';
 import {
   Ship,
   Plus,
@@ -35,7 +33,9 @@ import {
   Calendar,
   Anchor,
   Save,
-  X
+  CheckCircle,
+  Wrench,
+  AlertCircle
 } from 'lucide-react';
 
 interface ShipData {
@@ -57,6 +57,7 @@ interface ShipData {
   description?: string;
   highlights?: string[];
   amenities?: string[];
+  status?: 'active' | 'maintenance' | 'retired';
 }
 
 export default function ShipsManagement() {
@@ -68,6 +69,7 @@ export default function ShipsManagement() {
   const [formData, setFormData] = useState<ShipData>({
     name: '',
     cruiseLine: '',
+    status: 'active',
   });
   const { profile } = useSupabaseAuthContext();
   const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
@@ -76,7 +78,9 @@ export default function ShipsManagement() {
   const { data: ships = [], isLoading } = useQuery<ShipData[]>({
     queryKey: ['ships'],
     queryFn: async () => {
-      const response = await api.get('/api/ships');
+      const response = await fetch('/api/ships', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch ships');
       return response.json();
     }
@@ -85,7 +89,12 @@ export default function ShipsManagement() {
   // Create ship mutation
   const createShipMutation = useMutation({
     mutationFn: async (data: ShipData) => {
-      const response = await api.post('/api/ships', data);
+      const response = await fetch('/api/ships', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
       if (!response.ok) throw new Error('Failed to create ship');
       return response.json();
     },
@@ -110,7 +119,12 @@ export default function ShipsManagement() {
   // Update ship mutation
   const updateShipMutation = useMutation({
     mutationFn: async (data: ShipData) => {
-      const response = await api.put(`/api/ships/${data.id}`, data);
+      const response = await fetch(`/api/ships/${data.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
       if (!response.ok) throw new Error('Failed to update ship');
       return response.json();
     },
@@ -135,7 +149,10 @@ export default function ShipsManagement() {
   // Delete ship mutation
   const deleteShipMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/ships/${id}`);
+      const response = await fetch(`/api/ships/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete ship');
@@ -163,6 +180,7 @@ export default function ShipsManagement() {
     setFormData({
       name: '',
       cruiseLine: '',
+      status: 'active',
     });
   };
 
@@ -189,154 +207,170 @@ export default function ShipsManagement() {
 
   const filteredShips = ships.filter(ship =>
     ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ship.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase())
+    ship.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (ship.shipCode && ship.shipCode.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cruise Ships</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage your fleet information and specifications</p>
-        </div>
-        <Button
-          onClick={() => {
-            setEditingShip(null);
-            resetForm();
-            setShowAddModal(true);
-          }}
-          className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
-        >
-          <Plus className="mr-2" size={20} />
-          Add New Ship
-        </Button>
-      </div>
+  const getFleetIcon = (cruiseLine: string) => {
+    return <Anchor className="h-3.5 w-3.5" />;
+  };
 
-      {/* Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+  return (
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Ships & Fleet Management</h1>
+            <p className="text-sm text-white/60">Manage vessel fleet across Atlantis sailings.</p>
+          </div>
+          <Button
+            onClick={() => {
+              setEditingShip(null);
+              resetForm();
+              setShowAddModal(true);
+            }}
+            className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Ship
+          </Button>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
-              placeholder="Search ships by name or cruise line..."
+              placeholder="Search ships by name, cruise line, or code"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex flex-wrap gap-2 text-xs text-white/60">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Active
+            </Button>
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Status
+            </Button>
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Fleet
+            </Button>
+          </div>
+        </div>
+      </section>
 
-      {/* Ships Table */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="text-center py-12 text-gray-500">Loading ships...</div>
-          ) : filteredShips.length === 0 ? (
-            <div className="text-center py-12">
-              <Ship className="mx-auto mb-4 text-gray-400" size={48} />
-              <h3 className="text-lg font-semibold mb-2">No ships found</h3>
-              <p className="text-gray-500 mb-4">Start by adding your first ship</p>
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">All Ships ({filteredShips.length})</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all fleets</p>
+          </div>
+        </header>
+
+        {filteredShips.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+            <Ship className="h-10 w-10 text-white/30" />
+            <p className="text-sm">{searchTerm ? 'No ships match your search.' : 'Get started by adding your first ship.'}</p>
+            {!searchTerm && (
               <Button
                 onClick={() => {
                   setEditingShip(null);
                   resetForm();
                   setShowAddModal(true);
                 }}
-                className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
               >
-                <Plus className="mr-2" size={20} />
-                Add New Ship
+                <Plus className="mr-2 h-4 w-4" />
+                Create First Ship
               </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ship Details</TableHead>
-                    <TableHead>Capacity</TableHead>
-                    <TableHead>Ports</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredShips.map((ship) => (
-                    <TableRow key={ship.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#1e3a5f] to-[#0f2238] rounded-lg flex items-center justify-center text-white">
-                            <Ship className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{ship.name}</div>
-                            <div className="text-sm text-gray-500">{ship.cruiseLine}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {ship.capacity ? (
-                            <div className="flex items-center space-x-1">
-                              <Users className="w-4 h-4 text-gray-500" />
-                              <span className="font-medium">{ship.capacity.toLocaleString()}</span>
-                              <span className="text-gray-500">guests</span>
-                            </div>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="min-w-full text-sm text-white/80">
+              <TableHeader className="bg-white/5">
+                <TableRow className="border-white/10">
+                  <TableHead className="text-white/60">Ship</TableHead>
+                  <TableHead className="text-white/60">Fleet</TableHead>
+                  <TableHead className="text-white/60">Status</TableHead>
+                  <TableHead className="text-right text-white/60">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredShips.map((ship) => (
+                  <TableRow key={ship.id} className="border-white/10 hover:bg-white/5">
+                    <TableCell className="py-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                          {ship.imageUrl ? (
+                            <img
+                              src={ship.imageUrl}
+                              alt={ship.name}
+                              className="h-full w-full rounded-xl object-cover"
+                            />
                           ) : (
-                            <span className="text-gray-400">Not specified</span>
+                            <Ship className="h-5 w-5 text-white/70" />
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            <Anchor className="w-3 h-3 mr-1" />
-                            Multiple Ports
-                          </Badge>
+                        <div className="space-y-1">
+                          <p className="font-medium text-white">{ship.name}</p>
+                          {ship.description && (
+                            <p className="text-xs text-white/60 line-clamp-2">{ship.description}</p>
+                          )}
+                          {ship.shipCode && (
+                            <p className="text-xs text-white/40">Code: {ship.shipCode}</p>
+                          )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="default" className="bg-green-100 text-green-800">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          Active
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(ship)}
-                            title="Edit Ship"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(ship.id!)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            title="Delete Ship (Admins & Content Managers)"
-                            disabled={!canDelete}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                        {getFleetIcon(ship.cruiseLine)}
+                        <span>{ship.cruiseLine}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={ship.status || 'active'} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(ship)}
+                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
+                          title="Edit Ship"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(ship.id!)}
+                          className="h-8 w-8 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
+                          title="Delete Ship"
+                          disabled={!canDelete}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
+          Showing {filteredShips.length} ship{filteredShips.length === 1 ? '' : 's'}
+        </footer>
+      </section>
 
       {/* Add/Edit Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
           <DialogHeader>
             <DialogTitle>
               {editingShip ? 'Edit Ship' : 'Add New Ship'}
@@ -366,6 +400,23 @@ export default function ShipsManagement() {
                   onChange={(e) => setFormData({ ...formData, cruiseLine: e.target.value })}
                   required
                 />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status || 'active'}
+                  onValueChange={(value: 'active' | 'maintenance' | 'retired') => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -470,16 +521,17 @@ export default function ShipsManagement() {
                   setEditingShip(null);
                   resetForm();
                 }}
+                className="border-white/20 text-white hover:bg-white/10"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
                 disabled={createShipMutation.isPending || updateShipMutation.isPending}
               >
                 <Save className="mr-2" size={16} />
-                {editingShip ? 'Update Ship' : 'Create Ship'}
+                {editingShip ? 'Save Changes' : 'Create Ship'}
               </Button>
             </DialogFooter>
           </form>
