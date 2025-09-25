@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -24,9 +21,9 @@ import {
   Trash2,
   Search,
   Save,
-  Copy
+  Copy,
+  Sparkles
 } from 'lucide-react';
-import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 interface PartyTheme {
   id?: number;
@@ -42,9 +39,6 @@ interface PartyTheme {
 }
 
 export default function ThemesManagement() {
-  const { profile } = useSupabaseAuthContext();
-  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
-  const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -161,34 +155,6 @@ export default function ThemesManagement() {
     }
   });
 
-  // Duplicate theme mutation
-  const duplicateThemeMutation = useMutation({
-    mutationFn: async (theme: PartyTheme) => {
-      const response = await fetch(`/api/party-themes/${theme.id}/duplicate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name: `${theme.name} (Copy)` })
-      });
-      if (!response.ok) throw new Error('Failed to duplicate theme');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['party-themes'] });
-      toast({
-        title: 'Success',
-        description: 'Party theme duplicated successfully',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Failed to duplicate party theme',
-        variant: 'destructive',
-      });
-    }
-  });
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -221,10 +187,6 @@ export default function ThemesManagement() {
     }
   };
 
-  const handleDuplicate = (theme: PartyTheme) => {
-    duplicateThemeMutation.mutate(theme);
-  };
-
   const filteredThemes = themes.filter(theme =>
     theme.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     theme.longDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -232,99 +194,171 @@ export default function ThemesManagement() {
     theme.costumeIdeas?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getThemeIcon = (theme: string) => {
+    return <Sparkles className="h-3.5 w-3.5" />;
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Party Themes Management</h1>
-          <p className="text-sm text-gray-600 mt-1">Create reusable party theme templates for events</p>
-        </div>
-        <div className="flex items-center space-x-2">
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Party Themes Management</h1>
+            <p className="text-sm text-white/60">Manage reusable party themes across Atlantis sailings.</p>
+          </div>
           <Button
             onClick={() => {
               setEditingTheme(null);
               resetForm();
               setShowAddModal(true);
             }}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+            className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Theme
+            <Plus className="mr-2 h-4 w-4" />
+            Add Theme
           </Button>
         </div>
-      </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
-              placeholder="Search themes by name, venue, or description..."
+              placeholder="Search themes by name or description"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex flex-wrap gap-2 text-xs text-white/60">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Active
+            </Button>
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Category
+            </Button>
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Popular
+            </Button>
+          </div>
+        </div>
+      </section>
 
-      {/* Themes Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Party Themes ({filteredThemes.length})</CardTitle>
-          <CardDescription>
-            Manage reusable theme templates for all party events
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">
-              <Palette className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
-              <p>Loading party themes...</p>
-            </div>
-          ) : filteredThemes.length === 0 ? (
-            <div className="text-center py-12">
-              <Palette className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No party themes found</h3>
-              <p className="text-gray-500 mb-4">
-                {searchTerm ? 'Try adjusting your search criteria.' : 'Get started by creating your first party theme template.'}
-              </p>
-              {!searchTerm && (
-                <Button
-                  onClick={() => {
-                    setEditingTheme(null);
-                    resetForm();
-                    setShowAddModal(true);
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Theme
-                </Button>
-              )}
-            </div>
-          ) : (
-            <ThemesTable
-              themes={filteredThemes}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onDuplicate={handleDuplicate}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">All Themes ({filteredThemes.length})</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all events</p>
+          </div>
+        </header>
+
+        {filteredThemes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+            <Palette className="h-10 w-10 text-white/30" />
+            <p className="text-sm">{searchTerm ? 'No themes match your search.' : 'Get started by adding your first theme.'}</p>
+            {!searchTerm && (
+              <Button
+                onClick={() => {
+                  setEditingTheme(null);
+                  resetForm();
+                  setShowAddModal(true);
+                }}
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create First Theme
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="min-w-full text-sm text-white/80">
+              <TableHeader className="bg-white/5">
+                <TableRow className="border-white/10">
+                  <TableHead className="text-white/60">Theme</TableHead>
+                  <TableHead className="text-white/60">Category</TableHead>
+                  <TableHead className="text-white/60">Status</TableHead>
+                  <TableHead className="text-right text-white/60">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredThemes.map((theme) => (
+                  <TableRow key={theme.id} className="border-white/10 hover:bg-white/5">
+                    <TableCell className="py-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                          {theme.imageUrl ? (
+                            <img
+                              src={theme.imageUrl}
+                              alt={theme.name}
+                              className="h-full w-full rounded-xl object-cover"
+                            />
+                          ) : (
+                            <Palette className="h-5 w-5 text-white/70" />
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-medium text-white">{theme.name}</p>
+                          {theme.shortDescription && (
+                            <p className="text-xs text-white/60 line-clamp-2">{theme.shortDescription}</p>
+                          )}
+                          {theme.costumeIdeas && (
+                            <p className="text-xs text-white/40">Ideas: {theme.costumeIdeas.slice(0, 50)}...</p>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                        {getThemeIcon(theme.name)}
+                        <span>Party Theme</span>
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">Active</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(theme)}
+                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
+                          title="Edit Theme"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(theme.id!)}
+                          className="h-8 w-8 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
+                          title="Delete Theme"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
+          Showing {filteredThemes.length} theme{filteredThemes.length === 1 ? '' : 's'}
+        </footer>
+      </section>
 
       {/* Add/Edit Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
           <DialogHeader>
             <DialogTitle>
               {editingTheme ? 'Edit Party Theme' : 'Add New Party Theme'}
             </DialogTitle>
             <DialogDescription>
-              Create a reusable party theme template
+              Enter the theme information below
             </DialogDescription>
           </DialogHeader>
 
@@ -373,7 +407,7 @@ export default function ThemesManagement() {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div>
                 <Label htmlFor="imageUrl">Image URL</Label>
                 <Input
                   id="imageUrl"
@@ -384,8 +418,8 @@ export default function ThemesManagement() {
                 />
               </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="amazonShoppingListUrl">Amazon Shopping List URL</Label>
+              <div>
+                <Label htmlFor="amazonShoppingListUrl">Shopping List URL</Label>
                 <Input
                   id="amazonShoppingListUrl"
                   type="url"
@@ -405,135 +439,22 @@ export default function ThemesManagement() {
                   setEditingTheme(null);
                   resetForm();
                 }}
+                className="border-white/20 text-white hover:bg-white/10"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-gradient-to-r from-[#00B4D8] to-[#0077B6]"
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
                 disabled={createThemeMutation.isPending || updateThemeMutation.isPending}
               >
                 <Save className="mr-2" size={16} />
-                {editingTheme ? 'Update Theme' : 'Create Theme'}
+                {editingTheme ? 'Save Changes' : 'Create Theme'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-// Themes Table Component
-interface ThemesTableProps {
-  themes: PartyTheme[];
-  onEdit: (theme: PartyTheme) => void;
-  onDelete: (id: number) => void;
-  onDuplicate: (theme: PartyTheme) => void;
-}
-
-function ThemesTable({
-  themes,
-  onEdit,
-  onDelete,
-  onDuplicate
-}: ThemesTableProps) {
-  const { profile } = useSupabaseAuthContext();
-  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
-  return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Theme Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Costume Ideas</TableHead>
-            <TableHead>Shopping List</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {themes.map((theme) => (
-            <TableRow key={theme.id}>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-medium text-gray-900">{theme.name}</div>
-                  {theme.imageUrl && (
-                    <div className="text-xs text-blue-600 hover:underline truncate max-w-xs">
-                      <a href={theme.imageUrl} target="_blank" rel="noopener noreferrer">
-                        View Image
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {theme.shortDescription && (
-                    <div className="text-sm text-gray-700 line-clamp-1">{theme.shortDescription}</div>
-                  )}
-                  {theme.longDescription && (
-                    <div className="text-xs text-gray-500 line-clamp-2">{theme.longDescription}</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm text-gray-600">
-                  {theme.costumeIdeas ? (
-                    <div className="line-clamp-2">{theme.costumeIdeas}</div>
-                  ) : (
-                    <span className="text-gray-400">No costume ideas</span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {theme.amazonShoppingListUrl ? (
-                  <a
-                    href={theme.amazonShoppingListUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    View List
-                  </a>
-                ) : (
-                  <span className="text-gray-400 text-sm">Not set</span>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(theme)}
-                    title="Edit Theme"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDuplicate(theme)}
-                    title="Duplicate Theme"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(theme.id!)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    title="Delete Theme (Admins & Content Managers)"
-                    disabled={!canDelete}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
     </div>
   );
 }

@@ -1,734 +1,462 @@
-import React, { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { useToast } from '../../hooks/use-toast';
 import {
-  Search,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../ui/dialog';
+import { Textarea } from '../ui/textarea';
+import {
+  MapPin,
   Plus,
   Edit2,
   Trash2,
-  MapPin,
+  Search,
   Globe,
-  Anchor,
-  Navigation,
-  Filter,
-  Download,
-  Upload,
-  BarChart3,
-  X
+  Save
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import { useToast } from '../../hooks/use-toast';
-import { ImageUpload } from './ImageUpload';
-import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
-import { supabase } from '../../lib/supabase';
-import type { Location } from '../../types/api';
-// CSRF token not needed with Bearer authentication
 
-interface LocationStatistics {
-  total: number;
-  byType: Record<string, number>;
-  byCountry: Record<string, number>;
+interface Location {
+  id?: number;
+  name: string;
+  country: string;
+  description?: string;
+  imageUrl?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
-interface LocationManagementProps {
-  onSelectLocation?: (location: Location) => void;
-  showSelectMode?: boolean;
-  allowInlineCreate?: boolean;
-}
-
-const LOCATION_TYPES = [
-  { value: 'port', label: 'Port of Call', icon: Anchor },
-  { value: 'sea_day', label: 'Sea Day', icon: Navigation },
-  { value: 'embark', label: 'Embarkation', icon: Upload },
-  { value: 'disembark', label: 'Disembarkation', icon: Download },
-];
-
-
-export default function LocationManagement({
-  onSelectLocation,
-  showSelectMode = false,
-  allowInlineCreate = false
-}: LocationManagementProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showStatsDialog, setShowStatsDialog] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [showFilters, setShowFilters] = useState(false);
+export default function LocationManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { session, profile } = useSupabaseAuth();
-  const canDelete = (role?: string) => role && ['admin', 'content_manager', 'super_admin'].includes(role);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [formData, setFormData] = useState<Location>({
+    name: '',
+    country: '',
+  });
 
-  // Fetch locations with search and filters
-  const { data: locations = [], isLoading } = useQuery({
-    queryKey: ['locations', searchQuery, selectedType],
+  // Fetch locations
+  const { data: locations = [], isLoading } = useQuery<Location[]>({
+    queryKey: ['locations'],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (selectedType) params.append('type', selectedType);
-
-      // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const headers: Record<string, string> = {};
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      const response = await fetch(`/api/locations?${params.toString()}`, {
-        credentials: 'include',
-        headers,
+      const response = await fetch('/api/locations', {
+        credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
-    },
+    }
   });
 
-  // Fetch location statistics
-  const { data: stats } = useQuery({
-    queryKey: ['location-stats'],
-    queryFn: async () => {
-      // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const headers: Record<string, string> = {};
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      const response = await fetch('/api/locations/stats', {
-        credentials: 'include',
-        headers,
-      });
-      if (!response.ok) throw new Error('Failed to fetch location statistics');
-      return response.json();
-    },
-  });
-
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: async (locationData: Partial<Location>) => {
-      // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No authentication token');
-      }
-
+  // Create location mutation
+  const createLocationMutation = useMutation({
+    mutationFn: async (data: Location) => {
       const response = await fetch('/api/locations', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(locationData),
+        body: JSON.stringify(data)
       });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to create location' }));
-        throw new Error(error.error || 'Failed to create location');
-      }
+      if (!response.ok) throw new Error('Failed to create location');
       return response.json();
     },
-    onSuccess: (newLocation) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      queryClient.invalidateQueries({ queryKey: ['location-stats'] });
-      setShowCreateDialog(false);
-      setEditingLocation(null);
+      setShowAddModal(false);
+      resetForm();
       toast({
-        title: "Location Added",
-        description: `${newLocation.name} has been added to the location database.`,
-      });
-
-      if (showSelectMode && onSelectLocation) {
-        onSelectLocation(newLocation);
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create location.",
-        variant: "destructive",
+        title: 'Success',
+        description: 'Location created successfully',
       });
     },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create location',
+        variant: 'destructive',
+      });
+    }
   });
 
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, ...locationData }: Partial<Location> & { id: number }) => {
-      // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No authentication token');
-      }
-
-      const response = await fetch(`/api/locations/${id}`, {
+  // Update location mutation
+  const updateLocationMutation = useMutation({
+    mutationFn: async (data: Location) => {
+      const response = await fetch(`/api/locations/${data.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(locationData),
+        body: JSON.stringify(data)
       });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to update location' }));
-        throw new Error(error.error || 'Failed to update location');
-      }
+      if (!response.ok) throw new Error('Failed to update location');
       return response.json();
     },
-    onSuccess: (updatedLocation) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      queryClient.invalidateQueries({ queryKey: ['location-stats'] });
       setEditingLocation(null);
+      resetForm();
       toast({
-        title: "Location Updated",
-        description: `${updatedLocation.name} has been updated.`,
+        title: 'Success',
+        description: 'Location updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update location.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update location',
+        variant: 'destructive',
       });
-    },
+    }
   });
 
-  // Delete mutation
-  const deleteMutation = useMutation({
+  // Delete location mutation
+  const deleteLocationMutation = useMutation({
     mutationFn: async (id: number) => {
-      // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No authentication token');
-      }
-
       const response = await fetch(`/api/locations/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        credentials: 'include',
+        credentials: 'include'
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to delete location' }));
+        const error = await response.json();
         throw new Error(error.error || 'Failed to delete location');
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      queryClient.invalidateQueries({ queryKey: ['location-stats'] });
       toast({
-        title: "Location Deleted",
-        description: "Location has been deleted from the database.",
+        title: 'Success',
+        description: 'Location deleted successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete location.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message.includes('Cannot delete')
+          ? 'This location is used in trips and cannot be deleted'
+          : 'Failed to delete location',
+        variant: 'destructive',
       });
-    },
+    }
   });
 
-  // Filter locations based on search and filters
-  const filteredLocations = useMemo(() => {
-    return locations.filter((location: Location) => {
-      const matchesSearch = !searchQuery ||
-        location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (location.country && location.country.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      const matchesType = !selectedType; // Location type filtering removed since schema doesn't have port_type
-
-      return matchesSearch && matchesType;
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      country: '',
     });
-  }, [locations, searchQuery, selectedType]);
+  };
 
-  const handleSubmit = (formData: Partial<Location>) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (editingLocation) {
-      updateMutation.mutate({ ...formData, id: editingLocation.id });
+      updateLocationMutation.mutate({ ...formData, id: editingLocation.id });
     } else {
-      createMutation.mutate(formData);
+      createLocationMutation.mutate(formData);
     }
   };
 
-  const LocationForm = ({ location, onSubmit, onCancel }: {
-    location?: Location | null;
-    onSubmit: (data: Partial<Location>) => void;
-    onCancel: () => void;
-  }) => {
-    const [formData, setFormData] = useState<Partial<Location>>({
-      name: location?.name || '',
-      country: location?.country || '',
-      description: location?.description || '',
-      imageUrl: location?.imageUrl || '',
-      coordinates: location?.coordinates || null,
-    });
-
-    const handleCoordinatesChange = (lat: string, lng: string) => {
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lng);
-
-      if (!isNaN(latitude) && !isNaN(longitude)) {
-        setFormData(prev => ({
-          ...prev,
-          coordinates: { lat: latitude, lng: longitude }
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          coordinates: null
-        }));
-      }
-    };
-
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Location Name *</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter location name"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Country *</label>
-            <Input
-              value={formData.country}
-              onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-              placeholder="Enter country"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-            <label className="text-sm font-medium">Location Type *</label>
-            <Select
-              value="port"
-              onValueChange={() => {}} // Disabled since schema doesn't have port_type
-              disabled
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LOCATION_TYPES.map(type => {
-                  const Icon = type.icon;
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4" />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Latitude</label>
-            <Input
-              type="number"
-              step="any"
-              value={formData.coordinates?.lat?.toString() || ''}
-              onChange={(e) => handleCoordinatesChange(e.target.value, formData.coordinates?.lng?.toString() || '')}
-              placeholder="e.g., 40.7128"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Longitude</label>
-            <Input
-              type="number"
-              step="any"
-              value={formData.coordinates?.lng?.toString() || ''}
-              onChange={(e) => handleCoordinatesChange(formData.coordinates?.lat?.toString() || '', e.target.value)}
-              placeholder="e.g., -74.0060"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Description</label>
-          <Textarea
-            value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Location description, attractions, etc."
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Location Image</label>
-          <ImageUpload
-            imageType="itinerary"
-            onImageChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url || '' }))}
-            currentImageUrl={formData.imageUrl}
-            label="Location Image"
-          />
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button
-            onClick={() => onSubmit(formData)}
-            disabled={!formData.name || !formData.country || createMutation.isPending || updateMutation.isPending}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-          >
-            {editingLocation ? 'Update Location' : 'Create Location'}
-          </Button>
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
+  const handleEdit = (location: Location) => {
+    setEditingLocation(location);
+    setFormData(location);
+    setShowAddModal(true);
   };
 
-  const LocationCard = ({ location }: { location: Location }) => {
-    const locationType = LOCATION_TYPES[0]; // Default to port since schema doesn't have port_type
-    const Icon = locationType?.icon || Anchor;
-
-    return (
-      <Card className="group hover:shadow-lg transition-all duration-200 border-0 shadow-md">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <Icon className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-lg">{location.name}</CardTitle>
-            </div>
-            <Badge variant="default">
-              {locationType?.label || 'Port'}
-            </Badge>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {location.imageUrl && (
-            <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
-              <img
-                src={location.imageUrl}
-                alt={location.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Globe className="w-4 h-4" />
-              <span>{location.country || 'N/A'}</span>
-            </div>
-
-            {location.coordinates && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span>
-                  {location.coordinates.lat.toFixed(4)}, {location.coordinates.lng.toFixed(4)}
-                </span>
-              </div>
-            )}
-
-            {location.description && (
-              <p className="text-sm text-gray-600 line-clamp-2">
-                {location.description}
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            {showSelectMode ? (
-              <Button
-                onClick={() => onSelectLocation?.(location)}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                Select Location
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingLocation(location)}
-                >
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => deleteMutation.mutate(location.id)}
-                  className="text-red-600 hover:text-red-700"
-                  title="Delete Location (Admins & Content Managers)"
-                  disabled={!canDelete((profile as any)?.role)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const handleDelete = (id: number) => {
+    if (confirm('Are you sure you want to delete this location?')) {
+      deleteLocationMutation.mutate(id);
+    }
   };
 
-  const StatsDialog = () => (
-    <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Location Statistics
-          </DialogTitle>
-        </DialogHeader>
-
-        {stats && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-                  <div className="text-sm text-gray-600">Total Locations</div>
-                </CardContent>
-              </Card>
-
-              {Object.entries(stats.byType).map(([type, count]) => {
-                const locationType = LOCATION_TYPES.find(t => t.value === type);
-                const Icon = locationType?.icon || Anchor;
-                return (
-                  <Card key={type}>
-                    <CardContent className="p-4 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Icon className="w-5 h-5 text-gray-500" />
-                      </div>
-                      <div className="text-xl font-bold">{count as number}</div>
-                      <div className="text-xs text-gray-600">{locationType?.label}</div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-3">Top Countries</h4>
-              <div className="space-y-2">
-                {Object.entries(stats.byCountry)
-                  .sort(([,a], [,b]) => (b as number) - (a as number))
-                  .slice(0, 8)
-                  .map(([country, count]) => (
-                  <div key={country} className="flex justify-between">
-                    <span className="text-sm">{country}</span>
-                    <Badge variant="secondary">{count as number}</Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+  const filteredLocations = locations.filter(location =>
+    location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    location.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getRegionIcon = (country: string) => {
+    return <Globe className="h-3.5 w-3.5" />;
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header with Ocean Gradient */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <MapPin className="w-6 h-6" />
-              Location Management
-            </h1>
-            <p className="text-blue-100 mt-1">
-              Manage cruise destinations, ports of call, and sea days
-            </p>
+            <h1 className="text-2xl font-semibold text-white">Locations & Destinations</h1>
+            <p className="text-sm text-white/60">Manage travel destinations across Atlantis sailings.</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => setShowStatsDialog(true)}
-              className="bg-white/20 hover:bg-white/30 text-white border-0"
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Statistics
+          <Button
+            onClick={() => {
+              setEditingLocation(null);
+              resetForm();
+              setShowAddModal(true);
+            }}
+            className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Location
+          </Button>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              placeholder="Search locations by name or country"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs text-white/60">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Active
             </Button>
-            {!showSelectMode && (
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Region
+            </Button>
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+              Type
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">All Locations ({filteredLocations.length})</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all destinations</p>
+          </div>
+        </header>
+
+        {filteredLocations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+            <MapPin className="h-10 w-10 text-white/30" />
+            <p className="text-sm">{searchTerm ? 'No locations match your search.' : 'Get started by adding your first location.'}</p>
+            {!searchTerm && (
               <Button
-                onClick={() => setShowCreateDialog(true)}
-                className="bg-white text-blue-600 hover:bg-gray-100"
+                onClick={() => {
+                  setEditingLocation(null);
+                  resetForm();
+                  setShowAddModal(true);
+                }}
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Location
+                <Plus className="mr-2 h-4 w-4" />
+                Create First Location
               </Button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Action Bar */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search locations and countries..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className={showFilters ? 'bg-blue-50 border-blue-200' : ''}
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-      </div>
-
-      {/* Filters */}
-      {showFilters && (
-        <Card className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Location Type</label>
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
-                  {LOCATION_TYPES.map(type => {
-                    const Icon = type.icon;
-                    return (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-4 h-4" />
-                          {type.label}
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="min-w-full text-sm text-white/80">
+              <TableHeader className="bg-white/5">
+                <TableRow className="border-white/10">
+                  <TableHead className="text-white/60">Location</TableHead>
+                  <TableHead className="text-white/60">Region</TableHead>
+                  <TableHead className="text-white/60">Status</TableHead>
+                  <TableHead className="text-right text-white/60">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLocations.map((location) => (
+                  <TableRow key={location.id} className="border-white/10 hover:bg-white/5">
+                    <TableCell className="py-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                          {location.imageUrl ? (
+                            <img
+                              src={location.imageUrl}
+                              alt={location.name}
+                              className="h-full w-full rounded-xl object-cover"
+                            />
+                          ) : (
+                            <MapPin className="h-5 w-5 text-white/70" />
+                          )}
                         </div>
-                      </SelectItem>
-                    );
+                        <div className="space-y-1">
+                          <p className="font-medium text-white">{location.name}</p>
+                          {location.description && (
+                            <p className="text-xs text-white/60 line-clamp-2">{location.description}</p>
+                          )}
+                          {location.coordinates && (
+                            <p className="text-xs text-white/40">
+                              {location.coordinates.lat.toFixed(4)}, {location.coordinates.lng.toFixed(4)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                        {getRegionIcon(location.country)}
+                        <span>{location.country}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">Active</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(location)}
+                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
+                          title="Edit Location"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(location.id!)}
+                          className="h-8 w-8 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
+                          title="Delete Location"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
+          Showing {filteredLocations.length} location{filteredLocations.length === 1 ? '' : 's'}
+        </footer>
+      </section>
+
+      {/* Add/Edit Modal */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
+          <DialogHeader>
+            <DialogTitle>
+              {editingLocation ? 'Edit Location' : 'Add New Location'}
+            </DialogTitle>
+            <DialogDescription>
+              Enter the location information below
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="col-span-2">
+                <Label htmlFor="name">Location Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="country">Country *</Label>
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                  placeholder="Location description..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="lat">Latitude</Label>
+                <Input
+                  id="lat"
+                  type="number"
+                  step="any"
+                  value={formData.coordinates?.lat?.toString() || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    coordinates: {
+                      lat: parseFloat(e.target.value) || 0,
+                      lng: formData.coordinates?.lng || 0
+                    }
                   })}
-                </SelectContent>
-              </Select>
+                  placeholder="e.g., 40.7128"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="lng">Longitude</Label>
+                <Input
+                  id="lng"
+                  type="number"
+                  step="any"
+                  value={formData.coordinates?.lng?.toString() || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    coordinates: {
+                      lat: formData.coordinates?.lat || 0,
+                      lng: parseFloat(e.target.value) || 0
+                    }
+                  })}
+                  placeholder="e.g., -74.0060"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
             </div>
 
-            <div className="flex items-end">
+            <DialogFooter>
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
-                  setSelectedType('');
-                  setSearchQuery('');
+                  setShowAddModal(false);
+                  setEditingLocation(null);
+                  resetForm();
                 }}
-                className="w-full"
+                className="border-white/20 text-white hover:bg-white/10"
               >
-                <X className="w-4 h-4 mr-2" />
-                Clear Filters
+                Cancel
               </Button>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Results Summary */}
-      <div className="flex items-center justify-between text-sm text-gray-600">
-        <span>
-          Showing {filteredLocations.length} of {locations.length} locations
-        </span>
-        {(selectedType || searchQuery) && (
-          <span>Filters active</span>
-        )}
-      </div>
-
-      {/* Location Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="h-32 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredLocations.length === 0 ? (
-        <Card className="p-8 text-center">
-          <MapPin className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No locations found</h3>
-          <p className="text-gray-600 mb-4">
-            {searchQuery || selectedType
-              ? "No locations match your current filters."
-              : "Get started by adding your first location."
-            }
-          </p>
-          {!showSelectMode && (
-            <Button
-              onClick={() => setShowCreateDialog(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add First Location
-            </Button>
-          )}
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLocations.map((location: Location) => (
-            <LocationCard key={location.id} location={location} />
-          ))}
-        </div>
-      )}
-
-      {/* Create Location Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Location</DialogTitle>
-          </DialogHeader>
-          <LocationForm
-            onSubmit={handleSubmit}
-            onCancel={() => setShowCreateDialog(false)}
-          />
+              <Button
+                type="submit"
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
+                disabled={createLocationMutation.isPending || updateLocationMutation.isPending}
+              >
+                <Save className="mr-2" size={16} />
+                {editingLocation ? 'Save Changes' : 'Create Location'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
-
-      {/* Edit Location Dialog */}
-      <Dialog open={!!editingLocation} onOpenChange={(open) => !open && setEditingLocation(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Location</DialogTitle>
-          </DialogHeader>
-          <LocationForm
-            location={editingLocation}
-            onSubmit={handleSubmit}
-            onCancel={() => setEditingLocation(null)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Statistics Dialog */}
-      <StatsDialog />
     </div>
   );
 }
