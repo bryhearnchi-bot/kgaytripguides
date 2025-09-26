@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { FileText, LogOut, User, Settings, Shield, Bell } from "lucide-react";
+import { LogOut, User, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu,
@@ -53,8 +53,9 @@ export default function KokonutProfileDropdown({
 }: ProfileDropdownProps) {
     const [isOpen, setIsOpen] = React.useState(false);
 
-    const displayName = profile?.full_name || user.email?.split('@')[0] || 'User';
-    const initials = displayName
+    const fullDisplayName = profile?.full_name || user.email?.split('@')[0] || 'User';
+    const displayName = fullDisplayName.split(' ')[0]; // Only show first name
+    const initials = fullDisplayName
         .split(' ')
         .map(name => name[0])
         .join('')
@@ -64,18 +65,8 @@ export default function KokonutProfileDropdown({
     const menuItems: MenuItem[] = [
         {
             label: "Profile",
-            href: "/profile",
-            icon: <User className="w-4 h-4" />,
-        },
-        {
-            label: "Settings",
-            href: "/settings",
-            icon: <Settings className="w-4 h-4" />,
-        },
-        {
-            label: "Notifications",
-            href: "/notifications",
-            icon: <Bell className="w-4 h-4" />,
+            href: "/admin/profile",
+            icon: <User className="w-3 h-3" />,
         },
     ];
 
@@ -84,7 +75,7 @@ export default function KokonutProfileDropdown({
         menuItems.push({
             label: "Admin Dashboard",
             href: "/admin",
-            icon: <Shield className="w-4 h-4" />,
+            icon: <Shield className="w-3 h-3" />,
         });
     }
 
@@ -101,11 +92,6 @@ export default function KokonutProfileDropdown({
                             type="button"
                             className="flex items-center gap-2 px-2 py-1 rounded-xl bg-white/10 border border-white/20 hover:border-white/30 hover:bg-white/20 hover:shadow-sm transition-all duration-200 focus:outline-none text-white"
                         >
-                            <div className="text-left flex-1 hidden sm:block">
-                                <div className="text-sm font-medium text-white tracking-tight leading-tight">
-                                    {displayName}
-                                </div>
-                            </div>
                             <div className="relative">
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ocean-400 via-blue-400 to-cyan-400 p-0.5">
                                     <Avatar className="w-full h-full">
@@ -114,6 +100,11 @@ export default function KokonutProfileDropdown({
                                             {initials}
                                         </AvatarFallback>
                                     </Avatar>
+                                </div>
+                            </div>
+                            <div className="text-left flex-1 hidden sm:block">
+                                <div className="text-sm font-medium text-white tracking-tight leading-tight">
+                                    {displayName}
                                 </div>
                             </div>
                         </button>
@@ -154,52 +145,36 @@ export default function KokonutProfileDropdown({
                     <DropdownMenuContent
                         align="end"
                         sideOffset={4}
-                        className="w-56 p-2 bg-white/95 backdrop-blur-sm border border-ocean-200/60 rounded-2xl shadow-xl shadow-ocean-900/5
+                        className="w-48 p-2 bg-[#10192f]/95 backdrop-blur-sm border border-white/10 rounded-2xl shadow-xl shadow-black/40
                     data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-top-right"
                     >
                         {/* Profile Header */}
-                        <div className="flex items-center gap-3 p-3 mb-2 bg-gradient-to-r from-ocean-50 to-blue-50 rounded-xl">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-ocean-400 via-blue-400 to-cyan-400 p-0.5">
-                                <Avatar className="w-full h-full">
-                                    <AvatarImage src={user.avatar_url} alt={displayName} />
-                                    <AvatarFallback className="bg-gradient-to-br from-ocean-500 to-blue-500 text-white font-medium">
-                                        {initials}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-ocean-900 tracking-tight leading-tight truncate">
-                                    {displayName}
+                        {profile?.role && (
+                            <div className="p-2 mb-1 bg-white/5 border border-white/10 rounded-xl">
+                                <div className="text-sm font-medium text-white/70 capitalize">
+                                    {profile.role.replace('_', ' ')}
                                 </div>
-                                <div className="text-xs text-ocean-600 tracking-tight leading-tight truncate">
-                                    {user.email}
-                                </div>
-                                {profile?.role && (
-                                    <div className="text-xs text-ocean-500 capitalize mt-0.5">
-                                        {profile.role.replace('_', ' ')}
-                                    </div>
-                                )}
                             </div>
-                        </div>
+                        )}
 
                         <div className="space-y-1">
                             {menuItems.map((item) => (
                                 <DropdownMenuItem key={item.label} asChild>
                                     <button
                                         onClick={() => handleMenuClick(item.href)}
-                                        className="w-full flex items-center p-3 hover:bg-ocean-50 rounded-xl transition-all duration-200 cursor-pointer group hover:shadow-sm border border-transparent hover:border-ocean-200/50"
+                                        className="w-full flex items-center p-2 hover:bg-white/10 rounded-xl transition-all duration-200 cursor-pointer group hover:shadow-sm border border-transparent hover:border-white/20"
                                     >
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="flex items-center justify-center w-8 h-8 bg-ocean-100 rounded-lg group-hover:bg-ocean-200 transition-colors">
+                                        <div className="flex items-center gap-2 flex-1">
+                                            <div className="flex items-center justify-center w-6 h-6 bg-white/10 rounded-lg group-hover:bg-white/20 transition-colors">
                                                 {item.icon}
                                             </div>
-                                            <span className="text-sm font-medium text-gray-900 tracking-tight leading-tight whitespace-nowrap group-hover:text-ocean-800 transition-colors">
+                                            <span className="text-sm font-medium text-white tracking-tight leading-tight whitespace-nowrap group-hover:text-white/90 transition-colors">
                                                 {item.label}
                                             </span>
                                         </div>
                                         {item.value && (
                                             <div className="flex-shrink-0 ml-auto">
-                                                <span className="text-xs font-medium rounded-md py-1 px-2 tracking-tight text-ocean-600 bg-ocean-50 border border-ocean-500/10">
+                                                <span className="text-xs font-medium rounded-md py-1 px-2 tracking-tight text-white/60 bg-white/10 border border-white/20">
                                                     {item.value}
                                                 </span>
                                             </div>
@@ -209,18 +184,18 @@ export default function KokonutProfileDropdown({
                             ))}
                         </div>
 
-                        <DropdownMenuSeparator className="my-3 bg-gradient-to-r from-transparent via-ocean-200 to-transparent" />
+                        <DropdownMenuSeparator className="my-2 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
                         <DropdownMenuItem asChild>
                             <button
                                 type="button"
                                 onClick={onLogout}
-                                className="w-full flex items-center gap-3 p-3 duration-200 bg-red-500/10 rounded-xl hover:bg-red-500/20 cursor-pointer border border-transparent hover:border-red-500/30 hover:shadow-sm transition-all group"
+                                className="w-full flex items-center gap-2 p-2 duration-200 bg-red-500/10 rounded-xl hover:bg-red-500/20 cursor-pointer border border-transparent hover:border-red-500/30 hover:shadow-sm transition-all group"
                             >
-                                <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
-                                    <LogOut className="w-4 h-4 text-red-500 group-hover:text-red-600" />
+                                <div className="flex items-center justify-center w-6 h-6 bg-red-500/20 rounded-lg group-hover:bg-red-500/30 transition-colors">
+                                    <LogOut className="w-3 h-3 text-red-400 group-hover:text-red-300" />
                                 </div>
-                                <span className="text-sm font-medium text-red-500 group-hover:text-red-600">
+                                <span className="text-sm font-medium text-red-400 group-hover:text-red-300">
                                     Sign Out
                                 </span>
                             </button>

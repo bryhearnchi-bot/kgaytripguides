@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -28,7 +28,6 @@ import ImageTest from "@/pages/image-test";
 import { AuthCallback } from "@/pages/auth/AuthCallback";
 import LoginPage from "@/pages/auth/login";
 import AccountSetup from "@/pages/auth/AccountSetup";
-import UserProfilePage from "@/pages/user/profile";
 
 function Router() {
   return (
@@ -39,7 +38,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/setup-account/:token" component={AccountSetup} />
-      <Route path="/profile" component={() => <ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+      <Route path="/profile" component={() => <Redirect to="/admin/profile" />} />
       <Route path="/admin" component={() => <ProtectedRoute><AdminLayout><AdminDashboardContent /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminLayout><AdminDashboardContent /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/ships" component={() => <ProtectedRoute><AdminLayout><ShipsManagement /></AdminLayout></ProtectedRoute>} />
