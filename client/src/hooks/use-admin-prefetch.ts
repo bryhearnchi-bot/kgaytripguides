@@ -52,7 +52,7 @@ export function useAdminPrefetch() {
       ];
 
       // Prefetch management data for content managers and above
-      if (profile.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role)) {
+      if (profile.role && ['super_admin', 'content_manager'].includes(profile.role)) {
         await Promise.allSettled(
           managementQueries.map(({ queryKey, endpoint }) =>
             prefetchQuery(queryKey, endpoint)
@@ -60,8 +60,8 @@ export function useAdminPrefetch() {
         );
       }
 
-      // Prefetch admin data for admins only
-      if (profile.role && ['admin', 'super_admin'].includes(profile.role)) {
+      // Prefetch admin data for super admins only
+      if (profile.role && ['super_admin'].includes(profile.role)) {
         await Promise.allSettled(
           adminQueries.map(({ queryKey, endpoint }) =>
             prefetchQuery(queryKey, endpoint)

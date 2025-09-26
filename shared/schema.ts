@@ -30,7 +30,7 @@ export const profiles = pgTable("profiles", {
   tripUpdatesOptIn: boolean("trip_updates_opt_in").default(false),
   marketingEmails: boolean("marketing_emails").default(false),
   lastSignInAt: timestamp("last_sign_in_at"),
-  role: text("role").default("viewer"), // admin, content_manager, viewer
+  role: text("role").default("viewer"), // super_admin, content_manager, viewer
   accountStatus: text("account_status").default("active"), // active, suspended, pending_verification
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -43,7 +43,7 @@ export const profiles = pgTable("profiles", {
 export const invitations = pgTable("invitations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull(),
-  role: text("role").notNull(), // admin, content_editor, media_manager, viewer
+  role: text("role").notNull(), // super_admin, content_manager, viewer
   invitedBy: text("invited_by").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   tripId: integer("trip_id").references(() => trips.id, { onDelete: "set null" }), // Optional trip-specific invitation
   metadata: jsonb("metadata"), // Additional invitation data

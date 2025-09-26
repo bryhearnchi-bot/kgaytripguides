@@ -91,7 +91,7 @@ export interface Profile {
   email: string;
   fullName?: string;
   username?: string;
-  role: 'viewer' | 'content_manager' | 'admin';
+  role: 'viewer' | 'content_manager' | 'super_admin';
   accountStatus: 'active' | 'suspended' | 'pending_verification';
   isActive: boolean;
   createdAt: string;

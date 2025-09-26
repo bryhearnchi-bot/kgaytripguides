@@ -75,7 +75,7 @@ async function fetchAdminUsers(query: AdminUsersQuery, authHeaders?: Record<stri
 const COMMON_QUERIES: AdminUsersQuery[] = [
   { page: 1, limit: 20 }, // Default view
   { page: 1, limit: 20, status: 'active' }, // Active users
-  { page: 1, limit: 20, role: 'admin' }, // Admin users
+  { page: 1, limit: 20, role: 'super_admin' }, // Super admin users
   { page: 1, limit: 20, role: 'content_manager' }, // Content managers
 ];
 
@@ -84,7 +84,7 @@ export function useAdminUsersCache() {
   const { profile, session } = useSupabaseAuthContext();
 
   // Check if user can manage users
-  const canManageUsers = profile?.role && ['admin', 'super_admin', 'trip_admin', 'content_manager'].includes(profile.role);
+  const canManageUsers = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
 
   // Prefetch common queries on mount (only if authenticated and has permissions)
   useEffect(() => {
@@ -184,7 +184,7 @@ export function useAdminUsers(query: AdminUsersQuery) {
   const { profile, session } = useSupabaseAuthContext();
 
   // Check if user can manage users
-  const canManageUsers = profile?.role && ['admin', 'super_admin', 'trip_admin', 'content_manager'].includes(profile.role);
+  const canManageUsers = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
 
   const authHeaders = session?.access_token
     ? { Authorization: `Bearer ${session.access_token}` }

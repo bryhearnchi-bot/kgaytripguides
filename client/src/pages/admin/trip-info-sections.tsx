@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { api } from '@/lib/api-client';
 import {
   FileText,
   Plus,
@@ -43,9 +44,7 @@ export default function TripInfoSectionsManagement() {
   const { data: sections = [], isLoading } = useQuery<TripInfoSection[]>({
     queryKey: ['trip-info-sections'],
     queryFn: async () => {
-      const response = await fetch('/api/trip-info-sections', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/trip-info-sections');
       if (!response.ok) throw new Error('Failed to fetch trip info sections');
       return response.json();
     }
@@ -54,12 +53,7 @@ export default function TripInfoSectionsManagement() {
   // Create section mutation
   const createSectionMutation = useMutation({
     mutationFn: async (data: TripInfoSection) => {
-      const response = await fetch('/api/trip-info-sections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/trip-info-sections', data);
       if (!response.ok) throw new Error('Failed to create section');
       return response.json();
     },
@@ -84,12 +78,7 @@ export default function TripInfoSectionsManagement() {
   // Update section mutation
   const updateSectionMutation = useMutation({
     mutationFn: async (data: TripInfoSection) => {
-      const response = await fetch(`/api/trip-info-sections/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/trip-info-sections/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update section');
       return response.json();
     },
@@ -114,10 +103,7 @@ export default function TripInfoSectionsManagement() {
   // Delete section mutation
   const deleteSectionMutation = useMutation({
     mutationFn: async (sectionId: number) => {
-      const response = await fetch(`/api/trip-info-sections/${sectionId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/trip-info-sections/${sectionId}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete section');

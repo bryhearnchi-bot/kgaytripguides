@@ -25,7 +25,7 @@ interface NavItem {
 }
 
 const managementNav: NavItem[] = [
-  { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-4 w-4" /> },
+  // { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-4 w-4" /> }, // Temporarily hidden
   { label: 'Trips', path: '/admin/trips', icon: <Anchor className="h-4 w-4" /> },
   { label: 'Ships', path: '/admin/ships', icon: <Ship className="h-4 w-4" /> },
   { label: 'Locations', path: '/admin/locations', icon: <MapPin className="h-4 w-4" /> },

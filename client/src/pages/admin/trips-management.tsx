@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format } from "date-fns";
+import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -101,9 +102,9 @@ export default function TripsManagement() {
   const { profile } = useSupabaseAuthContext();
 
   const userRole = profile?.role ?? "viewer";
-  const canCreateOrEditTrips = ["admin", "content_manager"].includes(userRole);
+  const canCreateOrEditTrips = ["super_admin", "content_manager"].includes(userRole);
   const canArchiveTrips = canCreateOrEditTrips || userRole === "super_admin";
-  const canDeleteTrips = ["admin", "content_manager", "super_admin"].includes(userRole);
+  const canDeleteTrips = ["super_admin", "content_manager"].includes(userRole);
   const canExportTrips = canCreateOrEditTrips || userRole === "super_admin";
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -121,9 +122,7 @@ export default function TripsManagement() {
   } = useQuery<Trip[]>({
     queryKey: ["admin-trips"],
     queryFn: async () => {
-      const response = await fetch("/api/trips", {
-        credentials: "include",
-      });
+      const response = await api.get("/api/trips");
       if (!response.ok) {
         throw new Error("Failed to fetch trips");
       }
@@ -141,14 +140,7 @@ export default function TripsManagement() {
         throw new Error("Trip not found");
       }
 
-      const response = await fetch(`/api/trips/${tripId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ ...tripToArchive, status: "archived" }),
-      });
+      const response = await api.put(`/api/trips/${tripId}`, { ...tripToArchive, status: "archived" });
 
       if (!response.ok) {
         throw new Error("Failed to archive trip");
@@ -176,10 +168,7 @@ export default function TripsManagement() {
       if (!canDeleteTrips) {
         throw new Error("You do not have permission to delete trips.");
       }
-      const response = await fetch(`/api/trips/${tripId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await api.delete(`/api/trips/${tripId}`);
       if (!response.ok) {
         throw new Error("Failed to delete trip");
       }
@@ -344,7 +333,7 @@ export default function TripsManagement() {
       {!isFiltered && canCreateOrEditTrips && (
         <Button
           onClick={() => navigate("/admin/trips/new")}
-          className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+          className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create voyage
@@ -375,7 +364,7 @@ export default function TripsManagement() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg shadow-blue-900/20 backdrop-blur">
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.3em] text-white/40">
@@ -389,7 +378,7 @@ export default function TripsManagement() {
           {canCreateOrEditTrips && (
             <Button
               onClick={() => navigate("/admin/trips/new")}
-              className="self-start rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+              className="self-start rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
             >
               <Plus className="mr-2 h-4 w-4" />
               New Trip
@@ -398,7 +387,6 @@ export default function TripsManagement() {
         </div>
       </section>
 
-      <PageStats stats={pageStats} columns={4} className="hidden md:grid" />
 
       <FilterBar
         searchValue={searchTerm}
@@ -531,36 +519,6 @@ export default function TripsManagement() {
                     </TableCell>
                     <TableCell className="align-top text-right">
                       <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenQuickView(trip)}
-                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Quick view"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenReport(trip)}
-                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Performance report"
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                        </Button>
-                        {canExportTrips && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => exportTripData.mutate(trip.id)}
-                            disabled={exportTripData.isPending}
-                            className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                            title="Export JSON"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
                         {canCreateOrEditTrips && (
                           <Button
                             variant="ghost"
@@ -572,6 +530,15 @@ export default function TripsManagement() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenQuickView(trip)}
+                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
+                          title="Quick view"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -741,7 +708,7 @@ export default function TripsManagement() {
                       closeQuickView();
                       navigate(`/admin/trips/${selectedTrip.id}`);
                     }}
-                    className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+                    className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
                   >
                     <Edit className="mr-2 h-4 w-4" />
                     Edit trip
@@ -868,7 +835,7 @@ export default function TripsManagement() {
                 <Button
                   onClick={() => exportTripData.mutate(selectedTrip.id)}
                   disabled={exportTripData.isPending}
-                  className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   Export report

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { api } from '@/lib/api-client';
 import { Users, Plus, Edit2, Trash2, Search, Save, Shield, User, UserCheck, UserX } from 'lucide-react';
 import { useAdminUsers, useAdminUserMutations } from '@/hooks/use-admin-users-cache';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
@@ -45,7 +46,7 @@ interface UsersResponse {
   };
 }
 
-const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
+const fieldBaseClasses = "h-10 rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3";
 
 const ROLE_OPTIONS = [
   { value: 'viewer', label: 'Viewer' },
@@ -73,11 +74,8 @@ export default function UsersManagement() {
   });
 
   const userRole = profile?.role ?? 'viewer';
-  const canManageUsers = ['admin', 'super_admin', 'trip_admin', 'content_manager'].includes(userRole);
+  const canManageUsers = ['super_admin', 'content_manager'].includes(userRole);
   const canDeleteUsers = userRole === 'super_admin';
-  const authHeaders = session?.access_token
-    ? { Authorization: `Bearer ${session.access_token}` }
-    : {};
 
   // Use optimized caching hook
   const { updateUserOptimistically, addUserOptimistically, removeUserOptimistically, invalidateUsers } = useAdminUserMutations();
@@ -99,12 +97,7 @@ export default function UsersManagement() {
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/admin/users', data);
       if (!response.ok) throw new Error('Failed to create user');
       return response.json();
     },
@@ -132,12 +125,7 @@ export default function UsersManagement() {
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const response = await fetch(`/api/admin/users/${editingUser!.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/admin/users/${editingUser!.id}`, data);
       if (!response.ok) throw new Error('Failed to update user');
       return response.json();
     },
@@ -165,13 +153,7 @@ export default function UsersManagement() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/admin/users/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          ...authHeaders,
-        },
-      });
+      const response = await api.delete(`/api/admin/users/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete user');
