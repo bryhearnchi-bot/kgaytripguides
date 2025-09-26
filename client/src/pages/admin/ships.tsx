@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ResponsiveAdminTable } from '@/components/admin/ResponsiveAdminTable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
+import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 import {
   Select,
   SelectContent,
@@ -23,20 +18,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { StatusBadge } from '@/components/admin/StatusBadge';
-import {
-  Ship,
-  Plus,
-  Edit2,
-  Trash2,
-  Search,
-  Users,
-  Calendar,
-  Anchor,
-  Save,
-  CheckCircle,
-  Wrench,
-  AlertCircle
-} from 'lucide-react';
+import { Ship, Plus, Edit2, Trash2, Search, Users, Calendar, Anchor, CheckCircle, Wrench, AlertCircle } from 'lucide-react';
+import { AdminFormModal } from '@/components/admin/AdminFormModal';
+
+const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
+const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface ShipData {
   id?: number;
@@ -63,6 +49,7 @@ interface ShipData {
 export default function ShipsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingShip, setEditingShip] = useState<ShipData | null>(null);
@@ -74,8 +61,16 @@ export default function ShipsManagement() {
   const { profile } = useSupabaseAuthContext();
   const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
 
-  // Fetch ships
-  const { data: ships = [], isLoading } = useQuery<ShipData[]>({
+  const handleModalOpenChange = (open: boolean) => {
+    setShowAddModal(open);
+    if (!open) {
+      setEditingShip(null);
+      resetForm();
+    }
+  };
+
+  // Fetch ships with optimized caching
+  const { data: ships = [], isLoading, isPlaceholderData } = useQuery<ShipData[]>({
     queryKey: ['ships'],
     queryFn: async () => {
       const response = await fetch('/api/ships', {
@@ -83,7 +78,9 @@ export default function ShipsManagement() {
       });
       if (!response.ok) throw new Error('Failed to fetch ships');
       return response.json();
-    }
+    },
+    ...adminQueryOptions,
+    placeholderData: []
   });
 
   // Create ship mutation
@@ -215,6 +212,11 @@ export default function ShipsManagement() {
     return <Anchor className="h-3.5 w-3.5" />;
   };
 
+  // Show skeleton while loading initial data
+  if (isLoading && ships.length === 0) {
+    return <AdminTableSkeleton rows={5} />;
+  }
+
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
@@ -229,7 +231,7 @@ export default function ShipsManagement() {
               resetForm();
               setShowAddModal(true);
             }}
-            className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+            className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6] min-h-[44px] touch-manipulation"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Ship
@@ -247,13 +249,13 @@ export default function ShipsManagement() {
             />
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-white/60">
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
               Active
             </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
               Status
             </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
               Fleet
             </Button>
           </div>
@@ -279,7 +281,7 @@ export default function ShipsManagement() {
                   resetForm();
                   setShowAddModal(true);
                 }}
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white min-h-[44px] touch-manipulation"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create First Ship
@@ -369,174 +371,163 @@ export default function ShipsManagement() {
       </section>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
-          <DialogHeader>
-            <DialogTitle>
-              {editingShip ? 'Edit Ship' : 'Add New Ship'}
-            </DialogTitle>
-            <DialogDescription>
-              Enter the ship information below
-            </DialogDescription>
-          </DialogHeader>
+      <AdminFormModal
+        isOpen={showAddModal}
+        onOpenChange={handleModalOpenChange}
+        title={editingShip ? 'Edit Ship' : 'Add New Ship'}
+        description="Enter the ship information below"
+        onSubmit={handleSubmit}
+        primaryAction={{
+          label: editingShip ? 'Save Changes' : 'Create Ship',
+          loading: editingShip ? updateShipMutation.isPending : createShipMutation.isPending,
+          loadingLabel: editingShip ? 'Saving...' : 'Creating...'
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => handleModalOpenChange(false)
+        }}
+        contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1"
+      >
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="name">Ship Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            className={fieldBaseClasses}
+          />
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="col-span-2">
-                <Label htmlFor="name">Ship Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="cruiseLine">Cruise Line *</Label>
+          <Input
+            id="cruiseLine"
+            value={formData.cruiseLine}
+            onChange={(e) => setFormData({ ...formData, cruiseLine: e.target.value })}
+            required
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="cruiseLine">Cruise Line *</Label>
-                <Input
-                  id="cruiseLine"
-                  value={formData.cruiseLine}
-                  onChange={(e) => setFormData({ ...formData, cruiseLine: e.target.value })}
-                  required
-                />
-              </div>
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="status">Status</Label>
+          <Select
+            value={formData.status || 'active'}
+            onValueChange={(value: 'active' | 'maintenance' | 'retired') => setFormData({ ...formData, status: value })}
+          >
+            <SelectTrigger className={`${fieldBaseClasses} text-left`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+              <SelectItem value="retired">Retired</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status || 'active'}
-                  onValueChange={(value: 'active' | 'maintenance' | 'retired') => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="retired">Retired</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <div>
+          <Label htmlFor="shipCode">Ship Code</Label>
+          <Input
+            id="shipCode"
+            value={formData.shipCode || ''}
+            onChange={(e) => setFormData({ ...formData, shipCode: e.target.value })}
+            placeholder="e.g., VL"
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="shipCode">Ship Code</Label>
-                <Input
-                  id="shipCode"
-                  value={formData.shipCode || ''}
-                  onChange={(e) => setFormData({ ...formData, shipCode: e.target.value })}
-                  placeholder="e.g., VL"
-                />
-              </div>
+        <div>
+          <Label htmlFor="shipClass">Ship Class</Label>
+          <Input
+            id="shipClass"
+            value={formData.shipClass || ''}
+            onChange={(e) => setFormData({ ...formData, shipClass: e.target.value })}
+            placeholder="e.g., Lady Ships"
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="shipClass">Ship Class</Label>
-                <Input
-                  id="shipClass"
-                  value={formData.shipClass || ''}
-                  onChange={(e) => setFormData({ ...formData, shipClass: e.target.value })}
-                  placeholder="e.g., Lady Ships"
-                />
-              </div>
+        <div>
+          <Label htmlFor="capacity">Passenger Capacity</Label>
+          <Input
+            id="capacity"
+            type="number"
+            value={formData.capacity || ''}
+            onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || undefined })}
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="capacity">Passenger Capacity</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={formData.capacity || ''}
-                  onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || undefined })}
-                />
-              </div>
+        <div>
+          <Label htmlFor="crewSize">Crew Size</Label>
+          <Input
+            id="crewSize"
+            type="number"
+            value={formData.crewSize || ''}
+            onChange={(e) => setFormData({ ...formData, crewSize: parseInt(e.target.value) || undefined })}
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="crewSize">Crew Size</Label>
-                <Input
-                  id="crewSize"
-                  type="number"
-                  value={formData.crewSize || ''}
-                  onChange={(e) => setFormData({ ...formData, crewSize: parseInt(e.target.value) || undefined })}
-                />
-              </div>
+        <div>
+          <Label htmlFor="decks">Number of Decks</Label>
+          <Input
+            id="decks"
+            type="number"
+            value={formData.decks || ''}
+            onChange={(e) => setFormData({ ...formData, decks: parseInt(e.target.value) || undefined })}
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="decks">Number of Decks</Label>
-                <Input
-                  id="decks"
-                  type="number"
-                  value={formData.decks || ''}
-                  onChange={(e) => setFormData({ ...formData, decks: parseInt(e.target.value) || undefined })}
-                />
-              </div>
+        <div>
+          <Label htmlFor="builtYear">Year Built</Label>
+          <Input
+            id="builtYear"
+            type="number"
+            value={formData.builtYear || ''}
+            onChange={(e) => setFormData({ ...formData, builtYear: parseInt(e.target.value) || undefined })}
+            placeholder="e.g., 2021"
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="builtYear">Year Built</Label>
-                <Input
-                  id="builtYear"
-                  type="number"
-                  value={formData.builtYear || ''}
-                  onChange={(e) => setFormData({ ...formData, builtYear: parseInt(e.target.value) || undefined })}
-                  placeholder="e.g., 2021"
-                />
-              </div>
+        <div>
+          <Label htmlFor="lengthMeters">Length (meters)</Label>
+          <Input
+            id="lengthMeters"
+            type="number"
+            step="0.01"
+            value={formData.lengthMeters || ''}
+            onChange={(e) => setFormData({ ...formData, lengthMeters: parseFloat(e.target.value) || undefined })}
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="lengthMeters">Length (meters)</Label>
-                <Input
-                  id="lengthMeters"
-                  type="number"
-                  step="0.01"
-                  value={formData.lengthMeters || ''}
-                  onChange={(e) => setFormData({ ...formData, lengthMeters: parseFloat(e.target.value) || undefined })}
-                />
-              </div>
+        <div>
+          <Label htmlFor="flag">Flag/Registry</Label>
+          <Input
+            id="flag"
+            value={formData.flag || ''}
+            onChange={(e) => setFormData({ ...formData, flag: e.target.value })}
+            placeholder="e.g., Malta"
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="flag">Flag/Registry</Label>
-                <Input
-                  id="flag"
-                  value={formData.flag || ''}
-                  onChange={(e) => setFormData({ ...formData, flag: e.target.value })}
-                  placeholder="e.g., Malta"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingShip(null);
-                  resetForm();
-                }}
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
-                disabled={createShipMutation.isPending || updateShipMutation.isPending}
-              >
-                <Save className="mr-2" size={16} />
-                {editingShip ? 'Save Changes' : 'Create Ship'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={formData.description || ''}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={3}
+            className={textareaBaseClasses}
+          />
+        </div>
+      </AdminFormModal>
     </div>
   );
 }

@@ -40,6 +40,7 @@ import { AdminTable } from "@/components/admin/AdminTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { CategoryChip } from "@/components/admin/CategoryChip";
 import { PageStats } from "@/components/admin/PageStats";
+import { useSupabaseAuthContext } from "@/contexts/SupabaseAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { dateOnly } from "@/lib/utils";
 import {
@@ -97,6 +98,13 @@ export default function TripsManagement() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { profile } = useSupabaseAuthContext();
+
+  const userRole = profile?.role ?? "viewer";
+  const canCreateOrEditTrips = ["admin", "content_manager"].includes(userRole);
+  const canArchiveTrips = canCreateOrEditTrips || userRole === "super_admin";
+  const canDeleteTrips = ["admin", "content_manager", "super_admin"].includes(userRole);
+  const canExportTrips = canCreateOrEditTrips || userRole === "super_admin";
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
@@ -125,6 +133,9 @@ export default function TripsManagement() {
 
   const archiveTrip = useMutation({
     mutationFn: async (tripId: number) => {
+      if (!canArchiveTrips) {
+        throw new Error("You do not have permission to archive trips.");
+      }
       const tripToArchive = allTrips.find((trip) => trip.id === tripId);
       if (!tripToArchive) {
         throw new Error("Trip not found");
@@ -162,6 +173,9 @@ export default function TripsManagement() {
 
   const deleteTrip = useMutation({
     mutationFn: async (tripId: number) => {
+      if (!canDeleteTrips) {
+        throw new Error("You do not have permission to delete trips.");
+      }
       const response = await fetch(`/api/trips/${tripId}`, {
         method: "DELETE",
         credentials: "include",
@@ -184,10 +198,16 @@ export default function TripsManagement() {
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      setTripPendingDeletion(null);
+    },
   });
 
   const exportTripData = useMutation({
     mutationFn: async (tripId: number) => {
+      if (!canExportTrips) {
+        throw new Error("You do not have permission to export trips.");
+      }
       const trip = allTrips.find((entry) => entry.id === tripId);
       if (!trip) {
         throw new Error("Trip not found");
@@ -321,7 +341,7 @@ export default function TripsManagement() {
           ? "No voyages match the filters you've applied."
           : "Create your first voyage to populate the roster."}
       </p>
-      {!isFiltered && (
+      {!isFiltered && canCreateOrEditTrips && (
         <Button
           onClick={() => navigate("/admin/trips/new")}
           className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
@@ -366,17 +386,19 @@ export default function TripsManagement() {
               Monitor upcoming departures, live sailings, and archived voyages in one place.
             </p>
           </div>
-          <Button
-            onClick={() => navigate("/admin/trips/new")}
-            className="self-start rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Trip
-          </Button>
+          {canCreateOrEditTrips && (
+            <Button
+              onClick={() => navigate("/admin/trips/new")}
+              className="self-start rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Trip
+            </Button>
+          )}
         </div>
       </section>
 
-      <PageStats stats={pageStats} columns={4} />
+      <PageStats stats={pageStats} columns={4} className="hidden md:grid" />
 
       <FilterBar
         searchValue={searchTerm}
@@ -508,7 +530,7 @@ export default function TripsManagement() {
                       </div>
                     </TableCell>
                     <TableCell className="align-top text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -527,25 +549,29 @@ export default function TripsManagement() {
                         >
                           <BarChart3 className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => exportTripData.mutate(trip.id)}
-                          disabled={exportTripData.isPending}
-                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                          title="Export JSON"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/admin/trips/${trip.id}`)}
-                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Edit trip"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        {canExportTrips && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => exportTripData.mutate(trip.id)}
+                            disabled={exportTripData.isPending}
+                            className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Export JSON"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canCreateOrEditTrips && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/trips/${trip.id}`)}
+                            className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
+                            title="Edit trip"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -555,7 +581,7 @@ export default function TripsManagement() {
                         >
                           <Anchor className="h-4 w-4" />
                         </Button>
-                        {trip.status !== "archived" && (
+                        {canArchiveTrips && trip.status !== "archived" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -567,42 +593,44 @@ export default function TripsManagement() {
                             <Archive className="h-4 w-4" />
                           </Button>
                         )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setTripPendingDeletion(trip)}
-                              className="h-9 w-9 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
-                              title="Delete trip"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="border border-white/10 bg-[#10192f] text-white">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete trip</AlertDialogTitle>
-                              <AlertDialogDescription className="text-white/60">
-                                This will permanently remove "{trip.name}" and all associated voyage data. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10">
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() =>
-                                  tripPendingDeletion &&
-                                  deleteTrip.mutate(tripPendingDeletion.id)
-                                }
-                                disabled={deleteTrip.isPending}
-                                className="rounded-full bg-[#fb7185] px-4 py-2 text-sm font-semibold text-white hover:bg-[#f43f5e] disabled:cursor-not-allowed disabled:opacity-60"
+                        {canDeleteTrips && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setTripPendingDeletion(trip)}
+                                className="h-9 w-9 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
+                                title="Delete trip"
                               >
-                                Delete permanently
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="border border-white/10 bg-[#10192f] text-white">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete trip</AlertDialogTitle>
+                                <AlertDialogDescription className="text-white/60">
+                                  This will permanently remove "{trip.name}" and all associated voyage data. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10">
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    tripPendingDeletion &&
+                                    deleteTrip.mutate(tripPendingDeletion.id)
+                                  }
+                                  disabled={deleteTrip.isPending}
+                                  className="rounded-full bg-[#fb7185] px-4 py-2 text-sm font-semibold text-white hover:bg-[#f43f5e] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  Delete permanently
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -707,16 +735,18 @@ export default function TripsManagement() {
                 >
                   Close
                 </Button>
-                <Button
-                  onClick={() => {
-                    closeQuickView();
-                    navigate(`/admin/trips/${selectedTrip.id}`);
-                  }}
-                  className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit trip
-                </Button>
+                {canCreateOrEditTrips && (
+                  <Button
+                    onClick={() => {
+                      closeQuickView();
+                      navigate(`/admin/trips/${selectedTrip.id}`);
+                    }}
+                    className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit trip
+                  </Button>
+                )}
               </div>
             </div>
           )}

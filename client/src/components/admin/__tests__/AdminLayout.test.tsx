@@ -6,7 +6,6 @@ import { AdminLayout } from '../AdminLayout';
 
 const mockSignOut = vi.fn();
 const mockSetLocation = vi.fn();
-const mockSetMobileLocation = vi.fn();
 
 vi.mock('@/contexts/SupabaseAuthContext', () => ({
   useSupabaseAuthContext: () => ({
@@ -33,7 +32,7 @@ describe('AdminLayout', () => {
     );
 
     expect(screen.getByTestId('content')).toBeInTheDocument();
-    expect(screen.getByText(/Admin Control Center/i)).toBeInTheDocument();
+    expect(screen.getByText(/Management/i)).toBeInTheDocument();
   });
 
   it('renders navigation items', () => {
@@ -74,17 +73,4 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('button', { name: /Expand sidebar/i })).toBeInTheDocument();
   });
 
-  it('calls signOut when profile dropdown logout is used', () => {
-    render(
-      <AdminLayout>
-        <div>Content</div>
-      </AdminLayout>
-    );
-
-    const profileButton = screen.getByRole('button', { name: /Bryan Hearn/i });
-    fireEvent.click(profileButton);
-    fireEvent.click(screen.getByText(/Sign Out/i));
-
-    expect(mockSignOut).toHaveBeenCalled();
-  });
 });

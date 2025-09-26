@@ -101,68 +101,120 @@ const querySchema = z.object({
 
 export function registerAdminUsersRoutes(app: Express) {
 
-  // GET /api/admin/users - List all users with filtering
+  // GET /api/admin/users - List all users with filtering (OPTIMIZED)
   app.get("/api/admin/users", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const query = querySchema.parse(req.query);
 
-      // Use Supabase Admin client to bypass RLS
       if (!supabaseAdmin) {
         return res.status(503).json({
           error: 'Database service is not configured. Please set up Supabase credentials.'
         });
       }
 
-      // Build the query for Supabase
-      let supabaseQuery = supabaseAdmin
-        .from('profiles')
-        .select('*', { count: 'exact' });
+      // Try optimized search function first
+      try {
+        const offset = (query.page - 1) * query.limit;
 
-      // Apply filters
-      if (query.search) {
-        supabaseQuery = supabaseQuery.or(`username.ilike.%${query.search}%,email.ilike.%${query.search}%,full_name.ilike.%${query.search}%`);
-      }
+        // Use our optimized search function
+        const { data: searchResult, error: searchError } = await supabaseAdmin
+          .rpc('search_profiles_optimized', {
+            search_term: query.search || null,
+            filter_role: (query.role && query.role !== 'all') ? query.role : null,
+            filter_active: query.status === 'active' ? true :
+                          query.status === 'inactive' ? false : null,
+            page_limit: query.limit,
+            page_offset: offset
+          });
 
-      if (query.role && query.role !== 'all') {
-        supabaseQuery = supabaseQuery.eq('role', query.role);
-      }
-
-      if (query.status && query.status !== 'all') {
-        if (query.status === 'active') {
-          supabaseQuery = supabaseQuery.eq('is_active', true);
-        } else if (query.status === 'inactive') {
-          supabaseQuery = supabaseQuery.eq('is_active', false);
+        if (searchError) {
+          throw searchError;
         }
-      }
 
-      // Apply pagination
-      const offset = (query.page - 1) * query.limit;
-      supabaseQuery = supabaseQuery
-        .range(offset, offset + query.limit - 1)
-        .order('created_at', { ascending: false });
+        // Get count using optimized count function
+        const { data: countResult, error: countError } = await supabaseAdmin
+          .rpc('count_profiles_estimated', {
+            search_term: query.search || null,
+            filter_role: (query.role && query.role !== 'all') ? query.role : null,
+            filter_active: query.status === 'active' ? true :
+                          query.status === 'inactive' ? false : null
+          });
 
-      const { data: usersList, count: total, error } = await supabaseQuery;
+        if (countError) {
+          throw countError;
+        }
 
-      if (error) {
-        console.error('Error fetching users from Supabase:', error);
-        return res.status(500).json({
-          error: 'Failed to fetch users',
-          details: error.message
+        const total = countResult || 0;
+
+        res.json({
+          users: searchResult || [],
+          pagination: {
+            page: query.page,
+            limit: query.limit,
+            total,
+            pages: Math.ceil(total / query.limit)
+          }
+        });
+
+      } catch (optimizedError) {
+        console.warn('Optimized query failed, falling back to standard query:', optimizedError);
+
+        // Fallback to standard Supabase query with performance improvements
+        let supabaseQuery = supabaseAdmin
+          .from('profiles')
+          .select('*', { count: 'planned' }); // Use 'planned' instead of 'exact' for better performance
+
+        // Apply filters
+        if (query.search) {
+          // Use simpler search for fallback
+          const searchTerm = query.search.trim();
+          if (searchTerm.length < 3) {
+            // Use prefix search for short terms
+            supabaseQuery = supabaseQuery.or(
+              `username.ilike.${searchTerm}%,email.ilike.${searchTerm}%,full_name.ilike.${searchTerm}%`
+            );
+          } else {
+            // Use full wildcard search for longer terms
+            supabaseQuery = supabaseQuery.or(
+              `username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`
+            );
+          }
+        }
+
+        if (query.role && query.role !== 'all') {
+          supabaseQuery = supabaseQuery.eq('role', query.role);
+        }
+
+        if (query.status && query.status !== 'all') {
+          supabaseQuery = supabaseQuery.eq('is_active', query.status === 'active');
+        }
+
+        // Apply pagination
+        const offset = (query.page - 1) * query.limit;
+        supabaseQuery = supabaseQuery
+          .range(offset, offset + query.limit - 1)
+          .order('created_at', { ascending: false });
+
+        const { data: usersList, count: total, error } = await supabaseQuery;
+
+        if (error) {
+          console.error('Error fetching users from Supabase:', error);
+          return res.status(500).json({
+            error: 'Failed to fetch users',
+            details: error.message
+          });
+        }
+
+        res.json({
+          users: usersList || [],
+          pagination: {
+            page: query.page,
+            limit: query.limit,
+            total: total || 0,
+            pages: Math.ceil((total || 0) / query.limit)
+          }
         });
       }
-
-      // Data from Supabase is already in snake_case, just pass it through
-      const transformedUsers = usersList || [];
-
-      res.json({
-        users: transformedUsers,
-        pagination: {
-          page: query.page,
-          limit: query.limit,
-          total,
-          pages: Math.ceil(total / query.limit)
-        }
-      });
 
     } catch (error) {
       console.error('Error fetching users:', error);

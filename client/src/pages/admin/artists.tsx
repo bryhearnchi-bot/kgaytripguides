@@ -1,29 +1,18 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ResponsiveAdminTable } from '@/components/admin/ResponsiveAdminTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Users,
-  Plus,
-  Edit2,
-  Trash2,
-  Search,
-  Music,
-  Mic,
-  Save
-} from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, Search, Music, Mic } from 'lucide-react';
+import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
+import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
+
+const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
+const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface Talent {
   id?: number;
@@ -44,6 +33,7 @@ interface Talent {
 export default function ArtistsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingArtist, setEditingArtist] = useState<Talent | null>(null);
@@ -52,8 +42,8 @@ export default function ArtistsManagement() {
     category: 'DJ',
   });
 
-  // Fetch artists
-  const { data: artists = [], isLoading } = useQuery<Talent[]>({
+  // Fetch artists with optimized caching
+  const { data: artists = [], isLoading, isPlaceholderData } = useQuery<Talent[]>({
     queryKey: ['talent'],
     queryFn: async () => {
       const response = await fetch('/api/talent', {
@@ -61,7 +51,9 @@ export default function ArtistsManagement() {
       });
       if (!response.ok) throw new Error('Failed to fetch artists');
       return response.json();
-    }
+    },
+    ...adminQueryOptions,
+    placeholderData: []
   });
 
   // Create artist mutation
@@ -170,6 +162,14 @@ export default function ArtistsManagement() {
     }
   };
 
+  const handleModalOpenChange = (open: boolean) => {
+    setShowAddModal(open);
+    if (!open) {
+      setEditingArtist(null);
+      resetForm();
+    }
+  };
+
   const handleEdit = (artist: Talent) => {
     setEditingArtist(artist);
     setFormData(artist);
@@ -197,6 +197,11 @@ export default function ArtistsManagement() {
       default: return <Users size={16} />;
     }
   };
+
+  // Show skeleton while loading initial data
+  if (isLoading && artists.length === 0) {
+    return <AdminTableSkeleton rows={5} />;
+  }
 
   return (
     <div className="space-y-8">
@@ -230,13 +235,13 @@ export default function ArtistsManagement() {
             />
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-white/60">
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
               Active
             </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
               Category
             </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
+            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
               Cruise
             </Button>
           </div>
@@ -262,7 +267,7 @@ export default function ArtistsManagement() {
                   resetForm();
                   setShowAddModal(true);
                 }}
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
+                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white min-h-[44px] touch-manipulation"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create First Artist
@@ -270,191 +275,187 @@ export default function ArtistsManagement() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table className="min-w-full text-sm text-white/80">
-              <TableHeader className="bg-white/5">
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/60">Artist</TableHead>
-                  <TableHead className="text-white/60">Category</TableHead>
-                  <TableHead className="text-white/60">Status</TableHead>
-                  <TableHead className="text-right text-white/60">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredArtists.map((artist) => (
-                  <TableRow key={artist.id} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="py-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
-                          {artist.profileImageUrl ? (
-                            <img
-                              src={artist.profileImageUrl}
-                              alt={artist.name}
-                              className="h-full w-full rounded-xl object-cover"
-                            />
-                          ) : (
-                            <Users className="h-5 w-5 text-white/70" />
-                          )}
-                        </div>
-                        <div className="space-y-1">
-                          <p className="font-medium text-white">{artist.name}</p>
-                          {artist.bio && (
-                            <p className="text-xs text-white/60 line-clamp-2">{artist.bio}</p>
-                          )}
-                          {artist.knownFor && (
-                            <p className="text-xs text-white/40">Known for: {artist.knownFor}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
-                        {getCategoryIcon(artist.category)}
-                        <span>{artist.category}</span>
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">Active</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(artist)}
-                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Edit Artist"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(artist.id!)}
-                          className="h-8 w-8 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
-                          title="Delete Artist"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <ResponsiveAdminTable
+            data={filteredArtists}
+            columns={[
+              {
+                key: 'name',
+                label: 'Artist',
+                priority: 'high',
+                render: (value, artist) => (
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10 flex-shrink-0">
+                      {artist.profileImageUrl ? (
+                        <img
+                          src={artist.profileImageUrl}
+                          alt={artist.name}
+                          className="h-full w-full rounded-xl object-cover"
+                        />
+                      ) : (
+                        <Users className="h-5 w-5 text-white/70" />
+                      )}
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <p className="font-medium text-white">{artist.name}</p>
+                      {artist.bio && (
+                        <p className="text-xs text-white/60 line-clamp-2">{artist.bio}</p>
+                      )}
+                      {artist.knownFor && (
+                        <p className="text-xs text-white/40">Known for: {artist.knownFor}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              },
+              {
+                key: 'category',
+                label: 'Category',
+                priority: 'high',
+                render: (value, artist) => (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                    {getCategoryIcon(artist.category)}
+                    <span>{artist.category}</span>
+                  </span>
+                )
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                priority: 'medium',
+                render: () => (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">Active</span>
+                )
+              },
+              {
+                key: 'bio',
+                label: 'Bio',
+                priority: 'low',
+                render: (value) => value && (
+                  <span className="text-xs text-white/60 line-clamp-2">{value}</span>
+                )
+              },
+              {
+                key: 'knownFor',
+                label: 'Known For',
+                priority: 'low',
+                render: (value) => value && (
+                  <span className="text-xs text-white/40">{value}</span>
+                )
+              }
+            ]}
+            actions={[
+              {
+                label: 'Edit Artist',
+                icon: <Edit2 className="h-4 w-4" />,
+                onClick: handleEdit
+              },
+              {
+                label: 'Delete Artist',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: (artist) => handleDelete(artist.id!),
+                variant: 'destructive'
+              }
+            ]}
+            keyField="id"
+            isLoading={isLoading}
+            emptyMessage={searchTerm ? 'No artists match your search.' : 'Get started by adding your first artist.'}
+          />
         )}
 
-        <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
+        <footer className="border-t border-white/10 px-4 sm:px-6 py-4 text-xs text-white/50">
           Showing {filteredArtists.length} artist{filteredArtists.length === 1 ? '' : 's'}
         </footer>
       </section>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
-          <DialogHeader>
-            <DialogTitle>
-              {editingArtist ? 'Edit Artist' : 'Add New Artist'}
-            </DialogTitle>
-            <DialogDescription>
-              Enter the artist information below
-            </DialogDescription>
-          </DialogHeader>
+      <AdminFormModal
+        isOpen={showAddModal}
+        onOpenChange={handleModalOpenChange}
+        title={editingArtist ? 'Edit Artist' : 'Add New Artist'}
+        description="Enter the artist information below"
+        onSubmit={handleSubmit}
+        primaryAction={{
+          label: editingArtist ? 'Save Changes' : 'Create Artist',
+          loading: editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending,
+          loadingLabel: editingArtist ? 'Saving...' : 'Creating...'
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => handleModalOpenChange(false)
+        }}
+        contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1"
+      >
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="name">Artist Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            className={`${fieldBaseClasses} touch-manipulation`}
+          />
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="col-span-2">
-                <Label htmlFor="name">Artist Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="category">Category *</Label>
+          <Input
+            id="category"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            placeholder="e.g., DJ, Drag, Comedy, Band"
+            required
+            className={`${fieldBaseClasses} touch-manipulation`}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="category">Category *</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="e.g., DJ, Drag, Comedy, Band"
-                  required
-                />
-              </div>
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="bio">Biography</Label>
+          <Textarea
+            id="bio"
+            value={formData.bio || ''}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            rows={4}
+            placeholder="Artist biography..."
+            className={`${textareaBaseClasses} touch-manipulation resize-none min-h-[88px]`}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="bio">Biography</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio || ''}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  rows={4}
-                  placeholder="Artist biography..."
-                />
-              </div>
+        <div className="col-span-1 sm:col-span-2">
+          <Label htmlFor="knownFor">Known For</Label>
+          <Input
+            id="knownFor"
+            value={formData.knownFor || ''}
+            onChange={(e) => setFormData({ ...formData, knownFor: e.target.value })}
+            placeholder="e.g., RuPaul's Drag Race, Comedy Central"
+            className={`${fieldBaseClasses} touch-manipulation`}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="knownFor">Known For</Label>
-                <Input
-                  id="knownFor"
-                  value={formData.knownFor || ''}
-                  onChange={(e) => setFormData({ ...formData, knownFor: e.target.value })}
-                  placeholder="e.g., RuPaul's Drag Race, Comedy Central"
-                />
-              </div>
+        <div className="col-span-1 sm:col-span-1">
+          <Label htmlFor="instagram">Instagram URL</Label>
+          <Input
+            id="instagram"
+            value={formData.socialLinks?.instagram || ''}
+            onChange={(e) => setFormData({
+              ...formData,
+              socialLinks: { ...formData.socialLinks, instagram: e.target.value }
+            })}
+            placeholder="https://instagram.com/..."
+            className={`${fieldBaseClasses} touch-manipulation`}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="instagram">Instagram URL</Label>
-                <Input
-                  id="instagram"
-                  value={formData.socialLinks?.instagram || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    socialLinks: { ...formData.socialLinks, instagram: e.target.value }
-                  })}
-                  placeholder="https://instagram.com/..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  value={formData.website || ''}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingArtist(null);
-                  resetForm();
-                }}
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
-                disabled={createArtistMutation.isPending || updateArtistMutation.isPending}
-              >
-                <Save className="mr-2" size={16} />
-                {editingArtist ? 'Save Changes' : 'Create Artist'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <div className="col-span-1 sm:col-span-1">
+          <Label htmlFor="website">Website</Label>
+          <Input
+            id="website"
+            value={formData.website || ''}
+            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            placeholder="https://..."
+            className={`${fieldBaseClasses} touch-manipulation`}
+          />
+        </div>
+      </AdminFormModal>
     </div>
   );
 }

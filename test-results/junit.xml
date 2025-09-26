@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="0">
-    <testsuite name="client/src/components/__tests__/trip-guide.test.tsx" timestamp="2025-09-23T23:11:18.693Z" hostname="Bryans-MacBook-Air-2.local" tests="1" failures="1" errors="0" skipped="0" time="0">
-        <testcase classname="client/src/components/__tests__/trip-guide.test.tsx" name="client/src/components/__tests__/trip-guide.test.tsx" time="0">
-            <failure message="Cannot find module &apos;/Users/bryan/develop/projects/kgay-travel-guides/tests/utils/test-setup.ts&apos;" type="Error">
-Error: Cannot find module &apos;/Users/bryan/develop/projects/kgay-travel-guides/tests/utils/test-setup.ts&apos;
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-Serialized Error: { code: &apos;ERR_MODULE_NOT_FOUND&apos; }
-Caused by: Caused by: Error: Failed to load url /Users/bryan/develop/projects/kgay-travel-guides/tests/utils/test-setup.ts (resolved id: /Users/bryan/develop/projects/kgay-travel-guides/tests/utils/test-setup.ts). Does the file exist?
- ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:51968:17
-            </failure>
+<testsuites name="vitest tests" tests="4" failures="0" errors="0" time="0.170867917">
+    <testsuite name="client/src/components/admin/__tests__/AdminLayout.test.tsx" timestamp="2025-09-25T23:52:17.377Z" hostname="Bryans-MacBook-Air-2.local" tests="4" failures="0" errors="0" skipped="0" time="0.170867917">
+        <testcase classname="client/src/components/admin/__tests__/AdminLayout.test.tsx" name="AdminLayout &gt; renders child content" time="0.016181792">
+        </testcase>
+        <testcase classname="client/src/components/admin/__tests__/AdminLayout.test.tsx" name="AdminLayout &gt; renders navigation items" time="0.005174375">
+        </testcase>
+        <testcase classname="client/src/components/admin/__tests__/AdminLayout.test.tsx" name="AdminLayout &gt; navigates when nav item is clicked" time="0.005115292">
+        </testcase>
+        <testcase classname="client/src/components/admin/__tests__/AdminLayout.test.tsx" name="AdminLayout &gt; allows collapsing and expanding the sidebar" time="0.143891875">
         </testcase>
     </testsuite>
 </testsuites>

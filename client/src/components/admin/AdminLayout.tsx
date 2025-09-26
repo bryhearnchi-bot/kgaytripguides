@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import {
   LayoutDashboard,
@@ -10,12 +10,9 @@ import {
   FileText,
   Settings,
   Shield,
-  Menu,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -34,7 +31,7 @@ const managementNav: NavItem[] = [
   { label: 'Locations', path: '/admin/locations', icon: <MapPin className="h-4 w-4" /> },
   { label: 'Artists', path: '/admin/artists', icon: <Users className="h-4 w-4" /> },
   { label: 'Party Themes', path: '/admin/themes', icon: <Palette className="h-4 w-4" /> },
-  { label: 'Info Sections', path: '/admin/info-sections', icon: <FileText className="h-4 w-4" /> },
+  { label: 'Trip Info Sections', path: '/admin/trip-info-sections', icon: <FileText className="h-4 w-4" /> },
 ];
 
 const adminNav: NavItem[] = [
@@ -44,10 +41,10 @@ const adminNav: NavItem[] = [
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, profile, signOut } = useSupabaseAuthContext();
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
 
   const isActive = (path: string) => {
     if (path === '/admin') return location === '/admin';
@@ -68,34 +65,101 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     if (mobileOpen) setMobileOpen(false);
   };
 
-  const renderNavButton = (item: NavItem) => (
-    <button
-      key={item.path}
-      onClick={() => handleNavigate(item.path)}
-      className={`flex w-full items-center gap-3 rounded-full border px-4 py-2 text-sm transition ${
-        isActive(item.path)
-          ? 'border-white/20 bg-white/15 text-white shadow-lg shadow-blue-900/20'
-          : 'border-white/10 bg-white/5 text白/70 hover:bg白/10 hover:text白'
-      } ${sidebarCollapsed ? 'justify-center px-0' : ''}`}
-      title={sidebarCollapsed ? item.label : undefined}
-    >
-      {item.icon}
-      {!sidebarCollapsed && <span>{item.label}</span>}
-    </button>
-  );
+  useEffect(() => {
+    const handleAdminNav = (event: Event) => {
+      const detail = (event as CustomEvent<{ action?: 'toggle' | 'open' | 'close' }>).detail;
+      if (!detail) return;
+      if (detail.action === 'toggle') {
+        setMobileOpen((prev) => !prev);
+      } else if (detail.action === 'open') {
+        setMobileOpen(true);
+      } else if (detail.action === 'close') {
+        setMobileOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+      }
+    };
+
+    window.addEventListener('admin-nav', handleAdminNav as EventListener);
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('admin-nav', handleAdminNav as EventListener);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+
+    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
+      if ('matches' in event && event.matches) {
+        setMobileOpen(false);
+      }
+    };
+
+    handleChange(mediaQuery);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange as (event: MediaQueryListEvent) => void);
+      return () => mediaQuery.removeEventListener('change', handleChange as (event: MediaQueryListEvent) => void);
+    }
+
+    mediaQuery.addListener(handleChange as (event: MediaQueryListEvent) => void);
+    return () => mediaQuery.removeListener(handleChange as (event: MediaQueryListEvent) => void);
+  }, []);
+
+  const renderNavButton = (item: NavItem, options?: { collapsed?: boolean; variant?: 'desktop' | 'mobile' }) => {
+    const collapsed = options?.collapsed ?? sidebarCollapsed;
+    const variant = options?.variant ?? 'desktop';
+    const isActiveNav = isActive(item.path);
+
+    const baseClasses =
+      variant === 'desktop'
+        ? `flex w-full items-center gap-3 rounded-full border px-4 py-2 text-sm transition min-h-[44px] touch-manipulation ${
+            isActiveNav
+              ? 'border-white/20 bg-white/15 text-white shadow-lg shadow-blue-900/20'
+              : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+          } ${collapsed ? 'justify-center px-0 min-w-[44px]' : ''}`
+        : `flex w-full items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15 ${
+            isActiveNav ? 'text-white' : 'text-white/80'
+          }`;
+
+    return (
+      <button
+        key={item.path}
+        onClick={() => handleNavigate(item.path)}
+        className={baseClasses}
+        title={collapsed && variant === 'desktop' ? item.label : undefined}
+      >
+        {item.icon}
+        {variant === 'desktop' ? (!collapsed && <span>{item.label}</span>) : <span>{item.label}</span>}
+      </button>
+    );
+  };
+
+  const navSections = [
+    { title: 'Management', items: managementNav },
+    { title: 'Administration', items: adminNav },
+  ];
+
+  const BANNER_OFFSET = 64;
 
   return (
     <div className="flex min-h-screen bg-[#0b1222] text-white">
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-[#10192f]/95 py-8 backdrop-blur-lg transition-all duration-300 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 ${sidebarCollapsed ? 'w-20' : 'w-64'} lg:static`}
+        className={`hidden lg:flex lg:flex-col lg:border-r lg:border-white/10 lg:bg-[#10192f]/95 lg:py-8 lg:backdrop-blur-lg lg:transition-all lg:duration-300 ${
+          sidebarCollapsed ? 'lg:w-20' : 'lg:w-64 xl:w-72'
+        }`}
       >
         <div className={sidebarCollapsed ? 'px-2' : 'px-6'}>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="mb-6 flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 py-2 text-xs text白/60 hover:bg白/10"
+            className="mb-6 flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 py-2 text-xs text-white/60 hover:bg-white/10 min-h-[40px] touch-manipulation"
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -103,65 +167,59 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </button>
         </div>
 
-        <div className={`space-y-6 ${sidebarCollapsed ? 'px-2' : 'px-6'} overflow-y-auto`}>
-          <div>
-            <p className={`text-xs uppercase tracking-[0.3em] text白/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}>Management</p>
-            <div className="space-y-2">{managementNav.map(renderNavButton)}</div>
-          </div>
-
-          <div>
-            <p className={`text-xs uppercase tracking-[0.3em] text白/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}>Administration</p>
-            <div className="space-y-2">{adminNav.map(renderNavButton)}</div>
-          </div>
+        <div className={`space-y-6 ${sidebarCollapsed ? 'px-2' : 'px-6'} overflow-y-auto`}
+             aria-label="Admin navigation">
+          {navSections.map((section) => (
+            <div key={section.title}>
+              <p className={`text-xs uppercase tracking-[0.3em] text-white/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}>
+                {section.title}
+              </p>
+              <div className="space-y-2">{section.items.map((item) => renderNavButton(item))}</div>
+            </div>
+          ))}
         </div>
       </aside>
 
+      {/* Mobile drop-down navigation */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <>
+          <div
+            className="fixed left-0 right-0 z-50 border-b border-white/10 bg-[#10192f]/95 px-4 py-6 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden"
+            style={{ top: BANNER_OFFSET }}
+          >
+            <div className="max-h-[calc(100vh-80px)] space-y-5 overflow-y-auto">
+              {navSections.map((section) => (
+                <div key={section.title}>
+                  <p className="mb-3 text-[11px] uppercase tracking-[0.3em] text-white/40">{section.title}</p>
+                  <div className="space-y-2">
+                    {section.items.map((item) => renderNavButton(item, { variant: 'mobile', collapsed: false }))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+              >
+                Close menu
+              </button>
+            </div>
+          </div>
+          <div
+            className="fixed left-0 right-0 bottom-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            style={{ top: BANNER_OFFSET }}
+            onClick={() => setMobileOpen(false)}
+          />
+        </>
       )}
 
       <div className="flex flex-1 flex-col transition-all duration-300">
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#10192f]/90 px-4 py-3 backdrop-blur lg:hidden">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="rounded-full border border-white/10 bg白/5 p-2 text白 hover:bg白/10"
-              aria-label="Open navigation"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <span className="text-xs uppercase tracking-[0.3em] text-white/40">Admin</span>
-            {user && profile ? (
-              <KokonutProfileDropdown
-                user={user}
-                profile={profile}
-                onLogout={async () => {
-                  await signOut();
-                  setMobileOpen(false);
-                }}
-                onNavigate={handleNavigate}
-              />
-            ) : (
-              <ButtonFallback />
-            )}
-          </div>
-        </header>
-
-        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="space-y-8">{children}</div>
+        <main className="flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-8 lg:py-8">
+          <div className="space-y-6 lg:space-y-8">{children}</div>
         </main>
       </div>
-    </div>
-  );
-}
-
-function ButtonFallback() {
-  return (
-    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text白/60">
-      Loading…
     </div>
   );
 }

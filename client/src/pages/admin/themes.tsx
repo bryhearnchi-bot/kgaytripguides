@@ -5,25 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Palette,
-  Plus,
-  Edit2,
-  Trash2,
-  Search,
-  Save,
-  Copy,
-  Sparkles
-} from 'lucide-react';
+import { Palette, Plus, Edit2, Trash2, Search, Sparkles } from 'lucide-react';
+import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
+import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
+
+const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
+const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface PartyTheme {
   id?: number;
@@ -41,6 +30,7 @@ interface PartyTheme {
 export default function ThemesManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTheme, setEditingTheme] = useState<PartyTheme | null>(null);
@@ -53,8 +43,8 @@ export default function ThemesManagement() {
     amazonShoppingListUrl: '',
   });
 
-  // Fetch themes
-  const { data: themes = [], isLoading } = useQuery<PartyTheme[]>({
+  // Fetch themes with optimized caching
+  const { data: themes = [], isLoading, isPlaceholderData } = useQuery<PartyTheme[]>({
     queryKey: ['party-themes'],
     queryFn: async () => {
       const response = await fetch('/api/party-themes', {
@@ -62,7 +52,9 @@ export default function ThemesManagement() {
       });
       if (!response.ok) throw new Error('Failed to fetch themes');
       return response.json();
-    }
+    },
+    ...adminQueryOptions,
+    placeholderData: []
   });
 
   // Create theme mutation
@@ -175,6 +167,14 @@ export default function ThemesManagement() {
     }
   };
 
+  const handleModalOpenChange = (open: boolean) => {
+    setShowAddModal(open);
+    if (!open) {
+      setEditingTheme(null);
+      resetForm();
+    }
+  };
+
   const handleEdit = (theme: PartyTheme) => {
     setEditingTheme(theme);
     setFormData(theme);
@@ -197,6 +197,11 @@ export default function ThemesManagement() {
   const getThemeIcon = (theme: string) => {
     return <Sparkles className="h-3.5 w-3.5" />;
   };
+
+  // Show skeleton while loading initial data
+  if (isLoading && themes.length === 0) {
+    return <AdminTableSkeleton rows={5} />;
+  }
 
   return (
     <div className="space-y-8">
@@ -351,110 +356,94 @@ export default function ThemesManagement() {
       </section>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
-          <DialogHeader>
-            <DialogTitle>
-              {editingTheme ? 'Edit Party Theme' : 'Add New Party Theme'}
-            </DialogTitle>
-            <DialogDescription>
-              Enter the theme information below
-            </DialogDescription>
-          </DialogHeader>
+      <AdminFormModal
+        isOpen={showAddModal}
+        onOpenChange={handleModalOpenChange}
+        title={editingTheme ? 'Edit Party Theme' : 'Add New Party Theme'}
+        description="Enter the theme information below"
+        onSubmit={handleSubmit}
+        primaryAction={{
+          label: editingTheme ? 'Save Changes' : 'Create Theme',
+          loading: editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending,
+          loadingLabel: editingTheme ? 'Saving...' : 'Creating...'
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => handleModalOpenChange(false)
+        }}
+        contentClassName="grid grid-cols-2 gap-4"
+      >
+        <div className="col-span-2">
+          <Label htmlFor="name">Theme Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="e.g., White Party, Glow Night"
+            required
+            className={fieldBaseClasses}
+          />
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="col-span-2">
-                <Label htmlFor="name">Theme Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., White Party, Glow Night"
-                  required
-                />
-              </div>
+        <div className="col-span-2">
+          <Label htmlFor="shortDescription">Short Description</Label>
+          <Input
+            id="shortDescription"
+            value={formData.shortDescription || ''}
+            onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+            placeholder="Brief theme summary"
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="shortDescription">Short Description</Label>
-                <Input
-                  id="shortDescription"
-                  value={formData.shortDescription || ''}
-                  onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                  placeholder="Brief theme summary"
-                />
-              </div>
+        <div className="col-span-2">
+          <Label htmlFor="longDescription">Long Description</Label>
+          <Textarea
+            id="longDescription"
+            value={formData.longDescription || ''}
+            onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+            placeholder="Detailed description of the party theme"
+            rows={3}
+            className={textareaBaseClasses}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="longDescription">Long Description</Label>
-                <Textarea
-                  id="longDescription"
-                  value={formData.longDescription || ''}
-                  onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
-                  placeholder="Detailed description of the party theme"
-                  rows={3}
-                />
-              </div>
+        <div className="col-span-2">
+          <Label htmlFor="costumeIdeas">Costume Ideas</Label>
+          <Textarea
+            id="costumeIdeas"
+            value={formData.costumeIdeas || ''}
+            onChange={(e) => setFormData({ ...formData, costumeIdeas: e.target.value })}
+            placeholder="e.g., All white attire, UV reactive clothing, neon accessories"
+            rows={3}
+            className={textareaBaseClasses}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="costumeIdeas">Costume Ideas</Label>
-                <Textarea
-                  id="costumeIdeas"
-                  value={formData.costumeIdeas || ''}
-                  onChange={(e) => setFormData({ ...formData, costumeIdeas: e.target.value })}
-                  placeholder="e.g., All white attire, UV reactive clothing, neon accessories"
-                  rows={3}
-                />
-              </div>
+        <div>
+          <Label htmlFor="imageUrl">Image URL</Label>
+          <Input
+            id="imageUrl"
+            type="url"
+            value={formData.imageUrl || ''}
+            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+            placeholder="https://example.com/image.jpg"
+            className={fieldBaseClasses}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  type="url"
-                  value={formData.imageUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="amazonShoppingListUrl">Shopping List URL</Label>
-                <Input
-                  id="amazonShoppingListUrl"
-                  type="url"
-                  value={formData.amazonShoppingListUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
-                  placeholder="https://www.amazon.com/shop/..."
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingTheme(null);
-                  resetForm();
-                }}
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
-                disabled={createThemeMutation.isPending || updateThemeMutation.isPending}
-              >
-                <Save className="mr-2" size={16} />
-                {editingTheme ? 'Save Changes' : 'Create Theme'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <div>
+          <Label htmlFor="amazonShoppingListUrl">Shopping List URL</Label>
+          <Input
+            id="amazonShoppingListUrl"
+            type="url"
+            value={formData.amazonShoppingListUrl || ''}
+            onChange={(e) => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
+            placeholder="https://www.amazon.com/shop/..."
+            className={fieldBaseClasses}
+          />
+        </div>
+      </AdminFormModal>
     </div>
   );
 }

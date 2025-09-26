@@ -245,335 +245,344 @@ export default function AdminProfile() {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="text-center">
-          <User className="w-8 h-8 animate-pulse mx-auto mb-4 text-blue-600" />
-          <p>Loading profile...</p>
+          <User className="w-8 h-8 animate-pulse mx-auto mb-4 text-[#22d3ee]" />
+          <p className="text-white">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage your account settings</p>
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">My Profile</h1>
+            <p className="text-sm text-white/60">Manage your account settings and preferences</p>
+          </div>
         </div>
-      </div>
+      </section>
       {/* Profile Overview */}
-      <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {profile.full_name?.charAt(0) || profile.email?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <CardTitle className="text-2xl">{profile.full_name || 'Admin User'}</CardTitle>
-                  <CardDescription className="flex items-center space-x-2 mt-1">
-                    <Mail className="w-4 h-4" />
-                    <span>{profile.email}</span>
-                  </CardDescription>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Badge variant={getRoleBadgeVariant(profile.role || '')}>
-                      <Shield className="w-3 h-3 mr-1" />
-                      {profile.role?.replace('_', ' ').toUpperCase() || 'USER'}
-                    </Badge>
-                    <Badge variant="outline">
-                      <CheckCircle className="w-3 h-3 mr-1 text-green-500" />
-                      Active
-                    </Badge>
-                  </div>
-                </div>
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <div className="px-6 py-6">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#22d3ee] to-[#2563eb] rounded-full flex items-center justify-center text-white text-2xl font-bold">
+              {profile.full_name?.charAt(0) || profile.email?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold text-white">{profile.full_name || 'Admin User'}</h2>
+              <div className="flex items-center space-x-2 mt-1">
+                <Mail className="w-4 h-4 text-white/60" />
+                <span className="text-white/80">{profile.email}</span>
               </div>
-            </CardHeader>
-          </Card>
+              <div className="flex items-center space-x-2 mt-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                  <Shield className="w-3 h-3" />
+                  <span>{profile.role?.replace('_', ' ').toUpperCase() || 'USER'}</span>
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">
+                  <CheckCircle className="w-3 h-3" />
+                  Active
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Account Information */}
-      <Card>
-            <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>
-                Update your personal information and preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Enter your email address"
-                  />
-                </div>
-              </div>
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="border-b border-white/10 px-6 py-4">
+          <h2 className="text-lg font-semibold text-white">Account Information</h2>
+          <p className="text-sm text-white/60">
+            Update your personal information and preferences
+          </p>
+        </header>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-white/80">Full Name</Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                placeholder="Enter your full name"
+                className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white/80">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="Enter your email address"
+                className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
+              />
+            </div>
+          </div>
 
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleUpdateProfile}
-                  disabled={updateProfile.isPending}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleUpdateProfile}
+              disabled={updateProfile.isPending}
+              className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6 text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {/* Security Settings */}
-      <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Key className="w-5 h-5" />
-                <span>Security Settings</span>
-              </CardTitle>
-              <CardDescription>
-                Manage your password and security preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {!isChangingPassword ? (
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Password</h3>
-                    <p className="text-sm text-gray-600">Last changed: Not available</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsChangingPassword(true)}
-                  >
-                    Change Password
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Key className="w-4 h-4 text-blue-600" />
-                    <h3 className="font-medium text-blue-900">Change Password</h3>
-                  </div>
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="border-b border-white/10 px-6 py-4">
+          <h2 className="text-lg font-semibold text-white flex items-center space-x-2">
+            <Key className="w-5 h-5" />
+            <span>Security Settings</span>
+          </h2>
+          <p className="text-sm text-white/60">
+            Manage your password and security preferences
+          </p>
+        </header>
+        <div className="p-6 space-y-6">
+          {!isChangingPassword ? (
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+              <div>
+                <h3 className="font-medium text-white">Password</h3>
+                <p className="text-sm text-white/60">Last changed: Not available</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setIsChangingPassword(true)}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Change Password
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 p-4 border border-white/20 rounded-lg bg-white/5">
+              <div className="flex items-center space-x-2 mb-4">
+                <Key className="w-4 h-4 text-[#22d3ee]" />
+                <h3 className="font-medium text-white">Change Password</h3>
+              </div>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Current Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="currentPassword"
-                          type={showCurrentPassword ? 'text' : 'password'}
-                          value={formData.currentPassword}
-                          onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-                          placeholder="Enter your current password"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        >
-                          {showCurrentPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="newPassword"
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={formData.newPassword}
-                          onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                          placeholder="Enter your new password"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-600">
-                        Password must be at least 8 characters long
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={formData.confirmPassword}
-                          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                          placeholder="Confirm your new password"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword" className="text-white/80">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="currentPassword"
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={formData.currentPassword}
+                      onChange={(e) => handleInputChange('currentPassword', e.target.value)}
+                      placeholder="Enter your current password"
+                      className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
+                    />
                     <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsChangingPassword(false);
-                        setFormData(prev => ({
-                          ...prev,
-                          currentPassword: '',
-                          newPassword: '',
-                          confirmPassword: '',
-                        }));
-                      }}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white/60"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleChangePassword}
-                      disabled={changePassword.isPending}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                    >
-                      {changePassword.isPending ? 'Changing...' : 'Change Password'}
+                      {showCurrentPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-white/80">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={formData.newPassword}
+                      onChange={(e) => handleInputChange('newPassword', e.target.value)}
+                      placeholder="Enter your new password"
+                      className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white/60"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-white/40">
+                    Password must be at least 8 characters long
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-white/80">Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      placeholder="Confirm your new password"
+                      className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white/60"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsChangingPassword(false);
+                    setFormData(prev => ({
+                      ...prev,
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: '',
+                    }));
+                  }}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={changePassword.isPending}
+                  className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6 text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
+                >
+                  {changePassword.isPending ? 'Changing...' : 'Change Password'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Account Details */}
-      <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Activity className="w-5 h-5" />
-                <span>Account Details</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Member Since</p>
-                      <p className="text-sm text-gray-600">
-                        {profile.created_at ? format(dateOnly(profile.created_at), 'MMMM dd, yyyy') : 'Unknown'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Last Login</p>
-                      <p className="text-sm text-gray-600">
-                        {profile.last_sign_in_at ? format(dateOnly(profile.last_sign_in_at), 'MMMM dd, yyyy') : 'Unknown'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Shield className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Role</p>
-                      <p className="text-sm text-gray-600">
-                        {profile.role?.replace('_', ' ').toUpperCase() || 'USER'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Account Status</p>
-                      <p className="text-sm text-gray-600">Active</p>
-                    </div>
-                  </div>
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="border-b border-white/10 px-6 py-4">
+          <h2 className="text-lg font-semibold text-white flex items-center space-x-2">
+            <Activity className="w-5 h-5" />
+            <span>Account Details</span>
+          </h2>
+        </header>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-white/60" />
+                <div>
+                  <p className="text-sm font-medium text-white">Member Since</p>
+                  <p className="text-sm text-white/80">
+                    {profile.created_at ? format(dateOnly(profile.created_at), 'MMMM dd, yyyy') : 'Unknown'}
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4 text-white/60" />
+                <div>
+                  <p className="text-sm font-medium text-white">Last Login</p>
+                  <p className="text-sm text-white/80">
+                    {profile.last_sign_in_at ? format(dateOnly(profile.last_sign_in_at), 'MMMM dd, yyyy') : 'Unknown'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Shield className="w-4 h-4 text-white/60" />
+                <div>
+                  <p className="text-sm font-medium text-white">Role</p>
+                  <p className="text-sm text-white/80">
+                    {profile.role?.replace('_', ' ').toUpperCase() || 'USER'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-[#34d399]" />
+                <div>
+                  <p className="text-sm font-medium text-white">Account Status</p>
+                  <p className="text-sm text-white/80">Active</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Danger Zone */}
-      <Card className="border-red-200">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-red-700">
-                <AlertTriangle className="w-5 h-5" />
-                <span>Danger Zone</span>
-              </CardTitle>
-              <CardDescription>
-                Irreversible and destructive actions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-red-900">Delete Account</h3>
-                    <p className="text-sm text-red-700">
-                      Permanently delete your account and all associated data. This action cannot be undone.
-                    </p>
-                  </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">
-                        Delete Account
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your account
-                          and remove all your data from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-red-600 hover:bg-red-700">
-                          Yes, delete my account
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+      <section className="rounded-2xl border border-[#fb7185]/30 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="border-b border-[#fb7185]/30 px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#fb7185] flex items-center space-x-2">
+            <AlertTriangle className="w-5 h-5" />
+            <span>Danger Zone</span>
+          </h2>
+          <p className="text-sm text-[#fb7185]/80">
+            Irreversible and destructive actions
+          </p>
+        </header>
+        <div className="p-6">
+          <div className="p-4 border border-[#fb7185]/30 rounded-lg bg-[#fb7185]/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-[#fb7185]">Delete Account</h3>
+                <p className="text-sm text-[#fb7185]/80">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="bg-[#fb7185] text-white hover:bg-[#f43f5e]">
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="border border-white/10 bg-[#0f172a] text-white">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-white/60">
+                      This action cannot be undone. This will permanently delete your account
+                      and remove all your data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+                    <AlertDialogAction className="bg-[#fb7185] hover:bg-[#f43f5e]">
+                      Yes, delete my account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

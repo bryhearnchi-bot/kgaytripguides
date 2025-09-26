@@ -4,14 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -20,7 +13,6 @@ import {
   Edit2,
   Trash2,
   Search,
-  Save,
   Database,
   Shield,
   Globe,
@@ -191,6 +183,14 @@ export default function AdminSettings() {
       updateSettingMutation.mutate({ ...formData });
     } else {
       createSettingMutation.mutate(formData);
+    }
+  };
+
+  const handleModalOpenChange = (open: boolean) => {
+    setShowAddModal(open);
+    if (!open) {
+      setEditingSetting(null);
+      resetForm();
     }
   };
 
@@ -371,119 +371,97 @@ export default function AdminSettings() {
       </section>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSetting ? 'Edit Setting' : 'Add New Setting'}
-            </DialogTitle>
-            <DialogDescription>
-              Enter the setting information below
-            </DialogDescription>
-          </DialogHeader>
+      <AdminFormModal
+        isOpen={showAddModal}
+        onOpenChange={handleModalOpenChange}
+        title={editingSetting ? 'Edit Setting' : 'Add New Setting'}
+        description="Enter the setting information below"
+        onSubmit={handleSubmit}
+        primaryAction={{
+          label: editingSetting ? 'Save Changes' : 'Create Setting',
+          loading: editingSetting ? updateSettingMutation.isPending : createSettingMutation.isPending,
+          loadingLabel: editingSetting ? 'Saving...' : 'Creating...'
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => handleModalOpenChange(false)
+        }}
+        contentClassName="grid grid-cols-2 gap-4"
+      >
+        <div>
+          <Label htmlFor="category">Category *</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => setFormData({ ...formData, category: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {SETTING_CATEGORIES.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div>
-                <Label htmlFor="category">Category *</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SETTING_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <div>
+          <Label htmlFor="key">Key *</Label>
+          <Input
+            id="key"
+            value={formData.key}
+            onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+            placeholder="setting_key"
+            required
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="key">Key *</Label>
-                <Input
-                  id="key"
-                  value={formData.key}
-                  onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-                  placeholder="setting_key"
-                  required
-                />
-              </div>
+        <div className="col-span-2">
+          <Label htmlFor="label">Label *</Label>
+          <Input
+            id="label"
+            value={formData.label}
+            onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+            placeholder="Human-readable label"
+            required
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="label">Label *</Label>
-                <Input
-                  id="label"
-                  value={formData.label}
-                  onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                  placeholder="Human-readable label"
-                  required
-                />
-              </div>
+        <div className="col-span-2">
+          <Label htmlFor="value">Value</Label>
+          <Textarea
+            id="value"
+            value={formData.value}
+            onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+            placeholder="Setting value"
+            rows={3}
+          />
+        </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="value">Value</Label>
-                <Textarea
-                  id="value"
-                  value={formData.value}
-                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  placeholder="Setting value"
-                  rows={3}
-                />
-              </div>
+        <div>
+          <Label htmlFor="orderIndex">Order Index</Label>
+          <Input
+            id="orderIndex"
+            type="number"
+            value={formData.orderIndex}
+            onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) || 0 })}
+            placeholder="0"
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="orderIndex">Order Index</Label>
-                <Input
-                  id="orderIndex"
-                  type="number"
-                  value={formData.orderIndex}
-                  onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2 mt-6">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <Label htmlFor="isActive">Active setting</Label>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingSetting(null);
-                  resetForm();
-                }}
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-6"
-                disabled={createSettingMutation.isPending || updateSettingMutation.isPending}
-              >
-                <Save className="mr-2" size={16} />
-                {editingSetting ? 'Save Changes' : 'Create Setting'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <div className="flex items-center space-x-2 mt-6">
+          <input
+            type="checkbox"
+            id="isActive"
+            checked={formData.isActive}
+            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <Label htmlFor="isActive">Active setting</Label>
+        </div>
+      </AdminFormModal>
     </div>
   );
 }

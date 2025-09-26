@@ -17,6 +17,7 @@ import { registerLocationRoutes } from "./routes/locations";
 import { registerPublicRoutes } from "./routes/public";
 import { registerPerformanceRoutes } from "./routes/performance";
 import { registerPartyThemeRoutes } from "./routes/party-themes";
+import { registerTripInfoSectionRoutes } from "./routes/trip-info-sections";
 import { registerAuthRoutes } from "./auth-routes";
 import { setupSwaggerDocs } from "./openapi";
 
@@ -116,6 +117,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register party theme routes
   registerPartyThemeRoutes(app);
+
+  // Register trip info section routes
+  registerTripInfoSectionRoutes(app);
 
   // Register performance monitoring routes
   registerPerformanceRoutes(app);

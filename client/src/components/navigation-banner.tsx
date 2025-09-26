@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useSupabaseAuthContext } from "@/contexts/SupabaseAuthContext";
 import KokonutProfileDropdown from "@/components/ui/kokonut-profile-dropdown";
 
 export default function NavigationBanner() {
   const { user, profile, signOut } = useSupabaseAuthContext();
-  const [, setLocation] = useLocation();
+  const [currentLocation, setLocation] = useLocation();
+
+  const isAdminRoute = currentLocation.startsWith("/admin");
 
   const handleLogout = async () => {
     try {
@@ -18,10 +20,29 @@ export default function NavigationBanner() {
     }
   };
 
+  const toggleAdminNavigation = () => {
+    const event = new CustomEvent("admin-nav", {
+      detail: { action: "toggle" },
+    });
+    window.dispatchEvent(event);
+  };
+
   return (
     <div className="bg-ocean-900 text-white shadow-lg fixed z-[60] w-full top-0 left-0 right-0">
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
+          {isAdminRoute && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={toggleAdminNavigation}
+              className="mr-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1222] focus-visible:ring-white/40 lg:hidden"
+              aria-label="Open admin navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
           <Link href="/">
             <img
               src="/logos/atlantis-logo.png"
