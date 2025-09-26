@@ -18,7 +18,7 @@ export function UniversalHero({
   tabSection
 }: UniversalHeroProps) {
   return (
-    <header className="relative overflow-hidden text-white fixed top-[18px] left-0 right-0 z-40 h-[250px]">
+    <header className="relative overflow-hidden text-white fixed top-[12px] left-0 right-0 z-40 h-[250px]">
       {/* Background Layer */}
       <div className="absolute inset-0 z-0">
         {variant === 'landing' ? (

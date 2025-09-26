@@ -38,6 +38,52 @@ html {
   padding-top: 0 !important;
 }
 
+/* DEFINITIVE SOLUTION: Remove blue outline from profile button and all focus states */
+/* Target the actual Radix PopoverTrigger element, not just the button */
+button[data-radix-popover-trigger],
+button[data-radix-popover-trigger]:focus,
+button[data-radix-popover-trigger]:focus-visible,
+button[data-radix-popover-trigger]:active,
+button[data-radix-popover-trigger][data-state="open"],
+button[data-radix-popover-trigger][data-state="closed"],
+.kokonut-profile-button,
+.kokonut-profile-button *,
+.kokonut-profile-button:focus,
+.kokonut-profile-button:focus-visible,
+.kokonut-profile-button:active,
+.kokonut-profile-button[data-state="open"],
+.kokonut-profile-button[data-state="closed"],
+button[data-radix-collection-item] {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  /* Force override browser default focus ring */
+  -webkit-focus-ring-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Additional safety net for any Radix Popover elements */
+[data-radix-popover-trigger] {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Override any potential browser default button focus styles */
+button.kokonut-profile-button::-moz-focus-inner {
+  border: 0 !important;
+  outline: none !important;
+}
+
+/* Ensure accessibility while removing visual focus indicator */
+.kokonut-profile-button:focus-visible {
+  /* We'll use our own subtle focus style instead of the blue border */
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  transition: background-color 0.2s ease !important;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(210, 25%, 7.8431%);

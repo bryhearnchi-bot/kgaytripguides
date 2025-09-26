@@ -116,8 +116,20 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   };
 
   // Don't log health check requests at info level
+  // In development, only log API requests, not static assets or health checks
   if (req.path === '/healthz' || req.path === '/api/metrics') {
     req.logger.debug('Health check request', requestData);
+  } else if (process.env.NODE_ENV === 'development' && (
+    req.path.startsWith('/src/') ||
+    req.path.startsWith('/@') ||
+    req.path.startsWith('/node_modules') ||
+    req.path.includes('.js') ||
+    req.path.includes('.css') ||
+    req.path.includes('.tsx') ||
+    req.path.includes('.json')
+  )) {
+    // Skip logging static assets in development
+    req.logger.debug('Static asset request', requestData);
   } else {
     req.logger.info('Incoming request', requestData);
   }
@@ -169,6 +181,17 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
     } else if (res.statusCode >= 400) {
       req.logger.warn('Request failed with client error', responseData);
     } else if (req.path === '/healthz' || req.path === '/api/metrics') {
+      req.logger.debug('Request completed', responseData);
+    } else if (process.env.NODE_ENV === 'development' && (
+      req.path.startsWith('/src/') ||
+      req.path.startsWith('/@') ||
+      req.path.startsWith('/node_modules') ||
+      req.path.includes('.js') ||
+      req.path.includes('.css') ||
+      req.path.includes('.tsx') ||
+      req.path.includes('.json')
+    )) {
+      // Skip logging static asset responses in development
       req.logger.debug('Request completed', responseData);
     } else {
       req.logger.info('Request completed', responseData);

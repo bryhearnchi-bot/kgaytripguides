@@ -1,5 +1,13 @@
 # K-GAY Travel Guides - Project Documentation
 
+## ⚡ Server Management
+**ALWAYS use `npm run dev` with `run_in_background: true` to start the development server. No custom restart scripts.**
+```bash
+# Use Bash tool with run_in_background: true
+npm run dev
+```
+**CRITICAL**: Always set `run_in_background: true` when using Bash tool to start the server. This prevents blocking and allows immediate response.
+
 ## 🚀 Project Overview
 **K-GAY Travel Guides** - LGBTQ+ travel app with trip management, events, and talent coordination. React/Node.js/Supabase stack.
 

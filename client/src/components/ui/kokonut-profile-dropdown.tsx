@@ -2,15 +2,11 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { LogOut, User, Shield } from "lucide-react";
+import { LogOut, User, Shield, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface Profile {
     name: string;
@@ -66,7 +62,7 @@ export default function KokonutProfileDropdown({
         {
             label: "Profile",
             href: "/admin/profile",
-            icon: <User className="w-3 h-3" />,
+            icon: <User className="w-4 h-4" />,
         },
     ];
 
@@ -75,134 +71,177 @@ export default function KokonutProfileDropdown({
         menuItems.push({
             label: "Admin Dashboard",
             href: "/admin",
-            icon: <Shield className="w-3 h-3" />,
+            icon: <Shield className="w-4 h-4" />,
         });
     }
 
     const handleMenuClick = (href: string) => {
         onNavigate(href);
+        setIsOpen(false);
     };
 
     return (
         <div className={cn("relative", className)} {...props}>
-            <DropdownMenu onOpenChange={setIsOpen}>
-                <div className="group relative">
-                    <DropdownMenuTrigger asChild>
+            <div
+                style={{
+                    outline: 'none',
+                    border: 'none',
+                    boxShadow: 'none',
+                }}
+            >
+                <Popover open={isOpen} onOpenChange={setIsOpen}>
+                    <PopoverTrigger
+                        style={{
+                            outline: 'none',
+                            border: 'none',
+                            boxShadow: 'none',
+                            background: 'transparent',
+                        }}
+                        asChild
+                    >
                         <button
                             type="button"
-                            className="flex items-center gap-2 px-2 py-1 rounded-xl bg-white/10 border border-white/20 hover:border-white/30 hover:bg-white/20 hover:shadow-sm transition-all duration-200 focus:outline-none text-white"
-                        >
-                            <div className="relative">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ocean-400 via-blue-400 to-cyan-400 p-0.5">
-                                    <Avatar className="w-full h-full">
-                                        <AvatarImage src={user.avatar_url} alt={displayName} />
-                                        <AvatarFallback className="bg-gradient-to-br from-ocean-500 to-blue-500 text-white text-xs font-medium">
-                                            {initials}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </div>
-                            </div>
-                            <div className="text-left flex-1 hidden sm:block">
-                                <div className="text-sm font-medium text-white tracking-tight leading-tight">
-                                    {displayName}
-                                </div>
-                            </div>
-                        </button>
-                    </DropdownMenuTrigger>
-
-                    {/* Bending line indicator on the right */}
-                    <div
-                        className={cn(
-                            "absolute -right-3 top-1/2 -translate-y-1/2 transition-all duration-200",
-                            isOpen
-                                ? "opacity-100"
-                                : "opacity-60 group-hover:opacity-100"
-                        )}
-                    >
-                        <svg
-                            width="12"
-                            height="24"
-                            viewBox="0 0 12 24"
-                            fill="none"
+                            style={{
+                                outline: 'none !important',
+                                border: 'none !important',
+                                boxShadow: 'none !important',
+                                background: 'transparent !important',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none',
+                            }}
                             className={cn(
-                                "transition-all duration-200",
-                                isOpen
-                                    ? "text-ocean-400 scale-110"
-                                    : "text-white/40 group-hover:text-white/60"
+                                "kokonut-profile-button group flex items-center gap-2 px-2 py-1 rounded-xl",
+                                "hover:bg-white/10",
+                                "transition-all duration-300 ease-out",
+                                isOpen && "bg-white/10"
                             )}
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M2 4C6 8 6 16 2 20"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                fill="none"
-                            />
-                        </svg>
-                    </div>
-
-                    <DropdownMenuContent
-                        align="end"
-                        sideOffset={4}
-                        className="w-48 p-2 bg-[#10192f]/95 backdrop-blur-sm border border-white/10 rounded-2xl shadow-xl shadow-black/40
-                    data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-top-right"
                     >
-                        {/* Profile Header */}
-                        {profile?.role && (
-                            <div className="p-2 mb-1 bg-white/5 border border-white/10 rounded-xl">
-                                <div className="text-sm font-medium text-white/70 capitalize">
-                                    {profile.role.replace('_', ' ')}
-                                </div>
+                        {/* Avatar with enhanced styling */}
+                        <div className="relative">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-ocean-400 via-blue-400 to-cyan-400 p-0.5 shadow-md">
+                                <Avatar className="w-full h-full">
+                                    <AvatarImage src={user.avatar_url} alt={displayName} />
+                                    <AvatarFallback className="bg-gradient-to-br from-ocean-500 to-blue-500 text-white text-xs font-semibold">
+                                        {initials}
+                                    </AvatarFallback>
+                                </Avatar>
                             </div>
-                        )}
+                            {/* Online indicator */}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-400 border-2 border-white/90 rounded-full shadow-sm" />
+                        </div>
 
-                        <div className="space-y-1">
-                            {menuItems.map((item) => (
-                                <DropdownMenuItem key={item.label} asChild>
+                        {/* Name only */}
+                        <div className="text-left flex-1 hidden sm:block">
+                            <div className="text-sm font-semibold text-white tracking-tight leading-tight">
+                                {displayName}
+                            </div>
+                        </div>
+
+                        {/* Chevron indicator */}
+                        <ChevronDown
+                            className={cn(
+                                "w-4 h-4 text-white/60 transition-transform duration-300",
+                                isOpen && "rotate-180 text-ocean-400"
+                            )}
+                        />
+                        </button>
+                    </PopoverTrigger>
+
+                <PopoverContent
+                    align="end"
+                    sideOffset={8}
+                    className="w-64 p-0 border-0 bg-transparent shadow-none"
+                >
+                    <Card className="bg-[#10192f]/98 backdrop-blur-xl border-white/10 shadow-2xl shadow-black/40 rounded-2xl overflow-hidden">
+                        {/* Profile header */}
+                        <CardHeader className="pb-2 pt-3 px-3">
+                            <div className="flex flex-col">
+                                <p className="text-sm text-white/60 truncate">
+                                    {user.email}
+                                </p>
+                                {profile?.role && (
+                                    <span className="text-xs font-medium text-ocean-300 capitalize mt-1">
+                                        {profile.role.replace('_', ' ')}
+                                    </span>
+                                )}
+                            </div>
+                        </CardHeader>
+
+                        <CardContent className="p-0">
+                            <Separator className="bg-white/10" />
+
+                            {/* Menu items */}
+                            <div className="p-2 space-y-1">
+                                {menuItems.map((item) => (
                                     <button
+                                        key={item.label}
                                         onClick={() => handleMenuClick(item.href)}
-                                        className="w-full flex items-center p-2 hover:bg-white/10 rounded-xl transition-all duration-200 cursor-pointer group hover:shadow-sm border border-transparent hover:border-white/20"
+                                        style={{
+                                            outline: 'none',
+                                            border: 'none',
+                                            boxShadow: 'none',
+                                        }}
+                                        className={cn(
+                                            "group w-full flex items-center gap-2 p-2 rounded-lg",
+                                            "text-left transition-all duration-200",
+                                            "hover:bg-white/10 hover:shadow-sm",
+                                            "focus:outline-none focus:ring-0 focus:border-0"
+                                        )}
                                     >
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <div className="flex items-center justify-center w-6 h-6 bg-white/10 rounded-lg group-hover:bg-white/20 transition-colors">
-                                                {item.icon}
-                                            </div>
-                                            <span className="text-sm font-medium text-white tracking-tight leading-tight whitespace-nowrap group-hover:text-white/90 transition-colors">
+                                        <div className={cn(
+                                            "flex items-center justify-center w-6 h-6 rounded-lg",
+                                            "bg-white/10 group-hover:bg-white/20 transition-colors",
+                                            "text-white/80 group-hover:text-white"
+                                        )}>
+                                            {item.icon}
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="text-sm font-medium text-white group-hover:text-white/90 transition-colors">
                                                 {item.label}
                                             </span>
                                         </div>
                                         {item.value && (
-                                            <div className="flex-shrink-0 ml-auto">
-                                                <span className="text-xs font-medium rounded-md py-1 px-2 tracking-tight text-white/60 bg-white/10 border border-white/20">
-                                                    {item.value}
-                                                </span>
-                                            </div>
+                                            <span className="text-xs font-medium px-2 py-1 rounded-md bg-white/10 text-white/60 border border-white/20">
+                                                {item.value}
+                                            </span>
                                         )}
                                     </button>
-                                </DropdownMenuItem>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
 
-                        <DropdownMenuSeparator className="my-2 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                            <Separator className="bg-white/10" />
 
-                        <DropdownMenuItem asChild>
-                            <button
-                                type="button"
-                                onClick={onLogout}
-                                className="w-full flex items-center gap-2 p-2 duration-200 bg-red-500/10 rounded-xl hover:bg-red-500/20 cursor-pointer border border-transparent hover:border-red-500/30 hover:shadow-sm transition-all group"
-                            >
-                                <div className="flex items-center justify-center w-6 h-6 bg-red-500/20 rounded-lg group-hover:bg-red-500/30 transition-colors">
-                                    <LogOut className="w-3 h-3 text-red-400 group-hover:text-red-300" />
-                                </div>
-                                <span className="text-sm font-medium text-red-400 group-hover:text-red-300">
-                                    Sign Out
-                                </span>
-                            </button>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </div>
-            </DropdownMenu>
+                            {/* Logout button */}
+                            <div className="p-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onLogout();
+                                        setIsOpen(false);
+                                    }}
+                                    className={cn(
+                                        "group w-full flex items-center gap-2 p-2 rounded-lg",
+                                        "bg-red-500/10 hover:bg-red-500/20 border border-transparent hover:border-red-500/30",
+                                        "transition-all duration-200 hover:shadow-sm",
+                                        "focus:outline-none focus:ring-2 focus:ring-red-400/50"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "flex items-center justify-center w-6 h-6 rounded-lg",
+                                        "bg-red-500/20 group-hover:bg-red-500/30 transition-colors"
+                                    )}>
+                                        <LogOut className="w-4 h-4 text-red-400 group-hover:text-red-300 transition-colors" />
+                                    </div>
+                                    <span className="text-sm font-medium text-red-400 group-hover:text-red-300 transition-colors">
+                                        Sign Out
+                                    </span>
+                                </button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </PopoverContent>
+            </Popover>
+            </div>
         </div>
     );
 }
