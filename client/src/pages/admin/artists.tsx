@@ -7,12 +7,11 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
+import { api } from '@/lib/api-client';
 import { Users, Plus, Edit2, Trash2, Search, Music, Mic } from 'lucide-react';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 
-const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
-const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface Talent {
   id?: number;
@@ -46,9 +45,7 @@ export default function ArtistsManagement() {
   const { data: artists = [], isLoading, isPlaceholderData } = useQuery<Talent[]>({
     queryKey: ['talent'],
     queryFn: async () => {
-      const response = await fetch('/api/talent', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/talent');
       if (!response.ok) throw new Error('Failed to fetch artists');
       return response.json();
     },
@@ -59,12 +56,7 @@ export default function ArtistsManagement() {
   // Create artist mutation
   const createArtistMutation = useMutation({
     mutationFn: async (data: Talent) => {
-      const response = await fetch('/api/talent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/talent', data);
       if (!response.ok) throw new Error('Failed to create artist');
       return response.json();
     },
@@ -89,12 +81,7 @@ export default function ArtistsManagement() {
   // Update artist mutation
   const updateArtistMutation = useMutation({
     mutationFn: async (data: Talent) => {
-      const response = await fetch(`/api/talent/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/talent/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update artist');
       return response.json();
     },
@@ -119,10 +106,7 @@ export default function ArtistsManagement() {
   // Delete artist mutation
   const deleteArtistMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/talent/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/talent/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete artist');
@@ -372,7 +356,7 @@ export default function ArtistsManagement() {
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingArtist ? 'Edit Artist' : 'Add New Artist'}
-        description="Enter the artist information below"
+        description="Artist information and social details"
         onSubmit={handleSubmit}
         primaryAction={{
           label: editingArtist ? 'Save Changes' : 'Create Artist',
@@ -383,20 +367,22 @@ export default function ArtistsManagement() {
           label: 'Cancel',
           onClick: () => handleModalOpenChange(false)
         }}
-        contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1"
+        maxWidthClassName="max-w-3xl"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
       >
-        <div className="col-span-1 sm:col-span-2">
+        {/* Basic Information */}
+        <div className="space-y-2">
           <Label htmlFor="name">Artist Name *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-            className={`${fieldBaseClasses} touch-manipulation`}
+            placeholder="Enter artist name"
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
           <Input
             id="category"
@@ -404,34 +390,33 @@ export default function ArtistsManagement() {
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             placeholder="e.g., DJ, Drag, Comedy, Band"
             required
-            className={`${fieldBaseClasses} touch-manipulation`}
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-2">
+        {/* Biography - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
           <Label htmlFor="bio">Biography</Label>
           <Textarea
             id="bio"
             value={formData.bio || ''}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             rows={4}
-            placeholder="Artist biography..."
-            className={`${textareaBaseClasses} touch-manipulation resize-none min-h-[88px]`}
+            placeholder="Artist biography and background..."
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="knownFor">Known For</Label>
           <Input
             id="knownFor"
             value={formData.knownFor || ''}
             onChange={(e) => setFormData({ ...formData, knownFor: e.target.value })}
             placeholder="e.g., RuPaul's Drag Race, Comedy Central"
-            className={`${fieldBaseClasses} touch-manipulation`}
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-1">
+        {/* Social Links - use remaining space */}
+        <div className="space-y-2">
           <Label htmlFor="instagram">Instagram URL</Label>
           <Input
             id="instagram"
@@ -441,18 +426,16 @@ export default function ArtistsManagement() {
               socialLinks: { ...formData.socialLinks, instagram: e.target.value }
             })}
             placeholder="https://instagram.com/..."
-            className={`${fieldBaseClasses} touch-manipulation`}
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-1">
+        <div className="space-y-2">
           <Label htmlFor="website">Website</Label>
           <Input
             id="website"
             value={formData.website || ''}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             placeholder="https://..."
-            className={`${fieldBaseClasses} touch-manipulation`}
           />
         </div>
       </AdminFormModal>

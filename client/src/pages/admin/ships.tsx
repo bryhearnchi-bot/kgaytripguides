@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
+import { api } from '@/lib/api-client';
 import {
   Select,
   SelectContent,
@@ -21,8 +22,6 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Ship, Plus, Edit2, Trash2, Search, Users, Calendar, Anchor, CheckCircle, Wrench, AlertCircle } from 'lucide-react';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 
-const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
-const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface ShipData {
   id?: number;
@@ -59,7 +58,7 @@ export default function ShipsManagement() {
     status: 'active',
   });
   const { profile } = useSupabaseAuthContext();
-  const canDelete = profile?.role && ['admin', 'content_manager', 'super_admin'].includes(profile.role);
+  const canDelete = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
 
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
@@ -73,9 +72,7 @@ export default function ShipsManagement() {
   const { data: ships = [], isLoading, isPlaceholderData } = useQuery<ShipData[]>({
     queryKey: ['ships'],
     queryFn: async () => {
-      const response = await fetch('/api/ships', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/ships');
       if (!response.ok) throw new Error('Failed to fetch ships');
       return response.json();
     },
@@ -86,12 +83,7 @@ export default function ShipsManagement() {
   // Create ship mutation
   const createShipMutation = useMutation({
     mutationFn: async (data: ShipData) => {
-      const response = await fetch('/api/ships', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/ships', data);
       if (!response.ok) throw new Error('Failed to create ship');
       return response.json();
     },
@@ -116,12 +108,7 @@ export default function ShipsManagement() {
   // Update ship mutation
   const updateShipMutation = useMutation({
     mutationFn: async (data: ShipData) => {
-      const response = await fetch(`/api/ships/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/ships/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update ship');
       return response.json();
     },
@@ -146,10 +133,7 @@ export default function ShipsManagement() {
   // Delete ship mutation
   const deleteShipMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/ships/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/ships/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete ship');
@@ -375,7 +359,7 @@ export default function ShipsManagement() {
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingShip ? 'Edit Ship' : 'Add New Ship'}
-        description="Enter the ship information below"
+        description="Vessel details and configuration"
         onSubmit={handleSubmit}
         primaryAction={{
           label: editingShip ? 'Save Changes' : 'Create Ship',
@@ -386,37 +370,39 @@ export default function ShipsManagement() {
           label: 'Cancel',
           onClick: () => handleModalOpenChange(false)
         }}
-        contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1"
+        maxWidthClassName="max-w-4xl"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
       >
-        <div className="col-span-1 sm:col-span-2">
+        {/* Basic Information Row */}
+        <div className="space-y-2">
           <Label htmlFor="name">Ship Name *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-            className={fieldBaseClasses}
+            placeholder="Enter ship name"
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="cruiseLine">Cruise Line *</Label>
           <Input
             id="cruiseLine"
             value={formData.cruiseLine}
             onChange={(e) => setFormData({ ...formData, cruiseLine: e.target.value })}
             required
-            className={fieldBaseClasses}
+            placeholder="Enter cruise line"
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
           <Select
             value={formData.status || 'active'}
             onValueChange={(value: 'active' | 'maintenance' | 'retired') => setFormData({ ...formData, status: value })}
           >
-            <SelectTrigger className={`${fieldBaseClasses} text-left`}>
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -427,62 +413,109 @@ export default function ShipsManagement() {
           </Select>
         </div>
 
-        <div>
+        {/* Ship Details Row */}
+        <div className="space-y-2">
           <Label htmlFor="shipCode">Ship Code</Label>
           <Input
             id="shipCode"
             value={formData.shipCode || ''}
             onChange={(e) => setFormData({ ...formData, shipCode: e.target.value })}
             placeholder="e.g., VL"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="shipClass">Ship Class</Label>
           <Input
             id="shipClass"
             value={formData.shipClass || ''}
             onChange={(e) => setFormData({ ...formData, shipClass: e.target.value })}
             placeholder="e.g., Lady Ships"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div>
-          <Label htmlFor="capacity">Passenger Capacity</Label>
+        <div className="space-y-2">
+          <Label htmlFor="flag">Flag/Registry</Label>
+          <Input
+            id="flag"
+            value={formData.flag || ''}
+            onChange={(e) => setFormData({ ...formData, flag: e.target.value })}
+            placeholder="e.g., Malta"
+          />
+        </div>
+
+        {/* Capacity & Crew Row */}
+        <div className="space-y-2">
+          <Label htmlFor="capacity">Guest Capacity</Label>
           <Input
             id="capacity"
             type="number"
             value={formData.capacity || ''}
             onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || undefined })}
-            className={fieldBaseClasses}
+            placeholder="Maximum guests"
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="crewSize">Crew Size</Label>
           <Input
             id="crewSize"
             type="number"
             value={formData.crewSize || ''}
             onChange={(e) => setFormData({ ...formData, crewSize: parseInt(e.target.value) || undefined })}
-            className={fieldBaseClasses}
+            placeholder="Total crew"
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="decks">Number of Decks</Label>
           <Input
             id="decks"
             type="number"
             value={formData.decks || ''}
             onChange={(e) => setFormData({ ...formData, decks: parseInt(e.target.value) || undefined })}
-            className={fieldBaseClasses}
+            placeholder="Total decks"
           />
         </div>
 
-        <div>
+        {/* Ship Specifications Row */}
+        <div className="space-y-2">
+          <Label htmlFor="lengthMeters">Length (m)</Label>
+          <Input
+            id="lengthMeters"
+            type="number"
+            step="0.01"
+            value={formData.lengthMeters || ''}
+            onChange={(e) => setFormData({ ...formData, lengthMeters: parseFloat(e.target.value) || undefined })}
+            placeholder="Ship length"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="beamMeters">Beam (m)</Label>
+          <Input
+            id="beamMeters"
+            type="number"
+            step="0.01"
+            value={formData.beamMeters || ''}
+            onChange={(e) => setFormData({ ...formData, beamMeters: parseFloat(e.target.value) || undefined })}
+            placeholder="Ship width"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="grossTonnage">Gross Tonnage</Label>
+          <Input
+            id="grossTonnage"
+            type="number"
+            value={formData.grossTonnage || ''}
+            onChange={(e) => setFormData({ ...formData, grossTonnage: parseInt(e.target.value) || undefined })}
+            placeholder="Ship tonnage"
+          />
+        </div>
+
+        {/* Years Row */}
+        <div className="space-y-2">
           <Label htmlFor="builtYear">Year Built</Label>
           <Input
             id="builtYear"
@@ -490,41 +523,64 @@ export default function ShipsManagement() {
             value={formData.builtYear || ''}
             onChange={(e) => setFormData({ ...formData, builtYear: parseInt(e.target.value) || undefined })}
             placeholder="e.g., 2021"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div>
-          <Label htmlFor="lengthMeters">Length (meters)</Label>
+        <div className="space-y-2">
+          <Label htmlFor="refurbishedYear">Year Refurbished</Label>
           <Input
-            id="lengthMeters"
+            id="refurbishedYear"
             type="number"
-            step="0.01"
-            value={formData.lengthMeters || ''}
-            onChange={(e) => setFormData({ ...formData, lengthMeters: parseFloat(e.target.value) || undefined })}
-            className={fieldBaseClasses}
+            value={formData.refurbishedYear || ''}
+            onChange={(e) => setFormData({ ...formData, refurbishedYear: parseInt(e.target.value) || undefined })}
+            placeholder="e.g., 2023"
           />
         </div>
 
-        <div>
-          <Label htmlFor="flag">Flag/Registry</Label>
+        {/* Image URL - spans remaining column */}
+        <div className="lg:col-span-2 xl:col-span-1 space-y-2">
+          <Label htmlFor="imageUrl">Image URL</Label>
           <Input
-            id="flag"
-            value={formData.flag || ''}
-            onChange={(e) => setFormData({ ...formData, flag: e.target.value })}
-            placeholder="e.g., Malta"
-            className={fieldBaseClasses}
+            id="imageUrl"
+            value={formData.imageUrl || ''}
+            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+            placeholder="https://example.com/ship-image.jpg"
           />
         </div>
 
-        <div className="col-span-1 sm:col-span-2">
+        {/* Description - spans full width */}
+        <div className="lg:col-span-2 xl:col-span-3 space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
             value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={3}
-            className={textareaBaseClasses}
+            placeholder="Describe the ship's features and amenities..."
+          />
+        </div>
+
+        {/* Highlights - spans 2 columns */}
+        <div className="lg:col-span-1 xl:col-span-2 space-y-2">
+          <Label htmlFor="highlights">Highlights (one per line)</Label>
+          <Textarea
+            id="highlights"
+            value={formData.highlights?.join('\n') || ''}
+            onChange={(e) => setFormData({ ...formData, highlights: e.target.value ? e.target.value.split('\n') : [] })}
+            rows={4}
+            placeholder="Edge-class design\nInfinite Verandas\nRooftop Garden"
+          />
+        </div>
+
+        {/* Amenities - spans 1 column */}
+        <div className="lg:col-span-1 xl:col-span-1 space-y-2">
+          <Label htmlFor="amenities">Amenities (one per line)</Label>
+          <Textarea
+            id="amenities"
+            value={formData.amenities?.join('\n') || ''}
+            onChange={(e) => setFormData({ ...formData, amenities: e.target.value ? e.target.value.split('\n') : [] })}
+            rows={4}
+            placeholder="Swimming Pools\nFitness Center\nSpa\nTheater"
           />
         </div>
       </AdminFormModal>

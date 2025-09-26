@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Design 3 - Minimal Ocean Card</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0b1222;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 18, 34, 0.85);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, #10192f 0%, #0f1629 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-header {
+            padding: 24px 28px 20px;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.03) 0%, rgba(37, 99, 235, 0.03) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #22d3ee 0%, #2563eb 100%);
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.3px;
+        }
+
+        .modal-description {
+            margin: 6px 0 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .modal-content {
+            padding: 24px 28px;
+            overflow-y: auto;
+            max-height: calc(85vh - 160px);
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            height: 44px;
+            padding: 0 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: rgba(34, 211, 238, 0.6);
+            background: rgba(34, 211, 238, 0.03);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+        }
+
+        .form-textarea {
+            height: 90px;
+            padding: 12px 14px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .modal-footer {
+            padding: 20px 28px 24px;
+            background: rgba(0, 0, 0, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            min-width: 90px;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.75);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #22d3ee 0%, #2563eb 100%);
+            color: white;
+            border: 1.5px solid transparent;
+            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.25);
+        }
+
+        .btn-save:hover {
+            background: linear-gradient(135deg, #06b6d4 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 211, 238, 0.35);
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Ship</h2>
+                <p class="modal-description">Modify vessel details and configuration</p>
+            </div>
+
+            <div class="modal-content">
+                <div class="form-grid">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Ship Name</label>
+                            <input type="text" class="form-input" placeholder="Enter ship name" value="Celebrity Edge">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cruise Line</label>
+                            <input type="text" class="form-input" placeholder="Enter cruise line" value="Celebrity Cruises">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Guest Capacity</label>
+                            <input type="number" class="form-input" placeholder="Maximum guests" value="2900">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Status</label>
+                            <select class="form-select">
+                                <option>Active</option>
+                                <option>Maintenance</option>
+                                <option>Retired</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" placeholder="Describe the ship's features and amenities...">Modern cruise ship with innovative design and luxury amenities.</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-cancel">Cancel</button>
+                <button class="btn btn-save">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

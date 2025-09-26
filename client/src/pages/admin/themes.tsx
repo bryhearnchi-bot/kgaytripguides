@@ -7,12 +7,11 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
+import { api } from '@/lib/api-client';
 import { Palette, Plus, Edit2, Trash2, Search, Sparkles } from 'lucide-react';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 
-const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
-const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface PartyTheme {
   id?: number;
@@ -47,9 +46,7 @@ export default function ThemesManagement() {
   const { data: themes = [], isLoading, isPlaceholderData } = useQuery<PartyTheme[]>({
     queryKey: ['party-themes'],
     queryFn: async () => {
-      const response = await fetch('/api/party-themes', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/party-themes');
       if (!response.ok) throw new Error('Failed to fetch themes');
       return response.json();
     },
@@ -60,12 +57,7 @@ export default function ThemesManagement() {
   // Create theme mutation
   const createThemeMutation = useMutation({
     mutationFn: async (data: PartyTheme) => {
-      const response = await fetch('/api/party-themes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/party-themes', data);
       if (!response.ok) throw new Error('Failed to create theme');
       return response.json();
     },
@@ -90,12 +82,7 @@ export default function ThemesManagement() {
   // Update theme mutation
   const updateThemeMutation = useMutation({
     mutationFn: async (data: PartyTheme) => {
-      const response = await fetch(`/api/party-themes/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/party-themes/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update theme');
       return response.json();
     },
@@ -120,10 +107,7 @@ export default function ThemesManagement() {
   // Delete theme mutation
   const deleteThemeMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/party-themes/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/party-themes/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete theme');
@@ -360,7 +344,7 @@ export default function ThemesManagement() {
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingTheme ? 'Edit Party Theme' : 'Add New Party Theme'}
-        description="Enter the theme information below"
+        description="Party theme details and costume ideas"
         onSubmit={handleSubmit}
         primaryAction={{
           label: editingTheme ? 'Save Changes' : 'Create Theme',
@@ -371,9 +355,11 @@ export default function ThemesManagement() {
           label: 'Cancel',
           onClick: () => handleModalOpenChange(false)
         }}
-        contentClassName="grid grid-cols-2 gap-4"
+        maxWidthClassName="max-w-3xl"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
       >
-        <div className="col-span-2">
+        {/* Theme Name - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
           <Label htmlFor="name">Theme Name *</Label>
           <Input
             id="name"
@@ -381,46 +367,21 @@ export default function ThemesManagement() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g., White Party, Glow Night"
             required
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div className="col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="shortDescription">Short Description</Label>
           <Input
             id="shortDescription"
             value={formData.shortDescription || ''}
             onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
             placeholder="Brief theme summary"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div className="col-span-2">
-          <Label htmlFor="longDescription">Long Description</Label>
-          <Textarea
-            id="longDescription"
-            value={formData.longDescription || ''}
-            onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
-            placeholder="Detailed description of the party theme"
-            rows={3}
-            className={textareaBaseClasses}
-          />
-        </div>
-
-        <div className="col-span-2">
-          <Label htmlFor="costumeIdeas">Costume Ideas</Label>
-          <Textarea
-            id="costumeIdeas"
-            value={formData.costumeIdeas || ''}
-            onChange={(e) => setFormData({ ...formData, costumeIdeas: e.target.value })}
-            placeholder="e.g., All white attire, UV reactive clothing, neon accessories"
-            rows={3}
-            className={textareaBaseClasses}
-          />
-        </div>
-
-        <div>
+        {/* Image URL - use remaining space */}
+        <div className="space-y-2">
           <Label htmlFor="imageUrl">Image URL</Label>
           <Input
             id="imageUrl"
@@ -428,11 +389,33 @@ export default function ThemesManagement() {
             value={formData.imageUrl || ''}
             onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
             placeholder="https://example.com/image.jpg"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div>
+        {/* Long Description - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
+          <Label htmlFor="longDescription">Long Description</Label>
+          <Textarea
+            id="longDescription"
+            value={formData.longDescription || ''}
+            onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+            placeholder="Detailed description of the party theme"
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="costumeIdeas">Costume Ideas</Label>
+          <Textarea
+            id="costumeIdeas"
+            value={formData.costumeIdeas || ''}
+            onChange={(e) => setFormData({ ...formData, costumeIdeas: e.target.value })}
+            placeholder="e.g., All white attire, UV reactive clothing, neon accessories"
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="amazonShoppingListUrl">Shopping List URL</Label>
           <Input
             id="amazonShoppingListUrl"
@@ -440,7 +423,6 @@ export default function ThemesManagement() {
             value={formData.amazonShoppingListUrl || ''}
             onChange={(e) => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
             placeholder="https://www.amazon.com/shop/..."
-            className={fieldBaseClasses}
           />
         </div>
       </AdminFormModal>

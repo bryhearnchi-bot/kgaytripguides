@@ -8,10 +8,9 @@ import { Textarea } from '../ui/textarea';
 import { ResponsiveAdminTable } from './ResponsiveAdminTable';
 import { StatusBadge } from './StatusBadge';
 import { AdminFormModal } from './AdminFormModal';
+import { api } from '@/lib/api-client';
 import { MapPin, Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
 
-const fieldBaseClasses = "h-11 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
-const textareaBaseClasses = "rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder:text-white/60 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0";
 
 interface Location {
   id?: number;
@@ -48,9 +47,7 @@ export default function LocationManagement() {
   const { data: locations = [], isLoading } = useQuery<Location[]>({
     queryKey: ['locations'],
     queryFn: async () => {
-      const response = await fetch('/api/locations', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/locations');
       if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
     }
@@ -59,12 +56,7 @@ export default function LocationManagement() {
   // Create location mutation
   const createLocationMutation = useMutation({
     mutationFn: async (data: Location) => {
-      const response = await fetch('/api/locations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/api/locations', data);
       if (!response.ok) throw new Error('Failed to create location');
       return response.json();
     },
@@ -89,12 +81,7 @@ export default function LocationManagement() {
   // Update location mutation
   const updateLocationMutation = useMutation({
     mutationFn: async (data: Location) => {
-      const response = await fetch(`/api/locations/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await api.put(`/api/locations/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update location');
       return response.json();
     },
@@ -119,10 +106,7 @@ export default function LocationManagement() {
   // Delete location mutation
   const deleteLocationMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/locations/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/locations/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete location');
@@ -347,43 +331,46 @@ export default function LocationManagement() {
           label: 'Cancel',
           onClick: () => handleModalOpenChange(false),
         }}
-        contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        maxWidthClassName="max-w-3xl"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
       >
-        <div className="col-span-2">
+        {/* Basic Information */}
+        <div className="space-y-2">
           <Label htmlFor="name">Location Name *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-            className={fieldBaseClasses}
+            placeholder="Enter location name"
           />
         </div>
 
-        <div className="col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="country">Country *</Label>
           <Input
             id="country"
             value={formData.country}
             onChange={(e) => setFormData({ ...formData, country: e.target.value })}
             required
-            className={fieldBaseClasses}
+            placeholder="Enter country name"
           />
         </div>
 
-        <div className="col-span-2">
+        {/* Description - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
             value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={4}
-            placeholder="Location description..."
-            className={textareaBaseClasses}
+            placeholder="Describe this travel destination..."
           />
         </div>
 
-        <div>
+        {/* Coordinates */}
+        <div className="space-y-2">
           <Label htmlFor="lat">Latitude</Label>
           <Input
             id="lat"
@@ -398,11 +385,10 @@ export default function LocationManagement() {
               },
             })}
             placeholder="e.g., 40.7128"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="lng">Longitude</Label>
           <Input
             id="lng"
@@ -417,18 +403,17 @@ export default function LocationManagement() {
               },
             })}
             placeholder="e.g., -74.0060"
-            className={fieldBaseClasses}
           />
         </div>
 
-        <div className="col-span-2">
+        {/* Image URL - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
           <Label htmlFor="imageUrl">Image URL</Label>
           <Input
             id="imageUrl"
             value={formData.imageUrl || ''}
             onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            placeholder="https://..."
-            className={fieldBaseClasses}
+            placeholder="https://example.com/destination-image.jpg"
           />
         </div>
       </AdminFormModal>
