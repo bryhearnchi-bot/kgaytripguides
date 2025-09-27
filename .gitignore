@@ -127,3 +127,9 @@ add-supabase-mcp.js
 remove-unused-mcp.js
 *-mcp-config.js
 claude_desktop_config.json
+
+# Playwright test artifacts and screenshots
+.playwright-mcp/
+test-results/
+playwright-report/
+playwright/.cache/
