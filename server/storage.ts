@@ -257,11 +257,19 @@ export class ProfileStorage implements IProfileStorage {
   }
 
   async updateProfile(id: string, profileData: Partial<schema.Profile>): Promise<schema.Profile | undefined> {
-    const result = await db.update(schema.profiles)
-      .set({ ...profileData, updatedAt: new Date() })
-      .where(eq(schema.profiles.id, id))
-      .returning();
-    return result[0];
+    try {
+      const updateData = { ...profileData, updatedAt: new Date() };
+
+      const result = await db.update(schema.profiles)
+        .set(updateData)
+        .where(eq(schema.profiles.id, id))
+        .returning();
+
+      return result[0];
+    } catch (error) {
+      console.error('Error in ProfileStorage.updateProfile:', error);
+      throw error;
+    }
   }
 }
 

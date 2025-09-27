@@ -35,17 +35,6 @@ sourcemap: true,
       strict: true,
       deny: ["**/.*"],
     },
-    proxy: {
-      // Proxy API requests to the backend server
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-      // Proxy static image requests to the backend server
-      '^/(itinerary-images|event-images|talent-images|cruise-images)': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
+    // No proxy needed - API and frontend served from same Express server
   },
 });

@@ -33,8 +33,8 @@ export function AuthCallback() {
           let redirectTo = sessionStorage.getItem('redirectAfterLogin');
 
           if (!redirectTo) {
-            // Default redirect - go to admin dashboard for admin users
-            redirectTo = '/admin/dashboard';
+            // Default redirect - go to admin trips page for admin users
+            redirectTo = '/admin/trips';
           }
 
           sessionStorage.removeItem('redirectAfterLogin');

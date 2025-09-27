@@ -239,24 +239,13 @@ export default function AdminSettings() {
       <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white">System Settings</h1>
+            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
+              <Settings className="h-6 w-6" />
+              System Settings
+            </h1>
             <p className="text-sm text-white/60">Configure system settings across Atlantis sailings.</p>
           </div>
-          <Button
-            onClick={() => {
-              setEditingSetting(null);
-              resetForm();
-              setShowAddModal(true);
-            }}
-            className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6]"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Setting
-          </Button>
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="relative flex-1">
+          <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               placeholder="Search settings by name, key, or category"
@@ -264,17 +253,6 @@ export default function AdminSettings() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs text-white/60">
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
-              Active
-            </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
-              Category
-            </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10">
-              System
-            </Button>
           </div>
         </div>
       </section>
@@ -285,6 +263,17 @@ export default function AdminSettings() {
             <h2 className="text-lg font-semibold text-white">All Settings ({filteredSettings.length})</h2>
             <p className="text-xs uppercase tracking-[0.3em] text-white/40">Configuration management</p>
           </div>
+          <Button
+            onClick={() => {
+              setEditingSetting(null);
+              resetForm();
+              setShowAddModal(true);
+            }}
+            className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+          >
+            <Plus className="mr-1 h-3 w-3" />
+            Add Setting
+          </Button>
         </header>
 
         {filteredSettings.length === 0 ? (
@@ -298,7 +287,7 @@ export default function AdminSettings() {
                   resetForm();
                   setShowAddModal(true);
                 }}
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
+                className="rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm text-white transition-colors"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create First Setting
@@ -375,6 +364,7 @@ export default function AdminSettings() {
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingSetting ? 'Edit Setting' : 'Add New Setting'}
+        icon={<Settings className="h-5 w-5" />}
         description="Enter the setting information below"
         onSubmit={handleSubmit}
         primaryAction={{

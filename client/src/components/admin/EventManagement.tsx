@@ -455,7 +455,7 @@ export default function EventManagement({
         </div>
         <Button
           onClick={() => setIsCreateDialogOpen(true)}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+          className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Event
@@ -1021,7 +1021,7 @@ export default function EventManagement({
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
               >
                 {createMutation.isPending || updateMutation.isPending ? (
                   <div className="flex items-center">

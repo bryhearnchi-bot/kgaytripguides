@@ -86,14 +86,52 @@ export interface Location {
   updatedAt: string;
 }
 
+export interface ProfileName {
+  first: string;
+  last: string;
+  middle?: string;
+  suffix?: string;
+  preferred?: string;
+  full: string;
+}
+
+export interface ProfileLocation {
+  city?: string;
+  state?: string;
+  country?: string;
+}
+
+export interface ProfileSocialLinks {
+  instagram?: string;
+  twitter?: string;
+  facebook?: string;
+  telegram?: string;
+}
+
+export interface ProfileCommunicationPreferences {
+  email?: boolean;
+  sms?: boolean;
+}
+
 export interface Profile {
   id: string;
   email: string;
-  fullName?: string;
+  name?: ProfileName;
+  fullName?: string; // Deprecated - use name.full instead
   username?: string;
+  avatarUrl?: string;
   role: 'viewer' | 'content_manager' | 'super_admin';
   accountStatus: 'active' | 'suspended' | 'pending_verification';
   isActive: boolean;
+  bio?: string;
+  website?: string; // Deprecated - use socialLinks.website instead
+  phoneNumber?: string;
+  location?: ProfileLocation;
+  socialLinks?: ProfileSocialLinks;
+  communicationPreferences?: ProfileCommunicationPreferences;
+  tripUpdatesOptIn?: boolean;
+  marketingEmails?: boolean;
+  lastSignInAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -237,12 +275,20 @@ export interface CreateProfileRequest {
 }
 
 export interface UpdateProfileRequest {
-  fullName?: string;
+  name?: ProfileName;
+  fullName?: string; // Deprecated - use name instead
   username?: string;
-  role?: 'viewer' | 'content_manager' | 'admin';
+  avatarUrl?: string;
+  role?: 'viewer' | 'content_manager' | 'super_admin';
   accountStatus?: 'active' | 'suspended' | 'pending_verification';
   phoneNumber?: string;
   bio?: string;
+  website?: string; // Deprecated - use socialLinks.website instead
+  location?: ProfileLocation;
+  socialLinks?: ProfileSocialLinks;
+  communicationPreferences?: ProfileCommunicationPreferences;
+  tripUpdatesOptIn?: boolean;
+  marketingEmails?: boolean;
   isActive?: boolean;
 }
 

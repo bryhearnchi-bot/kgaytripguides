@@ -86,40 +86,55 @@ export function EnhancedUserList() {
   const { data: users, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-users', searchTerm, roleFilter, statusFilter, page],
     queryFn: async () => {
-      let query = supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
-        .range(page * pageSize, (page + 1) * pageSize - 1)
-        .order('created_at', { ascending: false });
+      const session = await supabase.auth.getSession();
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+      });
 
       if (searchTerm) {
-        query = query.or(`email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
+        params.append('search', searchTerm);
       }
 
       if (roleFilter !== 'all') {
-        query = query.eq('role', roleFilter);
+        params.append('role', roleFilter);
       }
 
       if (statusFilter !== 'all') {
-        query = query.eq('account_status', statusFilter);
+        params.append('status', statusFilter);
       }
 
-      const { data, error, count } = await query;
+      const response = await fetch(`/api/auth/users?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+      });
 
-      if (error) throw error;
-      return { users: data as UserData[], total: count || 0 };
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const result = await response.json();
+      return { users: result.users as UserData[], total: result.total || 0 };
     },
   });
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const session = await supabase.auth.getSession();
+      const response = await fetch(`/api/auth/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+        body: JSON.stringify({ role }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to update user role');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -140,12 +155,19 @@ export function EnhancedUserList() {
   // Update account status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ account_status: status, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const session = await supabase.auth.getSession();
+      const response = await fetch(`/api/auth/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+        body: JSON.stringify({ accountStatus: status }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to update user status');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -175,26 +197,32 @@ export function EnhancedUserList() {
     }
 
     try {
-      switch (operation) {
-        case 'activate':
-          await supabase
-            .from('profiles')
-            .update({ account_status: 'active' })
-            .in('id', selectedUsers);
-          break;
-        case 'deactivate':
-          await supabase
-            .from('profiles')
-            .update({ account_status: 'suspended' })
-            .in('id', selectedUsers);
-          break;
-        case 'delete':
-          // Implement soft delete
-          await supabase
-            .from('profiles')
-            .update({ account_status: 'deleted' })
-            .in('id', selectedUsers);
-          break;
+      const session = await supabase.auth.getSession();
+      const statusMap = {
+        activate: 'active',
+        deactivate: 'suspended',
+        delete: 'deleted'
+      };
+
+      // Process each user individually using our API
+      const promises = selectedUsers.map(userId =>
+        fetch(`/api/auth/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.data.session?.access_token}`,
+          },
+          body: JSON.stringify({ accountStatus: statusMap[operation] }),
+        })
+      );
+
+      const responses = await Promise.all(promises);
+
+      // Check if any failed
+      for (const response of responses) {
+        if (!response.ok) {
+          throw new Error(`Failed to ${operation} user`);
+        }
       }
 
       setSelectedUsers([]);
@@ -215,14 +243,19 @@ export function EnhancedUserList() {
   // Export users to CSV
   const exportUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .csv();
+      const session = await supabase.auth.getSession();
+      const response = await fetch('/api/auth/users?format=csv', {
+        headers: {
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to export users');
+      }
 
-      const blob = new Blob([data as string], { type: 'text/csv' });
+      const csvData = await response.text();
+      const blob = new Blob([csvData], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

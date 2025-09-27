@@ -5,94 +5,95 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsiveAdminTable } from '@/components/admin/ResponsiveAdminTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
-import { ShipFormModal } from '@/components/admin/ShipFormModal';
+import { ResortFormModal } from '@/components/admin/ResortFormModal';
 import { api } from '@/lib/api-client';
-import { Ship, Plus, Edit2, Trash2, Search, Users, Calendar, Anchor } from 'lucide-react';
+import { Building, Plus, Edit2, Trash2, Search, Users, MapPin, Hotel } from 'lucide-react';
 
-interface Ship {
+interface Resort {
   id?: number;
   name: string;
-  cruiseLine: string;
+  location: string;
   capacity?: number;
-  decks?: number;
-  builtYear?: number;
+  roomCount?: number;
   imageUrl?: string;
-  deckPlansUrl?: string;
+  propertyMapUrl?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
   description?: string;
-  cruiseCount?: number;
+  tripCount?: number;
 }
 
-export default function ShipsManagement() {
+export default function ResortsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingShip, setEditingShip] = useState<Ship | null>(null);
+  const [editingResort, setEditingResort] = useState<Resort | null>(null);
 
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
     if (!open) {
-      setEditingShip(null);
+      setEditingResort(null);
     }
   };
 
-  // Fetch ships
-  const { data: ships = [], isLoading } = useQuery<Ship[]>({
-    queryKey: ['ships'],
+  // Fetch resorts
+  const { data: resorts = [], isLoading } = useQuery<Resort[]>({
+    queryKey: ['resorts'],
     queryFn: async () => {
-      const response = await api.get('/api/ships');
-      if (!response.ok) throw new Error('Failed to fetch ships');
+      const response = await api.get('/api/resorts');
+      if (!response.ok) throw new Error('Failed to fetch resorts');
       return response.json();
     }
   });
 
-  // Delete ship mutation
-  const deleteShipMutation = useMutation({
+  // Delete resort mutation
+  const deleteResortMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/ships/${id}`);
+      const response = await api.delete(`/api/resorts/${id}`);
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete ship');
+        throw new Error(error.error || 'Failed to delete resort');
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ships'] });
+      queryClient.invalidateQueries({ queryKey: ['resorts'] });
       toast({
         title: 'Success',
-        description: 'Ship deleted successfully',
+        description: 'Resort deleted successfully',
       });
     },
     onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message.includes('Cannot delete')
-          ? 'This ship is assigned to cruises and cannot be deleted'
-          : 'Failed to delete ship',
+          ? 'This resort is assigned to trips and cannot be deleted'
+          : 'Failed to delete resort',
         variant: 'destructive',
       });
     }
   });
 
-  const handleEdit = (ship: Ship) => {
-    setEditingShip(ship);
+  const handleEdit = (resort: Resort) => {
+    setEditingResort(resort);
     setShowAddModal(true);
   };
 
   const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this ship?')) {
-      deleteShipMutation.mutate(id);
+    if (confirm('Are you sure you want to delete this resort?')) {
+      deleteResortMutation.mutate(id);
     }
   };
 
   const handleModalSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['ships'] });
+    queryClient.invalidateQueries({ queryKey: ['resorts'] });
     setShowAddModal(false);
-    setEditingShip(null);
+    setEditingResort(null);
   };
 
-  const filteredShips = ships.filter(ship =>
-    ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ship.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredResorts = resorts.filter(resort =>
+    resort.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    resort.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -101,15 +102,15 @@ export default function ShipsManagement() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <Ship className="h-6 w-6" />
-              Cruise Ships
+              <Building className="h-6 w-6" />
+              Resort Properties
             </h1>
-            <p className="text-sm text-white/60">Manage your fleet information and specifications</p>
+            <p className="text-sm text-white/60">Manage resort accommodations and amenities</p>
           </div>
           <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
-              placeholder="Search ships by name or cruise line"
+              placeholder="Search resorts by name or location"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
@@ -121,64 +122,67 @@ export default function ShipsManagement() {
       <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
         <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Ships ({filteredShips.length})</h2>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all cruise lines</p>
+            <h2 className="text-lg font-semibold text-white">All Resorts ({filteredResorts.length})</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all destinations</p>
           </div>
           <Button
             onClick={() => {
-              setEditingShip(null);
+              setEditingResort(null);
               setShowAddModal(true);
             }}
             className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
           >
             <Plus className="mr-1 h-3 w-3" />
-            Add Ship
+            Add Resort
           </Button>
         </header>
 
-        {filteredShips.length === 0 ? (
+        {filteredResorts.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
-            <Ship className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No ships match your search.' : 'Get started by adding your first ship.'}</p>
+            <Building className="h-10 w-10 text-white/30" />
+            <p className="text-sm">{searchTerm ? 'No resorts match your search.' : 'Get started by adding your first resort.'}</p>
             {!searchTerm && (
               <Button
                 onClick={() => {
-                  setEditingShip(null);
+                  setEditingResort(null);
                   setShowAddModal(true);
                 }}
                 className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Create First Ship
+                Create First Resort
               </Button>
             )}
           </div>
         ) : (
           <ResponsiveAdminTable
-            data={filteredShips}
+            data={filteredResorts}
             columns={[
               {
                 key: 'name',
-                label: 'Ship',
+                label: 'Resort',
                 priority: 'high',
-                render: (_value, ship) => (
+                render: (_value, resort) => (
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
-                      {ship.imageUrl ? (
+                      {resort.imageUrl ? (
                         <img
-                          src={ship.imageUrl}
-                          alt={ship.name}
+                          src={resort.imageUrl}
+                          alt={resort.name}
                           className="h-full w-full rounded-xl object-cover"
                         />
                       ) : (
-                        <Ship className="h-5 w-5 text-white/70" />
+                        <Building className="h-5 w-5 text-white/70" />
                       )}
                     </div>
                     <div className="space-y-1 min-w-0">
-                      <p className="font-medium text-white">{ship.name}</p>
-                      <p className="text-xs text-white/60">{ship.cruiseLine}</p>
-                      {ship.description && (
-                        <p className="text-xs text-white/60 line-clamp-2">{ship.description}</p>
+                      <p className="font-medium text-white">{resort.name}</p>
+                      <div className="flex items-center gap-1 text-xs text-white/60">
+                        <MapPin className="h-3 w-3" />
+                        <span>{resort.location}</span>
+                      </div>
+                      {resort.description && (
+                        <p className="text-xs text-white/60 line-clamp-2">{resort.description}</p>
                       )}
                     </div>
                   </div>
@@ -188,36 +192,35 @@ export default function ShipsManagement() {
                 key: 'capacity',
                 label: 'Specs',
                 priority: 'medium',
-                render: (_value, ship) => (
+                render: (_value, resort) => (
                   <div className="space-y-1">
-                    {ship.capacity && (
+                    {resort.capacity && (
                       <div className="flex items-center gap-1 text-xs text-white/70">
                         <Users className="h-3 w-3" />
-                        <span>{ship.capacity.toLocaleString()} guests</span>
+                        <span>{resort.capacity.toLocaleString()} guests</span>
                       </div>
                     )}
-                    {ship.decks && (
+                    {resort.roomCount && (
                       <div className="flex items-center gap-1 text-xs text-white/70">
-                        <Anchor className="h-3 w-3" />
-                        <span>{ship.decks} decks</span>
+                        <Hotel className="h-3 w-3" />
+                        <span>{resort.roomCount} rooms</span>
                       </div>
                     )}
-                    {ship.builtYear && (
-                      <div className="flex items-center gap-1 text-xs text-white/70">
-                        <Calendar className="h-3 w-3" />
-                        <span>Built {ship.builtYear}</span>
+                    {resort.checkInTime && resort.checkOutTime && (
+                      <div className="text-xs text-white/70">
+                        {resort.checkInTime} - {resort.checkOutTime}
                       </div>
                     )}
                   </div>
                 ),
               },
               {
-                key: 'cruiseCount',
+                key: 'tripCount',
                 label: 'Usage',
                 priority: 'medium',
                 render: (value) => (
                   <span className="text-xs text-white/60">
-                    {value || 0} cruise{(value || 0) === 1 ? '' : 's'}
+                    {value || 0} trip{(value || 0) === 1 ? '' : 's'}
                   </span>
                 ),
               },
@@ -230,33 +233,33 @@ export default function ShipsManagement() {
             ]}
             actions={[
               {
-                label: 'Edit Ship',
+                label: 'Edit Resort',
                 icon: <Edit2 className="h-4 w-4" />,
                 onClick: handleEdit,
               },
               {
-                label: 'Delete Ship',
+                label: 'Delete Resort',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (ship) => handleDelete(ship.id!),
+                onClick: (resort) => handleDelete(resort.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No ships match your search.' : 'Get started by adding your first ship.'}
+            emptyMessage={searchTerm ? 'No resorts match your search.' : 'Get started by adding your first resort.'}
           />
         )}
 
         <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
-          Showing {filteredShips.length} ship{filteredShips.length === 1 ? '' : 's'}
+          Showing {filteredResorts.length} resort{filteredResorts.length === 1 ? '' : 's'}
         </footer>
       </section>
 
-      {/* Ship Form Modal */}
-      <ShipFormModal
+      {/* Resort Form Modal */}
+      <ResortFormModal
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
-        ship={editingShip}
+        resort={editingResort}
         onSuccess={handleModalSuccess}
       />
     </div>

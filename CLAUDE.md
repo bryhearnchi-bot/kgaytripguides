@@ -1,5 +1,21 @@
 # K-GAY Travel Guides - Project Documentation
 
+## 🚨 CRITICAL DATABASE RULE - READ FIRST
+**SUPABASE IS THE ONLY DATABASE SYSTEM WE USE. PERIOD.**
+- ✅ Database: Supabase PostgreSQL ONLY
+- ✅ Connection: `DATABASE_URL=postgresql://postgres:...@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres`
+- ❌ NO Neon, NO mock data, NO other databases EVER
+- ❌ NEVER use `USE_MOCK_DATA=true` - always use Supabase
+- 🔥 **ANY DATABASE OPERATION MUST GO TO SUPABASE - NO EXCEPTIONS**
+
+## 🚨 CRITICAL PAGE CREATION RULE - READ FIRST
+**NEVER CREATE NEW PAGES - ONLY UPDATE EXISTING ONES. PERIOD.**
+- ✅ Update existing pages: modify `/pages/admin/ships.tsx`, `/pages/admin/locations.tsx`, etc.
+- ✅ Add new components: create in `/components/` directory
+- ❌ NEVER create new pages like `ShipsManagement.tsx`, `ResortsManagement.tsx`
+- ❌ NO new route files, NO new page files in `/pages/` directory
+- 🔥 **CREATING NEW PAGES BREAKS APPLICATION ARCHITECTURE - UPDATE EXISTING PAGES ONLY**
+
 ## ⚡ Server Management
 **ALWAYS use `npm run dev` with `run_in_background: true` to start the development server. No custom restart scripts.**
 ```bash
@@ -62,6 +78,13 @@ VITE_API_URL=http://localhost:3001
 **Protected:** Headers, navigation, color scheme, landing/trip pages
 **Modifiable:** Card content, admin interface, data displays, mobile fixes
 
+**CRITICAL: ADMIN STYLE GUIDE**
+- **Reference**: `docs/admin-style-guide.md` - MANDATORY for ALL admin interface work
+- **Never create new admin pages** - only update existing ones
+- **Use exact LocationManagement.tsx pattern** for all admin pages
+- **ResponsiveAdminTable + ocean theme colors required**
+- **Compact modal layout** with 2-column grid structure
+
 ---
 
 ## 🤖 Agent Rules
@@ -101,6 +124,38 @@ npm run test:e2e        # E2E tests
 **Images:** Check bucket permissions, verify SUPABASE_URL
 **Auth:** Verify SUPABASE_ANON_KEY, check profiles table, enable cookies
 **Debug:** `npm run db:studio`, `npm run analyze`, `npm run lighthouse`
+
+---
+
+---
+
+## 🔄 Data Consistency Rule
+**CRITICAL: Always use API endpoints for data operations, never mix Supabase direct queries with API calls**
+
+**Problem:** Mixed data access patterns cause sync issues:
+- **Updates** via API (Drizzle ORM + snake_case)
+- **Fetches** via Supabase client (different field mapping + caching)
+
+**Solution:** Use API for both save AND fetch operations:
+```typescript
+// ❌ WRONG - Mixed approach causes data sync issues
+const updateProfile = () => api.put('/api/admin/profile', data);  // API
+const fetchProfile = () => supabase.from('profiles').select('*'); // Direct
+
+// ✅ CORRECT - Consistent API usage
+const updateProfile = () => api.put('/api/admin/profile', data);   // API
+const fetchProfile = () => fetch('/api/admin/profile');           // API
+```
+
+**Key Changes Made:**
+1. **Profile fetching**: `useSupabaseAuth.ts` now uses `/api/admin/profile`
+2. **User management**: `UserManagement/` components use `/api/auth/users`
+3. **Field mapping**: Consistent camelCase ↔ snake_case conversion
+
+**Exceptions:** Direct Supabase allowed for:
+- Auth operations (`supabase.auth.*`)
+- File storage (`supabase.storage.*`)
+- Internal authorization checks (authUtils.ts)
 
 ---
 

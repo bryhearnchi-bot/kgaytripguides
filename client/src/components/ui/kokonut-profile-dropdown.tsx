@@ -69,8 +69,8 @@ export default function KokonutProfileDropdown({
     // Add admin menu item if user is admin
     if (profile?.role === 'admin' || profile?.role === 'super_admin') {
         menuItems.push({
-            label: "Admin Dashboard",
-            href: "/admin",
+            label: "Admin Panel",
+            href: "/admin/trips",
             icon: <Shield className="w-4 h-4" />,
         });
     }

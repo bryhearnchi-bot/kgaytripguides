@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Anchor,
   Ship,
+  Building,
   MapPin,
   Users,
   Palette,
@@ -11,7 +12,8 @@ import {
   Settings,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Mail
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -28,6 +30,7 @@ const managementNav: NavItem[] = [
   // { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-4 w-4" /> }, // Temporarily hidden
   { label: 'Trips', path: '/admin/trips', icon: <Anchor className="h-4 w-4" /> },
   { label: 'Ships', path: '/admin/ships', icon: <Ship className="h-4 w-4" /> },
+  { label: 'Resorts', path: '/admin/resorts', icon: <Building className="h-4 w-4" /> },
   { label: 'Locations', path: '/admin/locations', icon: <MapPin className="h-4 w-4" /> },
   { label: 'Artists', path: '/admin/artists', icon: <Users className="h-4 w-4" /> },
   { label: 'Party Themes', path: '/admin/themes', icon: <Palette className="h-4 w-4" /> },
@@ -36,6 +39,7 @@ const managementNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { label: 'Users', path: '/admin/users', icon: <Users className="h-4 w-4" /> },
+  { label: 'Invitations', path: '/admin/invitations', icon: <Mail className="h-4 w-4" /> },
   { label: 'Settings', path: '/admin/settings', icon: <Settings className="h-4 w-4" /> },
   { label: 'Profile', path: '/admin/profile', icon: <Shield className="h-4 w-4" /> },
 ];
@@ -55,9 +59,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     const routeMap: Record<string, string> = {
       '/profile': '/admin/profile',
       '/settings': '/admin/settings',
-      '/notifications': '/admin',
+      '/notifications': '/admin/trips',
       '/help': '/docs',
-      '/admin-dashboard': '/admin'
+      '/admin-dashboard': '/admin/trips',
+      '/admin': '/admin/trips'
     };
 
     const target = routeMap[path] || path;
@@ -119,11 +124,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
     const baseClasses =
       variant === 'desktop'
-        ? `flex w-full items-center gap-3 rounded-full border px-4 py-2 text-sm transition min-h-[44px] touch-manipulation ${
+        ? `flex w-full items-center gap-2.5 rounded-full border px-3 py-1.5 text-xs transition min-h-[36px] touch-manipulation ${
             isActiveNav
               ? 'border-white/20 bg-white/15 text-white shadow-lg shadow-blue-900/20'
               : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-          } ${collapsed ? 'justify-center px-0 min-w-[44px]' : ''}`
+          } ${collapsed ? 'justify-center px-0 w-10 h-10 rounded-full' : ''}`
         : `flex w-full items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15 ${
             isActiveNav ? 'text-white' : 'text-white/80'
           }`;
@@ -152,22 +157,29 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="flex min-h-screen bg-[#0b1222] text-white">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex lg:flex-col lg:bg-[#10192f] lg:py-8 lg:backdrop-blur-lg lg:transition-all lg:duration-300 ${
-          sidebarCollapsed ? 'lg:w-20' : 'lg:w-64 xl:w-72'
+        className={`hidden lg:flex lg:flex-col lg:bg-[#10192f] lg:py-6 lg:backdrop-blur-lg lg:transition-all lg:duration-300 ${
+          sidebarCollapsed ? 'lg:w-16' : 'lg:w-48 xl:w-56'
         }`}
       >
-        <div className={sidebarCollapsed ? 'px-2' : 'px-6'}>
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="mb-6 flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 py-2 text-xs text-white/60 hover:bg-white/10 min-h-[40px] touch-manipulation"
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            {!sidebarCollapsed && <span className="ml-2">Collapse</span>}
-          </button>
+        <div className={sidebarCollapsed ? 'px-2' : 'px-4'}>
+          <div className={`mb-5 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+            {!sidebarCollapsed && (
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-white/60" />
+                <h2 className="text-sm font-semibold text-white/70">Admin Panel</h2>
+              </div>
+            )}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 transition-colors"
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </div>
 
-        <div className={`space-y-6 ${sidebarCollapsed ? 'px-2' : 'px-6'} overflow-y-auto`}
+        <div className={`space-y-5 ${sidebarCollapsed ? 'px-2' : 'px-4'} overflow-y-auto`}
              aria-label="Admin navigation">
           {navSections.map((section) => (
             <div key={section.title}>

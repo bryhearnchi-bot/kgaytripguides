@@ -14,6 +14,7 @@ import LandingPage from "@/pages/landing";
 import TripPage from "@/pages/trip";
 import ShipsManagement from "@/pages/admin/ships";
 import LocationsManagement from "@/pages/admin/locations";
+import ResortsManagement from "@/pages/admin/resorts";
 import ArtistsManagement from "@/pages/admin/artists";
 import ThemesManagement from "@/pages/admin/themes";
 import TripInfoSectionsManagement from "@/pages/admin/trip-info-sections";
@@ -23,6 +24,7 @@ import AdminProfile from "@/pages/admin/profile";
 import TripWizard from "@/pages/admin/trip-wizard";
 import TripDetail from "@/pages/admin/trip-detail";
 import TripsManagement from "@/pages/admin/trips-management";
+import InvitationsManagement from "@/pages/admin/invitations";
 import NotFound from "@/pages/not-found";
 import ImageTest from "@/pages/image-test";
 import { AuthCallback } from "@/pages/auth/AuthCallback";
@@ -39,14 +41,16 @@ function Router() {
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/setup-account/:token" component={AccountSetup} />
       <Route path="/profile" component={() => <Redirect to="/admin/profile" />} />
-      <Route path="/admin" component={() => <ProtectedRoute><AdminLayout><AdminDashboardContent /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/dashboard" component={() => <ProtectedRoute><AdminLayout><AdminDashboardContent /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin" component={() => <Redirect to="/admin/trips" />} />
+      <Route path="/admin/dashboard" component={() => <Redirect to="/admin/trips" />} />
       <Route path="/admin/ships" component={() => <ProtectedRoute><AdminLayout><ShipsManagement /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/resorts" component={() => <ProtectedRoute><AdminLayout><ResortsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/locations" component={() => <ProtectedRoute><AdminLayout><LocationsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/artists" component={() => <ProtectedRoute><AdminLayout><ArtistsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/themes" component={() => <ProtectedRoute><AdminLayout><ThemesManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/trip-info-sections" component={() => <ProtectedRoute><AdminLayout><TripInfoSectionsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/users" component={() => <ProtectedRoute><AdminLayout><UsersManagement /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/invitations" component={() => <ProtectedRoute><AdminLayout><InvitationsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/settings" component={() => <ProtectedRoute><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/profile" component={() => <ProtectedRoute><AdminLayout><AdminProfile /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/trips" component={() => <ProtectedRoute><AdminLayout><TripsManagement /></AdminLayout></ProtectedRoute>} />

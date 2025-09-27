@@ -260,26 +260,13 @@ export default function UsersManagement() {
       <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white">User Management</h1>
+            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
+              <Users className="h-6 w-6" />
+              User Management
+            </h1>
             <p className="text-sm text-white/60">Manage user accounts across Atlantis sailings.</p>
           </div>
-          {canManageUsers && (
-            <Button
-              onClick={() => {
-                setEditingUser(null);
-                resetForm();
-                handleModalOpenChange(true);
-              }}
-              className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:from-[#38e0f6] hover:to-[#3b82f6] min-h-[44px] touch-manipulation"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          )}
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="relative flex-1">
+          <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               placeholder="Search users by name, email, or role"
@@ -287,17 +274,6 @@ export default function UsersManagement() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs text-white/60">
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
-              Active
-            </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
-              Role
-            </Button>
-            <Button variant="ghost" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 min-h-[36px] touch-manipulation">
-              Status
-            </Button>
           </div>
         </div>
       </section>
@@ -308,6 +284,19 @@ export default function UsersManagement() {
             <h2 className="text-lg font-semibold text-white">All Users ({filteredUsers.length})</h2>
             <p className="text-xs uppercase tracking-[0.3em] text-white/40">Account management</p>
           </div>
+          {canManageUsers && (
+            <Button
+              onClick={() => {
+                setEditingUser(null);
+                resetForm();
+                handleModalOpenChange(true);
+              }}
+              className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Add User
+            </Button>
+          )}
         </header>
 
         {!canManageUsers ? (
@@ -341,7 +330,7 @@ export default function UsersManagement() {
                   resetForm();
                   setShowAddModal(true);
                 }}
-                className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white min-h-[44px] touch-manipulation"
+                className="rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm text-white transition-colors min-h-[44px] touch-manipulation"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create First User
@@ -430,6 +419,7 @@ export default function UsersManagement() {
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingUser ? 'Edit User' : 'Add New User'}
+        icon={<Users className="h-5 w-5" />}
         description="Enter the user information below"
         onSubmit={handleSubmit}
         primaryAction={{

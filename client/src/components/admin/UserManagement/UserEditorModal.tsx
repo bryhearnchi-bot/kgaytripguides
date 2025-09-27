@@ -118,45 +118,41 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
 
   const createUser = useMutation({
     mutationFn: async (data: UserFormData) => {
-      // Step 1: Create auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: data.email,
-        password: data.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: data.full_name,
+      // Use our API endpoint which handles both auth user creation and profile setup
+      const response = await fetch('/api/auth/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
-      });
-
-      if (authError) throw authError;
-
-      // Step 2: Update profile with additional data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: data.full_name,
-          phone_number: data.phone_number,
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          fullName: data.full_name,
+          phoneNumber: data.phone_number,
           role: data.role,
-          account_status: data.account_status,
+          accountStatus: data.account_status,
           bio: data.bio,
           location: {
             city: data.city,
             state: data.state,
             country: data.country,
           },
-          communication_preferences: {
+          communicationPreferences: {
             email: data.email_updates,
             sms: data.text_messages,
           },
-          trip_updates_opt_in: data.cruise_notifications,
-          marketing_emails: data.marketing_emails,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', authData.user!.id);
+          tripUpdatesOptIn: data.cruise_notifications,
+          marketingEmails: data.marketing_emails,
+        }),
+      });
 
-      if (profileError) throw profileError;
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Failed to create user: ${error}`);
+      }
 
-      return authData.user;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });

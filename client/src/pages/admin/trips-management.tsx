@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format } from "date-fns";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -58,6 +59,7 @@ import {
   Loader2,
   MapPin,
   Plus,
+  Search,
   Ship,
   Star,
   Trash2,
@@ -333,7 +335,7 @@ export default function TripsManagement() {
       {!isFiltered && canCreateOrEditTrips && (
         <Button
           onClick={() => navigate("/admin/trips/new")}
-          className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
+          className="rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create voyage
@@ -367,55 +369,72 @@ export default function TripsManagement() {
       <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">
-              Voyage Control
-            </p>
-            <h1 className="text-2xl font-semibold text-white">Sailings & Trips</h1>
+            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
+              <Anchor className="h-6 w-6" />
+              Sailings & Trips
+            </h1>
             <p className="text-sm text-white/60">
               Monitor upcoming departures, live sailings, and archived voyages in one place.
             </p>
           </div>
-          {canCreateOrEditTrips && (
-            <Button
-              onClick={() => navigate("/admin/trips/new")}
-              className="self-start rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Trip
-            </Button>
-          )}
+          <div className="relative w-full md:max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search voyages by name, ship, or cruise line"
+              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70 focus:ring-0"
+            />
+          </div>
         </div>
       </section>
 
 
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        placeholder="Search voyages by name, ship, or cruise line"
-        filters={statusFilters}
-        activeFilter={statusFilter}
-        onFilterChange={(value) => setStatusFilter(value as StatusFilter)}
-      >
-        <Select value={yearFilter} onValueChange={setYearFilter}>
-          <SelectTrigger className="h-11 w-full rounded-full border-white/10 bg-white/10 text-left text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0 md:w-48">
-            <SelectValue placeholder="All years" />
-          </SelectTrigger>
-          <SelectContent className="border-white/10 bg-[#10192f] text-white">
-            <SelectItem value="all" className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white">
-              All years
-            </SelectItem>
-            {availableYears.map((year) => (
-              <SelectItem
-                key={year}
-                value={year.toString()}
-                className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-blue-900/20 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-2">
+          {statusFilters.map((filter) => {
+            const isActive = statusFilter === filter.value;
+            return (
+              <button
+                key={filter.value}
+                onClick={() => setStatusFilter(filter.value as StatusFilter)}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition ${
+                  isActive
+                    ? "border-white/20 bg-gradient-to-r from-[#22d3ee]/90 to-[#2563eb]/80 text-white shadow-lg shadow-blue-900/30"
+                    : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white"
+                }`}
+                type="button"
               >
-                {year}
+                <span>{filter.label}</span>
+                {typeof filter.count === "number" && (
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] leading-none text-white/70">
+                    {filter.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="h-11 w-full rounded-full border-white/10 bg-white/10 text-left text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0 md:w-48">
+              <SelectValue placeholder="All years" />
+            </SelectTrigger>
+            <SelectContent className="border-white/10 bg-[#10192f] text-white">
+              <SelectItem value="all" className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white">
+                All years
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
+              {availableYears.map((year) => (
+                <SelectItem
+                  key={year}
+                  value={year.toString()}
+                  className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
+                >
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </section>
 
       <AdminTable
         title="Voyage Manifest"
@@ -424,6 +443,17 @@ export default function TripsManagement() {
         empty={showEmpty || showError}
         emptyState={tableEmptyState}
         footer={tableFooter}
+        actions={
+          canCreateOrEditTrips && (
+            <Button
+              onClick={() => navigate("/admin/trips/new")}
+              className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              New Trip
+            </Button>
+          )
+        }
       >
         {!showEmpty && !showError && (
           <>
@@ -708,7 +738,7 @@ export default function TripsManagement() {
                       closeQuickView();
                       navigate(`/admin/trips/${selectedTrip.id}`);
                     }}
-                    className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6]"
+                    className="rounded-full bg-blue-600 hover:bg-blue-700 px-5 py-2 text-sm font-semibold text-white transition-colors"
                   >
                     <Edit className="mr-2 h-4 w-4" />
                     Edit trip
@@ -835,7 +865,7 @@ export default function TripsManagement() {
                 <Button
                   onClick={() => exportTripData.mutate(selectedTrip.id)}
                   disabled={exportTripData.isPending}
-                  className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white hover:from-[#38e0f6] hover:to-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-blue-600 hover:bg-blue-700 px-5 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   Export report

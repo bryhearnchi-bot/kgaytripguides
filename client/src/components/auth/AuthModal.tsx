@@ -20,7 +20,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
       if (event === 'SIGNED_IN' && session) {
         // User just signed in - wait a moment for auth context to update, then redirect
         setTimeout(() => {
-          navigate('/admin/dashboard');
+          navigate('/admin/trips');
         }, 100);
       }
     });

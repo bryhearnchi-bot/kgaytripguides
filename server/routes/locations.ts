@@ -644,4 +644,1242 @@ export function registerLocationRoutes(app: Express) {
     }
   });
 
+  // ============ AMENITIES ENDPOINTS ============
+
+  // Get amenities statistics
+  app.get("/api/amenities/stats", async (req, res) => {
+    try {
+      const stats = await db.select({
+        total: count()
+      }).from(schema.amenities);
+
+      res.json(stats[0] || { total: 0 });
+    } catch (error) {
+      console.error('Error fetching amenities stats:', error);
+      res.status(500).json({ error: 'Failed to fetch amenities statistics' });
+    }
+  });
+
+  // List all amenities
+  app.get("/api/amenities", async (req, res) => {
+    try {
+      const {
+        search = '',
+        limit = '100',
+        offset = '0'
+      } = req.query;
+
+      let query = db.select().from(schema.amenities);
+
+      // Apply filters
+      const conditions = [];
+      if (search) {
+        conditions.push(
+          or(
+            ilike(schema.amenities.name, `%${search}%`),
+            ilike(schema.amenities.description, `%${search}%`)
+          )
+        );
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+      }
+
+      // Apply pagination
+      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+
+      const results = await query;
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((amenity: any) => ({
+        id: amenity.id,
+        name: amenity.name,
+        description: amenity.description,
+        createdAt: amenity.created_at,
+        updatedAt: amenity.updated_at
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching amenities:', error);
+      res.status(500).json({ error: 'Failed to fetch amenities' });
+    }
+  });
+
+  // Get amenity by ID
+  app.get("/api/amenities/:id", async (req, res) => {
+    try {
+      const [amenity] = await db.select()
+        .from(schema.amenities)
+        .where(eq(schema.amenities.id, Number(req.params.id)))
+        .limit(1);
+
+      if (!amenity) {
+        return res.status(404).json({ error: "Amenity not found" });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedAmenity = {
+        id: amenity.id,
+        name: amenity.name,
+        description: amenity.description,
+        createdAt: amenity.created_at,
+        updatedAt: amenity.updated_at
+      };
+
+      res.json(transformedAmenity);
+    } catch (error) {
+      console.error('Error fetching amenity:', error);
+      res.status(500).json({ error: 'Failed to fetch amenity' });
+    }
+  });
+
+  // Create amenity
+  app.post("/api/amenities", requireContentEditor, auditLogger('admin.amenity.create'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Validate required fields
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+
+      // Prepare amenity data with proper field names for database
+      const amenityData = {
+        name: req.body.name,
+        description: req.body.description || null
+      };
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: amenity, error } = await supabaseAdmin
+        .from('amenities')
+        .insert(amenityData)
+        .select()
+        .single();
+
+      if (error) {
+        handleSupabaseError(error, 'create amenity');
+      }
+
+      if (!amenity) {
+        return res.status(500).json({ error: 'Failed to create amenity' });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedAmenity = {
+        id: amenity.id,
+        name: amenity.name,
+        description: amenity.description,
+        createdAt: amenity.created_at,
+        updatedAt: amenity.updated_at
+      };
+
+      res.json(transformedAmenity);
+    } catch (error: any) {
+      console.error('Error creating amenity:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to create amenity',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Update amenity
+  app.put("/api/amenities/:id", requireContentEditor, validateParams(idParamSchema as any), auditLogger('admin.amenity.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Build update data dynamically
+      const updateData: any = {};
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+
+      // Always update the updated_at timestamp
+      updateData.updated_at = new Date().toISOString();
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: amenity, error } = await supabaseAdmin
+        .from('amenities')
+        .update(updateData)
+        .eq('id', Number(req.params.id))
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Amenity not found" });
+        }
+        handleSupabaseError(error, 'update amenity');
+      }
+
+      if (!amenity) {
+        return res.status(404).json({ error: "Amenity not found" });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedAmenity = {
+        id: amenity.id,
+        name: amenity.name,
+        description: amenity.description,
+        createdAt: amenity.created_at,
+        updatedAt: amenity.updated_at
+      };
+
+      res.json(transformedAmenity);
+    } catch (error: any) {
+      console.error('Error updating amenity:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update amenity',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Delete amenity
+  app.delete("/api/amenities/:id", requireContentEditor, auditLogger('admin.amenity.delete'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('amenities')
+        .delete()
+        .eq('id', Number(req.params.id));
+
+      if (error) {
+        handleSupabaseError(error, 'delete amenity');
+      }
+
+      res.json({ message: "Amenity deleted" });
+    } catch (error: any) {
+      console.error('Error deleting amenity:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to delete amenity',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ============ VENUE TYPES ENDPOINTS ============
+
+  // List all venue types (reference data)
+  app.get("/api/venue-types", async (req, res) => {
+    try {
+      const results = await db.select().from(schema.venueTypes);
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((venueType: any) => ({
+        id: venueType.id,
+        name: venueType.name,
+        createdAt: venueType.created_at,
+        updatedAt: venueType.updated_at
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching venue types:', error);
+      res.status(500).json({ error: 'Failed to fetch venue types' });
+    }
+  });
+
+  // ============ VENUES ENDPOINTS ============
+
+  // Get venues statistics
+  app.get("/api/venues/stats", async (req, res) => {
+    try {
+      const totalResult = await db.select({ total: count() }).from(schema.venues);
+      const total = totalResult[0]?.total || 0;
+
+      const typeStats = await db.select({
+        venue_type_name: schema.venueTypes.name,
+        type_count: count()
+      })
+      .from(schema.venues)
+      .leftJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
+      .groupBy(schema.venueTypes.name);
+
+      const byType = Object.fromEntries(
+        typeStats.map(stat => [stat.venue_type_name, stat.type_count])
+      );
+
+      const stats = { total, byType };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching venues stats:', error);
+      res.status(500).json({ error: 'Failed to fetch venues statistics' });
+    }
+  });
+
+  // List all venues
+  app.get("/api/venues", async (req, res) => {
+    try {
+      const {
+        search = '',
+        venueTypeId,
+        limit = '100',
+        offset = '0'
+      } = req.query;
+
+      // Join with venue types to get venue type name
+      let query = db.select({
+        id: schema.venues.id,
+        name: schema.venues.name,
+        venue_type_id: schema.venues.venueTypeId,
+        venue_type_name: schema.venueTypes.name,
+        description: schema.venues.description,
+        created_at: schema.venues.createdAt,
+        updated_at: schema.venues.updatedAt
+      }).from(schema.venues)
+        .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id));
+
+      // Apply filters
+      const conditions = [];
+      if (search) {
+        conditions.push(
+          or(
+            ilike(schema.venues.name, `%${search}%`),
+            ilike(schema.venues.description, `%${search}%`),
+            ilike(schema.venueTypes.name, `%${search}%`)
+          )
+        );
+      }
+      if (venueTypeId) {
+        conditions.push(eq(schema.venues.venueTypeId, Number(venueTypeId)));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+      }
+
+      // Apply pagination
+      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+
+      const results = await query;
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((venue: any) => ({
+        id: venue.id,
+        name: venue.name,
+        venueTypeId: venue.venue_type_id,
+        venueTypeName: venue.venue_type_name,
+        description: venue.description,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+      res.status(500).json({ error: 'Failed to fetch venues' });
+    }
+  });
+
+  // Get venue by ID
+  app.get("/api/venues/:id", async (req, res) => {
+    try {
+      const results = await db.select({
+        id: schema.venues.id,
+        name: schema.venues.name,
+        venue_type_id: schema.venues.venueTypeId,
+        venue_type_name: schema.venueTypes.name,
+        description: schema.venues.description,
+        created_at: schema.venues.createdAt,
+        updated_at: schema.venues.updatedAt
+      }).from(schema.venues)
+        .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
+        .where(eq(schema.venues.id, Number(req.params.id)))
+        .limit(1);
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Venue not found" });
+      }
+
+      const venue = results[0];
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedVenue = {
+        id: venue.id,
+        name: venue.name,
+        venueTypeId: venue.venue_type_id,
+        venueTypeName: venue.venue_type_name,
+        description: venue.description,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at
+      };
+
+      res.json(transformedVenue);
+    } catch (error) {
+      console.error('Error fetching venue:', error);
+      res.status(500).json({ error: 'Failed to fetch venue' });
+    }
+  });
+
+  // Create venue
+  app.post("/api/venues", requireContentEditor, auditLogger('admin.venue.create'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Validate required fields
+      const { name, venueTypeId } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+      if (!venueTypeId) {
+        return res.status(400).json({ error: 'Venue type ID is required' });
+      }
+
+      // Prepare venue data with proper field names for database
+      const venueData = {
+        name: req.body.name,
+        venue_type_id: req.body.venueTypeId,
+        description: req.body.description || null
+      };
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: venue, error } = await supabaseAdmin
+        .from('venues')
+        .insert(venueData)
+        .select(`
+          id,
+          name,
+          venue_type_id,
+          description,
+          created_at,
+          updated_at,
+          venue_types!inner(name)
+        `)
+        .single();
+
+      if (error) {
+        handleSupabaseError(error, 'create venue');
+      }
+
+      if (!venue) {
+        return res.status(500).json({ error: 'Failed to create venue' });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedVenue = {
+        id: venue.id,
+        name: venue.name,
+        venueTypeId: venue.venue_type_id,
+        venueTypeName: venue.venue_types?.name,
+        description: venue.description,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at
+      };
+
+      res.json(transformedVenue);
+    } catch (error: any) {
+      console.error('Error creating venue:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to create venue',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Update venue
+  app.put("/api/venues/:id", requireContentEditor, validateParams(idParamSchema as any), auditLogger('admin.venue.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Build update data dynamically
+      const updateData: any = {};
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.venueTypeId !== undefined) updateData.venue_type_id = req.body.venueTypeId;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+
+      // Always update the updated_at timestamp
+      updateData.updated_at = new Date().toISOString();
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: venue, error } = await supabaseAdmin
+        .from('venues')
+        .update(updateData)
+        .eq('id', Number(req.params.id))
+        .select(`
+          id,
+          name,
+          venue_type_id,
+          description,
+          created_at,
+          updated_at,
+          venue_types!inner(name)
+        `)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Venue not found" });
+        }
+        handleSupabaseError(error, 'update venue');
+      }
+
+      if (!venue) {
+        return res.status(404).json({ error: "Venue not found" });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedVenue = {
+        id: venue.id,
+        name: venue.name,
+        venueTypeId: venue.venue_type_id,
+        venueTypeName: venue.venue_types?.name,
+        description: venue.description,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at
+      };
+
+      res.json(transformedVenue);
+    } catch (error: any) {
+      console.error('Error updating venue:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update venue',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Delete venue
+  app.delete("/api/venues/:id", requireContentEditor, auditLogger('admin.venue.delete'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('venues')
+        .delete()
+        .eq('id', Number(req.params.id));
+
+      if (error) {
+        handleSupabaseError(error, 'delete venue');
+      }
+
+      res.json({ message: "Venue deleted" });
+    } catch (error: any) {
+      console.error('Error deleting venue:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to delete venue',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ============ RESORTS ENDPOINTS ============
+
+  // Get resort statistics
+  app.get("/api/resorts/stats", async (req, res) => {
+    try {
+      const stats = await db.select({
+        total: count(),
+        totalCapacity: sql<number>`SUM(capacity)`,
+        avgCapacity: sql<number>`AVG(capacity)`
+      }).from(schema.resorts);
+
+      res.json(stats[0] || { total: 0, totalCapacity: 0, avgCapacity: 0 });
+    } catch (error) {
+      console.error('Error fetching resort stats:', error);
+      res.status(500).json({ error: 'Failed to fetch resort statistics' });
+    }
+  });
+
+  // List all resorts
+  app.get("/api/resorts", async (req, res) => {
+    try {
+      const {
+        search = '',
+        location,
+        limit = '100',
+        offset = '0'
+      } = req.query;
+
+      let query = db.select().from(schema.resorts);
+
+      // Apply filters
+      const conditions = [];
+      if (search) {
+        conditions.push(
+          or(
+            ilike(schema.resorts.name, `%${search}%`),
+            ilike(schema.resorts.location, `%${search}%`),
+            ilike(schema.resorts.description, `%${search}%`)
+          )
+        );
+      }
+      if (location) {
+        conditions.push(eq(schema.resorts.location, location as string));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+      }
+
+      // Apply pagination
+      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+
+      const results = await query;
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((resort: any) => ({
+        id: resort.id,
+        name: resort.name,
+        location: resort.location,
+        capacity: resort.capacity,
+        roomCount: resort.room_count,
+        imageUrl: resort.image_url,
+        description: resort.description,
+        propertyMapUrl: resort.property_map_url,
+        checkInTime: resort.check_in_time,
+        checkOutTime: resort.check_out_time,
+        createdAt: resort.created_at,
+        updatedAt: resort.updated_at
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching resorts:', error);
+      res.status(500).json({ error: 'Failed to fetch resorts' });
+    }
+  });
+
+  // Get resort by ID
+  app.get("/api/resorts/:id", async (req, res) => {
+    try {
+      const [resort] = await db.select()
+        .from(schema.resorts)
+        .where(eq(schema.resorts.id, Number(req.params.id)))
+        .limit(1);
+
+      if (!resort) {
+        return res.status(404).json({ error: "Resort not found" });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResort = {
+        id: resort.id,
+        name: resort.name,
+        location: resort.location,
+        capacity: resort.capacity,
+        roomCount: resort.room_count,
+        imageUrl: resort.image_url,
+        description: resort.description,
+        propertyMapUrl: resort.property_map_url,
+        checkInTime: resort.check_in_time,
+        checkOutTime: resort.check_out_time,
+        createdAt: resort.created_at,
+        updatedAt: resort.updated_at
+      };
+
+      res.json(transformedResort);
+    } catch (error) {
+      console.error('Error fetching resort:', error);
+      res.status(500).json({ error: 'Failed to fetch resort' });
+    }
+  });
+
+  // Create resort
+  app.post("/api/resorts", requireContentEditor, auditLogger('admin.resort.create'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Validate required fields
+      const { name, location } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+      if (!location) {
+        return res.status(400).json({ error: 'Location is required' });
+      }
+
+      // Prepare resort data with proper field names for database
+      const resortData = {
+        name: req.body.name,
+        location: req.body.location,
+        capacity: req.body.capacity || null,
+        room_count: req.body.roomCount || req.body.room_count || null,
+        image_url: req.body.imageUrl || req.body.image_url || null,
+        description: req.body.description || null,
+        property_map_url: req.body.propertyMapUrl || req.body.property_map_url || null,
+        check_in_time: req.body.checkInTime || req.body.check_in_time || null,
+        check_out_time: req.body.checkOutTime || req.body.check_out_time || null
+      };
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: resort, error } = await supabaseAdmin
+        .from('resorts')
+        .insert(resortData)
+        .select()
+        .single();
+
+      if (error) {
+        handleSupabaseError(error, 'create resort');
+      }
+
+      if (!resort) {
+        return res.status(500).json({ error: 'Failed to create resort' });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResort = {
+        id: resort.id,
+        name: resort.name,
+        location: resort.location,
+        capacity: resort.capacity,
+        roomCount: resort.room_count,
+        imageUrl: resort.image_url,
+        description: resort.description,
+        propertyMapUrl: resort.property_map_url,
+        checkInTime: resort.check_in_time,
+        checkOutTime: resort.check_out_time,
+        createdAt: resort.created_at,
+        updatedAt: resort.updated_at
+      };
+
+      res.json(transformedResort);
+    } catch (error: any) {
+      console.error('Error creating resort:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to create resort',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Update resort
+  app.put("/api/resorts/:id", requireContentEditor, validateParams(idParamSchema as any), auditLogger('admin.resort.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Build update data dynamically
+      const updateData: any = {};
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.location !== undefined) updateData.location = req.body.location;
+      if (req.body.capacity !== undefined) updateData.capacity = req.body.capacity;
+      if (req.body.roomCount !== undefined || req.body.room_count !== undefined) {
+        updateData.room_count = req.body.roomCount || req.body.room_count;
+      }
+      if (req.body.imageUrl !== undefined || req.body.image_url !== undefined) {
+        updateData.image_url = req.body.imageUrl || req.body.image_url;
+      }
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.propertyMapUrl !== undefined || req.body.property_map_url !== undefined) {
+        updateData.property_map_url = req.body.propertyMapUrl || req.body.property_map_url;
+      }
+      if (req.body.checkInTime !== undefined || req.body.check_in_time !== undefined) {
+        updateData.check_in_time = req.body.checkInTime || req.body.check_in_time;
+      }
+      if (req.body.checkOutTime !== undefined || req.body.check_out_time !== undefined) {
+        updateData.check_out_time = req.body.checkOutTime || req.body.check_out_time;
+      }
+
+      // Always update the updated_at timestamp
+      updateData.updated_at = new Date().toISOString();
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: resort, error } = await supabaseAdmin
+        .from('resorts')
+        .update(updateData)
+        .eq('id', Number(req.params.id))
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Resort not found" });
+        }
+        handleSupabaseError(error, 'update resort');
+      }
+
+      if (!resort) {
+        return res.status(404).json({ error: "Resort not found" });
+      }
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResort = {
+        id: resort.id,
+        name: resort.name,
+        location: resort.location,
+        capacity: resort.capacity,
+        roomCount: resort.room_count,
+        imageUrl: resort.image_url,
+        description: resort.description,
+        propertyMapUrl: resort.property_map_url,
+        checkInTime: resort.check_in_time,
+        checkOutTime: resort.check_out_time,
+        createdAt: resort.created_at,
+        updatedAt: resort.updated_at
+      };
+
+      res.json(transformedResort);
+    } catch (error: any) {
+      console.error('Error updating resort:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update resort',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Delete resort
+  app.delete("/api/resorts/:id", requireContentEditor, auditLogger('admin.resort.delete'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      // Use Supabase Admin client to bypass RLS
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('resorts')
+        .delete()
+        .eq('id', Number(req.params.id));
+
+      if (error) {
+        handleSupabaseError(error, 'delete resort');
+      }
+
+      res.json({ message: "Resort deleted" });
+    } catch (error: any) {
+      console.error('Error deleting resort:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to delete resort',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ============ SHIPS RELATIONSHIP ENDPOINTS ============
+
+  // Get ship's amenities
+  app.get("/api/ships/:id/amenities", async (req, res) => {
+    try {
+      const shipId = Number(req.params.id);
+
+      // Join ship_amenities with amenities to get full amenity details
+      const results = await db.select({
+        id: schema.amenities.id,
+        name: schema.amenities.name,
+        description: schema.amenities.description,
+        createdAt: schema.amenities.createdAt,
+        updatedAt: schema.amenities.updatedAt
+      })
+      .from(schema.shipAmenities)
+      .innerJoin(schema.amenities, eq(schema.shipAmenities.amenityId, schema.amenities.id))
+      .where(eq(schema.shipAmenities.shipId, shipId));
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((amenity: any) => ({
+        id: amenity.id,
+        name: amenity.name,
+        description: amenity.description,
+        createdAt: amenity.createdAt,
+        updatedAt: amenity.updatedAt
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching ship amenities:', error);
+      res.status(500).json({ error: 'Failed to fetch ship amenities' });
+    }
+  });
+
+  // Update ship's amenities
+  app.put("/api/ships/:id/amenities", requireContentEditor, auditLogger('admin.ship.amenities.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      const shipId = Number(req.params.id);
+      const { amenityIds = [] } = req.body;
+
+      if (!Array.isArray(amenityIds)) {
+        return res.status(400).json({ error: 'amenityIds must be an array' });
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // First, remove all existing amenities for this ship
+      const { error: deleteError } = await supabaseAdmin
+        .from('ship_amenities')
+        .delete()
+        .eq('ship_id', shipId);
+
+      if (deleteError) {
+        handleSupabaseError(deleteError, 'remove ship amenities');
+      }
+
+      // Then, add the new amenities
+      if (amenityIds.length > 0) {
+        const insertData = amenityIds.map((amenityId: number) => ({
+          ship_id: shipId,
+          amenity_id: amenityId
+        }));
+
+        const { error: insertError } = await supabaseAdmin
+          .from('ship_amenities')
+          .insert(insertData);
+
+        if (insertError) {
+          handleSupabaseError(insertError, 'add ship amenities');
+        }
+      }
+
+      res.json({ message: "Ship amenities updated successfully" });
+    } catch (error: any) {
+      console.error('Error updating ship amenities:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update ship amenities',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Get ship's venues
+  app.get("/api/ships/:id/venues", async (req, res) => {
+    try {
+      const shipId = Number(req.params.id);
+
+      // Join ship_venues with venues and venue_types to get full venue details
+      const results = await db.select({
+        id: schema.venues.id,
+        name: schema.venues.name,
+        venue_type_id: schema.venues.venueTypeId,
+        venue_type_name: schema.venueTypes.name,
+        description: schema.venues.description,
+        created_at: schema.venues.createdAt,
+        updated_at: schema.venues.updatedAt
+      })
+      .from(schema.shipVenues)
+      .innerJoin(schema.venues, eq(schema.shipVenues.venueId, schema.venues.id))
+      .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
+      .where(eq(schema.shipVenues.shipId, shipId));
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((venue: any) => ({
+        id: venue.id,
+        name: venue.name,
+        venueTypeId: venue.venue_type_id,
+        venueTypeName: venue.venue_type_name,
+        description: venue.description,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching ship venues:', error);
+      res.status(500).json({ error: 'Failed to fetch ship venues' });
+    }
+  });
+
+  // Update ship's venues
+  app.put("/api/ships/:id/venues", requireContentEditor, auditLogger('admin.ship.venues.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      const shipId = Number(req.params.id);
+      const { venueIds = [] } = req.body;
+
+      if (!Array.isArray(venueIds)) {
+        return res.status(400).json({ error: 'venueIds must be an array' });
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // First, remove all existing venues for this ship
+      const { error: deleteError } = await supabaseAdmin
+        .from('ship_venues')
+        .delete()
+        .eq('ship_id', shipId);
+
+      if (deleteError) {
+        handleSupabaseError(deleteError, 'remove ship venues');
+      }
+
+      // Then, add the new venues
+      if (venueIds.length > 0) {
+        const insertData = venueIds.map((venueId: number) => ({
+          ship_id: shipId,
+          venue_id: venueId
+        }));
+
+        const { error: insertError } = await supabaseAdmin
+          .from('ship_venues')
+          .insert(insertData);
+
+        if (insertError) {
+          handleSupabaseError(insertError, 'add ship venues');
+        }
+      }
+
+      res.json({ message: "Ship venues updated successfully" });
+    } catch (error: any) {
+      console.error('Error updating ship venues:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update ship venues',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ============ RESORTS RELATIONSHIP ENDPOINTS ============
+
+  // Get resort's amenities
+  app.get("/api/resorts/:id/amenities", async (req, res) => {
+    try {
+      const resortId = Number(req.params.id);
+
+      // Join resort_amenities with amenities to get full amenity details
+      const results = await db.select({
+        id: schema.amenities.id,
+        name: schema.amenities.name,
+        description: schema.amenities.description,
+        createdAt: schema.amenities.createdAt,
+        updatedAt: schema.amenities.updatedAt
+      })
+      .from(schema.resortAmenities)
+      .innerJoin(schema.amenities, eq(schema.resortAmenities.amenityId, schema.amenities.id))
+      .where(eq(schema.resortAmenities.resortId, resortId));
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((amenity: any) => ({
+        id: amenity.id,
+        name: amenity.name,
+        description: amenity.description,
+        createdAt: amenity.createdAt,
+        updatedAt: amenity.updatedAt
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching resort amenities:', error);
+      res.status(500).json({ error: 'Failed to fetch resort amenities' });
+    }
+  });
+
+  // Update resort's amenities
+  app.put("/api/resorts/:id/amenities", requireContentEditor, auditLogger('admin.resort.amenities.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      const resortId = Number(req.params.id);
+      const { amenityIds = [] } = req.body;
+
+      if (!Array.isArray(amenityIds)) {
+        return res.status(400).json({ error: 'amenityIds must be an array' });
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // First, remove all existing amenities for this resort
+      const { error: deleteError } = await supabaseAdmin
+        .from('resort_amenities')
+        .delete()
+        .eq('resort_id', resortId);
+
+      if (deleteError) {
+        handleSupabaseError(deleteError, 'remove resort amenities');
+      }
+
+      // Then, add the new amenities
+      if (amenityIds.length > 0) {
+        const insertData = amenityIds.map((amenityId: number) => ({
+          resort_id: resortId,
+          amenity_id: amenityId
+        }));
+
+        const { error: insertError } = await supabaseAdmin
+          .from('resort_amenities')
+          .insert(insertData);
+
+        if (insertError) {
+          handleSupabaseError(insertError, 'add resort amenities');
+        }
+      }
+
+      res.json({ message: "Resort amenities updated successfully" });
+    } catch (error: any) {
+      console.error('Error updating resort amenities:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update resort amenities',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // Get resort's venues
+  app.get("/api/resorts/:id/venues", async (req, res) => {
+    try {
+      const resortId = Number(req.params.id);
+
+      // Join resort_venues with venues and venue_types to get full venue details
+      const results = await db.select({
+        id: schema.venues.id,
+        name: schema.venues.name,
+        venue_type_id: schema.venues.venueTypeId,
+        venue_type_name: schema.venueTypes.name,
+        description: schema.venues.description,
+        created_at: schema.venues.createdAt,
+        updated_at: schema.venues.updatedAt
+      })
+      .from(schema.resortVenues)
+      .innerJoin(schema.venues, eq(schema.resortVenues.venueId, schema.venues.id))
+      .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
+      .where(eq(schema.resortVenues.resortId, resortId));
+
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedResults = results.map((venue: any) => ({
+        id: venue.id,
+        name: venue.name,
+        venueTypeId: venue.venue_type_id,
+        venueTypeName: venue.venue_type_name,
+        description: venue.description,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at
+      }));
+
+      res.json(transformedResults);
+    } catch (error) {
+      console.error('Error fetching resort venues:', error);
+      res.status(500).json({ error: 'Failed to fetch resort venues' });
+    }
+  });
+
+  // Update resort's venues
+  app.put("/api/resorts/:id/venues", requireContentEditor, auditLogger('admin.resort.venues.update'), async (req: AuthenticatedRequest, res) => {
+    try {
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      const resortId = Number(req.params.id);
+      const { venueIds = [] } = req.body;
+
+      if (!Array.isArray(venueIds)) {
+        return res.status(400).json({ error: 'venueIds must be an array' });
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // First, remove all existing venues for this resort
+      const { error: deleteError } = await supabaseAdmin
+        .from('resort_venues')
+        .delete()
+        .eq('resort_id', resortId);
+
+      if (deleteError) {
+        handleSupabaseError(deleteError, 'remove resort venues');
+      }
+
+      // Then, add the new venues
+      if (venueIds.length > 0) {
+        const insertData = venueIds.map((venueId: number) => ({
+          resort_id: resortId,
+          venue_id: venueId
+        }));
+
+        const { error: insertError } = await supabaseAdmin
+          .from('resort_venues')
+          .insert(insertData);
+
+        if (insertError) {
+          handleSupabaseError(insertError, 'add resort venues');
+        }
+      }
+
+      res.json({ message: "Resort venues updated successfully" });
+    } catch (error: any) {
+      console.error('Error updating resort venues:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to update resort venues',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
 }

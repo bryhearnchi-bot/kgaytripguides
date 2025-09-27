@@ -210,8 +210,8 @@ export default function AccountSetup() {
         description: 'Your account has been successfully created. Welcome aboard!',
       });
 
-      // Redirect to dashboard or login
-      setLocation('/admin/dashboard');
+      // Redirect to trips or login
+      setLocation('/admin/trips');
     } catch (error) {
       toast({
         title: 'Setup Failed',

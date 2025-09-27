@@ -293,6 +293,7 @@ export function registerPublicRoutes(app: Express) {
   app.put("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
+
       if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
       }

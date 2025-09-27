@@ -7,7 +7,34 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
+  fullName?: string; // For compatibility
+  name?: {
+    first: string;
+    last: string;
+    middle?: string;
+    suffix?: string;
+    preferred?: string;
+    full: string;
+  };
+  username?: string;
+  avatarUrl?: string;
   role: string;
+  bio?: string;
+  website?: string;
+  phoneNumber?: string;
+  location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  socialLinks?: {
+    website?: string;
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+    youtube?: string;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -99,32 +126,59 @@ export function useSupabaseAuth() {
     };
   }, [navigate]);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, forceRefresh = false) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      console.log('Fetching profile for user:', userId, 'Force refresh:', forceRefresh);
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        // Even if profile fetch fails, user is still authenticated
-        // Just set profile to null
+      // Get the current session for authentication
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+      // Use our API instead of Supabase direct to ensure consistency
+      const response = await fetch('/api/admin/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${currentSession?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: forceRefresh ? 'no-store' : 'default'
+      });
+
+      if (!response.ok) {
+        console.error('Error fetching profile from API:', response.status, response.statusText);
         setProfile(null);
         return;
       }
 
-      // Ensure the profile has all required fields
+      const data = await response.json();
+
+      console.log('Raw profile data from API:', data);
+      console.log('Bio field from API:', data?.bio);
+      console.log('Social links from API:', data?.socialLinks);
+
+      // The API already returns properly formatted data, so we can use it directly
       if (data) {
-        setProfile({
+        const mappedProfile = {
           id: data.id,
           email: data.email,
-          full_name: data.full_name || null,
+          full_name: data.fullName || null,
+          fullName: data.fullName || data.name?.full || '', // For compatibility
+          name: data.name || undefined,
+          username: data.username || '',
+          avatarUrl: data.avatarUrl || '',
           role: data.role || 'user',
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-        });
+          bio: data.bio || '',
+          website: data.website || data.socialLinks?.website || '',
+          phoneNumber: data.phoneNumber || '',
+          location: data.location || undefined,
+          socialLinks: data.socialLinks || undefined,
+          created_at: data.createdAt,
+          updated_at: data.updatedAt,
+        };
+
+        console.log('Mapped profile bio:', mappedProfile.bio);
+        console.log('Mapped profile social links:', mappedProfile.socialLinks);
+
+        setProfile(mappedProfile);
       } else {
         setProfile(null);
       }
@@ -240,6 +294,15 @@ export function useSupabaseAuth() {
     return profile?.role === 'admin';
   };
 
+  const refreshProfile = async () => {
+    if (user?.id) {
+      console.log('Manually refreshing profile with force refresh...');
+      // Clear profile first to force a fresh fetch
+      setProfile(null);
+      await fetchProfile(user.id, true);
+    }
+  };
+
   return {
     user,
     profile,
@@ -253,5 +316,6 @@ export function useSupabaseAuth() {
     signOut,
     resetPassword,
     updatePassword,
+    refreshProfile,
   };
 }

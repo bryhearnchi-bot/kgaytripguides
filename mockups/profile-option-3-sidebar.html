@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Option 3 - Sidebar Layout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ocean: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex gap-6">
+            <!-- Sidebar -->
+            <div class="w-80 space-y-6">
+                <!-- Profile Card -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-2xl">
+                    <div class="text-center">
+                        <div class="relative inline-block">
+                            <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+                                BH
+                            </div>
+                            <button class="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <h2 class="mt-4 text-lg font-semibold text-white">Bryan Hearn</h2>
+                        <p class="text-blue-200 text-sm">admin@atlantis.com</p>
+                        <div class="mt-3 flex justify-center">
+                            <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-medium rounded-full">Super Admin</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-3">
+                        <div class="flex items-center gap-3 text-sm text-blue-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                            (847) 999-2811
+                        </div>
+                        <div class="flex items-center gap-3 text-sm text-blue-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Chicago, IL, US
+                        </div>
+                        <div class="flex items-center gap-3 text-sm text-blue-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Joined Sep 2025
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-2xl">
+                    <h3 class="text-sm font-semibold text-white mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <button class="w-full text-left px-3 py-2 text-sm text-blue-200 hover:text-white hover:bg-white/10 rounded-md transition-colors">
+                            Change Password
+                        </button>
+                        <button class="w-full text-left px-3 py-2 text-sm text-blue-200 hover:text-white hover:bg-white/10 rounded-md transition-colors">
+                            Download Data
+                        </button>
+                        <button class="w-full text-left px-3 py-2 text-sm text-blue-200 hover:text-white hover:bg-white/10 rounded-md transition-colors">
+                            Activity Log
+                        </button>
+                        <button class="w-full text-left px-3 py-2 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded-md transition-colors">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1">
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-2xl">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">Profile Settings</h1>
+                            <p class="text-blue-200 text-sm">Update your account information and preferences</p>
+                        </div>
+                        <button class="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg transition-all duration-200">
+                            Save Changes
+                        </button>
+                    </div>
+
+                    <!-- Form Content -->
+                    <div class="space-y-8">
+                        <!-- Basic Information -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4 pb-2 border-b border-white/20">Basic Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">First Name</label>
+                                    <input type="text" value="Bryan" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Last Name</label>
+                                    <input type="text" value="Hearn" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Email Address</label>
+                                    <input type="email" value="admin@atlantis.com" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Username</label>
+                                    <input type="text" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Choose a username" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location & Contact -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4 pb-2 border-b border-white/20">Location & Contact</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Phone</label>
+                                    <input type="tel" value="(847) 999-2811" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">City</label>
+                                    <input type="text" value="Chicago" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">State</label>
+                                    <input type="text" value="IL" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Country</label>
+                                    <input type="text" value="United States" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Social Links -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4 pb-2 border-b border-white/20">Social Media</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Website</label>
+                                    <input type="url" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="https://yourwebsite.com" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Instagram</label>
+                                    <div class="flex">
+                                        <span class="inline-flex items-center px-4 bg-white/10 border border-r-0 border-white/20 rounded-l-lg text-blue-200">@</span>
+                                        <input type="text" value="bryanh605" class="flex-1 bg-white/5 border border-white/20 rounded-r-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">Twitter</label>
+                                    <input type="text" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="@username" />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-blue-200 block mb-2">LinkedIn</label>
+                                    <input type="text" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="linkedin.com/in/username" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bio -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4 pb-2 border-b border-white/20">About You</h3>
+                            <div>
+                                <label class="text-sm font-medium text-blue-200 block mb-2">Bio</label>
+                                <textarea rows="4" class="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Tell us about yourself..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Preferences -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4 pb-2 border-b border-white/20">Preferences</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" checked class="rounded border-white/20 bg-white/5 text-blue-600 focus:ring-blue-500" />
+                                    <span class="text-blue-200">Email notifications</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" class="rounded border-white/20 bg-white/5 text-blue-600 focus:ring-blue-500" />
+                                    <span class="text-blue-200">SMS notifications</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" checked class="rounded border-white/20 bg-white/5 text-blue-600 focus:ring-blue-500" />
+                                    <span class="text-blue-200">Trip updates</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" class="rounded border-white/20 bg-white/5 text-blue-600 focus:ring-blue-500" />
+                                    <span class="text-blue-200">Marketing emails</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

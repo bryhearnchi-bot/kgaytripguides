@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,15 @@ const modalFieldStyles = `
     color: white;
     font-size: 14px;
     transition: all 0.2s ease;
+  }
+  .admin-form-modal input.h-8,
+  .admin-form-modal select.h-8 {
+    height: 32px !important;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .admin-form-modal button[class*="absolute"][class*="right"] {
+    display: none !important;
   }
   .admin-form-modal textarea {
     height: 90px;
@@ -77,6 +86,7 @@ interface AdminFormModalProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  icon?: ReactNode;
   children: ReactNode;
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
   primaryAction?: ActionConfig;
@@ -91,6 +101,7 @@ export function AdminFormModal({
   onOpenChange,
   title,
   description,
+  icon,
   children,
   onSubmit,
   primaryAction,
@@ -124,23 +135,49 @@ export function AdminFormModal({
             'w-[calc(100%-1rem)] sm:w-full',
             maxWidthClassName,
             'max-h-[85vh] overflow-hidden',
-            // Design 1 styling - exact match
+            // Clean design without gradients
             'bg-gradient-to-b from-[#10192f] to-[#0f1629]',
             'border border-white/8',
             'rounded-[20px]',
             'text-white shadow-[0_32px_64px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]'
           )}
         >
-          <DialogHeader className="px-7 py-6 pb-5 border-b border-white/8 relative">
-            {/* Design 1 gradient top accent */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#22d3ee] to-[#2563eb]" />
-            <div className="absolute inset-0 bg-gradient-to-br from-[#22d3ee]/3 to-[#2563eb]/3" />
-            <DialogTitle className="text-[20px] font-bold text-white leading-tight tracking-[-0.3px] relative z-10">{title}</DialogTitle>
-            {description && (
-              <DialogDescription className="text-[14px] text-white/55 mt-1.5 relative z-10">
-                {description}
-              </DialogDescription>
-            )}
+          <DialogHeader className="px-7 py-4 border-b border-white/8">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <DialogTitle className="flex items-center gap-2 text-[18px] font-bold text-white leading-tight tracking-[-0.3px]">
+                  {icon && <span className="flex-shrink-0">{icon}</span>}
+                  {title}
+                </DialogTitle>
+                {description && (
+                  <DialogDescription className="text-[13px] text-white/55 mt-1">
+                    {description}
+                  </DialogDescription>
+                )}
+              </div>
+
+              <div className="flex gap-2 ml-4 flex-shrink-0">
+                {primaryAction && (
+                  <Button
+                    type={primaryType}
+                    disabled={primaryAction.disabled || primaryAction.loading}
+                    onClick={primaryType === 'button' ? primaryAction.onClick : undefined}
+                    className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[8px] min-w-[70px] font-semibold text-[12px] transition-colors duration-200"
+                    form={primaryAction.form}
+                  >
+                    {renderPrimaryLabel()}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="h-8 w-8 p-0 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-[8px] transition-all duration-200 flex items-center justify-center"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
 
         {onSubmit ? (
@@ -148,62 +185,16 @@ export function AdminFormModal({
             <div className={cn('px-7 py-6 overflow-y-auto flex-1', contentClassName)}>
               {children}
             </div>
-            <DialogFooter className="px-7 py-5 pt-5 border-t border-white/6 bg-black/5 flex-row gap-3 justify-end">
-              {secondaryAction && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={secondaryAction.onClick}
-                  disabled={secondaryAction.disabled}
-                  className="h-10 px-5 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 hover:-translate-y-[1px] rounded-[10px] min-w-[90px] font-semibold text-[14px] transition-all duration-200"
-                >
-                  {secondaryAction.label}
-                </Button>
-              )}
-              {primaryAction && (
-                <Button
-                  type={primaryType}
-                  disabled={primaryAction.disabled || primaryAction.loading}
-                  onClick={primaryType === 'button' ? primaryAction.onClick : undefined}
-                  className="h-10 px-5 bg-gradient-to-br from-[#22d3ee] to-[#2563eb] text-white hover:from-[#06b6d4] hover:to-[#1d4ed8] hover:-translate-y-[2px] hover:shadow-[0_8px_20px_rgba(34,211,238,0.35)] rounded-[10px] min-w-[90px] font-semibold text-[14px] border-[1.5px] border-transparent shadow-[0_4px_12px_rgba(34,211,238,0.25)] transition-all duration-200"
-                  form={primaryAction.form}
-                >
-                  {renderPrimaryLabel()}
-                </Button>
-              )}
-            </DialogFooter>
           </form>
         ) : (
           <div className="flex flex-col h-full">
             <div className={cn('px-7 py-6 overflow-y-auto flex-1', contentClassName)}>
               {children}
             </div>
-            {(footer || primaryAction || secondaryAction) && (
-              <DialogFooter className="px-7 py-5 pt-5 border-t border-white/6 bg-black/5 flex-row gap-3 justify-end">
-                {secondaryAction && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={secondaryAction.onClick}
-                    disabled={secondaryAction.disabled}
-                    className="h-10 px-5 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 hover:-translate-y-[1px] rounded-[10px] min-w-[90px] font-semibold text-[14px] transition-all duration-200"
-                  >
-                    {secondaryAction.label}
-                  </Button>
-                )}
-                {primaryAction && (
-                  <Button
-                    type={primaryType}
-                    disabled={primaryAction.disabled || primaryAction.loading}
-                    onClick={primaryType === 'button' ? primaryAction.onClick : undefined}
-                    className="h-10 px-5 bg-gradient-to-br from-[#22d3ee] to-[#2563eb] text-white hover:from-[#06b6d4] hover:to-[#1d4ed8] hover:-translate-y-[2px] hover:shadow-[0_8px_20px_rgba(34,211,238,0.35)] rounded-[10px] min-w-[90px] font-semibold text-[14px] border-[1.5px] border-transparent shadow-[0_4px_12px_rgba(34,211,238,0.25)] transition-all duration-200"
-                    form={primaryAction.form}
-                  >
-                    {renderPrimaryLabel()}
-                  </Button>
-                )}
+            {footer && (
+              <div className="px-7 py-4">
                 {footer}
-              </DialogFooter>
+              </div>
             )}
           </div>
         )}

@@ -120,8 +120,18 @@ export const updateProfileSchema = z.object({
     .trim()
     .optional(),
 
+  // New structured name field
+  name: z.object({
+    first: z.string().max(100).optional(),
+    last: z.string().max(100).optional(),
+    middle: z.string().max(100).optional(),
+    suffix: z.string().max(20).optional(),
+    preferred: z.string().max(100).optional(),
+    full: z.string().max(255).optional()
+  }).optional(),
+
   bio: z.string()
-    .max(1000, 'Bio must be less than 1000 characters')
+    .max(2000, 'Bio must be less than 2000 characters')
     .optional(),
 
   avatarUrl: z.string()
@@ -130,6 +140,14 @@ export const updateProfileSchema = z.object({
     .or(z.literal('')),
 
   phone: phoneSchema.optional().or(z.literal('')),
+  phoneNumber: phoneSchema.optional().or(z.literal('')), // Alternative field name
+
+  // Enhanced location field
+  location: z.object({
+    city: z.string().max(100).optional(),
+    state: z.string().max(100).optional(),
+    country: z.string().max(100).optional()
+  }).optional(),
 
   preferences: z.object({
     emailNotifications: z.boolean().optional(),
@@ -140,13 +158,25 @@ export const updateProfileSchema = z.object({
     theme: z.enum(['light', 'dark', 'auto']).optional()
   }).optional(),
 
+  // Enhanced social links
   socialLinks: z.object({
     website: z.string().url().optional().or(z.literal('')),
     instagram: z.string().optional(),
     facebook: z.string().optional(),
     twitter: z.string().optional(),
-    linkedin: z.string().optional()
-  }).optional()
+    linkedin: z.string().optional(),
+    youtube: z.string().optional(),
+    tiktok: z.string().optional()
+  }).optional(),
+
+  // Communication preferences
+  communicationPreferences: z.object({
+    email: z.boolean().optional(),
+    sms: z.boolean().optional()
+  }).optional(),
+
+  tripUpdatesOptIn: z.boolean().optional(),
+  marketingEmails: z.boolean().optional()
 });
 
 /**

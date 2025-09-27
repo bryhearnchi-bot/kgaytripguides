@@ -25,7 +25,9 @@ export const profiles = pgTable("profiles", {
   username: text("username"),
   phoneNumber: text("phone_number"),
   bio: text("bio"),
+  name: jsonb("name"), // { first, last, middle, suffix, preferred, full }
   location: jsonb("location"), // { city, state, country }
+  socialLinks: jsonb("social_links"), // { instagram, twitter, facebook, telegram }
   communicationPreferences: jsonb("communication_preferences"), // { email, sms }
   tripUpdatesOptIn: boolean("trip_updates_opt_in").default(false),
   marketingEmails: boolean("marketing_emails").default(false),
@@ -111,31 +113,112 @@ export const ships = pgTable("ships", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   cruiseLine: varchar("cruise_line", { length: 255 }).notNull(),
-  shipCode: varchar("ship_code", { length: 50 }), // Short code like "VL" for Valiant Lady
   capacity: integer("capacity"), // Passenger capacity
-  crewSize: integer("crew_size"), // Number of crew
-  grossTonnage: integer("gross_tonnage"), // Ship size
-  lengthMeters: decimal("length_meters", { precision: 10, scale: 2 }), // Ship length
-  beamMeters: decimal("beam_meters", { precision: 10, scale: 2 }), // Ship width
   decks: integer("decks"), // Number of decks
-  builtYear: integer("built_year"), // Year built
-  refurbishedYear: integer("refurbished_year"), // Last refurbishment
-  shipClass: varchar("ship_class", { length: 100 }), // Ship class/series
-  flag: varchar("flag", { length: 100 }), // Country of registration
   imageUrl: text("image_url"), // Hero image of the ship
-  deckPlans: jsonb("deck_plans"), // Array of deck plan URLs or data
-  amenities: jsonb("amenities"), // Ship amenities and features
-  diningVenues: jsonb("dining_venues"), // Dining options on board
-  entertainmentVenues: jsonb("entertainment_venues"), // Entertainment venues
-  stateroomCategories: jsonb("stateroom_categories"), // Room types and counts
   description: text("description"), // Ship description
-  highlights: jsonb("highlights"), // Array of highlight features
+  deckPlansUrl: text("deck_plans_url"), // URL to ship's deck plans
+  // Amenities and venues now handled via junction tables (ship_amenities, ship_venues)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   nameIdx: index("ships_name_idx").on(table.name),
   cruiseLineIdx: index("ships_cruise_line_idx").on(table.cruiseLine),
   nameLineUnique: unique("ships_name_cruise_line_unique").on(table.name, table.cruiseLine),
+}));
+
+// ============ VENUE TYPES TABLE ============
+export const venueTypes = pgTable("venue_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============ AMENITIES TABLE ============
+export const amenities = pgTable("amenities", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("amenities_name_idx").on(table.name),
+}));
+
+// ============ VENUES TABLE ============
+export const venues = pgTable("venues", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  venueTypeId: integer("venue_type_id").notNull().references(() => venueTypes.id, { onDelete: "restrict" }),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("venues_name_idx").on(table.name),
+  venueTypeIdx: index("venues_venue_type_id_idx").on(table.venueTypeId),
+}));
+
+// ============ RESORTS TABLE ============
+export const resorts = pgTable("resorts", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  location: varchar("location", { length: 255 }).notNull(),
+  capacity: integer("capacity"), // Guest capacity
+  roomCount: integer("room_count"), // Number of rooms
+  imageUrl: text("image_url"), // Hero image of the resort
+  description: text("description"), // Resort description
+  propertyMapUrl: text("property_map_url"), // URL to property map
+  checkInTime: text("check_in_time"), // e.g., "15:00"
+  checkOutTime: text("check_out_time"), // e.g., "11:00"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("resorts_name_idx").on(table.name),
+  locationIdx: index("resorts_location_idx").on(table.location),
+  nameLocationUnique: unique("resorts_name_location_unique").on(table.name, table.location),
+}));
+
+// ============ JUNCTION TABLES ============
+
+// Ship-Amenities Junction Table
+export const shipAmenities = pgTable("ship_amenities", {
+  shipId: integer("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
+  amenityId: integer("amenity_id").notNull().references(() => amenities.id, { onDelete: "cascade" }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.shipId, table.amenityId] }),
+  shipIdx: index("ship_amenities_ship_id_idx").on(table.shipId),
+  amenityIdx: index("ship_amenities_amenity_id_idx").on(table.amenityId),
+}));
+
+// Ship-Venues Junction Table
+export const shipVenues = pgTable("ship_venues", {
+  shipId: integer("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
+  venueId: integer("venue_id").notNull().references(() => venues.id, { onDelete: "cascade" }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.shipId, table.venueId] }),
+  shipIdx: index("ship_venues_ship_id_idx").on(table.shipId),
+  venueIdx: index("ship_venues_venue_id_idx").on(table.venueId),
+}));
+
+// Resort-Amenities Junction Table
+export const resortAmenities = pgTable("resort_amenities", {
+  resortId: integer("resort_id").notNull().references(() => resorts.id, { onDelete: "cascade" }),
+  amenityId: integer("amenity_id").notNull().references(() => amenities.id, { onDelete: "cascade" }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.resortId, table.amenityId] }),
+  resortIdx: index("resort_amenities_resort_id_idx").on(table.resortId),
+  amenityIdx: index("resort_amenities_amenity_id_idx").on(table.amenityId),
+}));
+
+// Resort-Venues Junction Table
+export const resortVenues = pgTable("resort_venues", {
+  resortId: integer("resort_id").notNull().references(() => resorts.id, { onDelete: "cascade" }),
+  venueId: integer("venue_id").notNull().references(() => venues.id, { onDelete: "cascade" }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.resortId, table.venueId] }),
+  resortIdx: index("resort_venues_resort_id_idx").on(table.resortId),
+  venueIdx: index("resort_venues_venue_id_idx").on(table.venueId),
 }));
 
 // ============ TRIPS TABLE (formerly cruises) ============
@@ -145,7 +228,7 @@ export const trips = pgTable("trips", {
   name: text("name").notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   shipId: integer("ship_id").references(() => ships.id), // Foreign key to ships table
-  resortName: varchar("resort_name", { length: 255 }), // For resort trips
+  resortId: integer("resort_id").references(() => resorts.id), // Foreign key to resorts table
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   tripStatusId: integer("trip_status_id").notNull().references(() => tripStatus.id),
@@ -162,6 +245,7 @@ export const trips = pgTable("trips", {
   tripTypeIdIdx: index("trips_trip_type_id_idx").on(table.tripTypeId),
   tripStatusIdIdx: index("trips_trip_status_id_idx").on(table.tripStatusId),
   shipIdx: index("trips_ship_id_idx").on(table.shipId),
+  resortIdx: index("trips_resort_id_idx").on(table.resortId),
 }));
 
 
@@ -344,6 +428,8 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
 
 export const shipsRelations = relations(ships, ({ many }) => ({
   trips: many(trips),
+  shipAmenities: many(shipAmenities),
+  shipVenues: many(shipVenues),
 }));
 
 export const tripsRelations = relations(trips, ({ many, one }) => ({
@@ -353,6 +439,10 @@ export const tripsRelations = relations(trips, ({ many, one }) => ({
   ship: one(ships, {
     fields: [trips.shipId],
     references: [ships.id],
+  }),
+  resort: one(resorts, {
+    fields: [trips.resortId],
+    references: [resorts.id],
   }),
   tripType: one(tripTypes, {
     fields: [trips.tripTypeId],
@@ -440,6 +530,77 @@ export const tripInfoSectionsRelations = relations(tripInfoSections, ({ one }) =
   updater: one(profiles, {
     fields: [tripInfoSections.updatedBy],
     references: [profiles.id],
+  }),
+}));
+
+// ============ NEW TABLE RELATIONS ============
+
+export const venueTypesRelations = relations(venueTypes, ({ many }) => ({
+  venues: many(venues),
+}));
+
+export const amenitiesRelations = relations(amenities, ({ many }) => ({
+  shipAmenities: many(shipAmenities),
+  resortAmenities: many(resortAmenities),
+}));
+
+export const venuesRelations = relations(venues, ({ one, many }) => ({
+  venueType: one(venueTypes, {
+    fields: [venues.venueTypeId],
+    references: [venueTypes.id],
+  }),
+  shipVenues: many(shipVenues),
+  resortVenues: many(resortVenues),
+}));
+
+export const resortsRelations = relations(resorts, ({ many }) => ({
+  trips: many(trips),
+  resortAmenities: many(resortAmenities),
+  resortVenues: many(resortVenues),
+}));
+
+// Junction table relations
+export const shipAmenitiesRelations = relations(shipAmenities, ({ one }) => ({
+  ship: one(ships, {
+    fields: [shipAmenities.shipId],
+    references: [ships.id],
+  }),
+  amenity: one(amenities, {
+    fields: [shipAmenities.amenityId],
+    references: [amenities.id],
+  }),
+}));
+
+export const shipVenuesRelations = relations(shipVenues, ({ one }) => ({
+  ship: one(ships, {
+    fields: [shipVenues.shipId],
+    references: [ships.id],
+  }),
+  venue: one(venues, {
+    fields: [shipVenues.venueId],
+    references: [venues.id],
+  }),
+}));
+
+export const resortAmenitiesRelations = relations(resortAmenities, ({ one }) => ({
+  resort: one(resorts, {
+    fields: [resortAmenities.resortId],
+    references: [resorts.id],
+  }),
+  amenity: one(amenities, {
+    fields: [resortAmenities.amenityId],
+    references: [amenities.id],
+  }),
+}));
+
+export const resortVenuesRelations = relations(resortVenues, ({ one }) => ({
+  resort: one(resorts, {
+    fields: [resortVenues.resortId],
+    references: [resorts.id],
+  }),
+  venue: one(venues, {
+    fields: [resortVenues.venueId],
+    references: [venues.id],
   }),
 }));
 
