@@ -4,14 +4,12 @@ import {
   itineraryStorage,
   eventStorage,
   tripInfoStorage,
-  db,
   batchQueryBuilder,
   optimizedConnection
 } from "../storage";
 import { OptimizedQueryPatterns, QueryCacheStrategies } from "../storage/OptimizedQueries";
 import { requireAuth, requireContentEditor, type AuthenticatedRequest } from "../auth";
-import * as schema from "../../shared/schema";
-import { eq, ilike, or, count, sql, and, gte, lte } from "drizzle-orm";
+import { getSupabaseAdmin } from "../supabase-admin";
 import {
   validateBody,
   validateParams,
@@ -193,51 +191,76 @@ export function registerOptimizedTripRoutes(app: Express) {
         return res.json(cached);
       }
 
-      // Use optimized single query for all stats
+      // Use optimized queries with Supabase Admin
       const stats = await optimizedConnection.executeWithMetrics(
         async () => {
-          const result = await db.execute(sql`
-            WITH trip_stats AS (
-              SELECT
-                COUNT(*) as total,
-                COUNT(CASE WHEN trip_status_id = (SELECT id FROM trip_status WHERE status = 'published') THEN 1 END) as published,
-                COUNT(CASE WHEN trip_status_id = (SELECT id FROM trip_status WHERE status = 'draft') THEN 1 END) as draft,
-                COUNT(CASE WHEN trip_status_id = (SELECT id FROM trip_status WHERE status = 'archived') THEN 1 END) as archived,
-                COUNT(CASE WHEN start_date > CURRENT_DATE THEN 1 END) as upcoming,
-                COUNT(CASE WHEN start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE THEN 1 END) as ongoing,
-                COUNT(CASE WHEN end_date < CURRENT_DATE THEN 1 END) as past
-              FROM trips
-            ),
-            event_stats AS (
-              SELECT
-                COUNT(DISTINCT trip_id) as trips_with_events,
-                COUNT(*) as total_events,
-                AVG(events_per_trip) as avg_events_per_trip
-              FROM (
-                SELECT trip_id, COUNT(*) as events_per_trip
-                FROM events
-                GROUP BY trip_id
-              ) e
-            ),
-            itinerary_stats AS (
-              SELECT
-                AVG(stops_per_trip) as avg_stops_per_trip
-              FROM (
-                SELECT trip_id, COUNT(*) as stops_per_trip
-                FROM itinerary
-                GROUP BY trip_id
-              ) i
-            )
-            SELECT
-              json_build_object(
-                'trips', row_to_json(trip_stats),
-                'events', row_to_json(event_stats),
-                'itinerary', row_to_json(itinerary_stats)
-              ) as stats
-            FROM trip_stats, event_stats, itinerary_stats
-          `);
+          const supabaseAdmin = getSupabaseAdmin();
 
-          return result[0]?.stats;
+          // Fetch all data in parallel
+          const [tripsData, eventsData, itineraryData, statusData] = await Promise.all([
+            supabaseAdmin.from('trips').select('start_date, end_date, trip_status_id'),
+            supabaseAdmin.from('events').select('trip_id'),
+            supabaseAdmin.from('itinerary').select('trip_id'),
+            supabaseAdmin.from('trip_status').select('id, status')
+          ]);
+
+          if (tripsData.error || eventsData.error || itineraryData.error || statusData.error) {
+            throw new Error('Failed to fetch dashboard stats');
+          }
+
+          const trips = tripsData.data || [];
+          const events = eventsData.data || [];
+          const itinerary = itineraryData.data || [];
+          const statuses = statusData.data || [];
+
+          // Build status map
+          const statusMap = Object.fromEntries(statuses.map(s => [s.id, s.status]));
+          const statusIdMap = Object.fromEntries(statuses.map(s => [s.status, s.id]));
+
+          const now = new Date();
+
+          // Calculate trip stats
+          const tripStats = {
+            total: trips.length,
+            published: trips.filter(t => statusMap[t.trip_status_id] === 'published').length,
+            draft: trips.filter(t => statusMap[t.trip_status_id] === 'draft').length,
+            archived: trips.filter(t => statusMap[t.trip_status_id] === 'archived').length,
+            upcoming: trips.filter(t => new Date(t.start_date) > now).length,
+            ongoing: trips.filter(t =>
+              new Date(t.start_date) <= now && new Date(t.end_date) >= now
+            ).length,
+            past: trips.filter(t => new Date(t.end_date) < now).length
+          };
+
+          // Calculate event stats
+          const eventsByTrip = events.reduce((acc: Record<string, number>, e) => {
+            acc[e.trip_id] = (acc[e.trip_id] || 0) + 1;
+            return acc;
+          }, {});
+
+          const eventStats = {
+            trips_with_events: Object.keys(eventsByTrip).length,
+            total_events: events.length,
+            avg_events_per_trip: Object.keys(eventsByTrip).length ?
+              events.length / Object.keys(eventsByTrip).length : 0
+          };
+
+          // Calculate itinerary stats
+          const stopsByTrip = itinerary.reduce((acc: Record<string, number>, i) => {
+            acc[i.trip_id] = (acc[i.trip_id] || 0) + 1;
+            return acc;
+          }, {});
+
+          const itineraryStats = {
+            avg_stops_per_trip: Object.keys(stopsByTrip).length ?
+              itinerary.length / Object.keys(stopsByTrip).length : 0
+          };
+
+          return {
+            trips: tripStats,
+            events: eventStats,
+            itinerary: itineraryStats
+          };
         },
         'getDashboardTripStats'
       );
@@ -270,64 +293,63 @@ export function registerOptimizedTripRoutes(app: Express) {
       const limitNum = Math.min(parseInt(limit as string), 100); // Cap at 100
       const offset = (pageNum - 1) * limitNum;
 
-      // Build optimized query with specific columns
-      let baseQuery = db.select({
-        id: schema.trips.id,
-        name: schema.trips.name,
-        slug: schema.trips.slug,
-        heroImageUrl: schema.trips.heroImageUrl,
-        startDate: schema.trips.startDate,
-        endDate: schema.trips.endDate,
-        tripStatusId: schema.trips.tripStatusId,
-        tripTypeId: schema.trips.tripTypeId,
-        createdAt: schema.trips.createdAt
-      }).from(schema.trips);
+      const supabaseAdmin = getSupabaseAdmin();
 
-      // Apply filters
-      const conditions = [];
+      // Build query with specific columns
+      let query = supabaseAdmin
+        .from('trips')
+        .select(`
+          id,
+          name,
+          slug,
+          hero_image_url,
+          start_date,
+          end_date,
+          trip_status_id,
+          trip_type_id,
+          created_at
+        `, { count: 'exact' });
 
+      // Apply search filter
       if (search) {
-        // Use full-text search if available, otherwise fallback to ILIKE
-        conditions.push(
-          sql`to_tsvector('english', ${schema.trips.name} || ' ' || COALESCE(${schema.trips.description}, '')) @@ plainto_tsquery('english', ${search})`
-        );
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
       }
 
+      // Apply status filter
       if (status) {
-        const statusId = await db.select({ id: schema.tripStatus.id })
-          .from(schema.tripStatus)
-          .where(eq(schema.tripStatus.status, status as string))
-          .then(r => r[0]?.id);
+        // First get the status ID
+        const { data: statusData, error: statusError } = await supabaseAdmin
+          .from('trip_status')
+          .select('id')
+          .eq('status', status as string)
+          .single();
 
-        if (statusId) {
-          conditions.push(eq(schema.trips.tripStatusId, statusId));
+        if (statusData) {
+          query = query.eq('trip_status_id', statusData.id);
         }
       }
 
-      if (conditions.length > 0) {
-        baseQuery = baseQuery.where(conditions.length === 1 ? conditions[0] : and(...conditions)) as typeof baseQuery;
+      // Apply sorting
+      const sortColumn = {
+        'startDate': 'start_date',
+        'endDate': 'end_date',
+        'createdAt': 'created_at',
+        'name': 'name',
+        'slug': 'slug'
+      }[sortBy as string] || 'start_date';
+
+      query = query.order(sortColumn, { ascending: sortOrder !== 'desc' });
+
+      // Apply pagination
+      query = query.range(offset, offset + limitNum - 1);
+
+      // Execute query
+      const { data: trips, error, count: total } = await query;
+
+      if (error) {
+        console.error('Error fetching trips:', error);
+        throw new Error('Failed to fetch trips');
       }
-
-      // Get total count efficiently
-      const countQuery = db.select({ count: count() }).from(schema.trips);
-      if (conditions.length > 0) {
-        countQuery.where(conditions.length === 1 ? conditions[0] : and(...conditions));
-      }
-
-      // Execute count and data queries in parallel
-      const [countResult, trips] = await Promise.all([
-        countQuery,
-        baseQuery
-          .orderBy(
-            sortOrder === 'desc'
-              ? sql`${schema.trips[sortBy as keyof typeof schema.trips]} DESC`
-              : sql`${schema.trips[sortBy as keyof typeof schema.trips]} ASC`
-          )
-          .limit(limitNum)
-          .offset(offset)
-      ]);
-
-      const total = countResult[0]?.count || 0;
 
       res.json({
         trips,

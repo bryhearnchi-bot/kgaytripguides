@@ -1,15 +1,6 @@
 import type { Express } from "express";
-import {
-  profileStorage,
-  settingsStorage,
-  tripStorage,
-  eventStorage,
-  talentStorage,
-  db
-} from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
-import * as schema from "../../shared/schema";
-import { eq, ilike, or, count, sql } from "drizzle-orm";
+import { getSupabaseAdmin } from "../supabase-admin";
 import { z } from "zod";
 import {
   validateBody,
@@ -47,19 +38,28 @@ export function registerPublicRoutes(app: Express) {
     async (req: AuthenticatedRequest, res) => {
       try {
         const { dateRange, metrics } = req.body;
+        const supabaseAdmin = getSupabaseAdmin();
 
         // Build dynamic stats based on requested metrics
         const stats: any = {};
 
         if (metrics.includes('trips')) {
           try {
-            const tripStats = await db.select({
-              total: count(),
-              upcoming: sql<number>`COUNT(CASE WHEN start_date > CURRENT_DATE THEN 1 END)`,
-              active: sql<number>`COUNT(CASE WHEN start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE THEN 1 END)`,
-              past: sql<number>`COUNT(CASE WHEN end_date < CURRENT_DATE THEN 1 END)`
-            }).from(schema.trips);
-            stats.trips = tripStats[0];
+            const { data: trips, error } = await supabaseAdmin
+              .from('trips')
+              .select('start_date, end_date');
+
+            if (error) throw error;
+
+            const now = new Date();
+            const total = trips?.length || 0;
+            const upcoming = trips?.filter(t => new Date(t.start_date) > now).length || 0;
+            const active = trips?.filter(t =>
+              new Date(t.start_date) <= now && new Date(t.end_date) >= now
+            ).length || 0;
+            const past = trips?.filter(t => new Date(t.end_date) < now).length || 0;
+
+            stats.trips = { total, upcoming, active, past };
           } catch (err) {
             console.error('Error fetching trip stats:', err);
             stats.trips = { total: 0, upcoming: 0, active: 0, past: 0 };
@@ -67,25 +67,27 @@ export function registerPublicRoutes(app: Express) {
         }
 
         if (metrics.includes('events')) {
-          const eventStats = await db.select({
-            total: count()
-          }).from(schema.events);
-          stats.events = eventStats[0];
+          const { data: events, error } = await supabaseAdmin
+            .from('events')
+            .select('id');
+          stats.events = { total: events?.length || 0 };
         }
 
         if (metrics.includes('talent')) {
-          const talentStats = await db.select({
-            total: count(),
-            featured: sql<number>`COUNT(CASE WHEN featured = true THEN 1 END)`
-          }).from(schema.talent);
-          stats.talent = talentStats[0];
+          const { data: talent, error } = await supabaseAdmin
+            .from('talent')
+            .select('featured');
+
+          const total = talent?.length || 0;
+          const featured = talent?.filter(t => t.featured === true).length || 0;
+          stats.talent = { total, featured };
         }
 
         if (metrics.includes('locations')) {
-          const locationStats = await db.select({
-            total: count()
-          }).from(schema.locations);
-          stats.locations = locationStats[0];
+          const { data: locations, error } = await supabaseAdmin
+            .from('locations')
+            .select('id');
+          stats.locations = { total: locations?.length || 0 };
         }
 
         res.json(stats);
@@ -112,7 +114,13 @@ export function registerPublicRoutes(app: Express) {
         if (detailed === 'true') {
           // Database health check
           try {
-            await db.select({ test: sql`1` }).from(schema.trips).limit(1);
+            const supabaseAdmin = getSupabaseAdmin();
+            const { data, error } = await supabaseAdmin
+              .from('trips')
+              .select('id')
+              .limit(1);
+
+            if (error) throw error;
             health.database = { status: 'connected' };
           } catch (error) {
             health.database = { status: 'disconnected', error: (error as Error).message };
@@ -163,60 +171,72 @@ export function registerPublicRoutes(app: Express) {
         const searchTerm = q as string;
         const searchTypes = Array.isArray(types) ? types : [types];
         const limitNum = parseInt(limit as string);
+        const supabaseAdmin = getSupabaseAdmin();
 
         const results: any = {};
 
         // Search trips
         if (searchTypes.includes('trips')) {
-          const tripResults = await db.select()
-            .from(schema.trips)
-            .where(
-              or(
-                ilike(schema.trips.name, `%${searchTerm}%`),
-                ilike(schema.trips.description, `%${searchTerm}%`)
-              )
-            )
+          const { data: tripResults, error } = await supabaseAdmin
+            .from('trips')
+            .select('*')
+            .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
             .limit(limitNum);
-          results.trips = tripResults;
+
+          if (error) {
+            console.error('Error searching trips:', error);
+            results.trips = [];
+          } else {
+            results.trips = tripResults || [];
+          }
         }
 
         // Search events
         if (searchTypes.includes('events')) {
-          const eventResults = await db.select()
-            .from(schema.events)
-            .where(
-              ilike(schema.events.title, `%${searchTerm}%`)
-            )
+          const { data: eventResults, error } = await supabaseAdmin
+            .from('events')
+            .select('*')
+            .ilike('title', `%${searchTerm}%`)
             .limit(limitNum);
-          results.events = eventResults;
+
+          if (error) {
+            console.error('Error searching events:', error);
+            results.events = [];
+          } else {
+            results.events = eventResults || [];
+          }
         }
 
         // Search talent
         if (searchTypes.includes('talent')) {
-          const talentResults = await db.select()
-            .from(schema.talent)
-            .where(
-              or(
-                ilike(schema.talent.name, `%${searchTerm}%`),
-                ilike(schema.talent.bio, `%${searchTerm}%`)
-              )
-            )
+          const { data: talentResults, error } = await supabaseAdmin
+            .from('talent')
+            .select('*')
+            .or(`name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`)
             .limit(limitNum);
-          results.talent = talentResults;
+
+          if (error) {
+            console.error('Error searching talent:', error);
+            results.talent = [];
+          } else {
+            results.talent = talentResults || [];
+          }
         }
 
         // Search locations
         if (searchTypes.includes('locations')) {
-          const locationResults = await db.select()
-            .from(schema.locations)
-            .where(
-              or(
-                ilike(schema.locations.name, `%${searchTerm}%`),
-                ilike(schema.locations.description, `%${searchTerm}%`)
-              )
-            )
+          const { data: locationResults, error } = await supabaseAdmin
+            .from('locations')
+            .select('*')
+            .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
             .limit(limitNum);
-          results.locations = locationResults;
+
+          if (error) {
+            console.error('Error searching locations:', error);
+            results.locations = [];
+          } else {
+            results.locations = locationResults || [];
+          }
         }
 
         res.json(results);
@@ -231,39 +251,100 @@ export function registerPublicRoutes(app: Express) {
 
   // Get settings by category
   app.get("/api/settings/:category", async (req, res) => {
-    const settings = await settingsStorage.getSettingsByCategory(req.params.category);
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: settings, error } = await supabaseAdmin
+      .from('settings')
+      .select('*')
+      .eq('category', req.params.category)
+      .order('order_index', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching settings:', error);
+      return res.status(500).json({ error: 'Failed to fetch settings' });
+    }
     res.json(settings);
   });
 
   // Get active settings by category
   app.get("/api/settings/:category/active", async (req, res) => {
-    const settings = await settingsStorage.getActiveSettingsByCategory(req.params.category);
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: settings, error } = await supabaseAdmin
+      .from('settings')
+      .select('*')
+      .eq('category', req.params.category)
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching active settings:', error);
+      return res.status(500).json({ error: 'Failed to fetch active settings' });
+    }
     res.json(settings);
   });
 
   // Create or update a setting
   app.post("/api/settings/:category/:key", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const setting = await settingsStorage.upsertSetting(
-      req.params.category,
-      req.params.key,
-      req.body
-    );
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: setting, error } = await supabaseAdmin
+      .from('settings')
+      .upsert({
+        category: req.params.category,
+        key: req.params.key,
+        ...req.body,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error upserting setting:', error);
+      return res.status(500).json({ error: 'Failed to upsert setting' });
+    }
     res.json(setting);
   });
 
   // Deactivate a setting
   app.post("/api/settings/:category/:key/deactivate", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const setting = await settingsStorage.deactivateSetting(
-      req.params.category,
-      req.params.key
-    );
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: setting, error } = await supabaseAdmin
+      .from('settings')
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('category', req.params.category)
+      .eq('key', req.params.key)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error deactivating setting:', error);
+      return res.status(500).json({ error: 'Failed to deactivate setting' });
+    }
     res.json(setting);
   });
 
   // Reorder settings within a category
   app.post("/api/settings/:category/reorder", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     const { keys } = req.body;
-    await settingsStorage.reorderSettings(req.params.category, keys);
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Update each setting with its new order index
+    for (let i = 0; i < keys.length; i++) {
+      const { error } = await supabaseAdmin
+        .from('settings')
+        .update({
+          order_index: i,
+          updated_at: new Date().toISOString()
+        })
+        .eq('category', req.params.category)
+        .eq('key', keys[i]);
+
+      if (error) {
+        console.error('Error reordering settings:', error);
+        return res.status(500).json({ error: 'Failed to reorder settings' });
+      }
+    }
     res.json({ message: "Settings reordered" });
   });
 
@@ -277,8 +358,15 @@ export function registerPublicRoutes(app: Express) {
         return res.status(401).json({ error: 'User not authenticated' });
       }
 
-      const profile = await profileStorage.getProfile(userId);
-      if (!profile) {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: profile, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error || !profile) {
+        console.error('Error fetching profile:', error);
         return res.status(404).json({ error: 'Profile not found' });
       }
 
@@ -298,7 +386,21 @@ export function registerPublicRoutes(app: Express) {
         return res.status(401).json({ error: 'User not authenticated' });
       }
 
-      const updatedProfile = await profileStorage.updateProfile(userId, req.body);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: updatedProfile, error } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          ...req.body,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        return res.status(500).json({ error: 'Failed to update profile' });
+      }
       res.json(updatedProfile);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -309,8 +411,15 @@ export function registerPublicRoutes(app: Express) {
   // Get another user's profile (admin only)
   app.get("/api/admin/users/:userId/profile", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
-      const profile = await profileStorage.getProfile(req.params.userId);
-      if (!profile) {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: profile, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', req.params.userId)
+        .single();
+
+      if (error || !profile) {
+        console.error('Error fetching profile:', error);
         return res.status(404).json({ error: 'Profile not found' });
       }
 
@@ -341,8 +450,15 @@ export function registerPublicRoutes(app: Express) {
       }
 
       // Get user from database
-      const user = await profileStorage.getProfile(userId);
-      if (!user) {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: user, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error || !user) {
+        console.error('Error fetching user:', error);
         return res.status(404).json({ error: 'User not found' });
       }
 

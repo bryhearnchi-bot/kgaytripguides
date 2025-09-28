@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { partyThemeStorage } from "../storage/PartyThemeStorage";
+import { getSupabaseAdmin } from "../supabase-admin";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import {
   validateBody,
@@ -27,17 +27,24 @@ export function registerPartyThemeRoutes(app: Express) {
   app.get("/api/party-themes", async (req, res) => {
     try {
       const { search, withCostumes } = req.query;
+      const supabaseAdmin = getSupabaseAdmin();
 
-      let themes;
+      let query = supabaseAdmin.from('party_themes').select('*');
+
       if (search) {
-        themes = await partyThemeStorage.search(search as string);
+        query = query.or(`name.ilike.%${search}%,short_description.ilike.%${search}%,long_description.ilike.%${search}%`);
       } else if (withCostumes === 'true') {
-        themes = await partyThemeStorage.getWithCostumeIdeas();
-      } else {
-        themes = await partyThemeStorage.getAll();
+        query = query.not('costume_ideas', 'is', null);
       }
 
-      res.json(themes);
+      const { data: themes, error } = await query.order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching party themes:', error);
+        return res.status(500).json({ error: 'Failed to fetch party themes' });
+      }
+
+      res.json(themes || []);
     } catch (error) {
       console.error('Error fetching party themes:', error);
       res.status(500).json({ error: 'Failed to fetch party themes' });
@@ -47,7 +54,35 @@ export function registerPartyThemeRoutes(app: Express) {
   // Get party theme statistics
   app.get("/api/party-themes/stats", async (req, res) => {
     try {
-      const stats = await partyThemeStorage.getStatistics();
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get total count
+      const { count: totalCount, error: countError } = await supabaseAdmin
+        .from('party_themes')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        console.error('Error fetching party theme count:', countError);
+        return res.status(500).json({ error: 'Failed to fetch statistics' });
+      }
+
+      // Get count with costume ideas
+      const { count: withCostumesCount, error: costumesError } = await supabaseAdmin
+        .from('party_themes')
+        .select('*', { count: 'exact', head: true })
+        .not('costume_ideas', 'is', null);
+
+      if (costumesError) {
+        console.error('Error fetching costume count:', costumesError);
+        return res.status(500).json({ error: 'Failed to fetch statistics' });
+      }
+
+      const stats = {
+        total: totalCount || 0,
+        withCostumeIdeas: withCostumesCount || 0,
+        withoutCostumeIdeas: (totalCount || 0) - (withCostumesCount || 0)
+      };
+
       res.json(stats);
     } catch (error) {
       console.error('Error fetching party theme stats:', error);
@@ -58,10 +93,19 @@ export function registerPartyThemeRoutes(app: Express) {
   // Get party theme by ID
   app.get("/api/party-themes/:id", validateParams(idParamSchema), async (req, res) => {
     try {
-      const theme = await partyThemeStorage.getById(parseInt(req.params.id));
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: theme, error } = await supabaseAdmin
+        .from('party_themes')
+        .select('*')
+        .eq('id', parseInt(req.params.id))
+        .single();
 
-      if (!theme) {
-        return res.status(404).json({ error: 'Party theme not found' });
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Party theme not found' });
+        }
+        console.error('Error fetching party theme:', error);
+        return res.status(500).json({ error: 'Failed to fetch party theme' });
       }
 
       res.json(theme);
@@ -74,8 +118,20 @@ export function registerPartyThemeRoutes(app: Express) {
   // Get events using a party theme
   app.get("/api/party-themes/:id/events", validateParams(idParamSchema), async (req, res) => {
     try {
-      const events = await partyThemeStorage.getEvents(parseInt(req.params.id));
-      res.json(events);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: events, error } = await supabaseAdmin
+        .from('events')
+        .select('*')
+        .eq('party_theme_id', parseInt(req.params.id))
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching events for party theme:', error);
+        return res.status(500).json({ error: 'Failed to fetch events' });
+      }
+
+      res.json(events || []);
     } catch (error) {
       console.error('Error fetching events for party theme:', error);
       res.status(500).json({ error: 'Failed to fetch events' });
@@ -85,52 +141,142 @@ export function registerPartyThemeRoutes(app: Express) {
   // Create party theme
   app.post("/api/party-themes", requireContentEditor, validateBody(createPartyThemeSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const theme = await partyThemeStorage.create(req.body);
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Check if name already exists
+      const { data: existing, error: checkError } = await supabaseAdmin
+        .from('party_themes')
+        .select('name')
+        .eq('name', req.body.name)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing party theme:', checkError);
+        return res.status(500).json({ error: 'Failed to create party theme' });
+      }
+
+      if (existing) {
+        return res.status(409).json({ error: `Party theme with name '${req.body.name}' already exists` });
+      }
+
+      const { data: theme, error } = await supabaseAdmin
+        .from('party_themes')
+        .insert({
+          name: req.body.name,
+          long_description: req.body.longDescription,
+          short_description: req.body.shortDescription,
+          costume_ideas: req.body.costumeIdeas,
+          image_url: req.body.imageUrl,
+          amazon_shopping_list_url: req.body.amazonShoppingListUrl
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating party theme:', error);
+        return res.status(500).json({ error: 'Failed to create party theme' });
+      }
+
       res.status(201).json(theme);
     } catch (error: any) {
       console.error('Error creating party theme:', error);
-      if (error.message?.includes('already exists')) {
-        res.status(409).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Failed to create party theme' });
-      }
+      res.status(500).json({ error: 'Failed to create party theme' });
     }
   });
 
   // Update party theme
   app.put("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updatePartyThemeSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const theme = await partyThemeStorage.update(parseInt(req.params.id), req.body);
+      const id = parseInt(req.params.id);
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Check if name already exists (if name is being updated)
+      if (req.body.name) {
+        const { data: existing, error: checkError } = await supabaseAdmin
+          .from('party_themes')
+          .select('id, name')
+          .eq('name', req.body.name)
+          .neq('id', id)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking existing party theme:', checkError);
+          return res.status(500).json({ error: 'Failed to update party theme' });
+        }
+
+        if (existing) {
+          return res.status(409).json({ error: `Party theme with name '${req.body.name}' already exists` });
+        }
+      }
+
+      const updateData: any = { updated_at: new Date().toISOString() };
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.longDescription !== undefined) updateData.long_description = req.body.longDescription;
+      if (req.body.shortDescription !== undefined) updateData.short_description = req.body.shortDescription;
+      if (req.body.costumeIdeas !== undefined) updateData.costume_ideas = req.body.costumeIdeas;
+      if (req.body.imageUrl !== undefined) updateData.image_url = req.body.imageUrl;
+      if (req.body.amazonShoppingListUrl !== undefined) updateData.amazon_shopping_list_url = req.body.amazonShoppingListUrl;
+
+      const { data: theme, error } = await supabaseAdmin
+        .from('party_themes')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Party theme not found' });
+        }
+        console.error('Error updating party theme:', error);
+        return res.status(500).json({ error: 'Failed to update party theme' });
+      }
+
       res.json(theme);
     } catch (error: any) {
       console.error('Error updating party theme:', error);
-      if (error.message?.includes('not found')) {
-        res.status(404).json({ error: error.message });
-      } else if (error.message?.includes('already exists')) {
-        res.status(409).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Failed to update party theme' });
-      }
+      res.status(500).json({ error: 'Failed to update party theme' });
     }
   });
 
   // Delete party theme
   app.delete("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const deleted = await partyThemeStorage.delete(parseInt(req.params.id));
+      const id = parseInt(req.params.id);
+      const supabaseAdmin = getSupabaseAdmin();
 
-      if (!deleted) {
-        return res.status(404).json({ error: 'Party theme not found' });
+      // Check if theme is used in any events
+      const { data: usedEvents, error: usageError } = await supabaseAdmin
+        .from('events')
+        .select('id')
+        .eq('party_theme_id', id)
+        .limit(1);
+
+      if (usageError) {
+        console.error('Error checking party theme usage:', usageError);
+        return res.status(500).json({ error: 'Failed to delete party theme' });
+      }
+
+      if (usedEvents && usedEvents.length > 0) {
+        return res.status(409).json({
+          error: 'Cannot delete party theme as it is being used by one or more events'
+        });
+      }
+
+      const { error } = await supabaseAdmin
+        .from('party_themes')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting party theme:', error);
+        return res.status(500).json({ error: 'Failed to delete party theme' });
       }
 
       res.json({ message: 'Party theme deleted successfully' });
     } catch (error: any) {
       console.error('Error deleting party theme:', error);
-      if (error.message?.includes('Cannot delete')) {
-        res.status(409).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Failed to delete party theme' });
-      }
+      res.status(500).json({ error: 'Failed to delete party theme' });
     }
   });
 
@@ -138,29 +284,94 @@ export function registerPartyThemeRoutes(app: Express) {
   app.post("/api/party-themes/:id/duplicate", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const { name } = req.body;
+      const id = parseInt(req.params.id);
 
       if (!name) {
         return res.status(400).json({ error: 'New name is required' });
       }
 
-      const theme = await partyThemeStorage.duplicate(parseInt(req.params.id), name);
-      res.status(201).json(theme);
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get the original theme
+      const { data: originalTheme, error: fetchError } = await supabaseAdmin
+        .from('party_themes')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Party theme not found' });
+        }
+        console.error('Error fetching original theme:', fetchError);
+        return res.status(500).json({ error: 'Failed to duplicate party theme' });
+      }
+
+      // Check if new name already exists
+      const { data: existingTheme, error: checkError } = await supabaseAdmin
+        .from('party_themes')
+        .select('name')
+        .eq('name', name)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing theme name:', checkError);
+        return res.status(500).json({ error: 'Failed to duplicate party theme' });
+      }
+
+      if (existingTheme) {
+        return res.status(409).json({ error: `Party theme with name '${name}' already exists` });
+      }
+
+      // Create duplicate with new name
+      const { data: duplicatedTheme, error: duplicateError } = await supabaseAdmin
+        .from('party_themes')
+        .insert({
+          name: name,
+          long_description: originalTheme.long_description,
+          short_description: originalTheme.short_description,
+          costume_ideas: originalTheme.costume_ideas,
+          image_url: originalTheme.image_url,
+          amazon_shopping_list_url: originalTheme.amazon_shopping_list_url
+        })
+        .select()
+        .single();
+
+      if (duplicateError) {
+        console.error('Error creating duplicate theme:', duplicateError);
+        return res.status(500).json({ error: 'Failed to duplicate party theme' });
+      }
+
+      res.status(201).json(duplicatedTheme);
     } catch (error: any) {
       console.error('Error duplicating party theme:', error);
-      if (error.message?.includes('not found')) {
-        res.status(404).json({ error: error.message });
-      } else if (error.message?.includes('already exists')) {
-        res.status(409).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Failed to duplicate party theme' });
-      }
+      res.status(500).json({ error: 'Failed to duplicate party theme' });
     }
   });
 
   // Check party theme usage
   app.get("/api/party-themes/:id/usage", validateParams(idParamSchema), async (req, res) => {
     try {
-      const usage = await partyThemeStorage.checkUsage(parseInt(req.params.id));
+      const id = parseInt(req.params.id);
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get events using this party theme
+      const { data: events, error: eventsError } = await supabaseAdmin
+        .from('events')
+        .select('id, title, date, trip_id')
+        .eq('party_theme_id', id);
+
+      if (eventsError) {
+        console.error('Error checking party theme usage:', eventsError);
+        return res.status(500).json({ error: 'Failed to check usage' });
+      }
+
+      const usage = {
+        isUsed: (events && events.length > 0),
+        eventCount: events ? events.length : 0,
+        events: events || []
+      };
+
       res.json(usage);
     } catch (error) {
       console.error('Error checking party theme usage:', error);

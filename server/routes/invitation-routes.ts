@@ -19,13 +19,25 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { eq, and, desc, count, or, lt, gt, ilike } from 'drizzle-orm';
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from '../auth';
-import { db } from '../storage';
-import * as schema from '../../shared/schema';
-import type { InferSelectModel } from 'drizzle-orm';
+import { getSupabaseAdmin } from '../supabase-admin';
 
-type Invitation = InferSelectModel<typeof schema.invitations>;
+// Type definitions for invitation data
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  invitedBy: string;
+  cruiseId?: string;
+  metadata?: any;
+  tokenHash: string;
+  salt: string;
+  expiresAt: Date;
+  used: boolean;
+  usedAt?: Date;
+  usedBy?: string;
+  createdAt?: Date;
+}
 import {
   generateInvitationToken,
   validateTokenTiming,
@@ -124,12 +136,22 @@ const invitationAcceptRateLimit = createRateLimit({
  */
 async function getInvitationById(id: string): Promise<InvitationTable | null> {
   try {
-    const result = await db.select()
-      .from(schema.invitations)
-      .where(eq(schema.invitations.id, id))
-      .limit(1);
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('invitations')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    return result.length > 0 ? result[0] as InvitationTable : null;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Not found
+      }
+      console.error('Error fetching invitation:', error);
+      return null;
+    }
+
+    return data as InvitationTable;
   } catch (error) {
     console.error('Error fetching invitation:', error);
     return null;
@@ -141,21 +163,45 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
  */
 async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'createdAt'>): Promise<InvitationTable> {
   try {
-    const result = await db.insert(schema.invitations).values({
-      email: invitation.email,
-      role: invitation.role,
-      invitedBy: invitation.invitedBy,
-      cruiseId: invitation.cruiseId,
-      metadata: invitation.metadata,
-      tokenHash: invitation.tokenHash,
-      salt: invitation.salt,
-      expiresAt: invitation.expiresAt,
-      used: invitation.used,
-      usedAt: invitation.usedAt,
-      usedBy: invitation.usedBy,
-    }).returning();
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('invitations')
+      .insert({
+        email: invitation.email,
+        role: invitation.role,
+        invited_by: invitation.invitedBy,
+        cruise_id: invitation.cruiseId,
+        metadata: invitation.metadata,
+        token_hash: invitation.tokenHash,
+        salt: invitation.salt,
+        expires_at: invitation.expiresAt.toISOString(),
+        used: invitation.used,
+        used_at: invitation.usedAt?.toISOString(),
+        used_by: invitation.usedBy,
+      })
+      .select()
+      .single();
 
-    return result[0] as InvitationTable;
+    if (error) {
+      console.error('Error creating invitation:', error);
+      throw new Error('Failed to create invitation in database');
+    }
+
+    return {
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      invitedBy: data.invited_by,
+      cruiseId: data.cruise_id,
+      metadata: data.metadata,
+      tokenHash: data.token_hash,
+      salt: data.salt,
+      expiresAt: new Date(data.expires_at),
+      used: data.used,
+      usedAt: data.used_at ? new Date(data.used_at) : undefined,
+      usedBy: data.used_by,
+      createdAt: new Date(data.created_at),
+    } as InvitationTable;
   } catch (error) {
     console.error('Error creating invitation:', error);
     throw new Error('Failed to create invitation in database');
@@ -167,12 +213,47 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
  */
 async function updateInvitationInDb(id: string, updates: Partial<InvitationTable>): Promise<InvitationTable | null> {
   try {
-    const result = await db.update(schema.invitations)
-      .set(updates)
-      .where(eq(schema.invitations.id, id))
-      .returning();
+    const supabaseAdmin = getSupabaseAdmin();
 
-    return result.length > 0 ? result[0] as InvitationTable : null;
+    // Transform camelCase to snake_case for database
+    const updateData: any = {};
+    if (updates.tokenHash !== undefined) updateData.token_hash = updates.tokenHash;
+    if (updates.salt !== undefined) updateData.salt = updates.salt;
+    if (updates.expiresAt !== undefined) updateData.expires_at = updates.expiresAt.toISOString();
+    if (updates.used !== undefined) updateData.used = updates.used;
+    if (updates.usedAt !== undefined) updateData.used_at = updates.usedAt?.toISOString();
+    if (updates.usedBy !== undefined) updateData.used_by = updates.usedBy;
+
+    const { data, error } = await supabaseAdmin
+      .from('invitations')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Not found
+      }
+      console.error('Error updating invitation:', error);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      invitedBy: data.invited_by,
+      cruiseId: data.cruise_id,
+      metadata: data.metadata,
+      tokenHash: data.token_hash,
+      salt: data.salt,
+      expiresAt: new Date(data.expires_at),
+      used: data.used,
+      usedAt: data.used_at ? new Date(data.used_at) : undefined,
+      usedBy: data.used_by,
+      createdAt: new Date(data.created_at),
+    } as InvitationTable;
   } catch (error) {
     console.error('Error updating invitation:', error);
     return null;
@@ -184,19 +265,23 @@ async function updateInvitationInDb(id: string, updates: Partial<InvitationTable
  */
 async function checkExistingInvitation(email: string): Promise<boolean> {
   try {
-    const now = new Date();
-    const result = await db.select()
-      .from(schema.invitations)
-      .where(
-        and(
-          eq(schema.invitations.email, email.toLowerCase()),
-          eq(schema.invitations.used, false),
-          gt(invitations.expiresAt, now)
-        )
-      )
+    const supabaseAdmin = getSupabaseAdmin();
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+      .from('invitations')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .eq('used', false)
+      .gt('expires_at', now)
       .limit(1);
 
-    return result.length > 0;
+    if (error) {
+      console.error('Error checking existing invitation:', error);
+      return false;
+    }
+
+    return data && data.length > 0;
   } catch (error) {
     console.error('Error checking existing invitation:', error);
     return false;
@@ -208,12 +293,20 @@ async function checkExistingInvitation(email: string): Promise<boolean> {
  */
 async function checkUserExists(email: string): Promise<boolean> {
   try {
-    const existingProfile = await db.select()
-      .from(schema.profiles)
-      .where(eq(schema.profiles.email, email.toLowerCase()))
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('email', email.toLowerCase())
       .limit(1);
 
-    return existingProfile.length > 0;
+    if (error) {
+      console.error('Error checking user existence:', error);
+      return false;
+    }
+
+    return data && data.length > 0;
   } catch (error) {
     console.error('Error checking user existence:', error);
     return false;
@@ -245,21 +338,43 @@ async function sendInvitationEmail(email: string, token: string, inviterName: st
  */
 async function findInvitationByToken(token: string): Promise<InvitationTable | null> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const now = new Date().toISOString();
+
     // Get all active (unused, non-expired) invitations
-    const now = new Date();
-    const activeInvitations = await db.select()
-      .from(schema.invitations)
-      .where(
-        and(
-          eq(schema.invitations.used, false),
-          gt(invitations.expiresAt, now)
-        )
-      );
+    const { data: activeInvitations, error } = await supabaseAdmin
+      .from('invitations')
+      .select('*')
+      .eq('used', false)
+      .gt('expires_at', now);
+
+    if (error) {
+      console.error('Error fetching active invitations:', error);
+      return null;
+    }
+
+    if (!activeInvitations || activeInvitations.length === 0) {
+      return null;
+    }
 
     // Check each invitation's token hash
     for (const invitation of activeInvitations) {
-      if (validateTokenTiming(token, invitation.tokenHash, invitation.salt)) {
-        return invitation as InvitationTable;
+      if (validateTokenTiming(token, invitation.token_hash, invitation.salt)) {
+        return {
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          invitedBy: invitation.invited_by,
+          cruiseId: invitation.cruise_id,
+          metadata: invitation.metadata,
+          tokenHash: invitation.token_hash,
+          salt: invitation.salt,
+          expiresAt: new Date(invitation.expires_at),
+          used: invitation.used,
+          usedAt: invitation.used_at ? new Date(invitation.used_at) : undefined,
+          usedBy: invitation.used_by,
+          createdAt: new Date(invitation.created_at),
+        } as InvitationTable;
       }
     }
 
@@ -280,6 +395,8 @@ async function createUserFromInvitation(
   password: string
 ): Promise<{ id: string; email: string; fullName: string; role: string }> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     // TODO: Implement actual user creation with Supabase Auth
 
     // For now, create a profile entry (requires Supabase Auth user first)
@@ -287,18 +404,27 @@ async function createUserFromInvitation(
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Insert profile (this would normally be done via Supabase Auth trigger)
-    await db.insert(profiles).values({
-      id: userId,
-      email,
-      fullName,
-      role,
-    });
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: userId,
+        email,
+        full_name: fullName,
+        role,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating user profile:', error);
+      throw new Error('Failed to create user account');
+    }
 
     return {
-      id: userId,
-      email,
-      fullName,
-      role,
+      id: data.id,
+      email: data.email,
+      fullName: data.full_name,
+      role: data.role,
     };
   } catch (error) {
     console.error('Error creating user account:', error);
@@ -429,71 +555,83 @@ router.get(
     try {
       const { page, limit, status, role, search } = req.query;
       const offset = (page - 1) * limit;
+      const supabaseAdmin = getSupabaseAdmin();
 
       // Build query conditions
-      const now = new Date();
-      const conditions = [];
+      const now = new Date().toISOString();
+
+      // Build base query
+      let query = supabaseAdmin.from('invitations').select('*', { count: 'exact' });
 
       // Apply status filter
       switch (status) {
         case 'active':
-          conditions.push(
-            and(
-              eq(schema.invitations.used, false),
-              gt(invitations.expiresAt, now)
-            )
-          );
+          query = query.eq('used', false).gt('expires_at', now);
           break;
         case 'expired':
-          conditions.push(
-            and(
-              eq(schema.invitations.used, false),
-              lt(invitations.expiresAt, now)
-            )
-          );
+          query = query.eq('used', false).lt('expires_at', now);
           break;
         case 'used':
-          conditions.push(eq(schema.invitations.used, true));
+          query = query.eq('used', true);
           break;
         // 'all' - no additional filtering
       }
 
       // Apply role filter
       if (role) {
-        conditions.push(eq(schema.invitations.role, role));
+        query = query.eq('role', role);
       }
 
       // Apply search filter
       if (search) {
-        conditions.push(ilike(invitations.email, `%${search}%`));
+        query = query.ilike('email', `%${search}%`);
       }
 
-      // Build where clause
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
       // Get total count
-      const [totalResult] = await db.select({ count: count() })
-        .from(schema.invitations)
-        .where(whereClause);
-      const total = totalResult.count;
+      const countQuery = supabaseAdmin.from('invitations').select('*', { count: 'exact', head: true });
+
+      // Apply same filters to count query
+      switch (status) {
+        case 'active':
+          countQuery.eq('used', false).gt('expires_at', now);
+          break;
+        case 'expired':
+          countQuery.eq('used', false).lt('expires_at', now);
+          break;
+        case 'used':
+          countQuery.eq('used', true);
+          break;
+      }
+      if (role) countQuery.eq('role', role);
+      if (search) countQuery.ilike('email', `%${search}%`);
+
+      const { count: total, error: countError } = await countQuery;
+
+      if (countError) {
+        console.error('Error counting invitations:', countError);
+        throw new Error('Failed to count invitations');
+      }
 
       // Get paginated results
-      const invitationResults = await db.select()
-        .from(schema.invitations)
-        .where(whereClause)
-        .orderBy(desc(invitations.createdAt))
-        .limit(limit)
-        .offset(offset);
+      const { data: invitationResults, error } = await query
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
+      if (error) {
+        console.error('Error fetching invitations:', error);
+        throw new Error('Failed to fetch invitations');
+      }
+
+      const nowDate = new Date();
       const paginatedInvitations = invitationResults.map(inv => ({
         id: inv.id,
         email: inv.email,
         role: inv.role,
-        expiresAt: inv.expiresAt,
-        createdAt: inv.createdAt,
+        expiresAt: inv.expires_at,
+        createdAt: inv.created_at,
         used: inv.used,
-        usedAt: inv.usedAt,
-        expired: inv.expiresAt <= now,
+        usedAt: inv.used_at,
+        expired: new Date(inv.expires_at) <= nowDate,
       }));
 
       res.json({
@@ -564,11 +702,14 @@ router.delete(
       }
 
       // Delete invitation from database
-      const deletedInvitation = await db.delete(schema.invitations)
-        .where(eq(schema.invitations.id, id))
-        .returning();
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error: deleteError } = await supabaseAdmin
+        .from('invitations')
+        .delete()
+        .eq('id', id);
 
-      if (deletedInvitation.length === 0) {
+      if (deleteError) {
+        console.error('Error deleting invitation:', deleteError);
         return res.status(500).json({
           error: 'Failed to delete invitation',
           message: 'Invitation could not be deleted from database'

@@ -1,12 +1,6 @@
 import type { Express } from "express";
-import {
-  db
-} from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { auditLogger } from "../logging/middleware";
-import * as schema from "../../shared/schema";
-const locations = schema.locations;
-import { eq, ilike, or, count, sql } from "drizzle-orm";
 import {
   validateBody,
   validateParams,
@@ -23,12 +17,25 @@ export function registerLocationRoutes(app: Express) {
   // Get location statistics
   app.get("/api/locations/stats", async (req, res) => {
     try {
-      const stats = await db.select({
-        total: count(),
-        byCountry: sql<any>`json_object_agg(country, country_count) FROM (SELECT country, COUNT(*) as country_count FROM ${locations} GROUP BY country) t`
-      }).from(schema.locations);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: locations, error } = await supabaseAdmin
+        .from('locations')
+        .select('country');
 
-      res.json(stats[0] || { total: 0, byCountry: {} });
+      if (error) {
+        console.error('Error fetching location stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch location statistics' });
+      }
+
+      // Calculate stats from the results
+      const total = locations?.length || 0;
+      const byCountry = locations?.reduce((acc: Record<string, number>, loc: any) => {
+        acc[loc.country] = (acc[loc.country] || 0) + 1;
+        return acc;
+      }, {}) || {};
+
+      res.json({ total, byCountry });
     } catch (error) {
       console.error('Error fetching location stats:', error);
       res.status(500).json({ error: 'Failed to fetch location statistics' });
@@ -640,11 +647,18 @@ export function registerLocationRoutes(app: Express) {
   // Get amenities statistics
   app.get("/api/amenities/stats", async (req, res) => {
     try {
-      const stats = await db.select({
-        total: count()
-      }).from(schema.amenities);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: amenities, error } = await supabaseAdmin
+        .from('amenities')
+        .select('id');
 
-      res.json(stats[0] || { total: 0 });
+      if (error) {
+        console.error('Error fetching amenities stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch amenities statistics' });
+      }
+
+      res.json({ total: amenities?.length || 0 });
     } catch (error) {
       console.error('Error fetching amenities stats:', error);
       res.status(500).json({ error: 'Failed to fetch amenities statistics' });
@@ -660,27 +674,29 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(schema.amenities);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('amenities')
+        .select('*')
+        .order('name');
 
       // Apply filters
-      const conditions = [];
       if (search) {
-        conditions.push(
-          or(
-            ilike(schema.amenities.name, `%${search}%`),
-            ilike(schema.amenities.description, `%${search}%`)
-          )
-        );
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const startIndex = parseInt(offset as string);
+      const endIndex = startIndex + parseInt(limit as string) - 1;
+      query = query.range(startIndex, endIndex);
 
-      const results = await query;
+      const { data: results, error } = await query;
+
+      if (error) {
+        console.error('Error fetching amenities:', error);
+        return res.status(500).json({ error: 'Failed to fetch amenities' });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((amenity: any) => ({
@@ -701,10 +717,21 @@ export function registerLocationRoutes(app: Express) {
   // Get amenity by ID
   app.get("/api/amenities/:id", async (req, res) => {
     try {
-      const [amenity] = await db.select()
-        .from(schema.amenities)
-        .where(eq(schema.amenities.id, Number(req.params.id)))
-        .limit(1);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: amenity, error } = await supabaseAdmin
+        .from('amenities')
+        .select('*')
+        .eq('id', Number(req.params.id))
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Amenity not found" });
+        }
+        console.error('Error fetching amenity:', error);
+        return res.status(500).json({ error: 'Failed to fetch amenity' });
+      }
 
       if (!amenity) {
         return res.status(404).json({ error: "Amenity not found" });
@@ -879,7 +906,17 @@ export function registerLocationRoutes(app: Express) {
   // List all venue types (reference data)
   app.get("/api/venue-types", async (req, res) => {
     try {
-      const results = await db.select().from(schema.venueTypes);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('venue_types')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching venue types:', error);
+        return res.status(500).json({ error: 'Failed to fetch venue types' });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((venueType: any) => ({
@@ -901,24 +938,29 @@ export function registerLocationRoutes(app: Express) {
   // Get venues statistics
   app.get("/api/venues/stats", async (req, res) => {
     try {
-      const totalResult = await db.select({ total: count() }).from(schema.venues);
-      const total = totalResult[0]?.total || 0;
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: venues, error } = await supabaseAdmin
+        .from('venues')
+        .select(`
+          id,
+          venue_type_id,
+          venue_types!inner(name)
+        `);
 
-      const typeStats = await db.select({
-        venue_type_name: schema.venueTypes.name,
-        type_count: count()
-      })
-      .from(schema.venues)
-      .leftJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
-      .groupBy(schema.venueTypes.name);
+      if (error) {
+        console.error('Error fetching venues stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch venues statistics' });
+      }
 
-      const byType = Object.fromEntries(
-        typeStats.map(stat => [stat.venue_type_name, stat.type_count])
-      );
+      const total = venues?.length || 0;
+      const byType = venues?.reduce((acc: Record<string, number>, venue: any) => {
+        const typeName = venue.venue_types?.name || 'Unknown';
+        acc[typeName] = (acc[typeName] || 0) + 1;
+        return acc;
+      }, {}) || {};
 
-      const stats = { total, byType };
-
-      res.json(stats);
+      res.json({ total, byType });
     } catch (error) {
       console.error('Error fetching venues stats:', error);
       res.status(500).json({ error: 'Failed to fetch venues statistics' });
@@ -935,48 +977,47 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      // Join with venue types to get venue type name
-      let query = db.select({
-        id: schema.venues.id,
-        name: schema.venues.name,
-        venue_type_id: schema.venues.venueTypeId,
-        venue_type_name: schema.venueTypes.name,
-        description: schema.venues.description,
-        created_at: schema.venues.createdAt,
-        updated_at: schema.venues.updatedAt
-      }).from(schema.venues)
-        .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id));
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('venues')
+        .select(`
+          id,
+          name,
+          venue_type_id,
+          description,
+          created_at,
+          updated_at,
+          venue_types!inner(name)
+        `)
+        .order('name');
 
       // Apply filters
-      const conditions = [];
       if (search) {
-        conditions.push(
-          or(
-            ilike(schema.venues.name, `%${search}%`),
-            ilike(schema.venues.description, `%${search}%`),
-            ilike(schema.venueTypes.name, `%${search}%`)
-          )
-        );
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
       }
       if (venueTypeId) {
-        conditions.push(eq(schema.venues.venueTypeId, Number(venueTypeId)));
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+        query = query.eq('venue_type_id', Number(venueTypeId));
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const startIndex = parseInt(offset as string);
+      const endIndex = startIndex + parseInt(limit as string) - 1;
+      query = query.range(startIndex, endIndex);
 
-      const results = await query;
+      const { data: results, error } = await query;
+
+      if (error) {
+        console.error('Error fetching venues:', error);
+        return res.status(500).json({ error: 'Failed to fetch venues' });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((venue: any) => ({
         id: venue.id,
         name: venue.name,
         venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_type_name,
+        venueTypeName: venue.venue_types?.name,
         description: venue.description,
         createdAt: venue.created_at,
         updatedAt: venue.updated_at
@@ -992,31 +1033,40 @@ export function registerLocationRoutes(app: Express) {
   // Get venue by ID
   app.get("/api/venues/:id", async (req, res) => {
     try {
-      const results = await db.select({
-        id: schema.venues.id,
-        name: schema.venues.name,
-        venue_type_id: schema.venues.venueTypeId,
-        venue_type_name: schema.venueTypes.name,
-        description: schema.venues.description,
-        created_at: schema.venues.createdAt,
-        updated_at: schema.venues.updatedAt
-      }).from(schema.venues)
-        .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
-        .where(eq(schema.venues.id, Number(req.params.id)))
-        .limit(1);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: venue, error } = await supabaseAdmin
+        .from('venues')
+        .select(`
+          id,
+          name,
+          venue_type_id,
+          description,
+          created_at,
+          updated_at,
+          venue_types!inner(name)
+        `)
+        .eq('id', Number(req.params.id))
+        .single();
 
-      if (results.length === 0) {
-        return res.status(404).json({ error: "Venue not found" });
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Venue not found" });
+        }
+        console.error('Error fetching venue:', error);
+        return res.status(500).json({ error: 'Failed to fetch venue' });
       }
 
-      const venue = results[0];
+      if (!venue) {
+        return res.status(404).json({ error: "Venue not found" });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedVenue = {
         id: venue.id,
         name: venue.name,
         venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_type_name,
+        venueTypeName: venue.venue_types?.name,
         description: venue.description,
         createdAt: venue.created_at,
         updatedAt: venue.updated_at
@@ -1207,13 +1257,25 @@ export function registerLocationRoutes(app: Express) {
   // Get resort statistics
   app.get("/api/resorts/stats", async (req, res) => {
     try {
-      const stats = await db.select({
-        total: count(),
-        totalCapacity: sql<number>`SUM(capacity)`,
-        avgCapacity: sql<number>`AVG(capacity)`
-      }).from(schema.resorts);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: resorts, error } = await supabaseAdmin
+        .from('resorts')
+        .select('capacity');
 
-      res.json(stats[0] || { total: 0, totalCapacity: 0, avgCapacity: 0 });
+      if (error) {
+        console.error('Error fetching resort stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch resort statistics' });
+      }
+
+      const stats = {
+        total: resorts?.length || 0,
+        totalCapacity: resorts?.reduce((sum, resort) => sum + (resort.capacity || 0), 0) || 0,
+        avgCapacity: resorts?.length ?
+          (resorts.reduce((sum, resort) => sum + (resort.capacity || 0), 0) / resorts.length) : 0
+      };
+
+      res.json(stats);
     } catch (error) {
       console.error('Error fetching resort stats:', error);
       res.status(500).json({ error: 'Failed to fetch resort statistics' });
@@ -1522,26 +1584,34 @@ export function registerLocationRoutes(app: Express) {
     try {
       const shipId = Number(req.params.id);
 
-      // Join ship_amenities with amenities to get full amenity details
-      const results = await db.select({
-        id: schema.amenities.id,
-        name: schema.amenities.name,
-        description: schema.amenities.description,
-        createdAt: schema.amenities.createdAt,
-        updatedAt: schema.amenities.updatedAt
-      })
-      .from(schema.shipAmenities)
-      .innerJoin(schema.amenities, eq(schema.shipAmenities.amenityId, schema.amenities.id))
-      .where(eq(schema.shipAmenities.shipId, shipId));
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('ship_amenities')
+        .select(`
+          amenities!inner(
+            id,
+            name,
+            description,
+            created_at,
+            updated_at
+          )
+        `)
+        .eq('ship_id', shipId);
 
-      // Transform snake_case to camelCase for frontend compatibility
-      const transformedResults = results.map((amenity: any) => ({
-        id: amenity.id,
-        name: amenity.name,
-        description: amenity.description,
-        createdAt: amenity.createdAt,
-        updatedAt: amenity.updatedAt
-      }));
+      if (error) {
+        console.error('Error fetching ship amenities:', error);
+        return res.status(500).json({ error: 'Failed to fetch ship amenities' });
+      }
+
+      // Transform results to flat structure with camelCase
+      const transformedResults = results?.map((item: any) => ({
+        id: item.amenities.id,
+        name: item.amenities.name,
+        description: item.amenities.description,
+        createdAt: item.amenities.created_at,
+        updatedAt: item.amenities.updated_at
+      })) || [];
 
       res.json(transformedResults);
     } catch (error) {
@@ -1611,31 +1681,38 @@ export function registerLocationRoutes(app: Express) {
     try {
       const shipId = Number(req.params.id);
 
-      // Join ship_venues with venues and venue_types to get full venue details
-      const results = await db.select({
-        id: schema.venues.id,
-        name: schema.venues.name,
-        venue_type_id: schema.venues.venueTypeId,
-        venue_type_name: schema.venueTypes.name,
-        description: schema.venues.description,
-        created_at: schema.venues.createdAt,
-        updated_at: schema.venues.updatedAt
-      })
-      .from(schema.shipVenues)
-      .innerJoin(schema.venues, eq(schema.shipVenues.venueId, schema.venues.id))
-      .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
-      .where(eq(schema.shipVenues.shipId, shipId));
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('ship_venues')
+        .select(`
+          venues!inner(
+            id,
+            name,
+            venue_type_id,
+            description,
+            created_at,
+            updated_at,
+            venue_types!inner(name)
+          )
+        `)
+        .eq('ship_id', shipId);
 
-      // Transform snake_case to camelCase for frontend compatibility
-      const transformedResults = results.map((venue: any) => ({
-        id: venue.id,
-        name: venue.name,
-        venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_type_name,
-        description: venue.description,
-        createdAt: venue.created_at,
-        updatedAt: venue.updated_at
-      }));
+      if (error) {
+        console.error('Error fetching ship venues:', error);
+        return res.status(500).json({ error: 'Failed to fetch ship venues' });
+      }
+
+      // Transform results to flat structure with camelCase
+      const transformedResults = results?.map((item: any) => ({
+        id: item.venues.id,
+        name: item.venues.name,
+        venueTypeId: item.venues.venue_type_id,
+        venueTypeName: item.venues.venue_types?.name,
+        description: item.venues.description,
+        createdAt: item.venues.created_at,
+        updatedAt: item.venues.updated_at
+      })) || [];
 
       res.json(transformedResults);
     } catch (error) {
@@ -1707,26 +1784,34 @@ export function registerLocationRoutes(app: Express) {
     try {
       const resortId = Number(req.params.id);
 
-      // Join resort_amenities with amenities to get full amenity details
-      const results = await db.select({
-        id: schema.amenities.id,
-        name: schema.amenities.name,
-        description: schema.amenities.description,
-        createdAt: schema.amenities.createdAt,
-        updatedAt: schema.amenities.updatedAt
-      })
-      .from(schema.resortAmenities)
-      .innerJoin(schema.amenities, eq(schema.resortAmenities.amenityId, schema.amenities.id))
-      .where(eq(schema.resortAmenities.resortId, resortId));
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('resort_amenities')
+        .select(`
+          amenities!inner(
+            id,
+            name,
+            description,
+            created_at,
+            updated_at
+          )
+        `)
+        .eq('resort_id', resortId);
 
-      // Transform snake_case to camelCase for frontend compatibility
-      const transformedResults = results.map((amenity: any) => ({
-        id: amenity.id,
-        name: amenity.name,
-        description: amenity.description,
-        createdAt: amenity.createdAt,
-        updatedAt: amenity.updatedAt
-      }));
+      if (error) {
+        console.error('Error fetching resort amenities:', error);
+        return res.status(500).json({ error: 'Failed to fetch resort amenities' });
+      }
+
+      // Transform results to flat structure with camelCase
+      const transformedResults = results?.map((item: any) => ({
+        id: item.amenities.id,
+        name: item.amenities.name,
+        description: item.amenities.description,
+        createdAt: item.amenities.created_at,
+        updatedAt: item.amenities.updated_at
+      })) || [];
 
       res.json(transformedResults);
     } catch (error) {
@@ -1796,31 +1881,38 @@ export function registerLocationRoutes(app: Express) {
     try {
       const resortId = Number(req.params.id);
 
-      // Join resort_venues with venues and venue_types to get full venue details
-      const results = await db.select({
-        id: schema.venues.id,
-        name: schema.venues.name,
-        venue_type_id: schema.venues.venueTypeId,
-        venue_type_name: schema.venueTypes.name,
-        description: schema.venues.description,
-        created_at: schema.venues.createdAt,
-        updated_at: schema.venues.updatedAt
-      })
-      .from(schema.resortVenues)
-      .innerJoin(schema.venues, eq(schema.resortVenues.venueId, schema.venues.id))
-      .innerJoin(schema.venueTypes, eq(schema.venues.venueTypeId, schema.venueTypes.id))
-      .where(eq(schema.resortVenues.resortId, resortId));
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('resort_venues')
+        .select(`
+          venues!inner(
+            id,
+            name,
+            venue_type_id,
+            description,
+            created_at,
+            updated_at,
+            venue_types!inner(name)
+          )
+        `)
+        .eq('resort_id', resortId);
 
-      // Transform snake_case to camelCase for frontend compatibility
-      const transformedResults = results.map((venue: any) => ({
-        id: venue.id,
-        name: venue.name,
-        venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_type_name,
-        description: venue.description,
-        createdAt: venue.created_at,
-        updatedAt: venue.updated_at
-      }));
+      if (error) {
+        console.error('Error fetching resort venues:', error);
+        return res.status(500).json({ error: 'Failed to fetch resort venues' });
+      }
+
+      // Transform results to flat structure with camelCase
+      const transformedResults = results?.map((item: any) => ({
+        id: item.venues.id,
+        name: item.venues.name,
+        venueTypeId: item.venues.venue_type_id,
+        venueTypeName: item.venues.venue_types?.name,
+        description: item.venues.description,
+        createdAt: item.venues.created_at,
+        updatedAt: item.venues.updated_at
+      })) || [];
 
       res.json(transformedResults);
     } catch (error) {

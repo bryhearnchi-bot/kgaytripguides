@@ -1,7 +1,6 @@
 import * as argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
-import { storage, db } from './storage';
 import type { Profile } from '@shared/schema';
 import { ApiError, ErrorCode } from './utils/ApiError';
 
@@ -90,9 +89,14 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (user && !error) {
-      // Get user profile from database
-      const { profileStorage } = await import('./storage');
-      const profile = await profileStorage.getProfile(user.id);
+      // Get user profile from database using Supabase Admin
+      const { getSupabaseAdmin } = await import('./supabase-admin');
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
       if (profile) {
         req.user = {

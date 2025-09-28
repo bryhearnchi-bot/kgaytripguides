@@ -4,7 +4,7 @@
  */
 
 import type { Request, Response } from 'express';
-import { db } from '../storage';
+import { getSupabaseAdmin } from '../supabase-admin';
 import { logger } from '../logging/logger';
 import os from 'os';
 import { promises as fs } from 'fs';
@@ -32,11 +32,22 @@ async function checkDatabaseHealth(): Promise<HealthStatus> {
   const startTime = Date.now();
 
   try {
-    // Perform a simple query to check connectivity using Drizzle
-    const result = await db.execute('SELECT 1 as health_check');
+    // Perform a simple query to check connectivity using Supabase Admin
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin.rpc('health_check', {});
 
-    if (!result || !result.rows || result.rows.length === 0) {
-      throw new Error('Invalid database response');
+    // If health_check function doesn't exist, fall back to a simple table query
+    if (error && error.code === '42883') {
+      const { data: fallbackData, error: fallbackError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .limit(1);
+
+      if (fallbackError) {
+        throw fallbackError;
+      }
+    } else if (error) {
+      throw error;
     }
 
     // Connection pool status (not directly available with Drizzle)

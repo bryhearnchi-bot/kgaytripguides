@@ -312,6 +312,62 @@ export function registerOptimizedAdminUsersRoutes(app: Express) {
     }
   });
 
+  // GET /api/admin/profile - Get current user's profile
+  app.get("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'User management service is not configured'
+        });
+      }
+
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Fetch user profile from Supabase
+      const { data: profile, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return res.status(500).json({ error: 'Failed to fetch profile' });
+      }
+
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      // Transform snake_case to camelCase for frontend
+      const transformedProfile = {
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.full_name,
+        name: profile.name,
+        username: profile.username,
+        avatarUrl: profile.avatar_url,
+        role: profile.role,
+        bio: profile.bio,
+        website: profile.website,
+        phoneNumber: profile.phone_number,
+        location: profile.location,
+        socialLinks: profile.social_links,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at,
+      };
+
+      res.json(transformedProfile);
+
+    } catch (error) {
+      console.error('Error in profile endpoint:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
   // Clear cache endpoint
   app.delete("/api/admin/users/cache", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
     queryCache.clear();

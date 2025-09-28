@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
-import { storage } from '../storage';
+import { getSupabaseAdmin } from '../supabase-admin';
 import { ApiError } from '../utils/ApiError';
 
 const router = Router();
@@ -8,8 +8,18 @@ const router = Router();
 // Get all talent categories
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const categories = await storage.getAllTalentCategories();
-    res.json(categories);
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: categories, error } = await supabaseAdmin
+      .from('talent_categories')
+      .select('*')
+      .order('category', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching talent categories:', error);
+      return res.status(500).json({ error: 'Failed to fetch talent categories' });
+    }
+
+    res.json(categories || []);
   } catch (error) {
     console.error('Error fetching talent categories:', error);
     res.status(500).json({
@@ -27,7 +37,18 @@ router.post('/', async (req: Request, res: Response) => {
       throw new ApiError(400, 'Category name is required');
     }
 
-    const newCategory = await storage.createTalentCategory(category);
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: newCategory, error } = await supabaseAdmin
+      .from('talent_categories')
+      .insert({ category })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating talent category:', error);
+      return res.status(500).json({ error: 'Failed to create talent category' });
+    }
+
     res.status(201).json(newCategory);
   } catch (error) {
     console.error('Error creating talent category:', error);
@@ -51,7 +72,25 @@ router.put('/:id', async (req: Request, res: Response) => {
       throw new ApiError(400, 'Category name is required');
     }
 
-    const updated = await storage.updateTalentCategory(Number(id), category);
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: updated, error } = await supabaseAdmin
+      .from('talent_categories')
+      .update({
+        category,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', Number(id))
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new ApiError(404, 'Talent category not found');
+      }
+      console.error('Error updating talent category:', error);
+      return res.status(500).json({ error: 'Failed to update talent category' });
+    }
+
     res.json(updated);
   } catch (error) {
     console.error('Error updating talent category:', error);
@@ -69,7 +108,18 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await storage.deleteTalentCategory(Number(id));
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+      .from('talent_categories')
+      .delete()
+      .eq('id', Number(id));
+
+    if (error) {
+      console.error('Error deleting talent category:', error);
+      return res.status(500).json({ error: 'Failed to delete talent category' });
+    }
+
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting talent category:', error);

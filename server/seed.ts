@@ -1,5 +1,4 @@
-import { db, schema } from './storage';
-import { eq } from 'drizzle-orm';
+import { getSupabaseAdmin } from './supabase-admin';
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../client/src/data/mock-data';
 
@@ -18,97 +17,133 @@ async function seedDatabase() {
   console.log(useMockData ? '🧪 Using mock data for testing' : '🚢 Using production Greek Isles cruise data');
 
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     // Check if Greek cruise already exists
-    const existingCruise = await db.select().from(schema.trips).where(eq(cruises.slug, useMockData ? 'mock-cruise-2024' : 'greek-isles-2025'));
-    
-    if (existingCruise.length > 0) {
+    const targetSlug = useMockData ? 'mock-cruise-2024' : 'greek-isles-2025';
+    const { data: existingCruise, error: checkError } = await supabaseAdmin
+      .from('trips')
+      .select('*')
+      .eq('slug', targetSlug);
+
+    if (checkError) {
+      console.error('Error checking existing cruise:', checkError);
+      throw checkError;
+    }
+
+    if (existingCruise && existingCruise.length > 0) {
       console.log('✅ Cruise already exists, skipping seed...');
       console.log(`Found existing cruise: ${existingCruise[0].name} (ID: ${existingCruise[0].id})`);
       return;
     }
     // Create the cruise
     console.log(useMockData ? 'Creating mock test cruise...' : 'Creating Greek Isles cruise...');
-    const [cruise] = await db.insert(schema.trips).values({
-      name: useMockData ? 'Mock Test Cruise' : 'Greek Isles Atlantis Cruise',
-      slug: useMockData ? 'mock-cruise-2024' : 'greek-isles-2025',
-      shipName: useMockData ? 'Test Ship' : 'Virgin Resilient Lady',
-      cruiseLine: useMockData ? 'Test Line' : 'Virgin Voyages',
-      startDate: useMockData ? new Date('2024-01-01') : new Date('2025-08-21'),
-      endDate: useMockData ? new Date('2024-01-03') : new Date('2025-08-31'),
-      status: 'upcoming',
-      description: useMockData ? 'Mock test cruise for development and testing purposes.' : 'Join us for an unforgettable journey through the Greek Isles aboard the Virgin Resilient Lady. Experience ancient wonders, stunning beaches, and legendary Atlantis parties.',
-      heroImageUrl: 'https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png',
-      highlights: [
-        'Visit iconic Greek islands including Mykonos and Santorini',
-        'Explore ancient ruins in Athens and Ephesus',
-        'Legendary Atlantis parties and entertainment',
-        'World-class talent and performances',
-        'All-gay vacation experience'
-      ],
-      includesInfo: {
-        included: [
-          'Accommodation in your selected cabin category',
-          'All meals and entertainment onboard',
-          'Access to all ship facilities',
-          'Atlantis parties and events',
-          'Talent performances and shows'
+    const { data: cruise, error: insertError } = await supabaseAdmin
+      .from('trips')
+      .insert({
+        name: useMockData ? 'Mock Test Cruise' : 'Greek Isles Atlantis Cruise',
+        slug: useMockData ? 'mock-cruise-2024' : 'greek-isles-2025',
+        ship_name: useMockData ? 'Test Ship' : 'Virgin Resilient Lady',
+        cruise_line: useMockData ? 'Test Line' : 'Virgin Voyages',
+        start_date: (useMockData ? new Date('2024-01-01') : new Date('2025-08-21')).toISOString(),
+        end_date: (useMockData ? new Date('2024-01-03') : new Date('2025-08-31')).toISOString(),
+        status: 'upcoming',
+        description: useMockData ? 'Mock test cruise for development and testing purposes.' : 'Join us for an unforgettable journey through the Greek Isles aboard the Virgin Resilient Lady. Experience ancient wonders, stunning beaches, and legendary Atlantis parties.',
+        hero_image_url: 'https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png',
+        highlights: [
+          'Visit iconic Greek islands including Mykonos and Santorini',
+          'Explore ancient ruins in Athens and Ephesus',
+          'Legendary Atlantis parties and entertainment',
+          'World-class talent and performances',
+          'All-gay vacation experience'
         ],
-        notIncluded: [
-          'Airfare',
-          'Shore excursions',
-          'Alcoholic beverages',
-          'Gratuities',
-          'Spa services'
-        ]
-      }
-    }).returning();
+        includes_info: {
+          included: [
+            'Accommodation in your selected cabin category',
+            'All meals and entertainment onboard',
+            'Access to all ship facilities',
+            'Atlantis parties and events',
+            'Talent performances and shows'
+          ],
+          notIncluded: [
+            'Airfare',
+            'Shore excursions',
+            'Alcoholic beverages',
+            'Gratuities',
+            'Spa services'
+          ]
+        }
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating cruise:', insertError);
+      throw insertError;
+    }
 
     // Seed itinerary
     console.log('Creating itinerary stops...');
-    const itineraryPromises = selectedItinerary.map(async (stop, index) => {
+    const itineraryData = selectedItinerary.map((stop, index) => {
       const [year, month, day] = stop.key.split('-').map(Number);
       const stopDate = new Date(year, month - 1, day);
 
-      return db.insert(schema.itinerary).values({
-        cruiseId: cruise.id,
-        date: stopDate,
+      return {
+        trip_id: cruise.id,
+        date: stopDate.toISOString(),
         day: index + 1,
-        portName: stop.port,
-        country: stop.port.includes('Greece') ? 'Greece' : 
-                 stop.port.includes('Turkey') ? 'Turkey' : 
-                 stop.port.includes('Egypt') ? 'Egypt' :
-                 stop.port.includes('Italy') ? 'Italy' :
-                 stop.port.includes('Spain') ? 'Spain' : null,
-        arrivalTime: stop.arrive === '—' ? null : stop.arrive,
-        departureTime: stop.depart === '—' ? null : stop.depart === 'Overnight' ? 'Overnight' : stop.depart,
-        allAboardTime: stop.depart && stop.depart !== '—' && stop.depart !== 'Overnight' ? 
+        location_id: null, // Will be set to actual location IDs later if needed
+        location_type_id: null, // Will be set to actual location type IDs later if needed
+        arrival_time: stop.arrive === '—' ? null : stop.arrive,
+        departure_time: stop.depart === '—' ? null : stop.depart === 'Overnight' ? 'Overnight' : stop.depart,
+        all_aboard_time: stop.depart && stop.depart !== '—' && stop.depart !== 'Overnight' ?
           (() => {
             const [hours, minutes] = stop.depart.split(':').map(Number);
             const allAboardHour = hours - 1;
             return `${String(allAboardHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
           })() : null,
-        orderIndex: index,
-        description: stop.port.includes('Sea') ? 'Enjoy a relaxing day at sea with all the ship amenities and Atlantis activities.' : null
-      }).returning();
+        order_index: index,
+        segment: null,
+        description: stop.port.includes('Sea') ? 'Enjoy a relaxing day at sea with all the ship amenities and Atlantis activities.' : null,
+        highlights: null,
+        location_image_url: null,
+        port_image_url: null
+      };
     });
 
-    await Promise.all(itineraryPromises);
+    const { error: itineraryError } = await supabaseAdmin
+      .from('itinerary')
+      .insert(itineraryData);
+
+    if (itineraryError) {
+      console.error('Error creating itinerary:', itineraryError);
+      throw itineraryError;
+    }
 
     // Seed talent
     console.log('Creating talent...');
     const talentMap = new Map();
-    
+
     for (const t of selectedTalent) {
-      const [talentRecord] = await db.insert(schema.talent).values({
-        name: t.name,
-        category: t.cat,
-        bio: t.bio,
-        knownFor: t.knownFor,
-        profileImageUrl: t.img,
-        socialLinks: t.social || {},
-        website: t.social?.website || null
-      }).returning();
-      
+      const { data: talentRecord, error: talentError } = await supabaseAdmin
+        .from('talent')
+        .insert({
+          name: t.name,
+          talent_category_id: null, // Will need to map categories to IDs later if needed
+          bio: t.bio,
+          known_for: t.knownFor,
+          profile_image_url: t.img,
+          social_links: t.social || {},
+          website: t.social?.website || null
+        })
+        .select()
+        .single();
+
+      if (talentError) {
+        console.error(`Error creating talent ${t.name}:`, talentError);
+        throw talentError;
+      }
+
       talentMap.set(t.name, talentRecord.id);
     }
 
@@ -135,18 +170,25 @@ async function seedDatabase() {
           themeDesc = theme?.desc || null;
         }
 
-        await db.insert(schema.events).values({
-          cruiseId: cruise.id,
-          date: eventDate,
-          time: item.time,
-          title: item.title,
-          type: item.type,
-          venue: item.venue,
-          description: themeDesc,
-          shortDescription: themeDesc ? (themeDesc.length > 100 ? themeDesc.substring(0, 100) + '...' : themeDesc) : null,
-          talentIds: talentIds.length > 0 ? talentIds : null,
-          requiresReservation: item.venue === 'The Manor' || item.venue === 'Pink Agave'
-        });
+        const { error: eventError } = await supabaseAdmin
+          .from('events')
+          .insert({
+            trip_id: cruise.id,
+            date: eventDate.toISOString(),
+            time: item.time,
+            title: item.title,
+            type: item.type,
+            venue: item.venue,
+            description: themeDesc,
+            short_description: themeDesc ? (themeDesc.length > 100 ? themeDesc.substring(0, 100) + '...' : themeDesc) : null,
+            talent_ids: talentIds.length > 0 ? talentIds : null,
+            requires_reservation: item.venue === 'The Manor' || item.venue === 'Pink Agave'
+          });
+
+        if (eventError) {
+          console.error(`Error creating event ${item.title}:`, eventError);
+          throw eventError;
+        }
       }
     }
 

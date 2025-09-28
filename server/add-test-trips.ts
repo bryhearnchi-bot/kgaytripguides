@@ -1,6 +1,5 @@
 
-import { db, schema } from './storage';
-import { eq } from 'drizzle-orm';
+import { getSupabaseAdmin } from './supabase-admin';
 
 /**
  * Script to add test trips for UI testing purposes
@@ -10,6 +9,8 @@ async function addTestTrips() {
   console.log('🧪 Adding test trips for UI testing...');
 
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     const testTrips = [
       // Upcoming Trips
       {
@@ -92,28 +93,49 @@ async function addTestTrips() {
 
     for (const trip of testTrips) {
       // Check if trip already exists
-      const existingTrip = await db.select().from(schema.trips).where(eq(schema.trips.slug, trip.slug));
+      const { data: existingTrip, error: checkError } = await supabaseAdmin
+        .from('trips')
+        .select('*')
+        .eq('slug', trip.slug);
 
-      if (existingTrip.length === 0) {
+      if (checkError) {
+        console.error(`Error checking existing trip ${trip.slug}:`, checkError);
+        throw checkError;
+      }
+
+      if (!existingTrip || existingTrip.length === 0) {
         console.log(`➕ Adding test trip: ${trip.name}`);
 
-        await db.insert(schema.trips).values({
-          ...trip,
-          includesInfo: {
-            included: [
-              'Accommodation in selected cabin category',
-              'All meals and entertainment onboard',
-              'Access to ship facilities',
-              'Entertainment and shows'
-            ],
-            notIncluded: [
-              'Airfare',
-              'Shore excursions',
-              'Alcoholic beverages',
-              'Gratuities'
-            ]
-          }
-        });
+        const { error: insertError } = await supabaseAdmin
+          .from('trips')
+          .insert({
+            ...trip,
+            ship_name: trip.shipName,
+            cruise_line: trip.cruiseLine,
+            start_date: trip.startDate.toISOString(),
+            end_date: trip.endDate.toISOString(),
+            hero_image_url: trip.heroImageUrl,
+            includes_info: {
+              included: [
+                'Accommodation in selected cabin category',
+                'All meals and entertainment onboard',
+                'Access to ship facilities',
+                'Entertainment and shows'
+              ],
+              notIncluded: [
+                'Airfare',
+                'Shore excursions',
+                'Alcoholic beverages',
+                'Gratuities'
+              ]
+            }
+          });
+
+        if (insertError) {
+          console.error(`Error creating test trip ${trip.name}:`, insertError);
+          throw insertError;
+        }
+
         addedCount++;
       } else {
         console.log(`✅ Test trip already exists: ${trip.name}`);

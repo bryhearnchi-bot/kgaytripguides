@@ -81,8 +81,8 @@ export interface TripData {
 // Transform database data to match the existing component format
 // v2.0: Phase 4 migration - using location fields instead of port fields
 export function transformTripData(data: TripData) {
-  // Transform itinerary
-  const itinerary = data.itinerary.map(stop => ({
+  // Transform itinerary (defensive check)
+  const itinerary = (data.itinerary || []).map(stop => ({
     key: stop.date.split('T')[0],
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
@@ -96,17 +96,17 @@ export function transformTripData(data: TripData) {
     portDetails: (stop as any).location // Include full location details (renamed from port)
   }));
 
-  // Group events by date
+  // Group events by date (defensive check)
   const dailyEvents: Record<string, any[]> = {};
-  data.events.forEach(event => {
+  (data.events || []).forEach(event => {
     const dateKey = event.date.split('T')[0];
     if (!dailyEvents[dateKey]) {
       dailyEvents[dateKey] = [];
     }
     
-    // Map talent IDs to talent info
-    const eventTalent = event.talentIds ? 
-      data.talent.filter(t => event.talentIds.includes(t.id)) : [];
+    // Map talent IDs to talent info (defensive check)
+    const eventTalent = event.talentIds ?
+      (data.talent || []).filter(t => event.talentIds.includes(t.id)) : [];
     
     dailyEvents[dateKey].push({
       time: event.time,
@@ -131,8 +131,8 @@ export function transformTripData(data: TripData) {
     items: dailyEvents[key].sort((a, b) => a.time.localeCompare(b.time))
   }));
 
-  // Transform talent
-  const talent = data.talent.map(t => ({
+  // Transform talent (defensive check)
+  const talent = (data.talent || []).map(t => ({
     name: t.name,
     cat: t.category,
     bio: t.bio || '',
@@ -141,9 +141,9 @@ export function transformTripData(data: TripData) {
     social: t.socialLinks || {}
   }));
 
-  // Extract unique party themes from events
+  // Extract unique party themes from events (defensive check)
   const uniquePartyThemes = new Map();
-  data.events.forEach(event => {
+  (data.events || []).forEach(event => {
     if ((event as any).partyTheme) {
       const theme = (event as any).partyTheme;
       if (!uniquePartyThemes.has(theme.id)) {

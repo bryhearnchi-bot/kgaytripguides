@@ -3,12 +3,10 @@ import {
   tripStorage,
   itineraryStorage,
   eventStorage,
-  tripInfoStorage,
-  db
+  tripInfoStorage
 } from "../storage";
 import { requireAuth, requireContentEditor, requireSuperAdmin, requireTripAdmin, type AuthenticatedRequest } from "../auth";
-import * as schema from "../../shared/schema";
-import { eq, ilike, or, count, sql } from "drizzle-orm";
+import { getSupabaseAdmin } from "../supabase-admin";
 import {
   validateBody,
   validateParams,
@@ -208,50 +206,40 @@ export function registerTripRoutes(app: Express) {
       const limitNum = parseInt(limit as string);
       const offset = (pageNum - 1) * limitNum;
 
-      let query = db.select().from(schema.trips);
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Build the query
+      let query = supabaseAdmin
+        .from('trips')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
 
       // Apply filters
       if (search) {
-        query = query.where(
-          or(
-            ilike(schema.trips.name, `%${search}%`),
-            ilike(schema.trips.slug, `%${search}%`)
-          )
-        ) as typeof query;
+        query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
       }
 
       if (status) {
-        query = query.where(eq(schema.trips.status, status as any)) as typeof query;
+        query = query.eq('status', status as string);
       }
-
-      // Get total count
-      const countQuery = db.select({ count: count() }).from(schema.trips);
-      if (search) {
-        countQuery.where(
-          or(
-            ilike(schema.trips.name, `%${search}%`),
-            ilike(schema.trips.slug, `%${search}%`)
-          )
-        );
-      }
-      if (status) {
-        countQuery.where(eq(schema.trips.status, status as any));
-      }
-
-      const [{ count: total }] = await countQuery;
 
       // Apply pagination
-      query = query.limit(limitNum).offset(offset) as typeof query;
+      query = query.range(offset, offset + limitNum - 1);
 
-      const results = await query;
+      const { data: results, error, count: total } = await query;
+
+      if (error) {
+        console.error('Error fetching admin trips:', error);
+        return res.status(500).json({ error: 'Failed to fetch trips' });
+      }
 
       res.json({
-        trips: results,
+        trips: results || [],
         pagination: {
-          total,
+          total: total || 0,
           page: pageNum,
           limit: limitNum,
-          totalPages: Math.ceil(total / limitNum)
+          totalPages: Math.ceil((total || 0) / limitNum)
         }
       });
     } catch (error) {
@@ -281,20 +269,43 @@ export function registerTripRoutes(app: Express) {
   // Get trip statistics for admin dashboard
   app.get("/api/admin/trips/stats", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const stats = await db.select({
-        total: count(),
-        published: sql<number>`COUNT(CASE WHEN status = 'published' THEN 1 END)`,
-        draft: sql<number>`COUNT(CASE WHEN status = 'draft' THEN 1 END)`,
-        archived: sql<number>`COUNT(CASE WHEN status = 'archived' THEN 1 END)`,
-        upcoming: sql<number>`COUNT(CASE WHEN start_date > CURRENT_DATE AND status = 'published' THEN 1 END)`,
-        ongoing: sql<number>`COUNT(CASE WHEN start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE AND status = 'published' THEN 1 END)`,
-        past: sql<number>`COUNT(CASE WHEN end_date < CURRENT_DATE AND status = 'published' THEN 1 END)`,
-        totalCapacity: sql<number>`SUM(max_capacity)`,
-        totalBookings: sql<number>`SUM(current_bookings)`,
-        avgOccupancy: sql<number>`AVG(CASE WHEN max_capacity > 0 THEN (current_bookings::float / max_capacity * 100) ELSE 0 END)`
-      }).from(schema.trips);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: trips, error } = await supabaseAdmin
+        .from('trips')
+        .select('status, start_date, end_date, max_capacity, current_bookings');
 
-      res.json(stats[0]);
+      if (error) {
+        console.error('Error fetching trip stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch trip statistics' });
+      }
+
+      const now = new Date();
+      const stats = {
+        total: trips?.length || 0,
+        published: trips?.filter(t => t.status === 'published').length || 0,
+        draft: trips?.filter(t => t.status === 'draft').length || 0,
+        archived: trips?.filter(t => t.status === 'archived').length || 0,
+        upcoming: trips?.filter(t =>
+          new Date(t.start_date) > now && t.status === 'published'
+        ).length || 0,
+        ongoing: trips?.filter(t =>
+          new Date(t.start_date) <= now && new Date(t.end_date) >= now && t.status === 'published'
+        ).length || 0,
+        past: trips?.filter(t =>
+          new Date(t.end_date) < now && t.status === 'published'
+        ).length || 0,
+        totalCapacity: trips?.reduce((sum, t) => sum + (t.max_capacity || 0), 0) || 0,
+        totalBookings: trips?.reduce((sum, t) => sum + (t.current_bookings || 0), 0) || 0,
+        avgOccupancy: trips?.length ?
+          trips.reduce((sum, t) => {
+            if (t.max_capacity > 0) {
+              return sum + ((t.current_bookings || 0) / t.max_capacity * 100);
+            }
+            return sum;
+          }, 0) / trips.filter(t => t.max_capacity > 0).length : 0
+      };
+
+      res.json(stats);
     } catch (error) {
       console.error('Error fetching trip stats:', error);
       res.status(500).json({ error: 'Failed to fetch trip statistics' });
@@ -444,12 +455,23 @@ export function registerTripRoutes(app: Express) {
   // Get event statistics
   app.get("/api/events/stats", async (req, res) => {
     try {
-      const stats = await db.select({
-        total: count(),
-        byType: sql<any>`json_object_agg(type, type_count) FROM (SELECT type, COUNT(*) as type_count FROM ${schema.events} GROUP BY type) t`
-      }).from(schema.events);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: events, error } = await supabaseAdmin
+        .from('events')
+        .select('type');
 
-      res.json(stats[0] || { total: 0, byType: {} });
+      if (error) {
+        console.error('Error fetching event stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch event statistics' });
+      }
+
+      const total = events?.length || 0;
+      const byType = events?.reduce((acc: Record<string, number>, event: any) => {
+        acc[event.type] = (acc[event.type] || 0) + 1;
+        return acc;
+      }, {}) || {};
+
+      res.json({ total, byType });
     } catch (error) {
       console.error('Error fetching event stats:', error);
       res.status(500).json({ error: 'Failed to fetch event statistics' });
@@ -468,26 +490,39 @@ export function registerTripRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(schema.events);
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('events')
+        .select('*')
+        .order('start_time');
 
       // Apply filters
-      const conditions = [];
       if (tripId) {
-        conditions.push(eq(schema.events.tripId, tripId as string));
+        query = query.eq('trip_id', tripId as string);
       }
       if (type) {
-        conditions.push(eq(schema.events.type, type as any));
+        query = query.eq('type', type as string);
       }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+      if (startDate) {
+        query = query.gte('start_time', startDate as string);
+      }
+      if (endDate) {
+        query = query.lte('end_time', endDate as string);
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const startIndex = parseInt(offset as string);
+      const endIndex = startIndex + parseInt(limit as string) - 1;
+      query = query.range(startIndex, endIndex);
 
-      const results = await query;
-      res.json(results);
+      const { data: results, error } = await query;
+
+      if (error) {
+        console.error('Error fetching events:', error);
+        return res.status(500).json({ error: 'Failed to fetch events' });
+      }
+
+      res.json(results || []);
     } catch (error) {
       console.error('Error fetching events:', error);
       res.status(500).json({ error: 'Failed to fetch events' });
@@ -556,10 +591,19 @@ export function registerTripRoutes(app: Express) {
   // Get info sections for a trip
   app.get("/api/trips/:tripId/info-sections", async (req, res) => {
     try {
-      const sections = await db.select()
-        .from(schema.tripInfoSections)
-        .where(eq(schema.tripInfoSections.tripId, req.params.tripId));
-      res.json(sections);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: sections, error } = await supabaseAdmin
+        .from('trip_info_sections')
+        .select('*')
+        .eq('trip_id', req.params.tripId)
+        .order('display_order');
+
+      if (error) {
+        console.error('Error fetching info sections:', error);
+        return res.status(500).json({ error: 'Failed to fetch info sections' });
+      }
+
+      res.json(sections || []);
     } catch (error) {
       console.error('Error fetching info sections:', error);
       res.status(500).json({ error: 'Failed to fetch info sections' });
@@ -570,10 +614,21 @@ export function registerTripRoutes(app: Express) {
   // Create info section
   app.post("/api/trips/:tripId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const [section] = await db.insert(schema.tripInfoSections).values({
-        ...req.body,
-        tripId: req.params.tripId
-      }).returning();
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: section, error } = await supabaseAdmin
+        .from('trip_info_sections')
+        .insert({
+          ...req.body,
+          trip_id: req.params.tripId
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating info section:', error);
+        return res.status(500).json({ error: 'Failed to create info section' });
+      }
+
       res.json(section);
     } catch (error) {
       console.error('Error creating info section:', error);
@@ -584,10 +639,24 @@ export function registerTripRoutes(app: Express) {
   // Update info section
   app.put("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const [section] = await db.update(schema.tripInfoSections)
-        .set(req.body)
-        .where(eq(schema.tripInfoSections.id, req.params.id))
-        .returning();
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: section, error } = await supabaseAdmin
+        .from('trip_info_sections')
+        .update({
+          ...req.body,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', req.params.id)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Info section not found' });
+        }
+        console.error('Error updating info section:', error);
+        return res.status(500).json({ error: 'Failed to update info section' });
+      }
 
       if (!section) {
         return res.status(404).json({ error: 'Info section not found' });
@@ -603,8 +672,17 @@ export function registerTripRoutes(app: Express) {
   // Delete info section
   app.delete("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      await db.delete(schema.tripInfoSections)
-        .where(eq(schema.tripInfoSections.id, req.params.id));
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('trip_info_sections')
+        .delete()
+        .eq('id', req.params.id);
+
+      if (error) {
+        console.error('Error deleting info section:', error);
+        return res.status(500).json({ error: 'Failed to delete info section' });
+      }
+
       res.json({ message: 'Info section deleted' });
     } catch (error) {
       console.error('Error deleting info section:', error);

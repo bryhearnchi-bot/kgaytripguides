@@ -7,7 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 
 // Parse date from ISO string as a local date (no timezone conversion)
 // Treats the date as-is without any timezone adjustments
-export function dateOnly(isoString: string): Date {
+export function dateOnly(isoString: string | null | undefined): Date {
+  // Handle null/undefined values
+  if (!isoString) {
+    return new Date(); // Return current date as fallback
+  }
+
   // Extract just the date part (YYYY-MM-DD)
   const dateStr = isoString.split('T')[0];
   const [year, month, day] = dateStr.split('-').map(Number);

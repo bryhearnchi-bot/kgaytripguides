@@ -151,9 +151,6 @@ export function useSupabaseAuth() {
 
       const data = await response.json();
 
-      console.log('Raw profile data from API:', data);
-      console.log('Bio field from API:', data?.bio);
-      console.log('Social links from API:', data?.socialLinks);
 
       // The API already returns properly formatted data, so we can use it directly
       if (data) {
@@ -175,8 +172,6 @@ export function useSupabaseAuth() {
           updated_at: data.updatedAt,
         };
 
-        console.log('Mapped profile bio:', mappedProfile.bio);
-        console.log('Mapped profile social links:', mappedProfile.socialLinks);
 
         setProfile(mappedProfile);
       } else {
