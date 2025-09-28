@@ -53,7 +53,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Talent, DailyEvent, CityAttraction } from "@/data/trip-data";
 import { useTripData, transformTripData } from "@/hooks/useTripData";
@@ -1509,6 +1509,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
             <DialogTitle className="sr-only">
               {selectedTalent?.name}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Biography and information for {selectedTalent?.name}
+            </DialogDescription>
           </DialogHeader>
           {selectedTalent && (
             <div className="space-y-4">
@@ -1637,6 +1640,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
             <DialogTitle>
               Events for {selectedItineraryStop?.port}
             </DialogTitle>
+            <DialogDescription>
+              View scheduled events and activities for this port
+            </DialogDescription>
           </DialogHeader>
 
           {/* Port Description */}
@@ -1714,6 +1720,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
             <DialogTitle>
               {selectedParty?.title}
             </DialogTitle>
+            <DialogDescription>
+              Party details and information
+            </DialogDescription>
           </DialogHeader>
 
           {selectedParty && (

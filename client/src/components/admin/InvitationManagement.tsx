@@ -44,6 +44,7 @@ import {
   Send,
 } from 'lucide-react';
 import { InviteUserModal } from './InviteUserModal';
+import { supabase } from '@/lib/supabase';
 
 interface Invitation {
   id: string;
@@ -71,14 +72,7 @@ export function InvitationManagement() {
   const fetchInvitations = async () => {
     setIsLoading(true);
     try {
-      // Import supabase client
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
-      );
-
-      // Get authentication token
+      // Get authentication token from singleton client
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
@@ -118,13 +112,7 @@ export function InvitationManagement() {
   const handleDelete = async (id: string) => {
     try {
       // Import supabase client
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
-      );
-
-      // Get authentication token
+      // Get authentication token from singleton client
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
@@ -163,13 +151,7 @@ export function InvitationManagement() {
     setResendingId(id);
     try {
       // Import supabase client
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
-      );
-
-      // Get authentication token
+      // Get authentication token from singleton client
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');

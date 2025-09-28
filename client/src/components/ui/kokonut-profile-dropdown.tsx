@@ -49,8 +49,16 @@ export default function KokonutProfileDropdown({
 }: ProfileDropdownProps) {
     const [isOpen, setIsOpen] = React.useState(false);
 
-    const fullDisplayName = profile?.full_name || user.email?.split('@')[0] || 'User';
-    const displayName = fullDisplayName.split(' ')[0]; // Only show first name
+
+
+    // Get the first name - prioritize profile.name.first, then profile.full_name, then email username
+    const displayName = profile?.name?.first ||
+                       profile?.full_name?.split(' ')[0] ||
+                       user.email?.split('@')[0] ||
+                       'User';
+
+    // For full name display (used for initials), use profile.name.full or profile.full_name
+    const fullDisplayName = profile?.name?.full || profile?.full_name || displayName;
     const initials = fullDisplayName
         .split(' ')
         .map(name => name[0])
