@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format } from "date-fns";
@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { FilterBar } from "@/components/admin/FilterBar";
 import { AdminTable } from "@/components/admin/AdminTable";
+import { EnhancedTripsTable } from "@/components/admin/EnhancedTripsTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { CategoryChip } from "@/components/admin/CategoryChip";
 import { PageStats } from "@/components/admin/PageStats";
@@ -47,7 +48,6 @@ import { useToast } from "@/hooks/use-toast";
 import { dateOnly } from "@/lib/utils";
 import {
   Activity,
-  Anchor,
   Archive,
   BarChart3,
   Calendar,
@@ -59,10 +59,12 @@ import {
   Loader2,
   MapPin,
   Plus,
+  PlusSquare,
   Search,
   Ship,
   Star,
   Trash2,
+  TreePalm,
   Users,
 } from "lucide-react";
 
@@ -80,6 +82,7 @@ interface Trip {
   guestCount?: number;
   ports?: number;
   eventsCount?: number;
+  talentCount?: number;
   feedbackCount?: number;
   averageRating?: number;
   totalRevenue?: number;
@@ -116,6 +119,8 @@ export default function TripsManagement() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [tripPendingDeletion, setTripPendingDeletion] = useState<Trip | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const {
     data: allTrips = [],
@@ -285,6 +290,17 @@ export default function TripsManagement() {
     [groupedTrips]
   );
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredTrips.length);
+  const paginatedTrips = filteredTrips.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, yearFilter, searchTerm]);
+
   const isFiltered =
     statusFilter !== "all" || yearFilter !== "all" || searchTerm.trim().length > 0;
   const loadError = error as Error | null;
@@ -308,7 +324,9 @@ export default function TripsManagement() {
   }, [groupedTrips, statusFilter]);
 
   const tableFooter = !showError
-    ? `Showing ${filteredTrips.length} of ${totalForFilter} voyages`
+    ? filteredTrips.length === 0
+      ? "No trips to display"
+      : `Showing ${paginatedTrips.length} of ${filteredTrips.length} trips`
     : undefined;
 
   const tableEmptyState = showError ? (
@@ -334,11 +352,13 @@ export default function TripsManagement() {
       </p>
       {!isFiltered && canCreateOrEditTrips && (
         <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate("/admin/trips/new")}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors"
+          className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
+          title="Add New Trip"
         >
-          <Plus className="mr-2 h-4 w-4" />
-          Create voyage
+          <PlusSquare className="h-5 w-5 text-blue-400/80" />
         </Button>
       )}
     </>
@@ -370,11 +390,11 @@ export default function TripsManagement() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <Anchor className="h-6 w-6" />
-              Sailings & Trips
+              <TreePalm className="h-6 w-6" />
+              Trip Management
             </h1>
             <p className="text-sm text-white/60">
-              Monitor upcoming departures, live sailings, and archived voyages in one place.
+              Manage upcoming, current, and past trips all in one place.
             </p>
           </div>
           <div className="relative w-full md:max-w-md">
@@ -390,7 +410,7 @@ export default function TripsManagement() {
       </section>
 
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-blue-900/20 backdrop-blur">
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
         <div className="flex flex-wrap items-center gap-2">
           {statusFilters.map((filter) => {
             const isActive = statusFilter === filter.value;
@@ -400,7 +420,7 @@ export default function TripsManagement() {
                 onClick={() => setStatusFilter(filter.value as StatusFilter)}
                 className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition ${
                   isActive
-                    ? "border-white/20 bg-gradient-to-r from-[#22d3ee]/90 to-[#2563eb]/80 text-white shadow-lg shadow-blue-900/30"
+                    ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-900/30"
                     : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white"
                 }`}
                 type="button"
@@ -436,207 +456,199 @@ export default function TripsManagement() {
         </div>
       </section>
 
-      <AdminTable
-        title="Voyage Manifest"
-        description="Current Atlantis & KGAY sailings"
-        count={filteredTrips.length}
-        empty={showEmpty || showError}
-        emptyState={tableEmptyState}
-        footer={tableFooter}
-        actions={
-          canCreateOrEditTrips && (
+      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">All Trips</h2>
+          </div>
+          {canCreateOrEditTrips && (
             <Button
+              variant="ghost"
+              size="icon"
               onClick={() => navigate("/admin/trips/new")}
-              className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+              className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
+              title="Add New Trip"
             >
-              <Plus className="mr-1 h-3 w-3" />
-              New Trip
+              <PlusSquare className="h-5 w-5 text-blue-400/80" />
             </Button>
-          )
-        }
-      >
-        {!showEmpty && !showError && (
-          <>
-            <TableHeader className="bg-white/5">
-              <TableRow className="border-white/10 text-white/60">
-                <TableHead className="text-white/60">Voyage</TableHead>
-                <TableHead className="text-white/60">Schedule</TableHead>
-                <TableHead className="text-white/60">Status</TableHead>
-                <TableHead className="text-white/60">Highlights</TableHead>
-                <TableHead className="text-right text-white/60">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow className="border-white/10">
-                  <TableCell colSpan={5} className="py-12">
-                    <div className="flex items-center justify-center gap-3 text-white/60">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Loading voyages…
+          )}
+        </header>
+
+        {showEmpty || showError ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+            {tableEmptyState}
+          </div>
+        ) : (
+          <EnhancedTripsTable
+            data={paginatedTrips}
+            columns={[
+              {
+                key: 'image',
+                label: '',
+                priority: 'high',
+                sortable: false,
+                resizable: false,
+                width: 80,
+                minWidth: 80,
+                maxWidth: 80,
+                render: (_value, trip) => (
+                  <div className="flex items-center justify-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                      {trip.heroImageUrl ? (
+                        <img
+                          src={trip.heroImageUrl}
+                          alt={trip.name}
+                          className="h-full w-full rounded-xl object-cover"
+                        />
+                      ) : (
+                        <Ship className="h-6 w-6 text-white/70" />
+                      )}
                     </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredTrips.map((trip) => (
-                  <TableRow
-                    key={trip.id}
-                    className="border-white/10 bg-transparent hover:bg-white/5"
-                  >
-                    <TableCell className="py-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-[#22d3ee]/25 to-[#2563eb]/30 text-white">
-                          <Ship className="h-5 w-5" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="font-medium text-white">{trip.name}</p>
-                          <p className="text-xs text-white/60">
-                            {trip.shipName}
-                            {trip.cruiseLine ? ` • ${trip.cruiseLine}` : ""}
-                          </p>
-                          <p className="text-[11px] uppercase tracking-[0.25em] text-white/40">
-                            {trip.slug}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top text-sm text-white/80">
-                      <p className="font-medium text-white">
-                        {format(dateOnly(trip.startDate), "MMM dd")} – {format(
+                  </div>
+                ),
+              },
+              {
+                key: 'name',
+                label: 'Voyage',
+                priority: 'high',
+                sortable: true,
+                minWidth: 200,
+                render: (_value, trip) => (
+                  <p className="font-bold text-xs text-white">{trip.name}</p>
+                ),
+              },
+              {
+                key: 'startDate',
+                label: 'Schedule',
+                priority: 'high',
+                sortable: true,
+                minWidth: 150,
+                render: (_value, trip) => (
+                  <div className="space-y-1">
+                    <p className="text-xs text-white font-medium">
+                      {format(dateOnly(trip.startDate), "MMM dd")} – {format(
+                        dateOnly(trip.endDate),
+                        "MMM dd, yyyy"
+                      )}
+                    </p>
+                    <p className="text-xs text-white/50">
+                      {Math.max(
+                        1,
+                        differenceInDays(
                           dateOnly(trip.endDate),
-                          "MMM dd, yyyy"
-                        )}
-                      </p>
-                      <p className="text-xs text-white/50">
-                        {Math.max(
-                          1,
-                          differenceInDays(
-                            dateOnly(trip.endDate),
-                            dateOnly(trip.startDate)
-                          )
-                        )}{" "}
-                        days on board
-                      </p>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      {getTripStatusBadge(trip)}
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="flex flex-wrap gap-2">
-                        <CategoryChip
-                          label={`${trip.guestCount?.toLocaleString() ?? 0} guests`}
-                          icon={<Users className="h-3 w-3" />}
-                          variant="neutral"
-                        />
-                        <CategoryChip
-                          label={`${trip.ports ?? 0} ports`}
-                          icon={<MapPin className="h-3 w-3" />}
-                          variant="neutral"
-                        />
-                        <CategoryChip
-                          label={`${trip.eventsCount ?? 0} events`}
-                          icon={<Calendar className="h-3 w-3" />}
-                          variant="neutral"
-                        />
-                      </div>
-                      <div className="mt-3 flex items-center gap-2">
-                        {renderRatingStars(trip.averageRating)}
-                        {trip.feedbackCount ? (
-                          <span className="text-xs text-white/50">
-                            ({trip.feedbackCount} reviews)
-                          </span>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        {canCreateOrEditTrips && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/admin/trips/${trip.id}`)}
-                            className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                            title="Edit trip"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenQuickView(trip)}
-                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Quick view"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/trip/${trip.slug}`)}
-                          className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Preview trip"
-                        >
-                          <Anchor className="h-4 w-4" />
-                        </Button>
-                        {canArchiveTrips && trip.status !== "archived" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => archiveTrip.mutate(trip.id)}
-                            disabled={archiveTrip.isPending}
-                            className="h-9 w-9 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                            title="Archive trip"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDeleteTrips && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setTripPendingDeletion(trip)}
-                                className="h-9 w-9 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
-                                title="Delete trip"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="border border-white/10 bg-[#10192f] text-white">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete trip</AlertDialogTitle>
-                                <AlertDialogDescription className="text-white/60">
-                                  This will permanently remove "{trip.name}" and all associated voyage data. This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10">
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    tripPendingDeletion &&
-                                    deleteTrip.mutate(tripPendingDeletion.id)
-                                  }
-                                  disabled={deleteTrip.isPending}
-                                  className="rounded-full bg-[#fb7185] px-4 py-2 text-sm font-semibold text-white hover:bg-[#f43f5e] disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  Delete permanently
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </>
+                          dateOnly(trip.startDate)
+                        )
+                      )}{" "}
+                      days on board
+                    </p>
+                  </div>
+                ),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                priority: 'medium',
+                sortable: true,
+                minWidth: 120,
+                render: (_value, trip) => getTripStatusBadge(trip),
+              },
+              {
+                key: 'highlights',
+                label: 'Highlights',
+                priority: 'medium',
+                sortable: false,
+                minWidth: 200,
+                render: (_value, trip) => (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <CategoryChip
+                        label={`${trip.guestCount?.toLocaleString() ?? 0} guests`}
+                        icon={<Users className="h-3 w-3" />}
+                        variant="neutral"
+                      />
+                      <CategoryChip
+                        label={`${trip.ports ?? 0} ports`}
+                        icon={<MapPin className="h-3 w-3" />}
+                        variant="neutral"
+                      />
+                      <CategoryChip
+                        label={`${trip.eventsCount ?? 0} events`}
+                        icon={<Calendar className="h-3 w-3" />}
+                        variant="neutral"
+                      />
+                      <CategoryChip
+                        label={`${trip.talentCount ?? 0} artists`}
+                        icon={<Star className="h-3 w-3" />}
+                        variant="neutral"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {renderRatingStars(trip.averageRating)}
+                      {trip.feedbackCount ? (
+                        <span className="text-xs text-white/50">
+                          ({trip.feedbackCount} reviews)
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+            actions={[
+              ...(canCreateOrEditTrips ? [{
+                label: 'Edit Trip',
+                icon: <Edit className="h-4 w-4" />,
+                onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
+              }] : []),
+              ...(canDeleteTrips ? [{
+                label: 'Delete Trip',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  setTripPendingDeletion(trip);
+                  // Note: This will trigger the AlertDialog, but we need to handle it differently
+                  // For now, we'll use a simple confirm dialog
+                  if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
+                    deleteTrip.mutate(trip.id);
+                  }
+                },
+                variant: 'destructive' as const,
+              }] : []),
+            ]}
+            keyField="id"
+            isLoading={isLoading}
+            emptyMessage={isFiltered ? 'No voyages match the filters you\'ve applied.' : 'Create your first voyage to populate the roster.'}
+          />
         )}
-      </AdminTable>
+
+        {!showEmpty && !showError && (
+          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+            <div className="text-xs text-white/50">{tableFooter}</div>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="ghost"
+                >
+                  Previous
+                </Button>
+                <span className="text-xs text-white/50">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="ghost"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </footer>
+        )}
+      </section>
 
       <Dialog open={quickViewOpen} onOpenChange={(open) => !open && closeQuickView()}>
         <DialogContent className="max-w-3xl border border-white/10 bg-[#0f172a] text-white shadow-2xl">
@@ -965,6 +977,26 @@ function filterTrips(
   });
 }
 
+function getTripSortableStatus(trip: Trip): string {
+  if (trip.status === "archived") {
+    return "archived";
+  }
+
+  const now = new Date();
+  const start = dateOnly(trip.startDate);
+  const end = dateOnly(trip.endDate);
+
+  if (now < start) {
+    return "upcoming";
+  }
+
+  if (now >= start && now <= end) {
+    return "current";
+  }
+
+  return "past";
+}
+
 function getTripStatusBadge(trip: Trip) {
   if (trip.status === "archived") {
     return <StatusBadge status="archived" />;
@@ -991,7 +1023,7 @@ function getTripStatusBadge(trip: Trip) {
 
 function renderRatingStars(rating?: number) {
   if (!rating) {
-    return <span className="text-xs text-white/50">No ratings yet</span>;
+    return null;
   }
 
   return (

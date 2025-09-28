@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { MultiSelectWithCreate, MultiSelectItem } from './MultiSelectWithCreate';
+import { MultiSelectWithCreate, MultiSelectItem, type MultiSelectMenuVariant } from './MultiSelectWithCreate';
 import { AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -39,6 +39,7 @@ interface VenueSelectorProps {
   onSelectionChange: (selectedIds: number[]) => void;
   disabled?: boolean;
   className?: string;
+  menuVariant?: MultiSelectMenuVariant;
 }
 
 interface CreateVenueFormData {
@@ -52,6 +53,7 @@ export function VenueSelector({
   onSelectionChange,
   disabled = false,
   className,
+  menuVariant = 'compact',
 }: VenueSelectorProps) {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
@@ -66,6 +68,7 @@ export function VenueSelector({
     venueTypeId: '',
     description: '',
   });
+  const portalContainerRef = React.useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     try {
@@ -165,8 +168,8 @@ export function VenueSelector({
     const venue = venues.find(v => v.id === item.id);
     return (
       <div>
-        <div className="font-medium text-gray-900">{item.name}</div>
-        <div className="text-sm text-gray-500">
+        <div className="font-medium text-white">{item.name}</div>
+        <div className="text-sm text-white/60">
           {venue?.venueTypeName}
           {venue?.description && ` • ${venue.description}`}
         </div>
@@ -203,7 +206,7 @@ export function VenueSelector({
   };
 
   return (
-    <div className={className}>
+    <div className={className} ref={portalContainerRef}>
       <MultiSelectWithCreate
         items={items}
         selectedIds={selectedIds}
@@ -215,6 +218,10 @@ export function VenueSelector({
         searchPlaceholder="Search venues..."
         disabled={disabled}
         loading={loading}
+        menuVariant={menuVariant}
+        displaySelectedBelow={true}
+        maxItems={99}
+        container={portalContainerRef.current ?? undefined}
       />
       {loading && (
         <p className="mt-2 text-sm text-gray-500">Loading venues...</p>
@@ -222,13 +229,13 @@ export function VenueSelector({
 
       {/* Create Venue Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
           <DialogHeader>
-            <DialogTitle>Create New Venue</DialogTitle>
+            <DialogTitle className="text-white">Create New Venue</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-white/90">
                 Venue Name *
               </label>
               <Input
@@ -239,7 +246,7 @@ export function VenueSelector({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-white/90">
                 Venue Type *
               </label>
               <Select
@@ -260,7 +267,7 @@ export function VenueSelector({
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-white/90">
                 Description (Optional)
               </label>
               <Textarea

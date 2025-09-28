@@ -2,7 +2,7 @@
 import { config } from 'dotenv';
 config();
 
-import { eq, and, desc, asc, ilike, or, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, ilike, or, inArray, sql } from 'drizzle-orm';
 import type {
   Profile,
   InsertProfile,
@@ -289,7 +289,15 @@ export class TripStorage implements ITripStorage {
   // @Cacheable('trips', 1000 * 60 * 5) // Cache for 5 minutes - temporarily disabled
   async getAllTrips(): Promise<Trip[]> {
     return await optimizedConnection.executeWithMetrics(
-      () => db.select().from(schema.trips).orderBy(desc(schema.trips.startDate)),
+      () => db
+        .select({
+          ...schema.trips,
+          talentCount: sql<number>`COALESCE(COUNT(DISTINCT ${schema.tripTalent.talentId}), 0)`
+        })
+        .from(schema.trips)
+        .leftJoin(schema.tripTalent, eq(schema.trips.id, schema.tripTalent.tripId))
+        .groupBy(schema.trips.id)
+        .orderBy(desc(schema.trips.startDate)),
       'getAllTrips'
     );
   }

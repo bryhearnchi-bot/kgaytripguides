@@ -137,7 +137,7 @@ export function AdminFormModal({
             'max-h-[85vh] overflow-hidden',
             // Clean design without gradients
             'bg-gradient-to-b from-[#10192f] to-[#0f1629]',
-            'border border-white/8',
+            'border border-white/10',
             'rounded-[20px]',
             'text-white shadow-[0_32px_64px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]'
           )}
@@ -163,7 +163,7 @@ export function AdminFormModal({
                     disabled={primaryAction.disabled || primaryAction.loading}
                     onClick={primaryType === 'button' ? primaryAction.onClick : undefined}
                     className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[8px] min-w-[70px] font-semibold text-[12px] transition-colors duration-200"
-                    form={primaryAction.form}
+                    form={primaryType === 'submit' && onSubmit ? 'admin-modal-form' : primaryAction.form}
                   >
                     {renderPrimaryLabel()}
                   </Button>
@@ -181,7 +181,7 @@ export function AdminFormModal({
           </DialogHeader>
 
         {onSubmit ? (
-          <form onSubmit={onSubmit} className="flex flex-col h-full">
+          <form id="admin-modal-form" onSubmit={onSubmit} className="flex flex-col h-full">
             <div className={cn('px-7 py-6 overflow-y-auto flex-1', contentClassName)}>
               {children}
             </div>
