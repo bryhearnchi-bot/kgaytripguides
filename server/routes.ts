@@ -18,7 +18,6 @@ import { registerPublicRoutes } from "./routes/public";
 import { registerPerformanceRoutes } from "./routes/performance";
 import { registerPartyThemeRoutes } from "./routes/party-themes";
 import { registerTripInfoSectionRoutes } from "./routes/trip-info-sections";
-import { registerAuthRoutes } from "./auth-routes";
 import { setupSwaggerDocs } from "./openapi";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -100,8 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ REGISTER MODULAR ROUTES ============
 
-  // Register authentication routes
-  registerAuthRoutes(app);
+  // Authentication routes now handled by Supabase Auth
 
   // Register public/general routes (settings, search, dashboard, profile)
   registerPublicRoutes(app);

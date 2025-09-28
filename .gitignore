@@ -115,7 +115,6 @@ development_db_backup.sql
 # supabase-migration-mapping.json
 
 # Local configuration files that might contain sensitive data
-drizzle.config.local.ts
 
 # Railway deployment (current platform)
 modelcontextprotocol/

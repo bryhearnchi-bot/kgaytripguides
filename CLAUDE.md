@@ -8,11 +8,11 @@
 - ❌ NEVER use `USE_MOCK_DATA=true` - always use Supabase
 - 🔥 **ANY DATABASE OPERATION MUST GO TO SUPABASE - NO EXCEPTIONS**
 
-## 🎉 MIGRATION COMPLETE - DRIZZLE FULLY REMOVED
-**✅ DRIZZLE → SUPABASE MIGRATION COMPLETED (Phase 6)**
+## 🎉 MIGRATION COMPLETE - FULLY SUPABASE
+**✅ SUPABASE MIGRATION COMPLETED (Phase 6)**
 - ✅ All storage classes migrated to Supabase Admin
-- ✅ All route files using Supabase instead of Drizzle
-- ✅ Zero Drizzle dependencies remaining
+- ✅ All route files using Supabase instead of legacy ORM
+- ✅ Zero legacy dependencies remaining
 - ✅ Server successfully running on Supabase architecture
 - ✅ Phase 1-6 migration plan fully executed
 
@@ -67,7 +67,7 @@ mockups/    # Design references       supabase/   # DB config
 **Infrastructure:** Railway hosting, Supabase (DB/Auth/Storage)
 **MCP:** Supabase, Playwright, Perplexity
 
-**MIGRATION STATUS:** ✅ **DRIZZLE FULLY REMOVED** - All storage operations now use Supabase Admin directly
+**MIGRATION STATUS:** ✅ **FULLY SUPABASE** - All storage operations now use Supabase Admin directly
 
 ---
 
@@ -158,7 +158,7 @@ npm run test:e2e        # E2E tests
 **CRITICAL: Always use API endpoints for data operations, never mix Supabase direct queries with API calls**
 
 **Problem:** Mixed data access patterns cause sync issues:
-- **Updates** via API (Drizzle ORM + snake_case)
+- **Updates** via API (Supabase Admin + snake_case)
 - **Fetches** via Supabase client (different field mapping + caching)
 
 **Solution:** Use API for both save AND fetch operations:
