@@ -45,37 +45,41 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(schema.locations);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('locations')
+        .select('*')
+        .order('name');
 
       // Apply filters
-      const conditions = [];
       if (search) {
-        conditions.push(
-          or(
-            ilike(schema.locations.name, `%${search}%`),
-            ilike(schema.locations.country, `%${search}%`),
-            ilike(schema.locations.description, `%${search}%`)
-          )
-        );
+        query = query.or(`name.ilike.%${search}%,country.ilike.%${search}%,description.ilike.%${search}%`);
       }
       if (country) {
-        conditions.push(eq(schema.locations.country, country as string));
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+        query = query.eq('country', country as string);
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const startIndex = parseInt(offset as string);
+      const endIndex = startIndex + parseInt(limit as string) - 1;
+      query = query.range(startIndex, endIndex);
 
-      const results = await query;
+      const { data: results, error } = await query;
+
+      if (error) {
+        console.error('Error fetching locations:', error);
+        return res.status(500).json({ error: 'Failed to fetch locations' });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((location: any) => ({
-        ...location,
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
         imageUrl: location.image_url,
-        portType: location.port_type,
         createdAt: location.created_at,
         updatedAt: location.updated_at
       }));
@@ -90,16 +94,39 @@ export function registerLocationRoutes(app: Express) {
   // Get location by ID
   app.get("/api/locations/:id", async (req, res) => {
     try {
-      const [location] = await db.select()
-        .from(schema.locations)
-        .where(eq(schema.locations.id, Number(req.params.id)))
-        .limit(1);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: location, error } = await supabaseAdmin
+        .from('locations')
+        .select('*')
+        .eq('id', Number(req.params.id))
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Location not found" });
+        }
+        console.error('Error fetching location:', error);
+        return res.status(500).json({ error: 'Failed to fetch location' });
+      }
 
       if (!location) {
         return res.status(404).json({ error: "Location not found" });
       }
 
-      res.json(location);
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedLocation = {
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
+        imageUrl: location.image_url,
+        createdAt: location.created_at,
+        updatedAt: location.updated_at
+      };
+
+      res.json(transformedLocation);
     } catch (error) {
       console.error('Error fetching location:', error);
       res.status(500).json({ error: 'Failed to fetch location' });
@@ -128,7 +155,7 @@ export function registerLocationRoutes(app: Express) {
         country: req.body.country,
         coordinates: req.body.coordinates || null,
         description: req.body.description || null,
-        image_url: req.body.imageUrl || req.body.image_url || null
+        image_url: req.body.imageUrl || null
       };
 
       // Use Supabase Admin client to bypass RLS
@@ -140,7 +167,14 @@ export function registerLocationRoutes(app: Express) {
         .single();
 
       if (error) {
-        handleSupabaseError(error, 'create location');
+        console.error('Supabase error creating location:', error);
+        if (error.code === '23505') {
+          return res.status(409).json({ error: 'A location with this name already exists' });
+        }
+        if (error.code === '23502') {
+          return res.status(400).json({ error: 'Missing required field' });
+        }
+        return res.status(500).json({ error: error.message || 'Failed to create location' });
       }
 
       if (!location) {
@@ -149,8 +183,11 @@ export function registerLocationRoutes(app: Express) {
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedLocation = {
-        id: location.id,  // Explicitly include ID to ensure it's present
-        ...location,
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
         imageUrl: location.image_url,
         createdAt: location.created_at,
         updatedAt: location.updated_at
@@ -193,10 +230,10 @@ export function registerLocationRoutes(app: Express) {
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
       if (req.body.country !== undefined) updateData.country = req.body.country;
-      if (req.body.coordinates !== undefined) updateData.coordinates = req.body.coordinates;
-      if (req.body.description !== undefined) updateData.description = req.body.description;
-      if (req.body.imageUrl !== undefined || req.body.image_url !== undefined) {
-        updateData.image_url = req.body.imageUrl || req.body.image_url;
+      if (req.body.coordinates !== undefined) updateData.coordinates = req.body.coordinates || null;
+      if (req.body.description !== undefined) updateData.description = req.body.description || null;
+      if (req.body.imageUrl !== undefined) {
+        updateData.image_url = req.body.imageUrl || null;
       }
       updateData.updated_at = new Date().toISOString();
 
@@ -222,8 +259,11 @@ export function registerLocationRoutes(app: Express) {
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedLocation = {
-        id: location.id,  // Explicitly include ID to ensure it's present
-        ...location,
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
         imageUrl: location.image_url,
         createdAt: location.created_at,
         updatedAt: location.updated_at
