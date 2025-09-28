@@ -50,7 +50,7 @@ async function checkDatabaseHealth(): Promise<HealthStatus> {
       throw error;
     }
 
-    // Connection pool status (not directly available with Drizzle)
+    // Connection pool status (managed internally by Supabase)
     const poolStats = {
       totalCount: 0,
       idleCount: 0,

@@ -1,5 +1,5 @@
 // Supabase-based Storage Layer
-// Replaces Drizzle-based storage.ts with Supabase Admin implementations
+// Complete storage implementation using Supabase Admin API
 
 import { getSupabaseAdmin } from './supabase-admin';
 import type {
