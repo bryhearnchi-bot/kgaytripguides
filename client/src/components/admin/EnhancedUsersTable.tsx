@@ -51,7 +51,7 @@ export function EnhancedUsersTable({
   // Default column widths - stable object reference
   const defaultColumnWidths = useMemo(() => ({
     'image': 80,
-    'full_name': 200,
+    'name': 200,
     'email': 200,
     'role': 150,
     'is_active': 120,
@@ -60,7 +60,7 @@ export function EnhancedUsersTable({
   const { columnWidths, sortConfig, updateColumnWidth, handleSort, sortData } = useTableState(
     'users_table',
     defaultColumnWidths,
-    'full_name' // Default sort by name column
+    'name' // Default sort by name column
   );
 
   useEffect(() => {

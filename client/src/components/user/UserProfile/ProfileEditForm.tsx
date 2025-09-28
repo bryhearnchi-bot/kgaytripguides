@@ -12,6 +12,7 @@ import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { addCsrfToken } from '@/utils/csrf';
 import { supabase } from '@/lib/supabase';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import {
   User,
   Mail,
@@ -23,7 +24,9 @@ import {
 } from 'lucide-react';
 
 const profileSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  profileImageUrl: z.string().optional(),
   phoneNumber: z.string().optional(),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
   city: z.string().optional(),
@@ -56,7 +59,9 @@ export function ProfileEditForm({ onCancel, onSuccess }: ProfileEditFormProps) {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: profile?.full_name || '',
+      firstName: profile?.name?.first || '',
+      lastName: profile?.name?.last || '',
+      profileImageUrl: (profile as any)?.profile_image_url || '',
       phoneNumber: (profile as any)?.phone_number || '',
       bio: (profile as any)?.bio || '',
       city: (profile as any)?.location?.city || '',
@@ -91,7 +96,12 @@ export function ProfileEditForm({ onCancel, onSuccess }: ProfileEditFormProps) {
         headers,
         credentials: 'include',
         body: JSON.stringify({
-          full_name: data.fullName,
+          name: {
+            first: data.firstName,
+            last: data.lastName,
+            full: `${data.firstName} ${data.lastName}`.trim()
+          },
+          profile_image_url: data.profileImageUrl,
           phone_number: data.phoneNumber,
           bio: data.bio,
           location: {
@@ -136,7 +146,13 @@ export function ProfileEditForm({ onCancel, onSuccess }: ProfileEditFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl mx-auto space-y-6" onClick={(e) => {
+      // Prevent form clicks from interfering with image upload buttons
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-image-upload]')) {
+        e.stopPropagation();
+      }
+    }}>
       {/* Personal Information */}
       <Card>
         <CardHeader>
@@ -147,30 +163,41 @@ export function ProfileEditForm({ onCancel, onSuccess }: ProfileEditFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Profile Photo Upload */}
-          <div className="flex items-center gap-4">
-            <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
-              <Camera className="w-8 h-8 text-gray-400" />
-            </div>
-            <div>
-              <Button type="button" variant="outline" size="sm">
-                Upload Photo
-              </Button>
-              <p className="text-xs text-gray-500 mt-1">
-                JPG, PNG or GIF. Max size 5MB.
-              </p>
-            </div>
+          <div>
+            <Label>Profile Photo</Label>
+            <ImageUploadField
+              label="Profile Photo"
+              value={watch('profileImageUrl') || ''}
+              onChange={(url) => setValue('profileImageUrl', url || '', { shouldDirty: true })}
+              imageType="profiles"
+              placeholder="No profile photo uploaded"
+              disabled={loading}
+              autoSave={true}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="fullName">Full Name *</Label>
+              <Label htmlFor="firstName">First Name *</Label>
               <Input
-                id="fullName"
-                {...register('fullName')}
-                className={errors.fullName ? 'border-red-500' : ''}
+                id="firstName"
+                {...register('firstName')}
+                className={errors.firstName ? 'border-red-500' : ''}
               />
-              {errors.fullName && (
-                <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
+              {errors.firstName && (
+                <p className="text-sm text-red-600 mt-1">{errors.firstName.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="lastName">Last Name *</Label>
+              <Input
+                id="lastName"
+                {...register('lastName')}
+                className={errors.lastName ? 'border-red-500' : ''}
+              />
+              {errors.lastName && (
+                <p className="text-sm text-red-600 mt-1">{errors.lastName.message}</p>
               )}
             </div>
 

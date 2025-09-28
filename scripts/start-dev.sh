@@ -25,6 +25,8 @@ fi
 export USE_MOCK_DATA=false
 export NODE_ENV=development
 export DATABASE_URL="postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres"
+export SUPABASE_URL="https://bxiiodeyqvqqcgzzqzvt.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWlvZGV5cXZxcWNnenpxenZ0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Nzk2NzAyOSwiZXhwIjoyMDczNTQzMDI5fQ.q-doRMuntNVc7aigqBsdxQXMwuCWABDRnJnsSQV0oK0"
 
 echo "🗄️  Database: Live Supabase (postgresql://postgres:****@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres)"
 echo "🚫 Mock Data: Disabled (USE_MOCK_DATA=false)"

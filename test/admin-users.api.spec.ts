@@ -71,7 +71,7 @@ test.describe('Admin Users API (smoke CRUD)', () => {
         email,
         password: 'TestPassword!1234',
         role: 'viewer',
-        fullName: 'Playwright E2E',
+        name: 'Playwright E2E',
         isActive: true,
       },
     });
@@ -82,7 +82,7 @@ test.describe('Admin Users API (smoke CRUD)', () => {
 
     const updateRes = await api.put(`/api/admin/users/${userId}`, {
       data: {
-        fullName: 'Playwright E2E Updated',
+        name: 'Playwright E2E Updated',
       },
     });
     expect(updateRes.status()).toBe(200);

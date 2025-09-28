@@ -11,6 +11,7 @@ import { validateVersion } from "./middleware/versioning";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import invitationRoutes from "./routes/invitation-routes";
 import { registerAdminUsersRoutes } from "./routes/admin-users-routes";
+import { registerAdminLookupTablesRoutes } from "./routes/admin-lookup-tables-routes";
 import { registerTripRoutes } from "./routes/trips";
 import { registerMediaRoutes } from "./routes/media";
 import { registerLocationRoutes } from "./routes/locations";
@@ -18,6 +19,7 @@ import { registerPublicRoutes } from "./routes/public";
 import { registerPerformanceRoutes } from "./routes/performance";
 import { registerPartyThemeRoutes } from "./routes/party-themes";
 import { registerTripInfoSectionRoutes } from "./routes/trip-info-sections";
+import { registerAdminSequenceRoutes } from "./routes/admin-sequences";
 import { setupSwaggerDocs } from "./openapi";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -130,7 +132,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ ADMIN USER MANAGEMENT ROUTES ============
 
   // Register admin user management routes
+  // Debug middleware for admin users routes
+  app.use('/api/admin/users', (req, res, next) => {
+    console.log('🔍 ADMIN USERS ROUTE HIT:', req.method, req.url, req.query);
+    next();
+  });
+
   registerAdminUsersRoutes(app);
+
+  // Register admin lookup tables management routes
+  registerAdminLookupTablesRoutes(app);
+
+  // Register admin database sequence management routes
+  registerAdminSequenceRoutes(app);
 
   // ============ API DOCUMENTATION ============
 

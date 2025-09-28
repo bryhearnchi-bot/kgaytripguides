@@ -56,7 +56,7 @@ import { InviteUserModal } from '../InviteUserModal';
 interface UserData {
   id: string;
   email: string;
-  full_name: string | null;
+  name: string | null;
   role: string;
   phone_number: string | null;
   phone_verified: boolean;
@@ -491,7 +491,7 @@ export function EnhancedUserList() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{user.full_name || 'No name'}</p>
+                        <p className="font-medium">{user.name || 'No name'}</p>
                         <p className="text-sm text-gray-500">{user.email}</p>
                       </div>
                     </TableCell>

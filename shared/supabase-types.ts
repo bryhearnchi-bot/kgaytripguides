@@ -332,7 +332,6 @@ export type Database = {
           communication_preferences: Json | null
           created_at: string | null
           email: string
-          full_name: string | null
           id: string
           is_active: boolean | null
           last_sign_in_at: string | null
@@ -354,7 +353,6 @@ export type Database = {
           communication_preferences?: Json | null
           created_at?: string | null
           email: string
-          full_name?: string | null
           id: string
           is_active?: boolean | null
           last_sign_in_at?: string | null
@@ -376,7 +374,6 @@ export type Database = {
           communication_preferences?: Json | null
           created_at?: string | null
           email?: string
-          full_name?: string | null
           id?: string
           is_active?: boolean | null
           last_sign_in_at?: string | null
@@ -1017,7 +1014,8 @@ export type Database = {
       create_user_invitation: {
         Args: {
           p_email: string
-          p_full_name: string
+          p_first_name: string
+          p_last_name: string
           p_message?: string
           p_role: Database["public"]["Enums"]["user_role"]
         }
@@ -1092,7 +1090,8 @@ export type Database = {
           account_status: string
           created_at: string
           email: string
-          full_name: string
+          first_name: string
+          last_name: string
           id: string
           is_active: boolean
           last_sign_in_at: string

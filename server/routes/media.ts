@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { getSupabaseAdmin } from "../supabase-admin";
+import { getSupabaseAdmin, isSupabaseAdminAvailable } from "../supabase-admin";
 import { requireContentEditor, type AuthenticatedRequest } from "../auth";
 import { upload, uploadToSupabase, getPublicImageUrl, deleteImage, isValidImageUrl, downloadImageFromUrl } from "../image-utils";
 import {
@@ -371,24 +371,94 @@ export function registerMediaRoutes(app: Express) {
   // Create talent
   app.post("/api/talent", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
+      // Debug logging - log the full request body
+      console.log('=== TALENT CREATION REQUEST ===');
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
+      console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+
+      // Check if Supabase admin is available
+      if (!isSupabaseAdminAvailable()) {
+        console.error('❌ Supabase admin not available');
+        return res.status(503).json({
+          error: 'Admin service not configured',
+          details: 'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        });
+      }
+
+      console.log('✅ Supabase admin is available');
       const supabaseAdmin = getSupabaseAdmin();
+
+      // Handle both category name and category ID
+      let talentCategoryId = req.body.talentCategoryId;
+      console.log('Initial talentCategoryId:', talentCategoryId, 'Type:', typeof talentCategoryId);
+
+      // Check if talentCategoryId is invalid (null, undefined, 0, NaN, empty string, or not a positive number)
+      if (!talentCategoryId || talentCategoryId === 0 || isNaN(Number(talentCategoryId)) || Number(talentCategoryId) <= 0) {
+        console.log('talentCategoryId is invalid, checking for category name...');
+        if (req.body.category) {
+          console.log('Found category name:', req.body.category);
+          // Map category name to ID
+          const categoryMap: { [key: string]: number } = {
+            'Headliners': 1,
+            'Vocalists': 2,
+            'Drag & Variety': 3,
+            'DJ': 4,
+            'DJ\'s': 4,
+            'Piano Bar / Cabaret': 5,
+            'Comedy': 6,
+            'Shows': 7
+          };
+          talentCategoryId = categoryMap[req.body.category];
+          console.log('Mapped category to ID:', talentCategoryId);
+        }
+
+        // If still no valid category ID, return error
+        if (!talentCategoryId || talentCategoryId === 0 || isNaN(Number(talentCategoryId)) || Number(talentCategoryId) <= 0) {
+          console.error('❌ No valid talent category ID found');
+          return res.status(400).json({ error: 'Please select a talent category' });
+        }
+      }
+
+      console.log('✅ Final talentCategoryId:', talentCategoryId);
+
+      // Prepare talent data with proper field names
+      const talentData = {
+        name: req.body.name,
+        talent_category_id: talentCategoryId,
+        bio: req.body.bio || null,
+        known_for: req.body.knownFor || null,
+        profile_image_url: req.body.profileImageUrl === '' ? null : req.body.profileImageUrl,
+        social_links: req.body.socialLinks || null,
+        website: req.body.website === '' ? null : req.body.website
+      };
+
+      console.log('=== PREPARED TALENT DATA ===');
+      console.log('Talent data for insert:', JSON.stringify(talentData, null, 2));
+
+      console.log('🔍 Attempting to insert into talent table...');
       const { data: talentItem, error } = await supabaseAdmin
         .from('talent')
-        .insert({
-          name: req.body.name,
-          talent_category_id: req.body.talentCategoryId,
-          bio: req.body.bio,
-          known_for: req.body.knownFor,
-          profile_image_url: req.body.profileImageUrl,
-          social_links: req.body.socialLinks,
-          website: req.body.website
-        })
+        .insert(talentData)
         .select()
         .single();
 
       if (error) {
-        console.error('Error creating talent:', error);
-        return res.status(500).json({ error: 'Failed to create talent' });
+        console.error('❌ ERROR CREATING TALENT:');
+        console.error('Error object:', JSON.stringify(error, null, 2));
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        return res.status(500).json({
+          error: 'Failed to create talent',
+          debug: {
+            errorCode: error.code,
+            errorMessage: error.message,
+            errorDetails: error.details,
+            errorHint: error.hint,
+            sentData: talentData
+          }
+        });
       }
 
       // Transform result to match expected format
@@ -430,9 +500,9 @@ export function registerMediaRoutes(app: Express) {
       if (req.body.talentCategoryId !== undefined) updateData.talent_category_id = req.body.talentCategoryId;
       if (req.body.bio !== undefined) updateData.bio = req.body.bio;
       if (req.body.knownFor !== undefined) updateData.known_for = req.body.knownFor;
-      if (req.body.profileImageUrl !== undefined) updateData.profile_image_url = req.body.profileImageUrl;
+      if (req.body.profileImageUrl !== undefined) updateData.profile_image_url = req.body.profileImageUrl === '' ? null : req.body.profileImageUrl;
       if (req.body.socialLinks !== undefined) updateData.social_links = req.body.socialLinks;
-      if (req.body.website !== undefined) updateData.website = req.body.website;
+      if (req.body.website !== undefined) updateData.website = req.body.website === '' ? null : req.body.website;
 
       const { data: talentItem, error } = await supabaseAdmin
         .from('talent')
@@ -493,6 +563,95 @@ export function registerMediaRoutes(app: Express) {
     } catch (error) {
       console.error('Error deleting talent:', error);
       res.status(500).json({ error: 'Failed to delete talent' });
+    }
+  });
+
+  // TEMPORARY: Fix talent sequence issue
+  app.post("/api/talent/fix-sequence", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+    try {
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Step 1: Get current max ID in talent table
+      const { data: maxIdData, error: maxIdError } = await supabaseAdmin
+        .from('talent')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (maxIdError) {
+        console.error('Error getting max ID:', maxIdError);
+        return res.status(500).json({ error: 'Failed to get max ID from talent table' });
+      }
+
+      const maxId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id : 0;
+      const nextId = maxId + 1;
+
+      console.log(`Current max ID in talent table: ${maxId}`);
+      console.log(`Setting sequence to: ${nextId}`);
+
+      // Step 2: Reset the sequence
+      const { data: resetData, error: resetError } = await supabaseAdmin
+        .rpc('sql', {
+          query: `SELECT setval('talent_id_seq', ${nextId}, false);`
+        });
+
+      if (resetError) {
+        // Fallback: Try alternative approach with direct SQL execution
+        console.log('RPC approach failed, trying direct execution...');
+
+        // Get sequence name first
+        const { data: seqData, error: seqError } = await supabaseAdmin
+          .from('information_schema.sequences')
+          .select('sequence_name')
+          .eq('sequence_name', 'talent_id_seq')
+          .limit(1);
+
+        if (seqError) {
+          console.error('Error checking sequence:', seqError);
+          return res.status(500).json({
+            error: 'Failed to reset sequence',
+            details: resetError.message,
+            sqlCommands: [
+              `SELECT MAX(id) FROM talent;`,
+              `SELECT setval('talent_id_seq', ${nextId}, false);`
+            ]
+          });
+        }
+
+        // Since we can't execute raw SQL directly, return the manual commands
+        return res.status(500).json({
+          error: 'Unable to execute sequence reset automatically',
+          manualFix: {
+            currentMaxId: maxId,
+            nextId: nextId,
+            sqlCommands: [
+              `SELECT MAX(id) FROM talent;`,
+              `SELECT setval('talent_id_seq', ${nextId}, false);`
+            ],
+            instructions: 'Please run these SQL commands in your Supabase dashboard SQL editor'
+          }
+        });
+      }
+
+      // Step 3: Verify the fix
+      console.log('Sequence reset successful');
+
+      res.json({
+        success: true,
+        message: 'Talent sequence fixed successfully',
+        details: {
+          previousMaxId: maxId,
+          newSequenceValue: nextId,
+          action: 'Sequence reset to allow new talent creation'
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fixing talent sequence:', error);
+      res.status(500).json({
+        error: 'Failed to fix talent sequence',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

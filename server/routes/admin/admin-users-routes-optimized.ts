@@ -91,7 +91,7 @@ async function executeOptimizedSearch(query: any) {
       const searchCondition = `(
         username ILIKE '${searchTerm}%' OR
         email ILIKE '${searchTerm}%' OR
-        full_name ILIKE '${searchTerm}%'
+        name ILIKE '${searchTerm}%'
       )`;
 
       const fullWhere = whereClause
@@ -105,7 +105,7 @@ async function executeOptimizedSearch(query: any) {
           CASE
             WHEN username ILIKE '${searchTerm}%' THEN 1
             WHEN email ILIKE '${searchTerm}%' THEN 2
-            WHEN full_name ILIKE '${searchTerm}%' THEN 3
+            WHEN name ILIKE '${searchTerm}%' THEN 3
             ELSE 4
           END,
           created_at DESC
@@ -119,7 +119,7 @@ async function executeOptimizedSearch(query: any) {
       const searchCondition = `(
         username ILIKE '%${searchTerm}%' OR
         email ILIKE '%${searchTerm}%' OR
-        full_name ILIKE '%${searchTerm}%'
+        name ILIKE '%${searchTerm}%'
       )`;
 
       const fullWhere = whereClause
@@ -132,7 +132,7 @@ async function executeOptimizedSearch(query: any) {
           GREATEST(
             similarity(COALESCE(username, ''), '${searchTerm}'),
             similarity(COALESCE(email, ''), '${searchTerm}'),
-            similarity(COALESCE(full_name, ''), '${searchTerm}')
+            similarity(COALESCE(name, ''), '${searchTerm}')
           ) as search_rank
         FROM profiles
         ${fullWhere}
@@ -221,7 +221,7 @@ export function registerOptimizedAdminUsersRoutes(app: Express) {
           .select('*', { count: 'planned' }); // Use 'planned' instead of 'exact' for better performance
 
         if (query.search) {
-          supabaseQuery = supabaseQuery.or(`username.ilike.%${query.search}%,email.ilike.%${query.search}%,full_name.ilike.%${query.search}%`);
+          supabaseQuery = supabaseQuery.or(`username.ilike.%${query.search}%,email.ilike.%${query.search}%,name.ilike.%${query.search}%`);
         }
 
         if (query.role && query.role !== 'all') {
@@ -346,7 +346,7 @@ export function registerOptimizedAdminUsersRoutes(app: Express) {
       const transformedProfile = {
         id: profile.id,
         email: profile.email,
-        fullName: profile.full_name,
+        name: profile.name,
         name: profile.name,
         username: profile.username,
         avatarUrl: profile.avatar_url,

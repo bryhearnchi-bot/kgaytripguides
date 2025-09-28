@@ -45,7 +45,7 @@ export const userRegistrationSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  fullName: z.string()
+  name: z.string()
     .min(1, 'Full name is required')
     .max(255, 'Full name must be less than 255 characters')
     .trim(),
@@ -80,7 +80,7 @@ export const createUserSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  fullName: z.string()
+  name: z.string()
     .min(1, 'Full name is required')
     .max(255, 'Full name must be less than 255 characters')
     .trim()
@@ -115,7 +115,7 @@ export const updateProfileSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  fullName: z.string()
+  name: z.string()
     .max(255, 'Full name must be less than 255 characters')
     .trim()
     .optional(),
@@ -193,7 +193,7 @@ export const adminUpdateUserSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  fullName: z.string()
+  name: z.string()
     .max(255, 'Full name must be less than 255 characters')
     .trim()
     .optional(),
@@ -383,7 +383,7 @@ export const acceptInvitationSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  fullName: z.string()
+  name: z.string()
     .min(1, 'Full name is required')
     .max(255, 'Full name must be less than 255 characters')
     .trim()

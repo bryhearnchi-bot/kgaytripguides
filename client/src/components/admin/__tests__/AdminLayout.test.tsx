@@ -10,7 +10,7 @@ const mockSetLocation = vi.fn();
 vi.mock('@/contexts/SupabaseAuthContext', () => ({
   useSupabaseAuthContext: () => ({
     user: { id: '1', email: 'admin@atlantis.com' },
-    profile: { full_name: 'Bryan Hearn', role: 'admin' },
+    profile: { name: 'Bryan Hearn', role: 'admin' },
     signOut: mockSignOut,
   }),
 }));

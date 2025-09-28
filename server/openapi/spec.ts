@@ -430,7 +430,7 @@ The API uses standard HTTP status codes and returns consistent error responses w
             description: 'User email address',
             example: 'user@example.com'
           },
-          fullName: {
+          name: {
             type: 'string',
             nullable: true,
             description: 'User full name',

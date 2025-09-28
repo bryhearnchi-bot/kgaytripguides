@@ -21,7 +21,7 @@ export interface Database {
           id: string
           username: string | null
           email: string
-          full_name: string | null
+          name: string | null
           role: 'admin' | 'content_manager' | 'viewer'
           is_active: boolean
           account_status: 'active' | 'suspended' | 'pending_verification'
@@ -33,7 +33,7 @@ export interface Database {
           id: string
           username?: string | null
           email: string
-          full_name?: string | null
+          name?: string | null
           role?: 'admin' | 'content_manager' | 'viewer'
           is_active?: boolean
           account_status?: 'active' | 'suspended' | 'pending_verification'
@@ -45,7 +45,7 @@ export interface Database {
           id?: string
           username?: string | null
           email?: string
-          full_name?: string | null
+          name?: string | null
           role?: 'admin' | 'content_manager' | 'viewer'
           is_active?: boolean
           account_status?: 'active' | 'suspended' | 'pending_verification'

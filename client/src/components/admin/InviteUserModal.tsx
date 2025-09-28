@@ -26,7 +26,7 @@ import { supabase } from '@/lib/supabase';
 
 // Validation schema
 const inviteUserSchema = z.object({
-  fullName: z.string().optional(),
+  name: z.string().optional(),
   email: z.string().email('Please enter a valid email address'),
   role: z.enum(['admin', 'content_manager', 'viewer'], {
     required_error: 'Please select a role',
@@ -106,7 +106,7 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
         credentials: 'include',
         body: JSON.stringify({
           email: data.email,
-          fullName: data.fullName || '',
+          name: data.name || '',
           role: data.role,
         }),
       });
@@ -156,17 +156,17 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Name Field (Optional) */}
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="name" className="text-sm font-medium text-gray-700">
               Full Name <span className="text-gray-500">(optional)</span>
             </Label>
             <div className="relative">
               <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <Input
-                id="fullName"
+                id="name"
                 type="text"
                 placeholder="John Doe"
                 className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                {...register('fullName')}
+                {...register('name')}
                 disabled={isLoading}
               />
             </div>

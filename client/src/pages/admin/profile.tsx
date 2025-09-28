@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api-client';
 import { supabase } from '@/lib/supabase';
+import { ImageUploadPopup } from '@/components/admin/ImageUploadPopup';
+import { useImageUpload } from '@/hooks/useImageUpload';
 import {
   User,
   Edit3,
@@ -47,6 +49,7 @@ export default function AdminProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showAvatarUploadPopup, setShowAvatarUploadPopup] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: {
       first: '',
@@ -81,12 +84,12 @@ export default function AdminProfile() {
     if (profile) {
       setFormData({
         name: profile.name || {
-          first: profile.fullName?.split(' ')[0] || '',
-          last: profile.fullName?.split(' ').slice(1).join(' ') || '',
+          first: '',
+          last: '',
           middle: '',
           suffix: '',
           preferred: '',
-          full: profile.fullName || ''
+          full: ''
         },
         email: profile.email || '',
         username: profile.username || '',
@@ -107,40 +110,15 @@ export default function AdminProfile() {
     }
   }, [profile]);
 
-  // Handle avatar upload
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: 'Error',
-        description: 'Image must be smaller than 2MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  // Handle avatar upload from our custom popup
+  const handleAvatarImageUploaded = async (result: { url: string; filename: string; size: number }) => {
     setIsUploadingAvatar(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `avatar-${profile?.id}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      setAvatarPreview(publicUrl);
+      setAvatarPreview(result.url);
 
       // Update profile with new avatar URL
-      await api.put('/api/admin/profile', { avatarUrl: publicUrl });
+      await api.put('/api/admin/profile', { profile_image_url: result.url });
 
       toast({
         title: 'Success',
@@ -148,10 +126,11 @@ export default function AdminProfile() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
+      setShowAvatarUploadPopup(false);
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to upload avatar',
+        description: 'Failed to update avatar',
         variant: 'destructive',
       });
     } finally {
@@ -200,12 +179,12 @@ export default function AdminProfile() {
     if (profile) {
       setFormData({
         name: profile.name || {
-          first: profile.fullName?.split(' ')[0] || '',
-          last: profile.fullName?.split(' ').slice(1).join(' ') || '',
+          first: '',
+          last: '',
           middle: '',
           suffix: '',
           preferred: '',
-          full: profile.fullName || ''
+          full: ''
         },
         email: profile.email || '',
         username: profile.username || '',
@@ -242,8 +221,8 @@ export default function AdminProfile() {
     if (profile?.name?.first && profile?.name?.last) {
       return `${profile.name.first[0]}${profile.name.last[0]}`.toUpperCase();
     }
-    if (profile?.fullName) {
-      const names = profile.fullName.split(' ');
+    if (profile?.name?.full) {
+      const names = profile.name.full.split(' ');
       return `${names[0]?.[0] || ''}${names[1]?.[0] || ''}`.toUpperCase();
     }
     return profile?.email?.[0]?.toUpperCase() || 'U';
@@ -290,19 +269,22 @@ export default function AdminProfile() {
                     getInitials()
                   )}
                 </div>
-                <label className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white cursor-pointer transition-colors shadow-lg">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                    disabled={isUploadingAvatar}
-                  />
+                <button
+                  className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white cursor-pointer transition-colors shadow-lg"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowAvatarUploadPopup(true);
+                  }}
+                  disabled={isUploadingAvatar}
+                >
                   <Camera className="w-4 h-4" />
-                </label>
+                </button>
               </div>
               <h2 className="mt-4 text-lg font-semibold text-white">
-                {profile.name?.full || profile.fullName || 'No Name Set'}
+                {profile.name?.first && profile.name?.last
+                  ? `${profile.name.first} ${profile.name.last}`
+                  : 'No Name Set'}
               </h2>
               <p className="text-slate-300 text-sm">{profile.email}</p>
               <div className="mt-3 flex justify-center">
@@ -597,6 +579,15 @@ export default function AdminProfile() {
           </div>
         </div>
       </div>
+
+      {/* Avatar Upload Popup */}
+      <ImageUploadPopup
+        isOpen={showAvatarUploadPopup}
+        onClose={() => setShowAvatarUploadPopup(false)}
+        onImageUploaded={handleAvatarImageUploaded}
+        imageType="profiles"
+        title="Upload Profile Photo"
+      />
     </div>
   );
 }

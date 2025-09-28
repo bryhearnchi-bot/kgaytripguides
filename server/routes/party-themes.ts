@@ -14,8 +14,8 @@ const createPartyThemeSchema = z.object({
   longDescription: z.string().optional().nullable(),
   shortDescription: z.string().optional().nullable(),
   costumeIdeas: z.string().optional().nullable(),
-  imageUrl: z.string().url().optional().nullable(),
-  amazonShoppingListUrl: z.string().url().optional().nullable()
+  imageUrl: z.string().url().optional().nullable().or(z.literal('')),
+  amazonShoppingListUrl: z.string().url().optional().nullable().or(z.literal(''))
 });
 
 const updatePartyThemeSchema = createPartyThemeSchema.partial();
@@ -44,7 +44,20 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch party themes' });
       }
 
-      res.json(themes || []);
+      // Map snake_case database fields to camelCase for frontend
+      const mappedThemes = (themes || []).map(theme => ({
+        id: theme.id,
+        name: theme.name,
+        longDescription: theme.long_description,
+        shortDescription: theme.short_description,
+        costumeIdeas: theme.costume_ideas,
+        imageUrl: theme.image_url,
+        amazonShoppingListUrl: theme.amazon_shopping_list_url,
+        createdAt: theme.created_at,
+        updatedAt: theme.updated_at
+      }));
+
+      res.json(mappedThemes);
     } catch (error) {
       console.error('Error fetching party themes:', error);
       res.status(500).json({ error: 'Failed to fetch party themes' });
@@ -108,7 +121,20 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch party theme' });
       }
 
-      res.json(theme);
+      // Map snake_case database fields to camelCase for frontend
+      const mappedTheme = {
+        id: theme.id,
+        name: theme.name,
+        longDescription: theme.long_description,
+        shortDescription: theme.short_description,
+        costumeIdeas: theme.costume_ideas,
+        imageUrl: theme.image_url,
+        amazonShoppingListUrl: theme.amazon_shopping_list_url,
+        createdAt: theme.created_at,
+        updatedAt: theme.updated_at
+      };
+
+      res.json(mappedTheme);
     } catch (error) {
       console.error('Error fetching party theme:', error);
       res.status(500).json({ error: 'Failed to fetch party theme' });
@@ -166,8 +192,8 @@ export function registerPartyThemeRoutes(app: Express) {
           long_description: req.body.longDescription,
           short_description: req.body.shortDescription,
           costume_ideas: req.body.costumeIdeas,
-          image_url: req.body.imageUrl,
-          amazon_shopping_list_url: req.body.amazonShoppingListUrl
+          image_url: req.body.imageUrl === '' ? null : req.body.imageUrl,
+          amazon_shopping_list_url: req.body.amazonShoppingListUrl === '' ? null : req.body.amazonShoppingListUrl
         })
         .select()
         .single();
@@ -177,7 +203,20 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to create party theme' });
       }
 
-      res.status(201).json(theme);
+      // Map snake_case database fields to camelCase for frontend
+      const mappedTheme = {
+        id: theme.id,
+        name: theme.name,
+        longDescription: theme.long_description,
+        shortDescription: theme.short_description,
+        costumeIdeas: theme.costume_ideas,
+        imageUrl: theme.image_url,
+        amazonShoppingListUrl: theme.amazon_shopping_list_url,
+        createdAt: theme.created_at,
+        updatedAt: theme.updated_at
+      };
+
+      res.status(201).json(mappedTheme);
     } catch (error: any) {
       console.error('Error creating party theme:', error);
       res.status(500).json({ error: 'Failed to create party theme' });
@@ -214,8 +253,8 @@ export function registerPartyThemeRoutes(app: Express) {
       if (req.body.longDescription !== undefined) updateData.long_description = req.body.longDescription;
       if (req.body.shortDescription !== undefined) updateData.short_description = req.body.shortDescription;
       if (req.body.costumeIdeas !== undefined) updateData.costume_ideas = req.body.costumeIdeas;
-      if (req.body.imageUrl !== undefined) updateData.image_url = req.body.imageUrl;
-      if (req.body.amazonShoppingListUrl !== undefined) updateData.amazon_shopping_list_url = req.body.amazonShoppingListUrl;
+      if (req.body.imageUrl !== undefined) updateData.image_url = req.body.imageUrl === '' ? null : req.body.imageUrl;
+      if (req.body.amazonShoppingListUrl !== undefined) updateData.amazon_shopping_list_url = req.body.amazonShoppingListUrl === '' ? null : req.body.amazonShoppingListUrl;
 
       const { data: theme, error } = await supabaseAdmin
         .from('party_themes')
@@ -232,7 +271,20 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to update party theme' });
       }
 
-      res.json(theme);
+      // Map snake_case database fields to camelCase for frontend
+      const mappedTheme = {
+        id: theme.id,
+        name: theme.name,
+        longDescription: theme.long_description,
+        shortDescription: theme.short_description,
+        costumeIdeas: theme.costume_ideas,
+        imageUrl: theme.image_url,
+        amazonShoppingListUrl: theme.amazon_shopping_list_url,
+        createdAt: theme.created_at,
+        updatedAt: theme.updated_at
+      };
+
+      res.json(mappedTheme);
     } catch (error: any) {
       console.error('Error updating party theme:', error);
       res.status(500).json({ error: 'Failed to update party theme' });
@@ -342,7 +394,20 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to duplicate party theme' });
       }
 
-      res.status(201).json(duplicatedTheme);
+      // Map snake_case database fields to camelCase for frontend
+      const mappedTheme = {
+        id: duplicatedTheme.id,
+        name: duplicatedTheme.name,
+        longDescription: duplicatedTheme.long_description,
+        shortDescription: duplicatedTheme.short_description,
+        costumeIdeas: duplicatedTheme.costume_ideas,
+        imageUrl: duplicatedTheme.image_url,
+        amazonShoppingListUrl: duplicatedTheme.amazon_shopping_list_url,
+        createdAt: duplicatedTheme.created_at,
+        updatedAt: duplicatedTheme.updated_at
+      };
+
+      res.status(201).json(mappedTheme);
     } catch (error: any) {
       console.error('Error duplicating party theme:', error);
       res.status(500).json({ error: 'Failed to duplicate party theme' });

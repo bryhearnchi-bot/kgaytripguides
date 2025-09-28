@@ -66,7 +66,7 @@ describe('AccountSetup', () => {
           json: () => Promise.resolve({
             invitation: {
               email: 'test@example.com',
-              full_name: 'Test User',
+              name: 'Test User',
               role: 'content_editor',
               expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
             }
@@ -338,8 +338,8 @@ describe('AccountSetup', () => {
     expect(continueButton).toBeDisabled();
 
     // Add full name
-    const fullNameInput = screen.getByLabelText(/full name \*/i);
-    fireEvent.change(fullNameInput, { target: { value: 'Test User' } });
+    const nameInput = screen.getByLabelText(/full name \*/i);
+    fireEvent.change(nameInput, { target: { value: 'Test User' } });
 
     // Now should be able to continue
     await waitFor(() => {

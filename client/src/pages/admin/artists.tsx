@@ -7,16 +7,26 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { api } from '@/lib/api-client';
 import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Music, Mic } from 'lucide-react';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
+import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
 
+
+interface TalentCategory {
+  id: number;
+  category: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 interface Talent {
   id?: number;
   name: string;
-  category: string;
+  category?: string;
+  talentCategoryId: number;
   bio?: string;
   knownFor?: string;
   profileImageUrl?: string;
@@ -38,7 +48,19 @@ export default function ArtistsManagement() {
   const [editingArtist, setEditingArtist] = useState<Talent | null>(null);
   const [formData, setFormData] = useState<Talent>({
     name: '',
-    category: 'DJ',
+    talentCategoryId: 0, // No default selection
+  });
+
+  // Fetch talent categories
+  const { data: talentCategories = [] } = useQuery<TalentCategory[]>({
+    queryKey: ['talent-categories'],
+    queryFn: async () => {
+      const response = await api.get('/api/talent-categories');
+      if (!response.ok) throw new Error('Failed to fetch talent categories');
+      return response.json();
+    },
+    ...adminQueryOptions,
+    placeholderData: []
   });
 
   // Fetch artists with optimized caching
@@ -87,6 +109,7 @@ export default function ArtistsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talent'] });
+      setShowAddModal(false);
       setEditingArtist(null);
       resetForm();
       toast({
@@ -130,15 +153,60 @@ export default function ArtistsManagement() {
     }
   });
 
+  // Create talent category mutation
+  const createCategoryMutation = useMutation({
+    mutationFn: async (categoryName: string) => {
+      const response = await api.post('/api/talent-categories', { category: categoryName });
+      if (!response.ok) throw new Error('Failed to create talent category');
+      return response.json();
+    },
+    onSuccess: (newCategory) => {
+      queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
+      // Update form data to use the new category
+      setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
+      toast({
+        title: 'Success',
+        description: 'Talent category created successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create talent category',
+        variant: 'destructive',
+      });
+    }
+  });
+
   const resetForm = () => {
     setFormData({
       name: '',
-      category: 'DJ',
+      talentCategoryId: 0, // No default selection
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Artist name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.talentCategoryId || formData.talentCategoryId === 0) {
+      toast({
+        title: 'Error',
+        description: 'Please select a talent category',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (editingArtist) {
       updateArtistMutation.mutate({ ...formData, id: editingArtist.id });
     } else {
@@ -387,12 +455,14 @@ export default function ArtistsManagement() {
 
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <Input
-            id="category"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            placeholder="e.g., DJ, Drag, Comedy, Band"
-            required
+          <SingleSelectWithCreate
+            options={talentCategories.map(cat => ({ id: cat.id, name: cat.category }))}
+            value={formData.talentCategoryId}
+            onValueChange={(value) => setFormData({ ...formData, talentCategoryId: Number(value) })}
+            onCreateNew={createCategoryMutation.mutateAsync}
+            placeholder="Select talent category..."
+            searchPlaceholder="Search categories..."
+            createLabel="Create new category"
           />
         </div>
 
@@ -439,6 +509,19 @@ export default function ArtistsManagement() {
             value={formData.website || ''}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             placeholder="https://..."
+          />
+        </div>
+
+        {/* Profile Image - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
+          <Label htmlFor="profileImage">Profile Image</Label>
+          <ImageUploadField
+            label="Profile Image"
+            value={formData.profileImageUrl || ''}
+            onChange={(url) => setFormData({ ...formData, profileImageUrl: url || '' })}
+            imageType="talent"
+            placeholder="No profile image uploaded"
+            disabled={editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending}
           />
         </div>
       </AdminFormModal>

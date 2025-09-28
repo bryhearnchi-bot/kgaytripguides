@@ -7,6 +7,7 @@ import {
   LogOut,
   User,
   Settings,
+  Search,
   ChevronDown
 } from "lucide-react";
 import {
@@ -75,11 +76,19 @@ export default function AdminNavigationBanner() {
                   className="flex items-center space-x-1 sm:space-x-2 text-white hover:bg-white/10 p-2 touch-manipulation"
                 >
                   <div className="flex items-center space-x-1 sm:space-x-2">
-                    <div className="w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
-                      <User className="w-3 sm:w-4 h-3 sm:h-4 text-white" />
+                    <div className="w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center overflow-hidden">
+                      {profile?.avatarUrl ? (
+                        <img
+                          src={profile.avatarUrl}
+                          alt={profile?.name?.full || 'Profile'}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-3 sm:w-4 h-3 sm:h-4 text-white" />
+                      )}
                     </div>
                     <div className="hidden sm:block text-left">
-                      <p className="text-xs sm:text-sm font-medium">{profile?.full_name || profile?.email?.split('@')[0] || 'Admin'}</p>
+                      <p className="text-xs sm:text-sm font-medium">{profile?.name?.full || profile?.email?.split('@')[0] || 'Admin'}</p>
                       <Badge
                         variant={getRoleBadgeVariant(profile?.role || '')}
                         className="text-[9px] sm:text-[10px] px-1 py-0"
@@ -94,7 +103,7 @@ export default function AdminNavigationBanner() {
               <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name || 'Admin User'}</p>
+                    <p className="text-sm font-medium leading-none">{profile?.name?.full || 'Admin User'}</p>
                     <p className="text-xs leading-none text-muted-foreground">{profile?.email}</p>
                   </div>
                 </DropdownMenuLabel>
@@ -103,9 +112,9 @@ export default function AdminNavigationBanner() {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation('/admin/settings')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+                <DropdownMenuItem onClick={() => setLocation('/admin/lookup-tables')}>
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>Lookup Tables</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">

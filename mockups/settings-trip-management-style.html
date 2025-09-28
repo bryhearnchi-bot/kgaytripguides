@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - Trip Management Style</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ocean-blue': '#0ea5e9',
+                        'ocean-teal': '#22d3ee',
+                        'ocean-dark': '#10192f',
+                        'dark-blue': '#1e293b',
+                        'darker-blue': '#0f172a',
+                    }
+                }
+            }
+        }
+
+        function switchTable(tableName) {
+            // Hide all tables
+            document.querySelectorAll('.table-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Remove active state from all buttons
+            document.querySelectorAll('.table-button').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-700/50', 'text-slate-300', 'border', 'border-slate-600');
+            });
+
+            // Show selected table
+            document.getElementById(tableName + '-table').classList.remove('hidden');
+
+            // Set active button
+            event.target.classList.remove('bg-slate-700/50', 'text-slate-300', 'border', 'border-slate-600');
+            event.target.classList.add('bg-blue-600', 'text-white');
+        }
+    </script>
+</head>
+<body class="bg-darker-blue text-white font-sans">
+    <div class="min-h-screen">
+        <!-- Header Section -->
+        <div class="rounded-2xl border border-slate-700 bg-dark-blue/50 px-6 py-6 mx-6 mt-6 shadow-lg backdrop-blur">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="flex items-center gap-2 text-2xl font-semibold text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Settings
+                    </h1>
+                    <p class="text-sm text-slate-400">Manage dropdown options and system settings throughout the application.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter/Table Selection Section -->
+        <div class="mx-6 mt-6">
+            <div class="rounded-2xl border border-slate-700 bg-dark-blue/50 px-6 py-6 shadow-lg backdrop-blur">
+                <div class="flex flex-wrap items-center gap-3">
+                    <button onclick="switchTable('venue_types')" class="table-button bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">
+                        Venue Types
+                        <span class="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">5</span>
+                    </button>
+                    <button onclick="switchTable('trip_types')" class="table-button bg-slate-700/50 text-slate-300 px-4 py-2 rounded-full text-sm font-medium border border-slate-600">
+                        Trip Types
+                        <span class="ml-2 bg-slate-600 px-2 py-0.5 rounded-full text-xs">2</span>
+                    </button>
+                    <button onclick="switchTable('trip_status')" class="table-button bg-slate-700/50 text-slate-300 px-4 py-2 rounded-full text-sm font-medium border border-slate-600">
+                        Trip Status
+                        <span class="ml-2 bg-slate-600 px-2 py-0.5 rounded-full text-xs">3</span>
+                    </button>
+                    <button onclick="switchTable('talent_categories')" class="table-button bg-slate-700/50 text-slate-300 px-4 py-2 rounded-full text-sm font-medium border border-slate-600">
+                        Talent Categories
+                        <span class="ml-2 bg-slate-600 px-2 py-0.5 rounded-full text-xs">7</span>
+                    </button>
+                    <button onclick="switchTable('location_types')" class="table-button bg-slate-700/50 text-slate-300 px-4 py-2 rounded-full text-sm font-medium border border-slate-600">
+                        Location Types
+                        <span class="ml-2 bg-slate-600 px-2 py-0.5 rounded-full text-xs">5</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Sections -->
+        <div class="mx-6 mt-6 mb-6">
+            <!-- Venue Types Table -->
+            <div id="venue_types-table" class="table-section rounded-2xl border border-slate-700 bg-dark-blue/50 shadow-lg backdrop-blur">
+                <div class="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">All Venue Types</h2>
+                    <button class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center hover:bg-blue-600/30">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider w-20">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700">
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Dining</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Entertainment</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Bars</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Spa</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Recreation</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="border-t border-slate-700 px-6 py-3">
+                    <p class="text-xs text-slate-400">Showing 5 of 5 venue types</p>
+                </div>
+            </div>
+
+            <!-- Trip Types Table -->
+            <div id="trip_types-table" class="table-section rounded-2xl border border-slate-700 bg-dark-blue/50 shadow-lg backdrop-blur hidden">
+                <div class="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">All Trip Types</h2>
+                    <button class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center hover:bg-blue-600/30">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider w-20">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700">
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Cruise</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Resort</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="border-t border-slate-700 px-6 py-3">
+                    <p class="text-xs text-slate-400">Showing 2 of 2 trip types</p>
+                </div>
+            </div>
+
+            <!-- Trip Status Table -->
+            <div id="trip_status-table" class="table-section rounded-2xl border border-slate-700 bg-dark-blue/50 shadow-lg backdrop-blur hidden">
+                <div class="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">All Trip Status</h2>
+                    <button class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center hover:bg-blue-600/30">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider w-20">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700">
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Upcoming</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Current</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Past</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="border-t border-slate-700 px-6 py-3">
+                    <p class="text-xs text-slate-400">Showing 3 of 3 trip status</p>
+                </div>
+            </div>
+
+            <!-- Talent Categories Table -->
+            <div id="talent_categories-table" class="table-section rounded-2xl border border-slate-700 bg-dark-blue/50 shadow-lg backdrop-blur hidden">
+                <div class="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">All Talent Categories</h2>
+                    <button class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center hover:bg-blue-600/30">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider w-20">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700">
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Headliners</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Vocalists</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Drag & Variety</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">DJ's</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Piano Bar / Cabaret</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Comedy</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Shows</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="border-t border-slate-700 px-6 py-3">
+                    <p class="text-xs text-slate-400">Showing 7 of 7 talent categories</p>
+                </div>
+            </div>
+
+            <!-- Location Types Table -->
+            <div id="location_types-table" class="table-section rounded-2xl border border-slate-700 bg-dark-blue/50 shadow-lg backdrop-blur hidden">
+                <div class="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">All Location Types</h2>
+                    <button class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center hover:bg-blue-600/30">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider w-20">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700">
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Embarkation</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Disembarkation</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Port</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Sea Day</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">Resort</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <button class="w-8 h-8 rounded-lg bg-slate-700/50 border border-slate-600/50 flex items-center justify-center hover:bg-slate-600/50">
+                                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="border-t border-slate-700 px-6 py-3">
+                    <p class="text-xs text-slate-400">Showing 5 of 5 location types</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

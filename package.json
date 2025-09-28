@@ -8,8 +8,8 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/index.ts",
-    "dev:main": "./scripts/start-dev.sh",
+    "dev": "SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWlvZGV5cXZxcWNnenpxenZ0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Nzk2NzAyOSwiZXhwIjoyMDczNTQzMDI5fQ.q-doRMuntNVc7aigqBsdxQXMwuCWABDRnJnsSQV0oK0 DATABASE_URL=postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres NODE_ENV=development tsx server/index.ts",
+    "dev:script": "./scripts/start-dev.sh",
     "dev:redesign": "./scripts/start-redesign-dev.sh",
     "build": "vite build && node scripts/copy-pwa-files.js",
     "build:railway": "vite build",
@@ -84,6 +84,7 @@
     "@vitejs/plugin-react": "^4.3.2",
     "argon2": "^0.44.0",
     "autoprefixer": "^10.4.20",
+    "chrome-devtools-mcp": "^0.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -127,7 +128,6 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/server-postgres": "^0.6.2",
-    "@playwright/mcp": "^0.0.37",
     "@playwright/test": "^1.55.0",
     "@supabase/mcp-server-supabase": "^0.5.4",
     "@tailwindcss/vite": "^4.1.3",

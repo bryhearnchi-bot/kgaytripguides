@@ -43,7 +43,7 @@ const passwordSchema = z.object({
 });
 
 const profileSchema = z.object({
-  fullName: z.string().min(1, 'Full name is required'),
+  name: z.string().min(1, 'Full name is required'),
   phoneNumber: z.string().optional(),
   emailNotifications: z.boolean().default(true),
   smsNotifications: z.boolean().default(false),
@@ -64,7 +64,7 @@ const termsSchema = z.object({
 interface InvitationData {
   id: string;
   email: string;
-  fullName?: string;
+  name?: string;
   role: string;
 }
 
@@ -92,7 +92,7 @@ export default function AccountSetup() {
   const profileForm = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: '',
+      name: '',
       phoneNumber: '',
       emailNotifications: true,
       smsNotifications: false,
@@ -129,8 +129,8 @@ export default function AccountSetup() {
         setInvitationData(data);
 
         // Pre-fill profile form with invitation data
-        if (data.fullName) {
-          profileForm.setValue('fullName', data.fullName);
+        if (data.name) {
+          profileForm.setValue('name', data.name);
         }
       } catch (error) {
         setVerificationError(
@@ -180,7 +180,7 @@ export default function AccountSetup() {
         password: passwordData.password,
         options: {
           data: {
-            full_name: profileData.fullName,
+            name: profileData.name,
             phone_number: profileData.phoneNumber,
             role: invitationData.role,
             email_notifications: profileData.emailNotifications,
@@ -482,19 +482,19 @@ export default function AccountSetup() {
             {currentStep === 3 && (
               <form className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Label htmlFor="name">Full Name *</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                     <Input
-                      id="fullName"
+                      id="name"
                       type="text"
                       className="pl-10"
-                      {...profileForm.register('fullName')}
+                      {...profileForm.register('name')}
                     />
                   </div>
-                  {profileForm.formState.errors.fullName && (
+                  {profileForm.formState.errors.name && (
                     <p className="text-sm text-red-600">
-                      {profileForm.formState.errors.fullName.message}
+                      {profileForm.formState.errors.name.message}
                     </p>
                   )}
                 </div>

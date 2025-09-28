@@ -6,8 +6,6 @@ import { useLocation } from 'wouter';
 export interface Profile {
   id: string;
   email: string;
-  full_name: string | null;
-  fullName?: string; // For compatibility
   name?: {
     first: string;
     last: string;
@@ -128,7 +126,7 @@ export function useSupabaseAuth() {
 
   const fetchProfile = async (userId: string, forceRefresh = false) => {
     try {
-      console.log('Fetching profile for user:', userId, 'Force refresh:', forceRefresh);
+      console.log('📡 Fetching profile for user:', userId, 'Force refresh:', forceRefresh);
 
       // Get the current session for authentication
       const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -157,11 +155,13 @@ export function useSupabaseAuth() {
         const mappedProfile = {
           id: data.id,
           email: data.email,
-          full_name: data.fullName || null,
-          fullName: data.fullName || data.name?.full || '', // For compatibility
-          name: data.name || undefined,
+          name: data.name || {
+            full: '',
+            first: '',
+            last: ''
+          },
           username: data.username || '',
-          avatarUrl: data.avatarUrl || '',
+          avatarUrl: data.profile_image_url || data.avatarUrl || '',
           role: data.role || 'user',
           bio: data.bio || '',
           website: data.website || data.socialLinks?.website || '',
@@ -193,13 +193,13 @@ export function useSupabaseAuth() {
     return data;
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, name?: { first: string; last: string }) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: fullName,
+          name: name,
         },
       },
     });
@@ -291,10 +291,14 @@ export function useSupabaseAuth() {
 
   const refreshProfile = async () => {
     if (user?.id) {
-      console.log('Manually refreshing profile with force refresh...');
+      console.log('🔄 Manually refreshing profile with force refresh...');
+      console.log('👤 Current user ID:', user.id);
       // Clear profile first to force a fresh fetch
       setProfile(null);
       await fetchProfile(user.id, true);
+      console.log('✅ Profile refresh completed');
+    } else {
+      console.log('❌ No user ID for profile refresh');
     }
   };
 

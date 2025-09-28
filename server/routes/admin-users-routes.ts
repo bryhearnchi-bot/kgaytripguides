@@ -38,47 +38,47 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
     )
   : null;
 
-// Validation schemas - accept both camelCase and snake_case
+// Validation schemas
 const createUserSchema = z.object({
   username: z.string().min(3).max(50).optional(),
   email: z.string().email(),
-  fullName: z.string().optional(),
-  full_name: z.string().optional(),
-  role: z.enum(['admin', 'content_manager', 'viewer', 'super_admin']),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  role: z.enum(['viewer', 'content_manager', 'super_admin']),
   password: z.string().min(8),
   isActive: z.boolean().default(true),
-  is_active: z.boolean().default(true),
-  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).default('active'),
-  account_status: z.enum(['active', 'suspended', 'pending_verification']).default('active')
+  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).default('active')
 }).transform(data => ({
   username: data.username,
   email: data.email,
-  full_name: data.fullName || data.full_name,
+  firstName: data.firstName,
+  lastName: data.lastName,
   role: data.role,
-  password: data.password,
-  is_active: data.isActive ?? data.is_active,
-  account_status: data.accountStatus || data.account_status
+  password: data.password === '' ? undefined : data.password,
+  is_active: data.isActive,
+  account_status: data.accountStatus
 }));
 
 const updateUserSchema = z.object({
   username: z.string().min(3).max(50).optional(),
   email: z.string().email().optional(),
-  fullName: z.string().optional(),
-  full_name: z.string().optional(),
-  role: z.enum(['admin', 'content_manager', 'viewer', 'super_admin']).optional(),
-  password: z.string().min(8).optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  role: z.enum(['viewer', 'content_manager', 'super_admin']).optional(),
+  password: z.string().optional().refine((val) => !val || val.length >= 8, {
+    message: "Password must be at least 8 characters long if provided"
+  }),
   isActive: z.boolean().optional(),
-  is_active: z.boolean().optional(),
-  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).optional(),
-  account_status: z.enum(['active', 'suspended', 'pending_verification']).optional()
+  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).optional()
 }).transform(data => ({
   username: data.username,
   email: data.email,
-  full_name: data.fullName || data.full_name,
+  firstName: data.firstName,
+  lastName: data.lastName,
   role: data.role,
-  password: data.password,
-  is_active: data.isActive ?? data.is_active,
-  account_status: data.accountStatus || data.account_status
+  password: data.password === '' ? undefined : data.password,
+  is_active: data.isActive,
+  account_status: data.accountStatus
 }));
 
 const userStatusSchema = z.object({
@@ -101,6 +101,8 @@ export function registerAdminUsersRoutes(app: Express) {
   // GET /api/admin/users - List all users with filtering (OPTIMIZED)
   app.get("/api/admin/users", requireTripAdmin, async (req: AuthenticatedRequest, res) => {
     try {
+      console.log('=== USERS API CALLED ===');
+      console.log('Query params:', req.query);
       const query = querySchema.parse(req.query);
 
       if (!supabaseAdmin) {
@@ -109,109 +111,61 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      // Try optimized search function first
-      try {
-        const offset = (query.page - 1) * query.limit;
+      // Direct query to profiles table
+      const offset = (query.page - 1) * query.limit;
+      let supabaseQuery = supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact' });
 
-        // Use our optimized search function
-        const { data: searchResult, error: searchError } = await supabaseAdmin
-          .rpc('search_profiles_optimized', {
-            search_term: query.search || null,
-            filter_role: (query.role && query.role !== 'all') ? query.role : null,
-            filter_active: query.status === 'active' ? true :
-                          query.status === 'inactive' ? false : null,
-            page_limit: query.limit,
-            page_offset: offset
-          });
+      // Apply filters
+      if (query.search) {
+        const searchTerm = query.search.trim();
+        supabaseQuery = supabaseQuery.or(
+          `username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
+        );
+      }
 
-        if (searchError) {
-          throw searchError;
-        }
+      if (query.role && query.role !== 'all') {
+        supabaseQuery = supabaseQuery.eq('role', query.role);
+      }
 
-        // Get count using optimized count function
-        const { data: countResult, error: countError } = await supabaseAdmin
-          .rpc('count_profiles_estimated', {
-            search_term: query.search || null,
-            filter_role: (query.role && query.role !== 'all') ? query.role : null,
-            filter_active: query.status === 'active' ? true :
-                          query.status === 'inactive' ? false : null
-          });
+      if (query.status && query.status !== 'all') {
+        supabaseQuery = supabaseQuery.eq('is_active', query.status === 'active');
+      }
 
-        if (countError) {
-          throw countError;
-        }
+      // Apply pagination
+      supabaseQuery = supabaseQuery
+        .range(offset, offset + query.limit - 1)
+        .order('created_at', { ascending: false });
 
-        const total = countResult || 0;
+      const { data: usersList, count: total, error } = await supabaseQuery;
 
-        res.json({
-          users: searchResult || [],
-          pagination: {
-            page: query.page,
-            limit: query.limit,
-            total,
-            pages: Math.ceil(total / query.limit)
-          }
-        });
-
-      } catch (optimizedError) {
-        console.warn('Optimized query failed, falling back to standard query:', optimizedError);
-
-        // Fallback to standard Supabase query with performance improvements
-        let supabaseQuery = supabaseAdmin
-          .from('profiles')
-          .select('*', { count: 'planned' }); // Use 'planned' instead of 'exact' for better performance
-
-        // Apply filters
-        if (query.search) {
-          // Use simpler search for fallback
-          const searchTerm = query.search.trim();
-          if (searchTerm.length < 3) {
-            // Use prefix search for short terms
-            supabaseQuery = supabaseQuery.or(
-              `username.ilike.${searchTerm}%,email.ilike.${searchTerm}%,full_name.ilike.${searchTerm}%`
-            );
-          } else {
-            // Use full wildcard search for longer terms
-            supabaseQuery = supabaseQuery.or(
-              `username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`
-            );
-          }
-        }
-
-        if (query.role && query.role !== 'all') {
-          supabaseQuery = supabaseQuery.eq('role', query.role);
-        }
-
-        if (query.status && query.status !== 'all') {
-          supabaseQuery = supabaseQuery.eq('is_active', query.status === 'active');
-        }
-
-        // Apply pagination
-        const offset = (query.page - 1) * query.limit;
-        supabaseQuery = supabaseQuery
-          .range(offset, offset + query.limit - 1)
-          .order('created_at', { ascending: false });
-
-        const { data: usersList, count: total, error } = await supabaseQuery;
-
-        if (error) {
-          console.error('Error fetching users from Supabase:', error);
-          return res.status(500).json({
-            error: 'Failed to fetch users',
-            details: error.message
-          });
-        }
-
-        res.json({
-          users: usersList || [],
-          pagination: {
-            page: query.page,
-            limit: query.limit,
-            total: total || 0,
-            pages: Math.ceil((total || 0) / query.limit)
-          }
+      if (error) {
+        console.error('Error fetching users from Supabase:', error);
+        return res.status(500).json({
+          error: 'Failed to fetch users',
+          details: error.message
         });
       }
+
+      // Map database fields to frontend expected format
+      const mappedUsers = (usersList || []).map(user => ({
+        ...user,
+        name: {
+          first: user.name?.first || '',
+          last: user.name?.last || ''
+        }
+      }));
+
+      res.json({
+        users: mappedUsers,
+        pagination: {
+          page: query.page,
+          limit: query.limit,
+          total: total || 0,
+          pages: Math.ceil((total || 0) / query.limit)
+        }
+      });
 
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -271,7 +225,7 @@ export function registerAdminUsersRoutes(app: Express) {
         email_confirm: true,
         user_metadata: {
           username: userData.username || undefined,
-          full_name: userData.full_name || undefined,
+          name: userData.name || undefined,
           role: userData.role
         }
       };
@@ -313,7 +267,7 @@ export function registerAdminUsersRoutes(app: Express) {
         const profileData = {
           id: authUser.user.id,
           email: authUser.user.email,
-          full_name: userData.full_name || null,
+          name: userData.name || null,
           username: userData.username || null,
           role: userData.role || 'user',
           is_active: true,
@@ -427,7 +381,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
         updateData.user_metadata = {
           username: userData.username || existingUser.username,
-          full_name: userData.full_name || existingUser.full_name,
+          name: userData.name || existingUser.name,
           role: userData.role || existingUser.role
         };
 
@@ -457,8 +411,8 @@ export function registerAdminUsersRoutes(app: Express) {
       // Map fields to database column names (snake_case)
       if (userData.username !== undefined) updateFields.username = userData.username;
       if (userData.email !== undefined) updateFields.email = userData.email;
-      if (userData.full_name !== undefined) updateFields.full_name = userData.full_name;
-      if (userData.fullName !== undefined) updateFields.full_name = userData.fullName;
+      if (userData.name !== undefined) updateFields.name = userData.name;
+      if (userData.name !== undefined) updateFields.name = userData.name;
       if (userData.role !== undefined) updateFields.role = userData.role;
       if (userData.is_active !== undefined) updateFields.is_active = userData.is_active;
       if (userData.isActive !== undefined) updateFields.is_active = userData.isActive;
@@ -549,7 +503,7 @@ export function registerAdminUsersRoutes(app: Express) {
           id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
-          fullName: updatedUser.fullName,
+          name: updatedUser.name,
           role: updatedUser.role,
           isActive: updatedUser.isActive,
           accountStatus: updatedUser.accountStatus,
@@ -654,7 +608,7 @@ export function registerAdminUsersRoutes(app: Express) {
       const transformedProfile = {
         id: profile.id,
         email: profile.email,
-        fullName: profile.full_name,
+        name: profile.name,
         name: profile.name,
         username: profile.username,
         avatarUrl: profile.avatar_url,

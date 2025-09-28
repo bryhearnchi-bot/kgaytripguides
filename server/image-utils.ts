@@ -15,20 +15,21 @@ const fileFilter = (req: any, file: any, cb: any) => {
     'image/jpg',
     'image/png',
     'image/webp',
-    'image/gif'
+    'image/gif',
+    'image/avif'
   ];
 
   // Check MIME type
   if (!allowedMimeTypes.includes(file.mimetype)) {
-    cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'), false);
+    cb(new Error('Invalid file type. Only JPEG, PNG, WebP, GIF, and AVIF images are allowed.'), false);
     return;
   }
 
   // Check file extension (double validation)
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
   if (!allowedExtensions.includes(ext)) {
-    cb(new Error('Invalid file extension. Only .jpg, .jpeg, .png, .webp, and .gif are allowed.'), false);
+    cb(new Error('Invalid file extension. Only .jpg, .jpeg, .png, .webp, .gif, and .avif are allowed.'), false);
     return;
   }
 
@@ -80,6 +81,8 @@ async function scanFileForMalware(buffer: Buffer): Promise<boolean> {
 
 // Upload image to Supabase Storage with security checks
 export async function uploadToSupabase(file: Express.Multer.File, imageType: string): Promise<string> {
+  console.log('🚀 uploadToSupabase called with imageType:', imageType);
+
   // Perform malware scan
   const isSafe = await scanFileForMalware(file.buffer);
   if (!isSafe) {
@@ -89,6 +92,9 @@ export async function uploadToSupabase(file: Express.Multer.File, imageType: str
   // Initialize Supabase client
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  console.log('🔧 Supabase URL:', supabaseUrl ? 'configured' : 'missing');
+  console.log('🔧 Service key:', supabaseServiceKey ? 'configured' : 'missing');
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Supabase configuration missing');
@@ -100,35 +106,51 @@ export async function uploadToSupabase(file: Express.Multer.File, imageType: str
   const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
   const filename = `${imageType}-${randomUUID()}${ext}`;
 
-  // Determine bucket based on image type
-  let bucket = 'images';
+  // Determine bucket and folder path - using single bucket with folders as per user setup
+  const bucket = 'images'; // Single bucket for all images
   let folderPath = imageType;
 
+  // Map image types to their folder names
   switch (imageType) {
     case 'talent':
-      bucket = 'talent-images';
-      folderPath = '';
+      folderPath = 'talent';
       break;
+    case 'events':
     case 'event':
-      bucket = 'event-images';
-      folderPath = '';
+      folderPath = 'events';
       break;
     case 'itinerary':
-      bucket = 'itinerary-images';
-      folderPath = '';
+      folderPath = 'itinerary';
       break;
     case 'cruise':
     case 'trip':
-      bucket = 'trip-images';
-      folderPath = '';
+      folderPath = 'trips';
+      break;
+    case 'ships':
+      folderPath = 'ships';
+      break;
+    case 'resorts':
+      folderPath = 'resorts';
+      break;
+    case 'locations':
+      folderPath = 'locations';
+      break;
+    case 'general':
+      folderPath = 'general';
+      break;
+    case 'profiles':
+      folderPath = 'profiles';
       break;
     default:
-      bucket = 'images';
-      folderPath = imageType;
+      folderPath = imageType; // Use the imageType as folder name
   }
 
   // Construct full path
   const fullPath = folderPath ? `${folderPath}/${filename}` : filename;
+
+  console.log('📦 Using bucket:', bucket);
+  console.log('📁 Full path:', fullPath);
+  console.log('📄 File info:', { name: file.originalname, size: file.size, type: file.mimetype });
 
   // Upload to Supabase Storage
   const { data, error } = await supabase.storage
@@ -196,29 +218,11 @@ export function getPublicImageUrl(imageType: string, filename: string): string {
     return filename; // Already a full URL
   }
 
-  // If we have Supabase configured, construct the URL
+  // If we have Supabase configured, construct the URL using single bucket
   const supabaseUrl = process.env.SUPABASE_URL;
   if (supabaseUrl) {
-    // Determine bucket based on image type
-    let bucket = 'images';
-    switch (imageType) {
-      case 'talent':
-        bucket = 'talent-images';
-        break;
-      case 'event':
-        bucket = 'event-images';
-        break;
-      case 'itinerary':
-        bucket = 'itinerary-images';
-        break;
-      case 'cruise':
-      case 'trip':
-        bucket = 'trip-images';
-        break;
-      default:
-        bucket = 'images';
-    }
-
+    // Single bucket for all images
+    const bucket = 'images';
     return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filename}`;
   }
 

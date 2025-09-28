@@ -35,20 +35,36 @@ import {
   Settings,
   Save,
   UserPlus,
-  Key
+  Key,
+  Globe,
+  Image,
+  Clock,
+  Activity,
+  Eye
 } from 'lucide-react';
 
 const userSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters').optional(),
-  full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  full_name: z.string().optional(),
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
   phone_number: z.string().optional(),
   role: z.enum(['viewer', 'content_manager', 'admin']),
   account_status: z.enum(['active', 'suspended', 'pending_verification']),
+  is_active: z.boolean(),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
+  website: z.string().url('Invalid website URL').optional().or(z.literal('')),
+  avatar_url: z.string().url('Invalid avatar URL').optional().or(z.literal('')),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
+  instagram: z.string().optional(),
+  twitter: z.string().optional(),
+  facebook: z.string().optional(),
+  linkedin: z.string().optional(),
+  tiktok: z.string().optional(),
   email_updates: z.boolean(),
   text_messages: z.boolean(),
   cruise_notifications: z.boolean(),
@@ -81,14 +97,25 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
     resolver: zodResolver(userSchema),
     defaultValues: {
       email: user?.email || '',
+      firstName: user?.name?.first || '',
+      lastName: user?.name?.last || '',
       full_name: user?.full_name || '',
+      username: user?.username || '',
       phone_number: user?.phone_number || '',
       role: user?.role || 'viewer',
       account_status: user?.account_status || 'active',
+      is_active: user?.is_active ?? true,
       bio: user?.bio || '',
+      website: user?.website || '',
+      avatar_url: user?.avatar_url || '',
       city: user?.location?.city || '',
       state: user?.location?.state || '',
       country: user?.location?.country || '',
+      instagram: user?.social_links?.instagram || '',
+      twitter: user?.social_links?.twitter || '',
+      facebook: user?.social_links?.facebook || '',
+      linkedin: user?.social_links?.linkedin || '',
+      tiktok: user?.social_links?.tiktok || '',
       email_updates: user?.communication_preferences?.email ?? true,
       text_messages: user?.communication_preferences?.sms ?? false,
       cruise_notifications: user?.trip_updates_opt_in ?? true,
@@ -100,14 +127,25 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
     if (user) {
       reset({
         email: user.email || '',
+        firstName: user.name?.first || '',
+        lastName: user.name?.last || '',
         full_name: user.full_name || '',
+        username: user.username || '',
         phone_number: user.phone_number || '',
         role: user.role || 'viewer',
         account_status: user.account_status || 'active',
+        is_active: user.is_active ?? true,
         bio: user.bio || '',
+        website: user.website || '',
+        avatar_url: user.avatar_url || '',
         city: user.location?.city || '',
         state: user.location?.state || '',
         country: user.location?.country || '',
+        instagram: user.social_links?.instagram || '',
+        twitter: user.social_links?.twitter || '',
+        facebook: user.social_links?.facebook || '',
+        linkedin: user.social_links?.linkedin || '',
+        tiktok: user.social_links?.tiktok || '',
         email_updates: user.communication_preferences?.email ?? true,
         text_messages: user.communication_preferences?.sms ?? false,
         cruise_notifications: user.trip_updates_opt_in ?? true,
@@ -128,15 +166,28 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
         body: JSON.stringify({
           email: data.email,
           password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
           fullName: data.full_name,
+          username: data.username,
           phoneNumber: data.phone_number,
           role: data.role,
           accountStatus: data.account_status,
+          isActive: data.is_active,
           bio: data.bio,
+          website: data.website,
+          avatarUrl: data.avatar_url,
           location: {
             city: data.city,
             state: data.state,
             country: data.country,
+          },
+          socialLinks: {
+            instagram: data.instagram,
+            twitter: data.twitter,
+            facebook: data.facebook,
+            linkedin: data.linkedin,
+            tiktok: data.tiktok,
           },
           communicationPreferences: {
             email: data.email_updates,
@@ -190,15 +241,29 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
         headers,
         credentials: 'include',
         body: JSON.stringify({
-          full_name: data.full_name,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          fullName: data.full_name,
+          username: data.username,
           email: data.email,
           phone_number: data.phone_number,
           role: data.role,
+          account_status: data.account_status,
+          is_active: data.is_active,
           bio: data.bio,
+          website: data.website,
+          avatar_url: data.avatar_url,
           location: {
             city: data.city,
             state: data.state,
             country: data.country,
+          },
+          social_links: {
+            instagram: data.instagram,
+            twitter: data.twitter,
+            facebook: data.facebook,
+            linkedin: data.linkedin,
+            tiktok: data.tiktok,
           },
           communication_preferences: {
             email: data.email_updates,
@@ -264,7 +329,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {mode === 'add' ? (
@@ -283,14 +348,22 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basic">
                 <User className="w-4 h-4 mr-2" />
-                Basic Info
+                Basic
+              </TabsTrigger>
+              <TabsTrigger value="profile">
+                <Image className="w-4 h-4 mr-2" />
+                Profile
               </TabsTrigger>
               <TabsTrigger value="location">
                 <MapPin className="w-4 h-4 mr-2" />
                 Location
+              </TabsTrigger>
+              <TabsTrigger value="social">
+                <Globe className="w-4 h-4 mr-2" />
+                Social
               </TabsTrigger>
               <TabsTrigger value="preferences">
                 <Settings className="w-4 h-4 mr-2" />
@@ -317,18 +390,61 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                 </div>
 
                 <div>
+                  <Label htmlFor="username">
+                    <User className="inline w-4 h-4 mr-1" />
+                    Username
+                  </Label>
+                  <Input
+                    id="username"
+                    {...register('username')}
+                    className={errors.username ? 'border-red-500' : ''}
+                    placeholder="Optional unique username"
+                  />
+                  {errors.username && (
+                    <p className="text-sm text-red-600 mt-1">{errors.username.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="firstName">
+                    <User className="inline w-4 h-4 mr-1" />
+                    First Name *
+                  </Label>
+                  <Input
+                    id="firstName"
+                    {...register('firstName')}
+                    className={errors.firstName ? 'border-red-500' : ''}
+                  />
+                  {errors.firstName && (
+                    <p className="text-sm text-red-600 mt-1">{errors.firstName.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="lastName">
+                    <User className="inline w-4 h-4 mr-1" />
+                    Last Name *
+                  </Label>
+                  <Input
+                    id="lastName"
+                    {...register('lastName')}
+                    className={errors.lastName ? 'border-red-500' : ''}
+                  />
+                  {errors.lastName && (
+                    <p className="text-sm text-red-600 mt-1">{errors.lastName.message}</p>
+                  )}
+                </div>
+
+                <div>
                   <Label htmlFor="full_name">
                     <User className="inline w-4 h-4 mr-1" />
-                    Full Name *
+                    Full Display Name
                   </Label>
                   <Input
                     id="full_name"
                     {...register('full_name')}
-                    className={errors.full_name ? 'border-red-500' : ''}
+                    placeholder="Optional override for display name"
                   />
-                  {errors.full_name && (
-                    <p className="text-sm text-red-600 mt-1">{errors.full_name.message}</p>
-                  )}
                 </div>
 
                 <div>
@@ -383,7 +499,10 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                 </div>
 
                 <div>
-                  <Label htmlFor="account_status">Account Status *</Label>
+                  <Label htmlFor="account_status">
+                    <Activity className="inline w-4 h-4 mr-1" />
+                    Account Status *
+                  </Label>
                   <Select
                     value={watch('account_status')}
                     onValueChange={(value: any) => setValue('account_status', value)}
@@ -398,91 +517,242 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_active"
+                    checked={watch('is_active')}
+                    onCheckedChange={(checked) => setValue('is_active', checked)}
+                  />
+                  <Label htmlFor="is_active" className="flex items-center">
+                    <Activity className="inline w-4 h-4 mr-1" />
+                    Account Active
+                  </Label>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  rows={4}
-                  {...register('bio')}
-                  placeholder="Tell us about this user..."
-                  className={errors.bio ? 'border-red-500' : ''}
-                />
-                {errors.bio && (
-                  <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>
-                )}
+              {user?.last_sign_in_at && (
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="flex items-center text-sm text-blue-700">
+                    <Clock className="w-4 h-4 mr-2" />
+                    Last sign in: {new Date(user.last_sign_in_at).toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="profile" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label htmlFor="avatar_url">
+                    <Image className="inline w-4 h-4 mr-1" />
+                    Avatar URL
+                  </Label>
+                  <Input
+                    id="avatar_url"
+                    type="url"
+                    {...register('avatar_url')}
+                    placeholder="https://example.com/avatar.jpg"
+                    className={errors.avatar_url ? 'border-red-500' : ''}
+                  />
+                  {errors.avatar_url && (
+                    <p className="text-sm text-red-600 mt-1">{errors.avatar_url.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="website">
+                    <Globe className="inline w-4 h-4 mr-1" />
+                    Website
+                  </Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    {...register('website')}
+                    placeholder="https://example.com"
+                    className={errors.website ? 'border-red-500' : ''}
+                  />
+                  {errors.website && (
+                    <p className="text-sm text-red-600 mt-1">{errors.website.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    rows={4}
+                    {...register('bio')}
+                    placeholder="Tell us about this user..."
+                    className={errors.bio ? 'border-red-500' : ''}
+                  />
+                  {errors.bio && (
+                    <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>
+                  )}
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="location" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input id="city" {...register('city')} />
+                  <Label htmlFor="city">
+                    <MapPin className="inline w-4 h-4 mr-1" />
+                    City
+                  </Label>
+                  <Input id="city" {...register('city')} placeholder="San Francisco" />
                 </div>
 
                 <div>
-                  <Label htmlFor="state">State/Province</Label>
-                  <Input id="state" {...register('state')} />
+                  <Label htmlFor="state">
+                    <MapPin className="inline w-4 h-4 mr-1" />
+                    State/Province
+                  </Label>
+                  <Input id="state" {...register('state')} placeholder="California" />
                 </div>
 
                 <div>
-                  <Label htmlFor="country">Country</Label>
-                  <Input id="country" {...register('country')} />
+                  <Label htmlFor="country">
+                    <MapPin className="inline w-4 h-4 mr-1" />
+                    Country
+                  </Label>
+                  <Input id="country" {...register('country')} placeholder="United States" />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="social" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label htmlFor="instagram">
+                    <Globe className="inline w-4 h-4 mr-1" />
+                    Instagram
+                  </Label>
+                  <Input
+                    id="instagram"
+                    {...register('instagram')}
+                    placeholder="@username or full URL"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="twitter">
+                    <Globe className="inline w-4 h-4 mr-1" />
+                    Twitter/X
+                  </Label>
+                  <Input
+                    id="twitter"
+                    {...register('twitter')}
+                    placeholder="@username or full URL"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="facebook">
+                    <Globe className="inline w-4 h-4 mr-1" />
+                    Facebook
+                  </Label>
+                  <Input
+                    id="facebook"
+                    {...register('facebook')}
+                    placeholder="Profile URL or username"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="linkedin">
+                    <Globe className="inline w-4 h-4 mr-1" />
+                    LinkedIn
+                  </Label>
+                  <Input
+                    id="linkedin"
+                    {...register('linkedin')}
+                    placeholder="Profile URL"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="tiktok">
+                    <Globe className="inline w-4 h-4 mr-1" />
+                    TikTok
+                  </Label>
+                  <Input
+                    id="tiktok"
+                    {...register('tiktok')}
+                    placeholder="@username or full URL"
+                  />
                 </div>
               </div>
             </TabsContent>
 
             <TabsContent value="preferences" className="space-y-4 mt-4">
               <div className="space-y-4">
+                <div className="bg-amber-50 p-3 rounded-lg">
+                  <div className="flex items-center text-sm text-amber-700">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Communication preferences are set by the user during invitation and account setup
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="email_updates">Email Updates</Label>
+                    <Label htmlFor="email_updates" className="flex items-center">
+                      <Eye className="inline w-4 h-4 mr-1 text-gray-400" />
+                      Email Updates (Read-only)
+                    </Label>
                     <p className="text-sm text-gray-500">
-                      Receive updates via email
+                      Receive updates via email - controlled by user
                     </p>
                   </div>
                   <Switch
                     id="email_updates"
                     checked={watch('email_updates')}
-                    onCheckedChange={(checked) => setValue('email_updates', checked)}
+                    disabled
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="text_messages">Text Messages</Label>
+                    <Label htmlFor="text_messages" className="flex items-center">
+                      <Eye className="inline w-4 h-4 mr-1 text-gray-400" />
+                      Text Messages (Read-only)
+                    </Label>
                     <p className="text-sm text-gray-500">
-                      Receive SMS notifications
+                      Receive SMS notifications - controlled by user
                     </p>
                   </div>
                   <Switch
                     id="text_messages"
                     checked={watch('text_messages')}
-                    onCheckedChange={(checked) => setValue('text_messages', checked)}
+                    disabled
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="cruise_notifications">Cruise Notifications</Label>
+                    <Label htmlFor="cruise_notifications" className="flex items-center">
+                      <Eye className="inline w-4 h-4 mr-1 text-gray-400" />
+                      Cruise Notifications (Read-only)
+                    </Label>
                     <p className="text-sm text-gray-500">
-                      Updates about cruises they're following
+                      Updates about cruises they're following - controlled by user
                     </p>
                   </div>
                   <Switch
                     id="cruise_notifications"
                     checked={watch('cruise_notifications')}
-                    onCheckedChange={(checked) => setValue('cruise_notifications', checked)}
+                    disabled
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="marketing_emails">Marketing Emails</Label>
+                    <Label htmlFor="marketing_emails">
+                      <Settings className="inline w-4 h-4 mr-1" />
+                      Marketing Emails
+                    </Label>
                     <p className="text-sm text-gray-500">
-                      Promotional offers and newsletters
+                      Promotional offers and newsletters - admin can edit
                     </p>
                   </div>
                   <Switch

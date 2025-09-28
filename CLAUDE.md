@@ -65,7 +65,7 @@ mockups/    # Design references       supabase/   # DB config
 **Frontend:** React 18 + TypeScript, Tailwind, Zustand + React Query, Vite
 **Backend:** Node.js 22 + Express, Supabase Admin, Zod validation
 **Infrastructure:** Railway hosting, Supabase (DB/Auth/Storage)
-**MCP:** Supabase, Playwright, Perplexity
+**MCP:** Supabase, Chrome DevTools, Perplexity
 
 **MIGRATION STATUS:** ✅ **FULLY SUPABASE** - All storage operations now use Supabase Admin directly
 
@@ -126,7 +126,7 @@ VITE_API_URL=http://localhost:3001
 
 ## 📝 Development
 **Standards:** TypeScript strict, Prettier, ESLint, conventional commits
-**Testing:** 80% coverage, Playwright E2E, test at 375px/768px/1024px
+**Testing:** 80% coverage, Chrome DevTools E2E, test at 375px/768px/1024px
 **Dates:** Use `format(dateOnly(date), 'MMMM d')` - no timezone conversion
 **Images:** `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
 
@@ -139,7 +139,7 @@ npm run build           # Production build
 npm test                # Run tests
 npm run db:push         # Push schema
 npm run db:migrate      # Run migrations
-npm run test:e2e        # E2E tests
+npm run test:e2e        # E2E tests (Chrome DevTools)
 ```
 
 ---

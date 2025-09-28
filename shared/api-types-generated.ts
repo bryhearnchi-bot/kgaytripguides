@@ -89,7 +89,7 @@ export interface Location {
 export interface Profile {
   id?: string;
   email?: string;
-  fullName?: string;
+  name?: string;
   username?: string;
   role?: 'viewer' | 'content_manager' | 'admin';
   accountStatus?: 'active' | 'suspended' | 'pending_verification';

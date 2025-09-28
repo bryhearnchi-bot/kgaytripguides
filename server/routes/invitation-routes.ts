@@ -82,7 +82,7 @@ const validateInvitationTokenSchema = z.object({
 
 const acceptInvitationSchema = z.object({
   token: z.string().min(32, 'Invalid token format'),
-  fullName: z.string().min(1, 'Full name is required').max(255),
+  name: z.string().min(1, 'Full name is required').max(255),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
@@ -390,10 +390,10 @@ async function findInvitationByToken(token: string): Promise<InvitationTable | n
  */
 async function createUserFromInvitation(
   email: string,
-  fullName: string,
+  name: string,
   role: string,
   password: string
-): Promise<{ id: string; email: string; fullName: string; role: string }> {
+): Promise<{ id: string; email: string; name: string; role: string }> {
   try {
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -409,7 +409,7 @@ async function createUserFromInvitation(
       .insert({
         id: userId,
         email,
-        full_name: fullName,
+        name: name,
         role,
       })
       .select()
@@ -423,7 +423,7 @@ async function createUserFromInvitation(
     return {
       id: data.id,
       email: data.email,
-      fullName: data.full_name,
+      name: data.name,
       role: data.role,
     };
   } catch (error) {
@@ -513,7 +513,7 @@ router.post(
       // Send invitation email if requested
       let emailSent = false;
       if (sendEmail) {
-        emailSent = await sendInvitationEmail(email, token, inviter.fullName || inviter.username || 'Admin', role);
+        emailSent = await sendInvitationEmail(email, token, inviter.name || inviter.username || 'Admin', role);
       }
 
       // Audit log the invitation creation
@@ -795,7 +795,7 @@ router.post(
       const emailSent = await sendInvitationEmail(
         invitation.email,
         token,
-        admin.fullName || admin.username || 'Admin',
+        admin.name || admin.username || 'Admin',
         invitation.role
       );
 
@@ -892,7 +892,7 @@ router.post(
   validateBody(acceptInvitationSchema),
   async (req, res) => {
     try {
-      const { token, fullName, password } = req.body;
+      const { token, name, password } = req.body;
 
       // Find and validate invitation
       const matchingInvitation = await findInvitationByToken(token);
@@ -924,7 +924,7 @@ router.post(
       // Create user account
       const newUser = await createUserFromInvitation(
         matchingInvitation.email,
-        fullName,
+        name,
         matchingInvitation.role,
         password
       );
@@ -944,7 +944,7 @@ router.post(
         user: {
           id: newUser.id,
           email: newUser.email,
-          fullName: newUser.fullName,
+          name: newUser.name,
           role: newUser.role,
         }
       });

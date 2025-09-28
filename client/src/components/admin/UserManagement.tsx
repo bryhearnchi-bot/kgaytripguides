@@ -34,7 +34,7 @@ interface User {
   id: string;
   username: string;
   email: string | null;
-  fullName: string | null;
+  name: string | null;
   role: string;
   isActive: boolean;
   createdAt: string;
@@ -44,7 +44,7 @@ interface User {
 interface CreateUserData {
   username: string;
   email: string;
-  fullName: string;
+  name: string;
   password: string;
   role: string;
   isActive: boolean;
@@ -64,7 +64,7 @@ export default function UserManagement() {
   const [formData, setFormData] = useState<CreateUserData>({
     username: '',
     email: '',
-    fullName: '',
+    name: '',
     password: '',
     role: 'viewer',
     isActive: true,
@@ -224,7 +224,7 @@ export default function UserManagement() {
       setFormData({
         username: user.username,
         email: user.email || '',
-        fullName: user.fullName || '',
+        name: user.name || '',
         password: '', // Don't populate password for editing
         role: user.role,
         isActive: user.isActive,
@@ -234,7 +234,7 @@ export default function UserManagement() {
       setFormData({
         username: '',
         email: '',
-        fullName: '',
+        name: '',
         password: '',
         role: 'viewer',
         isActive: true,
@@ -249,7 +249,7 @@ export default function UserManagement() {
     setFormData({
       username: '',
       email: '',
-      fullName: '',
+      name: '',
       password: '',
       role: 'viewer',
       isActive: true,
@@ -279,7 +279,7 @@ export default function UserManagement() {
       const updateData: Partial<CreateUserData> = {
         username: formData.username,
         email: formData.email,
-        fullName: formData.fullName,
+        name: formData.name,
         role: formData.role,
         isActive: formData.isActive,
       };
@@ -322,7 +322,7 @@ export default function UserManagement() {
   const filteredUsers = users?.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   if (usersLoading) {
@@ -418,9 +418,9 @@ export default function UserManagement() {
                           <User className="w-4 h-4 text-blue-600" />
                         </div>
                         <div>
-                          <div className="font-medium">{user.fullName || user.username}</div>
+                          <div className="font-medium">{user.name || user.username}</div>
                           <div className="text-sm text-gray-500">
-                            {user.fullName && user.fullName !== user.username && (
+                            {user.name && user.name !== user.username && (
                               <>@{user.username} • </>
                             )}
                             {user.email && (
@@ -527,11 +527,11 @@ export default function UserManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
-                id="fullName"
-                value={formData.fullName}
-                onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Enter full name"
               />
             </div>

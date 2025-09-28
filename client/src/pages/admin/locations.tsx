@@ -9,6 +9,7 @@ import { api } from '@/lib/api-client';
 import { MapPin, Plus, PlusSquare, Edit2, Trash2, Search, Globe } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 
 interface Location {
   id?: number;
@@ -358,13 +359,14 @@ export default function LocationsManagement() {
           </div>
 
           <div>
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
+            <Label htmlFor="imageUrl">Location Image</Label>
+            <ImageUploadField
+              label="Location Image"
               value={formData.imageUrl || ''}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              placeholder="https://..."
-              className="bg-white/5 border-white/10 text-white"
+              onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
+              imageType="locations"
+              placeholder="No location image uploaded"
+              disabled={editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending}
             />
           </div>
 

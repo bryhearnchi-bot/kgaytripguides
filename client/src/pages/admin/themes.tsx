@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api-client';
 import { Palette, Plus, PlusSquare, Edit2, Trash2, Search, Sparkles } from 'lucide-react';
@@ -382,15 +383,16 @@ export default function ThemesManagement() {
           />
         </div>
 
-        {/* Image URL - use remaining space */}
+        {/* Theme Image - use remaining space */}
         <div className="space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input
-            id="imageUrl"
-            type="url"
+          <Label htmlFor="imageUrl">Theme Image</Label>
+          <ImageUploadField
+            label="Theme Image"
             value={formData.imageUrl || ''}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            placeholder="https://example.com/image.jpg"
+            onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
+            imageType="general"
+            placeholder="No theme image uploaded"
+            disabled={editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending}
           />
         </div>
 

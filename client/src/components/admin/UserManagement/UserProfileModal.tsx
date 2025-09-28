@@ -87,10 +87,10 @@ export function UserProfileModal({ isOpen, onClose, user, onEdit }: UserProfileM
           <div className="flex items-start justify-between mb-6 pb-6 border-b">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div>
-                <h3 className="text-xl font-semibold">{user.full_name || 'No name'}</h3>
+                <h3 className="text-xl font-semibold">{user.name || 'No name'}</h3>
                 <p className="text-gray-600">{user.email}</p>
                 <div className="flex items-center gap-2 mt-2">
                   {getRoleBadge(user.role)}
@@ -126,7 +126,7 @@ export function UserProfileModal({ isOpen, onClose, user, onEdit }: UserProfileM
                   <CardContent className="space-y-2">
                     <div>
                       <p className="text-xs text-gray-500">Full Name</p>
-                      <p className="font-medium">{user.full_name || 'Not provided'}</p>
+                      <p className="font-medium">{user.name || 'Not provided'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Email</p>

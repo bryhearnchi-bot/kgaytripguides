@@ -370,7 +370,20 @@ export function registerPublicRoutes(app: Express) {
         return res.status(404).json({ error: 'Profile not found' });
       }
 
-      res.json(profile);
+      // Map database field names to frontend field names
+      // Prioritize the structured 'name' field over legacy 'name'
+      const nameObject = profile.name || {};
+      const displayName = nameObject.full || '';
+
+      const responseProfile = {
+        ...profile,
+        profile_image_url: profile.avatar_url,
+        name: nameObject,
+        phoneNumber: profile.phone_number,
+        socialLinks: profile.social_links
+      };
+
+      res.json(responseProfile);
     } catch (error) {
       console.error('Error fetching profile:', error);
       res.status(500).json({ error: 'Failed to fetch profile' });
@@ -386,11 +399,48 @@ export function registerPublicRoutes(app: Express) {
         return res.status(401).json({ error: 'User not authenticated' });
       }
 
+      // Map frontend field names to database field names
+      const updateData = { ...req.body };
+
+      // Profile image mapping
+      if ('profile_image_url' in updateData) {
+        updateData.avatar_url = updateData.profile_image_url;
+        delete updateData.profile_image_url;
+      }
+
+      // Handle firstName/lastName to name object mapping
+      if ('firstName' in updateData || 'lastName' in updateData) {
+        updateData.name = {
+          first: updateData.firstName || '',
+          last: updateData.lastName || ''
+        };
+        delete updateData.firstName;
+        delete updateData.lastName;
+      }
+
+      if ('phoneNumber' in updateData) {
+        updateData.phone_number = updateData.phoneNumber;
+        delete updateData.phoneNumber;
+      }
+
+      // Handle other camelCase field names
+      if ('socialLinks' in updateData) {
+        updateData.social_links = updateData.socialLinks;
+        delete updateData.socialLinks;
+      }
+
+      // Handle legacy camelCase field names for backward compatibility
+      if ('avatarUrl' in updateData) {
+        updateData.avatar_url = updateData.avatarUrl;
+        delete updateData.avatarUrl;
+      }
+
+
       const supabaseAdmin = getSupabaseAdmin();
       const { data: updatedProfile, error } = await supabaseAdmin
         .from('profiles')
         .update({
-          ...req.body,
+          ...updateData,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId)
@@ -401,7 +451,21 @@ export function registerPublicRoutes(app: Express) {
         console.error('Error updating profile:', error);
         return res.status(500).json({ error: 'Failed to update profile' });
       }
-      res.json(updatedProfile);
+
+      // Map database field names to frontend field names for response
+      // Prioritize the structured 'name' field over legacy 'name'
+      const nameObject = updatedProfile.name || {};
+      const displayName = nameObject.full || '';
+
+      const responseProfile = {
+        ...updatedProfile,
+        profile_image_url: updatedProfile.avatar_url,
+        name: nameObject,
+        phoneNumber: updatedProfile.phone_number,
+        socialLinks: updatedProfile.social_links
+      };
+
+      res.json(responseProfile);
     } catch (error) {
       console.error('Error updating profile:', error);
       res.status(500).json({ error: 'Failed to update profile' });

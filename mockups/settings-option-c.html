@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - Option C: Collapsible Sidebar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ocean-blue': '#0ea5e9',
+                        'ocean-teal': '#22d3ee',
+                        'ocean-dark': '#10192f',
+                    }
+                }
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const isCollapsed = sidebar.classList.contains('w-16');
+
+            if (isCollapsed) {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-64');
+                mainContent.classList.remove('ml-16');
+                mainContent.classList.add('ml-64');
+            } else {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-16');
+                mainContent.classList.remove('ml-64');
+                mainContent.classList.add('ml-16');
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-white font-sans">
+    <div class="flex h-screen">
+        <!-- Collapsible Sidebar -->
+        <div id="sidebar" class="w-64 bg-ocean-dark/80 border-r border-white/10 backdrop-blur transition-all duration-300 relative">
+            <!-- Collapse Button -->
+            <button
+                onclick="toggleSidebar()"
+                class="absolute -right-3 top-6 h-6 w-6 rounded-full bg-ocean-dark border border-white/10 flex items-center justify-center hover:bg-white/10 z-10"
+            >
+                <svg class="h-3 w-3 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-white mb-6 sidebar-text">Settings</h2>
+                <nav class="space-y-2">
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-400/20 text-blue-300">
+                        <div class="h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                        <div class="sidebar-text flex items-center justify-between flex-1">
+                            <span class="text-sm font-medium">Venue Types</span>
+                            <span class="text-xs bg-blue-500/20 px-2 py-1 rounded-full">5</span>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-white/70">
+                        <div class="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9 3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                            </svg>
+                        </div>
+                        <div class="sidebar-text flex items-center justify-between flex-1">
+                            <span class="text-sm font-medium">Trip Types</span>
+                            <span class="text-xs bg-white/10 px-2 py-1 rounded-full">2</span>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-white/70">
+                        <div class="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="sidebar-text flex items-center justify-between flex-1">
+                            <span class="text-sm font-medium">Trip Status</span>
+                            <span class="text-xs bg-white/10 px-2 py-1 rounded-full">3</span>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-white/70">
+                        <div class="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l6-1v10M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm6-2c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="sidebar-text flex items-center justify-between flex-1">
+                            <span class="text-sm font-medium">Talent Categories</span>
+                            <span class="text-xs bg-white/10 px-2 py-1 rounded-full">7</span>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-white/70">
+                        <div class="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="sidebar-text flex items-center justify-between flex-1">
+                            <span class="text-sm font-medium">Location Types</span>
+                            <span class="text-xs bg-white/10 px-2 py-1 rounded-full">5</span>
+                        </div>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="flex-1 ml-64 transition-all duration-300">
+            <!-- Header -->
+            <div class="border-b border-white/10 bg-white/5 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-white">Venue Types</h1>
+                        <p class="text-sm text-white/60">Manage venue type options for events and locations</p>
+                    </div>
+                    <button class="h-10 w-10 rounded-xl border border-white/15 bg-blue-500/20 text-white/80 hover:bg-blue-500/30 flex items-center justify-center">
+                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6">
+                <!-- Detailed Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dining Card -->
+                    <div class="rounded-2xl border border-white/10 bg-ocean-dark/80 overflow-hidden hover:bg-white/5 transition-colors">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="h-14 w-14 rounded-xl bg-blue-500/20 border border-white/10 flex items-center justify-center">
+                                    <svg class="h-7 w-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                    </svg>
+                                </div>
+                                <button class="h-8 w-8 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <h3 class="font-bold text-lg text-white mb-2">Dining</h3>
+                            <p class="text-sm text-white/60 mb-3">Restaurants, cafes, and food venues</p>
+                            <div class="text-xs text-white/50">Created Sep 27, 2025</div>
+                        </div>
+                        <div class="border-t border-white/10 p-3 bg-white/5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-white/60">ID: 1</span>
+                                <button class="text-xs text-blue-400 hover:text-blue-300 font-medium">Edit Details</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entertainment Card -->
+                    <div class="rounded-2xl border border-white/10 bg-ocean-dark/80 overflow-hidden hover:bg-white/5 transition-colors">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="h-14 w-14 rounded-xl bg-teal-500/20 border border-white/10 flex items-center justify-center">
+                                    <svg class="h-7 w-7 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l6-1v10M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm6-2c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path>
+                                    </svg>
+                                </div>
+                                <button class="h-8 w-8 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <h3 class="font-bold text-lg text-white mb-2">Entertainment</h3>
+                            <p class="text-sm text-white/60 mb-3">Shows, concerts, and live performances</p>
+                            <div class="text-xs text-white/50">Created Sep 27, 2025</div>
+                        </div>
+                        <div class="border-t border-white/10 p-3 bg-white/5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-white/60">ID: 2</span>
+                                <button class="text-xs text-blue-400 hover:text-blue-300 font-medium">Edit Details</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bars Card -->
+                    <div class="rounded-2xl border border-white/10 bg-ocean-dark/80 overflow-hidden hover:bg-white/5 transition-colors">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="h-14 w-14 rounded-xl bg-purple-500/20 border border-white/10 flex items-center justify-center">
+                                    <svg class="h-7 w-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"></path>
+                                    </svg>
+                                </div>
+                                <button class="h-8 w-8 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <h3 class="font-bold text-lg text-white mb-2">Bars</h3>
+                            <p class="text-sm text-white/60 mb-3">Cocktail lounges, pubs, and drink venues</p>
+                            <div class="text-xs text-white/50">Created Sep 27, 2025</div>
+                        </div>
+                        <div class="border-t border-white/10 p-3 bg-white/5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-white/60">ID: 3</span>
+                                <button class="text-xs text-blue-400 hover:text-blue-300 font-medium">Edit Details</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spa Card -->
+                    <div class="rounded-2xl border border-white/10 bg-ocean-dark/80 overflow-hidden hover:bg-white/5 transition-colors">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="h-14 w-14 rounded-xl bg-green-500/20 border border-white/10 flex items-center justify-center">
+                                    <svg class="h-7 w-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                </div>
+                                <button class="h-8 w-8 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <h3 class="font-bold text-lg text-white mb-2">Spa</h3>
+                            <p class="text-sm text-white/60 mb-3">Wellness centers and relaxation venues</p>
+                            <div class="text-xs text-white/50">Created Sep 27, 2025</div>
+                        </div>
+                        <div class="border-t border-white/10 p-3 bg-white/5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-white/60">ID: 4</span>
+                                <button class="text-xs text-blue-400 hover:text-blue-300 font-medium">Edit Details</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recreation Card -->
+                    <div class="rounded-2xl border border-white/10 bg-ocean-dark/80 overflow-hidden hover:bg-white/5 transition-colors">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="h-14 w-14 rounded-xl bg-orange-500/20 border border-white/10 flex items-center justify-center">
+                                    <svg class="h-7 w-7 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <button class="h-8 w-8 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <h3 class="font-bold text-lg text-white mb-2">Recreation</h3>
+                            <p class="text-sm text-white/60 mb-3">Sports, activities, and recreational areas</p>
+                            <div class="text-xs text-white/50">Created Sep 27, 2025</div>
+                        </div>
+                        <div class="border-t border-white/10 p-3 bg-white/5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-white/60">ID: 5</span>
+                                <button class="text-xs text-blue-400 hover:text-blue-300 font-medium">Edit Details</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add New Card -->
+                    <div class="rounded-2xl border-2 border-dashed border-white/20 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer flex flex-col items-center justify-center text-center p-6 min-h-[200px]">
+                        <div class="h-14 w-14 rounded-xl bg-blue-500/20 border border-white/10 flex items-center justify-center mb-4">
+                            <svg class="h-7 w-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                        </div>
+                        <h3 class="font-medium text-lg text-white mb-2">Add New Type</h3>
+                        <p class="text-sm text-white/60">Create a new venue type for events and locations</p>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="mt-8 p-4 rounded-2xl border border-white/10 bg-white/5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-white">Bulk Operations</h3>
+                            <p class="text-sm text-white/60">Manage multiple venue types at once</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-4 py-2 text-sm rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white">
+                                Export List
+                            </button>
+                            <button class="px-4 py-2 text-sm rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white">
+                                Import Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expandable Detail Modal -->
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden" id="detail-modal">
+        <div class="bg-ocean-dark/90 border border-white/10 rounded-2xl p-6 w-full max-w-lg mx-4">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Edit Venue Type</h3>
+                        <p class="text-sm text-white/60">Modify venue type details</p>
+                    </div>
+                </div>
+                <button class="h-8 w-8 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center">
+                    <svg class="h-4 w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Name *</label>
+                    <input
+                        type="text"
+                        value="Dining"
+                        class="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/50 focus:border-blue-400/50 focus:outline-none"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Description</label>
+                    <textarea
+                        rows="3"
+                        placeholder="Optional description for this venue type"
+                        class="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/50 focus:border-blue-400/50 focus:outline-none resize-none"
+                    ></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Created</label>
+                        <input
+                            type="text"
+                            value="Sep 27, 2025"
+                            disabled
+                            class="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/50"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">ID</label>
+                        <input
+                            type="text"
+                            value="1"
+                            disabled
+                            class="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/50"
+                        >
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" class="flex-1 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .sidebar-text {
+            transition: opacity 0.3s ease;
+        }
+
+        #sidebar.w-16 .sidebar-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #sidebar.w-16 {
+            overflow: hidden;
+        }
+
+        #sidebar.w-16 nav a {
+            justify-content: center;
+        }
+    </style>
+</body>
+</html>

@@ -31,7 +31,6 @@ interface ProfileDropdownProps extends React.HTMLAttributes<HTMLDivElement> {
         avatar_url?: string;
     };
     profile?: {
-        full_name?: string;
         role?: string;
         status?: string;
     };
@@ -51,14 +50,13 @@ export default function KokonutProfileDropdown({
 
 
 
-    // Get the first name - prioritize profile.name.first, then profile.full_name, then email username
+    // Get the first name - prioritize profile.name.first, then email username
     const displayName = profile?.name?.first ||
-                       profile?.full_name?.split(' ')[0] ||
                        user.email?.split('@')[0] ||
                        'User';
 
-    // For full name display (used for initials), use profile.name.full or profile.full_name
-    const fullDisplayName = profile?.name?.full || profile?.full_name || displayName;
+    // For full name display (used for initials), use profile.name.full
+    const fullDisplayName = profile?.name?.full || displayName;
     const initials = fullDisplayName
         .split(' ')
         .map(name => name[0])
@@ -126,9 +124,9 @@ export default function KokonutProfileDropdown({
                     >
                         {/* Avatar with enhanced styling */}
                         <div className="relative">
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-ocean-400 via-blue-400 to-cyan-400 p-0.5 shadow-md">
+                            <div className="w-7 h-7 rounded-full border border-gray-500/30 p-0.5 shadow-md">
                                 <Avatar className="w-full h-full">
-                                    <AvatarImage src={user.avatar_url} alt={displayName} />
+                                    <AvatarImage src={profile?.avatarUrl || user.avatar_url} alt={displayName} />
                                     <AvatarFallback className="bg-gradient-to-br from-ocean-500 to-blue-500 text-white text-xs font-semibold">
                                         {initials}
                                     </AvatarFallback>

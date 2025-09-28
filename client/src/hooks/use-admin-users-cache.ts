@@ -19,7 +19,10 @@ interface User {
   id: string;
   username: string | null;
   email: string;
-  full_name: string | null;
+  name: {
+    first: string;
+    last: string;
+  } | null;
   role: string;
   is_active: boolean;
   account_status: string;

@@ -19,7 +19,7 @@ import ArtistsManagement from "@/pages/admin/artists";
 import ThemesManagement from "@/pages/admin/themes";
 import TripInfoSectionsManagement from "@/pages/admin/trip-info-sections";
 import UsersManagement from "@/pages/admin/users";
-import AdminSettings from "@/pages/admin/settings";
+import AdminLookupTables from "@/pages/admin/lookup-tables";
 import AdminProfile from "@/pages/admin/profile";
 import TripWizard from "@/pages/admin/trip-wizard";
 import TripDetail from "@/pages/admin/trip-detail";
@@ -51,7 +51,7 @@ function Router() {
       <Route path="/admin/trip-info-sections" component={() => <ProtectedRoute><AdminLayout><TripInfoSectionsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/users" component={() => <ProtectedRoute><AdminLayout><UsersManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/invitations" component={() => <ProtectedRoute><AdminLayout><InvitationsManagement /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/settings" component={() => <ProtectedRoute><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/lookup-tables" component={() => <ProtectedRoute><AdminLayout><AdminLookupTables /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/profile" component={() => <ProtectedRoute><AdminLayout><AdminProfile /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/trips" component={() => <ProtectedRoute><AdminLayout><TripsManagement /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/trips/new" component={() => <ProtectedRoute><AdminLayout><TripWizard /></AdminLayout></ProtectedRoute>} />

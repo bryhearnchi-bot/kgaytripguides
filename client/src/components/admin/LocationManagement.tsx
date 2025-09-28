@@ -8,6 +8,7 @@ import { Textarea } from '../ui/textarea';
 import { ResponsiveAdminTable } from './ResponsiveAdminTable';
 import { StatusBadge } from './StatusBadge';
 import { AdminFormModal } from './AdminFormModal';
+import { ImageUploadField } from './ImageUploadField';
 import { api } from '@/lib/api-client';
 import { MapPin, Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
 
@@ -396,14 +397,16 @@ export default function LocationManagement() {
           />
         </div>
 
-        {/* Image URL - spans full width */}
+        {/* Image Upload - spans full width */}
         <div className="lg:col-span-2 space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input
-            id="imageUrl"
+          <Label htmlFor="imageUrl">Location Image</Label>
+          <ImageUploadField
+            label="Location Image"
             value={formData.imageUrl || ''}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            placeholder="https://example.com/destination-image.jpg"
+            onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
+            imageType="locations"
+            placeholder="No location image uploaded"
+            disabled={savingLocation}
           />
         </div>
       </AdminFormModal>

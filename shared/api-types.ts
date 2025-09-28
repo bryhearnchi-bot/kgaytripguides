@@ -117,7 +117,6 @@ export interface Profile {
   id: string;
   email: string;
   name?: ProfileName;
-  fullName?: string; // Deprecated - use name.full instead
   username?: string;
   avatarUrl?: string;
   role: 'viewer' | 'content_manager' | 'super_admin';
@@ -267,7 +266,7 @@ export interface DuplicateTripRequest {
 
 export interface CreateProfileRequest {
   email: string;
-  fullName: string;
+  name: string;
   username?: string;
   role: 'viewer' | 'content_manager' | 'admin';
   phoneNumber?: string;
@@ -276,7 +275,6 @@ export interface CreateProfileRequest {
 
 export interface UpdateProfileRequest {
   name?: ProfileName;
-  fullName?: string; // Deprecated - use name instead
   username?: string;
   avatarUrl?: string;
   role?: 'viewer' | 'content_manager' | 'super_admin';

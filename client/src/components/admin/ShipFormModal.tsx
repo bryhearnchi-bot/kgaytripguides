@@ -5,6 +5,7 @@ import { AmenitySelector } from './AmenitySelector';
 import { VenueSelector } from './VenueSelector';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUploadField } from './ImageUploadField';
 import { Ship as ShipIcon } from 'lucide-react';
 
 interface Ship {
@@ -116,19 +117,11 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('handleSubmit called');
     e.preventDefault();
 
-    console.log('Form data:', formData);
-    console.log('Name trimmed:', formData.name.trim());
-    console.log('CruiseLine trimmed:', formData.cruiseLine.trim());
-
     if (!formData.name.trim() || !formData.cruiseLine.trim()) {
-      console.error('Early return - missing name or cruise line');
       return;
     }
-
-    console.log('Proceeding with submission...');
     try {
       setLoading(true);
 
@@ -244,12 +237,15 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
             </div>
 
             <div className="space-y-0.5">
-              <label className="text-xs font-medium text-white/90">Ship Image URL</label>
-              <Input
-                placeholder="https://example.com/ship-image.jpg"
+              <label className="text-xs font-medium text-white/90">Ship Image</label>
+              <ImageUploadField
+                label="Ship Image"
                 value={formData.imageUrl}
-                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                className="admin-form-modal h-8"
+                onChange={(url) => handleInputChange('imageUrl', url || '')}
+                imageType="ships"
+                placeholder="No ship image uploaded"
+                disabled={loading}
+                className="admin-form-modal"
               />
             </div>
 

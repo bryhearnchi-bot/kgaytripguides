@@ -5,6 +5,7 @@ import { AmenitySelector } from './AmenitySelector';
 import { VenueSelector } from './VenueSelector';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUploadField } from './ImageUploadField';
 import { Building } from 'lucide-react';
 
 interface Resort {
@@ -269,11 +270,14 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/90">Resort Image URL</label>
-              <Input
-                placeholder="https://example.com/resort-image.jpg"
+              <label className="text-sm font-medium text-white/90">Resort Image</label>
+              <ImageUploadField
+                label="Resort Image"
                 value={formData.imageUrl}
-                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                onChange={(url) => handleInputChange('imageUrl', url || '')}
+                imageType="resorts"
+                placeholder="No resort image uploaded"
+                disabled={loading}
                 className="admin-form-modal"
               />
             </div>

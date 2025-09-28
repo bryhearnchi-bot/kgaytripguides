@@ -423,14 +423,14 @@ export const adminPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['email', 'fullName', 'role'],
+              required: ['email', 'name', 'role'],
               properties: {
                 email: {
                   type: 'string',
                   format: 'email',
                   description: 'User email address'
                 },
-                fullName: {
+                name: {
                   type: 'string',
                   description: 'User full name'
                 },
@@ -504,7 +504,7 @@ export const adminPaths: Record<string, OpenAPIV3_1.PathItemObject> = {
             schema: {
               type: 'object',
               properties: {
-                fullName: { type: 'string' },
+                name: { type: 'string' },
                 username: { type: 'string' },
                 role: {
                   type: 'string',

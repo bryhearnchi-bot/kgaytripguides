@@ -122,7 +122,7 @@ describe('useSupabaseAuth - Loading State Fix', () => {
             data: {
               id: 'test-user-id',
               email: 'test@example.com',
-              full_name: 'Test User',
+              name: 'Test User',
               role: 'admin',
               created_at: '2023-01-01',
               updated_at: '2023-01-01',

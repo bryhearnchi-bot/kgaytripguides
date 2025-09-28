@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { EnhancedUsersTable } from '@/components/admin/EnhancedUsersTable';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { UserEditorModal } from '@/components/admin/UserManagement/UserEditorModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api-client';
-import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Save, Shield, User, UserCheck, UserX } from 'lucide-react';
+import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Shield, UserCheck, UserX } from 'lucide-react';
 import { useAdminUsers, useAdminUserMutations } from '@/hooks/use-admin-users-cache';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 
@@ -17,24 +15,22 @@ interface UserData {
   id: string;
   username?: string;
   email: string;
-  full_name?: string;
+  name?: {
+    first?: string;
+    last?: string;
+    middle?: string;
+    full?: string;
+  };
   role: string;
   is_active: boolean;
   account_status: string;
   created_at: string;
   updated_at: string;
   last_sign_in_at?: string;
+  avatarUrl?: string;
+  profile_image_url?: string;
 }
 
-interface UserFormData {
-  username?: string;
-  email: string;
-  full_name?: string;
-  role: string;
-  password?: string;
-  is_active: boolean;
-  account_status: string;
-}
 
 interface UsersResponse {
   users: UserData[];
@@ -46,13 +42,9 @@ interface UsersResponse {
   };
 }
 
-const fieldBaseClasses = "h-10 rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3";
-
 const ROLE_OPTIONS = [
   { value: 'viewer', label: 'Viewer' },
   { value: 'content_manager', label: 'Content Manager' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'trip_admin', label: 'Trip Admin' },
   { value: 'super_admin', label: 'Super Admin' },
 ];
 
@@ -63,15 +55,6 @@ export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
-  const [formData, setFormData] = useState<UserFormData>({
-    username: '',
-    email: '',
-    full_name: '',
-    role: 'viewer',
-    password: '',
-    is_active: true,
-    account_status: 'active',
-  });
 
   const userRole = profile?.role ?? 'viewer';
   const canManageUsers = ['super_admin', 'content_manager'].includes(userRole);
@@ -94,61 +77,6 @@ export default function UsersManagement() {
   const users = data?.users ?? [];
   const loadError = error as Error | null;
 
-  // Create user mutation
-  const createUserMutation = useMutation({
-    mutationFn: async (data: UserFormData) => {
-      const response = await api.post('/api/admin/users', data);
-      if (!response.ok) throw new Error('Failed to create user');
-      return response.json();
-    },
-    onSuccess: (result) => {
-      if (result.user) {
-        addUserOptimistically(result.user);
-      }
-      invalidateUsers();
-      setShowAddModal(false);
-      resetForm();
-      toast({
-        title: 'Success',
-        description: 'User created successfully',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Failed to create user',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Update user mutation
-  const updateUserMutation = useMutation({
-    mutationFn: async (data: UserFormData) => {
-      const response = await api.put(`/api/admin/users/${editingUser!.id}`, data);
-      if (!response.ok) throw new Error('Failed to update user');
-      return response.json();
-    },
-    onSuccess: (result) => {
-      if (result.user && editingUser) {
-        updateUserOptimistically(editingUser.id, result.user);
-      }
-      invalidateUsers();
-      setEditingUser(null);
-      resetForm();
-      toast({
-        title: 'Success',
-        description: 'User updated successfully',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Failed to update user',
-        variant: 'destructive',
-      });
-    }
-  });
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
@@ -177,46 +105,15 @@ export default function UsersManagement() {
     }
   });
 
-  const resetForm = () => {
-    setFormData({
-      username: '',
-      email: '',
-      full_name: '',
-      role: 'viewer',
-      password: '',
-      is_active: true,
-      account_status: 'active',
-    });
-  };
-
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
     if (!open) {
       setEditingUser(null);
-      resetForm();
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingUser) {
-      updateUserMutation.mutate({ ...formData });
-    } else {
-      createUserMutation.mutate(formData);
     }
   };
 
   const handleEdit = (user: UserData) => {
     setEditingUser(user);
-    setFormData({
-      username: user.username || '',
-      email: user.email,
-      full_name: user.full_name || '',
-      role: user.role,
-      password: '',
-      is_active: user.is_active,
-      account_status: user.account_status,
-    });
     setShowAddModal(true);
   };
 
@@ -234,12 +131,17 @@ export default function UsersManagement() {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const displayName = user.name?.first && user.name?.last
+      ? `${user.name.first} ${user.name.last}`
+      : '';
+    return (
+      (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const getRoleIcon = (role: string) => {
     return <Shield className="h-3.5 w-3.5" />;
@@ -289,7 +191,6 @@ export default function UsersManagement() {
               size="icon"
               onClick={() => {
                 setEditingUser(null);
-                resetForm();
                 handleModalOpenChange(true);
               }}
               className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
@@ -328,7 +229,6 @@ export default function UsersManagement() {
               <Button
                 onClick={() => {
                   setEditingUser(null);
-                  resetForm();
                   setShowAddModal(true);
                 }}
                 className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
@@ -351,25 +251,56 @@ export default function UsersManagement() {
                 width: 80,
                 minWidth: 80,
                 maxWidth: 80,
-                render: (_value, user) => (
-                  <div className="flex items-center justify-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-medium">
-                        {user.full_name?.charAt(0)?.toUpperCase() || user.username?.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase()}
+                render: (_value, user) => {
+                  const profileImageUrl = user.avatarUrl || user.profile_image_url;
+                  // Get display name from first/last name
+                  const displayName = user.name?.first && user.name?.last
+                    ? `${user.name.first} ${user.name.last}`
+                    : user.username || user.email;
+                  const initials = displayName.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase();
+
+                  return (
+                    <div className="flex items-center justify-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                        {profileImageUrl ? (
+                          <img
+                            src={profileImageUrl}
+                            alt={displayName || 'User'}
+                            className="h-full w-full rounded-xl object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-medium">
+                            {initials}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ),
+                  );
+                },
               },
               {
-                key: 'full_name',
-                label: 'Name',
+                key: 'first_name',
+                label: 'First Name',
                 priority: 'high',
                 sortable: true,
-                minWidth: 200,
-                render: (_value, user) => (
-                  <p className="font-bold text-xs text-white">{user.full_name || user.username || 'No name'}</p>
-                ),
+                minWidth: 120,
+                render: (_value, user) => {
+                  return (
+                    <p className="font-bold text-xs text-white">{user.name?.first || '-'}</p>
+                  );
+                },
+              },
+              {
+                key: 'last_name',
+                label: 'Last Name',
+                priority: 'high',
+                sortable: true,
+                minWidth: 120,
+                render: (_value, user) => {
+                  return (
+                    <p className="font-bold text-xs text-white">{user.name?.last || '-'}</p>
+                  );
+                },
               },
               {
                 key: 'email',
@@ -444,101 +375,12 @@ export default function UsersManagement() {
       </section>
 
       {/* Add/Edit Modal */}
-      <AdminFormModal
+      <UserEditorModal
         isOpen={showAddModal}
-        onOpenChange={handleModalOpenChange}
-        title={editingUser ? 'Edit User' : 'Add New User'}
-        icon={<Users className="h-5 w-5" />}
-        description="Enter the user information below"
-        onSubmit={handleSubmit}
-        primaryAction={{
-          label: editingUser ? 'Save Changes' : 'Create User',
-          loading: editingUser ? updateUserMutation.isPending : createUserMutation.isPending,
-          loadingLabel: editingUser ? 'Saving...' : 'Creating...',
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () => handleModalOpenChange(false),
-        }}
-        contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4"
-      >
-        <div className="col-span-2">
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            placeholder="Enter username"
-            className={fieldBaseClasses}
-          />
-        </div>
-
-        <div className="col-span-2">
-          <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            placeholder="user@example.com"
-            required
-            className={fieldBaseClasses}
-          />
-        </div>
-
-        <div className="col-span-2">
-          <Label htmlFor="fullName">Full Name</Label>
-          <Input
-            id="fullName"
-            value={formData.full_name}
-            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-            placeholder="John Doe"
-            className={fieldBaseClasses}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="role">Role *</Label>
-          <Select
-            value={formData.role}
-            onValueChange={(value) => setFormData({ ...formData, role: value })}
-          >
-            <SelectTrigger className={`${fieldBaseClasses} text-left`}>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              {ROLE_OPTIONS.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="password">Password {!editingUser && '*'}</Label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder={editingUser ? 'Leave blank to keep current' : 'Enter password'}
-            className={fieldBaseClasses}
-          />
-        </div>
-
-        <div className="col-span-2 flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={formData.is_active}
-            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-            className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
-          />
-          <Label htmlFor="isActive">Active user account</Label>
-        </div>
-      </AdminFormModal>
+        onClose={() => handleModalOpenChange(false)}
+        user={editingUser}
+        mode={editingUser ? 'edit' : 'add'}
+      />
     </div>
   );
 }

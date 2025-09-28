@@ -9,6 +9,7 @@ import {
   Palette,
   FileText,
   Settings,
+  Search,
   Shield,
   ChevronLeft,
   ChevronRight,
@@ -40,7 +41,7 @@ const managementNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { label: 'Users', path: '/admin/users', icon: <Users className="h-4 w-4" /> },
   { label: 'Invitations', path: '/admin/invitations', icon: <Mail className="h-4 w-4" /> },
-  { label: 'Settings', path: '/admin/settings', icon: <Settings className="h-4 w-4" /> },
+  { label: 'Lookup Tables', path: '/admin/lookup-tables', icon: <Search className="h-4 w-4" /> },
   { label: 'Profile', path: '/admin/profile', icon: <Shield className="h-4 w-4" /> },
 ];
 

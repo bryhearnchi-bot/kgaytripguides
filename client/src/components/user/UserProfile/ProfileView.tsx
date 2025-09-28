@@ -34,13 +34,18 @@ export function ProfileView({ onEdit }: ProfileViewProps) {
   }
 
   // Get initials for avatar fallback
-  const getInitials = (name?: string | null) => {
-    if (!name) return 'U';
-    const parts = name.split(' ');
-    if (parts.length > 1) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  const getInitials = () => {
+    if (profile?.name?.first && profile?.name?.last) {
+      return `${profile.name.first[0]}${profile.name.last[0]}`.toUpperCase();
     }
-    return name[0].toUpperCase();
+    if (profile?.name?.full) {
+      const parts = profile.name.full.split(' ');
+      if (parts.length > 1) {
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      }
+      return parts[0][0].toUpperCase();
+    }
+    return 'U';
   };
 
   const memberSince = profile.created_at
@@ -57,13 +62,13 @@ export function ProfileView({ onEdit }: ProfileViewProps) {
               <Avatar className="h-20 w-20">
                 <AvatarImage src={(profile as any).profile_photo_url} />
                 <AvatarFallback className="text-lg bg-ocean-100 text-ocean-700">
-                  {getInitials(profile.full_name)}
+                  {getInitials()}
                 </AvatarFallback>
               </Avatar>
 
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {profile.full_name || 'User'}
+                  {profile.name?.full || 'User'}
                 </h2>
                 <p className="text-sm text-gray-600">Member since {memberSince}</p>
                 {profile.role === 'admin' && (
@@ -95,7 +100,7 @@ export function ProfileView({ onEdit }: ProfileViewProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Full Name</p>
-              <p className="font-medium">{profile.full_name || 'Not provided'}</p>
+              <p className="font-medium">{profile.name?.full || 'Not provided'}</p>
             </div>
 
             <div className="space-y-1">

@@ -49,13 +49,13 @@ import { supabase } from '@/lib/supabase';
 interface Invitation {
   id: string;
   email: string;
-  fullName?: string;
+  name?: string;
   role: 'admin' | 'editor' | 'user';
   status: 'pending' | 'accepted' | 'expired';
   createdAt: string;
   expiresAt: string;
   invitedBy?: {
-    fullName: string;
+    name: string;
     email: string;
   };
   acceptedAt?: string;
@@ -371,7 +371,7 @@ export function InvitationManagement() {
                   <TableRow key={invitation.id} className="hover:bg-white/5 border-white/10">
                     <TableCell>
                       <div>
-                        <p className="font-medium text-white">{invitation.fullName || 'No name provided'}</p>
+                        <p className="font-medium text-white">{invitation.name || 'No name provided'}</p>
                         <p className="text-sm text-white/60">{invitation.email}</p>
                       </div>
                     </TableCell>
@@ -380,7 +380,7 @@ export function InvitationManagement() {
                     <TableCell>
                       {invitation.invitedBy ? (
                         <div className="text-sm">
-                          <p className="font-medium text-white">{invitation.invitedBy.fullName}</p>
+                          <p className="font-medium text-white">{invitation.invitedBy.name}</p>
                           <p className="text-white/60">{invitation.invitedBy.email}</p>
                         </div>
                       ) : (

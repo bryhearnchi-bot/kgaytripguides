@@ -18,7 +18,7 @@ const signUpSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
   confirmPassword: z.string(),
-  fullName: z.string().min(2, 'Full name is required'),
+  name: z.string().min(2, 'Full name is required'),
   phoneNumber: z.string()
     .regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'Please enter a valid phone number'),
   communicationPreference: z.enum(['email', 'sms', 'both']),
@@ -67,7 +67,7 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
     setLoading(true);
     try {
       // Sign up the user with Supabase Auth
-      const result = await signUp(data.email, data.password, data.fullName);
+      const result = await signUp(data.email, data.password, data.name);
 
       // Store additional user data in the database
       // This will be handled by a database trigger or separate API call
@@ -126,16 +126,16 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Full Name */}
         <div>
-          <Label htmlFor="fullName">Full Name *</Label>
+          <Label htmlFor="name">Full Name *</Label>
           <Input
-            id="fullName"
+            id="name"
             type="text"
             placeholder="John Doe"
-            {...register('fullName')}
-            className={errors.fullName ? 'border-red-500' : ''}
+            {...register('name')}
+            className={errors.name ? 'border-red-500' : ''}
           />
-          {errors.fullName && (
-            <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
+          {errors.name && (
+            <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
           )}
         </div>
 
