@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { EnhancedUsersTable } from '@/components/admin/EnhancedUsersTable';
 import { UserEditorModal } from '@/components/admin/UserManagement/UserEditorModal';
 import { Button } from '@/components/ui/button';
