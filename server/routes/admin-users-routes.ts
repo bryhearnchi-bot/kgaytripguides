@@ -46,6 +46,27 @@ const createUserSchema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   role: z.enum(['viewer', 'content_manager', 'super_admin']),
   password: z.string().min(8),
+  is_active: z.boolean().optional(),
+  account_status: z.enum(['active', 'suspended', 'pending_verification']).optional(),
+  // Profile fields
+  avatar_url: z.string().optional(),
+  bio: z.string().optional(),
+  website: z.string().optional(),
+  phone_number: z.string().optional(),
+  // Location fields
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  // Social links
+  instagram: z.string().optional(),
+  twitter: z.string().optional(),
+  facebook: z.string().optional(),
+  linkedin: z.string().optional(),
+  tiktok: z.string().optional(),
+  // Preferences
+  marketing_emails: z.boolean().optional(),
+  trip_updates_opt_in: z.boolean().optional(),
+  // Legacy camelCase fields for backward compatibility
   isActive: z.boolean().default(true),
   accountStatus: z.enum(['active', 'suspended', 'pending_verification']).default('active')
 }).transform(data => ({
@@ -55,8 +76,30 @@ const createUserSchema = z.object({
   lastName: data.lastName,
   role: data.role,
   password: data.password === '' ? undefined : data.password,
-  is_active: data.isActive,
-  account_status: data.accountStatus
+  is_active: data.is_active ?? data.isActive,
+  account_status: data.account_status ?? data.accountStatus,
+  // Profile fields
+  avatar_url: data.avatar_url,
+  bio: data.bio,
+  website: data.website,
+  phone_number: data.phone_number,
+  // Location - combine into JSON object
+  location: (data.city || data.state || data.country) ? {
+    city: data.city,
+    state: data.state,
+    country: data.country
+  } : undefined,
+  // Social links - combine into JSON object
+  social_links: (data.instagram || data.twitter || data.facebook || data.linkedin || data.tiktok) ? {
+    instagram: data.instagram,
+    twitter: data.twitter,
+    facebook: data.facebook,
+    linkedin: data.linkedin,
+    tiktok: data.tiktok
+  } : undefined,
+  // Preferences
+  marketing_emails: data.marketing_emails,
+  trip_updates_opt_in: data.trip_updates_opt_in
 }));
 
 const updateUserSchema = z.object({
@@ -68,6 +111,27 @@ const updateUserSchema = z.object({
   password: z.string().optional().refine((val) => !val || val.length >= 8, {
     message: "Password must be at least 8 characters long if provided"
   }),
+  is_active: z.boolean().optional(),
+  account_status: z.enum(['active', 'suspended', 'pending_verification']).optional(),
+  // Profile fields
+  avatar_url: z.string().optional(),
+  bio: z.string().optional(),
+  website: z.string().optional(),
+  phone_number: z.string().optional(),
+  // Location fields
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  // Social links
+  instagram: z.string().optional(),
+  twitter: z.string().optional(),
+  facebook: z.string().optional(),
+  linkedin: z.string().optional(),
+  tiktok: z.string().optional(),
+  // Preferences
+  marketing_emails: z.boolean().optional(),
+  trip_updates_opt_in: z.boolean().optional(),
+  // Legacy camelCase fields for backward compatibility
   isActive: z.boolean().optional(),
   accountStatus: z.enum(['active', 'suspended', 'pending_verification']).optional()
 }).transform(data => ({
@@ -77,8 +141,30 @@ const updateUserSchema = z.object({
   lastName: data.lastName,
   role: data.role,
   password: data.password === '' ? undefined : data.password,
-  is_active: data.isActive,
-  account_status: data.accountStatus
+  is_active: data.is_active ?? data.isActive,
+  account_status: data.account_status ?? data.accountStatus,
+  // Profile fields
+  avatar_url: data.avatar_url,
+  bio: data.bio,
+  website: data.website,
+  phone_number: data.phone_number,
+  // Location - combine into JSON object
+  location: (data.city || data.state || data.country) ? {
+    city: data.city,
+    state: data.state,
+    country: data.country
+  } : undefined,
+  // Social links - combine into JSON object
+  social_links: (data.instagram || data.twitter || data.facebook || data.linkedin || data.tiktok) ? {
+    instagram: data.instagram,
+    twitter: data.twitter,
+    facebook: data.facebook,
+    linkedin: data.linkedin,
+    tiktok: data.tiktok
+  } : undefined,
+  // Preferences
+  marketing_emails: data.marketing_emails,
+  trip_updates_opt_in: data.trip_updates_opt_in
 }));
 
 const userStatusSchema = z.object({
@@ -184,7 +270,9 @@ export function registerAdminUsersRoutes(app: Express) {
   // POST /api/admin/users - Create new user
   app.post("/api/admin/users", requireTripAdmin, auditLogger('admin.user.create'), async (req: AuthenticatedRequest, res) => {
     try {
+      console.log('🔍 POST /api/admin/users - Raw request body:', req.body);
       const userData = createUserSchema.parse(req.body);
+      console.log('🔍 Parsed userData:', userData);
 
       // Only a super admin can create another super admin
       if (userData.role === 'super_admin' && req.user?.role !== 'super_admin') {
@@ -267,14 +355,27 @@ export function registerAdminUsersRoutes(app: Express) {
         const profileData = {
           id: authUser.user.id,
           email: authUser.user.email,
-          name: userData.name || null,
+          name: (userData.firstName || userData.lastName) ? {
+            first: userData.firstName || '',
+            last: userData.lastName || ''
+          } : null,
           username: userData.username || null,
+          avatar_url: userData.avatar_url || null,
           role: userData.role || 'user',
-          is_active: true,
+          is_active: userData.is_active !== undefined ? userData.is_active : true,
           account_status: 'active',
+          bio: userData.bio || null,
+          website: userData.website || null,
+          phone_number: userData.phone_number || null,
+          location: userData.location || null,
+          social_links: userData.social_links || null,
+          marketing_emails: userData.marketing_emails || false,
+          trip_updates_opt_in: userData.trip_updates_opt_in || false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
+
+        console.log('🔍 profileData being inserted to database:', JSON.stringify(profileData, null, 2));
 
         const { data: createdProfile, error: createError } = await supabaseAdmin
           .from('profiles')
@@ -297,10 +398,47 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
+      // Update the profile with all the additional fields
+      const updateFields = {
+        updated_at: new Date().toISOString(),
+        name: (userData.firstName || userData.lastName) ? {
+          first: userData.firstName || '',
+          last: userData.lastName || ''
+        } : null,
+        username: userData.username || null,
+        avatar_url: userData.avatar_url || null,
+        role: userData.role || 'viewer',
+        is_active: userData.is_active !== undefined ? userData.is_active : true,
+        account_status: userData.account_status || 'active',
+        bio: userData.bio || null,
+        website: userData.website || null,
+        phone_number: userData.phone_number || null,
+        location: userData.location || null,
+        social_links: userData.social_links || null,
+        marketing_emails: userData.marketing_emails || false,
+        trip_updates_opt_in: userData.trip_updates_opt_in || false,
+      };
 
-      // Return the user data in snake_case as expected by frontend
+      console.log('🔍 Updating profile with additional fields:', JSON.stringify(updateFields, null, 2));
+
+      const { data: updatedUser, error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update(updateFields)
+        .eq('id', authUser.user.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('[User Creation] Failed to update profile with additional fields:', updateError);
+        // Don't fail the entire creation, just return the basic profile
+        return res.status(201).json({
+          user: newUser
+        });
+      }
+
+      // Return the updated user data
       res.status(201).json({
-        user: newUser  // Supabase already returns snake_case
+        user: updatedUser
       });
 
     } catch (error) {
@@ -321,7 +459,9 @@ export function registerAdminUsersRoutes(app: Express) {
   app.put("/api/admin/users/:id", requireTripAdmin, auditLogger('admin.user.update'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.params.id;
+      console.log('🔍 PUT /api/admin/users/:id - Raw request body:', req.body);
       const userData = updateUserSchema.parse(req.body);
+      console.log('🔍 Parsed userData:', userData);
 
       // Check if user exists using Supabase Admin
       if (!supabaseAdmin) {
@@ -411,13 +551,34 @@ export function registerAdminUsersRoutes(app: Express) {
       // Map fields to database column names (snake_case)
       if (userData.username !== undefined) updateFields.username = userData.username;
       if (userData.email !== undefined) updateFields.email = userData.email;
-      if (userData.name !== undefined) updateFields.name = userData.name;
-      if (userData.name !== undefined) updateFields.name = userData.name;
       if (userData.role !== undefined) updateFields.role = userData.role;
       if (userData.is_active !== undefined) updateFields.is_active = userData.is_active;
-      if (userData.isActive !== undefined) updateFields.is_active = userData.isActive;
       if (userData.account_status !== undefined) updateFields.account_status = userData.account_status;
-      if (userData.accountStatus !== undefined) updateFields.account_status = userData.accountStatus;
+
+      // Handle name fields - construct name object from firstName/lastName
+      if (userData.firstName !== undefined || userData.lastName !== undefined || userData.full_name !== undefined) {
+        const nameObj: any = {};
+        if (userData.firstName !== undefined) nameObj.first = userData.firstName;
+        if (userData.lastName !== undefined) nameObj.last = userData.lastName;
+        if (userData.full_name !== undefined) nameObj.full = userData.full_name;
+        updateFields.name = nameObj;
+      }
+
+      // Profile fields
+      if (userData.avatar_url !== undefined) updateFields.avatar_url = userData.avatar_url;
+      if (userData.bio !== undefined) updateFields.bio = userData.bio;
+      if (userData.website !== undefined) updateFields.website = userData.website;
+      if (userData.phone_number !== undefined) updateFields.phone_number = userData.phone_number;
+
+      // Location and social links (already transformed to JSON objects in schema)
+      if (userData.location !== undefined) updateFields.location = userData.location;
+      if (userData.social_links !== undefined) updateFields.social_links = userData.social_links;
+
+      // Preferences
+      if (userData.marketing_emails !== undefined) updateFields.marketing_emails = userData.marketing_emails;
+      if (userData.trip_updates_opt_in !== undefined) updateFields.trip_updates_opt_in = userData.trip_updates_opt_in;
+
+      console.log('🔍 updateFields being sent to database:', updateFields);
 
       // Use Supabase Admin client to bypass RLS
       if (!supabaseAdmin) {
@@ -532,14 +693,20 @@ export function registerAdminUsersRoutes(app: Express) {
     try {
       const userId = req.params.id;
 
-      // Check if user exists
-      const existingUser = await db
-        .select()
-        .from(schema.profiles)
-        .where(eq(schema.profiles.id, userId))
-        .limit(1);
+      // Check if user exists using Supabase Admin
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'User management service is not configured. Please set up Supabase credentials.'
+        });
+      }
 
-      if (existingUser.length === 0) {
+      const { data: existingUser, error: fetchError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError || !existingUser) {
         return res.status(404).json({ error: 'User not found' });
       }
 

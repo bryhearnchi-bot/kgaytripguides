@@ -39,10 +39,6 @@
     "performance:test": "lhci autorun",
     "db:seed": "tsx server/seed.ts",
     "db:production-seed": "tsx server/production-seed.ts",
-    "db:add-test-cruises": "tsx server/add-test-cruises.ts",
-    "db:seed:local": "DATABASE_URL=file:./cruise-guide.db tsx server/seed.ts",
-    "deploy:production": "node deploy-to-production.js",
-    "api:generate-types": "node scripts/generate-api-types.js",
     "api:docs": "echo 'API Documentation available at http://localhost:3001/api/docs'"
   },
   "dependencies": {

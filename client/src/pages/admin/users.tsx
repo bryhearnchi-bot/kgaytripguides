@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { EnhancedUsersTable } from '@/components/admin/EnhancedUsersTable';
-import { UserEditorModal } from '@/components/admin/UserManagement/UserEditorModal';
+import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
 import { api } from '@/lib/api-client';
 import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Shield, UserCheck, UserX } from 'lucide-react';
 import { useAdminUsers, useAdminUserMutations } from '@/hooks/use-admin-users-cache';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 
 interface UserData {
   id: string;
@@ -27,8 +31,55 @@ interface UserData {
   created_at: string;
   updated_at: string;
   last_sign_in_at?: string;
+  avatar_url?: string;
   avatarUrl?: string;
   profile_image_url?: string;
+  bio?: string;
+  website?: string;
+  phone_number?: string;
+  location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  social_links?: {
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    tiktok?: string;
+  };
+  communication_preferences?: {
+    email?: boolean;
+    sms?: boolean;
+  };
+  trip_updates_opt_in?: boolean;
+  marketing_emails?: boolean;
+}
+
+interface UserFormData {
+  username?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  password?: string;
+  is_active: boolean;
+  account_status: string;
+  bio?: string;
+  website?: string;
+  avatar_url?: string;
+  phone_number?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  instagram?: string;
+  twitter?: string;
+  facebook?: string;
+  linkedin?: string;
+  tiktok?: string;
+  marketing_emails?: boolean;
+  trip_updates_opt_in?: boolean;
 }
 
 
@@ -41,6 +92,8 @@ interface UsersResponse {
     pages: number;
   };
 }
+
+const fieldBaseClasses = "h-10 rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3";
 
 const ROLE_OPTIONS = [
   { value: 'viewer', label: 'Viewer' },
@@ -55,6 +108,30 @@ export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [formData, setFormData] = useState<UserFormData>({
+    username: '',
+    email: '',
+    firstName: '',
+    lastName: '',
+    role: 'viewer',
+    password: '',
+    is_active: true,
+    account_status: 'active',
+    bio: '',
+    website: '',
+    avatar_url: '',
+    phone_number: '',
+    city: '',
+    state: '',
+    country: '',
+    instagram: '',
+    twitter: '',
+    facebook: '',
+    linkedin: '',
+    tiktok: '',
+    marketing_emails: false,
+    trip_updates_opt_in: false,
+  });
 
   const userRole = profile?.role ?? 'viewer';
   const canManageUsers = ['super_admin', 'content_manager'].includes(userRole);
@@ -77,6 +154,64 @@ export default function UsersManagement() {
   const users = data?.users ?? [];
   const loadError = error as Error | null;
 
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (data: UserFormData) => {
+      const response = await api.post('/api/admin/users', data);
+      if (!response.ok) throw new Error('Failed to create user');
+      return response.json();
+    },
+    onSuccess: (result) => {
+      if (result.user) {
+        addUserOptimistically(result.user);
+      }
+      invalidateUsers();
+      setShowAddModal(false);
+      resetForm();
+      toast({
+        title: 'Success',
+        description: 'User created successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create user',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async (data: UserFormData) => {
+      console.log('🚀 updateUserMutation.mutationFn called with data:', data);
+      console.log('🚀 editingUser.id:', editingUser?.id);
+      const response = await api.put(`/api/admin/users/${editingUser!.id}`, data);
+      if (!response.ok) throw new Error('Failed to update user');
+      return response.json();
+    },
+    onSuccess: (result) => {
+      if (result.user && editingUser) {
+        updateUserOptimistically(editingUser.id, result.user);
+      }
+      invalidateUsers();
+      setEditingUser(null);
+      setShowAddModal(false);
+      resetForm();
+      toast({
+        title: 'Success',
+        description: 'User updated successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update user',
+        variant: 'destructive',
+      });
+    }
+  });
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
@@ -105,15 +240,88 @@ export default function UsersManagement() {
     }
   });
 
+  const resetForm = () => {
+    setFormData({
+      username: '',
+      email: '',
+      firstName: '',
+      lastName: '',
+        role: 'viewer',
+      password: '',
+      is_active: true,
+      account_status: 'active',
+      bio: '',
+      website: '',
+      avatar_url: '',
+      phone_number: '',
+      city: '',
+      state: '',
+      country: '',
+      instagram: '',
+      twitter: '',
+      facebook: '',
+      linkedin: '',
+      tiktok: '',
+      marketing_emails: false,
+      trip_updates_opt_in: false,
+    });
+  };
+
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
     if (!open) {
       setEditingUser(null);
+      resetForm();
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('🔍 handleSubmit called');
+    console.log('🔍 editingUser:', editingUser?.id);
+    console.log('🔍 formData:', formData);
+
+    // Validate password for new users
+    if (!editingUser && (!formData.password || formData.password.length < 8)) {
+      alert('Password is required and must be at least 8 characters for new users.');
+      return;
+    }
+
+    if (editingUser) {
+      console.log('🔍 Calling updateUserMutation.mutate with:', { ...formData });
+      updateUserMutation.mutate({ ...formData });
+    } else {
+      console.log('🔍 Calling createUserMutation.mutate with:', formData);
+      createUserMutation.mutate(formData);
     }
   };
 
   const handleEdit = (user: UserData) => {
     setEditingUser(user);
+    setFormData({
+      username: user.username || '',
+      email: user.email,
+      firstName: user.name?.first || '',
+      lastName: user.name?.last || '',
+      role: user.role,
+      password: '',
+      is_active: user.is_active,
+      account_status: user.account_status,
+      bio: user.bio || '',
+      website: user.website || '',
+      avatar_url: user.avatar_url || user.avatarUrl || '',
+      phone_number: user.phone_number || '',
+      city: user.location?.city || '',
+      state: user.location?.state || '',
+      country: user.location?.country || '',
+      instagram: user.social_links?.instagram || '',
+      twitter: user.social_links?.twitter || '',
+      facebook: user.social_links?.facebook || '',
+      linkedin: user.social_links?.linkedin || '',
+      tiktok: user.social_links?.tiktok || '',
+      marketing_emails: user.marketing_emails || false,
+      trip_updates_opt_in: user.trip_updates_opt_in || false,
+    });
     setShowAddModal(true);
   };
 
@@ -191,6 +399,7 @@ export default function UsersManagement() {
               size="icon"
               onClick={() => {
                 setEditingUser(null);
+                resetForm();
                 handleModalOpenChange(true);
               }}
               className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
@@ -229,6 +438,7 @@ export default function UsersManagement() {
               <Button
                 onClick={() => {
                   setEditingUser(null);
+                  resetForm();
                   setShowAddModal(true);
                 }}
                 className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
@@ -252,7 +462,7 @@ export default function UsersManagement() {
                 minWidth: 80,
                 maxWidth: 80,
                 render: (_value, user) => {
-                  const profileImageUrl = user.avatarUrl || user.profile_image_url;
+                  const profileImageUrl = user.avatar_url || user.avatarUrl || user.profile_image_url;
                   // Get display name from first/last name
                   const displayName = user.name?.first && user.name?.last
                     ? `${user.name.first} ${user.name.last}`
@@ -375,12 +585,324 @@ export default function UsersManagement() {
       </section>
 
       {/* Add/Edit Modal */}
-      <UserEditorModal
+      <AdminFormModal
         isOpen={showAddModal}
-        onClose={() => handleModalOpenChange(false)}
-        user={editingUser}
-        mode={editingUser ? 'edit' : 'add'}
-      />
+        onOpenChange={handleModalOpenChange}
+        title={editingUser ? 'Edit User' : 'Add New User'}
+        icon={<Users className="h-5 w-5" />}
+        description="Enter the user information below"
+        onSubmit={handleSubmit}
+        primaryAction={{
+          label: editingUser ? 'Save Changes' : 'Create User',
+          loading: editingUser ? updateUserMutation.isPending : createUserMutation.isPending,
+          loadingLabel: editingUser ? 'Saving...' : 'Creating...',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => handleModalOpenChange(false),
+        }}
+        maxWidthClassName="max-w-4xl"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
+      >
+        {/* Basic Information */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Basic Information</h3>
+
+          <div>
+            <Label htmlFor="email">Email Address *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="user@example.com"
+              required
+              className={fieldBaseClasses}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              placeholder="Optional unique username"
+              className={fieldBaseClasses}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="firstName">First Name *</Label>
+              <Input
+                id="firstName"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                placeholder="John"
+                required
+                className={fieldBaseClasses}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="lastName">Last Name *</Label>
+              <Input
+                id="lastName"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                placeholder="Doe"
+                required
+                className={fieldBaseClasses}
+              />
+            </div>
+          </div>
+
+
+          <div>
+            <Label htmlFor="phone_number">Phone Number</Label>
+            <Input
+              id="phone_number"
+              type="tel"
+              value={formData.phone_number}
+              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              placeholder="(555) 123-4567"
+              className={fieldBaseClasses}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password">Password {!editingUser && '*'}</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder={editingUser ? 'Leave blank to keep current' : 'Enter password'}
+              className={fieldBaseClasses}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="role">Role *</Label>
+            <SingleSelectWithCreate
+              options={ROLE_OPTIONS.map(role => ({ id: role.value, name: role.label }))}
+              value={formData.role}
+              onValueChange={(value) => setFormData({ ...formData, role: String(value) })}
+              placeholder="Select role..."
+              showSearch={false}
+              showCreateNew={false}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="account_status">Account Status *</Label>
+            <SingleSelectWithCreate
+              options={[
+                { id: 'active', name: 'Active' },
+                { id: 'suspended', name: 'Suspended' },
+                { id: 'pending_verification', name: 'Pending Verification' }
+              ]}
+              value={formData.account_status}
+              onValueChange={(value) => setFormData({ ...formData, account_status: String(value) })}
+              placeholder="Select status..."
+              showSearch={false}
+              showCreateNew={false}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isActive"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
+            />
+            <Label htmlFor="isActive">Active user account</Label>
+          </div>
+        </div>
+
+        {/* Profile & Additional Information */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Profile & Additional Information</h3>
+
+          <div>
+            <Label htmlFor="avatar_url">Profile Avatar</Label>
+            <ImageUploadField
+              label="Profile Avatar"
+              value={formData.avatar_url || ''}
+              onChange={(url) => setFormData({ ...formData, avatar_url: url || '' })}
+              imageType="profiles"
+              placeholder="No avatar uploaded"
+              disabled={editingUser ? updateUserMutation.isPending : createUserMutation.isPending}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              type="url"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://example.com"
+              className={fieldBaseClasses}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea
+              id="bio"
+              rows={3}
+              value={formData.bio}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              placeholder="Tell us about this user..."
+              className="min-h-[80px] rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3 py-2"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">Location</h4>
+
+            <div>
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="San Francisco"
+                className={fieldBaseClasses}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="state">State/Province</Label>
+                <Input
+                  id="state"
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  placeholder="California"
+                  className={fieldBaseClasses}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  placeholder="United States"
+                  className={fieldBaseClasses}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">Social Links</h4>
+
+            <div>
+              <Label htmlFor="instagram">Instagram</Label>
+              <Input
+                id="instagram"
+                value={formData.instagram}
+                onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                placeholder="@username or full URL"
+                className={fieldBaseClasses}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="twitter">Twitter/X</Label>
+              <Input
+                id="twitter"
+                value={formData.twitter}
+                onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                placeholder="@username or full URL"
+                className={fieldBaseClasses}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="facebook">Facebook</Label>
+              <Input
+                id="facebook"
+                value={formData.facebook}
+                onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                placeholder="Profile URL or username"
+                className={fieldBaseClasses}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="linkedin">LinkedIn</Label>
+              <Input
+                id="linkedin"
+                value={formData.linkedin}
+                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                placeholder="Profile URL"
+                className={fieldBaseClasses}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="tiktok">TikTok</Label>
+              <Input
+                id="tiktok"
+                value={formData.tiktok}
+                onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
+                placeholder="@username or full URL"
+                className={fieldBaseClasses}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">Preferences</h4>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="marketing_emails"
+                checked={formData.marketing_emails}
+                onChange={(e) => setFormData({ ...formData, marketing_emails: e.target.checked })}
+                className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
+              />
+              <Label htmlFor="marketing_emails">Marketing emails</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="trip_updates_opt_in"
+                checked={formData.trip_updates_opt_in}
+                onChange={(e) => setFormData({ ...formData, trip_updates_opt_in: e.target.checked })}
+                className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
+              />
+              <Label htmlFor="trip_updates_opt_in">Trip updates opt-in</Label>
+            </div>
+          </div>
+
+          {editingUser?.communication_preferences && (
+            <div className="space-y-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <h4 className="text-xs font-medium text-amber-300 uppercase tracking-wide flex items-center gap-2">
+                <div className="h-1 w-1 rounded-full bg-amber-400"></div>
+                User Communication Preferences (Read-only)
+              </h4>
+              <div className="text-xs text-amber-200/80 space-y-1">
+                <div>Email updates: {editingUser.communication_preferences.email ? 'Enabled' : 'Disabled'}</div>
+                <div>SMS notifications: {editingUser.communication_preferences.sms ? 'Enabled' : 'Disabled'}</div>
+                <div>Trip updates: {editingUser.trip_updates_opt_in ? 'Enabled' : 'Disabled'}</div>
+                <div>Marketing: {editingUser.marketing_emails ? 'Enabled' : 'Disabled'}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </AdminFormModal>
     </div>
   );
 }

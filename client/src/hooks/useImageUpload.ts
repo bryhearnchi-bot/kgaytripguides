@@ -13,7 +13,7 @@ export interface ImageUploadResult {
   size: number;
 }
 
-export type ImageType = 'ships' | 'resorts' | 'locations' | 'events' | 'talent' | 'general';
+export type ImageType = 'ships' | 'resorts' | 'locations' | 'events' | 'talent' | 'profiles' | 'general';
 
 export function useImageUpload() {
   const [state, setState] = useState<ImageUploadState>({

@@ -8,14 +8,6 @@
 - ❌ NEVER use `USE_MOCK_DATA=true` - always use Supabase
 - 🔥 **ANY DATABASE OPERATION MUST GO TO SUPABASE - NO EXCEPTIONS**
 
-## 🎉 MIGRATION COMPLETE - FULLY SUPABASE
-**✅ SUPABASE MIGRATION COMPLETED (Phase 6)**
-- ✅ All storage classes migrated to Supabase Admin
-- ✅ All route files using Supabase instead of legacy ORM
-- ✅ Zero legacy dependencies remaining
-- ✅ Server successfully running on Supabase architecture
-- ✅ Phase 1-6 migration plan fully executed
-
 ## 🚨 CRITICAL PAGE CREATION RULE - READ FIRST
 **NEVER CREATE NEW PAGES - ONLY UPDATE EXISTING ONES. PERIOD.**
 - ✅ Update existing pages: modify `/pages/admin/ships.tsx`, `/pages/admin/locations.tsx`, etc.
@@ -32,61 +24,187 @@ npm run dev
 ```
 **CRITICAL**: Always set `run_in_background: true` when using Bash tool to start the server. This prevents blocking and allows immediate response.
 
+
 ## 🚀 Project Overview
-**K-GAY Travel Guides** - LGBTQ+ travel app with trip management, events, and talent coordination. React/Node.js/Supabase stack.
-
-## 📁 File Organization
-```
-client/     # React frontend          server/     # Express backend
-shared/     # Shared utilities        public/     # Static assets
-scripts/    # Build scripts           docs/       # Documentation
-mockups/    # Design references       supabase/   # DB config
-```
-
-**File Rules:**
-- Tests: `__tests__/` adjacent to code
-- Temp files: `/tmp/` (never commit)
-- Images: Supabase Storage buckets
-- Never place in root: test files, screenshots, temp scripts
-
----
-
-## 🗄️ Database Schema
-**Core Tables:** `profiles`, `trips`, `locations`, `events`, `talent`, `ships`, `itinerary`
-**Junction:** `trip_talent`, `trip_info_sections`
-
-**Connection:** `DATABASE_URL=postgresql://...@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres`
-- Port 6543 (production), 5432 (dev)
-- Supabase Auth + Storage
+**K-GAY Travel Guides** (Atlantis Events Guides) - LGBTQ+ travel application with comprehensive trip management, events coordination, and talent management. Built with React/Node.js/Supabase stack.
 
 ---
 
 ## 🛠️ Tech Stack
-**Frontend:** React 18 + TypeScript, Tailwind, Zustand + React Query, Vite
-**Backend:** Node.js 22 + Express, Supabase Admin, Zod validation
-**Infrastructure:** Railway hosting, Supabase (DB/Auth/Storage)
-**MCP:** Supabase, Chrome DevTools, Perplexity
 
-**MIGRATION STATUS:** ✅ **FULLY SUPABASE** - All storage operations now use Supabase Admin directly
+**Frontend:**
+- React 18 + TypeScript
+- Vite build system
+- Tailwind CSS with animations
+- Shadcn/ui component library
+- Framer Motion for animations
+- Zustand + React Query for state management
+- Wouter for routing
+
+**Backend:**
+- Node.js 22 + Express
+- TypeScript with strict mode
+- Supabase PostgreSQL database
+- Supabase Admin SDK
+- Zod validation
+- Winston logging
+- Swagger/OpenAPI documentation
+
+**Infrastructure:**
+- Railway hosting
+- Supabase (Database + Auth + Storage)
+- Node.js 20+ required
+
+**Testing:**
+- Vitest for unit tests
+- Jest for integration tests
+- Chrome DevTools MCP integration
+
+**Development Tools:**
+- ESLint + Prettier
+- TypeScript strict mode
+- MCP integrations (Supabase, Chrome DevTools, Perplexity)
 
 ---
 
-## 🔐 Environment
+## 📁 Project Structure
+
+```
+├── client/               # React frontend application
+│   ├── src/
+│   │   ├── components/   # Reusable UI components
+│   │   ├── pages/        # Application pages/routes
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── contexts/     # React contexts
+│   │   ├── utils/        # Utility functions
+│   │   ├── types/        # TypeScript type definitions
+│   │   └── lib/          # Core libraries and configurations
+│   ├── dist/             # Build output
+│   └── public/           # Static assets
+├── server/               # Express backend application
+│   ├── routes/           # API route handlers
+│   ├── middleware/       # Express middleware
+│   ├── services/         # Business logic services
+│   ├── schemas/          # Zod validation schemas
+│   ├── utils/            # Server utilities
+│   ├── storage/          # File storage utilities
+│   └── migrations/       # Database migrations
+├── shared/               # Shared utilities between client/server
+├── scripts/              # Build and deployment scripts
+├── docs/                 # Project documentation
+├── test/                 # Test configuration and utilities
+├── public/               # Static public assets
+└── supabase/             # Supabase configuration
+```
+
+---
+
+## 🗄️ Database Schema
+
+**Core Tables:**
+- `profiles` - User profiles and authentication
+- `trips` - Travel trip information
+- `locations` - Destination and venue data
+- `events` - Events and activities
+- `talent` - Talent/performer management
+- `ships` - Cruise ship information
+- `itinerary` - Trip schedules and itineraries
+
+**Junction Tables:**
+- `trip_talent` - Many-to-many relationship between trips and talent
+- `trip_info_sections` - Trip information sections
+
+**Connection:**
+- Database: Supabase PostgreSQL
+- Port: 6543 (production), 5432 (development)
+- Authentication: Supabase Auth
+- Storage: Supabase Storage buckets
+
+---
+
+## 🔐 Environment Configuration
+
+Required environment variables:
+
 ```bash
-DATABASE_URL=postgresql://...
+# Database
+DATABASE_URL=postgresql://postgres:...@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres
+
+# Supabase
 SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co
-SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
+VITE_SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co
+VITE_SUPABASE_ANON_KEY=...
+
+# Application
+NODE_ENV=development|production
 PORT=3001
 VITE_API_URL=http://localhost:3001
+
+# Security
+SESSION_SECRET=...
+
+# Optional
+USE_MOCK_DATA=false
+```
+
+---
+
+## 🚀 Development Commands
+
+```bash
+# Development
+npm run dev                    # Start development server (port 3001)
+npm run dev:script            # Alternative dev start script
+npm run dev:redesign          # Redesign development mode
+
+# Building
+npm run build                 # Production build with PWA files
+npm run build:railway         # Railway-specific build
+npm run check                 # TypeScript type checking
+
+# Testing
+npm test                      # Run Vitest unit tests
+npm run test:run              # Run tests once
+npm run test:coverage         # Test coverage report
+npm run test:integration      # Jest integration tests
+npm run test:e2e              # Playwright E2E tests
+npm run test:all              # All test suites
+npm run test:ci               # CI test pipeline
+
+# Database
+npm run db:seed               # Seed development database
+npm run production:seed       # Seed production database
+
+# Production
+npm start                     # Start production server
+npm run deploy:production     # Deploy to production
+
+# API Documentation
+npm run api:docs              # View API docs at localhost:3001/api/docs
 ```
 
 ---
 
 ## 🎨 UI/UX Guidelines
-**Design:** Ocean theme, blue/teal gradients, Shadcn/ui components
-**Protected:** Headers, navigation, color scheme, landing/trip pages
-**Modifiable:** Card content, admin interface, data displays, mobile fixes
+
+**Design System:**
+- Ocean theme with blue/teal gradients
+- Shadcn/ui component library
+- Tailwind CSS for styling
+- Responsive design (mobile-first)
+- Accessible components
+
+**Protected Elements:**
+- Application headers and navigation
+- Color scheme and branding
+- Landing page and trip page layouts
+
+**Modifiable Areas:**
+- Card content and layouts
+- Admin interface components
+- Data display components
+- Mobile-specific fixes
 
 **CRITICAL: ADMIN STYLE GUIDE**
 - **Reference**: `docs/admin-style-guide.md` - MANDATORY for ALL admin interface work
@@ -112,86 +230,87 @@ VITE_API_URL=http://localhost:3001
 
 ---
 
-## 🤖 Agent Rules
-**Always use agents for:** Code reviews, performance, security, DB migrations, complex features
+## 📝 Development Standards
 
-**Patterns:**
-- **Bug fixes:** `code-reviewer` → `[specialist]` → `test-automator`
-- **New features:** `architect-review` → `ui-ux-designer` → `[specialists]` → `test-automator` → `security-auditor`
-- **DB changes:** `database-optimizer` + `sql-expert` + `security-auditor`
+**Code Quality:**
+- TypeScript strict mode enabled
+- ESLint + Prettier formatting
+- Conventional commit messages
+- 80%+ test coverage target
 
-**Key Agents:** `frontend-developer`, `backend-architect`, `database-optimizer`, `test-automator`, `security-auditor`
+**Testing Strategy:**
+- Unit tests with Vitest
+- Integration tests with Jest
+- E2E tests with Playwright
+- Test at breakpoints: 375px, 768px, 1024px
 
----
+**Date Handling:**
+- Use `date-fns` library
+- Format: `format(dateOnly(date), 'MMMM d')`
+- No timezone conversion
 
-## 📝 Development
-**Standards:** TypeScript strict, Prettier, ESLint, conventional commits
-**Testing:** 80% coverage, Chrome DevTools E2E, test at 375px/768px/1024px
-**Dates:** Use `format(dateOnly(date), 'MMMM d')` - no timezone conversion
-**Images:** `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
-
----
-
-## 🚀 Commands
-```bash
-npm run dev             # Dev server (port 3001)
-npm run build           # Production build
-npm test                # Run tests
-npm run db:push         # Push schema
-npm run db:migrate      # Run migrations
-npm run test:e2e        # E2E tests (Chrome DevTools)
-```
+**Image Handling:**
+- Supabase Storage buckets
+- Format: `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
 
 ---
 
 ## 🔧 Troubleshooting
-**DB Connection:** Use port 6543, database password (not JWT), USE_MOCK_DATA=false
-**Images:** Check bucket permissions, verify SUPABASE_URL
-**Auth:** Verify SUPABASE_ANON_KEY, check profiles table, enable cookies
-**Debug:** `npm run db:studio`, `npm run analyze`, `npm run lighthouse`
+
+**Database Issues:**
+- Verify DATABASE_URL points to Supabase (port 6543)
+- Check database password (not JWT)
+- Ensure USE_MOCK_DATA=false
+
+**Authentication:**
+- Verify SUPABASE_ANON_KEY is correct
+- Check profiles table exists
+- Enable cookies for session management
+
+**Image/Storage:**
+- Check Supabase bucket permissions
+- Verify SUPABASE_URL configuration
+- Ensure storage policies are properly set
+
+**Performance:**
+- Use `npm run performance:test` for Lighthouse CI
+- Monitor API response times
+- Check database query performance
 
 ---
 
----
+## 🔒 Security
 
-## 🔄 Data Consistency Rule
-**CRITICAL: Always use API endpoints for data operations, never mix Supabase direct queries with API calls**
+**Best Practices:**
+- Never commit `.env` files
+- Use Supabase RLS policies
+- Sanitize all user inputs
+- HTTPS in production
+- Secure session management
 
-**Problem:** Mixed data access patterns cause sync issues:
-- **Updates** via API (Supabase Admin + snake_case)
-- **Fetches** via Supabase client (different field mapping + caching)
-
-**Solution:** Use API for both save AND fetch operations:
-```typescript
-// ❌ WRONG - Mixed approach causes data sync issues
-const updateProfile = () => api.put('/api/admin/profile', data);  // API
-const fetchProfile = () => supabase.from('profiles').select('*'); // Direct
-
-// ✅ CORRECT - Consistent API usage
-const updateProfile = () => api.put('/api/admin/profile', data);   // API
-const fetchProfile = () => fetch('/api/admin/profile');           // API
-```
-
-**Key Changes Made:**
-1. **Profile fetching**: `useSupabaseAuth.ts` now uses `/api/admin/profile`
-2. **User management**: `UserManagement/` components use `/api/auth/users`
-3. **Field mapping**: Consistent camelCase ↔ snake_case conversion
-
-**Exceptions:** Direct Supabase allowed for:
-- Auth operations (`supabase.auth.*`)
-- File storage (`supabase.storage.*`)
-- Internal authorization checks (authUtils.ts)
+**Environment Security:**
+- Service role keys server-side only
+- Anon keys safe for client exposure
+- Proper CORS configuration
 
 ---
 
-## 🔒 Security & Resources
-**Security:** Never commit `.env`, use RLS policies, sanitize inputs, HTTPS in production
-**Resources:**
-- API docs: `http://localhost:3001/api/docs`
+## 📚 Resources
+
+**Development:**
+- API Documentation: `http://localhost:3001/api/docs`
+- TypeScript Config: Strict mode with path aliases
+- Component Library: Shadcn/ui with Radix primitives
+
+**External Services:**
 - [Supabase Dashboard](https://app.supabase.com/project/bxiiodeyqvqqcgzzqzvt)
 - [Railway Dashboard](https://railway.app)
 
----
+**File Organization:**
+- Tests: `__tests__/` adjacent to source code
+- Temporary files: `/tmp/` directory (excluded from git)
+- Static assets: Supabase Storage or `/public/`
+- Never commit: test files, screenshots, temporary scripts to root
 
 ## 🎯 MultiSelect Component Scrollbar Solution
 **Problem:** CommandList component from cmdk library prevents scrollbar visibility in dropdowns.
@@ -241,3 +360,7 @@ container?: HTMLElement;
 - Use `custom-scrollbar` class for webkit scrollbar styling
 - Set explicit max-height and overflow-y-auto on CommandList
 - Pass container prop through to PopoverContent for proper portal rendering
+
+---
+
+*Last updated: September 2025*
