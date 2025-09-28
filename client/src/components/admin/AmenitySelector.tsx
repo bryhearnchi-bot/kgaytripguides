@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { MultiSelectWithCreate, MultiSelectItem } from './MultiSelectWithCreate';
+import { MultiSelectWithCreate, MultiSelectItem, type MultiSelectMenuVariant } from './MultiSelectWithCreate';
 import { AlertCircle } from 'lucide-react';
 
 interface Amenity {
@@ -16,6 +16,7 @@ interface AmenitySelectorProps {
   onSelectionChange: (selectedIds: number[]) => void;
   disabled?: boolean;
   className?: string;
+  menuVariant?: MultiSelectMenuVariant;
 }
 
 export function AmenitySelector({
@@ -23,10 +24,12 @@ export function AmenitySelector({
   onSelectionChange,
   disabled = false,
   className,
+  menuVariant = 'compact',
 }: AmenitySelectorProps) {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const portalContainerRef = React.useRef<HTMLDivElement>(null);
 
   const fetchAmenities = async () => {
     try {
@@ -86,9 +89,9 @@ export function AmenitySelector({
   // Custom render function for amenity items
   const renderAmenityItem = (item: MultiSelectItem) => (
     <div>
-      <div className="font-medium text-gray-900">{item.name}</div>
+      <div className="font-medium text-white">{item.name}</div>
       {item.description && (
-        <div className="text-sm text-gray-500">{item.description}</div>
+        <div className="text-sm text-white/60">{item.description}</div>
       )}
     </div>
   );
@@ -122,7 +125,7 @@ export function AmenitySelector({
   };
 
   return (
-    <div className={className}>
+    <div className={className} ref={portalContainerRef}>
       <MultiSelectWithCreate
         items={items}
         selectedIds={selectedIds}
@@ -134,6 +137,10 @@ export function AmenitySelector({
         searchPlaceholder="Search amenities..."
         disabled={disabled}
         loading={loading}
+        menuVariant={menuVariant}
+        displaySelectedBelow={true}
+        maxItems={99}
+        container={portalContainerRef.current ?? undefined}
       />
       {loading && (
         <p className="mt-2 text-sm text-gray-500">Loading amenities...</p>

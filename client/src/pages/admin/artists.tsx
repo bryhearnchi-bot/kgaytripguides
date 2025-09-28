@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ResponsiveAdminTable } from '@/components/admin/ResponsiveAdminTable';
+import { EnhancedArtistsTable } from '@/components/admin/EnhancedArtistsTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api-client';
-import { Users, Plus, Edit2, Trash2, Search, Music, Mic } from 'lucide-react';
+import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Music, Mic } from 'lucide-react';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 
@@ -211,21 +211,22 @@ export default function ArtistsManagement() {
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
-        <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Artists ({filteredArtists.length})</h2>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all voyages</p>
+            <h2 className="text-lg font-semibold text-white">All Artists</h2>
           </div>
           <Button
+            variant="ghost"
+            size="icon"
             onClick={() => {
               setEditingArtist(null);
               resetForm();
               setShowAddModal(true);
             }}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
+            title="Add New Artist"
           >
-            <Plus className="mr-1 h-3 w-3" />
-            Add Artist
+            <PlusSquare className="h-5 w-5 text-blue-400/80" />
           </Button>
         </header>
 
@@ -248,16 +249,21 @@ export default function ArtistsManagement() {
             )}
           </div>
         ) : (
-          <ResponsiveAdminTable
+          <EnhancedArtistsTable
             data={filteredArtists}
             columns={[
               {
-                key: 'name',
-                label: 'Artist',
+                key: 'image',
+                label: '',
                 priority: 'high',
-                render: (value, artist) => (
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10 flex-shrink-0">
+                sortable: false,
+                resizable: false,
+                width: 80,
+                minWidth: 80,
+                maxWidth: 80,
+                render: (_value, artist) => (
+                  <div className="flex items-center justify-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
                       {artist.profileImageUrl ? (
                         <img
                           src={artist.profileImageUrl}
@@ -265,69 +271,72 @@ export default function ArtistsManagement() {
                           className="h-full w-full rounded-xl object-cover"
                         />
                       ) : (
-                        <Users className="h-5 w-5 text-white/70" />
-                      )}
-                    </div>
-                    <div className="space-y-1 min-w-0">
-                      <p className="font-medium text-white">{artist.name}</p>
-                      {artist.bio && (
-                        <p className="text-xs text-white/60 line-clamp-2">{artist.bio}</p>
-                      )}
-                      {artist.knownFor && (
-                        <p className="text-xs text-white/40">Known for: {artist.knownFor}</p>
+                        <Users className="h-6 w-6 text-white/70" />
                       )}
                     </div>
                   </div>
-                )
+                ),
+              },
+              {
+                key: 'name',
+                label: 'Artist',
+                priority: 'high',
+                sortable: true,
+                minWidth: 200,
+                render: (value) => (
+                  <p className="font-bold text-xs text-white">{value}</p>
+                ),
               },
               {
                 key: 'category',
                 label: 'Category',
                 priority: 'high',
+                sortable: true,
+                minWidth: 150,
                 render: (value, artist) => (
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
                     {getCategoryIcon(artist.category)}
                     <span>{artist.category}</span>
                   </span>
-                )
-              },
-              {
-                key: 'status',
-                label: 'Status',
-                priority: 'medium',
-                render: () => (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">Active</span>
-                )
+                ),
               },
               {
                 key: 'bio',
                 label: 'Bio',
-                priority: 'low',
-                render: (value) => value && (
-                  <span className="text-xs text-white/60 line-clamp-2">{value}</span>
-                )
+                priority: 'medium',
+                sortable: false,
+                minWidth: 250,
+                render: (value) => (
+                  <span className="text-white/70 line-clamp-2">
+                    {value || 'No bio'}
+                  </span>
+                ),
               },
               {
                 key: 'knownFor',
                 label: 'Known For',
                 priority: 'low',
-                render: (value) => value && (
-                  <span className="text-xs text-white/40">{value}</span>
-                )
-              }
+                sortable: false,
+                minWidth: 200,
+                render: (value) => (
+                  <span className="text-xs text-white/60">
+                    {value || 'Not specified'}
+                  </span>
+                ),
+              },
             ]}
             actions={[
               {
                 label: 'Edit Artist',
                 icon: <Edit2 className="h-4 w-4" />,
-                onClick: handleEdit
+                onClick: handleEdit,
               },
               {
                 label: 'Delete Artist',
                 icon: <Trash2 className="h-4 w-4" />,
                 onClick: (artist) => handleDelete(artist.id!),
-                variant: 'destructive'
-              }
+                variant: 'destructive',
+              },
             ]}
             keyField="id"
             isLoading={isLoading}
@@ -335,9 +344,13 @@ export default function ArtistsManagement() {
           />
         )}
 
-        <footer className="border-t border-white/10 px-4 sm:px-6 py-4 text-xs text-white/50">
-          Showing {filteredArtists.length} artist{filteredArtists.length === 1 ? '' : 's'}
-        </footer>
+        {filteredArtists.length > 0 && (
+          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+            <div className="text-xs text-white/50">
+              Showing {filteredArtists.length} of {artists.length} artists
+            </div>
+          </footer>
+        )}
       </section>
 
       {/* Add/Edit Modal */}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EnhancedTripInfoSectionsTable } from '@/components/admin/EnhancedTripInfoSectionsTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { api } from '@/lib/api-client';
 import {
   FileText,
   Plus,
+  PlusSquare,
   Edit2,
   Trash2,
   Search
@@ -196,21 +197,22 @@ export default function TripInfoSectionsManagement() {
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
-        <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Sections ({filteredSections.length})</h2>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all trips</p>
+            <h2 className="text-lg font-semibold text-white">All Sections</h2>
           </div>
           <Button
+            variant="ghost"
+            size="icon"
             onClick={() => {
               setEditingSection(null);
               resetForm();
               setShowAddModal(true);
             }}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
+            title="Add New Section"
           >
-            <Plus className="mr-1 h-3 w-3" />
-            Add Section
+            <PlusSquare className="h-5 w-5 text-blue-400/80" />
           </Button>
         </header>
 
@@ -233,77 +235,97 @@ export default function TripInfoSectionsManagement() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table className="min-w-full text-sm text-white/80">
-              <TableHeader className="bg-white/5">
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/60">Section</TableHead>
-                  <TableHead className="text-white/60">Trip</TableHead>
-                  <TableHead className="text-white/60">Status</TableHead>
-                  <TableHead className="text-right text-white/60">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSections.map((section) => (
-                  <TableRow key={section.id} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="py-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
-                          <FileText className="h-5 w-5 text-white/70" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="font-medium text-white">{section.title}</p>
-                          {section.content && (
-                            <p className="text-xs text-white/60 line-clamp-2">
-                              {section.content.slice(0, 100)}...
-                            </p>
-                          )}
-                          <p className="text-xs text-white/40">
-                            Order: #{section.order_index}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
-                        <span>{section.trip_name || `Trip #${section.trip_id}`}</span>
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">Active</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(section)}
-                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 p-0 text-white/80 hover:bg-white/10"
-                          title="Edit Section"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(section.id!)}
-                          className="h-8 w-8 rounded-full border border-[#fb7185]/30 bg-[#fb7185]/10 p-0 text-[#fb7185] hover:bg-[#fb7185]/20"
-                          title="Delete Section"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <EnhancedTripInfoSectionsTable
+            data={filteredSections}
+            columns={[
+              {
+                key: 'image',
+                label: '',
+                priority: 'high',
+                sortable: false,
+                resizable: false,
+                width: 80,
+                minWidth: 80,
+                maxWidth: 80,
+                render: (_value, section) => (
+                  <div className="flex items-center justify-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                      <FileText className="h-6 w-6 text-white/70" />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'title',
+                label: 'Section',
+                priority: 'high',
+                sortable: true,
+                minWidth: 200,
+                render: (value) => (
+                  <p className="font-bold text-xs text-white">{value}</p>
+                ),
+              },
+              {
+                key: 'content',
+                label: 'Content',
+                priority: 'medium',
+                sortable: false,
+                minWidth: 250,
+                render: (value) => (
+                  <span className="text-white/70 line-clamp-2">
+                    {value ? value.slice(0, 100) + '...' : 'No content'}
+                  </span>
+                ),
+              },
+              {
+                key: 'trip_name',
+                label: 'Trip',
+                priority: 'high',
+                sortable: true,
+                minWidth: 150,
+                render: (value, section) => (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                    {value || `Trip #${section.trip_id}`}
+                  </span>
+                ),
+              },
+              {
+                key: 'order_index',
+                label: 'Order',
+                priority: 'low',
+                sortable: true,
+                minWidth: 100,
+                render: (value) => (
+                  <span className="text-xs text-white/60">#{value}</span>
+                ),
+              },
+            ]}
+            actions={[
+              {
+                label: 'Edit Section',
+                icon: <Edit2 className="h-4 w-4" />,
+                onClick: handleEdit,
+              },
+              {
+                label: 'Delete Section',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: (section) => handleDelete(section.id!),
+                variant: 'destructive',
+              },
+            ]}
+            keyField="id"
+            isLoading={isLoading}
+            emptyMessage={searchTerm ? 'No sections match your search.' : 'Get started by adding your first section.'}
+          />
         )}
 
-        <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
-          Showing {filteredSections.length} section{filteredSections.length === 1 ? '' : 's'}
-        </footer>
+        {filteredSections.length > 0 && (
+          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+            <div className="text-xs text-white/50">
+              Showing {filteredSections.length} of {sections.length} sections
+            </div>
+          </footer>
+        )}
       </section>
 
       {/* Add/Edit Modal */}

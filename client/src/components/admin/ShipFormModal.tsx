@@ -13,7 +13,6 @@ interface Ship {
   cruiseLine: string;
   capacity?: number;
   decks?: number;
-  builtYear?: number;
   imageUrl?: string;
   deckPlansUrl?: string;
   description?: string;
@@ -36,7 +35,6 @@ interface FormData {
   cruiseLine: string;
   capacity: string;
   decks: string;
-  builtYear: string;
   imageUrl: string;
   deckPlansUrl: string;
   description: string;
@@ -51,7 +49,6 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
     cruiseLine: '',
     capacity: '',
     decks: '',
-    builtYear: '',
     imageUrl: '',
     deckPlansUrl: '',
     description: '',
@@ -67,7 +64,6 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         cruiseLine: ship.cruiseLine || '',
         capacity: ship.capacity?.toString() || '',
         decks: ship.decks?.toString() || '',
-        builtYear: ship.builtYear?.toString() || '',
         imageUrl: ship.imageUrl || '',
         deckPlansUrl: ship.deckPlansUrl || '',
         description: ship.description || '',
@@ -82,7 +78,6 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         cruiseLine: '',
         capacity: '',
         decks: '',
-        builtYear: '',
         imageUrl: '',
         deckPlansUrl: '',
         description: '',
@@ -94,6 +89,11 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
 
   const loadShipRelations = async (shipId: number) => {
     try {
+      if (!shipId) {
+        console.error('No ship ID provided for loading relations');
+        return;
+      }
+
       const [amenitiesResponse, venuesResponse] = await Promise.all([
         api.get(`/api/ships/${shipId}/amenities`),
         api.get(`/api/ships/${shipId}/venues`),
@@ -116,11 +116,19 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('handleSubmit called');
     e.preventDefault();
+
+    console.log('Form data:', formData);
+    console.log('Name trimmed:', formData.name.trim());
+    console.log('CruiseLine trimmed:', formData.cruiseLine.trim());
+
     if (!formData.name.trim() || !formData.cruiseLine.trim()) {
+      console.error('Early return - missing name or cruise line');
       return;
     }
 
+    console.log('Proceeding with submission...');
     try {
       setLoading(true);
 
@@ -130,7 +138,6 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         cruiseLine: formData.cruiseLine.trim(),
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         decks: formData.decks ? parseInt(formData.decks) : null,
-        builtYear: formData.builtYear ? parseInt(formData.builtYear) : null,
         imageUrl: formData.imageUrl.trim() || null,
         deckPlansUrl: formData.deckPlansUrl.trim() || null,
         description: formData.description.trim() || null,
@@ -181,12 +188,12 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         type: 'submit',
         loading,
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
-        disabled: !formData.name.trim() || !formData.cruiseLine.trim(),
+        disabled: !formData.name.trim() || !formData.cruiseLine.trim()
       }}
       maxWidthClassName="max-w-4xl"
       contentClassName="py-4"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Basic Information */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-white/90 mb-1">Basic Information</h3>
@@ -212,7 +219,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               <div className="space-y-0.5">
                 <label className="text-xs font-medium text-white/90">Capacity</label>
                 <Input
@@ -231,17 +238,6 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
                   placeholder="12"
                   value={formData.decks}
                   onChange={(e) => handleInputChange('decks', e.target.value)}
-                  className="admin-form-modal h-8"
-                />
-              </div>
-
-              <div className="space-y-0.5">
-                <label className="text-xs font-medium text-white/90">Built</label>
-                <Input
-                  type="number"
-                  placeholder="2015"
-                  value={formData.builtYear}
-                  onChange={(e) => handleInputChange('builtYear', e.target.value)}
                   className="admin-form-modal h-8"
                 />
               </div>
@@ -280,26 +276,39 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
           </div>
         </div>
 
-        {/* Right Column - Amenities & Venues */}
+        {/* Right Column - Venues & Amenities */}
         <div className="space-y-2">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-white/90">Ship Amenities</h3>
-            <AmenitySelector
-              selectedIds={amenityIds}
-              onSelectionChange={setAmenityIds}
-              disabled={loading}
-              className="w-full"
-            />
-          </div>
+          {/* Spacing to align with Ship Name */}
+          <div style={{ height: '1.275rem' }}></div>
 
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-white/90">Ship Venues</h3>
-            <VenueSelector
-              selectedIds={venueIds}
-              onSelectionChange={setVenueIds}
-              disabled={loading}
-              className="w-full"
-            />
+          <div className="space-y-1.5">
+            {/* Ship Venues - aligned with Ship Name on left */}
+            <div className="space-y-0.5">
+              <label className="text-xs font-medium text-white/90">Ship Venues</label>
+              <VenueSelector
+                selectedIds={venueIds}
+                onSelectionChange={setVenueIds}
+                disabled={loading}
+                className="w-full"
+              />
+            </div>
+
+            {/* Spacing to align with Ship Image URL - after Cruise Line and Capacity/Decks/Built */}
+            <div className="space-y-1.5">
+              <div style={{ height: '1.975rem' }}></div> {/* Cruise Line height */}
+              <div style={{ height: '1.975rem' }}></div> {/* Capacity/Decks/Built height */}
+            </div>
+
+            {/* Ship Amenities - aligned with Ship Image URL on left */}
+            <div className="space-y-0.5">
+              <label className="text-xs font-medium text-white/90">Ship Amenities</label>
+              <AmenitySelector
+                selectedIds={amenityIds}
+                onSelectionChange={setAmenityIds}
+                disabled={loading}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -45,37 +45,41 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(schema.locations);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('locations')
+        .select('*')
+        .order('name');
 
       // Apply filters
-      const conditions = [];
       if (search) {
-        conditions.push(
-          or(
-            ilike(schema.locations.name, `%${search}%`),
-            ilike(schema.locations.country, `%${search}%`),
-            ilike(schema.locations.description, `%${search}%`)
-          )
-        );
+        query = query.or(`name.ilike.%${search}%,country.ilike.%${search}%,description.ilike.%${search}%`);
       }
       if (country) {
-        conditions.push(eq(schema.locations.country, country as string));
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+        query = query.eq('country', country as string);
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const startIndex = parseInt(offset as string);
+      const endIndex = startIndex + parseInt(limit as string) - 1;
+      query = query.range(startIndex, endIndex);
 
-      const results = await query;
+      const { data: results, error } = await query;
+
+      if (error) {
+        console.error('Error fetching locations:', error);
+        return res.status(500).json({ error: 'Failed to fetch locations' });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((location: any) => ({
-        ...location,
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
         imageUrl: location.image_url,
-        portType: location.port_type,
         createdAt: location.created_at,
         updatedAt: location.updated_at
       }));
@@ -90,16 +94,39 @@ export function registerLocationRoutes(app: Express) {
   // Get location by ID
   app.get("/api/locations/:id", async (req, res) => {
     try {
-      const [location] = await db.select()
-        .from(schema.locations)
-        .where(eq(schema.locations.id, Number(req.params.id)))
-        .limit(1);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: location, error } = await supabaseAdmin
+        .from('locations')
+        .select('*')
+        .eq('id', Number(req.params.id))
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Location not found" });
+        }
+        console.error('Error fetching location:', error);
+        return res.status(500).json({ error: 'Failed to fetch location' });
+      }
 
       if (!location) {
         return res.status(404).json({ error: "Location not found" });
       }
 
-      res.json(location);
+      // Transform snake_case to camelCase for frontend compatibility
+      const transformedLocation = {
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
+        imageUrl: location.image_url,
+        createdAt: location.created_at,
+        updatedAt: location.updated_at
+      };
+
+      res.json(transformedLocation);
     } catch (error) {
       console.error('Error fetching location:', error);
       res.status(500).json({ error: 'Failed to fetch location' });
@@ -128,7 +155,7 @@ export function registerLocationRoutes(app: Express) {
         country: req.body.country,
         coordinates: req.body.coordinates || null,
         description: req.body.description || null,
-        image_url: req.body.imageUrl || req.body.image_url || null
+        image_url: req.body.imageUrl || null
       };
 
       // Use Supabase Admin client to bypass RLS
@@ -140,7 +167,14 @@ export function registerLocationRoutes(app: Express) {
         .single();
 
       if (error) {
-        handleSupabaseError(error, 'create location');
+        console.error('Supabase error creating location:', error);
+        if (error.code === '23505') {
+          return res.status(409).json({ error: 'A location with this name already exists' });
+        }
+        if (error.code === '23502') {
+          return res.status(400).json({ error: 'Missing required field' });
+        }
+        return res.status(500).json({ error: error.message || 'Failed to create location' });
       }
 
       if (!location) {
@@ -149,8 +183,11 @@ export function registerLocationRoutes(app: Express) {
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedLocation = {
-        id: location.id,  // Explicitly include ID to ensure it's present
-        ...location,
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
         imageUrl: location.image_url,
         createdAt: location.created_at,
         updatedAt: location.updated_at
@@ -193,10 +230,10 @@ export function registerLocationRoutes(app: Express) {
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
       if (req.body.country !== undefined) updateData.country = req.body.country;
-      if (req.body.coordinates !== undefined) updateData.coordinates = req.body.coordinates;
-      if (req.body.description !== undefined) updateData.description = req.body.description;
-      if (req.body.imageUrl !== undefined || req.body.image_url !== undefined) {
-        updateData.image_url = req.body.imageUrl || req.body.image_url;
+      if (req.body.coordinates !== undefined) updateData.coordinates = req.body.coordinates || null;
+      if (req.body.description !== undefined) updateData.description = req.body.description || null;
+      if (req.body.imageUrl !== undefined) {
+        updateData.image_url = req.body.imageUrl || null;
       }
       updateData.updated_at = new Date().toISOString();
 
@@ -222,8 +259,11 @@ export function registerLocationRoutes(app: Express) {
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedLocation = {
-        id: location.id,  // Explicitly include ID to ensure it's present
-        ...location,
+        id: location.id,
+        name: location.name,
+        country: location.country,
+        coordinates: location.coordinates,
+        description: location.description,
         imageUrl: location.image_url,
         createdAt: location.created_at,
         updatedAt: location.updated_at
@@ -289,13 +329,24 @@ export function registerLocationRoutes(app: Express) {
   // Get ship statistics
   app.get("/api/ships/stats", async (req, res) => {
     try {
-      const stats = await db.select({
-        total: count(),
-        totalCapacity: sql<number>`SUM(capacity)`,
-        avgCapacity: sql<number>`AVG(capacity)`
-      }).from(schema.ships);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: ships, error } = await supabaseAdmin
+        .from('ships')
+        .select('capacity');
 
-      res.json(stats[0] || { total: 0, totalCapacity: 0, avgCapacity: 0 });
+      if (error) {
+        throw error;
+      }
+
+      const stats = {
+        total: ships?.length || 0,
+        totalCapacity: ships?.reduce((sum, ship) => sum + (ship.capacity || 0), 0) || 0,
+        avgCapacity: ships?.length ?
+          (ships.reduce((sum, ship) => sum + (ship.capacity || 0), 0) / ships.length) : 0
+      };
+
+      res.json(stats);
     } catch (error) {
       console.error('Error fetching ship stats:', error);
       res.status(500).json({ error: 'Failed to fetch ship statistics' });
@@ -313,54 +364,48 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(schema.ships);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('ships')
+        .select('*');
 
       // Apply filters
-      const conditions = [];
       if (search) {
-        conditions.push(
-          or(
-            ilike(ships.name, `%${search}%`),
-            ilike(ships.description, `%${search}%`)
-          )
-        );
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
       }
       if (minCapacity) {
-        conditions.push(sql`capacity >= ${parseInt(minCapacity as string)}`);
+        query = query.gte('capacity', parseInt(minCapacity as string));
       }
       if (maxCapacity) {
-        conditions.push(sql`capacity <= ${parseInt(maxCapacity as string)}`);
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+        query = query.lte('capacity', parseInt(maxCapacity as string));
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const start = parseInt(offset as string);
+      const end = start + parseInt(limit as string) - 1;
+      query = query.range(start, end);
 
-      const results = await query;
+      const { data: results, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      if (!results) {
+        return res.json([]);
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((ship: any) => ({
         id: ship.id,
         name: ship.name,
         cruiseLine: ship.cruise_line,
-        shipCode: ship.ship_code,
         capacity: ship.capacity,
-        crewSize: ship.crew_size,
-        grossTonnage: ship.gross_tonnage,
-        lengthMeters: ship.length_meters,
-        beamMeters: ship.beam_meters,
         decks: ship.decks,
-        builtYear: ship.built_year,
-        refurbishedYear: ship.refurbished_year,
-        shipClass: ship.ship_class,
-        flag: ship.flag,
         imageUrl: ship.image_url,
+        deckPlansUrl: ship.deck_plans_url,
         description: ship.description,
-        highlights: ship.highlights,
-        amenities: ship.amenities,
         createdAt: ship.created_at,
         updatedAt: ship.updated_at
       }));
@@ -375,10 +420,20 @@ export function registerLocationRoutes(app: Express) {
   // Get ship by ID
   app.get("/api/ships/:id", async (req, res) => {
     try {
-      const [ship] = await db.select()
-        .from(schema.ships)
-        .where(eq(schema.ships.id, Number(req.params.id)))
-        .limit(1);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: ship, error } = await supabaseAdmin
+        .from('ships')
+        .select('*')
+        .eq('id', Number(req.params.id))
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Ship not found" });
+        }
+        throw error;
+      }
 
       if (!ship) {
         return res.status(404).json({ error: "Ship not found" });
@@ -389,21 +444,11 @@ export function registerLocationRoutes(app: Express) {
         id: ship.id,
         name: ship.name,
         cruiseLine: ship.cruise_line,
-        shipCode: ship.ship_code,
         capacity: ship.capacity,
-        crewSize: ship.crew_size,
-        grossTonnage: ship.gross_tonnage,
-        lengthMeters: ship.length_meters,
-        beamMeters: ship.beam_meters,
         decks: ship.decks,
-        builtYear: ship.built_year,
-        refurbishedYear: ship.refurbished_year,
-        shipClass: ship.ship_class,
-        flag: ship.flag,
         imageUrl: ship.image_url,
+        deckPlansUrl: ship.deck_plans_url,
         description: ship.description,
-        highlights: ship.highlights,
-        amenities: ship.amenities,
         createdAt: ship.created_at,
         updatedAt: ship.updated_at
       };
@@ -436,21 +481,11 @@ export function registerLocationRoutes(app: Express) {
       const shipData = {
         name: req.body.name,
         cruise_line: cruiseLine,  // Always use snake_case for database
-        ship_code: req.body.shipCode || req.body.ship_code || null,
         capacity: req.body.capacity || null,
-        crew_size: req.body.crewSize || req.body.crew_size || null,
-        gross_tonnage: req.body.grossTonnage || req.body.gross_tonnage || null,
-        length_meters: req.body.lengthMeters || req.body.length_meters || null,
-        beam_meters: req.body.beamMeters || req.body.beam_meters || null,
         decks: req.body.decks || null,
-        built_year: req.body.builtYear || req.body.built_year || null,
-        refurbished_year: req.body.refurbishedYear || req.body.refurbished_year || null,
-        ship_class: req.body.shipClass || req.body.ship_class || null,
-        flag: req.body.flag || null,
         image_url: req.body.imageUrl || req.body.image_url || null,
-        description: req.body.description || null,
-        highlights: req.body.highlights || null,
-        amenities: req.body.amenities || null
+        deck_plans_url: req.body.deckPlansUrl || req.body.deck_plans_url || null,
+        description: req.body.description || null
       };
 
       // Use Supabase Admin client to bypass RLS
@@ -474,21 +509,11 @@ export function registerLocationRoutes(app: Express) {
         id: ship.id,
         name: ship.name,
         cruiseLine: ship.cruise_line,
-        shipCode: ship.ship_code,
         capacity: ship.capacity,
-        crewSize: ship.crew_size,
-        grossTonnage: ship.gross_tonnage,
-        lengthMeters: ship.length_meters,
-        beamMeters: ship.beam_meters,
         decks: ship.decks,
-        builtYear: ship.built_year,
-        refurbishedYear: ship.refurbished_year,
-        shipClass: ship.ship_class,
-        flag: ship.flag,
         imageUrl: ship.image_url,
+        deckPlansUrl: ship.deck_plans_url,
         description: ship.description,
-        highlights: ship.highlights,
-        amenities: ship.amenities,
         createdAt: ship.created_at,
         updatedAt: ship.updated_at
       };
@@ -519,44 +544,20 @@ export function registerLocationRoutes(app: Express) {
         updated_at: new Date().toISOString()
       };
 
-      // Convert camelCase to snake_case for database fields
+      // Convert camelCase to snake_case for database fields - ONLY fields that exist in DB
       if (req.body.name !== undefined) updateData.name = req.body.name;
       if (req.body.cruiseLine !== undefined || req.body.cruise_line !== undefined) {
         updateData.cruise_line = req.body.cruiseLine || req.body.cruise_line;
       }
-      if (req.body.shipCode !== undefined || req.body.ship_code !== undefined) {
-        updateData.ship_code = req.body.shipCode || req.body.ship_code;
-      }
       if (req.body.capacity !== undefined) updateData.capacity = req.body.capacity;
-      if (req.body.crewSize !== undefined || req.body.crew_size !== undefined) {
-        updateData.crew_size = req.body.crewSize || req.body.crew_size;
-      }
-      if (req.body.grossTonnage !== undefined || req.body.gross_tonnage !== undefined) {
-        updateData.gross_tonnage = req.body.grossTonnage || req.body.gross_tonnage;
-      }
-      if (req.body.lengthMeters !== undefined || req.body.length_meters !== undefined) {
-        updateData.length_meters = req.body.lengthMeters || req.body.length_meters;
-      }
-      if (req.body.beamMeters !== undefined || req.body.beam_meters !== undefined) {
-        updateData.beam_meters = req.body.beamMeters || req.body.beam_meters;
-      }
       if (req.body.decks !== undefined) updateData.decks = req.body.decks;
-      if (req.body.builtYear !== undefined || req.body.built_year !== undefined) {
-        updateData.built_year = req.body.builtYear || req.body.built_year;
-      }
-      if (req.body.refurbishedYear !== undefined || req.body.refurbished_year !== undefined) {
-        updateData.refurbished_year = req.body.refurbishedYear || req.body.refurbished_year;
-      }
-      if (req.body.shipClass !== undefined || req.body.ship_class !== undefined) {
-        updateData.ship_class = req.body.shipClass || req.body.ship_class;
-      }
-      if (req.body.flag !== undefined) updateData.flag = req.body.flag;
       if (req.body.imageUrl !== undefined || req.body.image_url !== undefined) {
         updateData.image_url = req.body.imageUrl || req.body.image_url;
       }
+      if (req.body.deckPlansUrl !== undefined || req.body.deck_plans_url !== undefined) {
+        updateData.deck_plans_url = req.body.deckPlansUrl || req.body.deck_plans_url;
+      }
       if (req.body.description !== undefined) updateData.description = req.body.description;
-      if (req.body.highlights !== undefined) updateData.highlights = req.body.highlights;
-      if (req.body.amenities !== undefined) updateData.amenities = req.body.amenities;
 
       // Use Supabase Admin client to bypass RLS
       const supabaseAdmin = getSupabaseAdmin();
@@ -583,21 +584,11 @@ export function registerLocationRoutes(app: Express) {
         id: ship.id,
         name: ship.name,
         cruiseLine: ship.cruise_line,
-        shipCode: ship.ship_code,
         capacity: ship.capacity,
-        crewSize: ship.crew_size,
-        grossTonnage: ship.gross_tonnage,
-        lengthMeters: ship.length_meters,
-        beamMeters: ship.beam_meters,
         decks: ship.decks,
-        builtYear: ship.built_year,
-        refurbishedYear: ship.refurbished_year,
-        shipClass: ship.ship_class,
-        flag: ship.flag,
         imageUrl: ship.image_url,
+        deckPlansUrl: ship.deck_plans_url,
         description: ship.description,
-        highlights: ship.highlights,
-        amenities: ship.amenities,
         createdAt: ship.created_at,
         updatedAt: ship.updated_at
       };
@@ -1239,31 +1230,32 @@ export function registerLocationRoutes(app: Express) {
         offset = '0'
       } = req.query;
 
-      let query = db.select().from(schema.resorts);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      let query = supabaseAdmin
+        .from('resorts')
+        .select('*')
+        .order('name');
 
       // Apply filters
-      const conditions = [];
       if (search) {
-        conditions.push(
-          or(
-            ilike(schema.resorts.name, `%${search}%`),
-            ilike(schema.resorts.location, `%${search}%`),
-            ilike(schema.resorts.description, `%${search}%`)
-          )
-        );
+        query = query.or(`name.ilike.%${search}%,location.ilike.%${search}%,description.ilike.%${search}%`);
       }
       if (location) {
-        conditions.push(eq(schema.resorts.location, location as string));
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`) as typeof query;
+        query = query.eq('location', location as string);
       }
 
       // Apply pagination
-      query = query.limit(parseInt(limit as string)).offset(parseInt(offset as string)) as typeof query;
+      const startIndex = parseInt(offset as string);
+      const endIndex = startIndex + parseInt(limit as string) - 1;
+      query = query.range(startIndex, endIndex);
 
-      const results = await query;
+      const { data: results, error } = await query;
+
+      if (error) {
+        console.error('Error fetching resorts:', error);
+        return res.status(500).json({ error: 'Failed to fetch resorts' });
+      }
 
       // Transform snake_case to camelCase for frontend compatibility
       const transformedResults = results.map((resort: any) => ({
@@ -1291,10 +1283,21 @@ export function registerLocationRoutes(app: Express) {
   // Get resort by ID
   app.get("/api/resorts/:id", async (req, res) => {
     try {
-      const [resort] = await db.select()
-        .from(schema.resorts)
-        .where(eq(schema.resorts.id, Number(req.params.id)))
-        .limit(1);
+      // Use Supabase Admin client
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: resort, error } = await supabaseAdmin
+        .from('resorts')
+        .select('*')
+        .eq('id', Number(req.params.id))
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Resort not found" });
+        }
+        console.error('Error fetching resort:', error);
+        return res.status(500).json({ error: 'Failed to fetch resort' });
+      }
 
       if (!resort) {
         return res.status(404).json({ error: "Resort not found" });
@@ -1348,12 +1351,12 @@ export function registerLocationRoutes(app: Express) {
         name: req.body.name,
         location: req.body.location,
         capacity: req.body.capacity || null,
-        room_count: req.body.roomCount || req.body.room_count || null,
-        image_url: req.body.imageUrl || req.body.image_url || null,
+        room_count: req.body.roomCount || null,
+        image_url: req.body.imageUrl || null,
         description: req.body.description || null,
-        property_map_url: req.body.propertyMapUrl || req.body.property_map_url || null,
-        check_in_time: req.body.checkInTime || req.body.check_in_time || null,
-        check_out_time: req.body.checkOutTime || req.body.check_out_time || null
+        property_map_url: req.body.propertyMapUrl || null,
+        check_in_time: req.body.checkInTime || null,
+        check_out_time: req.body.checkOutTime || null
       };
 
       // Use Supabase Admin client to bypass RLS
@@ -1414,21 +1417,21 @@ export function registerLocationRoutes(app: Express) {
       if (req.body.name !== undefined) updateData.name = req.body.name;
       if (req.body.location !== undefined) updateData.location = req.body.location;
       if (req.body.capacity !== undefined) updateData.capacity = req.body.capacity;
-      if (req.body.roomCount !== undefined || req.body.room_count !== undefined) {
-        updateData.room_count = req.body.roomCount || req.body.room_count;
+      if (req.body.roomCount !== undefined) {
+        updateData.room_count = req.body.roomCount || null;
       }
-      if (req.body.imageUrl !== undefined || req.body.image_url !== undefined) {
-        updateData.image_url = req.body.imageUrl || req.body.image_url;
+      if (req.body.imageUrl !== undefined) {
+        updateData.image_url = req.body.imageUrl || null;
       }
-      if (req.body.description !== undefined) updateData.description = req.body.description;
-      if (req.body.propertyMapUrl !== undefined || req.body.property_map_url !== undefined) {
-        updateData.property_map_url = req.body.propertyMapUrl || req.body.property_map_url;
+      if (req.body.description !== undefined) updateData.description = req.body.description || null;
+      if (req.body.propertyMapUrl !== undefined) {
+        updateData.property_map_url = req.body.propertyMapUrl || null;
       }
-      if (req.body.checkInTime !== undefined || req.body.check_in_time !== undefined) {
-        updateData.check_in_time = req.body.checkInTime || req.body.check_in_time;
+      if (req.body.checkInTime !== undefined) {
+        updateData.check_in_time = req.body.checkInTime || null;
       }
-      if (req.body.checkOutTime !== undefined || req.body.check_out_time !== undefined) {
-        updateData.check_out_time = req.body.checkOutTime || req.body.check_out_time;
+      if (req.body.checkOutTime !== undefined) {
+        updateData.check_out_time = req.body.checkOutTime || null;
       }
 
       // Always update the updated_at timestamp

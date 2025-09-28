@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ResponsiveAdminTable } from '@/components/admin/ResponsiveAdminTable';
+import { EnhancedResortsTable } from '@/components/admin/EnhancedResortsTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ResortFormModal } from '@/components/admin/ResortFormModal';
 import { api } from '@/lib/api-client';
-import { Building, Plus, Edit2, Trash2, Search, Users, MapPin, Hotel } from 'lucide-react';
+import { Building, Plus, PlusSquare, Edit2, Trash2, Search, Users, MapPin, Hotel } from 'lucide-react';
 
 interface Resort {
   id?: number;
@@ -120,20 +120,21 @@ export default function ResortsManagement() {
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
-        <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Resorts ({filteredResorts.length})</h2>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all destinations</p>
+            <h2 className="text-lg font-semibold text-white">All Resorts</h2>
           </div>
           <Button
+            variant="ghost"
+            size="icon"
             onClick={() => {
               setEditingResort(null);
               setShowAddModal(true);
             }}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors min-w-[80px]"
+            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
+            title="Add New Resort"
           >
-            <Plus className="mr-1 h-3 w-3" />
-            Add Resort
+            <PlusSquare className="h-5 w-5 text-blue-400/80" />
           </Button>
         </header>
 
@@ -155,16 +156,21 @@ export default function ResortsManagement() {
             )}
           </div>
         ) : (
-          <ResponsiveAdminTable
+          <EnhancedResortsTable
             data={filteredResorts}
             columns={[
               {
-                key: 'name',
-                label: 'Resort',
+                key: 'image',
+                label: '',
                 priority: 'high',
+                sortable: false,
+                resizable: false,
+                width: 80,
+                minWidth: 80,
+                maxWidth: 80,
                 render: (_value, resort) => (
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                  <div className="flex items-center justify-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
                       {resort.imageUrl ? (
                         <img
                           src={resort.imageUrl}
@@ -172,20 +178,42 @@ export default function ResortsManagement() {
                           className="h-full w-full rounded-xl object-cover"
                         />
                       ) : (
-                        <Building className="h-5 w-5 text-white/70" />
-                      )}
-                    </div>
-                    <div className="space-y-1 min-w-0">
-                      <p className="font-medium text-white">{resort.name}</p>
-                      <div className="flex items-center gap-1 text-xs text-white/60">
-                        <MapPin className="h-3 w-3" />
-                        <span>{resort.location}</span>
-                      </div>
-                      {resort.description && (
-                        <p className="text-xs text-white/60 line-clamp-2">{resort.description}</p>
+                        <Building className="h-6 w-6 text-white/70" />
                       )}
                     </div>
                   </div>
+                ),
+              },
+              {
+                key: 'name',
+                label: 'Resort',
+                priority: 'high',
+                sortable: true,
+                minWidth: 200,
+                render: (_value, resort) => (
+                  <p className="font-bold text-xs text-white">{resort.name}</p>
+                ),
+              },
+              {
+                key: 'location',
+                label: 'Location',
+                priority: 'high',
+                sortable: true,
+                minWidth: 150,
+                render: (value) => (
+                  <span className="text-xs text-white/80">{value || 'N/A'}</span>
+                ),
+              },
+              {
+                key: 'description',
+                label: 'Description',
+                priority: 'medium',
+                sortable: false,
+                minWidth: 200,
+                render: (value) => (
+                  <span className="text-white/70 line-clamp-2">
+                    {value || 'No description'}
+                  </span>
                 ),
               },
               {
@@ -224,12 +252,6 @@ export default function ResortsManagement() {
                   </span>
                 ),
               },
-              {
-                key: 'status',
-                label: 'Status',
-                priority: 'medium',
-                render: () => <StatusBadge variant="default">Active</StatusBadge>,
-              },
             ]}
             actions={[
               {
@@ -250,9 +272,13 @@ export default function ResortsManagement() {
           />
         )}
 
-        <footer className="border-t border-white/10 px-6 py-4 text-xs text-white/50">
-          Showing {filteredResorts.length} resort{filteredResorts.length === 1 ? '' : 's'}
-        </footer>
+        {filteredResorts.length > 0 && (
+          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+            <div className="text-xs text-white/50">
+              Showing {filteredResorts.length} of {resorts.length} resorts
+            </div>
+          </footer>
+        )}
       </section>
 
       {/* Resort Form Modal */}
