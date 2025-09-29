@@ -32,6 +32,24 @@ npm run dev
 ```
 **CRITICAL**: Always set `run_in_background: true` when using Bash tool to start the server. This prevents blocking and allows immediate response.
 
+## 🤖 AUTOMATED CODE REVIEW REQUIREMENT
+**CRITICAL: After writing any code, ALWAYS run the code-reviewer agent:**
+```bash
+# After any significant code change
+claude-code use code-reviewer
+
+# Or use inline review
+/review-code
+
+# The agent will check:
+# - Security vulnerabilities
+# - Performance issues
+# - TypeScript type safety
+# - Error handling
+# - Code patterns
+```
+**If the code review finds issues, fix them before proceeding to the next task.**
+
 
 ## 🚀 Project Overview
 **K-GAY Travel Guides** (Atlantis Events Guides) - LGBTQ+ travel application with comprehensive trip management, events coordination, and talent management. Built with React/Node.js/Supabase stack.
@@ -298,19 +316,191 @@ npm run api:docs              # View API docs at localhost:3001/api/docs
 
 ---
 
-## 🔒 Security
+## 🔒 Security & Coding Standards (MANDATORY FOR ALL AGENTS)
 
-**Best Practices:**
-- Never commit `.env` files
-- Use Supabase RLS policies
-- Sanitize all user inputs
-- HTTPS in production
-- Secure session management
+### 🚨 CRITICAL SECURITY REQUIREMENTS
+**Every coding agent MUST follow these security practices:**
+
+#### Environment Variables
+- **NEVER hardcode secrets** in code, scripts, or package.json
+- **ALWAYS require env vars** - fail fast if missing (no fallback defaults)
+- **Use dotenv** only in development, never in production code
+- **Validate all env vars** on startup with explicit error messages
+```typescript
+// ✅ CORRECT - Fail fast
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET not configured');
+  process.exit(1);
+}
+
+// ❌ WRONG - Never use fallbacks
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+```
+
+#### Input Validation
+- **Validate ALL inputs** with Zod schemas before processing
+- **Sanitize user content** before display
+- **Never use innerHTML** with user content
+- **Use parameterized queries** for all database operations
+```typescript
+// ✅ CORRECT - Use DOM methods
+element.textContent = userInput;
+
+// ❌ WRONG - XSS vulnerability
+element.innerHTML = userInput;
+```
+
+#### Authentication & Authorization
+- **Use Bearer tokens** for API authentication (not cookies)
+- **Verify roles** on every protected endpoint
+- **Check permissions** before data access
+- **Use Supabase RLS** policies for database-level security
+
+### 📝 CODING BEST PRACTICES (REQUIRED)
+
+#### Logging Standards
+- **NO console.log in production code** - use logger service
+- **Import logger** from `@/lib/logger` (client) or `@/server/logging/logger` (server)
+- **Log levels**: debug (dev only), info, warn, error
+- **Never log sensitive data** (passwords, tokens, PII)
+```typescript
+// ✅ CORRECT
+import { logger } from '@/lib/logger';
+logger.info('User action', { userId, action });
+
+// ❌ WRONG
+console.log('User password:', password);
+```
+
+#### Error Handling
+- **Wrap all routes** in try-catch or asyncHandler
+- **Use error boundaries** for React components
+- **Return consistent error formats** from APIs
+- **Never expose internal errors** to users
+```typescript
+// ✅ CORRECT
+try {
+  await riskyOperation();
+} catch (error) {
+  logger.error('Operation failed', error);
+  return res.status(500).json({
+    error: 'An error occurred',
+    code: 'INTERNAL_ERROR'
+  });
+}
+```
+
+#### Performance Requirements
+- **Implement code splitting** for routes over 50KB
+- **Use React.memo** for expensive components
+- **Set finite staleTime** in React Query (never Infinity)
+- **Enable compression** for all text responses
+- **Lazy load images** with loading="lazy"
+
+#### TypeScript Standards
+- **NO 'any' types** without explicit justification
+- **Enable strict mode** in tsconfig.json
+- **Define interfaces** for all data structures
+- **Use type guards** for runtime type checking
+
+### 🔄 AUTOMATED CODE REVIEW HOOKS
+
+#### Pre-commit Hooks (Recommended Implementation)
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm run type-check && npm run security-check",
+      "post-commit": "npm run review-agent"
+    }
+  }
+}
+```
+
+#### Security Check Script
+```bash
+#!/bin/bash
+# scripts/security-check.sh
+
+# Check for exposed secrets
+if grep -r "postgresql://postgres:" . --exclude-dir=node_modules --exclude=.env; then
+  echo "❌ ERROR: Hardcoded database credentials found!"
+  exit 1
+fi
+
+# Check for console.log
+if grep -r "console.log" client/src server --exclude="*.test.*"; then
+  echo "⚠️ WARNING: console.log statements found"
+fi
+
+# Check for any types
+if grep -r ": any" client/src server --exclude="*.d.ts"; then
+  echo "⚠️ WARNING: 'any' types detected"
+fi
+```
+
+#### AI Code Review Agent Integration
+```bash
+# scripts/review-agent.sh
+#!/bin/bash
+# Run after each significant code change
+
+echo "🤖 Running AI Code Review..."
+
+# Get changed files
+CHANGED_FILES=$(git diff --name-only HEAD~1)
+
+# Trigger code-reviewer agent
+claude-code review --files="$CHANGED_FILES" \
+  --check-security \
+  --check-performance \
+  --check-types \
+  --check-errors
+
+# Check review result
+if [ $? -ne 0 ]; then
+  echo "❌ Code review found issues. Please fix before proceeding."
+  exit 1
+fi
+
+echo "✅ Code review passed!"
+```
+
+### 🛡️ SECURITY CHECKLIST FOR EVERY PR
+
+Before merging any code, verify:
+- [ ] No hardcoded secrets or credentials
+- [ ] All inputs validated with Zod
+- [ ] No console.log statements
+- [ ] No 'any' types without justification
+- [ ] Error boundaries in place
+- [ ] Proper error handling (try-catch)
+- [ ] Authentication checks on protected routes
+- [ ] No innerHTML with user content
+- [ ] React Query staleTime is finite
+- [ ] Code splitting for large components
+- [ ] Tests written and passing
+- [ ] Security scan passed (npm audit)
+
+### 🚀 PERFORMANCE CHECKLIST
+
+- [ ] Bundle size < 50KB per route chunk
+- [ ] Images have loading="lazy"
+- [ ] HTTP compression enabled
+- [ ] React components memoized where appropriate
+- [ ] Database queries use indexes
+- [ ] API responses < 200ms (p95)
+- [ ] Lighthouse score > 85
 
 **Environment Security:**
 - Service role keys server-side only
 - Anon keys safe for client exposure
 - Proper CORS configuration
+- CSP headers configured (production)
+- Rate limiting enabled
+- HTTPS enforced in production
 
 ---
 
