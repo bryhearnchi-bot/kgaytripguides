@@ -14,6 +14,7 @@ import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Shield, UserCheck, User
 import { useAdminUsers, useAdminUserMutations } from '@/hooks/use-admin-users-cache';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { LocationSearchBar } from '@/components/admin/LocationSearchBar';
 
 interface UserData {
   id: string;
@@ -42,6 +43,12 @@ interface UserData {
     state?: string;
     country?: string;
   };
+  // Individual location fields (following locations/resorts pattern)
+  locationText?: string;
+  city?: string;
+  stateProvince?: string;
+  country?: string;
+  countryCode?: string;
   social_links?: {
     instagram?: string;
     twitter?: string;
@@ -70,9 +77,12 @@ interface UserFormData {
   website?: string;
   avatar_url?: string;
   phone_number?: string;
+  // Location fields (following locations/resorts pattern)
+  locationText?: string;
   city?: string;
-  state?: string;
+  stateProvince?: string;
   country?: string;
+  countryCode?: string;
   instagram?: string;
   twitter?: string;
   facebook?: string;
@@ -122,8 +132,9 @@ export default function UsersManagement() {
     avatar_url: '',
     phone_number: '',
     city: '',
-    state: '',
+    stateProvince: '',
     country: '',
+    countryCode: '',
     instagram: '',
     twitter: '',
     facebook: '',
@@ -246,7 +257,7 @@ export default function UsersManagement() {
       email: '',
       firstName: '',
       lastName: '',
-        role: 'viewer',
+      role: 'viewer',
       password: '',
       is_active: true,
       account_status: 'active',
@@ -255,8 +266,9 @@ export default function UsersManagement() {
       avatar_url: '',
       phone_number: '',
       city: '',
-      state: '',
+      stateProvince: '',
       country: '',
+      countryCode: '',
       instagram: '',
       twitter: '',
       facebook: '',
@@ -311,9 +323,10 @@ export default function UsersManagement() {
       website: user.website || '',
       avatar_url: user.avatar_url || user.avatarUrl || '',
       phone_number: user.phone_number || '',
-      city: user.location?.city || '',
-      state: user.location?.state || '',
-      country: user.location?.country || '',
+      city: user.city || user.location?.city || '',
+      stateProvince: user.stateProvince || (user as any).state_province || user.location?.state || '',
+      country: user.country || user.location?.country || '',
+      countryCode: user.countryCode || (user as any).country_code || '',
       instagram: user.social_links?.instagram || '',
       twitter: user.social_links?.twitter || '',
       facebook: user.social_links?.facebook || '',
@@ -521,6 +534,23 @@ export default function UsersManagement() {
                 render: (value) => (
                   <span className="text-xs text-white/80">{value}</span>
                 ),
+              },
+              {
+                key: 'location_text',
+                label: 'Location',
+                priority: 'medium',
+                sortable: true,
+                minWidth: 150,
+                render: (_value, user) => {
+                  const locationText = user.locationText || user.location_text;
+                  const fallbackLocation = user.location ?
+                    [user.location.city, user.location.state, user.location.country].filter(Boolean).join(', ') : '';
+                  const displayLocation = locationText || fallbackLocation || '-';
+
+                  return (
+                    <span className="text-xs text-white/70">{displayLocation}</span>
+                  );
+                },
               },
               {
                 key: 'role',
@@ -763,43 +793,27 @@ export default function UsersManagement() {
             />
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">Location</h4>
-
-            <div>
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="San Francisco"
-                className={fieldBaseClasses}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="state">State/Province</Label>
-                <Input
-                  id="state"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  placeholder="California"
-                  className={fieldBaseClasses}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  placeholder="United States"
-                  className={fieldBaseClasses}
-                />
-              </div>
-            </div>
+          <div>
+            <LocationSearchBar
+              label="Location"
+              placeholder="Search for city, state, or country..."
+              value={{
+                city: formData.city || '',
+                state: formData.stateProvince || '',
+                country: formData.country || '',
+                countryCode: formData.countryCode || ''
+              }}
+              onChange={(location) => {
+                setFormData({
+                  ...formData,
+                  locationText: location.formatted || '',
+                  city: location.city || '',
+                  stateProvince: location.state || '',
+                  country: location.country || '',
+                  countryCode: location.countryCode || ''
+                });
+              }}
+            />
           </div>
 
           <div className="space-y-3">

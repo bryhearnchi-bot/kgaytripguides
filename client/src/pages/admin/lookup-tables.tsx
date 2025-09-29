@@ -38,6 +38,11 @@ const TABLES = {
     displayName: 'Location Types',
     nameField: 'type',
     apiField: 'type'
+  },
+  'charter-companies': {
+    displayName: 'Charter Companies',
+    nameField: 'name',
+    apiField: 'name'
   }
 } as const;
 

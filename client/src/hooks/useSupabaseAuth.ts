@@ -20,6 +20,13 @@ export interface Profile {
   bio?: string;
   website?: string;
   phoneNumber?: string;
+  // Individual location fields (new schema)
+  city?: string;
+  state_province?: string;
+  country?: string;
+  country_code?: string;
+  location_text?: string;
+  // Legacy nested location object (kept for backwards compatibility)
   location?: {
     city?: string;
     state?: string;
@@ -149,6 +156,7 @@ export function useSupabaseAuth() {
 
       const data = await response.json();
 
+      console.log('🔍 Profile API response data:', data);
 
       // The API already returns properly formatted data, so we can use it directly
       if (data) {
@@ -166,6 +174,12 @@ export function useSupabaseAuth() {
           bio: data.bio || '',
           website: data.website || data.socialLinks?.website || '',
           phoneNumber: data.phoneNumber || '',
+          // Add the individual location fields that come from the API
+          city: data.city || '',
+          state_province: data.state_province || '',
+          country: data.country || '',
+          country_code: data.country_code || '',
+          location_text: data.location_text || '',
           location: data.location || undefined,
           socialLinks: data.socialLinks || undefined,
           created_at: data.createdAt,
@@ -173,6 +187,7 @@ export function useSupabaseAuth() {
         };
 
 
+        console.log('🔍 Mapped profile data:', mappedProfile);
         setProfile(mappedProfile);
       } else {
         setProfile(null);

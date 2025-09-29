@@ -83,12 +83,12 @@ const createUserSchema = z.object({
   bio: data.bio,
   website: data.website,
   phone_number: data.phone_number,
-  // Location - combine into JSON object
-  location: (data.city || data.state || data.country) ? {
-    city: data.city,
-    state: data.state,
-    country: data.country
-  } : undefined,
+  // Individual location fields (support both camelCase and snake_case)
+  location_text: data.location_text || data.locationText,
+  city: data.city,
+  state_province: data.state_province || data.stateProvince || data.state,
+  country: data.country,
+  country_code: data.country_code || data.countryCode,
   // Social links - combine into JSON object
   social_links: (data.instagram || data.twitter || data.facebook || data.linkedin || data.tiktok) ? {
     instagram: data.instagram,
@@ -118,10 +118,13 @@ const updateUserSchema = z.object({
   bio: z.string().optional(),
   website: z.string().optional(),
   phone_number: z.string().optional(),
-  // Location fields
+  // Location fields (following locations/resorts pattern)
+  location_text: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  state_province: z.string().optional(),
   country: z.string().optional(),
+  country_code: z.string().optional(),
   // Social links
   instagram: z.string().optional(),
   twitter: z.string().optional(),
@@ -133,7 +136,11 @@ const updateUserSchema = z.object({
   trip_updates_opt_in: z.boolean().optional(),
   // Legacy camelCase fields for backward compatibility
   isActive: z.boolean().optional(),
-  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).optional()
+  accountStatus: z.enum(['active', 'suspended', 'pending_verification']).optional(),
+  // CamelCase location fields for frontend compatibility
+  locationText: z.string().optional(),
+  stateProvince: z.string().optional(),
+  countryCode: z.string().optional()
 }).transform(data => ({
   username: data.username,
   email: data.email,
@@ -148,12 +155,12 @@ const updateUserSchema = z.object({
   bio: data.bio,
   website: data.website,
   phone_number: data.phone_number,
-  // Location - combine into JSON object
-  location: (data.city || data.state || data.country) ? {
-    city: data.city,
-    state: data.state,
-    country: data.country
-  } : undefined,
+  // Individual location fields (support both camelCase and snake_case)
+  location_text: data.location_text || data.locationText,
+  city: data.city,
+  state_province: data.state_province || data.stateProvince || data.state,
+  country: data.country,
+  country_code: data.country_code || data.countryCode,
   // Social links - combine into JSON object
   social_links: (data.instagram || data.twitter || data.facebook || data.linkedin || data.tiktok) ? {
     instagram: data.instagram,
@@ -367,7 +374,12 @@ export function registerAdminUsersRoutes(app: Express) {
           bio: userData.bio || null,
           website: userData.website || null,
           phone_number: userData.phone_number || null,
-          location: userData.location || null,
+          // Individual location fields (no longer use JSONB location column)
+          location_text: userData.location_text || null,
+          city: userData.city || null,
+          state_province: userData.state_province || null,
+          country: userData.country || null,
+          country_code: userData.country_code || null,
           social_links: userData.social_links || null,
           marketing_emails: userData.marketing_emails || false,
           trip_updates_opt_in: userData.trip_updates_opt_in || false,
@@ -413,7 +425,12 @@ export function registerAdminUsersRoutes(app: Express) {
         bio: userData.bio || null,
         website: userData.website || null,
         phone_number: userData.phone_number || null,
-        location: userData.location || null,
+        // Individual location fields (no longer use JSONB location column)
+        location_text: userData.location_text || null,
+        city: userData.city || null,
+        state_province: userData.state_province || null,
+        country: userData.country || null,
+        country_code: userData.country_code || null,
         social_links: userData.social_links || null,
         marketing_emails: userData.marketing_emails || false,
         trip_updates_opt_in: userData.trip_updates_opt_in || false,
@@ -570,8 +587,14 @@ export function registerAdminUsersRoutes(app: Express) {
       if (userData.website !== undefined) updateFields.website = userData.website;
       if (userData.phone_number !== undefined) updateFields.phone_number = userData.phone_number;
 
-      // Location and social links (already transformed to JSON objects in schema)
-      if (userData.location !== undefined) updateFields.location = userData.location;
+      // Location fields (individual fields only)
+      if (userData.location_text !== undefined) updateFields.location_text = userData.location_text;
+      if (userData.city !== undefined) updateFields.city = userData.city;
+      if (userData.state_province !== undefined) updateFields.state_province = userData.state_province;
+      if (userData.country !== undefined) updateFields.country = userData.country;
+      if (userData.country_code !== undefined) updateFields.country_code = userData.country_code;
+
+      // Social links
       if (userData.social_links !== undefined) updateFields.social_links = userData.social_links;
 
       // Preferences
@@ -771,6 +794,14 @@ export function registerAdminUsersRoutes(app: Express) {
         return res.status(404).json({ error: 'Profile not found' });
       }
 
+      console.log('🔍 Raw profile from database:', {
+        city: profile.city,
+        state_province: profile.state_province,
+        country: profile.country,
+        country_code: profile.country_code,
+        location_text: profile.location_text
+      });
+
       // Transform snake_case to camelCase for frontend
       const transformedProfile = {
         id: profile.id,
@@ -783,7 +814,12 @@ export function registerAdminUsersRoutes(app: Express) {
         bio: profile.bio,
         website: profile.website,
         phoneNumber: profile.phone_number,
-        location: profile.location,
+        // Individual location fields (no longer use JSONB location column)
+        locationText: profile.location_text,
+        city: profile.city,
+        stateProvince: profile.state_province,
+        country: profile.country,
+        countryCode: profile.country_code,
         socialLinks: profile.social_links,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
@@ -794,6 +830,107 @@ export function registerAdminUsersRoutes(app: Express) {
     } catch (error) {
       console.error('Error in profile endpoint:', error);
       res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  // PUT /api/admin/profile - Update current user's profile
+  app.put("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!supabaseAdmin) {
+        return res.status(503).json({
+          error: 'User management service is not configured'
+        });
+      }
+
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      console.log('🔍 PUT /api/admin/profile - Raw request body:', req.body);
+      const userData = updateUserSchema.parse(req.body);
+      console.log('🔍 Parsed profile data:', userData);
+
+      // Build the update fields object
+      const updateFields: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      // Handle name fields
+      if (userData.name) {
+        updateFields.name = userData.name;
+      }
+
+      // Handle basic profile fields
+      if (userData.email !== undefined) updateFields.email = userData.email;
+      if (userData.username !== undefined) updateFields.username = userData.username;
+      if (userData.bio !== undefined) updateFields.bio = userData.bio;
+      if (userData.phone_number !== undefined) updateFields.phone_number = userData.phone_number;
+      if (userData.profile_image_url !== undefined) updateFields.avatar_url = userData.profile_image_url;
+
+      // Handle new location fields
+      if (userData.location_text !== undefined) updateFields.location_text = userData.location_text;
+      if (userData.city !== undefined) updateFields.city = userData.city;
+      if (userData.state_province !== undefined) updateFields.state_province = userData.state_province;
+      if (userData.country !== undefined) updateFields.country = userData.country;
+      if (userData.country_code !== undefined) updateFields.country_code = userData.country_code;
+
+      // Handle preferences
+      if (userData.preferences) {
+        if (userData.preferences.emailNotifications !== undefined || userData.preferences.smsNotifications !== undefined) {
+          updateFields.communication_preferences = {
+            email: userData.preferences.emailNotifications,
+            sms: userData.preferences.smsNotifications
+          };
+        }
+      }
+
+      if (userData.trip_updates_opt_in !== undefined) updateFields.trip_updates_opt_in = userData.trip_updates_opt_in;
+      if (userData.marketing_emails !== undefined) updateFields.marketing_emails = userData.marketing_emails;
+
+      // Handle social links
+      if (userData.social_links) {
+        updateFields.social_links = userData.social_links;
+      }
+
+      console.log('🔍 Profile updateFields being sent to database:', updateFields);
+
+      // Update the profile in Supabase
+      const { data: updatedProfile, error } = await supabaseAdmin
+        .from('profiles')
+        .update(updateFields)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Profile update error:', error);
+        return res.status(500).json({
+          error: 'Failed to update profile',
+          details: error.message
+        });
+      }
+
+      res.json({
+        success: true,
+        profile: updatedProfile,
+        message: 'Profile updated successfully'
+      });
+
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+
+      if (error.name === 'ZodError') {
+        return res.status(400).json({
+          error: 'Invalid profile data',
+          details: error.errors
+        });
+      }
+
+      res.status(500).json({
+        error: 'Failed to update profile',
+        details: error.message
+      });
     }
   });
 

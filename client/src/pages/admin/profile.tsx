@@ -10,6 +10,7 @@ import { api } from '@/lib/api-client';
 import { supabase } from '@/lib/supabase';
 import { ImageUploadPopup } from '@/components/admin/ImageUploadPopup';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { LocationSearchBar } from '@/components/admin/LocationSearchBar';
 import {
   User,
   Edit3,
@@ -40,7 +41,11 @@ interface FormData {
   username: string;
   bio: string;
   phoneNumber: string;
-  location: ProfileLocation;
+  locationText: string;
+  city: string;
+  stateProvince: string;
+  country: string;
+  countryCode: string;
   socialLinks: ProfileSocialLinks;
 }
 
@@ -63,11 +68,11 @@ export default function AdminProfile() {
     username: '',
     bio: '',
     phoneNumber: '',
-    location: {
-      city: '',
-      state: '',
-      country: ''
-    },
+    locationText: '',
+    city: '',
+    stateProvince: '',
+    country: '',
+    countryCode: '',
     socialLinks: {
       instagram: '',
       twitter: '',
@@ -95,11 +100,11 @@ export default function AdminProfile() {
         username: profile.username || '',
         bio: profile.bio || '',
         phoneNumber: profile.phoneNumber || '',
-        location: profile.location || {
-          city: '',
-          state: '',
-          country: ''
-        },
+        locationText: profile.location_text || '',
+        city: profile.city || profile.location?.city || '',
+        stateProvince: profile.state_province || profile.location?.state || '',
+        country: profile.country || profile.location?.country || '',
+        countryCode: profile.country_code || '',
         socialLinks: {
           instagram: profile.socialLinks?.instagram || '',
           twitter: profile.socialLinks?.twitter || '',
@@ -172,7 +177,24 @@ export default function AdminProfile() {
   });
 
   const handleSave = () => {
-    updateProfile.mutate(formData);
+    // Map FormData to API schema field names
+    const apiData = {
+      name: formData.name,
+      bio: formData.bio,
+      phone_number: formData.phoneNumber,
+
+      // New location fields (using snake_case for API)
+      location_text: formData.locationText,
+      city: formData.city,
+      state_province: formData.stateProvince,
+      country: formData.country,
+      country_code: formData.countryCode,
+
+      social_links: formData.socialLinks
+    };
+
+    console.log('🔍 Profile form data being sent:', apiData);
+    updateProfile.mutate(apiData);
   };
 
   const handleCancel = () => {
@@ -190,12 +212,15 @@ export default function AdminProfile() {
         username: profile.username || '',
         bio: profile.bio || '',
         phoneNumber: profile.phoneNumber || '',
-        location: profile.location || { city: '', state: '', country: '' },
+        locationText: profile.location_text || '',
+        city: profile.city || profile.location?.city || '',
+        stateProvince: profile.state_province || profile.location?.state || '',
+        country: profile.country || profile.location?.country || '',
+        countryCode: profile.country_code || '',
         socialLinks: {
           instagram: profile.socialLinks?.instagram || '',
           twitter: profile.socialLinks?.twitter || '',
-          facebook: profile.socialLinks?.facebook || '',
-          telegram: profile.socialLinks?.telegram || ''
+          facebook: profile.socialLinks?.facebook || ''
         }
       });
     }
@@ -302,10 +327,10 @@ export default function AdminProfile() {
                   {profile.phoneNumber}
                 </div>
               )}
-              {(profile.location?.city || profile.location?.state || profile.location?.country) && (
+              {(profile.location_text || profile.city || profile.state_province || profile.country || profile.location?.city || profile.location?.state || profile.location?.country) && (
                 <div className="flex items-center gap-3 text-sm text-slate-300">
                   <MapPin className="w-4 h-4 text-blue-400" />
-                  {[profile.location.city, profile.location.state, profile.location.country].filter(Boolean).join(', ')}
+                  {profile.location_text || [profile.city, profile.state_province, profile.country].filter(Boolean).join(', ') || [profile.location?.city, profile.location?.state, profile.location?.country].filter(Boolean).join(', ')}
                 </div>
               )}
               <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -440,7 +465,7 @@ export default function AdminProfile() {
                 {/* Location & Contact */}
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">Location & Contact</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium text-slate-300 block mb-2">Phone</Label>
                       <Input
@@ -451,30 +476,25 @@ export default function AdminProfile() {
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">City</Label>
-                      <Input
-                        type="text"
-                        value={formData.location.city}
-                        onChange={(e) => updateNestedFormData('location', 'city', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">State</Label>
-                      <Input
-                        type="text"
-                        value={formData.location.state}
-                        onChange={(e) => updateNestedFormData('location', 'state', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">Country</Label>
-                      <Input
-                        type="text"
-                        value={formData.location.country}
-                        onChange={(e) => updateNestedFormData('location', 'country', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                      <LocationSearchBar
+                        label="Location"
+                        placeholder="Search for city, state, or country..."
+                        value={{
+                          city: formData.city || '',
+                          state: formData.stateProvince || '',
+                          country: formData.country || '',
+                          countryCode: formData.countryCode || ''
+                        }}
+                        onChange={(location) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            locationText: location.formatted || '',
+                            city: location.city || '',
+                            stateProvince: location.state || '',
+                            country: location.country || '',
+                            countryCode: location.countryCode || ''
+                          }));
+                        }}
                       />
                     </div>
                   </div>

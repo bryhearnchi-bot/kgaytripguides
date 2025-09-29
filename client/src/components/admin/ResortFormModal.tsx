@@ -7,11 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from './ImageUploadField';
 import { Building } from 'lucide-react';
+import { LocationSearchBar } from './LocationSearchBar';
+import { locationService, type LocationData } from '@/lib/location-service';
 
 interface Resort {
   id: number;
   name: string;
   location: string;
+  city?: string;
+  state_province?: string;
+  country?: string;
+  country_code?: string;
   capacity?: number;
   roomCount?: number;
   imageUrl?: string;
@@ -36,6 +42,10 @@ interface ResortFormModalProps {
 interface FormData {
   name: string;
   location: string;
+  city: string;
+  state_province: string;
+  country: string;
+  country_code: string;
   capacity: string;
   roomCount: string;
   imageUrl: string;
@@ -52,6 +62,10 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   const [formData, setFormData] = useState<FormData>({
     name: '',
     location: '',
+    city: '',
+    state_province: '',
+    country: '',
+    country_code: '',
     capacity: '',
     roomCount: '',
     imageUrl: '',
@@ -66,9 +80,21 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   // Load resort data when editing
   useEffect(() => {
     if (resort && isOpen) {
+      // Parse existing location if it's in old format
+      const locationData = resort.city ? {
+        city: resort.city,
+        state_province: resort.state_province || '',
+        country: resort.country || '',
+        country_code: resort.country_code || ''
+      } : locationService.parseLocationString(resort.location || '');
+
       setFormData({
         name: resort.name || '',
         location: resort.location || '',
+        city: locationData.city || '',
+        state_province: locationData.state || '',
+        country: locationData.country || '',
+        country_code: locationData.countryCode || '',
         capacity: resort.capacity?.toString() || '',
         roomCount: resort.roomCount?.toString() || '',
         imageUrl: resort.imageUrl || '',
@@ -85,6 +111,10 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       setFormData({
         name: '',
         location: '',
+        city: '',
+        state_province: '',
+        country: '',
+        country_code: '',
         capacity: '',
         roomCount: '',
         imageUrl: '',
@@ -123,17 +153,25 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.location.trim()) {
+    if (!formData.name.trim() || !formData.country.trim()) {
       return;
     }
 
     try {
       setLoading(true);
 
-      // Prepare resort data
+      // Prepare resort data with new location fields
       const resortData = {
         name: formData.name.trim(),
-        location: formData.location.trim(),
+        location: locationService.formatLocation({
+          city: formData.city,
+          state: formData.state_province,
+          country: formData.country
+        }),
+        city: formData.city.trim() || null,
+        state_province: formData.state_province.trim() || null,
+        country: formData.country.trim(),
+        country_code: formData.country_code.trim() || null,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         roomCount: formData.roomCount ? parseInt(formData.roomCount) : null,
         imageUrl: formData.imageUrl.trim() || null,
@@ -188,7 +226,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         type: 'submit',
         loading,
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
-        disabled: !formData.name.trim() || !formData.location.trim(),
+        disabled: !formData.name.trim() || !formData.country.trim(),
       }}
       secondaryAction={{
         label: 'Cancel',
@@ -214,12 +252,25 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/90">Location *</label>
-              <Input
-                placeholder="City, Country"
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                className="admin-form-modal"
+              <LocationSearchBar
+                label="Location"
+                placeholder="Search for city, state, or country..."
+                value={{
+                  city: formData.city,
+                  state: formData.state_province,
+                  country: formData.country,
+                  countryCode: formData.country_code
+                }}
+                onChange={(location) => {
+                  setFormData({
+                    ...formData,
+                    city: location.city || '',
+                    state_province: location.state || '',
+                    country: location.country || '',
+                    country_code: location.countryCode || ''
+                  });
+                }}
+                required
               />
             </div>
 

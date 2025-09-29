@@ -115,12 +115,7 @@ export const updateProfileSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  name: z.string()
-    .max(255, 'Full name must be less than 255 characters')
-    .trim()
-    .optional(),
-
-  // New structured name field
+  // Structured name field
   name: z.object({
     first: z.string().max(100).optional(),
     last: z.string().max(100).optional(),
@@ -142,12 +137,12 @@ export const updateProfileSchema = z.object({
   phone: phoneSchema.optional().or(z.literal('')),
   phoneNumber: phoneSchema.optional().or(z.literal('')), // Alternative field name
 
-  // Enhanced location field
-  location: z.object({
-    city: z.string().max(100).optional(),
-    state: z.string().max(100).optional(),
-    country: z.string().max(100).optional()
-  }).optional(),
+  // Location fields following locations/resorts pattern
+  locationText: z.string().max(255).optional(),
+  city: z.string().max(100).optional(),
+  stateProvince: z.string().max(100).optional(),
+  country: z.string().max(100).optional(),
+  countryCode: z.string().length(2).optional(),
 
   preferences: z.object({
     emailNotifications: z.boolean().optional(),
@@ -209,6 +204,13 @@ export const adminUpdateUserSchema = z.object({
   emailVerified: z.boolean().optional(),
 
   phoneVerified: z.boolean().optional(),
+
+  // Location fields following locations/resorts pattern
+  locationText: z.string().max(255).optional(),
+  city: z.string().max(100).optional(),
+  stateProvince: z.string().max(100).optional(),
+  country: z.string().max(100).optional(),
+  countryCode: z.string().length(2).optional(),
 
   metadata: z.record(z.any()).optional(),
 

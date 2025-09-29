@@ -10,17 +10,19 @@ import { MapPin, Plus, PlusSquare, Edit2, Trash2, Search, Globe } from 'lucide-r
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { LocationSearchBar } from '@/components/admin/LocationSearchBar';
+import { locationService, type LocationData } from '@/lib/location-service';
 
 interface Location {
   id?: number;
   name: string;
+  location?: string;
   country: string;
+  city?: string;
+  state_province?: string;
+  country_code?: string;
   description?: string;
   imageUrl?: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
 }
 
 export default function LocationsManagement() {
@@ -31,7 +33,11 @@ export default function LocationsManagement() {
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState<Location>({
     name: '',
+    location: '',
     country: '',
+    city: '',
+    state_province: '',
+    country_code: '',
   });
 
   const handleModalOpenChange = (open: boolean) => {
@@ -86,6 +92,7 @@ export default function LocationsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
+      setShowAddModal(false);
       setEditingLocation(null);
       resetForm();
       toast({
@@ -146,11 +153,12 @@ export default function LocationsManagement() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', country: '' });
+    setFormData({ name: '', location: '', country: '', city: '', state_province: '', country_code: '' });
   };
 
   const filteredLocations = locations.filter(location =>
     location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    location.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     location.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -255,13 +263,13 @@ export default function LocationsManagement() {
                 ),
               },
               {
-                key: 'country',
-                label: 'Country',
+                key: 'location',
+                label: 'Location',
                 priority: 'high',
                 sortable: true,
-                minWidth: 150,
-                render: (value) => (
-                  <span className="text-xs text-white/80">{value}</span>
+                minWidth: 200,
+                render: (value, location) => (
+                  <span className="text-xs text-white/80">{value || location.country || 'No location'}</span>
                 ),
               },
               {
@@ -273,18 +281,6 @@ export default function LocationsManagement() {
                 render: (value) => (
                   <span className="text-white/70 line-clamp-2">
                     {value || 'No description'}
-                  </span>
-                ),
-              },
-              {
-                key: 'coordinates',
-                label: 'Coordinates',
-                priority: 'low',
-                sortable: false,
-                minWidth: 150,
-                render: (value) => (
-                  <span className="text-xs text-white/60">
-                    {value ? `${value.lat.toFixed(4)}, ${value.lng.toFixed(4)}` : 'Not set'}
                   </span>
                 ),
               },
@@ -337,13 +333,26 @@ export default function LocationsManagement() {
           </div>
 
           <div>
-            <Label htmlFor="country">Country</Label>
-            <Input
-              id="country"
-              value={formData.country}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+            <LocationSearchBar
+              label="Location"
+              placeholder="Search for city, state, or country..."
+              value={{
+                city: formData.city || '',
+                state: formData.state_province || '',
+                country: formData.country || '',
+                countryCode: formData.country_code || ''
+              }}
+              onChange={(location) => {
+                setFormData({
+                  ...formData,
+                  location: location.formatted || '',
+                  city: location.city || '',
+                  state_province: location.state || '',
+                  country: location.country || '',
+                  country_code: location.countryCode || ''
+                });
+              }}
               required
-              className="bg-white/5 border-white/10 text-white"
             />
           </div>
 

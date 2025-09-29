@@ -13,6 +13,10 @@ interface Resort {
   id?: number;
   name: string;
   location: string;
+  city?: string;
+  state_province?: string;
+  country?: string;
+  country_code?: string;
   capacity?: number;
   roomCount?: number;
   imageUrl?: string;
@@ -91,10 +95,13 @@ export default function ResortsManagement() {
     setEditingResort(null);
   };
 
-  const filteredResorts = resorts.filter(resort =>
-    resort.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resort.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredResorts = resorts.filter(resort => {
+    const searchLower = searchTerm.toLowerCase();
+    return resort.name.toLowerCase().includes(searchLower) ||
+           resort.location.toLowerCase().includes(searchLower) ||
+           (resort.city?.toLowerCase().includes(searchLower)) ||
+           (resort.country?.toLowerCase().includes(searchLower));
+  });
 
   return (
     <div className="space-y-8">

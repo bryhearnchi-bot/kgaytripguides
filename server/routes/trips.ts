@@ -430,14 +430,14 @@ export function registerTripRoutes(app: Express) {
   app.post("/api/trips/:tripId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     const item = await itineraryStorage.createItineraryStop({
       ...req.body,
-      tripId: parseInt(req.params.tripId),
+      tripId: parseInt(req.params.tripId!),
     });
     res.json(item);
   });
 
   // Update itinerary item
   app.put("/api/itinerary/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const item = await itineraryStorage.updateItineraryStop(parseInt(req.params.id), req.body);
+    const item = await itineraryStorage.updateItineraryStop(parseInt(req.params.id!), req.body);
     if (!item) {
       return res.status(404).send("Itinerary item not found");
     }
@@ -446,7 +446,7 @@ export function registerTripRoutes(app: Express) {
 
   // Delete itinerary item
   app.delete("/api/itinerary/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    await itineraryStorage.deleteItineraryStop(parseInt(req.params.id));
+    await itineraryStorage.deleteItineraryStop(parseInt(req.params.id!));
     res.json({ message: "Itinerary item deleted" });
   });
 
@@ -555,14 +555,14 @@ export function registerTripRoutes(app: Express) {
   app.post("/api/trips/:tripId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
     const event = await eventStorage.createEvent({
       ...req.body,
-      tripId: parseInt(req.params.tripId),
+      tripId: parseInt(req.params.tripId!),
     });
     res.json(event);
   });
 
   // Update event
   app.put("/api/events/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema), validateBody(updateEventSchema), async (req: AuthenticatedRequest, res) => {
-    const event = await eventStorage.updateEvent(parseInt(req.params.id), req.body);
+    const event = await eventStorage.updateEvent(parseInt(req.params.id!), req.body);
     if (!event) {
       return res.status(404).send("Event not found");
     }
@@ -571,7 +571,7 @@ export function registerTripRoutes(app: Express) {
 
   // Delete event
   app.delete("/api/events/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    await eventStorage.deleteEvent(parseInt(req.params.id));
+    await eventStorage.deleteEvent(parseInt(req.params.id!));
     res.json({ message: "Event deleted" });
   });
 

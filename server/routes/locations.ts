@@ -83,8 +83,11 @@ export function registerLocationRoutes(app: Express) {
       const transformedResults = results.map((location: any) => ({
         id: location.id,
         name: location.name,
+        location: location.location,
         country: location.country,
-        coordinates: location.coordinates,
+        city: location.city,
+        state_province: location.state_province,
+        country_code: location.country_code,
         description: location.description,
         imageUrl: location.image_url,
         createdAt: location.created_at,
@@ -125,7 +128,11 @@ export function registerLocationRoutes(app: Express) {
       const transformedLocation = {
         id: location.id,
         name: location.name,
+        location: location.location,
         country: location.country,
+        city: location.city,
+        state_province: location.state_province,
+        country_code: location.country_code,
         coordinates: location.coordinates,
         description: location.description,
         imageUrl: location.image_url,
@@ -159,8 +166,11 @@ export function registerLocationRoutes(app: Express) {
       // Prepare location data with proper field names
       const locationData = {
         name: req.body.name,
+        location: req.body.location || null,
         country: req.body.country,
-        coordinates: req.body.coordinates || null,
+        city: req.body.city || null,
+        state_province: req.body.state_province || null,
+        country_code: req.body.country_code || null,
         description: req.body.description || null,
         image_url: req.body.imageUrl || null
       };
@@ -192,7 +202,11 @@ export function registerLocationRoutes(app: Express) {
       const transformedLocation = {
         id: location.id,
         name: location.name,
+        location: location.location,
         country: location.country,
+        city: location.city,
+        state_province: location.state_province,
+        country_code: location.country_code,
         coordinates: location.coordinates,
         description: location.description,
         imageUrl: location.image_url,
@@ -236,7 +250,11 @@ export function registerLocationRoutes(app: Express) {
       // Prepare update data with proper field names
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.location !== undefined) updateData.location = req.body.location || null;
       if (req.body.country !== undefined) updateData.country = req.body.country;
+      if (req.body.city !== undefined) updateData.city = req.body.city || null;
+      if (req.body.state_province !== undefined) updateData.state_province = req.body.state_province || null;
+      if (req.body.country_code !== undefined) updateData.country_code = req.body.country_code || null;
       if (req.body.coordinates !== undefined) updateData.coordinates = req.body.coordinates || null;
       if (req.body.description !== undefined) updateData.description = req.body.description || null;
       if (req.body.imageUrl !== undefined) {
@@ -268,7 +286,11 @@ export function registerLocationRoutes(app: Express) {
       const transformedLocation = {
         id: location.id,
         name: location.name,
+        location: location.location,
         country: location.country,
+        city: location.city,
+        state_province: location.state_province,
+        country_code: location.country_code,
         coordinates: location.coordinates,
         description: location.description,
         imageUrl: location.image_url,
@@ -1324,6 +1346,10 @@ export function registerLocationRoutes(app: Express) {
         id: resort.id,
         name: resort.name,
         location: resort.location,
+        city: resort.city,
+        state_province: resort.state_province,
+        country: resort.country,
+        country_code: resort.country_code,
         capacity: resort.capacity,
         roomCount: resort.room_count,
         imageUrl: resort.image_url,
@@ -1400,18 +1426,22 @@ export function registerLocationRoutes(app: Express) {
       }
 
       // Validate required fields
-      const { name, location } = req.body;
+      const { name, country } = req.body;
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
       }
-      if (!location) {
-        return res.status(400).json({ error: 'Location is required' });
+      if (!country) {
+        return res.status(400).json({ error: 'Country is required' });
       }
 
       // Prepare resort data with proper field names for database
       const resortData = {
         name: req.body.name,
         location: req.body.location,
+        city: req.body.city || null,
+        state_province: req.body.state_province || null,
+        country: req.body.country,
+        country_code: req.body.country_code || null,
         capacity: req.body.capacity || null,
         room_count: req.body.roomCount || null,
         image_url: req.body.imageUrl || null,
@@ -1478,6 +1508,10 @@ export function registerLocationRoutes(app: Express) {
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
       if (req.body.location !== undefined) updateData.location = req.body.location;
+      if (req.body.city !== undefined) updateData.city = req.body.city || null;
+      if (req.body.state_province !== undefined) updateData.state_province = req.body.state_province || null;
+      if (req.body.country !== undefined) updateData.country = req.body.country;
+      if (req.body.country_code !== undefined) updateData.country_code = req.body.country_code || null;
       if (req.body.capacity !== undefined) updateData.capacity = req.body.capacity;
       if (req.body.roomCount !== undefined) {
         updateData.room_count = req.body.roomCount || null;

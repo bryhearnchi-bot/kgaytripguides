@@ -8,6 +8,14 @@
 - ❌ NEVER use `USE_MOCK_DATA=true` - always use Supabase
 - 🔥 **ANY DATABASE OPERATION MUST GO TO SUPABASE - NO EXCEPTIONS**
 
+## 🚨 CRITICAL API FIELD NAMING RULE - READ FIRST
+**ALL API RESPONSES USE SNAKE_CASE FIELD NAMES FROM DATABASE. PERIOD.**
+- ✅ API responses return: `location_text`, `state_province`, `country_code`, `phone_number`
+- ❌ NEVER map from camelCase: `locationText`, `stateProvince`, `countryCode`, `phoneNumber`
+- ✅ Profile context mapping: `data.location_text`, `data.state_province`, `data.country_code`
+- ❌ NEVER use: `data.locationText`, `data.stateProvince`, `data.countryCode`
+- 🔥 **API FIELD NAMES ARE SNAKE_CASE - ALWAYS CHECK API RESPONSE STRUCTURE FIRST**
+
 ## 🚨 CRITICAL PAGE CREATION RULE - READ FIRST
 **NEVER CREATE NEW PAGES - ONLY UPDATE EXISTING ONES. PERIOD.**
 - ✅ Update existing pages: modify `/pages/admin/ships.tsx`, `/pages/admin/locations.tsx`, etc.
@@ -252,6 +260,17 @@ npm run api:docs              # View API docs at localhost:3001/api/docs
 **Image Handling:**
 - Supabase Storage buckets
 - Format: `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
+
+**Location Search System:**
+- **Photon API**: OpenStreetMap-based global location search service
+- **Service**: `client/src/lib/location-service.ts` - Core location search implementation
+- **Component**: `client/src/components/admin/LocationSearchBar.tsx` - Admin UI component
+- **Data Flow**: User types → Photon API → Formatted results → Form fields → Supabase database
+- **Fields Populated**: city, state_province, country, country_code (ISO 2-letter)
+- **API Endpoint**: `https://photon.komoot.io/api/` - Free, no authentication required
+- **Response Format**: GeoJSON with properties (name, country, state, osm_type, etc.)
+- **Debouncing**: 300ms delay to prevent API spam
+- **Error Handling**: Graceful fallback with user-friendly error messages
 
 ---
 

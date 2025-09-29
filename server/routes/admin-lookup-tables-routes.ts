@@ -53,6 +53,10 @@ const locationTypeSchema = z.object({
   type: z.string().min(1).max(100).trim()
 });
 
+const charterCompanySchema = z.object({
+  name: z.string().min(1).max(100).trim()
+});
+
 // Table configuration
 const TABLES = {
   'venue-types': {
@@ -84,6 +88,12 @@ const TABLES = {
     schema: locationTypeSchema,
     nameField: 'type',
     displayName: 'Location Types'
+  },
+  'charter-companies': {
+    table: 'charter_companies',
+    schema: charterCompanySchema,
+    nameField: 'name',
+    displayName: 'Charter Companies'
   }
 };
 

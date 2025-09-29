@@ -105,10 +105,10 @@ export {
 
 // Location schemas
 export {
-  createPortSchema,
-  updatePortSchema,
-  portFilterSchema,
-  portTypeEnum,
+  createLocationSchema,
+  updateLocationSchema,
+  locationFilterSchema,
+  locationTypeEnum,
   regionEnum,
   createShipSchema,
   updateShipSchema,

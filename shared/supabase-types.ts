@@ -38,6 +38,27 @@ export type Database = {
         }
         Relationships: []
       }
+      charter_companies: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string | null
@@ -859,6 +880,7 @@ export type Database = {
       }
       trips: {
         Row: {
+          charter_company_id: number | null
           created_at: string | null
           created_by: string | null
           cruise_line: string | null
@@ -881,6 +903,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          charter_company_id?: number | null
           created_at?: string | null
           created_by?: string | null
           cruise_line?: string | null
@@ -903,6 +926,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          charter_company_id?: number | null
           created_at?: string | null
           created_by?: string | null
           cruise_line?: string | null
@@ -925,6 +949,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_charter_company_id_fkey"
+            columns: ["charter_company_id"]
+            isOneToOne: false
+            referencedRelation: "charter_companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trips_resort_id_fkey"
             columns: ["resort_id"]
@@ -1290,39 +1321,42 @@ export const Constants = {
   },
 } as const
 
-// Additional type exports for the new structure
-export type TripInfoSection = Tables<'trip_info_sections'>
-export type TripSectionAssignment = Tables<'trip_section_assignments'>
-
-// Enhanced types for the redesigned structure
+// Custom interfaces for enhanced type support
 export interface InfoSection {
   id: number;
   title: string;
   content: string | null;
-  sectionType: 'general' | 'trip_specific';
-  updatedBy: string | null;
-  updatedAt: string | null;
+  section_type: 'general' | 'trip_specific';
+  updated_by?: string | null;
+  updated_at?: string | null;
   assignment?: {
     id: number;
-    tripId: number;
-    orderIndex: number;
+    trip_id: number;
+    order_index: number;
   };
 }
 
 export interface SectionAssignment {
   id: number;
-  tripId: number;
-  sectionId: number;
-  orderIndex: number;
-  createdAt: string | null;
-  updatedAt: string | null;
+  trip_id: number;
+  section_id: number;
+  order_index: number;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
-// Legacy compatibility types
-export type Profile = Tables<'profiles'>
-export type Trip = Tables<'trips'>
-export type Itinerary = Tables<'itinerary'>
-export type Event = Tables<'events'>
-export type Talent = Tables<'talent'>
-export type TalentCategory = Tables<'talent_categories'>
-export type Settings = Tables<'security_audit_log'> // Placeholder - adjust as needed
+export interface CharterCompany {
+  id: number;
+  name: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+// Additional table type exports for storage layer
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type Trip = Database['public']['Tables']['trips']['Row'];
+export type Itinerary = Database['public']['Tables']['itinerary']['Row'];
+export type Event = Database['public']['Tables']['events']['Row'];
+export type Talent = Database['public']['Tables']['talent']['Row'];
+export type TalentCategory = Database['public']['Tables']['talent_categories']['Row'];
+export type Settings = Database['public']['Tables']['settings']['Row'];

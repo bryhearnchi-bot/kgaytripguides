@@ -97,8 +97,8 @@ export function EnhancedTripsTable({
 
     setIsResizing(columnKey);
     resizeStartPos.current = e.clientX;
-    resizeStartWidth.current = columnWidths[columnKey] || defaultColumnWidths[columnKey as keyof typeof defaultColumnWidths] || 150;
-    nextColumnStartWidth.current = columnWidths[nextColumn.key] || defaultColumnWidths[nextColumn.key as keyof typeof defaultColumnWidths] || 150;
+    resizeStartWidth.current = (columnWidths as Record<string, number>)[columnKey] || (defaultColumnWidths as Record<string, number>)[columnKey] || 150;
+    nextColumnStartWidth.current = (columnWidths as Record<string, number>)[nextColumn.key] || (defaultColumnWidths as Record<string, number>)[nextColumn.key] || 150;
     nextColumnKey.current = nextColumn.key;
   }, [columnWidths, defaultColumnWidths, columns]);
 
