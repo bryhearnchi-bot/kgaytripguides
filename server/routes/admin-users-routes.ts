@@ -53,10 +53,16 @@ const createUserSchema = z.object({
   bio: z.string().optional(),
   website: z.string().optional(),
   phone_number: z.string().optional(),
-  // Location fields
+  // Location fields (support both camelCase and snake_case)
+  location_text: z.string().optional(),
+  locationText: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  state_province: z.string().optional(),
+  stateProvince: z.string().optional(),
   country: z.string().optional(),
+  country_code: z.string().optional(),
+  countryCode: z.string().optional(),
   // Social links
   instagram: z.string().optional(),
   twitter: z.string().optional(),
@@ -184,7 +190,7 @@ const userStatusSchema = z.object({
 const querySchema = z.object({
   search: z.string().optional(),
   role: z.string().optional(),
-  status: z.enum(['active', 'inactive']).optional(),
+  status: z.enum(['active', 'inactive', 'all']).optional(),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20)
 });
@@ -250,7 +256,7 @@ export function registerAdminUsersRoutes(app: Express) {
         }
       }));
 
-      res.json({
+      return res.json({
         users: mappedUsers,
         pagination: {
           page: query.page,
