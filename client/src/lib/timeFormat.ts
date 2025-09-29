@@ -30,7 +30,9 @@ export function parseTime(timeStr: string): ParsedTime | null {
   return null;
 }
 
-export function formatTime(timeStr: string, format: TimeFormat): string {
+export function formatTime(timeStr: string | undefined, format: TimeFormat): string {
+  if (!timeStr) return '—';
+
   const parsed = parseTime(timeStr);
   if (!parsed) return timeStr;
 
@@ -47,7 +49,9 @@ export function formatTime(timeStr: string, format: TimeFormat): string {
   }
 }
 
-export function formatAllAboard(departTime: string, format: TimeFormat): string {
+export function formatAllAboard(departTime: string | undefined, format: TimeFormat): string {
+  if (!departTime) return '—';
+
   const parsed = parseTime(departTime);
   if (!parsed) return departTime;
 

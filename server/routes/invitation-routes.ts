@@ -152,7 +152,7 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
     }
 
     return data as InvitationTable;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching invitation:', error);
     return null;
   }
@@ -202,7 +202,7 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
       usedBy: data.used_by,
       createdAt: new Date(data.created_at),
     } as InvitationTable;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating invitation:', error);
     throw new Error('Failed to create invitation in database');
   }
@@ -254,7 +254,7 @@ async function updateInvitationInDb(id: string, updates: Partial<InvitationTable
       usedBy: data.used_by,
       createdAt: new Date(data.created_at),
     } as InvitationTable;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating invitation:', error);
     return null;
   }
@@ -282,7 +282,7 @@ async function checkExistingInvitation(email: string): Promise<boolean> {
     }
 
     return data && data.length > 0;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error checking existing invitation:', error);
     return false;
   }
@@ -307,7 +307,7 @@ async function checkUserExists(email: string): Promise<boolean> {
     }
 
     return data && data.length > 0;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error checking user existence:', error);
     return false;
   }
@@ -327,7 +327,7 @@ async function sendInvitationEmail(email: string, token: string, inviterName: st
       console.error('Failed to send invitation email:', result.error);
       return false;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error sending invitation email:', error);
     return false;
   }
@@ -379,7 +379,7 @@ async function findInvitationByToken(token: string): Promise<InvitationTable | n
     }
 
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error finding invitation by token:', error);
     return null;
   }
@@ -426,7 +426,7 @@ async function createUserFromInvitation(
       name: data.name,
       role: data.role,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating user account:', error);
     throw new Error('Failed to create user account');
   }
@@ -532,7 +532,7 @@ router.post(
         ...(process.env.NODE_ENV === 'development' && { token }),
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating invitation:', error);
       return res.status(500).json({
         error: 'Failed to create invitation',
@@ -652,7 +652,7 @@ router.get(
         },
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error listing invitations:', error);
       return res.status(500).json({
         error: 'Failed to fetch invitations',
@@ -723,7 +723,7 @@ router.delete(
         message: 'Invitation cancelled successfully'
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error cancelling invitation:', error);
       return res.status(500).json({
         error: 'Failed to cancel invitation',
@@ -814,7 +814,7 @@ router.post(
         ...(process.env.NODE_ENV === 'development' && { token }),
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error resending invitation:', error);
       return res.status(500).json({
         error: 'Failed to resend invitation',
@@ -832,7 +832,7 @@ router.get(
   '/invitations/validate/:token',
   invitationValidateRateLimit,
   validateParams(validateInvitationTokenSchema),
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { token } = req.params;
 
@@ -872,7 +872,7 @@ router.get(
         }
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error validating invitation:', error);
       return res.status(500).json({
         error: 'Validation failed',
@@ -890,7 +890,7 @@ router.post(
   '/invitations/accept',
   invitationAcceptRateLimit,
   validateBody(acceptInvitationSchema),
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { token, name, password } = req.body;
 
@@ -949,7 +949,7 @@ router.post(
         }
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error accepting invitation:', error);
       return res.status(500).json({
         error: 'Failed to create account',

@@ -15,7 +15,15 @@ export function dateOnly(isoString: string | null | undefined): Date {
 
   // Extract just the date part (YYYY-MM-DD)
   const dateStr = isoString.split('T')[0];
-  const [year, month, day] = dateStr.split('-').map(Number);
+  if (!dateStr) {
+    return new Date(); // Return current date as fallback
+  }
+
+  const parts = dateStr.split('-').map(Number);
+  const year = parts[0] || 2024;
+  const month = parts[1] || 1;
+  const day = parts[2] || 1;
+
   // Create date in local timezone with time at midnight
   return new Date(year, month - 1, day, 0, 0, 0, 0);
 }

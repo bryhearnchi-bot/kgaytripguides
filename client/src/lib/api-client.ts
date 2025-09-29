@@ -36,8 +36,8 @@ export async function apiClient(url: string, options: FetchOptions = {}): Promis
   }
 
   // Build headers
-  const requestHeaders: HeadersInit = {
-    ...headers,
+  const requestHeaders: Record<string, string> = {
+    ...(headers as Record<string, string>),
   };
 
   // Add content type for non-FormData bodies

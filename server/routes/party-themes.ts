@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { getSupabaseAdmin } from "../supabase-admin";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import {
@@ -24,7 +24,7 @@ export function registerPartyThemeRoutes(app: Express) {
   // ============ PARTY THEME ENDPOINTS ============
 
   // Get all party themes
-  app.get("/api/party-themes", async (req, res) => {
+  app.get("/api/party-themes", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { search, withCostumes } = req.query;
       const supabaseAdmin = getSupabaseAdmin();
@@ -58,14 +58,14 @@ export function registerPartyThemeRoutes(app: Express) {
       }));
 
       res.json(mappedThemes);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching party themes:', error);
       return res.status(500).json({ error: 'Failed to fetch party themes' });
     }
   });
 
   // Get party theme statistics
-  app.get("/api/party-themes/stats", async (req, res) => {
+  app.get("/api/party-themes/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
 
@@ -97,14 +97,14 @@ export function registerPartyThemeRoutes(app: Express) {
       };
 
       res.json(stats);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching party theme stats:', error);
       return res.status(500).json({ error: 'Failed to fetch statistics' });
     }
   });
 
   // Get party theme by ID
-  app.get("/api/party-themes/:id", validateParams(idParamSchema), async (req, res) => {
+  app.get("/api/party-themes/:id", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: theme, error } = await supabaseAdmin
@@ -135,14 +135,14 @@ export function registerPartyThemeRoutes(app: Express) {
       };
 
       res.json(mappedTheme);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching party theme:', error);
       return res.status(500).json({ error: 'Failed to fetch party theme' });
     }
   });
 
   // Get events using a party theme
-  app.get("/api/party-themes/:id/events", validateParams(idParamSchema), async (req, res) => {
+  app.get("/api/party-themes/:id/events", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: events, error } = await supabaseAdmin
@@ -158,7 +158,7 @@ export function registerPartyThemeRoutes(app: Express) {
       }
 
       res.json(events || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching events for party theme:', error);
       return res.status(500).json({ error: 'Failed to fetch events' });
     }
@@ -415,7 +415,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Check party theme usage
-  app.get("/api/party-themes/:id/usage", validateParams(idParamSchema), async (req, res) => {
+  app.get("/api/party-themes/:id/usage", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const supabaseAdmin = getSupabaseAdmin();
@@ -438,7 +438,7 @@ export function registerPartyThemeRoutes(app: Express) {
       };
 
       res.json(usage);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error checking party theme usage:', error);
       return res.status(500).json({ error: 'Failed to check usage' });
     }

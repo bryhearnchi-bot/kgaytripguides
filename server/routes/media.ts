@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { getSupabaseAdmin, isSupabaseAdminAvailable } from "../supabase-admin";
 import { requireContentEditor, type AuthenticatedRequest } from "../auth";
 import { upload, uploadToSupabase, getPublicImageUrl, deleteImage, isValidImageUrl, downloadImageFromUrl } from "../image-utils";
@@ -31,14 +31,15 @@ export function registerMediaRoutes(app: Express) {
 
       try {
         // Upload to Supabase Storage
-        const publicUrl = await uploadToSupabase(file, req.params.type);
+        const imageType = req.params.type || 'general';
+        const publicUrl = await uploadToSupabase(file, imageType);
 
-        res.json({
+        return res.json({
           url: publicUrl,
           filename: file.originalname,
           originalName: file.originalname,
           size: file.size,
-          type: req.params.type
+          type: imageType
         });
       } catch (uploadError: any) {
         return res.status(500).json({
@@ -59,7 +60,7 @@ export function registerMediaRoutes(app: Express) {
 
       // Download and upload to Supabase Storage
       const publicUrl = await downloadImageFromUrl(url, type, name);
-      res.json({ url: publicUrl });
+      return res.json({ url: publicUrl });
     } catch (error: any) {
       console.error('Error downloading image from URL:', error);
       return res.status(500).json({ error: error.message || 'Failed to download image' });
@@ -76,8 +77,8 @@ export function registerMediaRoutes(app: Express) {
       }
 
       await deleteImage(url);
-      res.json({ message: 'Image deleted successfully' });
-    } catch (error) {
+      return res.json({ message: 'Image deleted successfully' });
+    } catch (error: unknown) {
       console.error('Error deleting image:', error);
       return res.status(500).json({ error: 'Failed to delete image' });
     }
@@ -86,7 +87,7 @@ export function registerMediaRoutes(app: Express) {
   // ============ TALENT ENDPOINTS ============
 
   // Get all talent categories
-  app.get("/api/talent-categories", async (req, res) => {
+  app.get("/api/talent-categories", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: categories, error } = await supabaseAdmin
@@ -99,8 +100,8 @@ export function registerMediaRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch talent categories' });
       }
 
-      res.json(categories || []);
-    } catch (error) {
+      return res.json(categories || []);
+    } catch (error: unknown) {
       console.error('Error fetching talent categories:', error);
       return res.status(500).json({ error: 'Failed to fetch talent categories' });
     }
@@ -127,7 +128,7 @@ export function registerMediaRoutes(app: Express) {
           tripId,
           talentIds
         });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error bulk assigning talent:', error);
         return res.status(500).json({ error: 'Failed to assign talent' });
       }
@@ -135,7 +136,7 @@ export function registerMediaRoutes(app: Express) {
   );
 
   // Get talent statistics
-  app.get("/api/talent/stats", async (req, res) => {
+  app.get("/api/talent/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
 
@@ -174,15 +175,15 @@ export function registerMediaRoutes(app: Express) {
         }
       }
 
-      res.json({ total: totalCount || 0, byCategory });
-    } catch (error) {
+      return res.json({ total: totalCount || 0, byCategory });
+    } catch (error: unknown) {
       console.error('Error fetching talent stats:', error);
       return res.status(500).json({ error: 'Failed to fetch talent statistics' });
     }
   });
 
   // List all talent with optional filtering
-  app.get("/api/talent", async (req, res) => {
+  app.get("/api/talent", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         search = '',
@@ -248,17 +249,17 @@ export function registerMediaRoutes(app: Express) {
         category: talent.talent_categories?.category
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching talent:', error);
       return res.status(500).json({ error: 'Failed to fetch talent' });
     }
   });
 
   // Get talent by ID
-  app.get("/api/talent/:id", async (req, res) => {
+  app.get("/api/talent/:id", async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id || '0');
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid talent ID" });
       }
@@ -305,17 +306,17 @@ export function registerMediaRoutes(app: Express) {
         category: (talentItem as any).talent_categories?.category
       };
 
-      res.json(transformedTalent);
-    } catch (error) {
+      return res.json(transformedTalent);
+    } catch (error: unknown) {
       console.error('Error fetching talent:', error);
       return res.status(500).json({ error: 'Failed to fetch talent' });
     }
   });
 
   // Get talent for a trip
-  app.get("/api/trips/:tripId/talent", async (req, res) => {
+  app.get("/api/trips/:tripId/talent", async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const tripId = parseInt(req.params.tripId);
+      const tripId = parseInt(req.params.tripId || '0');
       if (isNaN(tripId)) {
         return res.status(400).json({ error: "Invalid trip ID" });
       }
@@ -361,8 +362,8 @@ export function registerMediaRoutes(app: Express) {
         role: talent.trip_talent?.role
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching talent for trip:', error);
       return res.status(500).json({ error: 'Failed to fetch talent for trip' });
     }
@@ -475,8 +476,8 @@ export function registerMediaRoutes(app: Express) {
         updatedAt: talentItem.updated_at
       };
 
-      res.json(transformedTalent);
-    } catch (error) {
+      return res.json(transformedTalent);
+    } catch (error: unknown) {
       console.error('Error creating talent:', error);
       return res.status(500).json({ error: 'Failed to create talent' });
     }
@@ -485,7 +486,7 @@ export function registerMediaRoutes(app: Express) {
   // Update talent
   app.put("/api/talent/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id || '0');
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid talent ID" });
       }
@@ -533,8 +534,8 @@ export function registerMediaRoutes(app: Express) {
         updatedAt: talentItem.updated_at
       };
 
-      res.json(transformedTalent);
-    } catch (error) {
+      return res.json(transformedTalent);
+    } catch (error: unknown) {
       console.error('Error updating talent:', error);
       return res.status(500).json({ error: 'Failed to update talent' });
     }
@@ -543,7 +544,7 @@ export function registerMediaRoutes(app: Express) {
   // Delete talent
   app.delete("/api/talent/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id || '0');
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid talent ID" });
       }
@@ -559,8 +560,8 @@ export function registerMediaRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to delete talent' });
       }
 
-      res.json({ message: "Talent deleted" });
-    } catch (error) {
+      return res.json({ message: "Talent deleted" });
+    } catch (error: unknown) {
       console.error('Error deleting talent:', error);
       return res.status(500).json({ error: 'Failed to delete talent' });
     }
@@ -583,7 +584,7 @@ export function registerMediaRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to get max ID from talent table' });
       }
 
-      const maxId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id : 0;
+      const maxId = (maxIdData && maxIdData.length > 0 ? maxIdData[0]?.id : 0) || 0;
       const nextId = maxId + 1;
 
       console.log(`Current max ID in talent table: ${maxId}`);
@@ -636,7 +637,7 @@ export function registerMediaRoutes(app: Express) {
       // Step 3: Verify the fix
       console.log('Sequence reset successful');
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Talent sequence fixed successfully',
         details: {
@@ -646,7 +647,7 @@ export function registerMediaRoutes(app: Express) {
         }
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fixing talent sequence:', error);
       return res.status(500).json({
         error: 'Failed to fix talent sequence',
@@ -658,8 +659,8 @@ export function registerMediaRoutes(app: Express) {
   // Assign talent to trip
   app.post("/api/trips/:tripId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const tripId = parseInt(req.params.tripId);
-      const talentId = parseInt(req.params.talentId);
+      const tripId = parseInt(req.params.tripId || '0');
+      const talentId = parseInt(req.params.talentId || '0');
       if (isNaN(tripId) || isNaN(talentId)) {
         return res.status(400).json({ error: "Invalid trip or talent ID" });
       }
@@ -678,8 +679,8 @@ export function registerMediaRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to assign talent to trip' });
       }
 
-      res.json({ message: "Talent assigned to trip" });
-    } catch (error) {
+      return res.json({ message: "Talent assigned to trip" });
+    } catch (error: unknown) {
       console.error('Error assigning talent to trip:', error);
       return res.status(500).json({ error: 'Failed to assign talent to trip' });
     }
@@ -688,8 +689,8 @@ export function registerMediaRoutes(app: Express) {
   // Remove talent from trip
   app.delete("/api/trips/:tripId/talent/:talentId", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     try {
-      const tripId = parseInt(req.params.tripId);
-      const talentId = parseInt(req.params.talentId);
+      const tripId = parseInt(req.params.tripId || '0');
+      const talentId = parseInt(req.params.talentId || '0');
       if (isNaN(tripId) || isNaN(talentId)) {
         return res.status(400).json({ error: "Invalid trip or talent ID" });
       }
@@ -706,8 +707,8 @@ export function registerMediaRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to remove talent from trip' });
       }
 
-      res.json({ message: "Talent removed from trip" });
-    } catch (error) {
+      return res.json({ message: "Talent removed from trip" });
+    } catch (error: unknown) {
       console.error('Error removing talent from trip:', error);
       return res.status(500).json({ error: 'Failed to remove talent from trip' });
     }

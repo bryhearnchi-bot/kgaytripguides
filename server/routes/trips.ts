@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import {
   tripStorage,
   itineraryStorage,
@@ -40,7 +40,7 @@ export function registerTripRoutes(app: Express) {
   app.post("/api/trips/:id/duplicate",
     requireContentEditor,
     validateParams(idParamSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
       const { newName, newSlug } = req.body;
 
@@ -71,7 +71,7 @@ export function registerTripRoutes(app: Express) {
         // Copy related data (itinerary, events, etc.) using batch operations
         const itinerary = await itineraryStorage.getItineraryByTrip(tripId);
         if (itinerary.length > 0) {
-          const itineraryToCopy = itinerary.map(item => ({
+          const itineraryToCopy = itinerary.map((item: any) => ({
             ...item,
             id: undefined,
             tripId: duplicatedTrip.id
@@ -79,7 +79,7 @@ export function registerTripRoutes(app: Express) {
           await itineraryStorage.bulkCreateItineraryStops(itineraryToCopy as any[]);
         }
 
-        res.json(duplicatedTrip);
+        return res.json(duplicatedTrip);
     })
   );
 
@@ -88,7 +88,7 @@ export function registerTripRoutes(app: Express) {
     bulkRateLimit,
     requireContentEditor,
     validateBody(bulkEventsSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { tripId, events } = req.body;
       const results = [];
 
@@ -108,7 +108,7 @@ export function registerTripRoutes(app: Express) {
     requireContentEditor,
     validateParams(idParamSchema),
     validateBody(exportTripSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
       const { format = 'json', includeRelated = true } = req.body;
 
@@ -122,8 +122,8 @@ export function registerTripRoutes(app: Express) {
         let exportData: any = { trip };
 
         if (includeRelated) {
-          exportData.itinerary = await itineraryStorage.getItineraryByTrip(parseInt(id));
-          exportData.events = await eventStorage.getEventsByTrip(parseInt(id));
+          exportData.itinerary = await itineraryStorage.getItineraryByTrip(tripId);
+          exportData.events = await eventStorage.getEventsByTrip(tripId);
           // Add more related data as needed
         }
 
@@ -131,13 +131,13 @@ export function registerTripRoutes(app: Express) {
           // Convert to CSV format
           // This would require a CSV library or custom implementation
           res.setHeader('Content-Type', 'text/csv');
-          res.setHeader('Content-Disposition', `attachment; filename="trip-${id}.csv"`);
+          res.setHeader('Content-Disposition', `attachment; filename="trip-${tripId}.csv"`);
           // Send CSV data
-          res.send('CSV export not yet implemented');
+          return res.send('CSV export not yet implemented');
         } else {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="trip-${tripId}.json"`);
-          res.json(exportData);
+          return res.json(exportData);
         }
     })
   );
@@ -147,7 +147,7 @@ export function registerTripRoutes(app: Express) {
     bulkRateLimit,
     requireContentEditor,
     validateBody(importTripSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { data, format = 'json', overwrite = false } = req.body;
 
       if (format !== 'json') {
@@ -176,7 +176,7 @@ export function registerTripRoutes(app: Express) {
 
         // Import related data using batch operations
         if (itinerary && itinerary.length > 0) {
-          const itineraryToImport = itinerary.map(item => ({
+          const itineraryToImport = itinerary.map((item: any) => ({
             ...item,
             id: undefined,
             tripId: importedTrip.id
@@ -185,7 +185,7 @@ export function registerTripRoutes(app: Express) {
         }
 
         if (events && events.length > 0) {
-          const eventsToImport = events.map(event => ({
+          const eventsToImport = events.map((event: any) => ({
             ...event,
             id: undefined,
             tripId: importedTrip.id
@@ -193,7 +193,7 @@ export function registerTripRoutes(app: Express) {
           await eventStorage.bulkCreateEvents(eventsToImport);
         }
 
-        res.json({ success: true, trip: importedTrip });
+        return res.json({ success: true, trip: importedTrip });
     })
   );
 
@@ -233,7 +233,7 @@ export function registerTripRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch trips' });
       }
 
-      res.json({
+      return res.json({
         trips: results || [],
         pagination: {
           total: total || 0,
@@ -242,7 +242,7 @@ export function registerTripRoutes(app: Express) {
           totalPages: Math.ceil((total || 0) / limitNum)
         }
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching admin trips:', error);
       return res.status(500).json({ error: 'Failed to fetch trips' });
     }
@@ -258,9 +258,9 @@ export function registerTripRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid status' });
       }
 
-      const trip = await tripStorage.updateTrip(parseInt(id), { status });
-      res.json(trip);
-    } catch (error) {
+      const trip = await tripStorage.updateTrip(parseInt(id || '0'), { status });
+      return res.json(trip);
+    } catch (error: unknown) {
       console.error('Error updating trip status:', error);
       return res.status(500).json({ error: 'Failed to update trip status' });
     }
@@ -305,8 +305,8 @@ export function registerTripRoutes(app: Express) {
           }, 0) / trips.filter(t => t.max_capacity > 0).length : 0
       };
 
-      res.json(stats);
-    } catch (error) {
+      return res.json(stats);
+    } catch (error: unknown) {
       console.error('Error fetching trip stats:', error);
       return res.status(500).json({ error: 'Failed to fetch trip statistics' });
     }
@@ -314,115 +314,115 @@ export function registerTripRoutes(app: Express) {
 
 
   // Get cruise by ID
-  app.get("/api/trips/id/:id", async (req, res) => {
-    const trip = await tripStorage.getTripById(parseInt(req.params.id));
+  app.get("/api/trips/id/:id", async (req: AuthenticatedRequest, res: Response) => {
+    const trip = await tripStorage.getTripById(parseInt(req.params.id || '0'));
     if (!trip) {
       return res.status(404).send("Trip not found");
     }
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Get trip by slug
-  app.get("/api/trips/:slug", async (req, res) => {
-    const trip = await tripStorage.getTripBySlug(req.params.slug);
+  app.get("/api/trips/:slug", async (req: AuthenticatedRequest, res: Response) => {
+    const trip = await tripStorage.getTripBySlug(req.params.slug || '');
     if (!trip) {
       return res.status(404).send("Trip not found");
     }
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Create trip
   app.post("/api/trips", requireContentEditor, async (req: AuthenticatedRequest, res) => {
     const trip = await tripStorage.createTrip(req.body);
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Update trip
   app.put("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    const trip = await tripStorage.updateTrip(parseInt(req.params.id), req.body);
+    const trip = await tripStorage.updateTrip(parseInt(req.params.id || '0'), req.body);
     if (!trip) {
       return res.status(404).send("Trip not found");
     }
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Delete trip
   app.delete("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    await tripStorage.deleteTrip(parseInt(req.params.id));
-    res.json({ message: "Trip deleted" });
+    await tripStorage.deleteTrip(parseInt(req.params.id || '0'));
+    return res.json({ message: "Trip deleted" });
   });
 
   // ============ TRIP ENDPOINTS ============
 
   // List all trips (public)
-  app.get("/api/trips", async (req, res) => {
+  app.get("/api/trips", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const allTrips = await tripStorage.getAllTrips();
-      res.json(allTrips);
-    } catch (error) {
+      return res.json(allTrips);
+    } catch (error: unknown) {
       console.error('Error fetching trips:', error);
       return res.status(500).json({ error: 'Failed to fetch trips' });
     }
   });
 
   // Get upcoming trips
-  app.get("/api/trips/upcoming", async (req, res) => {
+  app.get("/api/trips/upcoming", async (req: AuthenticatedRequest, res: Response) => {
     const upcomingTrips = await tripStorage.getUpcomingTrips();
-    res.json(upcomingTrips);
+    return res.json(upcomingTrips);
   });
 
   // Get past trips
-  app.get("/api/trips/past", async (req, res) => {
+  app.get("/api/trips/past", async (req: AuthenticatedRequest, res: Response) => {
     const pastTrips = await tripStorage.getPastTrips();
-    res.json(pastTrips);
+    return res.json(pastTrips);
   });
 
   // Get trip by ID
-  app.get("/api/trips/id/:id", async (req, res) => {
-    const trip = await tripStorage.getTripById(parseInt(req.params.id));
+  app.get("/api/trips/id/:id", async (req: AuthenticatedRequest, res: Response) => {
+    const trip = await tripStorage.getTripById(parseInt(req.params.id || '0'));
     if (!trip) {
       return res.status(404).send("Trip not found");
     }
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Get trip by slug
-  app.get("/api/trips/:slug", async (req, res) => {
-    const trip = await tripStorage.getTripBySlug(req.params.slug);
+  app.get("/api/trips/:slug", async (req: AuthenticatedRequest, res: Response) => {
+    const trip = await tripStorage.getTripBySlug(req.params.slug || '');
     if (!trip) {
       return res.status(404).send("Trip not found");
     }
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Create trip
   app.post("/api/trips", adminRateLimit, requireContentEditor, validateBody(createTripSchema), async (req: AuthenticatedRequest, res) => {
     const trip = await tripStorage.createTrip(req.body);
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Update trip
   app.put("/api/trips/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema), validateBody(updateTripSchema), async (req: AuthenticatedRequest, res) => {
-    const trip = await tripStorage.updateTrip(parseInt(req.params.id), req.body);
+    const trip = await tripStorage.updateTrip(parseInt(req.params.id || '0'), req.body);
     if (!trip) {
       return res.status(404).send("Trip not found");
     }
-    res.json(trip);
+    return res.json(trip);
   });
 
   // Delete trip
   app.delete("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    await tripStorage.deleteTrip(parseInt(req.params.id));
-    res.json({ message: "Trip deleted" });
+    await tripStorage.deleteTrip(parseInt(req.params.id || '0'));
+    return res.json({ message: "Trip deleted" });
   });
 
   // ============ ITINERARY ENDPOINTS ============
 
 
   // Get itinerary for a trip
-  app.get("/api/trips/:tripId/itinerary", async (req, res) => {
-    const itinerary = await itineraryStorage.getItineraryByTrip(parseInt(req.params.tripId));
-    res.json(itinerary);
+  app.get("/api/trips/:tripId/itinerary", async (req: AuthenticatedRequest, res: Response) => {
+    const itinerary = await itineraryStorage.getItineraryByTrip(parseInt(req.params.tripId || '0'));
+    return res.json(itinerary);
   });
 
 
@@ -432,7 +432,7 @@ export function registerTripRoutes(app: Express) {
       ...req.body,
       tripId: parseInt(req.params.tripId!),
     });
-    res.json(item);
+    return res.json(item);
   });
 
   // Update itinerary item
@@ -441,7 +441,7 @@ export function registerTripRoutes(app: Express) {
     if (!item) {
       return res.status(404).send("Itinerary item not found");
     }
-    res.json(item);
+    return res.json(item);
   });
 
   // Delete itinerary item
@@ -453,7 +453,7 @@ export function registerTripRoutes(app: Express) {
   // ============ EVENT ENDPOINTS ============
 
   // Get event statistics
-  app.get("/api/events/stats", async (req, res) => {
+  app.get("/api/events/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: events, error } = await supabaseAdmin
@@ -472,14 +472,14 @@ export function registerTripRoutes(app: Express) {
       }, {}) || {};
 
       res.json({ total, byType });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching event stats:', error);
       return res.status(500).json({ error: 'Failed to fetch event statistics' });
     }
   });
 
   // List all events with optional filtering
-  app.get("/api/events", async (req, res) => {
+  app.get("/api/events", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         tripId,
@@ -523,7 +523,7 @@ export function registerTripRoutes(app: Express) {
       }
 
       res.json(results || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching events:', error);
       return res.status(500).json({ error: 'Failed to fetch events' });
     }
@@ -531,21 +531,21 @@ export function registerTripRoutes(app: Express) {
 
 
   // Get events for a trip
-  app.get("/api/trips/:tripId/events", async (req, res) => {
+  app.get("/api/trips/:tripId/events", async (req: AuthenticatedRequest, res: Response) => {
     const eventsList = await eventStorage.getEventsByTrip(parseInt(req.params.tripId));
     res.json(eventsList);
   });
 
 
   // Get events by date
-  app.get("/api/trips/:tripId/events/date/:date", async (req, res) => {
+  app.get("/api/trips/:tripId/events/date/:date", async (req: AuthenticatedRequest, res: Response) => {
     const eventsList = await eventStorage.getEventsByDate(parseInt(req.params.tripId), new Date(req.params.date));
     res.json(eventsList);
   });
 
 
   // Get events by type
-  app.get("/api/trips/:tripId/events/type/:type", async (req, res) => {
+  app.get("/api/trips/:tripId/events/type/:type", async (req: AuthenticatedRequest, res: Response) => {
     const eventsList = await eventStorage.getEventsByType(parseInt(req.params.tripId), req.params.type);
     res.json(eventsList);
   });
@@ -578,7 +578,7 @@ export function registerTripRoutes(app: Express) {
   // ============ TRIP INFO SECTIONS ============
 
   // Get complete trip info with all sections
-  app.get("/api/trips/:slug/complete", async (req, res) => {
+  app.get("/api/trips/:slug/complete", async (req: AuthenticatedRequest, res: Response) => {
     const { slug } = req.params;
     const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
     if (!tripData) {
@@ -589,7 +589,7 @@ export function registerTripRoutes(app: Express) {
 
 
   // Get info sections for a trip
-  app.get("/api/trips/:tripId/info-sections", async (req, res) => {
+  app.get("/api/trips/:tripId/info-sections", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: sections, error } = await supabaseAdmin
@@ -604,7 +604,7 @@ export function registerTripRoutes(app: Express) {
       }
 
       res.json(sections || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching info sections:', error);
       return res.status(500).json({ error: 'Failed to fetch info sections' });
     }
@@ -630,7 +630,7 @@ export function registerTripRoutes(app: Express) {
       }
 
       res.json(section);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating info section:', error);
       return res.status(500).json({ error: 'Failed to create info section' });
     }
@@ -663,7 +663,7 @@ export function registerTripRoutes(app: Express) {
       }
 
       res.json(section);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error updating info section:', error);
       return res.status(500).json({ error: 'Failed to update info section' });
     }
@@ -684,7 +684,7 @@ export function registerTripRoutes(app: Express) {
       }
 
       res.json({ message: 'Info section deleted' });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error deleting info section:', error);
       return res.status(500).json({ error: 'Failed to delete info section' });
     }

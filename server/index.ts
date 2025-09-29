@@ -75,7 +75,7 @@ app.get('/liveness', livenessProbe);
 app.get('/readiness', readinessProbe);
 app.get('/startup', startupProbe);
 
-app.head('/healthz', (req, res) => {
+app.head('/healthz', (req: AuthenticatedRequest, res: Response) => {
   res.writeHead(200);
   res.end();
 });
@@ -95,7 +95,7 @@ app.use(cdnHeaders);
 
 // Add HTTP compression for all responses
 app.use(compression({
-  filter: (req, res) => {
+  filter: (req: AuthenticatedRequest, res: Response) => {
     // Don't compress responses with this request header
     if (req.headers['x-no-compression']) {
       return false;

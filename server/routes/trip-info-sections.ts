@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { getSupabaseAdmin } from "../supabase-admin";
 import { requireAuth, requireContentEditor, type AuthenticatedRequest } from "../auth";
 import {
@@ -41,7 +41,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   // ============ SECTION MANAGEMENT ENDPOINTS ============
 
   // Get all sections (library view) - with optional type filtering
-  app.get("/api/trip-info-sections", async (req, res) => {
+  app.get("/api/trip-info-sections", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { type } = req.query;
@@ -63,14 +63,14 @@ export function registerTripInfoSectionRoutes(app: Express) {
       }
 
       res.json(sections || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching trip info sections:', error);
       return res.status(500).json({ error: 'Failed to fetch trip info sections' });
     }
   });
 
   // Get only general (reusable) sections
-  app.get("/api/trip-info-sections/general", async (req, res) => {
+  app.get("/api/trip-info-sections/general", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: sections, error } = await supabaseAdmin
@@ -85,14 +85,14 @@ export function registerTripInfoSectionRoutes(app: Express) {
       }
 
       res.json(sections || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching general sections:', error);
       return res.status(500).json({ error: 'Failed to fetch general sections' });
     }
   });
 
   // Get sections for a specific trip (via assignments)
-  app.get("/api/trip-info-sections/trip/:tripId", validateParams(z.object({ tripId: z.string().transform(Number) })), async (req, res) => {
+  app.get("/api/trip-info-sections/trip/:tripId", validateParams(z.object({ tripId: z.string().transform(Number) })), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: sections, error } = await supabaseAdmin
@@ -128,14 +128,14 @@ export function registerTripInfoSectionRoutes(app: Express) {
       }));
 
       res.json(transformedSections);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching trip sections:', error);
       return res.status(500).json({ error: 'Failed to fetch trip sections' });
     }
   });
 
   // Get section by ID
-  app.get("/api/trip-info-sections/:id", validateParams(idParamSchema), async (req, res) => {
+  app.get("/api/trip-info-sections/:id", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: section, error } = await supabaseAdmin
@@ -153,7 +153,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
       }
 
       res.json(section);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching trip info section:', error);
       return res.status(500).json({ error: 'Failed to fetch trip info section' });
     }

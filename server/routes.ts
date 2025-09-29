@@ -67,23 +67,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   // Backward compatibility redirects for old image paths
-  app.use('/cruise-images', (req, res) => {
+  app.use('/cruise-images', (req: AuthenticatedRequest, res: Response) => {
     res.redirect(301, `/app-images/trips${req.url}`);
   });
 
-  app.use('/talent-images', (req, res) => {
+  app.use('/talent-images', (req: AuthenticatedRequest, res: Response) => {
     res.redirect(301, `/app-images/talent${req.url}`);
   });
 
-  app.use('/port-images', (req, res) => {
+  app.use('/port-images', (req: AuthenticatedRequest, res: Response) => {
     res.redirect(301, `/app-images/locations${req.url}`);
   });
 
-  app.use('/party-images', (req, res) => {
+  app.use('/party-images', (req: AuthenticatedRequest, res: Response) => {
     res.redirect(301, `/app-images/parties${req.url}`);
   });
 
-  app.use('/ship-images', (req, res) => {
+  app.use('/ship-images', (req: AuthenticatedRequest, res: Response) => {
     res.redirect(301, `/app-images/ships${req.url}`);
   });
 
@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ ERROR HANDLING ============
 
   // 404 handler for API routes - maintains backwards compatibility
-  app.use('/api/*', (req, res) => {
+  app.use('/api/*', (req: AuthenticatedRequest, res: Response) => {
     // Use notFoundHandler for consistent error format
     notFoundHandler(req, res);
   });

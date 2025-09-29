@@ -390,7 +390,7 @@ export class EventStorage implements IEventStorage {
     const supabaseAdmin = getSupabaseAdmin();
 
     // Add trip_id to all events and prepare for upsert
-    const eventsWithTripId = events.map(event => ({ ...event, trip_id: tripId }));
+    const eventsWithTripId = events.map((event: any) => ({ ...event, trip_id: tripId }));
 
     const { data: upsertedEvents, error } = await supabaseAdmin
       .from('events')
@@ -913,7 +913,7 @@ export async function getPerformanceMetrics() {
       },
       timestamp: new Date().toISOString()
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       database: {
         status: 'error',
@@ -937,7 +937,7 @@ export async function warmUpCaches() {
       supabaseAdmin.from('talent').select('id').limit(5)
     ]);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Cache warmup failed:', error);
     return false;
   }

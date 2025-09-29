@@ -310,7 +310,7 @@ async function seedProduction() {
       throw eventsFetchError;
     }
 
-    const existingEventKeys = (existingEvents || []).map(e =>
+    const existingEventKeys = (existingEvents || []).map((e: any) =>
       `${new Date(e.date).toISOString().split('T')[0]}-${e.time}-${e.title}`
     );
 
@@ -375,7 +375,7 @@ async function seedProduction() {
     console.log(`   - New itinerary stops: ${newItineraryCount}`);
     console.log(`   - New events added: ${newEventCount}`);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Error in production seeding:', error);
     throw error;
   }

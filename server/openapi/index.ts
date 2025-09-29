@@ -85,7 +85,7 @@ const swaggerUiOptions = {
  */
 export function setupSwaggerDocs(app: Express): void {
   // Serve the OpenAPI specification as JSON
-  app.get('/api/docs/swagger.json', (req, res) => {
+  app.get('/api/docs/swagger.json', (req: AuthenticatedRequest, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });
@@ -95,7 +95,7 @@ export function setupSwaggerDocs(app: Express): void {
   app.get('/api/docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
   // Alternative endpoint for OpenAPI spec
-  app.get('/api/openapi.json', (req, res) => {
+  app.get('/api/openapi.json', (req: AuthenticatedRequest, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });

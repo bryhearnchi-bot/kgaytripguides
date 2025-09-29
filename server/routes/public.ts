@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { getSupabaseAdmin } from "../supabase-admin";
 import { z } from "zod";
@@ -91,7 +91,7 @@ export function registerPublicRoutes(app: Express) {
         }
 
         res.json(stats);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error fetching dashboard stats:', error);
         return res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
       }
@@ -122,7 +122,7 @@ export function registerPublicRoutes(app: Express) {
 
             if (error) throw error;
             health.database = { status: 'connected' };
-          } catch (error) {
+          } catch (error: unknown) {
             health.database = { status: 'disconnected', error: (error as Error).message };
             health.status = 'degraded';
           }
@@ -143,7 +143,7 @@ export function registerPublicRoutes(app: Express) {
         }
 
         res.json(health);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error checking system health:', error);
         return res.status(500).json({
           status: 'unhealthy',
@@ -160,7 +160,7 @@ export function registerPublicRoutes(app: Express) {
   app.get("/api/search/global",
     searchRateLimit,
     validateQuery(globalSearchSchema),
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res: Response) => {
       try {
         const {
           q = '',
@@ -240,7 +240,7 @@ export function registerPublicRoutes(app: Express) {
         }
 
         res.json(results);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error performing global search:', error);
         return res.status(500).json({ error: 'Failed to perform search' });
       }
@@ -250,7 +250,7 @@ export function registerPublicRoutes(app: Express) {
   // ============ SETTINGS ENDPOINTS ============
 
   // Get settings by category
-  app.get("/api/settings/:category", async (req, res) => {
+  app.get("/api/settings/:category", async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: settings, error } = await supabaseAdmin
       .from('settings')
@@ -266,7 +266,7 @@ export function registerPublicRoutes(app: Express) {
   });
 
   // Get active settings by category
-  app.get("/api/settings/:category/active", async (req, res) => {
+  app.get("/api/settings/:category/active", async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: settings, error } = await supabaseAdmin
       .from('settings')
@@ -384,7 +384,7 @@ export function registerPublicRoutes(app: Express) {
       };
 
       res.json(responseProfile);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching profile:', error);
       return res.status(500).json({ error: 'Failed to fetch profile' });
     }
@@ -466,7 +466,7 @@ export function registerPublicRoutes(app: Express) {
       };
 
       res.json(responseProfile);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
       return res.status(500).json({ error: 'Failed to update profile' });
     }
@@ -488,7 +488,7 @@ export function registerPublicRoutes(app: Express) {
       }
 
       res.json(profile);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching user profile:', error);
       return res.status(500).json({ error: 'Failed to fetch user profile' });
     }
@@ -531,7 +531,7 @@ export function registerPublicRoutes(app: Express) {
       // In production, this should integrate with Supabase Auth API
 
       res.json({ message: 'Password changed successfully' });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error changing password:', error);
       return res.status(500).json({ error: 'Failed to change password' });
     }

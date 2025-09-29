@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { auditLogger } from "../logging/middleware";
 import {
@@ -15,7 +15,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ LOCATION ENDPOINTS ============
 
   // Get location statistics
-  app.get("/api/locations/stats", async (req, res) => {
+  app.get("/api/locations/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -43,7 +43,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // List all locations
-  app.get("/api/locations", async (req, res) => {
+  app.get("/api/locations", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         search = '',
@@ -102,7 +102,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get location by ID
-  app.get("/api/locations/:id", async (req, res) => {
+  app.get("/api/locations/:id", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -356,7 +356,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ SHIP ENDPOINTS ============
 
   // Get ship statistics
-  app.get("/api/ships/stats", async (req, res) => {
+  app.get("/api/ships/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -383,7 +383,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // List all ships
-  app.get("/api/ships", async (req, res) => {
+  app.get("/api/ships", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         search = '',
@@ -447,7 +447,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get ship by ID
-  app.get("/api/ships/:id", async (req, res) => {
+  app.get("/api/ships/:id", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -667,7 +667,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ AMENITIES ENDPOINTS ============
 
   // Get amenities statistics
-  app.get("/api/amenities/stats", async (req, res) => {
+  app.get("/api/amenities/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -688,7 +688,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // List all amenities
-  app.get("/api/amenities", async (req, res) => {
+  app.get("/api/amenities", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         search = '',
@@ -737,7 +737,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get amenity by ID
-  app.get("/api/amenities/:id", async (req, res) => {
+  app.get("/api/amenities/:id", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -926,7 +926,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ VENUE TYPES ENDPOINTS ============
 
   // List all venue types (reference data)
-  app.get("/api/venue-types", async (req, res) => {
+  app.get("/api/venue-types", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -958,7 +958,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ VENUES ENDPOINTS ============
 
   // Get venues statistics
-  app.get("/api/venues/stats", async (req, res) => {
+  app.get("/api/venues/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -990,7 +990,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // List all venues
-  app.get("/api/venues", async (req, res) => {
+  app.get("/api/venues", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         search = '',
@@ -1053,7 +1053,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get venue by ID
-  app.get("/api/venues/:id", async (req, res) => {
+  app.get("/api/venues/:id", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -1277,7 +1277,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ RESORTS ENDPOINTS ============
 
   // Get resort statistics
-  app.get("/api/resorts/stats", async (req, res) => {
+  app.get("/api/resorts/stats", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -1305,7 +1305,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // List all resorts
-  app.get("/api/resorts", async (req, res) => {
+  app.get("/api/resorts", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const {
         search = '',
@@ -1369,7 +1369,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get resort by ID
-  app.get("/api/resorts/:id", async (req, res) => {
+  app.get("/api/resorts/:id", async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -1614,7 +1614,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ SHIPS RELATIONSHIP ENDPOINTS ============
 
   // Get ship's amenities
-  app.get("/api/ships/:id/amenities", async (req, res) => {
+  app.get("/api/ships/:id/amenities", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const shipId = Number(req.params.id);
 
@@ -1711,7 +1711,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get ship's venues
-  app.get("/api/ships/:id/venues", async (req, res) => {
+  app.get("/api/ships/:id/venues", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const shipId = Number(req.params.id);
 
@@ -1814,7 +1814,7 @@ export function registerLocationRoutes(app: Express) {
   // ============ RESORTS RELATIONSHIP ENDPOINTS ============
 
   // Get resort's amenities
-  app.get("/api/resorts/:id/amenities", async (req, res) => {
+  app.get("/api/resorts/:id/amenities", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const resortId = Number(req.params.id);
 
@@ -1911,7 +1911,7 @@ export function registerLocationRoutes(app: Express) {
   });
 
   // Get resort's venues
-  app.get("/api/resorts/:id/venues", async (req, res) => {
+  app.get("/api/resorts/:id/venues", async (req: AuthenticatedRequest, res: Response) => {
     try {
       const resortId = Number(req.params.id);
 

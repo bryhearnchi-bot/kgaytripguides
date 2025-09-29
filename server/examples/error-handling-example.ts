@@ -44,7 +44,7 @@ export function registerExampleRoutes(app: Express) {
 
   // ============ EXAMPLE 1: Simple Resource Retrieval ============
   app.get('/api/example/users/:id',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       // Automatically validates and parses ID
       const userId = validateId(req.params.id, 'User');
 
@@ -63,7 +63,7 @@ export function registerExampleRoutes(app: Express) {
 
   // ============ EXAMPLE 2: Resource Creation with Validation ============
   app.post('/api/example/users',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       // Validate required fields (throws 422 if missing)
       validateRequiredFields(req.body, ['email', 'name', 'password']);
 
@@ -97,7 +97,7 @@ export function registerExampleRoutes(app: Express) {
 
   // ============ EXAMPLE 3: Paginated List with Error Handling ============
   app.get('/api/example/users',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       // Get pagination params with validation
       const params = getPaginationParams(req.query);
 
@@ -120,7 +120,7 @@ export function registerExampleRoutes(app: Express) {
 
   // ============ EXAMPLE 4: Complex Business Logic ============
   app.post('/api/example/transfer',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { fromUserId, toUserId, amount } = req.body;
 
       // Validate inputs
@@ -157,7 +157,7 @@ export function registerExampleRoutes(app: Express) {
 
   // ============ EXAMPLE 5: External Service Integration ============
   app.post('/api/example/notify',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
         // Simulate external service call
         const response = await fetch('https://api.example.com/notify', {
@@ -170,7 +170,7 @@ export function registerExampleRoutes(app: Express) {
         }
 
         res.json({ success: true });
-      } catch (error) {
+      } catch (error: unknown) {
         // Convert fetch errors to ApiError
         if (error instanceof ApiError) {
           throw error;
@@ -183,7 +183,7 @@ export function registerExampleRoutes(app: Express) {
 
   // ============ EXAMPLE 6: File Upload with Validation ============
   app.post('/api/example/upload',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       if (!req.file) {
         throw ApiError.badRequest('No file uploaded');
       }

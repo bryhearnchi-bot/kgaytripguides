@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import {
   tripStorage,
   itineraryStorage,
@@ -52,7 +52,7 @@ export function registerOptimizedTripRoutes(app: Express) {
   app.post("/api/v2/trips/:id/duplicate",
     requireContentEditor,
     validateParams(idParamSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
       const { newName, newSlug } = req.body;
 
@@ -84,7 +84,7 @@ export function registerOptimizedTripRoutes(app: Express) {
     bulkRateLimit,
     requireContentEditor,
     validateBody(bulkEventsSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { tripId, events } = req.body;
 
       // Use optimized bulk upsert
@@ -112,7 +112,7 @@ export function registerOptimizedTripRoutes(app: Express) {
     requireContentEditor,
     validateParams(idParamSchema),
     validateBody(exportTripSchema),
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
       const { format = 'json', includeRelated = true } = req.body;
 
@@ -145,7 +145,7 @@ export function registerOptimizedTripRoutes(app: Express) {
    * Uses batch loading and caching to minimize database queries
    */
   app.get("/api/v2/trips/:slug/complete",
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { slug } = req.params;
       const cacheKey = QueryCacheStrategies.getCacheKey('tripComplete', { slug });
 
@@ -181,7 +181,7 @@ export function registerOptimizedTripRoutes(app: Express) {
    */
   app.get("/api/v2/admin/trips/stats",
     requireContentEditor,
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const cacheKey = 'dashboard:stats:trips';
 
       // Try cache first (short TTL for dashboard stats)
@@ -279,7 +279,7 @@ export function registerOptimizedTripRoutes(app: Express) {
    */
   app.get("/api/v2/admin/trips",
     requireContentEditor,
-    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const {
         page = '1',
         limit = '20',
@@ -370,7 +370,7 @@ export function registerOptimizedTripRoutes(app: Express) {
    * Uses full-text search indexes and parallel queries
    */
   app.get("/api/v2/search/global",
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const {
         q = '',
         types = 'trips,events,talent,locations',
@@ -412,7 +412,7 @@ export function registerOptimizedTripRoutes(app: Express) {
    * Useful for homepage or listing pages
    */
   app.post("/api/v2/trips/batch",
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { tripIds, includeRelated = false } = req.body;
 
       if (!Array.isArray(tripIds) || tripIds.length === 0) {

@@ -146,7 +146,9 @@ class LocationService {
       // Clean up old cache entries
       if (this.searchCache.size > 100) {
         const oldestKey = this.searchCache.keys().next().value;
-        this.searchCache.delete(oldestKey);
+        if (oldestKey) {
+          this.searchCache.delete(oldestKey);
+        }
       }
 
       return results;

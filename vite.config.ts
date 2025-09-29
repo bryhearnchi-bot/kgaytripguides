@@ -75,6 +75,9 @@ export default defineConfig({
           if (id.includes('/components/ui/')) {
             return 'components-ui';
           }
+
+          // Default - let Vite decide
+          return undefined;
         }
       }
     },

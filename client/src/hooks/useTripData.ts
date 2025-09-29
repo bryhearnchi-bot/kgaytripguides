@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getTripSlug, getItineraryData, getTalentData, getDailyScheduleData, getPartyThemeData } from '../data/data-service';
+import { getTripSlug, getItineraryData, getTalentData, getDailyScheduleData, getPartyThemesData } from '../data/data-service';
 import { dateOnly } from '@/lib/utils';
 
 export interface TripData {
@@ -99,15 +99,17 @@ export function transformTripData(data: TripData) {
   // Group events by date (defensive check)
   const dailyEvents: Record<string, any[]> = {};
   (data.events || []).forEach(event => {
-    const dateKey = event.date.split('T')[0];
+    const dateKey = event.date?.split('T')[0];
+    if (!dateKey) return; // Skip if no valid date
+
     if (!dailyEvents[dateKey]) {
       dailyEvents[dateKey] = [];
     }
-    
+
     // Map talent IDs to talent info (defensive check)
     const eventTalent = event.talentIds ?
       (data.talent || []).filter(t => event.talentIds.includes(t.id)) : [];
-    
+
     dailyEvents[dateKey].push({
       time: event.time,
       title: event.title,
@@ -192,9 +194,13 @@ export function transformTripData(data: TripData) {
         const entertainment: any = {};
         section.content.split('\n').forEach(line => {
           if (line.includes(':')) {
-            const [key, value] = line.split(':');
-            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
-            entertainment[cleanKey] = value.trim();
+            const parts = line.split(':');
+            const key = parts[0];
+            const value = parts.slice(1).join(':');
+            if (key && value) {
+              const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+              entertainment[cleanKey] = value.trim();
+            }
           }
         });
         importantInfo.entertainment = entertainment;
@@ -203,9 +209,13 @@ export function transformTripData(data: TripData) {
         const dining: any = {};
         section.content.split('\n').forEach(line => {
           if (line.includes(':')) {
-            const [key, value] = line.split(':');
-            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
-            dining[cleanKey] = value.trim();
+            const parts = line.split(':');
+            const key = parts[0];
+            const value = parts.slice(1).join(':');
+            if (key && value) {
+              const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+              dining[cleanKey] = value.trim();
+            }
           }
         });
         importantInfo.dining = dining;
@@ -214,9 +224,13 @@ export function transformTripData(data: TripData) {
         const app: any = {};
         section.content.split('\n').forEach(line => {
           if (line.includes(':')) {
-            const [key, value] = line.split(':');
-            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
-            app[cleanKey] = value.trim();
+            const parts = line.split(':');
+            const key = parts[0];
+            const value = parts.slice(1).join(':');
+            if (key && value) {
+              const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+              app[cleanKey] = value.trim();
+            }
           }
         });
         importantInfo.app = app;
@@ -225,9 +239,13 @@ export function transformTripData(data: TripData) {
         const sectionData: any = {};
         section.content.split('\n').forEach(line => {
           if (line.includes(':')) {
-            const [key, value] = line.split(':');
-            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
-            sectionData[cleanKey] = value.trim();
+            const parts = line.split(':');
+            const key = parts[0];
+            const value = parts.slice(1).join(':');
+            if (key && value) {
+              const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+              sectionData[cleanKey] = value.trim();
+            }
           }
         });
         importantInfo[key] = sectionData;

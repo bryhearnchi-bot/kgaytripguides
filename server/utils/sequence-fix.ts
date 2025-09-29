@@ -124,7 +124,7 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
         error: `Manual fix required. Run in SQL editor: SELECT setval('${sequenceName}', ${newSequenceValue}, false);`
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`Error fixing sequence for ${tableName}`, error);
     return {
       tableName,
@@ -217,14 +217,14 @@ BEGIN;
         .order(idColumn, { ascending: false })
         .limit(1);
 
-      const currentMaxId = maxIdData && maxIdData.length > 0 ? maxIdData[0][idColumn] : 0;
+      const currentMaxId = maxIdData && maxIdData.length > 0 ? (maxIdData[0] as any)[idColumn] : 0;
       const newSequenceValue = currentMaxId + 1;
 
       sqlScript += `-- Fix ${tableName} sequence
 SELECT setval('${sequenceName}', GREATEST(${newSequenceValue}, (SELECT COALESCE(MAX(${idColumn}), 0) + 1 FROM ${tableName})), false);
 
 `;
-    } catch (error) {
+    } catch (error: unknown) {
       sqlScript += `-- Error getting max ID for ${tableName}, using dynamic approach
 SELECT setval('${sequenceName}', (SELECT COALESCE(MAX(${idColumn}), 0) + 1 FROM ${tableName}), false);
 

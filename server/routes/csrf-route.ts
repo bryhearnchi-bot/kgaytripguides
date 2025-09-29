@@ -4,7 +4,7 @@ const router = Router();
 
 // Simple CSRF token endpoint for development
 // Returns the existing CSRF token from cookie if present
-router.get('/api/csrf-token', (req, res) => {
+router.get('/api/csrf-token', (req: AuthenticatedRequest, res: Response) => {
   // Check if we already have a token in the cookie
   const existingToken = req.cookies?._csrf;
 
