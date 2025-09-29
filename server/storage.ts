@@ -590,6 +590,11 @@ export class SettingsStorage implements ISettingsStorage {
 
 export interface ITripInfoStorage {
   getCompleteInfo(slug: string, type: string): Promise<any>;
+  assignSectionToTrip(tripId: number, sectionId: number, orderIndex: number): Promise<any>;
+  updateAssignmentOrder(assignmentId: number, orderIndex: number): Promise<any>;
+  removeAssignment(assignmentId: number): Promise<void>;
+  getTripSections(tripId: number): Promise<any[]>;
+  getGeneralSections(): Promise<any[]>;
 }
 
 export class TripInfoStorage implements ITripInfoStorage {
@@ -701,24 +706,41 @@ export class TripInfoStorage implements ITripInfoStorage {
       updatedAt: talent.updated_at
     }));
 
-    // Get trip info sections
+    // Get trip info sections via junction table
     const { data: tripInfoSectionsData, error: tripInfoError } = await supabaseAdmin
-      .from('trip_info_sections')
-      .select('*')
+      .from('trip_section_assignments')
+      .select(`
+        id,
+        order_index,
+        trip_info_sections (
+          id,
+          title,
+          content,
+          section_type,
+          updated_by,
+          updated_at
+        )
+      `)
       .eq('trip_id', tripData.id)
       .order('order_index', { ascending: true });
 
     if (tripInfoError) throw tripInfoError;
 
     // Transform trip info sections to camelCase
-    const transformedTripInfoSections = (tripInfoSectionsData || []).map((section: any) => ({
-      id: section.id,
-      tripId: section.trip_id,
-      title: section.title,
-      content: section.content,
-      orderIndex: section.order_index,
-      updatedBy: section.updated_by,
-      updatedAt: section.updated_at
+    const transformedTripInfoSections = (tripInfoSectionsData || []).map((assignment: any) => ({
+      id: assignment.trip_info_sections.id,
+      tripId: tripData.id,
+      title: assignment.trip_info_sections.title,
+      content: assignment.trip_info_sections.content,
+      sectionType: assignment.trip_info_sections.section_type,
+      orderIndex: assignment.order_index,
+      updatedBy: assignment.trip_info_sections.updated_by,
+      updatedAt: assignment.trip_info_sections.updated_at,
+      assignment: {
+        id: assignment.id,
+        tripId: tripData.id,
+        orderIndex: assignment.order_index
+      }
     }));
 
     return {
@@ -728,6 +750,91 @@ export class TripInfoStorage implements ITripInfoStorage {
       talent: transformedTalent,
       tripInfoSections: transformedTripInfoSections
     };
+  }
+
+  async assignSectionToTrip(tripId: number, sectionId: number, orderIndex: number): Promise<any> {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: assignment, error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .insert({
+        trip_id: tripId,
+        section_id: sectionId,
+        order_index: orderIndex
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return assignment;
+  }
+
+  async updateAssignmentOrder(assignmentId: number, orderIndex: number): Promise<any> {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: assignment, error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .update({
+        order_index: orderIndex,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', assignmentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return assignment;
+  }
+
+  async removeAssignment(assignmentId: number): Promise<void> {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .delete()
+      .eq('id', assignmentId);
+
+    if (error) throw error;
+  }
+
+  async getTripSections(tripId: number): Promise<any[]> {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: sections, error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .select(`
+        id,
+        order_index,
+        trip_info_sections (
+          id,
+          title,
+          content,
+          section_type,
+          updated_by,
+          updated_at
+        )
+      `)
+      .eq('trip_id', tripId)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+
+    return (sections || []).map((assignment: any) => ({
+      ...assignment.trip_info_sections,
+      assignment: {
+        id: assignment.id,
+        tripId: tripId,
+        orderIndex: assignment.order_index
+      }
+    }));
+  }
+
+  async getGeneralSections(): Promise<any[]> {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: sections, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .select('*')
+      .eq('section_type', 'general')
+      .order('title', { ascending: true });
+
+    if (error) throw error;
+    return sections || [];
   }
 }
 

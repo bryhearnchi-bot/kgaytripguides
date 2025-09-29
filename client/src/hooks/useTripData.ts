@@ -179,14 +179,15 @@ export function transformTripData(data: TripData) {
   // Parse info sections and organize them
   tripInfoSections.forEach(section => {
     const key = section.title.toLowerCase().replace(/\s+/g, '');
+    const titleLower = section.title.toLowerCase();
 
     if (section.content) {
-      if (section.title === 'First Day Tips') {
+      if (titleLower.includes('first day tips')) {
         // Parse numbered list
         importantInfo.firstDayTips = section.content.split('\n').map(tip =>
-          tip.replace(/^\d+\.\s*/, '')
-        );
-      } else if (section.title === 'Entertainment Booking') {
+          tip.replace(/^\d+\.\s*/, '').trim()
+        ).filter(tip => tip.length > 0);
+      } else if (titleLower.includes('entertainment booking')) {
         // Parse key-value pairs
         const entertainment: any = {};
         section.content.split('\n').forEach(line => {
@@ -197,7 +198,7 @@ export function transformTripData(data: TripData) {
           }
         });
         importantInfo.entertainment = entertainment;
-      } else if (section.title === 'Dining Information') {
+      } else if (titleLower.includes('dining information')) {
         // Parse key-value pairs
         const dining: any = {};
         section.content.split('\n').forEach(line => {
@@ -208,8 +209,19 @@ export function transformTripData(data: TripData) {
           }
         });
         importantInfo.dining = dining;
+      } else if (titleLower.includes('virgin voyages app')) {
+        // Parse key-value pairs for app info
+        const app: any = {};
+        section.content.split('\n').forEach(line => {
+          if (line.includes(':')) {
+            const [key, value] = line.split(':');
+            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '');
+            app[cleanKey] = value.trim();
+          }
+        });
+        importantInfo.app = app;
       } else {
-        // Generic key-value parsing
+        // Generic key-value parsing for any other sections
         const sectionData: any = {};
         section.content.split('\n').forEach(line => {
           if (line.includes(':')) {

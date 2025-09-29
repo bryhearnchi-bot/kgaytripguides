@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { api } from '@/lib/api-client';
@@ -14,31 +15,36 @@ import {
   PlusSquare,
   Edit2,
   Trash2,
-  Search
+  Search,
+  Filter,
+  Globe,
+  MapPin
 } from 'lucide-react';
 
 interface TripInfoSection {
   id?: number;
-  trip_id: number;
   title: string;
   content?: string;
-  order_index: number;
+  section_type: 'general' | 'trip_specific';
   updated_by?: string;
   updated_at?: string;
+  trip_id?: number;
   trip_name?: string;
 }
+
+type SectionTypeFilter = 'all' | 'general' | 'trip_specific';
 
 export default function TripInfoSectionsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<SectionTypeFilter>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSection, setEditingSection] = useState<TripInfoSection | null>(null);
   const [formData, setFormData] = useState<TripInfoSection>({
-    trip_id: 0,
     title: '',
     content: '',
-    order_index: 1,
+    section_type: 'general',
   });
 
   // Fetch all trip info sections
@@ -86,6 +92,7 @@ export default function TripInfoSectionsManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-info-sections'] });
       setEditingSection(null);
+      setShowAddModal(false);
       resetForm();
       toast({
         title: 'Success',
@@ -126,13 +133,11 @@ export default function TripInfoSectionsManagement() {
     }
   });
 
-
   const resetForm = () => {
     setFormData({
-      trip_id: 0,
       title: '',
       content: '',
-      order_index: 1,
+      section_type: 'general',
     });
   };
 
@@ -165,12 +170,29 @@ export default function TripInfoSectionsManagement() {
     }
   };
 
+  const filteredSections = sections.filter(section => {
+    const matchesSearch = section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      section.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      section.trip_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const filteredSections = sections.filter(section =>
-    section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    section.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    section.trip_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    const matchesType = typeFilter === 'all' || section.section_type === typeFilter;
+
+    return matchesSearch && matchesType;
+  });
+
+  const getSectionTypeIcon = (type: string) => {
+    return type === 'general' ? <Globe className="h-3 w-3" /> : <MapPin className="h-3 w-3" />;
+  };
+
+  const getSectionTypeLabel = (type: string) => {
+    return type === 'general' ? 'Reusable' : 'Trip-Specific';
+  };
+
+  const getSectionTypeBadgeClass = (type: string) => {
+    return type === 'general'
+      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+      : 'border-amber-500/30 bg-amber-500/10 text-amber-400';
+  };
 
   return (
     <div className="space-y-8">
@@ -182,16 +204,44 @@ export default function TripInfoSectionsManagement() {
               <FileText className="h-6 w-6" />
               Trip Info Sections Management
             </h1>
-            <p className="text-sm text-white/60">Manage information sections across all trips</p>
+            <p className="text-sm text-white/60">Manage reusable and trip-specific information sections</p>
           </div>
-          <div className="relative w-full md:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <Input
-              placeholder="Search sections by title, content, or trip"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
-            />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Type Filter */}
+            <Select value={typeFilter} onValueChange={(value: SectionTypeFilter) => setTypeFilter(value)}>
+              <SelectTrigger className="w-full sm:w-48 h-11 rounded-full border-white/10 bg-white/10 text-white">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="general">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-3 w-3" />
+                    Reusable Sections
+                  </div>
+                </SelectItem>
+                <SelectItem value="trip_specific">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3" />
+                    Trip-Specific
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Search */}
+            <div className="relative w-full sm:max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+              <Input
+                placeholder="Search sections..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -219,8 +269,8 @@ export default function TripInfoSectionsManagement() {
         {filteredSections.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <FileText className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No sections match your search.' : 'Get started by adding your first section.'}</p>
-            {!searchTerm && (
+            <p className="text-sm">{searchTerm || typeFilter !== 'all' ? 'No sections match your criteria.' : 'Get started by adding your first section.'}</p>
+            {!searchTerm && typeFilter === 'all' && (
               <Button
                 onClick={() => {
                   setEditingSection(null);
@@ -266,6 +316,19 @@ export default function TripInfoSectionsManagement() {
                 ),
               },
               {
+                key: 'section_type',
+                label: 'Type',
+                priority: 'high',
+                sortable: true,
+                minWidth: 120,
+                render: (value) => (
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${getSectionTypeBadgeClass(value)}`}>
+                    {getSectionTypeIcon(value)}
+                    {getSectionTypeLabel(value)}
+                  </span>
+                ),
+              },
+              {
                 key: 'content',
                 label: 'Content',
                 priority: 'medium',
@@ -279,24 +342,18 @@ export default function TripInfoSectionsManagement() {
               },
               {
                 key: 'trip_name',
-                label: 'Trip',
-                priority: 'high',
+                label: 'Associated Trip',
+                priority: 'medium',
                 sortable: true,
                 minWidth: 150,
                 render: (value, section) => (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
-                    {value || `Trip #${section.trip_id}`}
-                  </span>
-                ),
-              },
-              {
-                key: 'order_index',
-                label: 'Order',
-                priority: 'low',
-                sortable: true,
-                minWidth: 100,
-                render: (value) => (
-                  <span className="text-xs text-white/60">#{value}</span>
+                  section.section_type === 'trip_specific' ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                      {value || `Trip #${section.trip_id}`}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-white/40 italic">Available to all trips</span>
+                  )
                 ),
               },
             ]}
@@ -315,7 +372,7 @@ export default function TripInfoSectionsManagement() {
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No sections match your search.' : 'Get started by adding your first section.'}
+            emptyMessage={searchTerm || typeFilter !== 'all' ? 'No sections match your criteria.' : 'Get started by adding your first section.'}
           />
         )}
 
@@ -361,6 +418,44 @@ export default function TripInfoSectionsManagement() {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="section_type" className="text-white/80">Section Type *</Label>
+          <Select
+            value={formData.section_type}
+            onValueChange={(value: 'general' | 'trip_specific') => setFormData({ ...formData, section_type: value })}
+          >
+            <SelectTrigger className="border-white/10 bg-white/5 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="general">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-emerald-400" />
+                  <div>
+                    <div className="font-medium">Reusable Section</div>
+                    <div className="text-xs text-muted-foreground">Can be used across multiple trips</div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="trip_specific">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-amber-400" />
+                  <div>
+                    <div className="font-medium">Trip-Specific Section</div>
+                    <div className="text-xs text-muted-foreground">Tied to a specific trip</div>
+                  </div>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-white/40">
+            {formData.section_type === 'general'
+              ? 'This section can be reused across multiple trips in the library.'
+              : 'This section will be specific to one trip and cannot be reused.'
+            }
+          </p>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="content" className="text-white/80">Content</Label>
           <Textarea
             id="content"
@@ -373,34 +468,6 @@ export default function TripInfoSectionsManagement() {
           <p className="text-xs text-white/40">
             Use line breaks to separate different points or instructions.
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="trip_id" className="text-white/80">Trip ID *</Label>
-            <Input
-              id="trip_id"
-              type="number"
-              min="1"
-              value={formData.trip_id || ''}
-              onChange={(e) => setFormData({ ...formData, trip_id: parseInt(e.target.value) || 0 })}
-              placeholder="Enter trip ID"
-              required
-              className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="order_index" className="text-white/80">Display Order *</Label>
-            <Input
-              id="order_index"
-              type="number"
-              min="1"
-              value={formData.order_index}
-              onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 1 })}
-              required
-              className="border-white/10 bg-white/5 text-white"
-            />
-          </div>
         </div>
       </AdminFormModal>
     </div>

@@ -705,33 +705,67 @@ export type Database = {
         Row: {
           content: string | null
           id: number
-          order_index: number
+          section_type: string | null
           title: string
-          trip_id: number
+          trip_id: number | null
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
           content?: string | null
           id?: number
-          order_index: number
+          section_type?: string | null
           title: string
-          trip_id: number
+          trip_id?: number | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
           content?: string | null
           id?: number
-          order_index?: number
+          section_type?: string | null
           title?: string
-          trip_id?: number
+          trip_id?: number | null
           updated_at?: string | null
           updated_by?: string | null
         }
+        Relationships: []
+      }
+      trip_section_assignments: {
+        Row: {
+          created_at: string | null
+          id: number
+          order_index: number
+          section_id: number
+          trip_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          order_index: number
+          section_id: number
+          trip_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          order_index?: number
+          section_id?: number
+          trip_id?: number
+          updated_at?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "trip_info_sections_trip_id_fkey"
+            foreignKeyName: "trip_section_assignments_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "trip_info_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_section_assignments_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
@@ -1014,8 +1048,7 @@ export type Database = {
       create_user_invitation: {
         Args: {
           p_email: string
-          p_first_name: string
-          p_last_name: string
+          p_full_name: string
           p_message?: string
           p_role: Database["public"]["Enums"]["user_role"]
         }
@@ -1090,8 +1123,7 @@ export type Database = {
           account_status: string
           created_at: string
           email: string
-          first_name: string
-          last_name: string
+          full_name: string
           id: string
           is_active: boolean
           last_sign_in_at: string
@@ -1258,26 +1290,39 @@ export const Constants = {
   },
 } as const
 
-// Frontend-friendly type definitions with camelCase fields
-export type Profile = Tables<'profiles'>;
-export type Trip = {
+// Additional type exports for the new structure
+export type TripInfoSection = Tables<'trip_info_sections'>
+export type TripSectionAssignment = Tables<'trip_section_assignments'>
+
+// Enhanced types for the redesigned structure
+export interface InfoSection {
   id: number;
-  name: string;
-  slug: string;
-  shipName: string;
-  cruiseLine: string | null;
-  tripType?: string;
-  startDate: string;
-  endDate: string;
-  status: string | null;
-  heroImageUrl: string | null;
-  description: string | null;
-  highlights: string[] | null;
+  title: string;
+  content: string | null;
+  sectionType: 'general' | 'trip_specific';
+  updatedBy: string | null;
+  updatedAt: string | null;
+  assignment?: {
+    id: number;
+    tripId: number;
+    orderIndex: number;
+  };
+}
+
+export interface SectionAssignment {
+  id: number;
+  tripId: number;
+  sectionId: number;
+  orderIndex: number;
   createdAt: string | null;
   updatedAt: string | null;
-};
-export type Itinerary = Tables<'itinerary'>;
-export type Event = Tables<'events'>;
-export type Talent = Tables<'talent'>;
-export type TalentCategory = Tables<'talent_categories'>;
-export type Settings = Tables<'settings'>;
+}
+
+// Legacy compatibility types
+export type Profile = Tables<'profiles'>
+export type Trip = Tables<'trips'>
+export type Itinerary = Tables<'itinerary'>
+export type Event = Tables<'events'>
+export type Talent = Tables<'talent'>
+export type TalentCategory = Tables<'talent_categories'>
+export type Settings = Tables<'security_audit_log'> // Placeholder - adjust as needed
