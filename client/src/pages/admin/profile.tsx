@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
-import type { ProfileName, ProfileLocation, ProfileSocialLinks } from '@/shared/api-types';
+import type { ProfileName, ProfileLocation, ProfileSocialLinks } from '@shared/api-types';
 
 interface FormData {
   name: ProfileName;
@@ -106,10 +106,10 @@ export default function AdminProfile() {
         country: profile.country || profile.location?.country || '',
         countryCode: profile.country_code || '',
         socialLinks: {
-          instagram: profile.socialLinks?.instagram || '',
-          twitter: profile.socialLinks?.twitter || '',
-          facebook: profile.socialLinks?.facebook || '',
-          telegram: profile.socialLinks?.telegram || ''
+          instagram: (profile.socialLinks as ProfileSocialLinks)?.instagram || '',
+          twitter: (profile.socialLinks as ProfileSocialLinks)?.twitter || '',
+          facebook: (profile.socialLinks as ProfileSocialLinks)?.facebook || '',
+          telegram: (profile.socialLinks as ProfileSocialLinks)?.telegram || ''
         }
       });
     }
@@ -340,26 +340,26 @@ export default function AdminProfile() {
             </div>
 
             {/* Social Links Display */}
-            {!isEditing && (profile.socialLinks?.instagram || profile.socialLinks?.twitter || profile.socialLinks?.facebook || profile.socialLinks?.telegram) && (
+            {!isEditing && ((profile.socialLinks as ProfileSocialLinks)?.instagram || (profile.socialLinks as ProfileSocialLinks)?.twitter || (profile.socialLinks as ProfileSocialLinks)?.facebook || (profile.socialLinks as ProfileSocialLinks)?.telegram) && (
               <div className="mt-4 pt-4 border-t border-slate-600/50">
                 <div className="flex justify-center gap-3">
-                  {profile.socialLinks.instagram && (
-                    <a href={`https://instagram.com/${profile.socialLinks.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-pink-400 transition-colors">
+                  {(profile.socialLinks as ProfileSocialLinks).instagram && (
+                    <a href={`https://instagram.com/${(profile.socialLinks as ProfileSocialLinks).instagram!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-pink-400 transition-colors">
                       <Instagram className="w-5 h-5" />
                     </a>
                   )}
-                  {profile.socialLinks.twitter && (
-                    <a href={`https://twitter.com/${profile.socialLinks.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-sky-400 transition-colors">
+                  {(profile.socialLinks as ProfileSocialLinks).twitter && (
+                    <a href={`https://twitter.com/${(profile.socialLinks as ProfileSocialLinks).twitter!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-sky-400 transition-colors">
                       <Twitter className="w-5 h-5" />
                     </a>
                   )}
-                  {profile.socialLinks.facebook && (
-                    <a href={profile.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
+                  {(profile.socialLinks as ProfileSocialLinks).facebook && (
+                    <a href={(profile.socialLinks as ProfileSocialLinks).facebook} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
                       <Facebook className="w-5 h-5" />
                     </a>
                   )}
-                  {profile.socialLinks.telegram && (
-                    <a href={`https://t.me/${profile.socialLinks.telegram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
+                  {(profile.socialLinks as ProfileSocialLinks).telegram && (
+                    <a href={`https://t.me/${(profile.socialLinks as ProfileSocialLinks).telegram!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
                       <Send className="w-5 h-5" />
                     </a>
                   )}

@@ -90,7 +90,7 @@ export function registerPublicRoutes(app: Express) {
           stats.locations = { total: locations?.length || 0 };
         }
 
-        res.json(stats);
+        return res.json(stats);
       } catch (error: unknown) {
         console.error('Error fetching dashboard stats:', error);
         return res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
@@ -142,7 +142,7 @@ export function registerPublicRoutes(app: Express) {
           };
         }
 
-        res.json(health);
+        return res.json(health);
       } catch (error: unknown) {
         console.error('Error checking system health:', error);
         return res.status(500).json({
@@ -239,7 +239,7 @@ export function registerPublicRoutes(app: Express) {
           }
         }
 
-        res.json(results);
+        return res.json(results);
       } catch (error: unknown) {
         console.error('Error performing global search:', error);
         return res.status(500).json({ error: 'Failed to perform search' });

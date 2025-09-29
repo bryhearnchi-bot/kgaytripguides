@@ -62,7 +62,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch trip info sections' });
       }
 
-      res.json(sections || []);
+      return res.json(sections || []);
     } catch (error: unknown) {
       console.error('Error fetching trip info sections:', error);
       return res.status(500).json({ error: 'Failed to fetch trip info sections' });
@@ -84,7 +84,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch general sections' });
       }
 
-      res.json(sections || []);
+      return res.json(sections || []);
     } catch (error: unknown) {
       console.error('Error fetching general sections:', error);
       return res.status(500).json({ error: 'Failed to fetch general sections' });
@@ -127,7 +127,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         }
       }));
 
-      res.json(transformedSections);
+      return res.json(transformedSections);
     } catch (error: unknown) {
       console.error('Error fetching trip sections:', error);
       return res.status(500).json({ error: 'Failed to fetch trip sections' });
@@ -152,7 +152,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch trip info section' });
       }
 
-      res.json(section);
+      return res.json(section);
     } catch (error: unknown) {
       console.error('Error fetching trip info section:', error);
       return res.status(500).json({ error: 'Failed to fetch trip info section' });
@@ -214,7 +214,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to update trip info section' });
       }
 
-      res.json(section);
+      return res.json(section);
     } catch (error: any) {
       console.error('Error updating trip info section:', error);
       return res.status(500).json({ error: 'Failed to update trip info section' });
@@ -237,7 +237,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to delete trip info section' });
       }
 
-      res.json({ message: 'Trip info section deleted successfully' });
+      return res.json({ message: 'Trip info section deleted successfully' });
     } catch (error: any) {
       console.error('Error deleting trip info section:', error);
       return res.status(500).json({ error: 'Failed to delete trip info section' });
@@ -299,7 +299,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to update assignment' });
       }
 
-      res.json(assignment);
+      return res.json(assignment);
     } catch (error: any) {
       console.error('Error updating assignment:', error);
       return res.status(500).json({ error: 'Failed to update assignment' });
@@ -322,7 +322,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to unassign section' });
       }
 
-      res.json({ message: 'Section unassigned successfully' });
+      return res.json({ message: 'Section unassigned successfully' });
     } catch (error: any) {
       console.error('Error deleting assignment:', error);
       return res.status(500).json({ error: 'Failed to unassign section' });

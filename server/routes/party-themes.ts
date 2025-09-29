@@ -57,7 +57,7 @@ export function registerPartyThemeRoutes(app: Express) {
         updatedAt: theme.updated_at
       }));
 
-      res.json(mappedThemes);
+      return res.json(mappedThemes);
     } catch (error: unknown) {
       console.error('Error fetching party themes:', error);
       return res.status(500).json({ error: 'Failed to fetch party themes' });
@@ -96,7 +96,7 @@ export function registerPartyThemeRoutes(app: Express) {
         withoutCostumeIdeas: (totalCount || 0) - (withCostumesCount || 0)
       };
 
-      res.json(stats);
+      return res.json(stats);
     } catch (error: unknown) {
       console.error('Error fetching party theme stats:', error);
       return res.status(500).json({ error: 'Failed to fetch statistics' });
@@ -134,7 +134,7 @@ export function registerPartyThemeRoutes(app: Express) {
         updatedAt: theme.updated_at
       };
 
-      res.json(mappedTheme);
+      return res.json(mappedTheme);
     } catch (error: unknown) {
       console.error('Error fetching party theme:', error);
       return res.status(500).json({ error: 'Failed to fetch party theme' });
@@ -157,7 +157,7 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch events' });
       }
 
-      res.json(events || []);
+      return res.json(events || []);
     } catch (error: unknown) {
       console.error('Error fetching events for party theme:', error);
       return res.status(500).json({ error: 'Failed to fetch events' });
@@ -284,7 +284,7 @@ export function registerPartyThemeRoutes(app: Express) {
         updatedAt: theme.updated_at
       };
 
-      res.json(mappedTheme);
+      return res.json(mappedTheme);
     } catch (error: any) {
       console.error('Error updating party theme:', error);
       return res.status(500).json({ error: 'Failed to update party theme' });
@@ -325,7 +325,7 @@ export function registerPartyThemeRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to delete party theme' });
       }
 
-      res.json({ message: 'Party theme deleted successfully' });
+      return res.json({ message: 'Party theme deleted successfully' });
     } catch (error: any) {
       console.error('Error deleting party theme:', error);
       return res.status(500).json({ error: 'Failed to delete party theme' });
@@ -437,7 +437,7 @@ export function registerPartyThemeRoutes(app: Express) {
         events: events || []
       };
 
-      res.json(usage);
+      return res.json(usage);
     } catch (error: unknown) {
       console.error('Error checking party theme usage:', error);
       return res.status(500).json({ error: 'Failed to check usage' });

@@ -28,7 +28,7 @@ function getVersionFromRequest(req: Request): string {
 
   // Try URL path
   const pathMatch = req.path.match(/^\/api\/v(\d+(?:\.\d+)?)\//);
-  if (pathMatch) {
+  if (pathMatch && pathMatch[1]) {
     return pathMatch[1];
   }
 
@@ -73,7 +73,7 @@ export function validateVersion(supportedVersions: string[] = ['v1']) {
 
     // Add version info to request
     (req as any).apiVersion = requestedVersion;
-    next();
+    return next();
   };
 }
 
@@ -91,7 +91,7 @@ export function versionedRoute(routes: Record<string, (req: Request, res: Respon
       });
     }
 
-    handler(req, res, next);
+    return handler(req, res, next);
   };
 }
 
@@ -131,7 +131,7 @@ export function apiVersionNegotiation() {
       }
     }
 
-    next();
+    return next();
   };
 }
 
@@ -223,7 +223,11 @@ export function breakingChangeHandler(changes: Record<string, {
 export function createVersionedSchema<T>(schemas: Record<string, z.ZodSchema<T>>) {
   return (req: Request): z.ZodSchema<T> => {
     const version = (req as any).apiVersion || 'v1';
-    return schemas[version] || schemas['v1'] || schemas['default'];
+    const schema = schemas[version] || schemas['v1'] || schemas['default'];
+    if (!schema) {
+      throw new Error(`No schema found for version: ${version}`);
+    }
+    return schema;
   };
 }
 

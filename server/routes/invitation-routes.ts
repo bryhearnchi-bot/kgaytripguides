@@ -17,7 +17,7 @@
  * - Admin-only invitation creation
  */
 
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from '../auth';
 import { getSupabaseAdmin } from '../supabase-admin';
@@ -634,7 +634,7 @@ router.get(
         expired: new Date(inv.expires_at) <= nowDate,
       }));
 
-      res.json({
+      return res.json({
         success: true,
         invitations: paginatedInvitations,
         pagination: {
@@ -718,7 +718,7 @@ router.delete(
 
       // Audit log the cancellation
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Invitation cancelled successfully'
       });
@@ -801,7 +801,7 @@ router.post(
 
       // Audit log the resend
 
-      res.json({
+      return res.json({
         success: true,
         invitation: {
           id: updatedInvitation.id,
@@ -863,7 +863,7 @@ router.get(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         invitation: {
           email: matchingInvitation.email,

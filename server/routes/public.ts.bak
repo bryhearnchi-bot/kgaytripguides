@@ -90,7 +90,7 @@ export function registerPublicRoutes(app: Express) {
           stats.locations = { total: locations?.length || 0 };
         }
 
-        res.json(stats);
+        return res.json(stats);
       } catch (error: unknown) {
         console.error('Error fetching dashboard stats:', error);
         return res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
@@ -142,7 +142,7 @@ export function registerPublicRoutes(app: Express) {
           };
         }
 
-        res.json(health);
+        return res.json(health);
       } catch (error: unknown) {
         console.error('Error checking system health:', error);
         return res.status(500).json({
@@ -160,7 +160,7 @@ export function registerPublicRoutes(app: Express) {
   app.get("/api/search/global",
     searchRateLimit,
     validateQuery(globalSearchSchema),
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res: Response) => {
       try {
         const {
           q = '',
@@ -250,7 +250,7 @@ export function registerPublicRoutes(app: Express) {
   // ============ SETTINGS ENDPOINTS ============
 
   // Get settings by category
-  app.get("/api/settings/:category", async (req, res) => {
+  app.get("/api/settings/:category", async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: settings, error } = await supabaseAdmin
       .from('settings')
@@ -266,7 +266,7 @@ export function registerPublicRoutes(app: Express) {
   });
 
   // Get active settings by category
-  app.get("/api/settings/:category/active", async (req, res) => {
+  app.get("/api/settings/:category/active", async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: settings, error } = await supabaseAdmin
       .from('settings')

@@ -19,7 +19,7 @@ router.get('/', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to fetch talent categories' });
     }
 
-    res.json(categories || []);
+    return res.json(categories || []);
   } catch (error: unknown) {
     console.error('Error fetching talent categories:', error);
     return res.status(500).json({
@@ -53,7 +53,7 @@ router.post('/', async (req: Request, res: Response) => {
   } catch (error: unknown) {
     console.error('Error creating talent category:', error);
     if (error instanceof ApiError) {
-      res.status(error.status).json({ error: error.message });
+      return res.status(error.status).json({ error: error.message });
     } else {
       return res.status(500).json({
         error: 'Failed to create talent category'
@@ -91,11 +91,11 @@ router.put('/:id', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to update talent category' });
     }
 
-    res.json(updated);
+    return res.json(updated);
   } catch (error: unknown) {
     console.error('Error updating talent category:', error);
     if (error instanceof ApiError) {
-      res.status(error.status).json({ error: error.message });
+      return res.status(error.status).json({ error: error.message });
     } else {
       return res.status(500).json({
         error: 'Failed to update talent category'
@@ -120,11 +120,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to delete talent category' });
     }
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error: unknown) {
     console.error('Error deleting talent category:', error);
     if (error instanceof ApiError) {
-      res.status(error.status).json({ error: error.message });
+      return res.status(error.status).json({ error: error.message });
     } else {
       return res.status(500).json({
         error: 'Failed to delete talent category'

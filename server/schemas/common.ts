@@ -243,9 +243,9 @@ export const percentageSchema = z.number()
 // ============ FILE VALIDATION SCHEMAS ============
 
 /**
- * Image upload validation schema
+ * Image upload configuration schema
  */
-export const imageUploadSchema = z.object({
+export const imageUploadConfigSchema = z.object({
   type: z.enum(['cruise', 'talent', 'port', 'party', 'ship', 'general'])
     .optional()
     .default('general'),
@@ -387,7 +387,7 @@ export default {
   percentageSchema,
 
   // File Validation
-  imageUploadSchema,
+  imageUploadConfigSchema,
   bulkOperationSchema,
 
   // Response Format

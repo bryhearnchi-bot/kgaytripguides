@@ -21,7 +21,8 @@ import {
   Trash2,
   Calendar,
   Users,
-  Search
+  Search,
+  MapPin
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ProtectedRoute from '@/components/ProtectedRoute';

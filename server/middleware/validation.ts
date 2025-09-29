@@ -66,7 +66,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
 
       // Replace req.body with validated and transformed data
       req.body = validationResult.data;
-      next();
+      return next();
     } catch (error: unknown) {
       console.error('Validation middleware error:', error);
       return res.status(500).json({
@@ -90,7 +90,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       }
 
       req.query = validationResult.data as any;
-      next();
+      return next();
     } catch (error: unknown) {
       console.error('Query validation middleware error:', error);
       return res.status(500).json({
@@ -114,7 +114,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       }
 
       req.params = validationResult.data as any;
-      next();
+      return next();
     } catch (error: unknown) {
       console.error('Parameter validation middleware error:', error);
       return res.status(500).json({
@@ -183,7 +183,7 @@ export function validateRequest<TBody = any, TQuery = any, TParams = any>({
         });
       }
 
-      next();
+      return next();
     } catch (error: unknown) {
       console.error('Request validation middleware error:', error);
       return res.status(500).json({

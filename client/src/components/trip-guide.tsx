@@ -618,46 +618,48 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Robust scroll to top when component content is ready
   useEffect(() => {
-    if (data && !isLoading) {
-      const forceScrollToTop = (): void => {
-        // Multiple scroll methods for maximum compatibility
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
+    if (!data || isLoading) {
+      return undefined;
+    }
 
-        // Also try with options
-        window.scrollTo({
-          top: 0,
-          left: 0,
-          behavior: 'instant'
-        });
-      };
+    const forceScrollToTop = (): void => {
+      // Multiple scroll methods for maximum compatibility
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
 
-      // Immediate scroll
+      // Also try with options
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+      });
+    };
+
+    // Immediate scroll
+    forceScrollToTop();
+
+    // Store timeout IDs for cleanup
+    const timeouts: number[] = [];
+
+    // Use requestAnimationFrame for next paint cycle
+    const rafId = requestAnimationFrame(() => {
       forceScrollToTop();
 
-      // Store timeout IDs for cleanup
-      const timeouts: number[] = [];
+      // Additional attempts to ensure it works
+      timeouts.push(window.setTimeout(forceScrollToTop, 1));
+      timeouts.push(window.setTimeout(forceScrollToTop, 10));
+      timeouts.push(window.setTimeout(forceScrollToTop, 50));
+      timeouts.push(window.setTimeout(forceScrollToTop, 100));
+      timeouts.push(window.setTimeout(forceScrollToTop, 300));
+      timeouts.push(window.setTimeout(forceScrollToTop, 500));
+    });
 
-      // Use requestAnimationFrame for next paint cycle
-      const rafId = requestAnimationFrame(() => {
-        forceScrollToTop();
-
-        // Additional attempts to ensure it works
-        timeouts.push(window.setTimeout(forceScrollToTop, 1));
-        timeouts.push(window.setTimeout(forceScrollToTop, 10));
-        timeouts.push(window.setTimeout(forceScrollToTop, 50));
-        timeouts.push(window.setTimeout(forceScrollToTop, 100));
-        timeouts.push(window.setTimeout(forceScrollToTop, 300));
-        timeouts.push(window.setTimeout(forceScrollToTop, 500));
-      });
-
-      // Cleanup function to cancel pending timeouts
-      return () => {
-        cancelAnimationFrame(rafId);
-        timeouts.forEach(id => clearTimeout(id));
-      };
-    }
+    // Cleanup function to cancel pending timeouts
+    return () => {
+      cancelAnimationFrame(rafId);
+      timeouts.forEach(id => clearTimeout(id));
+    };
   }, [data, isLoading, slug]);
 
   const ITINERARY = data?.ITINERARY || [];
@@ -676,12 +678,14 @@ export default function TripGuide({ slug }: TripGuideProps) {
   // Utility function: Events before 6am belong to the previous day's schedule
   const getScheduleDate = (date: string, time: string | undefined): string => {
     if (!time) return date;
-    const hour = parseInt(time.split(':')[0]);
+    const timeParts = time.split(':');
+    if (timeParts.length === 0) return date;
+    const hour = parseInt(timeParts[0] || '0');
     if (hour < 6) {
       // Before 6am - belongs to previous day
       const currentDate = new Date(date);
       currentDate.setDate(currentDate.getDate() - 1);
-      return currentDate.toISOString().split('T')[0];
+      return currentDate.toISOString().split('T')[0] || date;
     }
     return date;
   };
@@ -745,7 +749,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
       .sort()
       .map(dateKey => ({
         key: dateKey,
-        items: eventsByScheduledDate[dateKey].sort((a, b) => {
+        items: (eventsByScheduledDate[dateKey] || []).sort((a, b) => {
           // Custom sort to handle events that cross midnight
           const timeA = a.time;
           const timeB = b.time;
@@ -755,14 +759,16 @@ export default function TripGuide({ slug }: TripGuideProps) {
           // Convert time to minutes for proper chronological sorting
           const getMinutesFromMidnight = (time: string | undefined): number => {
             if (!time) return 0;
-            const [hours, minutes] = time.split(':').map(Number);
+            const parts = time.split(':');
+            const hours = Number(parts[0] || 0);
+            const minutes = Number(parts[1] || 0);
             const adjustedHours = hours === 24 ? 0 : hours; // Handle 24:00 as 00:00
 
             // Events before 6am are "next day" events, so add 24 hours worth of minutes
             if (adjustedHours < 6) {
-              return (adjustedHours + 24) * 60 + (minutes ?? 0);
+              return (adjustedHours + 24) * 60 + minutes;
             }
-            return adjustedHours * 60 + (minutes ?? 0);
+            return adjustedHours * 60 + minutes;
           };
 
           return getMinutesFromMidnight(timeA) - getMinutesFromMidnight(timeB);
@@ -772,7 +778,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   const getFilteredScheduledDaily = () => {
     const scheduledDaily = getScheduledDaily();
-    const cruiseStatus = data?.TRIP_INFO?.status || 'upcoming';
+    const cruiseStatus = (data?.TRIP_INFO as any)?.status || 'upcoming';
 
     return scheduledDaily.map(day => ({
       ...day,
@@ -878,7 +884,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
       <UniversalHero
         variant="trip"
-        tripImageUrl={tripData?.trip?.heroImageUrl}
+        tripImageUrl={tripData?.trip?.heroImageUrl || undefined}
         title={tripData?.trip?.name || "Trip Guide"}
         subtitle=""
         additionalInfo={tripData?.trip?.startDate && tripData?.trip?.endDate
@@ -1569,7 +1575,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 });
 
                 // Apply timing filter for talent performances
-                const cruiseStatus = data?.TRIP_INFO?.status || 'upcoming';
+                const cruiseStatus = (data?.TRIP_INFO as any)?.status || 'upcoming';
                 const talentPerformances = filterEventsByTiming(allTalentPerformances, cruiseStatus);
 
                 return talentPerformances.length > 0 && (
