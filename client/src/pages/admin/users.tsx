@@ -490,6 +490,7 @@ export default function UsersManagement() {
                             src={profileImageUrl}
                             alt={displayName || 'User'}
                             className="h-full w-full rounded-xl object-cover"
+                            loading="lazy"
                           />
                         ) : (
                           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-medium">

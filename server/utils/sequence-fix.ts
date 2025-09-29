@@ -11,6 +11,7 @@
  */
 
 import { getSupabaseAdmin } from '../supabase-admin';
+import { logger } from '../logging/logger';
 
 interface SequenceInfo {
   tableName: string;
@@ -61,7 +62,7 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
       .limit(1);
 
     if (maxIdError) {
-      console.error(`Error getting max ID from ${tableName}:`, maxIdError);
+      logger.error(`Error getting max ID from ${tableName}`, maxIdError);
       return {
         tableName,
         sequenceName,
@@ -75,7 +76,7 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
     const currentMaxId = maxIdData && maxIdData.length > 0 ? maxIdData[0][idColumn] : 0;
     const newSequenceValue = currentMaxId + 1;
 
-    console.log(`[${tableName}] Current max ID: ${currentMaxId}, Setting sequence to: ${newSequenceValue}`);
+    logger.info(`Fixing sequence for ${tableName}`, { currentMaxId, newSequenceValue });
 
     // Step 2: Try to reset the sequence using Supabase RPC
     // Note: This requires a custom function to be created in Supabase
@@ -91,7 +92,7 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
 
       if (resetError) {
         // If RPC fails, it might not exist, so provide manual SQL
-        console.warn(`RPC approach failed for ${tableName}, manual fix required`);
+        logger.warn(`RPC approach failed for ${tableName}, manual fix required`);
         return {
           tableName,
           sequenceName,
@@ -124,7 +125,7 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
       };
     }
   } catch (error) {
-    console.error(`Error fixing sequence for ${tableName}:`, error);
+    logger.error(`Error fixing sequence for ${tableName}`, error);
     return {
       tableName,
       sequenceName,
@@ -140,7 +141,7 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
  * Fix sequences for all tables
  */
 export async function fixAllSequences(): Promise<SequenceFixResult[]> {
-  console.log('Starting sequence fix for all tables...');
+  logger.info('Starting sequence fix for all tables');
   const results: SequenceFixResult[] = [];
 
   for (const tableInfo of TABLES_WITH_SEQUENCES) {
@@ -255,7 +256,11 @@ export function getCreateStoredProcedureSQL(): string {
 -- Run this once in your Supabase SQL editor
 
 CREATE OR REPLACE FUNCTION reset_sequence(sequence_name text, new_value integer)
-RETURNS bigint AS $$
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_catalog
+AS $$
 DECLARE
   result bigint;
 BEGIN
@@ -263,14 +268,18 @@ BEGIN
   EXECUTE format('SELECT setval(%L, %s, false)', sequence_name, new_value) INTO result;
   RETURN result;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION reset_sequence TO authenticated;
 
 -- Create a more comprehensive sequence fix function
 CREATE OR REPLACE FUNCTION fix_table_sequence(table_name text, sequence_name text DEFAULT NULL, id_column text DEFAULT 'id')
-RETURNS json AS $$
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_catalog
+AS $$
 DECLARE
   seq_name text;
   max_id bigint;
@@ -311,7 +320,7 @@ BEGIN
     'fixed', true
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION fix_table_sequence TO authenticated;

@@ -3,10 +3,20 @@ import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 import type { Profile } from '@shared/schema';
 import { ApiError, ErrorCode } from './utils/ApiError';
+import { logger } from './logging/logger';
 
-// JWT secret - in production this should come from environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
+// JWT secret getters - lazy evaluation to allow dotenv to load first
+function getJWTSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error('FATAL: SESSION_SECRET environment variable is required');
+  }
+  return secret;
+}
+
+function getJWTRefreshSecret(): string {
+  return process.env.JWT_REFRESH_SECRET || getJWTSecret();
+}
 
 export interface AuthenticatedRequest extends Request {
   user?: Profile;
@@ -32,16 +42,16 @@ export class AuthService {
   }
 
   static generateAccessToken(payload: TokenPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
+    return jwt.sign(payload, getJWTSecret(), { expiresIn: '15m' });
   }
 
   static generateRefreshToken(payload: TokenPayload): string {
-    return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    return jwt.sign(payload, getJWTRefreshSecret(), { expiresIn: '7d' });
   }
 
   static verifyAccessToken(token: string): TokenPayload | null {
     try {
-      return jwt.verify(token, JWT_SECRET) as TokenPayload;
+      return jwt.verify(token, getJWTSecret()) as TokenPayload;
     } catch (error: any) {
       // Provide more specific error information
       if (error.name === 'TokenExpiredError') {
@@ -56,7 +66,7 @@ export class AuthService {
 
   static verifyRefreshToken(token: string): TokenPayload | null {
     try {
-      return jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
+      return jwt.verify(token, getJWTRefreshSecret()) as TokenPayload;
     } catch (error: any) {
       if (error.name === 'TokenExpiredError') {
         throw new ApiError(401, 'Refresh token has expired', { code: ErrorCode.TOKEN_EXPIRED });
@@ -82,8 +92,12 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
   // First, try Supabase authentication
   try {
     const { createClient } = await import('@supabase/supabase-js');
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bxiiodeyqvqqcgzzqzvt.supabase.co';
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWlvZGV5cXZxcWNnenpxenZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NjcwMjksImV4cCI6MjA3MzU0MzAyOX0.Y9juoQm7q_6ky4EUvLI3YR9VIHuhJah5me85CwsKsVc';
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase credentials not configured');
+    }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -226,7 +240,7 @@ export async function auditLog(action: string, tableName: string, recordId?: str
       //   });
       // }
     } catch (error) {
-      console.error('Audit logging failed:', error);
+      logger.error('Audit logging failed', { error });
       // Don't fail the request if audit logging fails
     }
     next();

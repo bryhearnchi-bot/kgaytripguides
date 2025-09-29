@@ -525,6 +525,7 @@ function TimelineList({ events, onTalentClick, onPartyClick, eventDate, TALENT, 
                             alt={talent.name}
                             className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 cursor-pointer hover:border-ocean-400 transition-colors"
                             onClick={() => onTalentClick(name)}
+                            loading="lazy"
                           />
                         ) : null;
                       }).filter(Boolean)[0]
@@ -533,6 +534,7 @@ function TimelineList({ events, onTalentClick, onPartyClick, eventDate, TALENT, 
                         src="https://img.freepik.com/premium-vector/bingo-pop-art-cartoon-comic-background-design-template_393879-5344.jpg"
                         alt="Bingo"
                         className="w-12 h-12 rounded-full object-cover border-2 border-ocean-200 shadow-md"
+                        loading="lazy"
                       />
                     ) : (event.type === 'party' || event.type === 'after' || event.type === 'club') ? (
                       <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-ocean-200 bg-gradient-to-br from-coral to-pink-500 shadow-md">
@@ -634,18 +636,27 @@ export default function TripGuide({ slug }: TripGuideProps) {
       // Immediate scroll
       forceScrollToTop();
 
+      // Store timeout IDs for cleanup
+      const timeouts: number[] = [];
+
       // Use requestAnimationFrame for next paint cycle
-      requestAnimationFrame(() => {
+      const rafId = requestAnimationFrame(() => {
         forceScrollToTop();
 
         // Additional attempts to ensure it works
-        setTimeout(forceScrollToTop, 1);
-        setTimeout(forceScrollToTop, 10);
-        setTimeout(forceScrollToTop, 50);
-        setTimeout(forceScrollToTop, 100);
-        setTimeout(forceScrollToTop, 300);
-        setTimeout(forceScrollToTop, 500);
+        timeouts.push(window.setTimeout(forceScrollToTop, 1));
+        timeouts.push(window.setTimeout(forceScrollToTop, 10));
+        timeouts.push(window.setTimeout(forceScrollToTop, 50));
+        timeouts.push(window.setTimeout(forceScrollToTop, 100));
+        timeouts.push(window.setTimeout(forceScrollToTop, 300));
+        timeouts.push(window.setTimeout(forceScrollToTop, 500));
       });
+
+      // Cleanup function to cancel pending timeouts
+      return () => {
+        cancelAnimationFrame(rafId);
+        timeouts.forEach(id => clearTimeout(id));
+      };
     }
   }, [data, isLoading, slug]);
 
@@ -1091,6 +1102,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                 alt={stop.port}
                                 className="w-full h-full object-cover"
                                 style={{ objectFit: 'cover' }}
+                                loading="lazy"
                                 onError={(e) => {
                                   e.currentTarget.src = 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
                                 }}
@@ -1202,6 +1214,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                       src={talent.img}
                                       alt={talent.name}
                                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                                      loading="lazy"
                                       onError={(e) => {
                                         e.currentTarget.src = "https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg";
                                       }}
@@ -1325,6 +1338,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                                         alt={party.title}
                                         className="w-full h-full object-cover"
                                         style={{ objectFit: 'cover' }}
+                                        loading="lazy"
                                         onError={(e) => {
                                           e.currentTarget.src = 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
                                         }}
@@ -1521,6 +1535,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                     src={selectedTalent.img}
                     alt={selectedTalent.name}
                     className="w-32 h-32 rounded-md object-cover mx-auto lg:mx-0"
+                    loading="lazy"
                   />
                 </div>
                 <div className="flex-1 text-center lg:text-left min-w-0">
@@ -1734,6 +1749,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                       src={selectedParty.imageUrl}
                       alt={selectedParty.title}
                       className="w-32 h-32 rounded-md object-cover mx-auto lg:mx-0"
+                      loading="lazy"
                     />
                   </div>
                 )}
@@ -1770,6 +1786,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
               src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png"
               alt="Atlantis Events"
               className="h-8 w-auto mr-3 brightness-0 invert"
+              loading="lazy"
             />
             <div className="text-left">
               <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>

@@ -49,6 +49,7 @@ function TripCard({ trip }: { trip: Trip }) {
             src={trip.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
             alt={trip.name}
             className="h-36 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
             onError={(e) => {
               e.currentTarget.src = "/images/ships/resilient-lady-hero.jpg";
             }}

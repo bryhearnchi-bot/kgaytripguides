@@ -285,5 +285,20 @@ export class LocationStorage {
   }
 }
 
-// Export singleton instance
-export const locationStorage = new LocationStorage();
+// Export singleton instance (lazy-loaded to allow dotenv to load first)
+let locationStorageInstance: LocationStorage | null = null;
+
+export function getLocationStorage(): LocationStorage {
+  if (!locationStorageInstance) {
+    locationStorageInstance = new LocationStorage();
+  }
+  return locationStorageInstance;
+}
+
+// For backward compatibility, export the getter as locationStorage
+// But consumers should access it via function call: getLocationStorage()
+export const locationStorage = new Proxy({} as LocationStorage, {
+  get(target, prop) {
+    return (getLocationStorage() as any)[prop];
+  }
+});

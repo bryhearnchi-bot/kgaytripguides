@@ -46,12 +46,21 @@ interface CSRFConfig {
   sameSite?: 'strict' | 'lax' | 'none';
 }
 
+// CSRF secret getter - lazy evaluation to allow dotenv to load first
+function getCSRFSecret(): string {
+  const secret = process.env.CSRF_SECRET || process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error('FATAL: SESSION_SECRET or CSRF_SECRET environment variable is required');
+  }
+  return secret;
+}
+
 const defaultConfig: Required<CSRFConfig> = {
   tokenStore: new InMemoryCSRFStore(),
   tokenHeader: 'x-csrf-token',
   cookieName: '_csrf',
   ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-  secret: process.env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
+  secret: '', // Will be set lazily on first use
   sessionKey: 'sessionId',
   httpOnly: false, // Allow JS access for AJAX requests
   secure: process.env.NODE_ENV === 'production',
@@ -92,6 +101,11 @@ function getSessionId(req: Request, sessionKey: string): string {
 // CSRF Protection Middleware
 export function csrfProtection(config: CSRFConfig = {}) {
   const finalConfig = { ...defaultConfig, ...config };
+
+  // Lazily set secret on first use to allow dotenv to load
+  if (!finalConfig.secret) {
+    finalConfig.secret = getCSRFSecret();
+  }
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -168,6 +182,11 @@ async function generateAndSetToken(
 // Middleware to generate CSRF token for safe requests
 export function csrfTokenGenerator(config: CSRFConfig = {}) {
   const finalConfig = { ...defaultConfig, ...config };
+
+  // Lazily set secret on first use to allow dotenv to load
+  if (!finalConfig.secret) {
+    finalConfig.secret = getCSRFSecret();
+  }
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {

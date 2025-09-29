@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
 // Register Service Worker for PWA functionality
@@ -61,15 +62,29 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function showUpdateNotification(onUpdate: () => void) {
   const notification = document.createElement('div');
   notification.className = 'fixed top-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 flex justify-between items-center';
-  notification.innerHTML = `
-    <div>
-      <div class="font-medium">New version available!</div>
-      <div class="text-sm opacity-90">Tap to update for the latest features</div>
-    </div>
-    <button class="bg-white text-blue-600 px-3 py-1 rounded font-medium ml-4">Update</button>
-  `;
 
-  notification.querySelector('button')?.addEventListener('click', onUpdate);
+  // Create message container
+  const messageContainer = document.createElement('div');
+
+  const titleDiv = document.createElement('div');
+  titleDiv.className = 'font-medium';
+  titleDiv.textContent = 'New version available!';
+
+  const descDiv = document.createElement('div');
+  descDiv.className = 'text-sm opacity-90';
+  descDiv.textContent = 'Tap to update for the latest features';
+
+  messageContainer.appendChild(titleDiv);
+  messageContainer.appendChild(descDiv);
+
+  // Create update button
+  const updateButton = document.createElement('button');
+  updateButton.className = 'bg-white text-blue-600 px-3 py-1 rounded font-medium ml-4';
+  updateButton.textContent = 'Update';
+  updateButton.addEventListener('click', onUpdate);
+
+  notification.appendChild(messageContainer);
+  notification.appendChild(updateButton);
   document.body.appendChild(notification);
 
   setTimeout(() => {
@@ -83,21 +98,43 @@ function showInstallPrompt() {
 
   const prompt = document.createElement('div');
   prompt.className = 'fixed bottom-4 left-4 right-4 bg-white border border-gray-200 p-4 rounded-lg shadow-lg z-50';
-  prompt.innerHTML = `
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="font-medium text-gray-900">Install Trip Guide</div>
-        <div class="text-sm text-gray-600">Get faster access and offline features</div>
-      </div>
-      <div class="flex gap-2">
-        <button class="px-3 py-1 text-gray-600 text-sm">Later</button>
-        <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Install</button>
-      </div>
-    </div>
-  `;
 
-  const laterBtn = prompt.querySelector('button:first-of-type');
-  const installBtn = prompt.querySelector('button:last-of-type');
+  // Create container
+  const container = document.createElement('div');
+  container.className = 'flex items-center justify-between';
+
+  // Create text content
+  const textContainer = document.createElement('div');
+
+  const title = document.createElement('div');
+  title.className = 'font-medium text-gray-900';
+  title.textContent = 'Install Trip Guide';
+
+  const description = document.createElement('div');
+  description.className = 'text-sm text-gray-600';
+  description.textContent = 'Get faster access and offline features';
+
+  textContainer.appendChild(title);
+  textContainer.appendChild(description);
+
+  // Create buttons container
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.className = 'flex gap-2';
+
+  const laterBtn = document.createElement('button');
+  laterBtn.className = 'px-3 py-1 text-gray-600 text-sm';
+  laterBtn.textContent = 'Later';
+
+  const installBtn = document.createElement('button');
+  installBtn.className = 'px-3 py-1 bg-blue-600 text-white rounded text-sm';
+  installBtn.textContent = 'Install';
+
+  buttonsContainer.appendChild(laterBtn);
+  buttonsContainer.appendChild(installBtn);
+
+  container.appendChild(textContainer);
+  container.appendChild(buttonsContainer);
+  prompt.appendChild(container);
 
   laterBtn?.addEventListener('click', () => {
     prompt.remove();
@@ -133,4 +170,8 @@ function showToast(message: string, type: 'success' | 'warning' | 'error' = 'suc
   setTimeout(() => toast.remove(), 3000);
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);

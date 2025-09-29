@@ -18,16 +18,70 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-sourcemap: true,
+    sourcemap: true,
     rollupOptions: {
       output: {
-        chunkFileNames: 'assets/[name]-[hash].js'
+        // Optimize chunk file naming
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Manual chunk splitting for optimal caching
+        manualChunks: (id) => {
+          // Vendor chunks - separate large libraries
+          if (id.includes('node_modules')) {
+            // React ecosystem in one chunk
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+            // React Query and related
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            // UI libraries (shadcn/ui, radix)
+            if (id.includes('@radix-ui') || id.includes('class-variance-authority') || id.includes('clsx')) {
+              return 'vendor-ui';
+            }
+            // Routing
+            if (id.includes('wouter')) {
+              return 'vendor-router';
+            }
+            // Supabase
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            // Date utilities
+            if (id.includes('date-fns')) {
+              return 'vendor-date';
+            }
+            // All other vendor code
+            return 'vendor-misc';
+          }
+
+          // App code - split by route
+          if (id.includes('/pages/admin/')) {
+            return 'pages-admin';
+          }
+          if (id.includes('/pages/auth/')) {
+            return 'pages-auth';
+          }
+          if (id.includes('/pages/')) {
+            return 'pages-public';
+          }
+
+          // Shared components
+          if (id.includes('/components/admin/')) {
+            return 'components-admin';
+          }
+          if (id.includes('/components/ui/')) {
+            return 'components-ui';
+          }
+        }
       }
     },
     target: 'esnext',
     minify: 'esbuild',
-    // Optimize for mobile
-    chunkSizeWarningLimit: 600,
+    // Stricter chunk size limit for better performance
+    chunkSizeWarningLimit: 300,
     cssCodeSplit: true
   },
   server: {

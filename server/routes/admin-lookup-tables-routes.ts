@@ -14,6 +14,7 @@ import { requireAuth, requireTripAdmin, requireSuperAdmin, type AuthenticatedReq
 import { createClient } from '@supabase/supabase-js';
 import { z } from "zod";
 import { auditLogger } from "../logging/middleware";
+import { logger } from "../logging/logger";
 
 // Initialize Supabase Admin Client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -129,7 +130,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
         .order('id', { ascending: true });
 
       if (error) {
-        console.error(`Error fetching ${tableConfig.displayName}:`, error);
+        logger.error(`Error fetching ${tableConfig.displayName}`, { error, table: tableConfig.displayName });
         return res.status(500).json({
           error: `Failed to fetch ${tableConfig.displayName.toLowerCase()}`,
           details: error.message
@@ -142,7 +143,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
       });
 
     } catch (error) {
-      console.error('Error fetching settings items:', error);
+      logger.error('Error fetching settings items', { error });
       res.status(500).json({ error: 'Failed to fetch items' });
     }
   });
@@ -194,7 +195,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
         .single();
 
       if (createError) {
-        console.error(`Error creating ${tableConfig.displayName.slice(0, -1)}:`, createError);
+        logger.error(`Error creating ${tableConfig.displayName.slice(0, -1)}`, { error: createError, table: tableConfig.displayName });
         return res.status(500).json({
           error: `Failed to create ${tableConfig.displayName.slice(0, -1).toLowerCase()}`,
           details: createError.message
@@ -207,7 +208,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
       });
 
     } catch (error) {
-      console.error('Error creating settings item:', error);
+      logger.error('Error creating settings item', { error });
 
       if (error instanceof z.ZodError) {
         return res.status(400).json({
@@ -282,7 +283,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
         .single();
 
       if (updateError) {
-        console.error(`Error updating ${tableConfig.displayName.slice(0, -1)}:`, updateError);
+        logger.error(`Error updating ${tableConfig.displayName.slice(0, -1)}`, { error: updateError, table: tableConfig.displayName });
         return res.status(500).json({
           error: `Failed to update ${tableConfig.displayName.slice(0, -1).toLowerCase()}`,
           details: updateError.message
@@ -295,7 +296,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
       });
 
     } catch (error) {
-      console.error('Error updating settings item:', error);
+      logger.error('Error updating settings item', { error });
 
       if (error instanceof z.ZodError) {
         return res.status(400).json({
@@ -333,7 +334,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
           .select('*', { count: 'exact', head: true });
 
         if (error) {
-          console.error(`Error counting ${config.displayName}:`, error);
+          logger.error(`Error counting ${config.displayName}`, { error, table: config.displayName });
           counts[key] = 0;
         } else {
           counts[key] = count || 0;
@@ -343,7 +344,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
       res.json(counts);
 
     } catch (error) {
-      console.error('Error fetching counts:', error);
+      logger.error('Error fetching counts', { error });
       res.status(500).json({ error: 'Failed to fetch counts' });
     }
   });

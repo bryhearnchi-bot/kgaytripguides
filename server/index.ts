@@ -2,7 +2,45 @@
 import { config } from 'dotenv';
 config();
 
+// Validate critical environment variables on startup
+function validateEnvironment() {
+  const requiredVars = [
+    'DATABASE_URL',
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'SESSION_SECRET'
+  ];
+
+  const missing = requiredVars.filter(varName => !process.env[varName]);
+
+  if (missing.length > 0) {
+    console.error('\x1b[31m❌ FATAL: Missing required environment variables:\x1b[0m');
+    missing.forEach(varName => console.error(`   - ${varName}`));
+    console.error('\n\x1b[33mℹ️  Create .env file from template:\x1b[0m');
+    console.error('   cp .env.example .env');
+    console.error('\n\x1b[33mℹ️  Then fill in your credentials from:\x1b[0m');
+    console.error('   https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api\n');
+    process.exit(1);
+  }
+
+  // Validate DATABASE_URL format
+  if (!process.env.DATABASE_URL!.startsWith('postgresql://')) {
+    console.error('\x1b[31m❌ FATAL: DATABASE_URL must be a valid PostgreSQL connection string\x1b[0m');
+    process.exit(1);
+  }
+
+  // Validate SESSION_SECRET strength
+  if (process.env.SESSION_SECRET!.length < 32) {
+    console.error('\x1b[33m⚠️  WARNING: SESSION_SECRET should be at least 32 characters\x1b[0m');
+    console.error('   Generate with: openssl rand -base64 32\n');
+  }
+}
+
+// Run validation before starting server
+validateEnvironment();
+
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -54,6 +92,22 @@ app.head('/api', (_req, res) => res.sendStatus(200));
 app.use(securityHeaders);
 app.use(rateLimit());
 app.use(cdnHeaders);
+
+// Add HTTP compression for all responses
+app.use(compression({
+  filter: (req, res) => {
+    // Don't compress responses with this request header
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Use compression for all other requests
+    return compression.filter(req, res);
+  },
+  // Compression level (0-9, where 6 is default balance of speed/compression)
+  level: 6,
+  // Only compress responses larger than 1KB
+  threshold: 1024
+}));
 
 // Add HTTP metrics collection
 app.use(httpMetrics);

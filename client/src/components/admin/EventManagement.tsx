@@ -609,6 +609,7 @@ export default function EventManagement({
                       src={event.imageUrl}
                       alt={event.title}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                 )}
@@ -986,6 +987,7 @@ export default function EventManagement({
                     src={imageUrl}
                     alt="Preview"
                     className="w-full max-w-xs h-32 object-cover rounded-lg"
+                    loading="lazy"
                   />
                 </div>
               )}

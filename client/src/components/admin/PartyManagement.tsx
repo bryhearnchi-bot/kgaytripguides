@@ -374,6 +374,7 @@ export default function PartyManagement({
                       src={talent.profileImageUrl}
                       alt={talent.name}
                       className="w-16 h-16 rounded-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-teal-400 flex items-center justify-center">
@@ -558,6 +559,7 @@ export default function PartyManagement({
                       src={talent.profileImageUrl}
                       alt={talent.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -628,6 +630,7 @@ export default function PartyManagement({
                           src={talent.profileImageUrl}
                           alt={talent.name}
                           className="w-12 h-12 rounded-full object-cover"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-teal-400 flex items-center justify-center">
@@ -836,6 +839,7 @@ export default function PartyManagement({
                     src={imageUrl}
                     alt="Preview"
                     className="w-32 h-32 object-cover rounded-lg"
+                    loading="lazy"
                   />
                 </div>
               )}

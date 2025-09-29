@@ -8,7 +8,7 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
-    "dev": "SUPABASE_URL=https://bxiiodeyqvqqcgzzqzvt.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWlvZGV5cXZxcWNnenpxenZ0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Nzk2NzAyOSwiZXhwIjoyMDczNTQzMDI5fQ.q-doRMuntNVc7aigqBsdxQXMwuCWABDRnJnsSQV0oK0 DATABASE_URL=postgresql://postgres:qRlGhCf4xnNXCeBF@db.bxiiodeyqvqqcgzzqzvt.supabase.co:6543/postgres NODE_ENV=development tsx server/index.ts",
+    "dev": "NODE_ENV=development tsx server/index.ts",
     "dev:script": "./scripts/start-dev.sh",
     "dev:redesign": "./scripts/start-redesign-dev.sh",
     "build": "vite build && node scripts/copy-pwa-files.js",
@@ -71,6 +71,7 @@
     "@supabase/supabase-js": "^2.57.4",
     "@tailwindcss/typography": "^0.5.15",
     "@tanstack/react-query": "^5.60.5",
+    "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.9",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
@@ -84,6 +85,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "csurf": "^1.11.0",
     "date-fns": "^3.6.0",

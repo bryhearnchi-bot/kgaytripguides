@@ -15,6 +15,7 @@ import {
   getCreateStoredProcedureSQL,
   type SequenceFixResult
 } from "../utils/sequence-fix";
+import { logger } from "../logging/logger";
 
 export function registerAdminSequenceRoutes(app: Express) {
   // Get stored procedure creation SQL
@@ -27,7 +28,7 @@ export function registerAdminSequenceRoutes(app: Express) {
         instructions: "Run this SQL in your Supabase dashboard SQL editor to enable automatic sequence fixing"
       });
     } catch (error) {
-      console.error('Error generating stored procedure SQL:', error);
+      logger.error('Error generating stored procedure SQL', { error });
       res.status(500).json({
         error: 'Failed to generate stored procedure SQL',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -45,7 +46,7 @@ export function registerAdminSequenceRoutes(app: Express) {
         instructions: "Run this SQL in your Supabase dashboard SQL editor to fix all sequences"
       });
     } catch (error) {
-      console.error('Error generating fix SQL:', error);
+      logger.error('Error generating fix SQL', { error });
       res.status(500).json({
         error: 'Failed to generate fix SQL',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -62,7 +63,7 @@ export function registerAdminSequenceRoutes(app: Express) {
         return res.status(400).json({ error: 'Table name is required' });
       }
 
-      console.log(`Fixing sequence for table: ${tableName}`);
+      logger.info(`Fixing sequence for table: ${tableName}`);
       const result = await fixSequenceByTableName(tableName);
 
       if (!result.fixed && result.error?.includes('Manual fix required')) {
@@ -81,7 +82,7 @@ export function registerAdminSequenceRoutes(app: Express) {
         result
       });
     } catch (error) {
-      console.error('Error fixing table sequence:', error);
+      logger.error('Error fixing table sequence', { error });
       res.status(500).json({
         error: 'Failed to fix table sequence',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -92,7 +93,7 @@ export function registerAdminSequenceRoutes(app: Express) {
   // Fix all table sequences
   app.post("/api/admin/sequences/fix-all", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
-      console.log('Starting fix for all table sequences...');
+      logger.info('Starting fix for all table sequences...');
       const results = await fixAllSequences();
 
       const successCount = results.filter(r => r.fixed).length;
@@ -133,7 +134,7 @@ export function registerAdminSequenceRoutes(app: Express) {
         results
       });
     } catch (error) {
-      console.error('Error fixing all sequences:', error);
+      logger.error('Error fixing all sequences', { error });
       res.status(500).json({
         error: 'Failed to fix all sequences',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -199,7 +200,7 @@ export function registerAdminSequenceRoutes(app: Express) {
         note: 'To check actual sequence values, run SELECT currval(sequence_name) in SQL editor'
       });
     } catch (error) {
-      console.error('Error checking sequence status:', error);
+      logger.error('Error checking sequence status', { error });
       res.status(500).json({
         error: 'Failed to check sequence status',
         details: error instanceof Error ? error.message : 'Unknown error'

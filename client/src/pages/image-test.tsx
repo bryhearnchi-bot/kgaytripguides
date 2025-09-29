@@ -8,6 +8,7 @@ export default function ImageTest() {
         src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-scarlet-lady.jpg"
         alt="Test Ship"
         style={{ width: '300px', border: '2px solid red' }}
+        loading="lazy"
       />
 
       <h2>Test 2: Logo from Supabase Storage</h2>
@@ -15,6 +16,7 @@ export default function ImageTest() {
         src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/logos/atlantis-logo.png"
         alt="Logo"
         style={{ width: '200px', border: '2px solid blue' }}
+        loading="lazy"
       />
 
       <h2>Test 3: Background Image</h2>
