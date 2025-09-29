@@ -35,8 +35,8 @@ export function registerLocationRoutes(app: Express) {
         return acc;
       }, {}) || {};
 
-      res.json({ total, byCountry });
-    } catch (error) {
+      return res.json({ total, byCountry });
+    } catch (error: unknown) {
       console.error('Error fetching location stats:', error);
       return res.status(500).json({ error: 'Failed to fetch location statistics' });
     }
@@ -94,8 +94,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: location.updated_at
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching locations:', error);
       return res.status(500).json({ error: 'Failed to fetch locations' });
     }
@@ -140,8 +140,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: location.updated_at
       };
 
-      res.json(transformedLocation);
-    } catch (error) {
+      return res.json(transformedLocation);
+    } catch (error: unknown) {
       console.error('Error fetching location:', error);
       return res.status(500).json({ error: 'Failed to fetch location' });
     }
@@ -214,7 +214,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: location.updated_at
       };
 
-      res.json(transformedLocation);
+      return res.json(transformedLocation);
     } catch (error: any) {
       console.error('Error creating location:', error);
 
@@ -298,7 +298,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: location.updated_at
       };
 
-      res.json(transformedLocation);
+      return res.json(transformedLocation);
     } catch (error: any) {
       console.error('Error updating location:', error);
 
@@ -342,7 +342,7 @@ export function registerLocationRoutes(app: Express) {
         handleSupabaseError(error, 'delete location');
       }
 
-      res.json({ message: "Location deleted" });
+      return res.json({ message: "Location deleted" });
     } catch (error: any) {
       console.error('Error deleting location:', error);
       return res.status(500).json({
@@ -375,8 +375,8 @@ export function registerLocationRoutes(app: Express) {
           (ships.reduce((sum, ship) => sum + (ship.capacity || 0), 0) / ships.length) : 0
       };
 
-      res.json(stats);
-    } catch (error) {
+      return res.json(stats);
+    } catch (error: unknown) {
       console.error('Error fetching ship stats:', error);
       return res.status(500).json({ error: 'Failed to fetch ship statistics' });
     }
@@ -439,8 +439,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: ship.updated_at
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching ships:', error);
       return res.status(500).json({ error: 'Failed to fetch ships' });
     }
@@ -482,8 +482,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: ship.updated_at
       };
 
-      res.json(transformedShip);
-    } catch (error) {
+      return res.json(transformedShip);
+    } catch (error: unknown) {
       console.error('Error fetching ship:', error);
       return res.status(500).json({ error: 'Failed to fetch ship' });
     }
@@ -547,7 +547,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: ship.updated_at
       };
 
-      res.json(transformedShip);
+      return res.json(transformedShip);
     } catch (error: any) {
       console.error('Error creating ship:', error);
       return res.status(500).json({
@@ -622,7 +622,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: ship.updated_at
       };
 
-      res.json(transformedShip);
+      return res.json(transformedShip);
     } catch (error: any) {
       console.error('Error updating ship:', error);
       return res.status(500).json({
@@ -654,7 +654,7 @@ export function registerLocationRoutes(app: Express) {
         handleSupabaseError(error, 'delete ship');
       }
 
-      res.json({ message: "Ship deleted" });
+      return res.json({ message: "Ship deleted" });
     } catch (error: any) {
       console.error('Error deleting ship:', error);
       return res.status(500).json({
@@ -680,8 +680,8 @@ export function registerLocationRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch amenities statistics' });
       }
 
-      res.json({ total: amenities?.length || 0 });
-    } catch (error) {
+      return res.json({ total: amenities?.length || 0 });
+    } catch (error: unknown) {
       console.error('Error fetching amenities stats:', error);
       return res.status(500).json({ error: 'Failed to fetch amenities statistics' });
     }
@@ -729,8 +729,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: amenity.updated_at
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching amenities:', error);
       return res.status(500).json({ error: 'Failed to fetch amenities' });
     }
@@ -768,8 +768,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: amenity.updated_at
       };
 
-      res.json(transformedAmenity);
-    } catch (error) {
+      return res.json(transformedAmenity);
+    } catch (error: unknown) {
       console.error('Error fetching amenity:', error);
       return res.status(500).json({ error: 'Failed to fetch amenity' });
     }
@@ -823,7 +823,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: amenity.updated_at
       };
 
-      res.json(transformedAmenity);
+      return res.json(transformedAmenity);
     } catch (error: any) {
       console.error('Error creating amenity:', error);
       return res.status(500).json({
@@ -881,7 +881,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: amenity.updated_at
       };
 
-      res.json(transformedAmenity);
+      return res.json(transformedAmenity);
     } catch (error: any) {
       console.error('Error updating amenity:', error);
       return res.status(500).json({
@@ -913,7 +913,7 @@ export function registerLocationRoutes(app: Express) {
         handleSupabaseError(error, 'delete amenity');
       }
 
-      res.json({ message: "Amenity deleted" });
+      return res.json({ message: "Amenity deleted" });
     } catch (error: any) {
       console.error('Error deleting amenity:', error);
       return res.status(500).json({
@@ -948,8 +948,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: venueType.updated_at
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching venue types:', error);
       return res.status(500).json({ error: 'Failed to fetch venue types' });
     }
@@ -982,8 +982,8 @@ export function registerLocationRoutes(app: Express) {
         return acc;
       }, {}) || {};
 
-      res.json({ total, byType });
-    } catch (error) {
+      return res.json({ total, byType });
+    } catch (error: unknown) {
       console.error('Error fetching venues stats:', error);
       return res.status(500).json({ error: 'Failed to fetch venues statistics' });
     }
@@ -1045,8 +1045,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: venue.updated_at
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching venues:', error);
       return res.status(500).json({ error: 'Failed to fetch venues' });
     }
@@ -1088,14 +1088,14 @@ export function registerLocationRoutes(app: Express) {
         id: venue.id,
         name: venue.name,
         venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_types?.name,
+        venueTypeName: (venue.venue_types as any)?.name,
         description: venue.description,
         createdAt: venue.created_at,
         updatedAt: venue.updated_at
       };
 
-      res.json(transformedVenue);
-    } catch (error) {
+      return res.json(transformedVenue);
+    } catch (error: unknown) {
       console.error('Error fetching venue:', error);
       return res.status(500).json({ error: 'Failed to fetch venue' });
     }
@@ -1157,13 +1157,13 @@ export function registerLocationRoutes(app: Express) {
         id: venue.id,
         name: venue.name,
         venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_types?.name,
+        venueTypeName: (venue.venue_types as any)?.name,
         description: venue.description,
         createdAt: venue.created_at,
         updatedAt: venue.updated_at
       };
 
-      res.json(transformedVenue);
+      return res.json(transformedVenue);
     } catch (error: any) {
       console.error('Error creating venue:', error);
       return res.status(500).json({
@@ -1226,13 +1226,13 @@ export function registerLocationRoutes(app: Express) {
         id: venue.id,
         name: venue.name,
         venueTypeId: venue.venue_type_id,
-        venueTypeName: venue.venue_types?.name,
+        venueTypeName: (venue.venue_types as any)?.name,
         description: venue.description,
         createdAt: venue.created_at,
         updatedAt: venue.updated_at
       };
 
-      res.json(transformedVenue);
+      return res.json(transformedVenue);
     } catch (error: any) {
       console.error('Error updating venue:', error);
       return res.status(500).json({
@@ -1264,7 +1264,7 @@ export function registerLocationRoutes(app: Express) {
         handleSupabaseError(error, 'delete venue');
       }
 
-      res.json({ message: "Venue deleted" });
+      return res.json({ message: "Venue deleted" });
     } catch (error: any) {
       console.error('Error deleting venue:', error);
       return res.status(500).json({
@@ -1297,8 +1297,8 @@ export function registerLocationRoutes(app: Express) {
           (resorts.reduce((sum, resort) => sum + (resort.capacity || 0), 0) / resorts.length) : 0
       };
 
-      res.json(stats);
-    } catch (error) {
+      return res.json(stats);
+    } catch (error: unknown) {
       console.error('Error fetching resort stats:', error);
       return res.status(500).json({ error: 'Failed to fetch resort statistics' });
     }
@@ -1361,8 +1361,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: resort.updated_at
       }));
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching resorts:', error);
       return res.status(500).json({ error: 'Failed to fetch resorts' });
     }
@@ -1407,8 +1407,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: resort.updated_at
       };
 
-      res.json(transformedResort);
-    } catch (error) {
+      return res.json(transformedResort);
+    } catch (error: unknown) {
       console.error('Error fetching resort:', error);
       return res.status(500).json({ error: 'Failed to fetch resort' });
     }
@@ -1483,7 +1483,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: resort.updated_at
       };
 
-      res.json(transformedResort);
+      return res.json(transformedResort);
     } catch (error: any) {
       console.error('Error creating resort:', error);
       return res.status(500).json({
@@ -1569,7 +1569,7 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: resort.updated_at
       };
 
-      res.json(transformedResort);
+      return res.json(transformedResort);
     } catch (error: any) {
       console.error('Error updating resort:', error);
       return res.status(500).json({
@@ -1601,7 +1601,7 @@ export function registerLocationRoutes(app: Express) {
         handleSupabaseError(error, 'delete resort');
       }
 
-      res.json({ message: "Resort deleted" });
+      return res.json({ message: "Resort deleted" });
     } catch (error: any) {
       console.error('Error deleting resort:', error);
       return res.status(500).json({
@@ -1647,8 +1647,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: item.amenities.updated_at
       })) || [];
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching ship amenities:', error);
       return res.status(500).json({ error: 'Failed to fetch ship amenities' });
     }
@@ -1700,7 +1700,7 @@ export function registerLocationRoutes(app: Express) {
         }
       }
 
-      res.json({ message: "Ship amenities updated successfully" });
+      return res.json({ message: "Ship amenities updated successfully" });
     } catch (error: any) {
       console.error('Error updating ship amenities:', error);
       return res.status(500).json({
@@ -1748,8 +1748,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: item.venues.updated_at
       })) || [];
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching ship venues:', error);
       return res.status(500).json({ error: 'Failed to fetch ship venues' });
     }
@@ -1801,7 +1801,7 @@ export function registerLocationRoutes(app: Express) {
         }
       }
 
-      res.json({ message: "Ship venues updated successfully" });
+      return res.json({ message: "Ship venues updated successfully" });
     } catch (error: any) {
       console.error('Error updating ship venues:', error);
       return res.status(500).json({
@@ -1847,8 +1847,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: item.amenities.updated_at
       })) || [];
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching resort amenities:', error);
       return res.status(500).json({ error: 'Failed to fetch resort amenities' });
     }
@@ -1900,7 +1900,7 @@ export function registerLocationRoutes(app: Express) {
         }
       }
 
-      res.json({ message: "Resort amenities updated successfully" });
+      return res.json({ message: "Resort amenities updated successfully" });
     } catch (error: any) {
       console.error('Error updating resort amenities:', error);
       return res.status(500).json({
@@ -1948,8 +1948,8 @@ export function registerLocationRoutes(app: Express) {
         updatedAt: item.venues.updated_at
       })) || [];
 
-      res.json(transformedResults);
-    } catch (error) {
+      return res.json(transformedResults);
+    } catch (error: unknown) {
       console.error('Error fetching resort venues:', error);
       return res.status(500).json({ error: 'Failed to fetch resort venues' });
     }
@@ -2001,7 +2001,7 @@ export function registerLocationRoutes(app: Express) {
         }
       }
 
-      res.json({ message: "Resort venues updated successfully" });
+      return res.json({ message: "Resort venues updated successfully" });
     } catch (error: any) {
       console.error('Error updating resort venues:', error);
       return res.status(500).json({
