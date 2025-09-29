@@ -141,7 +141,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
       const { data: section, error } = await supabaseAdmin
         .from('trip_info_sections')
         .select('*')
-        .eq('id', parseInt(req.params.id))
+        .eq('id', parseInt(req.params.id ?? '0'))
         .single();
 
       if (error) {
@@ -190,7 +190,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   // Update section
   app.put("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updateSectionSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       const updateData: any = { updated_at: new Date().toISOString() };
@@ -224,7 +224,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   // Delete section
   app.delete("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       const { error } = await supabaseAdmin
@@ -278,7 +278,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   // Update assignment order
   app.put("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updateAssignmentSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       const { data: assignment, error } = await supabaseAdmin
@@ -309,7 +309,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   // Remove assignment (unassign section from trip)
   app.delete("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       const { error } = await supabaseAdmin

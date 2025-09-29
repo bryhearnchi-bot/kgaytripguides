@@ -262,7 +262,7 @@ export function registerPublicRoutes(app: Express) {
       console.error('Error fetching settings:', error);
       return res.status(500).json({ error: 'Failed to fetch settings' });
     }
-    res.json(settings);
+    return res.json(settings);
   });
 
   // Get active settings by category
@@ -279,7 +279,7 @@ export function registerPublicRoutes(app: Express) {
       console.error('Error fetching active settings:', error);
       return res.status(500).json({ error: 'Failed to fetch active settings' });
     }
-    res.json(settings);
+    return res.json(settings);
   });
 
   // Create or update a setting
@@ -300,7 +300,7 @@ export function registerPublicRoutes(app: Express) {
       console.error('Error upserting setting:', error);
       return res.status(500).json({ error: 'Failed to upsert setting' });
     }
-    res.json(setting);
+    return res.json(setting);
   });
 
   // Deactivate a setting
@@ -321,7 +321,7 @@ export function registerPublicRoutes(app: Express) {
       console.error('Error deactivating setting:', error);
       return res.status(500).json({ error: 'Failed to deactivate setting' });
     }
-    res.json(setting);
+    return res.json(setting);
   });
 
   // Reorder settings within a category
@@ -345,7 +345,7 @@ export function registerPublicRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to reorder settings' });
       }
     }
-    res.json({ message: "Settings reordered" });
+    return res.json({ message: "Settings reordered" });
   });
 
   // ============ USER PROFILE ENDPOINTS ============
@@ -383,7 +383,7 @@ export function registerPublicRoutes(app: Express) {
         socialLinks: profile.social_links
       };
 
-      res.json(responseProfile);
+      return res.json(responseProfile);
     } catch (error: unknown) {
       console.error('Error fetching profile:', error);
       return res.status(500).json({ error: 'Failed to fetch profile' });
@@ -465,7 +465,7 @@ export function registerPublicRoutes(app: Express) {
         socialLinks: updatedProfile.social_links
       };
 
-      res.json(responseProfile);
+      return res.json(responseProfile);
     } catch (error: unknown) {
       console.error('Error updating profile:', error);
       return res.status(500).json({ error: 'Failed to update profile' });
@@ -487,7 +487,7 @@ export function registerPublicRoutes(app: Express) {
         return res.status(404).json({ error: 'Profile not found' });
       }
 
-      res.json(profile);
+      return res.json(profile);
     } catch (error: unknown) {
       console.error('Error fetching user profile:', error);
       return res.status(500).json({ error: 'Failed to fetch user profile' });
@@ -530,7 +530,7 @@ export function registerPublicRoutes(app: Express) {
       // This is a placeholder implementation
       // In production, this should integrate with Supabase Auth API
 
-      res.json({ message: 'Password changed successfully' });
+      return res.json({ message: 'Password changed successfully' });
     } catch (error: unknown) {
       console.error('Error changing password:', error);
       return res.status(500).json({ error: 'Failed to change password' });

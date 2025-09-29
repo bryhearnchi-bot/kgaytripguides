@@ -107,10 +107,11 @@ export function registerPartyThemeRoutes(app: Express) {
   app.get("/api/party-themes/:id", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
+      const id = parseInt(req.params.id ?? '0');
       const { data: theme, error } = await supabaseAdmin
         .from('party_themes')
         .select('*')
-        .eq('id', parseInt(req.params.id))
+        .eq('id', id)
         .single();
 
       if (error) {
@@ -144,11 +145,12 @@ export function registerPartyThemeRoutes(app: Express) {
   // Get events using a party theme
   app.get("/api/party-themes/:id/events", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
       const { data: events, error } = await supabaseAdmin
         .from('events')
         .select('*')
-        .eq('party_theme_id', parseInt(req.params.id))
+        .eq('party_theme_id', id)
         .order('date', { ascending: true })
         .order('time', { ascending: true });
 
@@ -226,7 +228,7 @@ export function registerPartyThemeRoutes(app: Express) {
   // Update party theme
   app.put("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updatePartyThemeSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       // Check if name already exists (if name is being updated)
@@ -294,7 +296,7 @@ export function registerPartyThemeRoutes(app: Express) {
   // Delete party theme
   app.delete("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       // Check if theme is used in any events
@@ -336,7 +338,7 @@ export function registerPartyThemeRoutes(app: Express) {
   app.post("/api/party-themes/:id/duplicate", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const { name } = req.body;
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
 
       if (!name) {
         return res.status(400).json({ error: 'New name is required' });
@@ -417,7 +419,7 @@ export function registerPartyThemeRoutes(app: Express) {
   // Check party theme usage
   app.get("/api/party-themes/:id/usage", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
 
       // Get events using this party theme
