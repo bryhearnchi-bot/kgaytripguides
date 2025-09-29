@@ -92,8 +92,9 @@ export function StandardAdminTable({
 
   // Validate that first column is image column with correct specs
   React.useEffect(() => {
-    if (columns.length > 0 && columns[0].key === 'image') {
+    if (columns.length > 0 && columns[0]?.key === 'image') {
       const imageCol = columns[0];
+      if (!imageCol) return;
       if (
         imageCol.width !== FIXED_COLUMN_SPECS.image.width ||
         imageCol.minWidth !== FIXED_COLUMN_SPECS.image.minWidth ||

@@ -87,8 +87,9 @@ export function EnhancedTripsTable({
 
     // Look for the next resizable column
     for (let i = currentIndex + 1; i < columns.length; i++) {
-      if (columns[i].resizable !== false) {
-        nextColumn = columns[i];
+      const col = columns[i];
+      if (col && col.resizable !== false) {
+        nextColumn = col;
         break;
       }
     }

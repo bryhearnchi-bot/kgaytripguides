@@ -114,7 +114,7 @@ export function MobileKeyboardOptimizer({
     >
       {children}
 
-      <style jsx>{`
+      <style>{`
         .mobile-keyboard-container.keyboard-open {
           transform: translateY(0);
         }

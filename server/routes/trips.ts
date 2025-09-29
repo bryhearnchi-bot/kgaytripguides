@@ -244,7 +244,7 @@ export function registerTripRoutes(app: Express) {
       });
     } catch (error) {
       console.error('Error fetching admin trips:', error);
-      res.status(500).json({ error: 'Failed to fetch trips' });
+      return res.status(500).json({ error: 'Failed to fetch trips' });
     }
   });
 
@@ -262,7 +262,7 @@ export function registerTripRoutes(app: Express) {
       res.json(trip);
     } catch (error) {
       console.error('Error updating trip status:', error);
-      res.status(500).json({ error: 'Failed to update trip status' });
+      return res.status(500).json({ error: 'Failed to update trip status' });
     }
   });
 
@@ -308,7 +308,7 @@ export function registerTripRoutes(app: Express) {
       res.json(stats);
     } catch (error) {
       console.error('Error fetching trip stats:', error);
-      res.status(500).json({ error: 'Failed to fetch trip statistics' });
+      return res.status(500).json({ error: 'Failed to fetch trip statistics' });
     }
   });
 
@@ -361,7 +361,7 @@ export function registerTripRoutes(app: Express) {
       res.json(allTrips);
     } catch (error) {
       console.error('Error fetching trips:', error);
-      res.status(500).json({ error: 'Failed to fetch trips' });
+      return res.status(500).json({ error: 'Failed to fetch trips' });
     }
   });
 
@@ -474,7 +474,7 @@ export function registerTripRoutes(app: Express) {
       res.json({ total, byType });
     } catch (error) {
       console.error('Error fetching event stats:', error);
-      res.status(500).json({ error: 'Failed to fetch event statistics' });
+      return res.status(500).json({ error: 'Failed to fetch event statistics' });
     }
   });
 
@@ -525,7 +525,7 @@ export function registerTripRoutes(app: Express) {
       res.json(results || []);
     } catch (error) {
       console.error('Error fetching events:', error);
-      res.status(500).json({ error: 'Failed to fetch events' });
+      return res.status(500).json({ error: 'Failed to fetch events' });
     }
   });
 
@@ -606,7 +606,7 @@ export function registerTripRoutes(app: Express) {
       res.json(sections || []);
     } catch (error) {
       console.error('Error fetching info sections:', error);
-      res.status(500).json({ error: 'Failed to fetch info sections' });
+      return res.status(500).json({ error: 'Failed to fetch info sections' });
     }
   });
 
@@ -632,7 +632,7 @@ export function registerTripRoutes(app: Express) {
       res.json(section);
     } catch (error) {
       console.error('Error creating info section:', error);
-      res.status(500).json({ error: 'Failed to create info section' });
+      return res.status(500).json({ error: 'Failed to create info section' });
     }
   });
 
@@ -665,7 +665,7 @@ export function registerTripRoutes(app: Express) {
       res.json(section);
     } catch (error) {
       console.error('Error updating info section:', error);
-      res.status(500).json({ error: 'Failed to update info section' });
+      return res.status(500).json({ error: 'Failed to update info section' });
     }
   });
 
@@ -686,7 +686,7 @@ export function registerTripRoutes(app: Express) {
       res.json({ message: 'Info section deleted' });
     } catch (error) {
       console.error('Error deleting info section:', error);
-      res.status(500).json({ error: 'Failed to delete info section' });
+      return res.status(500).json({ error: 'Failed to delete info section' });
     }
   });
 }

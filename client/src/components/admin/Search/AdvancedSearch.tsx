@@ -366,10 +366,11 @@ export default function AdvancedSearch({
     // Add quick search filter if present
     if (quickSearch.trim()) {
       const searchableFields = fields.filter(f => f.searchable !== false);
-      if (searchableFields.length > 0) {
+      const firstField = searchableFields[0];
+      if (searchableFields.length > 0 && firstField) {
         searchFilters.push({
           id: 'quick-search',
-          field: searchableFields[0].key, // Default to first searchable field
+          field: firstField.key, // Default to first searchable field
           operator: 'contains',
           value: quickSearch.trim(),
           label: `Quick search: "${quickSearch.trim()}"`,

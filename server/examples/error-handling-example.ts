@@ -91,7 +91,7 @@ export function registerExampleRoutes(app: Express) {
         'Failed to create user'
       );
 
-      res.status(201).json(user);
+      return res.status(201).json(user);
     })
   );
 

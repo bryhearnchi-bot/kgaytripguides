@@ -139,7 +139,7 @@ export function LocationSearchBar({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (suggestions.length > 0) {
+      if (suggestions.length > 0 && suggestions[0]) {
         handleSelect(suggestions[0]);
       }
     } else if (e.key === 'Escape') {

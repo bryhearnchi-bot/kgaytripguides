@@ -33,14 +33,14 @@ export function PullToRefresh({
     const scrollTop = containerRef.current?.scrollTop || 0;
     if (scrollTop > 0) return;
 
-    startY.current = e.touches[0].clientY;
+    startY.current = e.touches[0]?.clientY ?? 0;
     setCanPull(true);
   };
 
   const handleTouchMove = (e: TouchEvent) => {
     if (!canPull || disabled || isRefreshing) return;
 
-    currentY.current = e.touches[0].clientY;
+    currentY.current = e.touches[0]?.clientY ?? 0;
     const distance = Math.max(0, (currentY.current - startY.current) * 0.5);
 
     if (distance > 0) {

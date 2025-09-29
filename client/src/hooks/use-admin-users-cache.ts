@@ -10,7 +10,7 @@ import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 interface AdminUsersQuery {
   search?: string;
   role?: string;
-  status?: 'active' | 'inactive';
+  status?: 'active' | 'inactive' | 'all';
   page?: number;
   limit?: number;
 }
@@ -97,9 +97,9 @@ export function useAdminUsersCache() {
 
     // Add a delay to ensure auth is fully established
     const timeoutId = setTimeout(() => {
-      const authHeaders = session.access_token
+      const authHeaders: Record<string, string> | undefined = session.access_token
         ? { Authorization: `Bearer ${session.access_token}` }
-        : {};
+        : undefined;
 
       const prefetchPromises = COMMON_QUERIES.map((query) => {
         const queryKey = getUsersQueryKey(query);
@@ -189,14 +189,14 @@ export function useAdminUsers(query: AdminUsersQuery) {
   // Check if user can manage users
   const canManageUsers = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
 
-  const authHeaders = session?.access_token
+  const authHeaders: Record<string, string> | undefined = session?.access_token
     ? { Authorization: `Bearer ${session.access_token}` }
-    : {};
+    : undefined;
 
   const result = useQuery({
     queryKey: getUsersQueryKey(query),
     queryFn: () => fetchAdminUsers(query, authHeaders),
-    enabled: canManageUsers && !!session?.access_token,
+    enabled: !!(canManageUsers && session?.access_token),
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     // Keep previous data while fetching new data to prevent flickering

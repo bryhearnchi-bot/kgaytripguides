@@ -67,7 +67,8 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
     setLoading(true);
     try {
       // Sign up the user with Supabase Auth
-      const result = await signUp(data.email, data.password, data.name);
+      const fullName = { first: data.name.split(' ')[0] || '', last: data.name.split(' ').slice(1).join(' ') || '' };
+      const result = await signUp(data.email, data.password, fullName);
 
       // Store additional user data in the database
       // This will be handled by a database trigger or separate API call

@@ -257,7 +257,7 @@ export function MultiSelectWithCreate({
                         "hover:bg-blue-500/25 text-xs px-2 py-0.5 rounded-md",
                         "flex items-center gap-1"
                       )}
-                      variant={variant}>
+                      variant={variant === "inverted" ? "default" : variant as "default" | "secondary" | "destructive" | "outline" | null}>
                       <span className="truncate max-w-[100px]">{item.name}</span>
                       <XCircle
                         className="h-3 w-3 cursor-pointer hover:text-blue-200"
@@ -268,7 +268,7 @@ export function MultiSelectWithCreate({
                   {selectedItems.length > maxItems && (
                     <Badge
                       className="bg-blue-500/20 text-blue-100 border-blue-400/30 text-xs px-2 py-0.5"
-                      variant={variant}>
+                      variant={variant === "inverted" ? "default" : variant as "default" | "secondary" | "destructive" | "outline" | null}>
                       + {selectedItems.length - maxItems} more
                     </Badge>
                   )}

@@ -269,7 +269,7 @@ export function registerOptimizedAdminUsersRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to fetch users' });
+      return res.status(500).json({ error: 'Failed to fetch users' });
     }
   });
 
@@ -308,7 +308,7 @@ export function registerOptimizedAdminUsersRoutes(app: Express) {
       res.json({ message: 'Cache warmed successfully' });
     } catch (error) {
       console.error('Error warming cache:', error);
-      res.status(500).json({ error: 'Failed to warm cache' });
+      return res.status(500).json({ error: 'Failed to warm cache' });
     }
   });
 
@@ -364,7 +364,7 @@ export function registerOptimizedAdminUsersRoutes(app: Express) {
 
     } catch (error) {
       console.error('Error in profile endpoint:', error);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      return res.status(500).json({ error: 'Failed to fetch profile' });
     }
   });
 

@@ -518,7 +518,7 @@ router.post(
 
       // Audit log the invitation creation
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         invitation: {
           id: storedInvitation.id,
@@ -534,7 +534,7 @@ router.post(
 
     } catch (error) {
       console.error('Error creating invitation:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to create invitation',
         message: 'An unexpected error occurred while creating the invitation'
       });
@@ -654,7 +654,7 @@ router.get(
 
     } catch (error) {
       console.error('Error listing invitations:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to fetch invitations',
         message: 'An unexpected error occurred while fetching invitations'
       });
@@ -725,7 +725,7 @@ router.delete(
 
     } catch (error) {
       console.error('Error cancelling invitation:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to cancel invitation',
         message: 'An unexpected error occurred while cancelling the invitation'
       });
@@ -816,7 +816,7 @@ router.post(
 
     } catch (error) {
       console.error('Error resending invitation:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to resend invitation',
         message: 'An unexpected error occurred while resending the invitation'
       });
@@ -874,7 +874,7 @@ router.get(
 
     } catch (error) {
       console.error('Error validating invitation:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Validation failed',
         message: 'An unexpected error occurred while validating the invitation'
       });
@@ -938,7 +938,7 @@ router.post(
 
       // Audit log the acceptance
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Account created successfully',
         user: {
@@ -951,7 +951,7 @@ router.post(
 
     } catch (error) {
       console.error('Error accepting invitation:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to create account',
         message: 'An unexpected error occurred while creating your account'
       });

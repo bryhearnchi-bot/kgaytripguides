@@ -37,7 +37,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Mobile Error Boundary caught an error:', error, errorInfo);
 
     // Trigger error haptic feedback
@@ -121,7 +121,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
     window.location.href = mailtoLink;
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Use custom fallback if provided
       if (this.props.fallback) {

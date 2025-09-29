@@ -25,7 +25,16 @@ interface Location {
   };
 }
 
-export default function LocationManagement() {
+interface LocationWithType extends Location {
+  type?: string;
+}
+
+interface LocationManagementProps {
+  showSelectMode?: boolean;
+  onSelectLocation?: (location: LocationWithType) => void;
+}
+
+export default function LocationManagement({ showSelectMode = false, onSelectLocation }: LocationManagementProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -406,7 +415,7 @@ export default function LocationManagement() {
             onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
             imageType="locations"
             placeholder="No location image uploaded"
-            disabled={savingLocation}
+            disabled={editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending}
           />
         </div>
       </AdminFormModal>

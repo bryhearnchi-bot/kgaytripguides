@@ -40,14 +40,14 @@ export function BottomSheetModal({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
-    setStartY(e.touches[0].clientY);
+    setStartY(e.touches[0]?.clientY ?? 0);
     setStartSnapPoint(currentSnapPoint);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
 
-    const currentY = e.touches[0].clientY;
+    const currentY = e.touches[0]?.clientY ?? 0;
     const deltaY = startY - currentY;
     const viewportHeight = window.innerHeight;
     const deltaSnapPoint = deltaY / viewportHeight;

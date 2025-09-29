@@ -22,7 +22,7 @@ router.get('/', async (req: Request, res: Response) => {
     res.json(categories || []);
   } catch (error) {
     console.error('Error fetching talent categories:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to fetch talent categories'
     });
   }
@@ -49,13 +49,13 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to create talent category' });
     }
 
-    res.status(201).json(newCategory);
+    return res.status(201).json(newCategory);
   } catch (error) {
     console.error('Error creating talent category:', error);
     if (error instanceof ApiError) {
       res.status(error.status).json({ error: error.message });
     } else {
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to create talent category'
       });
     }
@@ -97,7 +97,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (error instanceof ApiError) {
       res.status(error.status).json({ error: error.message });
     } else {
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to update talent category'
       });
     }
@@ -126,7 +126,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (error instanceof ApiError) {
       res.status(error.status).json({ error: error.message });
     } else {
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to delete talent category'
       });
     }

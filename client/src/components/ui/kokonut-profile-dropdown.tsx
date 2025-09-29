@@ -33,6 +33,12 @@ interface ProfileDropdownProps extends React.HTMLAttributes<HTMLDivElement> {
     profile?: {
         role?: string;
         status?: string;
+        name?: {
+            first?: string;
+            last?: string;
+            full?: string;
+        };
+        avatarUrl?: string;
     };
     onLogout: () => void;
     onNavigate: (path: string) => void;
@@ -59,7 +65,8 @@ export default function KokonutProfileDropdown({
     const fullDisplayName = profile?.name?.full || displayName;
     const initials = fullDisplayName
         .split(' ')
-        .map(name => name[0])
+        .map((name: string) => name[0])
+        .filter((char: string | undefined) => char)
         .join('')
         .toUpperCase()
         .slice(0, 2);

@@ -69,7 +69,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       next();
     } catch (error) {
       console.error('Validation middleware error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during validation'
       });
@@ -93,7 +93,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       next();
     } catch (error) {
       console.error('Query validation middleware error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during query validation'
       });
@@ -117,7 +117,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       next();
     } catch (error) {
       console.error('Parameter validation middleware error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during parameter validation'
       });
@@ -186,7 +186,7 @@ export function validateRequest<TBody = any, TQuery = any, TParams = any>({
       next();
     } catch (error) {
       console.error('Request validation middleware error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during request validation'
       });

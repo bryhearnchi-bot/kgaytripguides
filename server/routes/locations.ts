@@ -38,7 +38,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ total, byCountry });
     } catch (error) {
       console.error('Error fetching location stats:', error);
-      res.status(500).json({ error: 'Failed to fetch location statistics' });
+      return res.status(500).json({ error: 'Failed to fetch location statistics' });
     }
   });
 
@@ -97,7 +97,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching locations:', error);
-      res.status(500).json({ error: 'Failed to fetch locations' });
+      return res.status(500).json({ error: 'Failed to fetch locations' });
     }
   });
 
@@ -143,7 +143,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedLocation);
     } catch (error) {
       console.error('Error fetching location:', error);
-      res.status(500).json({ error: 'Failed to fetch location' });
+      return res.status(500).json({ error: 'Failed to fetch location' });
     }
   });
 
@@ -229,7 +229,7 @@ export function registerLocationRoutes(app: Express) {
         return res.status(400).json({ error: error.message });
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to create location',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -313,7 +313,7 @@ export function registerLocationRoutes(app: Express) {
         return res.status(400).json({ error: error.message });
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update location',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -345,7 +345,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Location deleted" });
     } catch (error: any) {
       console.error('Error deleting location:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to delete location',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -378,7 +378,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(stats);
     } catch (error) {
       console.error('Error fetching ship stats:', error);
-      res.status(500).json({ error: 'Failed to fetch ship statistics' });
+      return res.status(500).json({ error: 'Failed to fetch ship statistics' });
     }
   });
 
@@ -442,7 +442,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching ships:', error);
-      res.status(500).json({ error: 'Failed to fetch ships' });
+      return res.status(500).json({ error: 'Failed to fetch ships' });
     }
   });
 
@@ -485,7 +485,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedShip);
     } catch (error) {
       console.error('Error fetching ship:', error);
-      res.status(500).json({ error: 'Failed to fetch ship' });
+      return res.status(500).json({ error: 'Failed to fetch ship' });
     }
   });
 
@@ -550,7 +550,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedShip);
     } catch (error: any) {
       console.error('Error creating ship:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to create ship',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -625,7 +625,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedShip);
     } catch (error: any) {
       console.error('Error updating ship:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update ship',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -657,7 +657,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Ship deleted" });
     } catch (error: any) {
       console.error('Error deleting ship:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to delete ship',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -683,7 +683,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ total: amenities?.length || 0 });
     } catch (error) {
       console.error('Error fetching amenities stats:', error);
-      res.status(500).json({ error: 'Failed to fetch amenities statistics' });
+      return res.status(500).json({ error: 'Failed to fetch amenities statistics' });
     }
   });
 
@@ -732,7 +732,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching amenities:', error);
-      res.status(500).json({ error: 'Failed to fetch amenities' });
+      return res.status(500).json({ error: 'Failed to fetch amenities' });
     }
   });
 
@@ -771,7 +771,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedAmenity);
     } catch (error) {
       console.error('Error fetching amenity:', error);
-      res.status(500).json({ error: 'Failed to fetch amenity' });
+      return res.status(500).json({ error: 'Failed to fetch amenity' });
     }
   });
 
@@ -826,7 +826,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedAmenity);
     } catch (error: any) {
       console.error('Error creating amenity:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to create amenity',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -884,7 +884,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedAmenity);
     } catch (error: any) {
       console.error('Error updating amenity:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update amenity',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -916,7 +916,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Amenity deleted" });
     } catch (error: any) {
       console.error('Error deleting amenity:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to delete amenity',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -951,7 +951,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching venue types:', error);
-      res.status(500).json({ error: 'Failed to fetch venue types' });
+      return res.status(500).json({ error: 'Failed to fetch venue types' });
     }
   });
 
@@ -985,7 +985,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ total, byType });
     } catch (error) {
       console.error('Error fetching venues stats:', error);
-      res.status(500).json({ error: 'Failed to fetch venues statistics' });
+      return res.status(500).json({ error: 'Failed to fetch venues statistics' });
     }
   });
 
@@ -1048,7 +1048,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching venues:', error);
-      res.status(500).json({ error: 'Failed to fetch venues' });
+      return res.status(500).json({ error: 'Failed to fetch venues' });
     }
   });
 
@@ -1097,7 +1097,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedVenue);
     } catch (error) {
       console.error('Error fetching venue:', error);
-      res.status(500).json({ error: 'Failed to fetch venue' });
+      return res.status(500).json({ error: 'Failed to fetch venue' });
     }
   });
 
@@ -1166,7 +1166,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedVenue);
     } catch (error: any) {
       console.error('Error creating venue:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to create venue',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1235,7 +1235,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedVenue);
     } catch (error: any) {
       console.error('Error updating venue:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update venue',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1267,7 +1267,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Venue deleted" });
     } catch (error: any) {
       console.error('Error deleting venue:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to delete venue',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1300,7 +1300,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(stats);
     } catch (error) {
       console.error('Error fetching resort stats:', error);
-      res.status(500).json({ error: 'Failed to fetch resort statistics' });
+      return res.status(500).json({ error: 'Failed to fetch resort statistics' });
     }
   });
 
@@ -1364,7 +1364,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching resorts:', error);
-      res.status(500).json({ error: 'Failed to fetch resorts' });
+      return res.status(500).json({ error: 'Failed to fetch resorts' });
     }
   });
 
@@ -1410,7 +1410,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResort);
     } catch (error) {
       console.error('Error fetching resort:', error);
-      res.status(500).json({ error: 'Failed to fetch resort' });
+      return res.status(500).json({ error: 'Failed to fetch resort' });
     }
   });
 
@@ -1486,7 +1486,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResort);
     } catch (error: any) {
       console.error('Error creating resort:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to create resort',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1572,7 +1572,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResort);
     } catch (error: any) {
       console.error('Error updating resort:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update resort',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1604,7 +1604,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Resort deleted" });
     } catch (error: any) {
       console.error('Error deleting resort:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to delete resort',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1650,7 +1650,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching ship amenities:', error);
-      res.status(500).json({ error: 'Failed to fetch ship amenities' });
+      return res.status(500).json({ error: 'Failed to fetch ship amenities' });
     }
   });
 
@@ -1703,7 +1703,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Ship amenities updated successfully" });
     } catch (error: any) {
       console.error('Error updating ship amenities:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update ship amenities',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1751,7 +1751,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching ship venues:', error);
-      res.status(500).json({ error: 'Failed to fetch ship venues' });
+      return res.status(500).json({ error: 'Failed to fetch ship venues' });
     }
   });
 
@@ -1804,7 +1804,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Ship venues updated successfully" });
     } catch (error: any) {
       console.error('Error updating ship venues:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update ship venues',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1850,7 +1850,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching resort amenities:', error);
-      res.status(500).json({ error: 'Failed to fetch resort amenities' });
+      return res.status(500).json({ error: 'Failed to fetch resort amenities' });
     }
   });
 
@@ -1903,7 +1903,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Resort amenities updated successfully" });
     } catch (error: any) {
       console.error('Error updating resort amenities:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update resort amenities',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });
@@ -1951,7 +1951,7 @@ export function registerLocationRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching resort venues:', error);
-      res.status(500).json({ error: 'Failed to fetch resort venues' });
+      return res.status(500).json({ error: 'Failed to fetch resort venues' });
     }
   });
 
@@ -2004,7 +2004,7 @@ export function registerLocationRoutes(app: Express) {
       res.json({ message: "Resort venues updated successfully" });
     } catch (error: any) {
       console.error('Error updating resort venues:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: error.message || 'Failed to update resort venues',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       });

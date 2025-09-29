@@ -132,7 +132,6 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
                   loading_button_label: 'Signing in...',
                   social_provider_text: 'Sign in with {{provider}}',
                   link_text: "Don't have an account? Sign up",
-                  confirmation_text: 'Check your email for the confirmation link',
                 },
                 sign_up: {
                   email_label: 'Email',
@@ -141,7 +140,6 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
                   loading_button_label: 'Creating account...',
                   social_provider_text: 'Sign up with {{provider}}',
                   link_text: 'Already have an account? Sign in',
-                  confirmation_text: 'Check your email for the confirmation link',
                 },
                 forgotten_password: {
                   email_label: 'Email',

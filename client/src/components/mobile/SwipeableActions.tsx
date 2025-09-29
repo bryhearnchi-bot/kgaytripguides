@@ -39,13 +39,13 @@ export function SwipeableActions({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
     setIsDragging(true);
-    setStartX(e.touches[0].clientX);
+    setStartX(e.touches[0]?.clientX ?? 0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || disabled) return;
 
-    const currentX = e.touches[0].clientX;
+    const currentX = e.touches[0]?.clientX ?? 0;
     const deltaX = currentX - startX;
 
     // Limit swipe distance
@@ -64,10 +64,10 @@ export function SwipeableActions({
       // Trigger action based on swipe direction
       if (swipeX > 0 && leftActions.length > 0) {
         // Swiped right, trigger first left action
-        leftActions[0].onAction();
+        leftActions[0]?.onAction();
       } else if (swipeX < 0 && rightActions.length > 0) {
         // Swiped left, trigger first right action
-        rightActions[0].onAction();
+        rightActions[0]?.onAction();
       }
     }
 
@@ -99,9 +99,9 @@ export function SwipeableActions({
 
     if (Math.abs(swipeX) > threshold) {
       if (swipeX > 0 && leftActions.length > 0) {
-        leftActions[0].onAction();
+        leftActions[0]?.onAction();
       } else if (swipeX < 0 && rightActions.length > 0) {
-        rightActions[0].onAction();
+        rightActions[0]?.onAction();
       }
     }
 

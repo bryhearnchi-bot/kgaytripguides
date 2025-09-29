@@ -62,7 +62,7 @@ export function registerMediaRoutes(app: Express) {
       res.json({ url: publicUrl });
     } catch (error: any) {
       console.error('Error downloading image from URL:', error);
-      res.status(500).json({ error: error.message || 'Failed to download image' });
+      return res.status(500).json({ error: error.message || 'Failed to download image' });
     }
   });
 
@@ -79,7 +79,7 @@ export function registerMediaRoutes(app: Express) {
       res.json({ message: 'Image deleted successfully' });
     } catch (error) {
       console.error('Error deleting image:', error);
-      res.status(500).json({ error: 'Failed to delete image' });
+      return res.status(500).json({ error: 'Failed to delete image' });
     }
   });
 
@@ -102,7 +102,7 @@ export function registerMediaRoutes(app: Express) {
       res.json(categories || []);
     } catch (error) {
       console.error('Error fetching talent categories:', error);
-      res.status(500).json({ error: 'Failed to fetch talent categories' });
+      return res.status(500).json({ error: 'Failed to fetch talent categories' });
     }
   });
 
@@ -177,7 +177,7 @@ export function registerMediaRoutes(app: Express) {
       res.json({ total: totalCount || 0, byCategory });
     } catch (error) {
       console.error('Error fetching talent stats:', error);
-      res.status(500).json({ error: 'Failed to fetch talent statistics' });
+      return res.status(500).json({ error: 'Failed to fetch talent statistics' });
     }
   });
 
@@ -251,7 +251,7 @@ export function registerMediaRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching talent:', error);
-      res.status(500).json({ error: 'Failed to fetch talent' });
+      return res.status(500).json({ error: 'Failed to fetch talent' });
     }
   });
 
@@ -308,7 +308,7 @@ export function registerMediaRoutes(app: Express) {
       res.json(transformedTalent);
     } catch (error) {
       console.error('Error fetching talent:', error);
-      res.status(500).json({ error: 'Failed to fetch talent' });
+      return res.status(500).json({ error: 'Failed to fetch talent' });
     }
   });
 
@@ -364,7 +364,7 @@ export function registerMediaRoutes(app: Express) {
       res.json(transformedResults);
     } catch (error) {
       console.error('Error fetching talent for trip:', error);
-      res.status(500).json({ error: 'Failed to fetch talent for trip' });
+      return res.status(500).json({ error: 'Failed to fetch talent for trip' });
     }
   });
 
@@ -536,7 +536,7 @@ export function registerMediaRoutes(app: Express) {
       res.json(transformedTalent);
     } catch (error) {
       console.error('Error updating talent:', error);
-      res.status(500).json({ error: 'Failed to update talent' });
+      return res.status(500).json({ error: 'Failed to update talent' });
     }
   });
 
@@ -562,7 +562,7 @@ export function registerMediaRoutes(app: Express) {
       res.json({ message: "Talent deleted" });
     } catch (error) {
       console.error('Error deleting talent:', error);
-      res.status(500).json({ error: 'Failed to delete talent' });
+      return res.status(500).json({ error: 'Failed to delete talent' });
     }
   });
 
@@ -648,7 +648,7 @@ export function registerMediaRoutes(app: Express) {
 
     } catch (error) {
       console.error('Error fixing talent sequence:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to fix talent sequence',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -681,7 +681,7 @@ export function registerMediaRoutes(app: Express) {
       res.json({ message: "Talent assigned to trip" });
     } catch (error) {
       console.error('Error assigning talent to trip:', error);
-      res.status(500).json({ error: 'Failed to assign talent to trip' });
+      return res.status(500).json({ error: 'Failed to assign talent to trip' });
     }
   });
 
@@ -709,7 +709,7 @@ export function registerMediaRoutes(app: Express) {
       res.json({ message: "Talent removed from trip" });
     } catch (error) {
       console.error('Error removing talent from trip:', error);
-      res.status(500).json({ error: 'Failed to remove talent from trip' });
+      return res.status(500).json({ error: 'Failed to remove talent from trip' });
     }
   });
 

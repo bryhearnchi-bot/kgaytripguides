@@ -202,7 +202,7 @@ export const useErrorTracking = () => {
   }, [track]);
 };
 
-export const usePerformanceTracking = () => {
+export const usePerformanceTracking = (): void => {
   const { track } = useAnalytics();
 
   useEffect(() => {
@@ -212,20 +212,23 @@ export const usePerformanceTracking = () => {
       const lcpObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         const lastEntry = entries[entries.length - 1];
-        track('core_web_vital', {
-          metric: 'LCP',
-          value: lastEntry.startTime,
-          url: window.location.href
-        });
+        if (lastEntry) {
+          track('core_web_vital', {
+            metric: 'LCP',
+            value: lastEntry.startTime,
+            url: window.location.href
+          });
+        }
       });
 
       // Track First Input Delay (FID)
       const fidObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         entries.forEach(entry => {
+          const perfEntry = entry as any; // PerformanceEventTiming has these properties
           track('core_web_vital', {
             metric: 'FID',
-            value: entry.processingStart - entry.startTime,
+            value: perfEntry.processingStart - entry.startTime,
             url: window.location.href
           });
         });
@@ -236,8 +239,9 @@ export const usePerformanceTracking = () => {
       const clsObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         entries.forEach(entry => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+          const layoutEntry = entry as any; // LayoutShift has these properties
+          if (!layoutEntry.hadRecentInput) {
+            clsValue += layoutEntry.value;
           }
         });
       });

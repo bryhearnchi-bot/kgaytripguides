@@ -40,15 +40,15 @@ export function ProfileView({ onEdit }: ProfileViewProps) {
     }
     if (profile?.name?.full) {
       const parts = profile.name.full.split(' ');
-      if (parts.length > 1) {
+      if (parts.length > 1 && parts[0]?.[0] && parts[parts.length - 1]?.[0]) {
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
       }
-      return parts[0][0].toUpperCase();
+      return parts[0]?.[0]?.toUpperCase() || 'U';
     }
     return 'U';
   };
 
-  const memberSince = profile.created_at
+  const memberSince = profile?.created_at
     ? format(new Date(profile.created_at), 'MMMM yyyy')
     : 'Unknown';
 

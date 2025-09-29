@@ -366,7 +366,10 @@ export default function SettingsTab() {
   const moveSettingUp = (index: number) => {
     if (!settings || index === 0) return;
     const newOrder = [...settings];
-    [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+    const current = newOrder[index];
+    const prev = newOrder[index - 1];
+    if (!current || !prev) return;
+    [newOrder[index - 1], newOrder[index]] = [current, prev];
     const orderedKeys = newOrder.map(s => s.key);
     reorderSettings.mutate(orderedKeys);
   };
@@ -374,7 +377,10 @@ export default function SettingsTab() {
   const moveSettingDown = (index: number) => {
     if (!settings || index === settings.length - 1) return;
     const newOrder = [...settings];
-    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+    const current = newOrder[index];
+    const next = newOrder[index + 1];
+    if (!current || !next) return;
+    [newOrder[index], newOrder[index + 1]] = [next, current];
     const orderedKeys = newOrder.map(s => s.key);
     reorderSettings.mutate(orderedKeys);
   };

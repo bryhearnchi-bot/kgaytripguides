@@ -93,7 +93,7 @@ export function registerPublicRoutes(app: Express) {
         res.json(stats);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+        return res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
       }
     }
   );
@@ -145,7 +145,7 @@ export function registerPublicRoutes(app: Express) {
         res.json(health);
       } catch (error) {
         console.error('Error checking system health:', error);
-        res.status(500).json({
+        return res.status(500).json({
           status: 'unhealthy',
           error: 'Failed to check system health',
           timestamp: new Date().toISOString()
@@ -242,7 +242,7 @@ export function registerPublicRoutes(app: Express) {
         res.json(results);
       } catch (error) {
         console.error('Error performing global search:', error);
-        res.status(500).json({ error: 'Failed to perform search' });
+        return res.status(500).json({ error: 'Failed to perform search' });
       }
     }
   );
@@ -386,7 +386,7 @@ export function registerPublicRoutes(app: Express) {
       res.json(responseProfile);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      return res.status(500).json({ error: 'Failed to fetch profile' });
     }
   });
 
@@ -468,7 +468,7 @@ export function registerPublicRoutes(app: Express) {
       res.json(responseProfile);
     } catch (error) {
       console.error('Error updating profile:', error);
-      res.status(500).json({ error: 'Failed to update profile' });
+      return res.status(500).json({ error: 'Failed to update profile' });
     }
   });
 
@@ -490,7 +490,7 @@ export function registerPublicRoutes(app: Express) {
       res.json(profile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      res.status(500).json({ error: 'Failed to fetch user profile' });
+      return res.status(500).json({ error: 'Failed to fetch user profile' });
     }
   });
 
@@ -533,7 +533,7 @@ export function registerPublicRoutes(app: Express) {
       res.json({ message: 'Password changed successfully' });
     } catch (error) {
       console.error('Error changing password:', error);
-      res.status(500).json({ error: 'Failed to change password' });
+      return res.status(500).json({ error: 'Failed to change password' });
     }
   });
 }

@@ -57,8 +57,8 @@ export function TouchOptimizedForm({
   className = ''
 }: TouchOptimizedFormProps) {
   const [expandedSections, setExpandedSections] = React.useState<Set<number>>(
-    new Set(sections.map((_, index) =>
-      sections[index].collapsible ? (sections[index].defaultExpanded ? index : -1) : index
+    new Set(sections.map((section, index) =>
+      section?.collapsible ? (section.defaultExpanded ? index : -1) : index
     ).filter(i => i >= 0))
   );
 

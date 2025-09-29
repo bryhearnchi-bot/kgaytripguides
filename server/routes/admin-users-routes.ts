@@ -270,7 +270,7 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to fetch users' });
+      return res.status(500).json({ error: 'Failed to fetch users' });
     }
   });
 
@@ -454,7 +454,7 @@ export function registerAdminUsersRoutes(app: Express) {
       }
 
       // Return the updated user data
-      res.status(201).json({
+      return res.status(201).json({
         user: updatedUser
       });
 
@@ -468,7 +468,7 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to create user' });
+      return res.status(500).json({ error: 'Failed to create user' });
     }
   });
 
@@ -644,7 +644,7 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to update user' });
+      return res.status(500).json({ error: 'Failed to update user' });
     }
   });
 
@@ -707,7 +707,7 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to update user status' });
+      return res.status(500).json({ error: 'Failed to update user status' });
     }
   });
 
@@ -760,7 +760,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
     } catch (error) {
       console.error('Error deleting user:', error);
-      res.status(500).json({ error: 'Failed to delete user' });
+      return res.status(500).json({ error: 'Failed to delete user' });
     }
   });
 
@@ -829,7 +829,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
     } catch (error) {
       console.error('Error in profile endpoint:', error);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      return res.status(500).json({ error: 'Failed to fetch profile' });
     }
   });
 
@@ -927,7 +927,7 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to update profile',
         details: error.message
       });

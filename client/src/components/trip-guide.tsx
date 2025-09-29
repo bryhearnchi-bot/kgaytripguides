@@ -495,7 +495,7 @@ function TimelineList({ events, onTalentClick, onPartyClick, eventDate, TALENT, 
                   : ''
               }`}
               onClick={() => {
-                if (clickableNames.length > 0) {
+                if (clickableNames.length > 0 && clickableNames[0]) {
                   // If there are talent names, click the first one
                   onTalentClick(clickableNames[0]);
                 } else if ((event.type === 'party' || event.type === 'club' || event.type === 'after') && onPartyClick) {
@@ -619,7 +619,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   // Robust scroll to top when component content is ready
   useEffect(() => {
     if (data && !isLoading) {
-      const forceScrollToTop = () => {
+      const forceScrollToTop = (): void => {
         // Multiple scroll methods for maximum compatibility
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
@@ -674,7 +674,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const TRIP_INFO = data?.TRIP_INFO || {};
 
   // Utility function: Events before 6am belong to the previous day's schedule
-  const getScheduleDate = (date: string, time: string): string => {
+  const getScheduleDate = (date: string, time: string | undefined): string => {
+    if (!time) return date;
     const hour = parseInt(time.split(':')[0]);
     if (hour < 6) {
       // Before 6am - belongs to previous day
@@ -702,13 +703,13 @@ export default function TripGuide({ slug }: TripGuideProps) {
       const eventDate = event.dateKey || event.key;
 
       // Future dates are always included
-      if (eventDate > today) return true;
+      if (today && eventDate > today) return true;
 
       // Past dates are excluded
-      if (eventDate < today) return false;
+      if (today && eventDate < today) return false;
 
       // For today, check the time
-      if (eventDate === today) {
+      if (today && eventDate === today) {
         const [eventHour, eventMinute] = event.time.split(':').map(Number);
         const eventTotalMinutes = eventHour * 60 + eventMinute;
         const currentTotalMinutes = currentHour * 60 + currentMinute;
@@ -748,19 +749,20 @@ export default function TripGuide({ slug }: TripGuideProps) {
           // Custom sort to handle events that cross midnight
           const timeA = a.time;
           const timeB = b.time;
-          const hourA = parseInt(timeA.split(':')[0]);
-          const hourB = parseInt(timeB.split(':')[0]);
+          const hourA = parseInt(timeA?.split(':')[0] ?? '0');
+          const hourB = parseInt(timeB?.split(':')[0] ?? '0');
 
           // Convert time to minutes for proper chronological sorting
-          const getMinutesFromMidnight = (time: string) => {
+          const getMinutesFromMidnight = (time: string | undefined): number => {
+            if (!time) return 0;
             const [hours, minutes] = time.split(':').map(Number);
             const adjustedHours = hours === 24 ? 0 : hours; // Handle 24:00 as 00:00
 
             // Events before 6am are "next day" events, so add 24 hours worth of minutes
             if (adjustedHours < 6) {
-              return (adjustedHours + 24) * 60 + minutes;
+              return (adjustedHours + 24) * 60 + (minutes ?? 0);
             }
-            return adjustedHours * 60 + minutes;
+            return adjustedHours * 60 + (minutes ?? 0);
           };
 
           return getMinutesFromMidnight(timeA) - getMinutesFromMidnight(timeB);
@@ -770,7 +772,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   const getFilteredScheduledDaily = () => {
     const scheduledDaily = getScheduledDaily();
-    const cruiseStatus = data?.trip?.status || 'upcoming';
+    const cruiseStatus = data?.TRIP_INFO?.status || 'upcoming';
 
     return scheduledDaily.map(day => ({
       ...day,
@@ -881,7 +883,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
         subtitle=""
         additionalInfo={tripData?.trip?.startDate && tripData?.trip?.endDate
           ? `${format(dateOnly(tripData.trip.startDate), 'MMMM d')} - ${format(dateOnly(tripData.trip.endDate), 'MMMM d, yyyy')}`
-          : undefined
+          : ''
         }
         tabSection={
           <StandardizedTabContainer>
@@ -1068,7 +1070,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
                         <div
                           className="bg-gray-100 border border-gray-200 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer relative"
-                          onClick={() => handleViewEvents(stop.key, stop.port)}
+                          onClick={() => stop.key && handleViewEvents(stop.key, stop.port)}
                         >
                           {/* View Events Button - positioned in top right corner */}
                           <div className="absolute top-3 right-3 z-10">
@@ -1076,7 +1078,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent double-click from card
-                                handleViewEvents(stop.key, stop.port);
+                                if (stop.key) handleViewEvents(stop.key, stop.port);
                               }}
                               className="bg-ocean-600 hover:bg-ocean-700 text-white text-xs px-4 py-2"
                             >
@@ -1195,7 +1197,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         </div>
 
                         <div className="space-y-4">
-                          {talentByCategory[category].map((talent, index) => (
+                          {talentByCategory[category]?.map((talent, index) => (
                             <motion.div
                               key={talent.name}
                               initial={{ opacity: 0, y: 8 }}
@@ -1328,7 +1330,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                             </div>
 
                             <div className="space-y-4">
-                              {dayParties.map((party, index) => (
+                              {dayParties.map((party: any, index: number) => (
                                 <div key={`${party.title}-${party.time}`} className="bg-white/90 rounded-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
                                   <div className="flex flex-col lg:flex-row">
                                     {/* Hero Image */}
@@ -1567,7 +1569,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 });
 
                 // Apply timing filter for talent performances
-                const cruiseStatus = data?.trip?.status || 'upcoming';
+                const cruiseStatus = data?.TRIP_INFO?.status || 'upcoming';
                 const talentPerformances = filterEventsByTiming(allTalentPerformances, cruiseStatus);
 
                 return talentPerformances.length > 0 && (
@@ -1686,7 +1688,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                         : ''
                     }`}
                     onClick={() => {
-                      if (clickableNames.length > 0) {
+                      if (clickableNames.length > 0 && clickableNames[0]) {
                         // If there are talent names, click the first one
                         setCameFromEventsModal(true);
                         handleTalentClick(clickableNames[0]);
