@@ -337,8 +337,26 @@ if (process.env.NODE_ENV === 'production') {
     await setupVite(app, server);
   } else {
     // In production, add the fallback to index.html for client-side routing
+    // BUT: Don't catch requests for static assets (JS, CSS, etc.)
     const distPath = path.join(process.cwd(), 'dist', 'public');
-    app.use('*', (_req, res) => {
+    app.get('*', (req, res, next) => {
+      // Don't intercept requests for static assets
+      if (
+        req.path.startsWith('/assets/') ||
+        req.path.endsWith('.js') ||
+        req.path.endsWith('.css') ||
+        req.path.endsWith('.map') ||
+        req.path.endsWith('.png') ||
+        req.path.endsWith('.jpg') ||
+        req.path.endsWith('.jpeg') ||
+        req.path.endsWith('.gif') ||
+        req.path.endsWith('.svg') ||
+        req.path.endsWith('.ico') ||
+        req.path.endsWith('.webp')
+      ) {
+        return next(); // Let it 404 if file not found
+      }
+      // For all other requests, serve index.html (SPA fallback)
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
