@@ -10,9 +10,9 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   const cspDirectives = {
     'default-src': ["'self'", 'https:'],
     'script-src': isProduction
-      ? ["'self'", 'https:']
+      ? ["'self'", "'unsafe-inline'", 'https:'] // Vite build needs this for module preload
       : ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:'],
-    'style-src': isProduction ? ["'self'", 'https:'] : ["'self'", "'unsafe-inline'", 'https:'],
+    'style-src': ["'self'", "'unsafe-inline'", 'https:'], // Always need unsafe-inline for Vite
     'font-src': ["'self'", 'https:'],
     'img-src': [
       "'self'",
