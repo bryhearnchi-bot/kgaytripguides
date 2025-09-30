@@ -2,138 +2,113 @@ import { Router } from 'express';
 import { Request, Response } from 'express';
 import { getSupabaseAdmin } from '../supabase-admin';
 import { ApiError } from '../utils/ApiError';
+import { asyncHandler } from '../middleware/errorHandler';
+import { logger } from '../logging/logger';
 
 const router = Router();
 
 // Get all talent categories
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const supabaseAdmin = getSupabaseAdmin();
-    const { data: categories, error } = await supabaseAdmin
-      .from('talent_categories')
-      .select('*')
-      .order('category', { ascending: true });
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: categories, error } = await supabaseAdmin
+    .from('talent_categories')
+    .select('*')
+    .order('category', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching talent categories:', error);
-      return res.status(500).json({ error: 'Failed to fetch talent categories' });
-    }
-
-    return res.json(categories || []);
-  } catch (error: unknown) {
-    console.error('Error fetching talent categories:', error);
-    return res.status(500).json({
-      error: 'Failed to fetch talent categories'
+  if (error) {
+    logger.error('Error fetching talent categories', error, {
+      method: req.method,
+      path: req.path
     });
+    throw ApiError.internal('Failed to fetch talent categories');
   }
-});
+
+  return res.json(categories || []);
+}));
 
 // Create new talent category
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const { category } = req.body;
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
+  const { category } = req.body;
 
-    if (!category) {
-      throw new ApiError(400, 'Category name is required');
-    }
-
-    const supabaseAdmin = getSupabaseAdmin();
-    const { data: newCategory, error } = await supabaseAdmin
-      .from('talent_categories')
-      .insert({ category })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating talent category:', error);
-      return res.status(500).json({ error: 'Failed to create talent category' });
-    }
-
-    return res.status(201).json(newCategory);
-  } catch (error: unknown) {
-    console.error('Error creating talent category:', error);
-    if (error instanceof ApiError) {
-      // @ts-expect-error - ApiError should have status property, type definition needs update
-      return res.status(error.status || 500).json({ error: error.message });
-    } else {
-      return res.status(500).json({
-        error: 'Failed to create talent category'
-      });
-    }
+  if (!category) {
+    throw ApiError.badRequest('Category name is required');
   }
-});
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: newCategory, error } = await supabaseAdmin
+    .from('talent_categories')
+    .insert({ category })
+    .select()
+    .single();
+
+  if (error) {
+    logger.error('Error creating talent category', error, {
+      method: req.method,
+      path: req.path,
+      category
+    });
+    throw ApiError.internal('Failed to create talent category');
+  }
+
+  return res.status(201).json(newCategory);
+}));
 
 // Update talent category
-router.put('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { category } = req.body;
+router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { category } = req.body;
 
-    if (!category) {
-      throw new ApiError(400, 'Category name is required');
-    }
-
-    const supabaseAdmin = getSupabaseAdmin();
-    const { data: updated, error } = await supabaseAdmin
-      .from('talent_categories')
-      .update({
-        category,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', Number(id))
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        throw new ApiError(404, 'Talent category not found');
-      }
-      console.error('Error updating talent category:', error);
-      return res.status(500).json({ error: 'Failed to update talent category' });
-    }
-
-    return res.json(updated);
-  } catch (error: unknown) {
-    console.error('Error updating talent category:', error);
-    if (error instanceof ApiError) {
-      // @ts-expect-error - ApiError should have status property, type definition needs update
-      return res.status(error.status || 500).json({ error: error.message });
-    } else {
-      return res.status(500).json({
-        error: 'Failed to update talent category'
-      });
-    }
+  if (!category) {
+    throw ApiError.badRequest('Category name is required');
   }
-});
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: updated, error } = await supabaseAdmin
+    .from('talent_categories')
+    .update({
+      category,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', Number(id))
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw ApiError.notFound('Talent category not found');
+    }
+    logger.error('Error updating talent category', error, {
+      method: req.method,
+      path: req.path,
+      id,
+      category
+    });
+    throw ApiError.internal('Failed to update talent category');
+  }
+
+  return res.json(updated);
+}));
 
 // Delete talent category
-router.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-    const supabaseAdmin = getSupabaseAdmin();
-    const { error } = await supabaseAdmin
-      .from('talent_categories')
-      .delete()
-      .eq('id', Number(id));
+  const supabaseAdmin = getSupabaseAdmin();
+  const { error } = await supabaseAdmin
+    .from('talent_categories')
+    .delete()
+    .eq('id', Number(id));
 
-    if (error) {
-      console.error('Error deleting talent category:', error);
-      return res.status(500).json({ error: 'Failed to delete talent category' });
-    }
-
-    return res.status(204).send();
-  } catch (error: unknown) {
-    console.error('Error deleting talent category:', error);
-    if (error instanceof ApiError) {
-      // @ts-expect-error - ApiError should have status property, type definition needs update
-      return res.status(error.status || 500).json({ error: error.message });
-    } else {
-      return res.status(500).json({
-        error: 'Failed to delete talent category'
-      });
-    }
+  if (error) {
+    logger.error('Error deleting talent category', error, {
+      method: req.method,
+      path: req.path,
+      id
+    });
+    throw ApiError.internal('Failed to delete talent category');
   }
-});
+
+  return res.status(204).send();
+}));
 
 export default router;

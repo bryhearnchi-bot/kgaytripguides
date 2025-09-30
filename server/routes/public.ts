@@ -2,6 +2,8 @@ import type { Express, Response } from "express";
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import { getSupabaseAdmin } from "../supabase-admin";
 import { z } from "zod";
+import { asyncHandler } from '../middleware/errorHandler';
+import { ApiError } from '../utils/ApiError';
 import {
   validateBody,
   validateQuery,
@@ -15,6 +17,7 @@ import {
 } from "../middleware/rate-limiting";
 import { csrfTokenEndpoint } from "../middleware/csrf";
 import { apiVersionsEndpoint } from "../middleware/versioning";
+import { logger } from "../logging/logger";
 
 // Import bcrypt for password hashing
 // @ts-expect-error - bcryptjs types may not be installed, TODO: verify @types/bcryptjs
@@ -36,8 +39,7 @@ export function registerPublicRoutes(app: Express) {
     adminRateLimit,
     requireContentEditor,
     validateBody(dashboardStatsSchema),
-    async (req: AuthenticatedRequest, res) => {
-      try {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
         const { dateRange, metrics } = req.body;
         const supabaseAdmin = getSupabaseAdmin();
 
@@ -62,7 +64,10 @@ export function registerPublicRoutes(app: Express) {
 
             stats.trips = { total, upcoming, active, past };
           } catch (err) {
-            console.error('Error fetching trip stats:', err);
+            logger.error('Error fetching trip stats', err, {
+              metric: 'trips',
+              dateRange
+            });
             stats.trips = { total: 0, upcoming: 0, active: 0, past: 0 };
           }
         }
@@ -92,19 +97,14 @@ export function registerPublicRoutes(app: Express) {
         }
 
         return res.json(stats);
-      } catch (error: unknown) {
-        console.error('Error fetching dashboard stats:', error);
-        return res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
-      }
-    }
+    })
   );
 
   // System health check
   app.get("/api/admin/system/health",
     requireContentEditor,
     validateQuery(systemHealthSchema),
-    async (req: AuthenticatedRequest, res) => {
-      try {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
         const { detailed = false } = req.query;
         const health: any = {
           status: 'healthy',
@@ -144,15 +144,7 @@ export function registerPublicRoutes(app: Express) {
         }
 
         return res.json(health);
-      } catch (error: unknown) {
-        console.error('Error checking system health:', error);
-        return res.status(500).json({
-          status: 'unhealthy',
-          error: 'Failed to check system health',
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
+    })
   );
 
   // ============ SEARCH ENDPOINTS ============
@@ -161,8 +153,7 @@ export function registerPublicRoutes(app: Express) {
   app.get("/api/search/global",
     searchRateLimit,
     validateQuery(globalSearchSchema),
-    async (req: AuthenticatedRequest, res: Response) => {
-      try {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
         const {
           q = '',
           types = ['trips', 'events', 'talent', 'locations'],
@@ -185,7 +176,10 @@ export function registerPublicRoutes(app: Express) {
             .limit(limitNum);
 
           if (error) {
-            console.error('Error searching trips:', error);
+            logger.error('Error searching trips', error, {
+              searchTerm,
+              limit: limitNum
+            });
             results.trips = [];
           } else {
             results.trips = tripResults || [];
@@ -201,7 +195,10 @@ export function registerPublicRoutes(app: Express) {
             .limit(limitNum);
 
           if (error) {
-            console.error('Error searching events:', error);
+            logger.error('Error searching events', error, {
+              searchTerm,
+              limit: limitNum
+            });
             results.events = [];
           } else {
             results.events = eventResults || [];
@@ -217,7 +214,10 @@ export function registerPublicRoutes(app: Express) {
             .limit(limitNum);
 
           if (error) {
-            console.error('Error searching talent:', error);
+            logger.error('Error searching talent', error, {
+              searchTerm,
+              limit: limitNum
+            });
             results.talent = [];
           } else {
             results.talent = talentResults || [];
@@ -233,7 +233,10 @@ export function registerPublicRoutes(app: Express) {
             .limit(limitNum);
 
           if (error) {
-            console.error('Error searching locations:', error);
+            logger.error('Error searching locations', error, {
+              searchTerm,
+              limit: limitNum
+            });
             results.locations = [];
           } else {
             results.locations = locationResults || [];
@@ -241,17 +244,13 @@ export function registerPublicRoutes(app: Express) {
         }
 
         return res.json(results);
-      } catch (error: unknown) {
-        console.error('Error performing global search:', error);
-        return res.status(500).json({ error: 'Failed to perform search' });
-      }
-    }
+    })
   );
 
   // ============ SETTINGS ENDPOINTS ============
 
   // Get settings by category
-  app.get("/api/settings/:category", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/settings/:category", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: settings, error } = await supabaseAdmin
       .from('settings')
@@ -260,14 +259,13 @@ export function registerPublicRoutes(app: Express) {
       .order('order_index', { ascending: true });
 
     if (error) {
-      console.error('Error fetching settings:', error);
-      return res.status(500).json({ error: 'Failed to fetch settings' });
+      throw ApiError.internal('Failed to fetch settings');
     }
     return res.json(settings);
-  });
+  }));
 
   // Get active settings by category
-  app.get("/api/settings/:category/active", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/settings/:category/active", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: settings, error } = await supabaseAdmin
       .from('settings')
@@ -277,14 +275,13 @@ export function registerPublicRoutes(app: Express) {
       .order('order_index', { ascending: true });
 
     if (error) {
-      console.error('Error fetching active settings:', error);
-      return res.status(500).json({ error: 'Failed to fetch active settings' });
+      throw ApiError.internal('Failed to fetch active settings');
     }
     return res.json(settings);
-  });
+  }));
 
   // Create or update a setting
-  app.post("/api/settings/:category/:key", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/settings/:category/:key", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: setting, error } = await supabaseAdmin
       .from('settings')
@@ -298,14 +295,13 @@ export function registerPublicRoutes(app: Express) {
       .single();
 
     if (error) {
-      console.error('Error upserting setting:', error);
-      return res.status(500).json({ error: 'Failed to upsert setting' });
+      throw ApiError.internal('Failed to upsert setting');
     }
     return res.json(setting);
-  });
+  }));
 
   // Deactivate a setting
-  app.post("/api/settings/:category/:key/deactivate", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/settings/:category/:key/deactivate", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: setting, error } = await supabaseAdmin
       .from('settings')
@@ -319,14 +315,13 @@ export function registerPublicRoutes(app: Express) {
       .single();
 
     if (error) {
-      console.error('Error deactivating setting:', error);
-      return res.status(500).json({ error: 'Failed to deactivate setting' });
+      throw ApiError.internal('Failed to deactivate setting');
     }
     return res.json(setting);
-  });
+  }));
 
   // Reorder settings within a category
-  app.post("/api/settings/:category/reorder", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/settings/:category/reorder", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { keys } = req.body;
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -342,18 +337,16 @@ export function registerPublicRoutes(app: Express) {
         .eq('key', keys[i]);
 
       if (error) {
-        console.error('Error reordering settings:', error);
-        return res.status(500).json({ error: 'Failed to reorder settings' });
+        throw ApiError.internal('Failed to reorder settings');
       }
     }
     return res.json({ message: "Settings reordered" });
-  });
+  }));
 
   // ============ USER PROFILE ENDPOINTS ============
 
   // Get admin profile
-  app.get("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
+  app.get("/api/admin/profile", requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
@@ -367,7 +360,11 @@ export function registerPublicRoutes(app: Express) {
         .single();
 
       if (error || !profile) {
-        console.error('Error fetching profile:', error);
+        logger.error('Error fetching profile', error, {
+          method: req.method,
+          path: req.path,
+          userId
+        });
         return res.status(404).json({ error: 'Profile not found' });
       }
 
@@ -385,15 +382,10 @@ export function registerPublicRoutes(app: Express) {
       };
 
       return res.json(responseProfile);
-    } catch (error: unknown) {
-      console.error('Error fetching profile:', error);
-      return res.status(500).json({ error: 'Failed to fetch profile' });
-    }
-  });
+  }));
 
   // Update admin profile
-  app.put("/api/admin/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
+  app.put("/api/admin/profile", requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const userId = req.user?.id;
 
       if (!userId) {
@@ -449,7 +441,11 @@ export function registerPublicRoutes(app: Express) {
         .single();
 
       if (error) {
-        console.error('Error updating profile:', error);
+        logger.error('Error updating profile', error, {
+          method: req.method,
+          path: req.path,
+          userId
+        });
         return res.status(500).json({ error: 'Failed to update profile' });
       }
 
@@ -467,15 +463,10 @@ export function registerPublicRoutes(app: Express) {
       };
 
       return res.json(responseProfile);
-    } catch (error: unknown) {
-      console.error('Error updating profile:', error);
-      return res.status(500).json({ error: 'Failed to update profile' });
-    }
-  });
+  }));
 
   // Get another user's profile (admin only)
-  app.get("/api/admin/users/:userId/profile", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
+  app.get("/api/admin/users/:userId/profile", requireSuperAdmin, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: profile, error } = await supabaseAdmin
         .from('profiles')
@@ -484,20 +475,14 @@ export function registerPublicRoutes(app: Express) {
         .single();
 
       if (error || !profile) {
-        console.error('Error fetching profile:', error);
-        return res.status(404).json({ error: 'Profile not found' });
+        throw ApiError.notFound('Profile not found');
       }
 
       return res.json(profile);
-    } catch (error: unknown) {
-      console.error('Error fetching user profile:', error);
-      return res.status(500).json({ error: 'Failed to fetch user profile' });
-    }
-  });
+  }));
 
   // Change password
-  app.post("/api/admin/change-password", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
+  app.post("/api/admin/change-password", requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
@@ -523,7 +508,11 @@ export function registerPublicRoutes(app: Express) {
         .single();
 
       if (error || !user) {
-        console.error('Error fetching user:', error);
+        logger.error('Error fetching user for password change', error, {
+          method: req.method,
+          path: req.path,
+          userId
+        });
         return res.status(404).json({ error: 'User not found' });
       }
 
@@ -532,9 +521,5 @@ export function registerPublicRoutes(app: Express) {
       // In production, this should integrate with Supabase Auth API
 
       return res.json({ message: 'Password changed successfully' });
-    } catch (error: unknown) {
-      console.error('Error changing password:', error);
-      return res.status(500).json({ error: 'Failed to change password' });
-    }
-  });
+  }));
 }

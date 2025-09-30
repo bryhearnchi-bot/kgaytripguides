@@ -95,8 +95,12 @@ function checkMemoryHealth(): HealthStatus {
   const memPercentage = (usedMem / totalMem) * 100;
 
   // Check if memory usage is too high
+  // In development, be more lenient since the dev machine may have other processes
   const heapPercentage = (memUsage.heapUsed / memUsage.heapTotal) * 100;
-  const isHealthy = heapPercentage < 90 && memPercentage < 90;
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const heapThreshold = isDevelopment ? 95 : 90;
+  const systemThreshold = isDevelopment ? 99 : 90;
+  const isHealthy = heapPercentage < heapThreshold && memPercentage < systemThreshold;
 
   if (!isHealthy) {
     logger.warn('High memory usage detected', {
@@ -285,12 +289,12 @@ export async function healthCheck(req: Request, res: Response) {
     const cpu = checkCPUHealth();
 
     // Determine overall health
-    const isHealthy =
-      database.healthy &&
-      memory.healthy &&
-      cpu.healthy &&
-      disk.healthy &&
-      Object.values(services).every(s => s.healthy !== false);
+    // In development, only critical services (database, cpu, disk) are required
+    // Memory and external services can be degraded in development
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const criticalChecks = database.healthy && cpu.healthy && disk.healthy;
+    const allChecks = criticalChecks && memory.healthy && Object.values(services).every(s => s.healthy !== false);
+    const isHealthy = isDevelopment ? criticalChecks : allChecks;
 
     const health: ServiceHealth = {
       database,

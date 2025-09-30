@@ -12,8 +12,9 @@
  */
 
 import type { Express } from "express";
+import { logger } from "../logging/logger";
 
 export function registerOptimizedTripRoutes(app: Express) {
   // Experimental routes commented out - pending optimization infrastructure
-  console.log('Optimized trip routes: experimental features not yet implemented');
+  logger.info('Optimized trip routes: experimental features not yet implemented');
 }

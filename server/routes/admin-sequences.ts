@@ -5,7 +5,7 @@
  * that can cause duplicate key violations.
  */
 
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { requireSuperAdmin, type AuthenticatedRequest } from "../auth";
 import {
   fixTableSequence,
@@ -15,200 +15,158 @@ import {
   getCreateStoredProcedureSQL,
   type SequenceFixResult
 } from "../utils/sequence-fix";
+import { asyncHandler } from "../middleware/errorHandler";
+import { ApiError } from "../utils/ApiError";
 import { logger } from "../logging/logger";
 
 export function registerAdminSequenceRoutes(app: Express) {
   // Get stored procedure creation SQL
-  app.get("/api/admin/sequences/stored-procedure-sql", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const sql = getCreateStoredProcedureSQL();
-      res.json({
-        success: true,
-        sql,
-        instructions: "Run this SQL in your Supabase dashboard SQL editor to enable automatic sequence fixing"
-      });
-    } catch (error: unknown) {
-      logger.error('Error generating stored procedure SQL', { error });
-      res.status(500).json({
-        error: 'Failed to generate stored procedure SQL',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  app.get("/api/admin/sequences/stored-procedure-sql", requireSuperAdmin, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const sql = getCreateStoredProcedureSQL();
+    return res.json({
+      success: true,
+      sql,
+      instructions: "Run this SQL in your Supabase dashboard SQL editor to enable automatic sequence fixing"
+    });
+  }));
 
   // Generate complete SQL script for manual fixing
-  app.get("/api/admin/sequences/fix-sql", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const sql = await generateCompleteSequenceFixSQL();
-      return res.json({
-        success: true,
-        sql,
-        instructions: "Run this SQL in your Supabase dashboard SQL editor to fix all sequences"
-      });
-    } catch (error: unknown) {
-      logger.error('Error generating fix SQL', { error });
-      return res.status(500).json({
-        error: 'Failed to generate fix SQL',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  app.get("/api/admin/sequences/fix-sql", requireSuperAdmin, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const sql = await generateCompleteSequenceFixSQL();
+    return res.json({
+      success: true,
+      sql,
+      instructions: "Run this SQL in your Supabase dashboard SQL editor to fix all sequences"
+    });
+  }));
 
   // Fix a specific table's sequence
-  app.post("/api/admin/sequences/fix/:tableName", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { tableName } = req.params;
+  app.post("/api/admin/sequences/fix/:tableName", requireSuperAdmin, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { tableName } = req.params;
 
-      if (!tableName) {
-        return res.status(400).json({ error: 'Table name is required' });
-      }
+    if (!tableName || tableName.length === 0) {
+      throw ApiError.badRequest('Invalid table name');
+    }
 
-      if (!tableName || tableName.length === 0) {
-        return res.status(400).json({ error: 'Invalid table name' });
-      }
+    logger.info(`Fixing sequence for table: ${tableName}`);
+    const result = await fixSequenceByTableName(tableName);
 
-      logger.info(`Fixing sequence for table: ${tableName}`);
-      const result = await fixSequenceByTableName(tableName);
-
-      if (!result.fixed && result.error?.includes('Manual fix required')) {
-        // Return the manual SQL commands
-        return res.status(200).json({
-          success: false,
-          requiresManualFix: true,
-          result,
-          sqlCommand: `SELECT setval('${result.sequenceName}', ${result.newSequenceValue}, false);`,
-          instructions: 'Run the SQL command in your Supabase dashboard SQL editor'
-        });
-      }
-
-      return res.json({
-        success: result.fixed,
-        result
-      });
-    } catch (error: unknown) {
-      logger.error('Error fixing table sequence', { error });
-      return res.status(500).json({
-        error: 'Failed to fix table sequence',
-        details: error instanceof Error ? error.message : 'Unknown error'
+    if (!result.fixed && result.error?.includes('Manual fix required')) {
+      // Return the manual SQL commands
+      return res.status(200).json({
+        success: false,
+        requiresManualFix: true,
+        result,
+        sqlCommand: `SELECT setval('${result.sequenceName}', ${result.newSequenceValue}, false);`,
+        instructions: 'Run the SQL command in your Supabase dashboard SQL editor'
       });
     }
-  });
+
+    return res.json({
+      success: result.fixed,
+      result
+    });
+  }));
 
   // Fix all table sequences
-  app.post("/api/admin/sequences/fix-all", requireSuperAdmin, async (req: AuthenticatedRequest, res): Promise<any> => {
-    try {
-      logger.info('Starting fix for all table sequences...');
-      const results = await fixAllSequences();
+  app.post("/api/admin/sequences/fix-all", requireSuperAdmin, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    logger.info('Starting fix for all table sequences...');
+    const results = await fixAllSequences();
 
-      const successCount = results.filter(r => r.fixed).length;
-      const failureCount = results.filter(r => !r.fixed).length;
+    const successCount = results.filter(r => r.fixed).length;
+    const failureCount = results.filter(r => !r.fixed).length;
 
-      // Separate manual fixes from errors
-      const manualFixes = results.filter(r => !r.fixed && r.error?.includes('Manual fix required'));
-      const errors = results.filter(r => !r.fixed && !r.error?.includes('Manual fix required'));
+    // Separate manual fixes from errors
+    const manualFixes = results.filter(r => !r.fixed && r.error?.includes('Manual fix required'));
+    const errors = results.filter(r => !r.fixed && !r.error?.includes('Manual fix required'));
 
-      if (manualFixes.length > 0) {
-        // Generate SQL for manual fixes
-        const sqlCommands = manualFixes.map(r =>
-          `SELECT setval('${r.sequenceName}', ${r.newSequenceValue}, false); -- Fix ${r.tableName}`
-        ).join('\n');
+    if (manualFixes.length > 0) {
+      // Generate SQL for manual fixes
+      const sqlCommands = manualFixes.map(r =>
+        `SELECT setval('${r.sequenceName}', ${r.newSequenceValue}, false); -- Fix ${r.tableName}`
+      ).join('\n');
 
-        return res.json({
-          success: false,
-          requiresManualFix: true,
-          summary: {
-            total: results.length,
-            fixed: successCount,
-            requiresManualFix: manualFixes.length,
-            failed: errors.length
-          },
-          results,
-          sqlCommands,
-          instructions: 'Run the SQL commands in your Supabase dashboard SQL editor'
-        });
-      }
-
-      res.json({
-        success: failureCount === 0,
+      return res.json({
+        success: false,
+        requiresManualFix: true,
         summary: {
           total: results.length,
           fixed: successCount,
-          failed: failureCount
+          requiresManualFix: manualFixes.length,
+          failed: errors.length
         },
-        results
-      });
-    } catch (error: unknown) {
-      logger.error('Error fixing all sequences', { error });
-      res.status(500).json({
-        error: 'Failed to fix all sequences',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        results,
+        sqlCommands,
+        instructions: 'Run the SQL commands in your Supabase dashboard SQL editor'
       });
     }
-  });
+
+    return res.json({
+      success: failureCount === 0,
+      summary: {
+        total: results.length,
+        fixed: successCount,
+        failed: failureCount
+      },
+      results
+    });
+  }));
 
   // Check sequence status for all tables
-  app.get("/api/admin/sequences/status", requireSuperAdmin, async (req: AuthenticatedRequest, res): Promise<any> => {
-    try {
-      const { getSupabaseAdmin } = await import('../supabase-admin');
-      const supabaseAdmin = getSupabaseAdmin();
+  app.get("/api/admin/sequences/status", requireSuperAdmin, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { getSupabaseAdmin } = await import('../supabase-admin');
+    const supabaseAdmin = getSupabaseAdmin();
 
-      const tables = [
-        'talent', 'trips', 'locations', 'events', 'ships',
-        'itinerary', 'profiles', 'talent_categories',
-        'resorts', 'venues', 'amenities', 'trip_info_sections'
-      ];
+    const tables = [
+      'talent', 'trips', 'locations', 'events', 'ships',
+      'itinerary', 'profiles', 'talent_categories',
+      'resorts', 'venues', 'amenities', 'trip_info_sections'
+    ];
 
-      const status = [];
+    const status = [];
 
-      for (const tableName of tables) {
-        try {
-          // Get max ID
-          const { data: maxIdData, error: maxIdError } = await supabaseAdmin
-            .from(tableName)
-            .select('id')
-            .order('id', { ascending: false })
-            .limit(1);
+    for (const tableName of tables) {
+      try {
+        // Get max ID
+        const { data: maxIdData, error: maxIdError } = await supabaseAdmin
+          .from(tableName)
+          .select('id')
+          .order('id', { ascending: false })
+          .limit(1);
 
-          if (maxIdError) {
-            status.push({
-              tableName,
-              error: maxIdError.message,
-              maxId: null,
-              needsFix: null
-            });
-            continue;
-          }
-
-          const maxId = maxIdData && maxIdData.length > 0 ? maxIdData[0]?.id ?? 0 : 0;
-
+        if (maxIdError) {
           status.push({
             tableName,
-            maxId,
-            sequenceName: `${tableName}_id_seq`,
-            nextValue: maxId + 1,
-            needsFix: false // We can't check the actual sequence value without RPC
-          });
-        } catch (error: unknown) {
-          status.push({
-            tableName,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: maxIdError.message,
             maxId: null,
             needsFix: null
           });
+          continue;
         }
-      }
 
-      res.json({
-        success: true,
-        status,
-        note: 'To check actual sequence values, run SELECT currval(sequence_name) in SQL editor'
-      });
-    } catch (error: unknown) {
-      logger.error('Error checking sequence status', { error });
-      res.status(500).json({
-        error: 'Failed to check sequence status',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
+        const maxId = maxIdData && maxIdData.length > 0 ? maxIdData[0]?.id ?? 0 : 0;
+
+        status.push({
+          tableName,
+          maxId,
+          sequenceName: `${tableName}_id_seq`,
+          nextValue: maxId + 1,
+          needsFix: false // We can't check the actual sequence value without RPC
+        });
+      } catch (error: unknown) {
+        status.push({
+          tableName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          maxId: null,
+          needsFix: null
+        });
+      }
     }
-  });
+
+    return res.json({
+      success: true,
+      status,
+      note: 'To check actual sequence values, run SELECT currval(sequence_name) in SQL editor'
+    });
+  }));
 }

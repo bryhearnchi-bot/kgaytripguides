@@ -21,6 +21,8 @@ import { Router, type Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from '../auth';
 import { getSupabaseAdmin } from '../supabase-admin';
+import { asyncHandler } from '../middleware/errorHandler';
+import { ApiError } from '../utils/ApiError';
 
 // Type definitions for invitation data
 interface Invitation {
@@ -48,6 +50,7 @@ import {
   INVITATION_RATE_LIMITS,
 } from '../utils/invitation-tokens';
 import { createRateLimit } from '../middleware/rate-limiting';
+import { logger } from '../logging/logger';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 
 // =============================================================================
@@ -144,13 +147,17 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
       if (error.code === 'PGRST116') {
         return null; // Not found
       }
-      console.error('Error fetching invitation:', error);
+      logger.error('Error fetching invitation', error, {
+        invitationId: id
+      });
       return null;
     }
 
     return data as InvitationTable;
   } catch (error: unknown) {
-    console.error('Error fetching invitation:', error);
+    logger.error('Error fetching invitation', error, {
+      invitationId: id
+    });
     return null;
   }
 }
@@ -180,7 +187,10 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
       .single();
 
     if (error) {
-      console.error('Error creating invitation:', error);
+      logger.error('Error creating invitation', error, {
+        email: invitation.email,
+        role: invitation.role
+      });
       throw new Error('Failed to create invitation in database');
     }
 
@@ -200,7 +210,10 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
       createdAt: new Date(data.created_at),
     } as InvitationTable;
   } catch (error: unknown) {
-    console.error('Error creating invitation:', error);
+    logger.error('Error creating invitation', error, {
+      
+      
+    });
     throw new Error('Failed to create invitation in database');
   }
 }
@@ -232,7 +245,9 @@ async function updateInvitationInDb(id: string, updates: Partial<InvitationTable
       if (error.code === 'PGRST116') {
         return null; // Not found
       }
-      console.error('Error updating invitation:', error);
+      logger.error('Error updating invitation', error, {
+        invitationId: id
+      });
       return null;
     }
 
@@ -252,7 +267,9 @@ async function updateInvitationInDb(id: string, updates: Partial<InvitationTable
       createdAt: new Date(data.created_at),
     } as InvitationTable;
   } catch (error: unknown) {
-    console.error('Error updating invitation:', error);
+    logger.error('Error updating invitation', error, {
+      invitationId: id
+    });
     return null;
   }
 }
@@ -274,13 +291,18 @@ async function checkExistingInvitation(email: string): Promise<boolean> {
       .limit(1);
 
     if (error) {
-      console.error('Error checking existing invitation:', error);
+      logger.error('Error checking existing invitation', error, {
+        email
+      });
       return false;
     }
 
     return data && data.length > 0;
   } catch (error: unknown) {
-    console.error('Error checking existing invitation:', error);
+    logger.error('Error checking existing invitation', error, {
+      
+      
+    });
     return false;
   }
 }
@@ -299,13 +321,18 @@ async function checkUserExists(email: string): Promise<boolean> {
       .limit(1);
 
     if (error) {
-      console.error('Error checking user existence:', error);
+      logger.error('Error checking user existence', error, {
+        email
+      });
       return false;
     }
 
     return data && data.length > 0;
   } catch (error: unknown) {
-    console.error('Error checking user existence:', error);
+    logger.error('Error checking user existence', error, {
+      
+      
+    });
     return false;
   }
 }
@@ -321,11 +348,16 @@ async function sendInvitationEmail(email: string, token: string, inviterName: st
     if (result.success) {
       return true;
     } else {
-      console.error('Failed to send invitation email:', result.error);
+      logger.error('Failed to send invitation email', result.error, {
+        email
+      });
       return false;
     }
   } catch (error: unknown) {
-    console.error('Error sending invitation email:', error);
+    logger.error('Error sending invitation email', error, {
+      
+      
+    });
     return false;
   }
 }
@@ -346,7 +378,7 @@ async function findInvitationByToken(token: string): Promise<InvitationTable | n
       .gt('expires_at', now);
 
     if (error) {
-      console.error('Error fetching active invitations:', error);
+      logger.error('Error fetching active invitations', error);
       return null;
     }
 
@@ -377,7 +409,10 @@ async function findInvitationByToken(token: string): Promise<InvitationTable | n
 
     return null;
   } catch (error: unknown) {
-    console.error('Error finding invitation by token:', error);
+    logger.error('Error finding invitation by token', error, {
+      
+      
+    });
     return null;
   }
 }
@@ -413,7 +448,9 @@ async function createUserFromInvitation(
       .single();
 
     if (error) {
-      console.error('Error creating user profile:', error);
+      logger.error('Error creating user profile', error, {
+        email
+      });
       throw new Error('Failed to create user account');
     }
 
@@ -424,7 +461,10 @@ async function createUserFromInvitation(
       role: data.role,
     };
   } catch (error: unknown) {
-    console.error('Error creating user account:', error);
+    logger.error('Error creating user account', error, {
+      
+      
+    });
     throw new Error('Failed to create user account');
   }
 }
@@ -445,8 +485,7 @@ router.post(
   requireAuth,
   requireContentEditor,
   validateBody(createInvitationSchema),
-  async (req: AuthenticatedRequest, res) => {
-    try {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { email, role, cruiseId, expirationHours, metadata, sendEmail } = req.body;
       const inviter = req.user!;
 
@@ -528,15 +567,7 @@ router.post(
         // Return token only for testing/development
         ...(process.env.NODE_ENV === 'development' && { token }),
       });
-
-    } catch (error: unknown) {
-      console.error('Error creating invitation:', error);
-      return res.status(500).json({
-        error: 'Failed to create invitation',
-        message: 'An unexpected error occurred while creating the invitation'
-      });
-    }
-  }
+  })
 );
 
 /**
@@ -548,8 +579,7 @@ router.get(
   requireAuth,
   requireContentEditor,
   validateQuery(listInvitationsSchema),
-  async (req: AuthenticatedRequest, res) => {
-    try {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { page, limit, status, role, search } = req.query as unknown as {
         page: number;
         limit: number;
@@ -611,7 +641,10 @@ router.get(
       const { count: total, error: countError } = await countQuery;
 
       if (countError) {
-        console.error('Error counting invitations:', countError);
+        logger.error('Error counting invitations', countError, {
+          
+          
+        });
         throw new Error('Failed to count invitations');
       }
 
@@ -623,7 +656,12 @@ router.get(
         .range(offset, offset + limit - 1);
 
       if (error) {
-        console.error('Error fetching invitations:', error);
+        logger.error('Error fetching invitations', error, {
+          
+          
+          page: req.query.page,
+          limit: req.query.limit
+        });
         throw new Error('Failed to fetch invitations');
       }
 
@@ -656,15 +694,7 @@ router.get(
           search,
         },
       });
-
-    } catch (error: unknown) {
-      console.error('Error listing invitations:', error);
-      return res.status(500).json({
-        error: 'Failed to fetch invitations',
-        message: 'An unexpected error occurred while fetching invitations'
-      });
-    }
-  }
+  })
 );
 
 /**
@@ -676,8 +706,7 @@ router.delete(
   requireAuth,
   requireContentEditor,
   validateParams(invitationIdSchema),
-  async (req: AuthenticatedRequest, res) => {
-    try {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { id } = req.params as { id: string };
       const admin = req.user!;
 
@@ -714,7 +743,11 @@ router.delete(
         .eq('id', id);
 
       if (deleteError) {
-        console.error('Error deleting invitation:', deleteError);
+        logger.error('Error deleting invitation', deleteError, {
+          
+          
+          invitationId: req.params.id
+        });
         return res.status(500).json({
           error: 'Failed to delete invitation',
           message: 'Invitation could not be deleted from database'
@@ -727,15 +760,7 @@ router.delete(
         success: true,
         message: 'Invitation cancelled successfully'
       });
-
-    } catch (error: unknown) {
-      console.error('Error cancelling invitation:', error);
-      return res.status(500).json({
-        error: 'Failed to cancel invitation',
-        message: 'An unexpected error occurred while cancelling the invitation'
-      });
-    }
-  }
+  })
 );
 
 /**
@@ -749,8 +774,7 @@ router.post(
   requireContentEditor,
   validateParams(invitationIdSchema),
   validateBody(resendInvitationSchema),
-  async (req: AuthenticatedRequest, res) => {
-    try {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { id } = req.params as { id: string };
       const { expirationHours } = req.body as { expirationHours: number };
       const admin = req.user!;
@@ -818,15 +842,7 @@ router.post(
         // Return token only for testing/development
         ...(process.env.NODE_ENV === 'development' && { token }),
       });
-
-    } catch (error: unknown) {
-      console.error('Error resending invitation:', error);
-      return res.status(500).json({
-        error: 'Failed to resend invitation',
-        message: 'An unexpected error occurred while resending the invitation'
-      });
-    }
-  }
+  })
 );
 
 /**
@@ -837,8 +853,7 @@ router.get(
   '/invitations/validate/:token',
   invitationValidateRateLimit,
   validateParams(validateInvitationTokenSchema),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { token } = req.params as { token: string };
 
       // Find and validate invitation
@@ -876,15 +891,7 @@ router.get(
           expiresAt: matchingInvitation.expiresAt,
         }
       });
-
-    } catch (error: unknown) {
-      console.error('Error validating invitation:', error);
-      return res.status(500).json({
-        error: 'Validation failed',
-        message: 'An unexpected error occurred while validating the invitation'
-      });
-    }
-  }
+  })
 );
 
 /**
@@ -895,8 +902,7 @@ router.post(
   '/invitations/accept',
   invitationAcceptRateLimit,
   validateBody(acceptInvitationSchema),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { token, name, password } = req.body;
 
       // Find and validate invitation
@@ -953,15 +959,7 @@ router.post(
           role: newUser.role,
         }
       });
-
-    } catch (error: unknown) {
-      console.error('Error accepting invitation:', error);
-      return res.status(500).json({
-        error: 'Failed to create account',
-        message: 'An unexpected error occurred while creating your account'
-      });
-    }
-  }
+  })
 );
 
 export default router;

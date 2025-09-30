@@ -169,6 +169,20 @@ export class ApiError extends Error {
     });
   }
 
+  static businessRuleViolation(message: string, details?: any): ApiError {
+    return new ApiError(422, message, {
+      code: ErrorCode.BUSINESS_RULE_VIOLATION,
+      details
+    });
+  }
+
+  static serviceUnavailable(message: string, details?: Record<string, any> | string): ApiError {
+    return new ApiError(503, message, {
+      code: ErrorCode.SERVICE_UNAVAILABLE,
+      details: typeof details === 'string' ? { message: details } : details
+    });
+  }
+
   /**
    * Convert to a JSON response object
    */

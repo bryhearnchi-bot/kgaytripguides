@@ -26,6 +26,7 @@ import {
 } from "../middleware/rate-limiting";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../middleware/errorHandler";
+import { logger } from "../logging/logger";
 import {
   validateId,
   ensureResourceExists,
@@ -199,523 +200,500 @@ export function registerTripRoutes(app: Express) {
 
   // ============ ADMIN TRIP MANAGEMENT ============
 
-  app.get("/api/admin/trips", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { page = '1', limit = '20', search = '', status = '' } = req.query;
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
-      const offset = (pageNum - 1) * limitNum;
+  app.get("/api/admin/trips", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { page = '1', limit = '20', search = '', status = '' } = req.query;
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
 
-      const supabaseAdmin = getSupabaseAdmin();
+    const supabaseAdmin = getSupabaseAdmin();
 
-      // Build the query
-      let query = supabaseAdmin
-        .from('trips')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+    // Build the query
+    let query = supabaseAdmin
+      .from('trips')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
 
-      // Apply filters
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
-      }
-
-      if (status) {
-        query = query.eq('status', status as string);
-      }
-
-      // Apply pagination
-      query = query.range(offset, offset + limitNum - 1);
-
-      const { data: results, error, count: total } = await query;
-
-      if (error) {
-        console.error('Error fetching admin trips:', error);
-        return res.status(500).json({ error: 'Failed to fetch trips' });
-      }
-
-      return res.json({
-        trips: results || [],
-        pagination: {
-          total: total || 0,
-          page: pageNum,
-          limit: limitNum,
-          totalPages: Math.ceil((total || 0) / limitNum)
-        }
-      });
-    } catch (error: unknown) {
-      console.error('Error fetching admin trips:', error);
-      return res.status(500).json({ error: 'Failed to fetch trips' });
+    // Apply filters
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
     }
-  });
+
+    if (status) {
+      query = query.eq('status', status as string);
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + limitNum - 1);
+
+    const { data: results, error, count: total } = await query;
+
+    if (error) {
+      logger.error('Error fetching admin trips:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch trips');
+    }
+
+    // Transform snake_case to camelCase for frontend
+    const transformedTrips = (results || []).map((trip: any) => tripStorage.transformTripData(trip));
+
+    return res.json({
+      trips: transformedTrips,
+      pagination: {
+        total: total || 0,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil((total || 0) / limitNum)
+      }
+    });
+  }));
 
   // Update trip status
-  app.patch("/api/admin/trips/:id/status", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
+  app.patch("/api/admin/trips/:id/status", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
 
-      if (!['draft', 'published', 'archived'].includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
-      }
-
-      const trip = await tripStorage.updateTrip(parseInt(id || '0'), { status });
-      return res.json(trip);
-    } catch (error: unknown) {
-      console.error('Error updating trip status:', error);
-      return res.status(500).json({ error: 'Failed to update trip status' });
+    if (!['draft', 'published', 'archived'].includes(status)) {
+      throw ApiError.badRequest('Invalid status');
     }
-  });
+
+    const trip = await tripStorage.updateTrip(parseInt(id || '0'), { status });
+    return res.json(trip);
+  }));
 
   // Get trip statistics for admin dashboard
-  app.get("/api/admin/trips/stats", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: trips, error } = await supabaseAdmin
-        .from('trips')
-        .select('status, start_date, end_date, max_capacity, current_bookings');
+  app.get("/api/admin/trips/stats", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: trips, error } = await supabaseAdmin
+      .from('trips')
+      .select('status, start_date, end_date, max_capacity, current_bookings');
 
-      if (error) {
-        console.error('Error fetching trip stats:', error);
-        return res.status(500).json({ error: 'Failed to fetch trip statistics' });
-      }
-
-      const now = new Date();
-      const stats = {
-        total: trips?.length || 0,
-        published: trips?.filter(t => t.status === 'published').length || 0,
-        draft: trips?.filter(t => t.status === 'draft').length || 0,
-        archived: trips?.filter(t => t.status === 'archived').length || 0,
-        upcoming: trips?.filter(t =>
-          new Date(t.start_date) > now && t.status === 'published'
-        ).length || 0,
-        ongoing: trips?.filter(t =>
-          new Date(t.start_date) <= now && new Date(t.end_date) >= now && t.status === 'published'
-        ).length || 0,
-        past: trips?.filter(t =>
-          new Date(t.end_date) < now && t.status === 'published'
-        ).length || 0,
-        totalCapacity: trips?.reduce((sum, t) => sum + (t.max_capacity || 0), 0) || 0,
-        totalBookings: trips?.reduce((sum, t) => sum + (t.current_bookings || 0), 0) || 0,
-        avgOccupancy: trips?.length ?
-          trips.reduce((sum, t) => {
-            if (t.max_capacity > 0) {
-              return sum + ((t.current_bookings || 0) / t.max_capacity * 100);
-            }
-            return sum;
-          }, 0) / trips.filter(t => t.max_capacity > 0).length : 0
-      };
-
-      return res.json(stats);
-    } catch (error: unknown) {
-      console.error('Error fetching trip stats:', error);
-      return res.status(500).json({ error: 'Failed to fetch trip statistics' });
+    if (error) {
+      logger.error('Error fetching trip stats:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch trip statistics');
     }
-  });
+
+    const now = new Date();
+    const stats = {
+      total: trips?.length || 0,
+      published: trips?.filter(t => t.status === 'published').length || 0,
+      draft: trips?.filter(t => t.status === 'draft').length || 0,
+      archived: trips?.filter(t => t.status === 'archived').length || 0,
+      upcoming: trips?.filter(t =>
+        new Date(t.start_date) > now && t.status === 'published'
+      ).length || 0,
+      ongoing: trips?.filter(t =>
+        new Date(t.start_date) <= now && new Date(t.end_date) >= now && t.status === 'published'
+      ).length || 0,
+      past: trips?.filter(t =>
+        new Date(t.end_date) < now && t.status === 'published'
+      ).length || 0,
+      totalCapacity: trips?.reduce((sum, t) => sum + (t.max_capacity || 0), 0) || 0,
+      totalBookings: trips?.reduce((sum, t) => sum + (t.current_bookings || 0), 0) || 0,
+      avgOccupancy: trips?.length ?
+        trips.reduce((sum, t) => {
+          if (t.max_capacity > 0) {
+            return sum + ((t.current_bookings || 0) / t.max_capacity * 100);
+          }
+          return sum;
+        }, 0) / trips.filter(t => t.max_capacity > 0).length : 0
+    };
+
+    return res.json(stats);
+  }));
 
 
   // Get cruise by ID
-  app.get("/api/trips/id/:id", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/id/:id", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.getTripById(parseInt(req.params.id || '0'));
     if (!trip) {
-      return res.status(404).send("Trip not found");
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(trip);
-  });
+  }));
 
   // Get trip by slug
-  app.get("/api/trips/:slug", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:slug", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.getTripBySlug(req.params.slug || '');
     if (!trip) {
-      return res.status(404).send("Trip not found");
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(trip);
-  });
+  }));
 
   // Create trip
-  app.post("/api/trips", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/trips", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.createTrip(req.body);
     return res.json(trip);
-  });
+  }));
 
   // Update trip
-  app.put("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/trips/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.updateTrip(parseInt(req.params.id || '0'), req.body);
     if (!trip) {
-      return res.status(404).send("Trip not found");
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(trip);
-  });
+  }));
 
   // Delete trip
-  app.delete("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/trips/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await tripStorage.deleteTrip(parseInt(req.params.id || '0'));
     return res.json({ message: "Trip deleted" });
-  });
+  }));
 
   // ============ TRIP ENDPOINTS ============
 
   // List all trips (public)
-  app.get("/api/trips", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const allTrips = await tripStorage.getAllTrips();
-      return res.json(allTrips);
-    } catch (error: unknown) {
-      console.error('Error fetching trips:', error);
-      return res.status(500).json({ error: 'Failed to fetch trips' });
-    }
-  });
+  app.get("/api/trips", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const allTrips = await tripStorage.getAllTrips();
+    return res.json(allTrips);
+  }));
 
   // Get upcoming trips
-  app.get("/api/trips/upcoming", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/upcoming", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const upcomingTrips = await tripStorage.getUpcomingTrips();
     return res.json(upcomingTrips);
-  });
+  }));
 
   // Get past trips
-  app.get("/api/trips/past", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/past", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const pastTrips = await tripStorage.getPastTrips();
     return res.json(pastTrips);
-  });
+  }));
 
   // Get trip by ID
-  app.get("/api/trips/id/:id", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/id/:id", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.getTripById(parseInt(req.params.id || '0'));
     if (!trip) {
-      return res.status(404).send("Trip not found");
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(trip);
-  });
+  }));
 
   // Get trip by slug
-  app.get("/api/trips/:slug", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:slug", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.getTripBySlug(req.params.slug || '');
     if (!trip) {
-      return res.status(404).send("Trip not found");
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(trip);
-  });
+  }));
 
   // Create trip
-  app.post("/api/trips", adminRateLimit, requireContentEditor, validateBody(createTripSchema), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/trips", adminRateLimit, requireContentEditor, validateBody(createTripSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.createTrip(req.body);
     return res.json(trip);
-  });
+  }));
 
   // Update trip
-  app.put("/api/trips/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema as any), validateBody(updateTripSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/trips/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema as any), validateBody(updateTripSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const trip = await tripStorage.updateTrip(parseInt(req.params.id || '0'), req.body);
     if (!trip) {
-      return res.status(404).send("Trip not found");
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(trip);
-  });
+  }));
 
   // Delete trip
-  app.delete("/api/trips/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/trips/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await tripStorage.deleteTrip(parseInt(req.params.id || '0'));
     return res.json({ message: "Trip deleted" });
-  });
+  }));
 
   // ============ ITINERARY ENDPOINTS ============
 
 
   // Get itinerary for a trip
-  app.get("/api/trips/:tripId/itinerary", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:tripId/itinerary", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const itinerary = await itineraryStorage.getItineraryByTrip(parseInt(req.params.tripId || '0'));
     return res.json(itinerary);
-  });
+  }));
 
 
   // Create itinerary item for a trip
-  app.post("/api/trips/:tripId/itinerary", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/trips/:tripId/itinerary", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const item = await itineraryStorage.createItineraryStop({
       ...req.body,
       tripId: parseInt(req.params.tripId!),
     });
     return res.json(item);
-  });
+  }));
 
   // Update itinerary item
-  app.put("/api/itinerary/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.put("/api/itinerary/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const item = await itineraryStorage.updateItineraryStop(parseInt(req.params.id!), req.body);
     if (!item) {
-      return res.status(404).send("Itinerary item not found");
+      throw ApiError.notFound("Itinerary item not found");
     }
     return res.json(item);
-  });
+  }));
 
   // Delete itinerary item
-  app.delete("/api/itinerary/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/itinerary/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await itineraryStorage.deleteItineraryStop(parseInt(req.params.id!));
     res.json({ message: "Itinerary item deleted" });
-  });
+  }));
 
   // ============ EVENT ENDPOINTS ============
 
   // Get event statistics
-  app.get("/api/events/stats", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: events, error } = await supabaseAdmin
-        .from('events')
-        .select('type');
+  app.get("/api/events/stats", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: events, error } = await supabaseAdmin
+      .from('events')
+      .select('type');
 
-      if (error) {
-        console.error('Error fetching event stats:', error);
-        return res.status(500).json({ error: 'Failed to fetch event statistics' });
-      }
-
-      const total = events?.length || 0;
-      const byType = events?.reduce((acc: Record<string, number>, event: any) => {
-        acc[event.type] = (acc[event.type] || 0) + 1;
-        return acc;
-      }, {}) || {};
-
-      return res.json({ total, byType });
-    } catch (error: unknown) {
-      console.error('Error fetching event stats:', error);
-      return res.status(500).json({ error: 'Failed to fetch event statistics' });
+    if (error) {
+      logger.error('Error fetching event stats:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch event statistics');
     }
-  });
+
+    const total = events?.length || 0;
+    const byType = events?.reduce((acc: Record<string, number>, event: any) => {
+      acc[event.type] = (acc[event.type] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
+    return res.json({ total, byType });
+  }));
 
   // List all events with optional filtering
-  app.get("/api/events", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const {
-        tripId,
-        type,
-        startDate,
-        endDate,
-        limit = '100',
-        offset = '0'
-      } = req.query;
+  app.get("/api/events", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const {
+      tripId,
+      type,
+      startDate,
+      endDate,
+      limit = '100',
+      offset = '0'
+    } = req.query;
 
-      const supabaseAdmin = getSupabaseAdmin();
-      let query = supabaseAdmin
-        .from('events')
-        .select('*')
-        .order('start_time');
+    const supabaseAdmin = getSupabaseAdmin();
+    let query = supabaseAdmin
+      .from('events')
+      .select('*')
+      .order('start_time');
 
-      // Apply filters
-      if (tripId) {
-        query = query.eq('trip_id', tripId as string);
-      }
-      if (type) {
-        query = query.eq('type', type as string);
-      }
-      if (startDate) {
-        query = query.gte('start_time', startDate as string);
-      }
-      if (endDate) {
-        query = query.lte('end_time', endDate as string);
-      }
-
-      // Apply pagination
-      const startIndex = parseInt(offset as string);
-      const endIndex = startIndex + parseInt(limit as string) - 1;
-      query = query.range(startIndex, endIndex);
-
-      const { data: results, error } = await query;
-
-      if (error) {
-        console.error('Error fetching events:', error);
-        return res.status(500).json({ error: 'Failed to fetch events' });
-      }
-
-      return res.json(results || []);
-    } catch (error: unknown) {
-      console.error('Error fetching events:', error);
-      return res.status(500).json({ error: 'Failed to fetch events' });
+    // Apply filters
+    if (tripId) {
+      query = query.eq('trip_id', tripId as string);
     }
-  });
+    if (type) {
+      query = query.eq('type', type as string);
+    }
+    if (startDate) {
+      query = query.gte('start_time', startDate as string);
+    }
+    if (endDate) {
+      query = query.lte('end_time', endDate as string);
+    }
+
+    // Apply pagination
+    const startIndex = parseInt(offset as string);
+    const endIndex = startIndex + parseInt(limit as string) - 1;
+    query = query.range(startIndex, endIndex);
+
+    const { data: results, error } = await query;
+
+    if (error) {
+      logger.error('Error fetching events:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch events');
+    }
+
+    return res.json(results || []);
+  }));
 
 
   // Get events for a trip
-  app.get("/api/trips/:tripId/events", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:tripId/events", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const tripId = req.params.tripId;
     if (!tripId) {
-      return res.status(400).json({ error: 'Trip ID is required' });
+      throw ApiError.badRequest('Trip ID is required');
     }
     const eventsList = await eventStorage.getEventsByTrip(parseInt(tripId));
     return res.json(eventsList);
-  });
+  }));
 
 
   // Get events by date
-  app.get("/api/trips/:tripId/events/date/:date", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:tripId/events/date/:date", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const tripId = req.params.tripId;
     const date = req.params.date;
     if (!tripId || !date) {
-      return res.status(400).json({ error: 'Trip ID and date are required' });
+      throw ApiError.badRequest('Trip ID and date are required');
     }
     const eventsList = await eventStorage.getEventsByDate(parseInt(tripId), new Date(date));
     return res.json(eventsList);
-  });
+  }));
 
 
   // Get events by type
-  app.get("/api/trips/:tripId/events/type/:type", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:tripId/events/type/:type", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const tripId = req.params.tripId;
     const type = req.params.type;
     if (!tripId || !type) {
-      return res.status(400).json({ error: 'Trip ID and type are required' });
+      throw ApiError.badRequest('Trip ID and type are required');
     }
     const eventsList = await eventStorage.getEventsByType(parseInt(tripId), type);
     return res.json(eventsList);
-  });
+  }));
 
 
   // Create event
-  app.post("/api/trips/:tripId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/trips/:tripId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const tripId = req.params.tripId;
     if (!tripId) {
-      return res.status(400).json({ error: 'Trip ID is required' });
+      throw ApiError.badRequest('Trip ID is required');
     }
     const event = await eventStorage.createEvent({
       ...req.body,
       tripId: parseInt(tripId),
     });
     return res.json(event);
-  });
+  }));
 
   // Update event
-  app.put("/api/events/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema as any), validateBody(updateEventSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/events/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema as any), validateBody(updateEventSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const id = req.params.id;
     if (!id) {
-      return res.status(400).json({ error: 'Event ID is required' });
+      throw ApiError.badRequest('Event ID is required');
     }
     const event = await eventStorage.updateEvent(parseInt(id), req.body);
     if (!event) {
-      return res.status(404).send("Event not found");
+      throw ApiError.notFound("Event not found");
     }
     return res.json(event);
-  });
+  }));
 
   // Delete event
-  app.delete("/api/events/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/events/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const id = req.params.id;
     if (!id) {
-      return res.status(400).json({ error: 'Event ID is required' });
+      throw ApiError.badRequest('Event ID is required');
     }
     await eventStorage.deleteEvent(parseInt(id));
     return res.json({ message: "Event deleted" });
-  });
+  }));
 
   // ============ TRIP INFO SECTIONS ============
 
   // Get complete trip info with all sections
-  app.get("/api/trips/:slug/complete", async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trips/:slug/complete", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { slug } = req.params;
     if (!slug) {
-      return res.status(400).json({ error: 'Trip slug is required' });
+      throw ApiError.badRequest('Trip slug is required');
     }
     const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
     if (!tripData) {
-      return res.status(404).json({ error: "Trip not found" });
+      throw ApiError.notFound("Trip not found");
     }
     return res.json(tripData);
-  });
+  }));
 
 
   // Get info sections for a trip
-  app.get("/api/trips/:tripId/info-sections", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: sections, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .select('*')
-        .eq('trip_id', req.params.tripId)
-        .order('display_order');
+  app.get("/api/trips/:tripId/info-sections", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: sections, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .select('*')
+      .eq('trip_id', req.params.tripId)
+      .order('display_order');
 
-      if (error) {
-        console.error('Error fetching info sections:', error);
-        return res.status(500).json({ error: 'Failed to fetch info sections' });
-      }
-
-      return res.json(sections || []);
-    } catch (error: unknown) {
-      console.error('Error fetching info sections:', error);
-      return res.status(500).json({ error: 'Failed to fetch info sections' });
+    if (error) {
+      logger.error('Error fetching info sections:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch info sections');
     }
-  });
+
+    return res.json(sections || []);
+  }));
 
 
   // Create info section
-  app.post("/api/trips/:tripId/info-sections", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: section, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .insert({
-          ...req.body,
-          trip_id: req.params.tripId
-        })
-        .select()
-        .single();
+  app.post("/api/trips/:tripId/info-sections", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: section, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .insert({
+        ...req.body,
+        trip_id: req.params.tripId
+      })
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating info section:', error);
-        return res.status(500).json({ error: 'Failed to create info section' });
-      }
-
-      return res.json(section);
-    } catch (error: unknown) {
-      console.error('Error creating info section:', error);
-      return res.status(500).json({ error: 'Failed to create info section' });
+    if (error) {
+      logger.error('Error creating info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to create info section');
     }
-  });
+
+    return res.json(section);
+  }));
 
   // Update info section
-  app.put("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: section, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .update({
-          ...req.body,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', req.params.id)
-        .select()
-        .single();
+  app.put("/api/info-sections/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: section, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .update({
+        ...req.body,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Info section not found' });
-        }
-        console.error('Error updating info section:', error);
-        return res.status(500).json({ error: 'Failed to update info section' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw ApiError.notFound('Info section not found');
       }
-
-      if (!section) {
-        return res.status(404).json({ error: 'Info section not found' });
-      }
-
-      return res.json(section);
-    } catch (error: unknown) {
-      console.error('Error updating info section:', error);
-      return res.status(500).json({ error: 'Failed to update info section' });
+      logger.error('Error updating info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to update info section');
     }
-  });
+
+    if (!section) {
+      throw ApiError.notFound('Info section not found');
+    }
+
+    return res.json(section);
+  }));
 
   // Delete info section
-  app.delete("/api/info-sections/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .delete()
-        .eq('id', req.params.id);
+  app.delete("/api/info-sections/:id", requireContentEditor, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .delete()
+      .eq('id', req.params.id);
 
-      if (error) {
-        console.error('Error deleting info section:', error);
-        return res.status(500).json({ error: 'Failed to delete info section' });
-      }
-
-      return res.json({ message: 'Info section deleted' });
-    } catch (error: unknown) {
-      console.error('Error deleting info section:', error);
-      return res.status(500).json({ error: 'Failed to delete info section' });
+    if (error) {
+      logger.error('Error deleting info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to delete info section');
     }
-  });
+
+    return res.json({ message: 'Info section deleted' });
+  }));
 }

@@ -7,6 +7,9 @@ import {
   idParamSchema
 } from "../middleware/validation";
 import { z } from "zod";
+import { logger } from "../logging/logger";
+import { asyncHandler } from "../middleware/errorHandler";
+import { ApiError } from "../utils/ApiError";
 
 // Validation schemas for new structure
 const createSectionSchema = z.object({
@@ -41,339 +44,320 @@ export function registerTripInfoSectionRoutes(app: Express) {
   // ============ SECTION MANAGEMENT ENDPOINTS ============
 
   // Get all sections (library view) - with optional type filtering
-  app.get("/api/trip-info-sections", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { type } = req.query;
+  app.get("/api/trip-info-sections", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { type } = req.query;
 
-      let query = supabaseAdmin
-        .from('trip_info_sections')
-        .select('*')
-        .order('title', { ascending: true });
+    let query = supabaseAdmin
+      .from('trip_info_sections')
+      .select('*')
+      .order('title', { ascending: true });
 
-      if (type && (type === 'general' || type === 'trip_specific')) {
-        query = query.eq('section_type', type);
-      }
-
-      const { data: sections, error } = await query;
-
-      if (error) {
-        console.error('Error fetching trip info sections:', error);
-        return res.status(500).json({ error: 'Failed to fetch trip info sections' });
-      }
-
-      return res.json(sections || []);
-    } catch (error: unknown) {
-      console.error('Error fetching trip info sections:', error);
-      return res.status(500).json({ error: 'Failed to fetch trip info sections' });
+    if (type && (type === 'general' || type === 'trip_specific')) {
+      query = query.eq('section_type', type);
     }
-  });
+
+    const { data: sections, error } = await query;
+
+    if (error) {
+      logger.error('Error fetching trip info sections:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch trip info sections');
+    }
+
+    return res.json(sections || []);
+  }));
 
   // Get only general (reusable) sections
-  app.get("/api/trip-info-sections/general", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: sections, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .select('*')
-        .eq('section_type', 'general')
-        .order('title', { ascending: true });
+  app.get("/api/trip-info-sections/general", asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: sections, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .select('*')
+      .eq('section_type', 'general')
+      .order('title', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching general sections:', error);
-        return res.status(500).json({ error: 'Failed to fetch general sections' });
-      }
-
-      return res.json(sections || []);
-    } catch (error: unknown) {
-      console.error('Error fetching general sections:', error);
-      return res.status(500).json({ error: 'Failed to fetch general sections' });
+    if (error) {
+      logger.error('Error fetching general sections:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch general sections');
     }
-  });
+
+    return res.json(sections || []);
+  }));
 
   // Get sections for a specific trip (via assignments)
-  app.get("/api/trip-info-sections/trip/:tripId", validateParams(z.object({ tripId: z.string().transform(Number) }) as any), async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: sections, error } = await supabaseAdmin
-        .from('trip_section_assignments')
-        .select(`
+  app.get("/api/trip-info-sections/trip/:tripId", validateParams(z.object({ tripId: z.string().transform(Number) }) as any), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: sections, error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .select(`
+        id,
+        order_index,
+        trip_info_sections (
           id,
-          order_index,
-          trip_info_sections (
-            id,
-            title,
-            content,
-            section_type,
-            updated_by,
-            updated_at
-          )
-        `)
-        .eq('trip_id', req.params.tripId as unknown as number)
-        .order('order_index', { ascending: true });
+          title,
+          content,
+          section_type,
+          updated_by,
+          updated_at
+        )
+      `)
+      .eq('trip_id', req.params.tripId as unknown as number)
+      .order('order_index', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching trip sections:', error);
-        return res.status(500).json({ error: 'Failed to fetch trip sections' });
-      }
-
-      // Transform data to include assignment info
-      const transformedSections = (sections || []).map(assignment => ({
-        ...assignment.trip_info_sections,
-        assignment: {
-          id: assignment.id,
-          trip_id: req.params.tripId,
-          order_index: assignment.order_index
-        }
-      }));
-
-      return res.json(transformedSections);
-    } catch (error: unknown) {
-      console.error('Error fetching trip sections:', error);
-      return res.status(500).json({ error: 'Failed to fetch trip sections' });
+    if (error) {
+      logger.error('Error fetching trip sections:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch trip sections');
     }
-  });
+
+    // Transform data to include assignment info
+    const transformedSections = (sections || []).map(assignment => ({
+      ...assignment.trip_info_sections,
+      assignment: {
+        id: assignment.id,
+        trip_id: req.params.tripId,
+        order_index: assignment.order_index
+      }
+    }));
+
+    return res.json(transformedSections);
+  }));
 
   // Get section by ID
-  app.get("/api/trip-info-sections/:id", validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: section, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .select('*')
-        .eq('id', parseInt(req.params.id ?? '0'))
-        .single();
+  app.get("/api/trip-info-sections/:id", validateParams(idParamSchema as any), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: section, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .select('*')
+      .eq('id', parseInt(req.params.id ?? '0'))
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Trip info section not found' });
-        }
-        console.error('Error fetching trip info section:', error);
-        return res.status(500).json({ error: 'Failed to fetch trip info section' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw ApiError.notFound('Trip info section');
       }
-
-      return res.json(section);
-    } catch (error: unknown) {
-      console.error('Error fetching trip info section:', error);
-      return res.status(500).json({ error: 'Failed to fetch trip info section' });
+      logger.error('Error fetching trip info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to fetch trip info section');
     }
-  });
+
+    return res.json(section);
+  }));
 
   // Create new section
-  app.post("/api/trip-info-sections", requireContentEditor, validateBody(createSectionSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: section, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .insert({
-          title: req.body.title,
-          content: req.body.content,
-          section_type: req.body.section_type,
-          updated_by: req.body.updated_by,
-          trip_id: null // New sections are not tied to specific trips
-        })
-        .select()
-        .single();
+  app.post("/api/trip-info-sections", requireContentEditor, validateBody(createSectionSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: section, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .insert({
+        title: req.body.title,
+        content: req.body.content,
+        section_type: req.body.section_type,
+        updated_by: req.body.updated_by,
+        trip_id: null // New sections are not tied to specific trips
+      })
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating trip info section:', error);
-        return res.status(500).json({ error: 'Failed to create trip info section' });
-      }
-
-      return res.status(201).json(section);
-    } catch (error: any) {
-      console.error('Error creating trip info section:', error);
-      return res.status(500).json({ error: 'Failed to create trip info section' });
+    if (error) {
+      logger.error('Error creating trip info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to create trip info section');
     }
-  });
+
+    return res.status(201).json(section);
+  }));
 
   // Update section
-  app.put("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updateSectionSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-      const id = parseInt(req.params.id ?? '0');
-      const supabaseAdmin = getSupabaseAdmin();
+  app.put("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updateSectionSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const id = parseInt(req.params.id ?? '0');
+    const supabaseAdmin = getSupabaseAdmin();
 
-      const updateData: any = { updated_at: new Date().toISOString() };
-      if (req.body.title !== undefined) updateData.title = req.body.title;
-      if (req.body.content !== undefined) updateData.content = req.body.content;
-      if (req.body.section_type !== undefined) updateData.section_type = req.body.section_type;
-      if (req.body.updated_by !== undefined) updateData.updated_by = req.body.updated_by;
+    const updateData: any = { updated_at: new Date().toISOString() };
+    if (req.body.title !== undefined) updateData.title = req.body.title;
+    if (req.body.content !== undefined) updateData.content = req.body.content;
+    if (req.body.section_type !== undefined) updateData.section_type = req.body.section_type;
+    if (req.body.updated_by !== undefined) updateData.updated_by = req.body.updated_by;
 
-      const { data: section, error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+    const { data: section, error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Trip info section not found' });
-        }
-        console.error('Error updating trip info section:', error);
-        return res.status(500).json({ error: 'Failed to update trip info section' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw ApiError.notFound('Trip info section');
       }
-
-      return res.json(section);
-    } catch (error: any) {
-      console.error('Error updating trip info section:', error);
-      return res.status(500).json({ error: 'Failed to update trip info section' });
+      logger.error('Error updating trip info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to update trip info section');
     }
-  });
+
+    return res.json(section);
+  }));
 
   // Delete section
-  app.delete("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res) => {
-    try {
-      const id = parseInt(req.params.id ?? '0');
-      const supabaseAdmin = getSupabaseAdmin();
+  app.delete("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema as any), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const id = parseInt(req.params.id ?? '0');
+    const supabaseAdmin = getSupabaseAdmin();
 
-      const { error } = await supabaseAdmin
-        .from('trip_info_sections')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabaseAdmin
+      .from('trip_info_sections')
+      .delete()
+      .eq('id', id);
 
-      if (error) {
-        console.error('Error deleting trip info section:', error);
-        return res.status(500).json({ error: 'Failed to delete trip info section' });
-      }
-
-      return res.json({ message: 'Trip info section deleted successfully' });
-    } catch (error: any) {
-      console.error('Error deleting trip info section:', error);
-      return res.status(500).json({ error: 'Failed to delete trip info section' });
+    if (error) {
+      logger.error('Error deleting trip info section:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to delete trip info section');
     }
-  });
+
+    return res.json({ message: 'Trip info section deleted successfully' });
+  }));
 
   // ============ ASSIGNMENT MANAGEMENT ENDPOINTS ============
 
   // Assign section to trip
-  app.post("/api/trip-section-assignments", requireContentEditor, validateBody(assignmentSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: assignment, error } = await supabaseAdmin
-        .from('trip_section_assignments')
-        .insert({
-          trip_id: req.body.trip_id,
-          section_id: req.body.section_id,
-          order_index: req.body.order_index
-        })
-        .select()
-        .single();
+  app.post("/api/trip-section-assignments", requireContentEditor, validateBody(assignmentSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: assignment, error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .insert({
+        trip_id: req.body.trip_id,
+        section_id: req.body.section_id,
+        order_index: req.body.order_index
+      })
+      .select()
+      .single();
 
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          return res.status(409).json({ error: 'Section already assigned to this trip' });
-        }
-        console.error('Error creating assignment:', error);
-        return res.status(500).json({ error: 'Failed to assign section to trip' });
+    if (error) {
+      if (error.code === '23505') { // Unique constraint violation
+        throw ApiError.conflict('Section already assigned to this trip');
       }
-
-      return res.status(201).json(assignment);
-    } catch (error: any) {
-      console.error('Error creating assignment:', error);
-      return res.status(500).json({ error: 'Failed to assign section to trip' });
+      logger.error('Error creating assignment:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to assign section to trip');
     }
-  });
+
+    return res.status(201).json(assignment);
+  }));
 
   // Update assignment order
-  app.put("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updateAssignmentSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-      const id = parseInt(req.params.id ?? '0');
-      const supabaseAdmin = getSupabaseAdmin();
+  app.put("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updateAssignmentSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const id = parseInt(req.params.id ?? '0');
+    const supabaseAdmin = getSupabaseAdmin();
 
-      const { data: assignment, error } = await supabaseAdmin
-        .from('trip_section_assignments')
-        .update({
-          order_index: req.body.order_index,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
+    const { data: assignment, error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .update({
+        order_index: req.body.order_index,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Assignment not found' });
-        }
-        console.error('Error updating assignment:', error);
-        return res.status(500).json({ error: 'Failed to update assignment' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw ApiError.notFound('Assignment');
       }
-
-      return res.json(assignment);
-    } catch (error: any) {
-      console.error('Error updating assignment:', error);
-      return res.status(500).json({ error: 'Failed to update assignment' });
+      logger.error('Error updating assignment:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to update assignment');
     }
-  });
+
+    return res.json(assignment);
+  }));
 
   // Remove assignment (unassign section from trip)
-  app.delete("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res) => {
-    try {
-      const id = parseInt(req.params.id ?? '0');
-      const supabaseAdmin = getSupabaseAdmin();
+  app.delete("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema as any), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const id = parseInt(req.params.id ?? '0');
+    const supabaseAdmin = getSupabaseAdmin();
 
-      const { error } = await supabaseAdmin
-        .from('trip_section_assignments')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .delete()
+      .eq('id', id);
 
-      if (error) {
-        console.error('Error deleting assignment:', error);
-        return res.status(500).json({ error: 'Failed to unassign section' });
-      }
-
-      return res.json({ message: 'Section unassigned successfully' });
-    } catch (error: any) {
-      console.error('Error deleting assignment:', error);
-      return res.status(500).json({ error: 'Failed to unassign section' });
+    if (error) {
+      logger.error('Error deleting assignment:', error, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to unassign section');
     }
-  });
+
+    return res.json({ message: 'Section unassigned successfully' });
+  }));
 
   // ============ LEGACY ENDPOINTS (for backward compatibility) ============
 
   // Legacy create endpoint - automatically creates assignment
-  app.post("/api/trip-info-sections/legacy", requireContentEditor, validateBody(createTripInfoSectionSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
+  app.post("/api/trip-info-sections/legacy", requireContentEditor, validateBody(createTripInfoSectionSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const supabaseAdmin = getSupabaseAdmin();
 
-      // Create the section
-      const { data: section, error: sectionError } = await supabaseAdmin
-        .from('trip_info_sections')
-        .insert({
-          title: req.body.title,
-          content: req.body.content,
-          section_type: 'trip_specific',
-          updated_by: req.body.updated_by,
-          trip_id: req.body.trip_id // Keep for reference
-        })
-        .select()
-        .single();
+    // Create the section
+    const { data: section, error: sectionError } = await supabaseAdmin
+      .from('trip_info_sections')
+      .insert({
+        title: req.body.title,
+        content: req.body.content,
+        section_type: 'trip_specific',
+        updated_by: req.body.updated_by,
+        trip_id: req.body.trip_id // Keep for reference
+      })
+      .select()
+      .single();
 
-      if (sectionError) {
-        console.error('Error creating trip info section:', sectionError);
-        return res.status(500).json({ error: 'Failed to create trip info section' });
-      }
-
-      // Create the assignment
-      const { data: assignment, error: assignmentError } = await supabaseAdmin
-        .from('trip_section_assignments')
-        .insert({
-          trip_id: req.body.trip_id,
-          section_id: section.id,
-          order_index: req.body.order_index
-        })
-        .select()
-        .single();
-
-      if (assignmentError) {
-        console.error('Error creating assignment:', assignmentError);
-        return res.status(500).json({ error: 'Failed to create assignment' });
-      }
-
-      return res.status(201).json({ section, assignment });
-    } catch (error: any) {
-      console.error('Error creating trip info section with assignment:', error);
-      return res.status(500).json({ error: 'Failed to create trip info section' });
+    if (sectionError) {
+      logger.error('Error creating trip info section:', sectionError, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to create trip info section');
     }
-  });
+
+    // Create the assignment
+    const { data: assignment, error: assignmentError } = await supabaseAdmin
+      .from('trip_section_assignments')
+      .insert({
+        trip_id: req.body.trip_id,
+        section_id: section.id,
+        order_index: req.body.order_index
+      })
+      .select()
+      .single();
+
+    if (assignmentError) {
+      logger.error('Error creating assignment:', assignmentError, {
+        method: req.method,
+        path: req.path
+      });
+      throw ApiError.internal('Failed to create assignment');
+    }
+
+    return res.status(201).json({ section, assignment });
+  }));
 }

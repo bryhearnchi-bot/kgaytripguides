@@ -25,10 +25,10 @@ $$ LANGUAGE plpgsql;
 ```
 
 ### 2. API Field Naming (MANDATORY)
-**ALL API RESPONSES USE SNAKE_CASE FROM DATABASE. PERIOD.**
-- ✅ Use: `location_text`, `state_province`, `country_code`, `phone_number`
-- ❌ NEVER: `locationText`, `stateProvince`, `countryCode`, `phoneNumber`
-- 🔥 **CHECK API RESPONSE STRUCTURE FIRST - ALWAYS SNAKE_CASE**
+**API RESPONSES USE CAMELCASE. DATABASE USES SNAKE_CASE.**
+- ✅ API: `startDate`, `heroImageUrl`, `shipName`, `createdAt`
+- ✅ Database: `start_date`, `hero_image_url`, `ship_name`, `created_at`
+- 🔥 **Transform snake_case → camelCase in storage layer (transformTripData, etc.)**
 
 ### 3. Page Creation Rules (MANDATORY)
 **NEVER CREATE NEW PAGES - ONLY UPDATE EXISTING ONES.**
@@ -36,6 +36,30 @@ $$ LANGUAGE plpgsql;
 - ✅ Create components in: `/client/src/components/`
 - ❌ NEVER create new pages like `ShipsManagement.tsx`
 - 🔥 **CREATING NEW PAGES BREAKS APPLICATION ARCHITECTURE**
+
+### 4. Image Storage Rules (MANDATORY)
+**ALL IMAGES MUST BE STORED IN SUPABASE STORAGE. PERIOD.**
+- ✅ Upload images to Supabase storage bucket
+- ✅ Use Supabase storage URLs only
+- ❌ NEVER use external image URLs
+- ❌ NEVER link to images on other domains
+- 🔥 **ALL IMAGES MUST BE IN SUPABASE STORAGE - NO EXCEPTIONS**
+
+**Image Handling:**
+```typescript
+// ✅ CORRECT - Upload to Supabase
+const { data, error } = await supabase.storage
+  .from('bucket-name')
+  .upload('file-path', file);
+
+// ❌ WRONG - External URL
+const imageUrl = 'https://example.com/image.jpg';
+```
+
+**AI-Found Images:**
+- If AI finds an external image, download it first
+- Then upload to Supabase storage
+- Use the Supabase storage URL in the database
 
 ---
 

@@ -104,17 +104,17 @@ export class TripStorage implements ITripStorage {
       id: dbTrip.id,
       name: dbTrip.name,
       slug: dbTrip.slug,
-      ship_name: dbTrip.ship_name,
-      cruise_line: dbTrip.cruise_line,
-      trip_type: dbTrip.trip_type,
-      start_date: dbTrip.start_date,
-      end_date: dbTrip.end_date,
+      shipName: dbTrip.ship_name,
+      cruiseLine: dbTrip.cruise_line,
+      tripType: dbTrip.trip_type,
+      startDate: dbTrip.start_date,
+      endDate: dbTrip.end_date,
       status: dbTrip.status,
-      hero_image_url: dbTrip.hero_image_url,
+      heroImageUrl: dbTrip.hero_image_url,
       description: dbTrip.description,
       highlights: dbTrip.highlights,
-      created_at: dbTrip.created_at,
-      updated_at: dbTrip.updated_at
+      createdAt: dbTrip.created_at,
+      updatedAt: dbTrip.updated_at
     } as any;
   }
 

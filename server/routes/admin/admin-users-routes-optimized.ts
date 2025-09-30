@@ -8,8 +8,9 @@
  */
 
 import type { Express } from "express";
+import { logger } from "../../logging/logger";
 
 export function registerOptimizedAdminUserRoutes(app: Express) {
   // Experimental routes - pending optimization infrastructure
-  console.log('Optimized admin user routes: experimental features not yet implemented');
+  logger.info('Optimized admin user routes: experimental features not yet implemented');
 }
