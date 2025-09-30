@@ -2,7 +2,12 @@
 NIXPACKS_NODE_VERSION = "20"
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = [
+  "npm run build",
+  "echo '✓ Build complete. Checking dist/public...'",
+  "ls -la dist/public/ || echo '✗ dist/public not found!'",
+  "ls -la dist/public/assets/ | head -10 || echo '✗ assets directory not found!'"
+]
 
 [start]
 cmd = "NODE_ENV=production npx tsx server/index.ts"
