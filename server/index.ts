@@ -337,31 +337,8 @@ if (process.env.NODE_ENV === 'production') {
     await setupVite(app, server);
   } else {
     // In production, add the fallback to index.html for client-side routing
-    // BUT: Don't catch requests for static assets (JS, CSS, etc.)
     const distPath = path.join(process.cwd(), 'dist', 'public');
-    app.get('*', (req, res, next) => {
-      // Don't intercept requests for static assets
-      if (
-        req.path.startsWith('/assets/') ||
-        req.path.endsWith('.js') ||
-        req.path.endsWith('.css') ||
-        req.path.endsWith('.map') ||
-        req.path.endsWith('.png') ||
-        req.path.endsWith('.jpg') ||
-        req.path.endsWith('.jpeg') ||
-        req.path.endsWith('.gif') ||
-        req.path.endsWith('.svg') ||
-        req.path.endsWith('.ico') ||
-        req.path.endsWith('.webp')
-      ) {
-        // Return 404 for missing static assets instead of SPA fallback
-        return res.status(404).send('Not found');
-      }
-      // For all other requests, serve index.html (SPA fallback)
-      // Set no-cache headers to prevent stale cached versions
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
+    app.use('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

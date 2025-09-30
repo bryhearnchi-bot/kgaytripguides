@@ -3,16 +3,19 @@ import { Request, Response, NextFunction } from 'express';
 // Security middleware for setting various security headers
 export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
   // Content Security Policy
-  // Note: unsafe-inline and unsafe-eval are only for development
-  // In production, use nonce-based CSP or remove these directives
-  const isProduction = process.env.NODE_ENV === 'production';
-
   const cspDirectives = {
     'default-src': ["'self'", 'https:'],
-    'script-src': isProduction
-      ? ["'self'", "'unsafe-inline'", 'https:'] // Vite build needs this for module preload
-      : ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:'],
-    'style-src': ["'self'", "'unsafe-inline'", 'https:'], // Always need unsafe-inline for Vite
+    'script-src': [
+      "'self'",
+      "'unsafe-inline'", // Required for Vite in development
+      "'unsafe-eval'", // Required for development
+      'https:',
+    ],
+    'style-src': [
+      "'self'",
+      "'unsafe-inline'", // Required for CSS-in-JS libraries
+      'https:',
+    ],
     'font-src': ["'self'", 'https:'],
     'img-src': [
       "'self'",
