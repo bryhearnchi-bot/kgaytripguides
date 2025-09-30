@@ -29,7 +29,12 @@ export default defineConfig({
           // Vendor chunks - separate large libraries
           if (id.includes('node_modules')) {
             // React ecosystem in one chunk
-            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+            if (
+              id.includes('react') ||
+              id.includes('react-dom') ||
+              id.includes('scheduler') ||
+              id.includes('use-sync-external-store')
+            ) {
               return 'vendor-react';
             }
             // React Query and related
