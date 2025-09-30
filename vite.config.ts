@@ -1,22 +1,21 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      '@': path.resolve(import.meta.dirname, 'client', 'src'),
+      '@shared': path.resolve(import.meta.dirname, 'shared'),
+      '@assets': path.resolve(import.meta.dirname, 'attached_assets'),
     },
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
   },
-  root: path.resolve(import.meta.dirname, "client"),
-  publicDir: path.resolve(import.meta.dirname, "client", "public"),
+  root: path.resolve(import.meta.dirname, 'client'),
+  publicDir: path.resolve(import.meta.dirname, 'client', 'public'),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
@@ -26,7 +25,7 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
         // Manual chunk splitting for optimal caching
-        manualChunks: (id) => {
+        manualChunks: id => {
           // Vendor chunks - separate large libraries
           if (id.includes('node_modules')) {
             // React ecosystem in one chunk
@@ -38,7 +37,11 @@ export default defineConfig({
               return 'vendor-query';
             }
             // UI libraries (shadcn/ui, radix)
-            if (id.includes('@radix-ui') || id.includes('class-variance-authority') || id.includes('clsx')) {
+            if (
+              id.includes('@radix-ui') ||
+              id.includes('class-variance-authority') ||
+              id.includes('clsx')
+            ) {
               return 'vendor-ui';
             }
             // Routing
@@ -78,19 +81,19 @@ export default defineConfig({
 
           // Default - let Vite decide
           return undefined;
-        }
-      }
+        },
+      },
     },
     target: 'esnext',
     minify: 'esbuild',
     // Stricter chunk size limit for better performance
     chunkSizeWarningLimit: 300,
-    cssCodeSplit: true
+    cssCodeSplit: true,
   },
   server: {
     fs: {
       strict: true,
-      deny: ["**/.*"],
+      deny: ['**/.*'],
     },
     // No proxy needed - API and frontend served from same Express server
   },
