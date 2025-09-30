@@ -20,11 +20,11 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO }: InfoTabProps) {
             Important Information
           </h2>
         </div>
-        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 p-6">
-          <p className="text-gray-500 text-center">
-            No important information available for this trip.
-          </p>
-        </Card>
+        <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
+          <Info className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No information available</h3>
+          <p className="text-gray-500">No important information about this trip.</p>
+        </div>
       </div>
     );
   }

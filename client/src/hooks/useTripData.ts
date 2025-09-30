@@ -181,11 +181,6 @@ export function transformTripData(data: TripData) {
   // Convert to array
   const partyThemes = Array.from(uniquePartyThemes.values());
 
-  // If no themes from database, use fallback (this shouldn't happen if data is loaded correctly)
-  if (partyThemes.length === 0) {
-    console.warn('No party themes found in database data, using fallback');
-  }
-
   // City attractions (keep static for now)
   const cityAttractions: any[] = [];
 
