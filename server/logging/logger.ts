@@ -65,7 +65,7 @@ if (process.env.NODE_ENV !== 'test') {
   transports.push(
     new winston.transports.Console({
       format: process.env.NODE_ENV === 'production' ? format : consoleFormat,
-      level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'warn'),
+      level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
       handleExceptions: true,
       handleRejections: true,
     })
@@ -119,7 +119,7 @@ if (process.env.NODE_ENV === 'production' && process.env.LOG_DIR) {
 
 // Create the Winston logger instance
 const winstonLogger = winston.createLogger({
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  level: process.env.LOG_LEVEL || 'debug',
   levels,
   format,
   transports,
