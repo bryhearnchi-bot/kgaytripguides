@@ -1,23 +1,31 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock IntersectionObserver for OptimizedImage component
 global.IntersectionObserver = class IntersectionObserver {
+  root: Element | Document | null = null;
+  rootMargin: string = '';
+  thresholds: ReadonlyArray<number> = [];
+
   constructor() {}
-  observe() {
-    return null;
+  observe(): void {
+    return undefined;
   }
-  disconnect() {
-    return null;
+  disconnect(): void {
+    return undefined;
   }
-  unobserve() {
-    return null;
+  unobserve(): void {
+    return undefined;
   }
-};
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+} as any;
 
 // Mock matchMedia for responsive components
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,

@@ -39,7 +39,7 @@ export function registerTripRoutes(app: Express) {
   // Duplicate a trip
   app.post("/api/trips/:id/duplicate",
     requireContentEditor,
-    validateParams(idParamSchema),
+    validateParams(idParamSchema as any),
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
       const { newName, newSlug } = req.body;
@@ -106,7 +106,7 @@ export function registerTripRoutes(app: Express) {
   // Export trip data
   app.post("/api/export/trips/:id",
     requireContentEditor,
-    validateParams(idParamSchema),
+    validateParams(idParamSchema as any),
     validateBody(exportTripSchema),
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
@@ -402,7 +402,7 @@ export function registerTripRoutes(app: Express) {
   });
 
   // Update trip
-  app.put("/api/trips/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema), validateBody(updateTripSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/trips/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema as any), validateBody(updateTripSchema), async (req: AuthenticatedRequest, res) => {
     const trip = await tripStorage.updateTrip(parseInt(req.params.id || '0'), req.body);
     if (!trip) {
       return res.status(404).send("Trip not found");
@@ -471,7 +471,7 @@ export function registerTripRoutes(app: Express) {
         return acc;
       }, {}) || {};
 
-      res.json({ total, byType });
+      return res.json({ total, byType });
     } catch (error: unknown) {
       console.error('Error fetching event stats:', error);
       return res.status(500).json({ error: 'Failed to fetch event statistics' });
@@ -522,7 +522,7 @@ export function registerTripRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch events' });
       }
 
-      res.json(results || []);
+      return res.json(results || []);
     } catch (error: unknown) {
       console.error('Error fetching events:', error);
       return res.status(500).json({ error: 'Failed to fetch events' });
@@ -532,47 +532,73 @@ export function registerTripRoutes(app: Express) {
 
   // Get events for a trip
   app.get("/api/trips/:tripId/events", async (req: AuthenticatedRequest, res: Response) => {
-    const eventsList = await eventStorage.getEventsByTrip(parseInt(req.params.tripId));
-    res.json(eventsList);
+    const tripId = req.params.tripId;
+    if (!tripId) {
+      return res.status(400).json({ error: 'Trip ID is required' });
+    }
+    const eventsList = await eventStorage.getEventsByTrip(parseInt(tripId));
+    return res.json(eventsList);
   });
 
 
   // Get events by date
   app.get("/api/trips/:tripId/events/date/:date", async (req: AuthenticatedRequest, res: Response) => {
-    const eventsList = await eventStorage.getEventsByDate(parseInt(req.params.tripId), new Date(req.params.date));
-    res.json(eventsList);
+    const tripId = req.params.tripId;
+    const date = req.params.date;
+    if (!tripId || !date) {
+      return res.status(400).json({ error: 'Trip ID and date are required' });
+    }
+    const eventsList = await eventStorage.getEventsByDate(parseInt(tripId), new Date(date));
+    return res.json(eventsList);
   });
 
 
   // Get events by type
   app.get("/api/trips/:tripId/events/type/:type", async (req: AuthenticatedRequest, res: Response) => {
-    const eventsList = await eventStorage.getEventsByType(parseInt(req.params.tripId), req.params.type);
-    res.json(eventsList);
+    const tripId = req.params.tripId;
+    const type = req.params.type;
+    if (!tripId || !type) {
+      return res.status(400).json({ error: 'Trip ID and type are required' });
+    }
+    const eventsList = await eventStorage.getEventsByType(parseInt(tripId), type);
+    return res.json(eventsList);
   });
 
 
   // Create event
   app.post("/api/trips/:tripId/events", adminRateLimit, requireContentEditor, validateBody(createEventSchema), async (req: AuthenticatedRequest, res) => {
+    const tripId = req.params.tripId;
+    if (!tripId) {
+      return res.status(400).json({ error: 'Trip ID is required' });
+    }
     const event = await eventStorage.createEvent({
       ...req.body,
-      tripId: parseInt(req.params.tripId!),
+      tripId: parseInt(tripId),
     });
-    res.json(event);
+    return res.json(event);
   });
 
   // Update event
-  app.put("/api/events/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema), validateBody(updateEventSchema), async (req: AuthenticatedRequest, res) => {
-    const event = await eventStorage.updateEvent(parseInt(req.params.id!), req.body);
+  app.put("/api/events/:id", adminRateLimit, requireContentEditor, validateParams(idParamSchema as any), validateBody(updateEventSchema), async (req: AuthenticatedRequest, res) => {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json({ error: 'Event ID is required' });
+    }
+    const event = await eventStorage.updateEvent(parseInt(id), req.body);
     if (!event) {
       return res.status(404).send("Event not found");
     }
-    res.json(event);
+    return res.json(event);
   });
 
   // Delete event
   app.delete("/api/events/:id", requireContentEditor, async (req: AuthenticatedRequest, res) => {
-    await eventStorage.deleteEvent(parseInt(req.params.id!));
-    res.json({ message: "Event deleted" });
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json({ error: 'Event ID is required' });
+    }
+    await eventStorage.deleteEvent(parseInt(id));
+    return res.json({ message: "Event deleted" });
   });
 
   // ============ TRIP INFO SECTIONS ============
@@ -580,11 +606,14 @@ export function registerTripRoutes(app: Express) {
   // Get complete trip info with all sections
   app.get("/api/trips/:slug/complete", async (req: AuthenticatedRequest, res: Response) => {
     const { slug } = req.params;
+    if (!slug) {
+      return res.status(400).json({ error: 'Trip slug is required' });
+    }
     const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
     if (!tripData) {
       return res.status(404).json({ error: "Trip not found" });
     }
-    res.json(tripData);
+    return res.json(tripData);
   });
 
 
@@ -603,7 +632,7 @@ export function registerTripRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to fetch info sections' });
       }
 
-      res.json(sections || []);
+      return res.json(sections || []);
     } catch (error: unknown) {
       console.error('Error fetching info sections:', error);
       return res.status(500).json({ error: 'Failed to fetch info sections' });
@@ -629,7 +658,7 @@ export function registerTripRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to create info section' });
       }
 
-      res.json(section);
+      return res.json(section);
     } catch (error: unknown) {
       console.error('Error creating info section:', error);
       return res.status(500).json({ error: 'Failed to create info section' });
@@ -662,7 +691,7 @@ export function registerTripRoutes(app: Express) {
         return res.status(404).json({ error: 'Info section not found' });
       }
 
-      res.json(section);
+      return res.json(section);
     } catch (error: unknown) {
       console.error('Error updating info section:', error);
       return res.status(500).json({ error: 'Failed to update info section' });
@@ -683,7 +712,7 @@ export function registerTripRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to delete info section' });
       }
 
-      res.json({ message: 'Info section deleted' });
+      return res.json({ message: 'Info section deleted' });
     } catch (error: unknown) {
       console.error('Error deleting info section:', error);
       return res.status(500).json({ error: 'Failed to delete info section' });

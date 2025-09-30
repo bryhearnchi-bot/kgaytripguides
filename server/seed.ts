@@ -1,6 +1,13 @@
 import { getSupabaseAdmin } from './supabase-admin';
-import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
+// NOTE: cruise-data.ts has been removed. Use trip-data.ts or mock-data.ts instead
+// import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 import { MOCK_ITINERARY, MOCK_DAILY, MOCK_TALENT, MOCK_PARTY_THEMES } from '../client/src/data/mock-data';
+
+// Placeholder for production data - replace with actual data source
+const ITINERARY = MOCK_ITINERARY;
+const DAILY = MOCK_DAILY;
+const TALENT = MOCK_TALENT;
+const PARTY_THEMES = MOCK_PARTY_THEMES;
 
 async function seedDatabase() {
   console.log('🌱 Starting database seed...');
@@ -84,7 +91,7 @@ async function seedDatabase() {
 
     // Seed itinerary
     console.log('Creating itinerary stops...');
-    const itineraryData = selectedItinerary.map((stop, index) => {
+    const itineraryData = selectedItinerary.map((stop: any, index: number) => {
       const [year, month, day] = stop.key.split('-').map(Number);
       const stopDate = new Date(year, month - 1, day);
 
@@ -150,7 +157,7 @@ async function seedDatabase() {
     // Seed events
     console.log('Creating events...');
     for (const daily of selectedDaily) {
-      const [year, month, day] = daily.key.split('-').map(Number);
+      const [year = 2025, month = 1, day = 1] = daily.key.split('-').map(Number);
       const eventDate = new Date(year, month - 1, day);
 
       for (const item of daily.items) {
@@ -166,7 +173,7 @@ async function seedDatabase() {
         // Find party theme description
         let themeDesc = null;
         if (item.type === 'party' || item.type === 'after') {
-          const theme = selectedPartyThemes.find(p => item.title.includes(p.key));
+          const theme = selectedPartyThemes.find((p: any) => item.title.includes(p.key));
           themeDesc = theme?.desc || null;
         }
 
@@ -196,7 +203,7 @@ async function seedDatabase() {
     console.log(`Created cruise: ${cruise.name} (ID: ${cruise.id})`);
     console.log(`- ${selectedItinerary.length} itinerary stops`);
     console.log(`- ${selectedTalent.length} talent members`);
-    console.log(`- ${selectedDaily.reduce((acc, d) => acc + d.items.length, 0)} events`);
+    console.log(`- ${selectedDaily.reduce((acc: number, d: any) => acc + d.items.length, 0)} events`);
 
   } catch (error: unknown) {
     console.error('❌ Error seeding database:', error);

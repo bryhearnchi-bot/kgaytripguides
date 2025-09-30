@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
@@ -20,7 +20,6 @@ import { registerPerformanceRoutes } from "./routes/performance";
 import { registerPartyThemeRoutes } from "./routes/party-themes";
 import { registerTripInfoSectionRoutes } from "./routes/trip-info-sections";
 import { registerAdminSequenceRoutes } from "./routes/admin-sequences";
-import { setupSwaggerDocs } from "./openapi";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ MIDDLEWARE SETUP ============
@@ -67,24 +66,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   // Backward compatibility redirects for old image paths
-  app.use('/cruise-images', (req: AuthenticatedRequest, res: Response) => {
-    res.redirect(301, `/app-images/trips${req.url}`);
+  app.use('/cruise-images', (req: Request, res: Response) => {
+    return res.redirect(301, `/app-images/trips${req.url}`);
   });
 
-  app.use('/talent-images', (req: AuthenticatedRequest, res: Response) => {
-    res.redirect(301, `/app-images/talent${req.url}`);
+  app.use('/talent-images', (req: Request, res: Response) => {
+    return res.redirect(301, `/app-images/talent${req.url}`);
   });
 
-  app.use('/port-images', (req: AuthenticatedRequest, res: Response) => {
-    res.redirect(301, `/app-images/locations${req.url}`);
+  app.use('/port-images', (req: Request, res: Response) => {
+    return res.redirect(301, `/app-images/locations${req.url}`);
   });
 
-  app.use('/party-images', (req: AuthenticatedRequest, res: Response) => {
-    res.redirect(301, `/app-images/parties${req.url}`);
+  app.use('/party-images', (req: Request, res: Response) => {
+    return res.redirect(301, `/app-images/parties${req.url}`);
   });
 
-  app.use('/ship-images', (req: AuthenticatedRequest, res: Response) => {
-    res.redirect(301, `/app-images/ships${req.url}`);
+  app.use('/ship-images', (req: Request, res: Response) => {
+    return res.redirect(301, `/app-images/ships${req.url}`);
   });
 
   // Serve general images from uploads directory
@@ -146,17 +145,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register admin database sequence management routes
   registerAdminSequenceRoutes(app);
 
-  // ============ API DOCUMENTATION ============
-
-  // Setup Swagger/OpenAPI documentation
-  setupSwaggerDocs(app);
-
   // ============ ERROR HANDLING ============
 
   // 404 handler for API routes - maintains backwards compatibility
-  app.use('/api/*', (req: AuthenticatedRequest, res: Response) => {
+  app.use('/api/*', (req: Request, res: Response) => {
     // Use notFoundHandler for consistent error format
-    notFoundHandler(req, res);
+    return notFoundHandler(req, res);
   });
 
   // Global error handler - provides standardized error responses

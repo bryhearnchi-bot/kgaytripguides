@@ -104,7 +104,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Get party theme by ID
-  app.get("/api/party-themes/:id", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/party-themes/:id", validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const id = parseInt(req.params.id ?? '0');
@@ -143,7 +143,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Get events using a party theme
-  app.get("/api/party-themes/:id/events", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/party-themes/:id/events", validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
@@ -226,7 +226,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Update party theme
-  app.put("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updatePartyThemeSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updatePartyThemeSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
@@ -294,7 +294,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Delete party theme
-  app.delete("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/party-themes/:id", requireContentEditor, validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
@@ -335,7 +335,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Duplicate party theme
-  app.post("/api/party-themes/:id/duplicate", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/party-themes/:id/duplicate", requireContentEditor, validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res) => {
     try {
       const { name } = req.body;
       const id = parseInt(req.params.id ?? '0');
@@ -417,7 +417,7 @@ export function registerPartyThemeRoutes(app: Express) {
   });
 
   // Check party theme usage
-  app.get("/api/party-themes/:id/usage", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/party-themes/:id/usage", validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();

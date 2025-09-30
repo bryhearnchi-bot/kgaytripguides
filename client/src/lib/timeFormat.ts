@@ -10,13 +10,13 @@ export function parseTime(timeStr: string): ParsedTime | null {
 
   // Handle 24h format (HH:mm)
   const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (match24) {
+  if (match24 && match24[1] && match24[2]) {
     return { h: parseInt(match24[1], 10), m: parseInt(match24[2], 10) };
   }
 
   // Handle 12h format (H:mm AM/PM)
   const match12 = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (match12) {
+  if (match12 && match12[1] && match12[2] && match12[3]) {
     let h = parseInt(match12[1], 10);
     const m = parseInt(match12[2], 10);
     const isPM = /pm/i.test(match12[3]);

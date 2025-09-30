@@ -11,7 +11,7 @@ interface HapticPattern {
 }
 
 // Standard haptic patterns
-export const HapticPatterns = {
+export const HapticPatterns: Record<string, HapticPattern> = {
   // Light tap (like button press)
   LIGHT: { duration: 50 },
 
@@ -32,7 +32,7 @@ export const HapticPatterns = {
 
   // Notification pattern
   NOTIFICATION: { pattern: [50, 100, 50, 100, 50] }
-} as const;
+};
 
 class HapticManager {
   private isSupported: boolean;
@@ -104,49 +104,56 @@ class HapticManager {
    * Light haptic feedback for subtle interactions
    */
   light(): void {
-    this.vibrate(HapticPatterns.LIGHT);
+    const pattern = HapticPatterns.LIGHT;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
    * Medium haptic feedback for standard interactions
    */
   medium(): void {
-    this.vibrate(HapticPatterns.MEDIUM);
+    const pattern = HapticPatterns.MEDIUM;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
    * Heavy haptic feedback for important interactions
    */
   heavy(): void {
-    this.vibrate(HapticPatterns.HEAVY);
+    const pattern = HapticPatterns.HEAVY;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
    * Success haptic feedback
    */
   success(): void {
-    this.vibrate(HapticPatterns.SUCCESS);
+    const pattern = HapticPatterns.SUCCESS;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
    * Error haptic feedback
    */
   error(): void {
-    this.vibrate(HapticPatterns.ERROR);
+    const pattern = HapticPatterns.ERROR;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
    * Warning haptic feedback
    */
   warning(): void {
-    this.vibrate(HapticPatterns.WARNING);
+    const pattern = HapticPatterns.WARNING;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
    * Notification haptic feedback
    */
   notification(): void {
-    this.vibrate(HapticPatterns.NOTIFICATION);
+    const pattern = HapticPatterns.NOTIFICATION;
+    if (pattern) this.vibrate(pattern);
   }
 
   /**
@@ -229,7 +236,8 @@ export function withHaptics<P extends object>(
 ) {
   return function HapticComponent(props: P) {
     const handleInteraction = () => {
-      haptics.vibrate(HapticPatterns[feedbackType]);
+      const pattern = HapticPatterns[feedbackType];
+      if (pattern) haptics.vibrate(pattern);
     };
 
     return React.createElement(

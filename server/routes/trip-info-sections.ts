@@ -92,7 +92,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   });
 
   // Get sections for a specific trip (via assignments)
-  app.get("/api/trip-info-sections/trip/:tripId", validateParams(z.object({ tripId: z.string().transform(Number) })), async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trip-info-sections/trip/:tripId", validateParams(z.object({ tripId: z.string().transform(Number) }) as any), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: sections, error } = await supabaseAdmin
@@ -135,7 +135,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   });
 
   // Get section by ID
-  app.get("/api/trip-info-sections/:id", validateParams(idParamSchema), async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/trip-info-sections/:id", validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: section, error } = await supabaseAdmin
@@ -188,7 +188,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   });
 
   // Update section
-  app.put("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updateSectionSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updateSectionSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
@@ -222,7 +222,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   });
 
   // Delete section
-  app.delete("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/trip-info-sections/:id", requireContentEditor, validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
@@ -276,7 +276,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   });
 
   // Update assignment order
-  app.put("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema), validateBody(updateAssignmentSchema), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema as any), validateBody(updateAssignmentSchema), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();
@@ -307,7 +307,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
   });
 
   // Remove assignment (unassign section from trip)
-  app.delete("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/trip-section-assignments/:id", requireContentEditor, validateParams(idParamSchema as any), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id ?? '0');
       const supabaseAdmin = getSupabaseAdmin();

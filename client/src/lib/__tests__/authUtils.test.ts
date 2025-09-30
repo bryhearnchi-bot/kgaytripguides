@@ -47,7 +47,16 @@ describe('authUtils', () => {
     it('should return headers with valid session token', async () => {
       const mockSession = {
         access_token: 'test-token-123',
-        user: { id: 'user-123' }
+        refresh_token: 'refresh-token',
+        expires_in: 3600,
+        token_type: 'bearer' as const,
+        user: {
+          id: 'user-123',
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        }
       };
 
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
@@ -75,9 +84,17 @@ describe('authUtils', () => {
     });
 
     it('should throw error when session fetch fails', async () => {
+      const mockError = {
+        message: 'Session error',
+        name: 'AuthError',
+        code: 'session_error',
+        status: 401,
+        __isAuthError: true
+      };
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: null },
-        error: new Error('Session error')
+        error: mockError as any
       });
 
       await expect(getAuthHeaders()).rejects.toThrow(
@@ -89,7 +106,16 @@ describe('authUtils', () => {
   describe('authenticatedFetch', () => {
     const mockSession = {
       access_token: 'test-token-123',
-      user: { id: 'user-123' }
+      refresh_token: 'refresh-token',
+      expires_in: 3600,
+      token_type: 'bearer' as const,
+      user: {
+        id: 'user-123',
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      }
     };
 
     beforeEach(() => {
@@ -168,7 +194,21 @@ describe('authUtils', () => {
   describe('authenticatedGet', () => {
     beforeEach(() => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            refresh_token: 'refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer' as const,
+            user: {
+              id: 'user-123',
+              app_metadata: {},
+              user_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            }
+          }
+        },
         error: null
       });
     });
@@ -206,7 +246,21 @@ describe('authUtils', () => {
   describe('authenticatedPost', () => {
     beforeEach(() => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            refresh_token: 'refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer' as const,
+            user: {
+              id: 'user-123',
+              app_metadata: {},
+              user_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            }
+          }
+        },
         error: null
       });
     });
@@ -246,7 +300,21 @@ describe('authUtils', () => {
   describe('authenticatedPut', () => {
     beforeEach(() => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            refresh_token: 'refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer' as const,
+            user: {
+              id: 'user-123',
+              app_metadata: {},
+              user_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            }
+          }
+        },
         error: null
       });
     });
@@ -274,7 +342,21 @@ describe('authUtils', () => {
   describe('authenticatedDelete', () => {
     beforeEach(() => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            refresh_token: 'refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer' as const,
+            user: {
+              id: 'user-123',
+              app_metadata: {},
+              user_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            }
+          }
+        },
         error: null
       });
     });
@@ -307,7 +389,21 @@ describe('authUtils', () => {
   describe('requireAdminRole', () => {
     it('should pass for admin users', async () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            refresh_token: 'refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer' as const,
+            user: {
+              id: 'user-123',
+              app_metadata: {},
+              user_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            }
+          }
+        },
         error: null
       });
 
@@ -320,7 +416,7 @@ describe('authUtils', () => {
             })
           }))
         }))
-      }));
+      })) as any;
 
       vi.mocked(supabase.from).mockImplementation(mockFrom);
 
@@ -329,7 +425,21 @@ describe('authUtils', () => {
 
     it('should throw error for non-admin users', async () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            refresh_token: 'refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer' as const,
+            user: {
+              id: 'user-123',
+              app_metadata: {},
+              user_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            }
+          }
+        },
         error: null
       });
 
@@ -342,7 +452,7 @@ describe('authUtils', () => {
             })
           }))
         }))
-      }));
+      })) as any;
 
       vi.mocked(supabase.from).mockImplementation(mockFrom);
 

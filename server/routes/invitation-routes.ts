@@ -104,27 +104,24 @@ const listInvitationsSchema = z.object({
 
 const invitationCreateRateLimit = createRateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: INVITATION_RATE_LIMITS.INVITATIONS_PER_HOUR,
+  maxRequests: INVITATION_RATE_LIMITS.INVITATIONS_PER_HOUR,
   message: 'Too many invitations created. Please try again later.',
   standardHeaders: true,
-  legacyHeaders: false,
 });
 
 const invitationValidateRateLimit = createRateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: INVITATION_RATE_LIMITS.VALIDATION_ATTEMPTS_PER_HOUR,
+  maxRequests: INVITATION_RATE_LIMITS.VALIDATION_ATTEMPTS_PER_HOUR,
   message: 'Too many validation attempts. Please try again later.',
   standardHeaders: true,
-  legacyHeaders: false,
   keyGenerator: (req) => `validate_${req.ip}_${req.params.token?.slice(0, 8)}`,
 });
 
 const invitationAcceptRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Max 5 acceptance attempts per IP per 15 minutes
+  maxRequests: 5, // Max 5 acceptance attempts per IP per 15 minutes
   message: 'Too many account creation attempts. Please try again later.',
   standardHeaders: true,
-  legacyHeaders: false,
 });
 
 // =============================================================================
@@ -553,7 +550,13 @@ router.get(
   validateQuery(listInvitationsSchema),
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { page, limit, status, role, search } = req.query;
+      const { page, limit, status, role, search } = req.query as unknown as {
+        page: number;
+        limit: number;
+        status?: 'active' | 'expired' | 'used' | 'all';
+        role?: string;
+        search?: string;
+      };
       const offset = (page - 1) * limit;
       const supabaseAdmin = getSupabaseAdmin();
 
@@ -612,6 +615,8 @@ router.get(
         throw new Error('Failed to count invitations');
       }
 
+      const totalCount = total ?? 0;
+
       // Get paginated results
       const { data: invitationResults, error } = await query
         .order('created_at', { ascending: false })
@@ -640,9 +645,9 @@ router.get(
         pagination: {
           page,
           limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page * limit < total,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          hasNext: page * limit < totalCount,
           hasPrev: page > 1,
         },
         filters: {
@@ -673,7 +678,7 @@ router.delete(
   validateParams(invitationIdSchema),
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const admin = req.user!;
 
       // Find the invitation
@@ -746,8 +751,8 @@ router.post(
   validateBody(resendInvitationSchema),
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { id } = req.params;
-      const { expirationHours } = req.body;
+      const { id } = req.params as { id: string };
+      const { expirationHours } = req.body as { expirationHours: number };
       const admin = req.user!;
 
       // Find the invitation
@@ -834,7 +839,7 @@ router.get(
   validateParams(validateInvitationTokenSchema),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { token } = req.params;
+      const { token } = req.params as { token: string };
 
       // Find and validate invitation
       const matchingInvitation = await findInvitationByToken(token);
