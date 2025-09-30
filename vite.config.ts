@@ -10,7 +10,15 @@ export default defineConfig({
       '@shared': path.resolve(import.meta.dirname, 'shared'),
       '@assets': path.resolve(import.meta.dirname, 'attached_assets'),
     },
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
+    // Dedupe React to prevent multiple instances
+    dedupe: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      '@tanstack/react-query',
+      'scheduler',
+    ],
   },
   root: path.resolve(import.meta.dirname, 'client'),
   publicDir: path.resolve(import.meta.dirname, 'client', 'public'),
@@ -25,13 +33,14 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
         // Manual chunk splitting for optimal caching
-        manualChunks: id => {
+        manualChunks: (id, { getModuleInfo }) => {
           // Vendor chunks - separate large libraries
           if (id.includes('node_modules')) {
-            // React ecosystem in one chunk
+            // React ecosystem - MUST be in one chunk to avoid duplication
             if (
               id.includes('react') ||
               id.includes('react-dom') ||
+              id.includes('react/jsx-runtime') ||
               id.includes('scheduler') ||
               id.includes('use-sync-external-store')
             ) {
@@ -39,13 +48,14 @@ export default defineConfig({
             }
             // React Query and related
             if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query';
+              return 'vendor-react'; // Bundle with React to avoid hook issues
             }
-            // UI libraries (shadcn/ui, radix)
+            // UI libraries (shadcn/ui, radix) - bundle with React for hook compatibility
             if (
               id.includes('@radix-ui') ||
               id.includes('class-variance-authority') ||
-              id.includes('clsx')
+              id.includes('clsx') ||
+              id.includes('tailwind-merge')
             ) {
               return 'vendor-ui';
             }
@@ -60,6 +70,10 @@ export default defineConfig({
             // Date utilities
             if (id.includes('date-fns')) {
               return 'vendor-date';
+            }
+            // Animation libraries
+            if (id.includes('framer-motion')) {
+              return 'vendor-animation';
             }
             // All other vendor code
             return 'vendor-misc';
@@ -94,6 +108,11 @@ export default defineConfig({
     // Stricter chunk size limit for better performance
     chunkSizeWarningLimit: 300,
     cssCodeSplit: true,
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react/jsx-runtime', '@tanstack/react-query', 'scheduler'],
+    // Force pre-bundle these to avoid React duplication issues
+    force: false,
   },
   server: {
     fs: {
