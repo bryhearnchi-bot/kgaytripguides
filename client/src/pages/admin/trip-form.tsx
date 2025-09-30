@@ -9,30 +9,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Save, Loader2, Upload, X } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-const tripSchema = z.object({
-  name: z.string().min(1, 'Trip name is required'),
-  slug: z.string().min(1, 'Slug is required'),
-  shipName: z.string().min(1, 'Ship name is required'),
-  cruiseLine: z.string().optional(),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().min(1, 'End date is required'),
-  status: z.enum(['upcoming', 'ongoing', 'past']).default('upcoming'),
-  description: z.string().optional(),
-  heroImageUrl: z.string().optional(),
-}).refine((data) => {
-  const start = new Date(data.startDate);
-  const end = new Date(data.endDate);
-  return end > start;
-}, {
-  message: "End date must be after start date",
-  path: ["endDate"],
-});
+const tripSchema = z
+  .object({
+    name: z.string().min(1, 'Trip name is required'),
+    slug: z.string().min(1, 'Slug is required'),
+    shipName: z.string().min(1, 'Ship name is required'),
+    cruiseLine: z.string().optional(),
+    startDate: z.string().min(1, 'Start date is required'),
+    endDate: z.string().min(1, 'End date is required'),
+    status: z.enum(['upcoming', 'ongoing', 'past']).default('upcoming'),
+    description: z.string().optional(),
+    heroImageUrl: z.string().optional(),
+  })
+  .refine(
+    data => {
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      return end > start;
+    },
+    {
+      message: 'End date must be after start date',
+      path: ['endDate'],
+    }
+  );
 
 type TripFormData = z.infer<typeof tripSchema>;
 
@@ -134,9 +145,9 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Error",
-        description: "Please select an image file.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please select an image file.',
+        variant: 'destructive',
       });
       return;
     }
@@ -144,9 +155,9 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "Error", 
-        description: "Image must be less than 5MB.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Image must be less than 5MB.',
+        variant: 'destructive',
       });
       return;
     }
@@ -160,20 +171,20 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
       // Upload to server
       const imageUrl = await uploadImage(file);
       setValue('heroImageUrl', imageUrl);
-      
+
       // Clean up preview
       URL.revokeObjectURL(previewUrl);
       setImagePreview(imageUrl);
 
       toast({
-        title: "Success",
-        description: "Image uploaded successfully.",
+        title: 'Success',
+        description: 'Image uploaded successfully.',
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to upload image.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to upload image.',
+        variant: 'destructive',
       });
       setImagePreview('');
     } finally {
@@ -202,8 +213,8 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
         credentials: 'include',
         body: JSON.stringify({
           ...data,
-          startDate: data.startDate + 'T00:00:00.000Z',
-          endDate: data.endDate + 'T00:00:00.000Z'
+          startDate: `${data.startDate}T00:00:00.000Z`,
+          endDate: `${data.endDate}T00:00:00.000Z`,
         }),
       });
 
@@ -214,24 +225,24 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       }
-      
+
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Trip "${data.name}" has been ${isEditing ? 'updated' : 'created'}.`,
       });
-      
+
       setLocation('/admin/trips');
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message || `Failed to ${isEditing ? 'update' : 'create'} trip.`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -260,11 +271,7 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
             <h1 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Edit Trip' : 'Create New Trip'}
             </h1>
-            <Button
-              type="submit"
-              form="trip-form"
-              disabled={isSubmitting || saveTrip.isPending}
-            >
+            <Button type="submit" form="trip-form" disabled={isSubmitting || saveTrip.isPending}>
               {isSubmitting || saveTrip.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -345,11 +352,7 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="startDate">Start Date *</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      {...register('startDate')}
-                    />
+                    <Input id="startDate" type="date" {...register('startDate')} />
                     {errors.startDate && (
                       <p className="text-sm text-red-600 mt-1">{errors.startDate.message}</p>
                     )}
@@ -357,11 +360,7 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
 
                   <div>
                     <Label htmlFor="endDate">End Date *</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      {...register('endDate')}
-                    />
+                    <Input id="endDate" type="date" {...register('endDate')} />
                     {errors.endDate && (
                       <p className="text-sm text-red-600 mt-1">{errors.endDate.message}</p>
                     )}
@@ -371,7 +370,7 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={watch('status')}
-                      onValueChange={(value) => setValue('status', value as any)}
+                      onValueChange={value => setValue('status', value as any)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
@@ -413,7 +412,7 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
                           <p className="text-sm text-gray-600">No image selected</p>
                         </div>
                       )}
-                      
+
                       <div className="flex gap-2">
                         <Button
                           type="button"
@@ -434,17 +433,13 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
                           )}
                         </Button>
                         {imagePreview && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={removeImage}
-                          >
+                          <Button type="button" variant="outline" onClick={removeImage}>
                             <X className="w-4 h-4 mr-2" />
                             Remove
                           </Button>
                         )}
                       </div>
-                      
+
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -452,17 +447,17 @@ function TripFormContent({ isEditing, tripId }: TripFormContentProps) {
                         onChange={handleImageUpload}
                         className="hidden"
                       />
-                      
+
                       <Input
                         {...register('heroImageUrl')}
                         placeholder="Or enter image URL directly"
                         value={watch('heroImageUrl') || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           setValue('heroImageUrl', e.target.value);
                           setImagePreview(e.target.value);
                         }}
                       />
-                      
+
                       {errors.heroImageUrl && (
                         <p className="text-sm text-red-600">{errors.heroImageUrl.message}</p>
                       )}

@@ -44,21 +44,79 @@ class LocationService {
 
   private getCountryFlag(countryCode: string): string {
     const flags: Record<string, string> = {
-      'US': '🇺🇸', 'CA': '🇨🇦', 'MX': '🇲🇽', 'GB': '🇬🇧', 'FR': '🇫🇷',
-      'DE': '🇩🇪', 'ES': '🇪🇸', 'IT': '🇮🇹', 'GR': '🇬🇷', 'NL': '🇳🇱',
-      'BE': '🇧🇪', 'CH': '🇨🇭', 'AT': '🇦🇹', 'PT': '🇵🇹', 'DK': '🇩🇰',
-      'SE': '🇸🇪', 'NO': '🇳🇴', 'FI': '🇫🇮', 'IE': '🇮🇪', 'IS': '🇮🇸',
-      'PL': '🇵🇱', 'CZ': '🇨🇿', 'HU': '🇭🇺', 'HR': '🇭🇷', 'TR': '🇹🇷',
-      'RU': '🇷🇺', 'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'TH': '🇹🇭',
-      'IN': '🇮🇳', 'SG': '🇸🇬', 'MY': '🇲🇾', 'ID': '🇮🇩', 'PH': '🇵🇭',
-      'VN': '🇻🇳', 'KH': '🇰🇭', 'LK': '🇱🇰', 'NP': '🇳🇵', 'MM': '🇲🇲',
-      'LA': '🇱🇦', 'EG': '🇪🇬', 'AE': '🇦🇪', 'IL': '🇮🇱', 'JO': '🇯🇴',
-      'MA': '🇲🇦', 'ZA': '🇿🇦', 'KE': '🇰🇪', 'TZ': '🇹🇿', 'ET': '🇪🇹',
-      'AU': '🇦🇺', 'NZ': '🇳🇿', 'FJ': '🇫🇯', 'BR': '🇧🇷', 'AR': '🇦🇷',
-      'CL': '🇨🇱', 'PE': '🇵🇪', 'CO': '🇨🇴', 'EC': '🇪🇨', 'UY': '🇺🇾',
-      'BO': '🇧🇴', 'CR': '🇨🇷', 'PA': '🇵🇦', 'GT': '🇬🇹', 'BZ': '🇧🇿',
-      'JM': '🇯🇲', 'BB': '🇧🇧', 'DO': '🇩🇴', 'CU': '🇨🇺', 'MC': '🇲🇨',
-      'LU': '🇱🇺', 'MT': '🇲🇹', 'CY': '🇨🇾'
+      US: '🇺🇸',
+      CA: '🇨🇦',
+      MX: '🇲🇽',
+      GB: '🇬🇧',
+      FR: '🇫🇷',
+      DE: '🇩🇪',
+      ES: '🇪🇸',
+      IT: '🇮🇹',
+      GR: '🇬🇷',
+      NL: '🇳🇱',
+      BE: '🇧🇪',
+      CH: '🇨🇭',
+      AT: '🇦🇹',
+      PT: '🇵🇹',
+      DK: '🇩🇰',
+      SE: '🇸🇪',
+      NO: '🇳🇴',
+      FI: '🇫🇮',
+      IE: '🇮🇪',
+      IS: '🇮🇸',
+      PL: '🇵🇱',
+      CZ: '🇨🇿',
+      HU: '🇭🇺',
+      HR: '🇭🇷',
+      TR: '🇹🇷',
+      RU: '🇷🇺',
+      JP: '🇯🇵',
+      KR: '🇰🇷',
+      CN: '🇨🇳',
+      TH: '🇹🇭',
+      IN: '🇮🇳',
+      SG: '🇸🇬',
+      MY: '🇲🇾',
+      ID: '🇮🇩',
+      PH: '🇵🇭',
+      VN: '🇻🇳',
+      KH: '🇰🇭',
+      LK: '🇱🇰',
+      NP: '🇳🇵',
+      MM: '🇲🇲',
+      LA: '🇱🇦',
+      EG: '🇪🇬',
+      AE: '🇦🇪',
+      IL: '🇮🇱',
+      JO: '🇯🇴',
+      MA: '🇲🇦',
+      ZA: '🇿🇦',
+      KE: '🇰🇪',
+      TZ: '🇹🇿',
+      ET: '🇪🇹',
+      AU: '🇦🇺',
+      NZ: '🇳🇿',
+      FJ: '🇫🇯',
+      BR: '🇧🇷',
+      AR: '🇦🇷',
+      CL: '🇨🇱',
+      PE: '🇵🇪',
+      CO: '🇨🇴',
+      EC: '🇪🇨',
+      UY: '🇺🇾',
+      BO: '🇧🇴',
+      CR: '🇨🇷',
+      PA: '🇵🇦',
+      GT: '🇬🇹',
+      BZ: '🇧🇿',
+      JM: '🇯🇲',
+      BB: '🇧🇧',
+      DO: '🇩🇴',
+      CU: '🇨🇺',
+      MC: '🇲🇨',
+      LU: '🇱🇺',
+      MT: '🇲🇹',
+      CY: '🇨🇾',
     };
     return flags[countryCode.toUpperCase()] || '🌍';
   }
@@ -80,7 +138,7 @@ class LocationService {
       const url = `${this.PHOTON_API_URL}/?q=${encodeURIComponent(query)}&limit=10`;
 
       const response = await fetch(url, {
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -90,23 +148,29 @@ class LocationService {
       const data: PhotonResponse = await response.json();
 
       const results: LocationData[] = data.features
-        .filter(feature =>
-          // Only include places that are cities, towns, villages, or countries
-          ['city', 'town', 'village', 'hamlet', 'suburb', 'quarter', 'neighbourhood'].includes(feature.properties.osm_value) ||
-          feature.properties.osm_key === 'place'
+        .filter(
+          feature =>
+            // Only include places that are cities, towns, villages, or countries
+            ['city', 'town', 'village', 'hamlet', 'suburb', 'quarter', 'neighbourhood'].includes(
+              feature.properties.osm_value
+            ) || feature.properties.osm_key === 'place'
         )
         .map(feature => {
           const props = feature.properties;
 
           // Determine the primary location name
-          let locationName = props.name;
+          const locationName = props.name;
           let city = '';
           let state = '';
-          let country = props.country || '';
-          let countryCode = props.countrycode?.toUpperCase() || '';
+          const country = props.country || '';
+          const countryCode = props.countrycode?.toUpperCase() || '';
 
           // Parse location hierarchy
-          if (props.osm_value === 'city' || props.osm_value === 'town' || props.osm_value === 'village') {
+          if (
+            props.osm_value === 'city' ||
+            props.osm_value === 'town' ||
+            props.osm_value === 'village'
+          ) {
             city = props.name;
             state = props.state || props.county || '';
           } else if (props.city) {
@@ -131,12 +195,13 @@ class LocationService {
             state: state,
             country: country,
             countryCode: countryCode,
-            formatted: formatted
+            formatted: formatted,
           };
         })
-        .filter((location, index, array) =>
-          // Remove duplicates
-          array.findIndex(l => l.formatted === location.formatted) === index
+        .filter(
+          (location, index, array) =>
+            // Remove duplicates
+            array.findIndex(l => l.formatted === location.formatted) === index
         )
         .slice(0, 10);
 
@@ -152,13 +217,11 @@ class LocationService {
       }
 
       return results;
-
     } catch (error) {
       console.error('Error searching locations:', error);
       return [];
     }
   }
-
 
   formatLocation(data: Partial<LocationData>): string {
     const parts: string[] = [];
@@ -181,7 +244,13 @@ class LocationService {
       return { city: parts[0], country: parts[1], countryCode: '', formatted: locationString };
     } else if (parts.length === 3) {
       // City, State, Country
-      return { city: parts[0], state: parts[1], country: parts[2], countryCode: '', formatted: locationString };
+      return {
+        city: parts[0],
+        state: parts[1],
+        country: parts[2],
+        countryCode: '',
+        formatted: locationString,
+      };
     }
 
     return {};

@@ -33,7 +33,7 @@ const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
-  winston.format.json(),
+  winston.format.json()
 );
 
 // Define console format for development
@@ -49,12 +49,12 @@ const consoleFormat = winston.format.combine(
       const { stack, ...cleanMetadata } = metadata;
 
       if (Object.keys(cleanMetadata).length > 0) {
-        msg += '\n' + JSON.stringify(cleanMetadata, null, 2);
+        msg += `\n${JSON.stringify(cleanMetadata, null, 2)}`;
       }
     }
 
     return msg;
-  }),
+  })
 );
 
 // Create transports
@@ -186,12 +186,14 @@ export class Logger {
   }
 
   error(message: string, error?: Error | any, metadata?: Record<string, any>) {
-    const errorData = error ? {
-      errorMessage: error.message || error,
-      errorStack: error.stack,
-      errorName: error.name,
-      ...metadata,
-    } : metadata;
+    const errorData = error
+      ? {
+          errorMessage: error.message || error,
+          errorStack: error.stack,
+          errorName: error.name,
+          ...metadata,
+        }
+      : metadata;
 
     this.log('error', message, errorData);
   }

@@ -5,8 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -37,7 +50,16 @@ import { cn } from '@/lib/utils';
 interface SearchFilter {
   id: string;
   field: string;
-  operator: 'equals' | 'contains' | 'startsWith' | 'endsWith' | 'greaterThan' | 'lessThan' | 'between' | 'in' | 'notIn';
+  operator:
+    | 'equals'
+    | 'contains'
+    | 'startsWith'
+    | 'endsWith'
+    | 'greaterThan'
+    | 'lessThan'
+    | 'between'
+    | 'in'
+    | 'notIn';
   value: any;
   label?: string;
 }
@@ -116,9 +138,7 @@ const FilterBuilder: React.FC<{
           { value: 'notIn', label: 'Contains none' },
         ];
       case 'boolean':
-        return [
-          { value: 'equals', label: 'Is' },
-        ];
+        return [{ value: 'equals', label: 'Is' }];
       default:
         return [{ value: 'contains', label: 'Contains' }];
     }
@@ -130,15 +150,12 @@ const FilterBuilder: React.FC<{
     switch (selectedField.type) {
       case 'select':
         return (
-          <Select
-            value={filter.value}
-            onValueChange={(value) => onChange({ ...filter, value })}
-          >
+          <Select value={filter.value} onValueChange={value => onChange({ ...filter, value })}>
             <SelectTrigger>
               <SelectValue placeholder="Select value" />
             </SelectTrigger>
             <SelectContent>
-              {selectedField.options?.map((option) => (
+              {selectedField.options?.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -150,12 +167,12 @@ const FilterBuilder: React.FC<{
       case 'multiselect':
         return (
           <div className="space-y-2">
-            {selectedField.options?.map((option) => (
+            {selectedField.options?.map(option => (
               <div key={option.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`${filter.id}-${option.value}`}
                   checked={Array.isArray(filter.value) && filter.value.includes(option.value)}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={checked => {
                     const currentValues = Array.isArray(filter.value) ? filter.value : [];
                     const newValues = checked
                       ? [...currentValues, option.value]
@@ -175,7 +192,7 @@ const FilterBuilder: React.FC<{
         return (
           <Select
             value={filter.value?.toString()}
-            onValueChange={(value) => onChange({ ...filter, value: value === 'true' })}
+            onValueChange={value => onChange({ ...filter, value: value === 'true' })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select value" />
@@ -192,7 +209,7 @@ const FilterBuilder: React.FC<{
           <Input
             type="date"
             value={filter.value || ''}
-            onChange={(e) => onChange({ ...filter, value: e.target.value })}
+            onChange={e => onChange({ ...filter, value: e.target.value })}
           />
         );
 
@@ -201,7 +218,7 @@ const FilterBuilder: React.FC<{
           <Input
             type="number"
             value={filter.value || ''}
-            onChange={(e) => onChange({ ...filter, value: e.target.value })}
+            onChange={e => onChange({ ...filter, value: e.target.value })}
             placeholder="Enter number"
           />
         );
@@ -210,7 +227,7 @@ const FilterBuilder: React.FC<{
         return (
           <Input
             value={filter.value || ''}
-            onChange={(e) => onChange({ ...filter, value: e.target.value })}
+            onChange={e => onChange({ ...filter, value: e.target.value })}
             placeholder="Enter value"
           />
         );
@@ -221,13 +238,13 @@ const FilterBuilder: React.FC<{
     <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
       <Select
         value={filter.field}
-        onValueChange={(field) => onChange({ ...filter, field, value: '' })}
+        onValueChange={field => onChange({ ...filter, field, value: '' })}
       >
         <SelectTrigger className="w-40">
           <SelectValue placeholder="Select field" />
         </SelectTrigger>
         <SelectContent>
-          {fields.map((field) => (
+          {fields.map(field => (
             <SelectItem key={field.key} value={field.key}>
               {field.label}
             </SelectItem>
@@ -243,7 +260,7 @@ const FilterBuilder: React.FC<{
           <SelectValue placeholder="Operator" />
         </SelectTrigger>
         <SelectContent>
-          {getOperatorOptions(selectedField?.type || 'text').map((option) => (
+          {getOperatorOptions(selectedField?.type || 'text').map(option => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
@@ -251,9 +268,7 @@ const FilterBuilder: React.FC<{
         </SelectContent>
       </Select>
 
-      <div className="flex-1 min-w-40">
-        {renderValueInput()}
-      </div>
+      <div className="flex-1 min-w-40">{renderValueInput()}</div>
 
       <Button
         variant="ghost"
@@ -281,7 +296,7 @@ const SavedSearchCard: React.FC<{
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onEdit();
             }}
@@ -291,7 +306,7 @@ const SavedSearchCard: React.FC<{
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onDelete();
             }}
@@ -301,11 +316,11 @@ const SavedSearchCard: React.FC<{
           </Button>
         </div>
       </div>
-      {search.description && (
-        <p className="text-sm text-gray-600 mb-2">{search.description}</p>
-      )}
+      {search.description && <p className="text-sm text-gray-600 mb-2">{search.description}</p>}
       <div className="flex items-center gap-2 text-xs text-gray-500">
-        <span>{search.filters.length} filter{search.filters.length !== 1 ? 's' : ''}</span>
+        <span>
+          {search.filters.length} filter{search.filters.length !== 1 ? 's' : ''}
+        </span>
         <span>•</span>
         <span>Used {search.useCount} times</span>
         {search.lastUsed && (
@@ -332,7 +347,7 @@ export default function AdvancedSearch({
   onSaveSearch,
   onDeleteSavedSearch,
   onLoadSavedSearch,
-  placeholder = "Search...",
+  placeholder = 'Search...',
   className,
   initialFilters = [],
   recentSearches = [],
@@ -361,7 +376,7 @@ export default function AdvancedSearch({
   }, [filters, quickSearch, sortBy, sortDirection]);
 
   const handleSearch = () => {
-    let searchFilters = [...filters];
+    const searchFilters = [...filters];
 
     // Add quick search filter if present
     if (quickSearch.trim()) {
@@ -392,7 +407,7 @@ export default function AdvancedSearch({
   };
 
   const updateFilter = (index: number, filter: SearchFilter) => {
-    setFilters(prev => prev.map((f, i) => i === index ? filter : f));
+    setFilters(prev => prev.map((f, i) => (i === index ? filter : f)));
   };
 
   const removeFilter = (index: number) => {
@@ -428,14 +443,14 @@ export default function AdvancedSearch({
       setIsPublic(false);
 
       toast({
-        title: "Search saved",
-        description: "Your search has been saved successfully.",
+        title: 'Search saved',
+        description: 'Your search has been saved successfully.',
       });
     } catch (error) {
       toast({
-        title: "Save failed",
-        description: "Unable to save search. Please try again.",
-        variant: "destructive",
+        title: 'Save failed',
+        description: 'Unable to save search. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -447,7 +462,7 @@ export default function AdvancedSearch({
     onLoadSavedSearch?.(search);
 
     toast({
-      title: "Search loaded",
+      title: 'Search loaded',
       description: `Loaded search: ${search.name}`,
     });
   };
@@ -458,14 +473,14 @@ export default function AdvancedSearch({
     try {
       await onExport(filters, format);
       toast({
-        title: "Export started",
+        title: 'Export started',
         description: `Exporting search results as ${format.toUpperCase()}.`,
       });
     } catch (error) {
       toast({
-        title: "Export failed",
-        description: "Unable to export results. Please try again.",
-        variant: "destructive",
+        title: 'Export failed',
+        description: 'Unable to export results. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -484,7 +499,7 @@ export default function AdvancedSearch({
   }, [savedSearches]);
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Quick Search Bar */}
       <Card>
         <CardContent className="p-4">
@@ -494,7 +509,7 @@ export default function AdvancedSearch({
               <Input
                 placeholder={placeholder}
                 value={quickSearch}
-                onChange={(e) => setQuickSearch(e.target.value)}
+                onChange={e => setQuickSearch(e.target.value)}
                 className="pl-10 pr-10"
               />
               {quickSearch && (
@@ -513,8 +528,8 @@ export default function AdvancedSearch({
               variant="outline"
               onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
               className={cn(
-                "flex items-center gap-2",
-                activeFilterCount > 0 && "border-blue-500 text-blue-600"
+                'flex items-center gap-2',
+                activeFilterCount > 0 && 'border-blue-500 text-blue-600'
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -524,7 +539,11 @@ export default function AdvancedSearch({
                   {activeFilterCount}
                 </Badge>
               )}
-              {isAdvancedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {isAdvancedOpen ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
             </Button>
 
             {activeFilterCount > 0 && (
@@ -616,16 +635,12 @@ export default function AdvancedSearch({
                       key={filter.id}
                       filter={filter}
                       fields={fields}
-                      onChange={(updatedFilter) => updateFilter(index, updatedFilter)}
+                      onChange={updatedFilter => updateFilter(index, updatedFilter)}
                       onRemove={() => removeFilter(index)}
                     />
                   ))}
 
-                  <Button
-                    variant="outline"
-                    onClick={addFilter}
-                    className="w-full border-dashed"
-                  >
+                  <Button variant="outline" onClick={addFilter} className="w-full border-dashed">
                     <Plus className="w-4 h-4 mr-1" />
                     Add Filter
                   </Button>
@@ -641,7 +656,7 @@ export default function AdvancedSearch({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">No sorting</SelectItem>
-                        {fields.map((field) => (
+                        {fields.map(field => (
                           <SelectItem key={field.key} value={field.key}>
                             {field.label}
                           </SelectItem>
@@ -652,7 +667,10 @@ export default function AdvancedSearch({
 
                   <div className="space-y-2">
                     <Label>Direction</Label>
-                    <Select value={sortDirection} onValueChange={(value: 'asc' | 'desc') => setSortDirection(value)}>
+                    <Select
+                      value={sortDirection}
+                      onValueChange={(value: 'asc' | 'desc') => setSortDirection(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -677,7 +695,7 @@ export default function AdvancedSearch({
                     <div key={category} className="space-y-3">
                       <h4 className="font-medium text-gray-900">{category}</h4>
                       <div className="grid gap-3">
-                        {searches.map((search) => (
+                        {searches.map(search => (
                           <SavedSearchCard
                             key={search.id}
                             search={search}
@@ -686,8 +704,8 @@ export default function AdvancedSearch({
                             onEdit={() => {
                               // TODO: Implement edit functionality
                               toast({
-                                title: "Edit saved search",
-                                description: "Edit functionality coming soon.",
+                                title: 'Edit saved search',
+                                description: 'Edit functionality coming soon.',
                               });
                             }}
                           />
@@ -718,7 +736,7 @@ export default function AdvancedSearch({
               <Input
                 id="name"
                 value={newSearchName}
-                onChange={(e) => setNewSearchName(e.target.value)}
+                onChange={e => setNewSearchName(e.target.value)}
                 placeholder="Enter a name for this search"
               />
             </div>
@@ -728,7 +746,7 @@ export default function AdvancedSearch({
               <Input
                 id="description"
                 value={newSearchDescription}
-                onChange={(e) => setNewSearchDescription(e.target.value)}
+                onChange={e => setNewSearchDescription(e.target.value)}
                 placeholder="Brief description of this search"
               />
             </div>
@@ -738,7 +756,7 @@ export default function AdvancedSearch({
               <Input
                 id="category"
                 value={newSearchCategory}
-                onChange={(e) => setNewSearchCategory(e.target.value)}
+                onChange={e => setNewSearchCategory(e.target.value)}
                 placeholder="e.g., Trips, Talent, Events"
               />
             </div>
@@ -747,7 +765,7 @@ export default function AdvancedSearch({
               <Checkbox
                 id="public"
                 checked={isPublic}
-                onCheckedChange={(checked) => setIsPublic(!!checked)}
+                onCheckedChange={checked => setIsPublic(!!checked)}
               />
               <Label htmlFor="public">Make this search public</Label>
             </div>

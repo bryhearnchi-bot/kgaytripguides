@@ -1,0 +1,33 @@
+# Build outputs
+node_modules/
+dist/
+build/
+coverage/
+.next/
+
+# Backups
+*.bak
+backups/
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.log
+.DS_Store
+.env
+.env.local
+.env.production
+
+# Testing
+playwright-report/
+test-results/
+
+# Database
+*.sql
+
+# IDE
+.vscode/
+.idea/

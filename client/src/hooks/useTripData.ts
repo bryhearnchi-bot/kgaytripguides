@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getTripSlug, getItineraryData, getTalentData, getDailyScheduleData, getPartyThemesData } from '../data/data-service';
+import {
+  getTripSlug,
+  getItineraryData,
+  getTalentData,
+  getDailyScheduleData,
+  getPartyThemesData,
+} from '../data/data-service';
 import { dateOnly } from '@/lib/utils';
 
 export interface TripData {
@@ -90,10 +96,11 @@ export function transformTripData(data: TripData) {
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
-    imageUrl: (stop as any).location?.imageUrl || (stop as any).location?.image_url || stop.portImageUrl, // Use location.imageUrl if available
+    imageUrl:
+      (stop as any).location?.imageUrl || (stop as any).location?.image_url || stop.portImageUrl, // Use location.imageUrl if available
     description: (stop as any).location?.description || stop.description, // Use location.description if available
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
-    portDetails: (stop as any).location // Include full location details (renamed from port)
+    portDetails: (stop as any).location, // Include full location details (renamed from port)
   }));
 
   // Group events by date (defensive check)
@@ -107,8 +114,9 @@ export function transformTripData(data: TripData) {
     }
 
     // Map talent IDs to talent info (defensive check)
-    const eventTalent = event.talentIds ?
-      (data.talent || []).filter(t => event.talentIds?.includes(t.id)) : [];
+    const eventTalent = event.talentIds
+      ? (data.talent || []).filter(t => event.talentIds?.includes(t.id))
+      : [];
 
     dailyEvents[dateKey].push({
       time: event.time,
@@ -123,14 +131,14 @@ export function transformTripData(data: TripData) {
       requiresReservation: event.requiresReservation,
       talent: eventTalent,
       partyTheme: (event as any).partyTheme, // Include full party theme data if available
-      partyThemeId: event.partyThemeId
+      partyThemeId: event.partyThemeId,
     });
   });
 
   // Transform daily events to match DAILY format
   const daily = Object.keys(dailyEvents).map(key => ({
     key,
-    items: (dailyEvents[key] || []).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+    items: (dailyEvents[key] || []).sort((a, b) => (a.time || '').localeCompare(b.time || '')),
   }));
 
   // Transform talent (defensive check)
@@ -140,7 +148,7 @@ export function transformTripData(data: TripData) {
     bio: t.bio || '',
     knownFor: t.knownFor || '',
     img: t.profileImageUrl || '',
-    social: t.socialLinks || {}
+    social: t.socialLinks || {},
   }));
 
   // Extract unique party themes from events (defensive check)
@@ -152,12 +160,19 @@ export function transformTripData(data: TripData) {
         uniquePartyThemes.set(theme.id, {
           key: theme.name,
           desc: theme.longDescription || theme.long_description || theme.description || '',
-          shortDesc: theme.shortDescription || theme.short_description || (theme.longDescription ? theme.longDescription.substring(0, 50) + '...' : ''),
+          shortDesc:
+            theme.shortDescription ||
+            theme.short_description ||
+            (theme.longDescription ? `${theme.longDescription.substring(0, 50)}...` : ''),
           costumeIdeas: theme.costumeIdeas || theme.costume_ideas,
-          shoppingList: theme.amazonShoppingListUrl || theme.amazon_shopping_list_url || theme.shoppingList || theme.shopping_list,
+          shoppingList:
+            theme.amazonShoppingListUrl ||
+            theme.amazon_shopping_list_url ||
+            theme.shoppingList ||
+            theme.shopping_list,
           imageUrl: theme.imageUrl || theme.image_url,
           longDescription: theme.longDescription || theme.long_description,
-          shortDescription: theme.shortDescription || theme.short_description
+          shortDescription: theme.shortDescription || theme.short_description,
         });
       }
     }
@@ -186,9 +201,10 @@ export function transformTripData(data: TripData) {
     if (section.content) {
       if (titleLower.includes('first day tips')) {
         // Parse numbered list
-        importantInfo.firstDayTips = section.content.split('\n').map(tip =>
-          tip.replace(/^\d+\.\s*/, '').trim()
-        ).filter(tip => tip.length > 0);
+        importantInfo.firstDayTips = section.content
+          .split('\n')
+          .map(tip => tip.replace(/^\d+\.\s*/, '').trim())
+          .filter(tip => tip.length > 0);
       } else if (titleLower.includes('entertainment booking')) {
         // Parse key-value pairs
         const entertainment: any = {};
@@ -255,31 +271,31 @@ export function transformTripData(data: TripData) {
 
   const tripInfo = {
     ship: {
-      name: "Resilient Lady", // Default ship for now
-      line: "Virgin Voyages", // Default cruise line for now
-      capacity: "2,770 guests",
-      crew: "1,160 crew members",
-      tonnage: "110,000 gross tons",
-      length: "278 meters",
-      decks: "17 decks (14 guest accessible)"
+      name: 'Resilient Lady', // Default ship for now
+      line: 'Virgin Voyages', // Default cruise line for now
+      capacity: '2,770 guests',
+      crew: '1,160 crew members',
+      tonnage: '110,000 gross tons',
+      length: '278 meters',
+      decks: '17 decks (14 guest accessible)',
     },
     amenities: [
-      "Multiple restaurants and dining venues",
-      "The Manor nightclub",
-      "Red Room theater",
-      "Aquatic Club pool deck",
-      "Redemption Spa",
-      "Fitness center",
-      "Running track",
-      "Casino"
+      'Multiple restaurants and dining venues',
+      'The Manor nightclub',
+      'Red Room theater',
+      'Aquatic Club pool deck',
+      'Redemption Spa',
+      'Fitness center',
+      'Running track',
+      'Casino',
     ],
     departureInfo: {
-      port: "Athens (Piraeus), Greece",
-      pierOpens: "2:00 PM",
-      luggageDropOff: "Available from 12:00 PM",
-      sailawayParty: "6:30 PM on Pool Deck",
-      latestArrival: "5:30 PM (ship departs at 7:00 PM)"
-    }
+      port: 'Athens (Piraeus), Greece',
+      pierOpens: '2:00 PM',
+      luggageDropOff: 'Available from 12:00 PM',
+      sailawayParty: '6:30 PM on Pool Deck',
+      latestArrival: '5:30 PM (ship departs at 7:00 PM)',
+    },
   };
 
   return {
@@ -289,18 +305,31 @@ export function transformTripData(data: TripData) {
     PARTY_THEMES: partyThemes,
     CITY_ATTRACTIONS: cityAttractions,
     IMPORTANT_INFO: importantInfo,
-    TRIP_INFO: tripInfo
+    TRIP_INFO: tripInfo,
   };
 }
 
 function formatDate(date: Date): string {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
   const dayName = days[date.getDay()];
   const monthName = months[date.getMonth()];
   const dayNum = date.getDate();
-  
+
   return `${dayName}, ${monthName} ${dayNum}`;
 }
 

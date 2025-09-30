@@ -58,8 +58,8 @@ describe('Invitation Tokens Security Tests', () => {
       const after = Date.now();
 
       const expiresAt = new Date(result.expiresAt).getTime();
-      const expectedMin = before + (expirationHours * 60 * 60 * 1000);
-      const expectedMax = after + (expirationHours * 60 * 60 * 1000);
+      const expectedMin = before + expirationHours * 60 * 60 * 1000;
+      const expectedMax = after + expirationHours * 60 * 60 * 1000;
 
       expect(expiresAt).toBeGreaterThanOrEqual(expectedMin);
       expect(expiresAt).toBeLessThanOrEqual(expectedMax);
@@ -75,7 +75,7 @@ describe('Invitation Tokens Security Tests', () => {
       const result = generateInvitationToken();
       const expiresAt = new Date(result.expiresAt).getTime();
       const now = Date.now();
-      const expectedExpiration = now + (SECURITY_CONFIG.DEFAULT_EXPIRATION_HOURS * 60 * 60 * 1000);
+      const expectedExpiration = now + SECURITY_CONFIG.DEFAULT_EXPIRATION_HOURS * 60 * 60 * 1000;
 
       // Allow 1 second tolerance
       expect(Math.abs(expiresAt - expectedExpiration)).toBeLessThan(1000);
@@ -197,7 +197,7 @@ describe('Invitation Tokens Security Tests', () => {
 
       // Test with completely wrong token vs token with 1 char different
       const wrongToken1 = 'x'.repeat(token.length);
-      const wrongToken2 = token.slice(0, -1) + 'x';
+      const wrongToken2 = `${token.slice(0, -1)}x`;
 
       const start1 = process.hrtime.bigint();
       validateTokenTiming(wrongToken1, hash, salt);
@@ -290,20 +290,26 @@ describe('Invitation Tokens Security Tests', () => {
     });
 
     it('should validate input data', () => {
-      expect(() => createInvitationRecord({
-        ...validInvitationData,
-        email: 'invalid-email',
-      })).toThrow();
+      expect(() =>
+        createInvitationRecord({
+          ...validInvitationData,
+          email: 'invalid-email',
+        })
+      ).toThrow();
 
-      expect(() => createInvitationRecord({
-        ...validInvitationData,
-        role: 'invalid-role' as any,
-      })).toThrow();
+      expect(() =>
+        createInvitationRecord({
+          ...validInvitationData,
+          role: 'invalid-role' as any,
+        })
+      ).toThrow();
 
-      expect(() => createInvitationRecord({
-        ...validInvitationData,
-        invitedBy: '',
-      })).toThrow();
+      expect(() =>
+        createInvitationRecord({
+          ...validInvitationData,
+          invitedBy: '',
+        })
+      ).toThrow();
     });
 
     it('should use custom expiration hours', () => {
@@ -313,8 +319,8 @@ describe('Invitation Tokens Security Tests', () => {
       const after = Date.now();
 
       const expiresAt = record.expiresAt.getTime();
-      const expectedMin = before + (customHours * 60 * 60 * 1000);
-      const expectedMax = after + (customHours * 60 * 60 * 1000);
+      const expectedMin = before + customHours * 60 * 60 * 1000;
+      const expectedMax = after + customHours * 60 * 60 * 1000;
 
       expect(expiresAt).toBeGreaterThanOrEqual(expectedMin);
       expect(expiresAt).toBeLessThanOrEqual(expectedMax);
@@ -362,12 +368,8 @@ describe('Invitation Tokens Security Tests', () => {
       expect(isTokenExpired(invitation.expiresAt)).toBe(false);
 
       // 4. Validate wrong token fails
-      const wrongToken = invitation.token.slice(0, -1) + 'x';
-      const isInvalidToken = validateTokenTiming(
-        wrongToken,
-        invitation.tokenHash,
-        invitation.salt
-      );
+      const wrongToken = `${invitation.token.slice(0, -1)}x`;
+      const isInvalidToken = validateTokenTiming(wrongToken, invitation.tokenHash, invitation.salt);
       expect(isInvalidToken).toBe(false);
     });
 
@@ -386,11 +388,7 @@ describe('Invitation Tokens Security Tests', () => {
       expect(isTokenExpired(invitation.expiresAt)).toBe(true);
 
       // Even with correct token, expired tokens should be rejected by business logic
-      const isValid = validateTokenTiming(
-        invitation.token,
-        invitation.tokenHash,
-        invitation.salt
-      );
+      const isValid = validateTokenTiming(invitation.token, invitation.tokenHash, invitation.salt);
       expect(isValid).toBe(true); // Token itself is still valid
       expect(isTokenExpired(invitation.expiresAt)).toBe(true); // But expired
     });

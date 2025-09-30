@@ -3,7 +3,9 @@ import { Request, Response, NextFunction } from 'express';
 // CDN configuration
 const CDN_CONFIG = {
   // Supabase Storage as primary CDN for images
-  supabaseStorage: process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL}/storage/v1/object/public` : '',
+  supabaseStorage: process.env.SUPABASE_URL
+    ? `${process.env.SUPABASE_URL}/storage/v1/object/public`
+    : '',
   jsDelivr: 'https://cdn.jsdelivr.net',
   unpkg: 'https://unpkg.com',
   googleFonts: 'https://fonts.googleapis.com',
@@ -137,12 +139,15 @@ export const generatePreloadHeaders = (criticalAssets: string[]): string[] => {
 };
 
 // Asset optimization utilities
-export const optimizeAssetUrl = (url: string, options?: {
-  width?: number;
-  height?: number;
-  quality?: number;
-  format?: 'webp' | 'avif' | 'jpg' | 'png';
-}): string => {
+export const optimizeAssetUrl = (
+  url: string,
+  options?: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    format?: 'webp' | 'avif' | 'jpg' | 'png';
+  }
+): string => {
   // Supabase Storage provides automatic image optimization via transform parameters
   if (!options) return getCDNUrl(url);
 
@@ -159,7 +164,7 @@ export const optimizeAssetUrl = (url: string, options?: {
 
     if (params.length > 0) {
       // Supabase uses render endpoint for transformations
-      return cdnUrl.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?' + params.join('&');
+      return `${cdnUrl.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')}?${params.join('&')}`;
     }
   }
 

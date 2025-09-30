@@ -12,24 +12,24 @@ router.get('/api/csrf-token', (req: Request, res: Response) => {
     // Return the existing token from the cookie
     return res.json({
       csrfToken: existingToken,
-      headerName: 'x-csrf-token'
+      headerName: 'x-csrf-token',
     });
   }
 
   // Generate a new token and set it as a cookie
-  const token = 'csrf-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const token = `csrf-${Math.random().toString(36).substring(2)}${Date.now().toString(36)}`;
 
   // Set the cookie (must match the middleware expectations)
   res.cookie('_csrf', token, {
     httpOnly: false, // Must be accessible to JavaScript for double-submit pattern
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 3600000 // 1 hour
+    maxAge: 3600000, // 1 hour
   });
 
   return res.json({
     csrfToken: token,
-    headerName: 'x-csrf-token'
+    headerName: 'x-csrf-token',
   });
 });
 

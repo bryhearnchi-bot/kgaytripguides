@@ -10,9 +10,9 @@ const TRIP_TYPE_SETTINGS = [
     value: null,
     metadata: {
       buttonText: 'Book Cruise',
-      description: 'Multi-day cruise experiences with entertainment, dining, and port visits'
+      description: 'Multi-day cruise experiences with entertainment, dining, and port visits',
     },
-    orderIndex: 0
+    orderIndex: 0,
   },
   {
     key: 'vacation',
@@ -20,9 +20,9 @@ const TRIP_TYPE_SETTINGS = [
     value: null,
     metadata: {
       buttonText: 'Book Vacation',
-      description: 'Complete vacation packages including accommodations and activities'
+      description: 'Complete vacation packages including accommodations and activities',
     },
-    orderIndex: 1
+    orderIndex: 1,
   },
   {
     key: 'event',
@@ -30,9 +30,9 @@ const TRIP_TYPE_SETTINGS = [
     value: null,
     metadata: {
       buttonText: 'Register for Event',
-      description: 'Exclusive events, parties, and special occasions'
+      description: 'Exclusive events, parties, and special occasions',
     },
-    orderIndex: 2
+    orderIndex: 2,
   },
   {
     key: 'resort',
@@ -40,10 +40,10 @@ const TRIP_TYPE_SETTINGS = [
     value: null,
     metadata: {
       buttonText: 'Book Resort',
-      description: 'Luxury resort accommodations with all-inclusive amenities'
+      description: 'Luxury resort accommodations with all-inclusive amenities',
     },
-    orderIndex: 3
-  }
+    orderIndex: 3,
+  },
 ];
 
 /**
@@ -53,10 +53,10 @@ const TRIP_TYPE_SETTINGS = [
  */
 async function seedProduction() {
   console.log('🚀 Starting production database seeding...');
-  
+
   // Only use real Greek Isles data in production
   const isProduction = process.env.NODE_ENV === 'production';
-  
+
   if (!isProduction) {
     console.log('⏭️ Skipping production seed - not in production environment');
     return;
@@ -92,14 +92,16 @@ async function seedProduction() {
           start_date: new Date('2025-08-21').toISOString(),
           end_date: new Date('2025-08-31').toISOString(),
           status: 'upcoming',
-          description: 'Join us for an unforgettable journey through the Greek Isles aboard the Virgin Resilient Lady. Experience ancient wonders, stunning beaches, and legendary Atlantis parties.',
-          hero_image_url: 'https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png',
+          description:
+            'Join us for an unforgettable journey through the Greek Isles aboard the Virgin Resilient Lady. Experience ancient wonders, stunning beaches, and legendary Atlantis parties.',
+          hero_image_url:
+            'https://www.usatoday.com/gcdn/authoring/authoring-images/2024/02/09/USAT/72538478007-resilientlady.png',
           highlights: [
             'Visit iconic Greek islands including Mykonos and Santorini',
             'Explore ancient ruins in Athens and Ephesus',
             'Legendary Atlantis parties and entertainment',
             'World-class talent and performances',
-            'All-gay vacation experience'
+            'All-gay vacation experience',
           ],
           includes_info: {
             included: [
@@ -107,16 +109,16 @@ async function seedProduction() {
               'All meals and entertainment onboard',
               'Access to all ship facilities',
               'Atlantis parties and events',
-              'Talent performances and shows'
+              'Talent performances and shows',
             ],
             notIncluded: [
               'Airfare',
               'Shore excursions',
               'Alcoholic beverages',
               'Gratuities',
-              'Spa services'
-            ]
-          }
+              'Spa services',
+            ],
+          },
         })
         .select()
         .single();
@@ -152,18 +154,16 @@ async function seedProduction() {
       if (!existingSettingKeys.includes(settingData.key)) {
         console.log(`➕ Adding new trip type setting: ${settingData.label}`);
 
-        const { error: insertSettingError } = await supabaseAdmin
-          .from('settings')
-          .insert({
-            category: 'trip_types',
-            key: settingData.key,
-            label: settingData.label,
-            value: settingData.value,
-            metadata: settingData.metadata,
-            is_active: true,
-            order_index: settingData.orderIndex,
-            created_by: null // System-created settings don't have a specific user
-          });
+        const { error: insertSettingError } = await supabaseAdmin.from('settings').insert({
+          category: 'trip_types',
+          key: settingData.key,
+          label: settingData.label,
+          value: settingData.value,
+          metadata: settingData.metadata,
+          is_active: true,
+          order_index: settingData.orderIndex,
+          created_by: null, // System-created settings don't have a specific user
+        });
 
         if (insertSettingError) {
           console.error(`Error creating setting ${settingData.key}:`, insertSettingError);
@@ -202,7 +202,7 @@ async function seedProduction() {
             known_for: t.knownFor,
             profile_image_url: t.img,
             social_links: t.social || {},
-            website: t.social?.website || null
+            website: t.social?.website || null,
           })
           .select()
           .single();
@@ -215,15 +215,18 @@ async function seedProduction() {
         talentMap.set(t.name, talentRecord.id);
 
         // Link new talent to cruise
-        const { error: linkError } = await supabaseAdmin
-          .from('trip_talent')
-          .insert({
-            trip_id: cruise.id,
-            talent_id: talentRecord.id,
-            role: t.cat === 'Broadway' ? 'Headliner' :
-                  t.cat === 'Drag' ? 'Special Guest' :
-                  t.cat === 'Comedy' ? 'Host' : 'Performer'
-          });
+        const { error: linkError } = await supabaseAdmin.from('trip_talent').insert({
+          trip_id: cruise.id,
+          talent_id: talentRecord.id,
+          role:
+            t.cat === 'Broadway'
+              ? 'Headliner'
+              : t.cat === 'Drag'
+                ? 'Special Guest'
+                : t.cat === 'Comedy'
+                  ? 'Host'
+                  : 'Performer',
+        });
 
         if (linkError) {
           console.error(`Error linking talent ${t.name} to cruise:`, linkError);
@@ -247,8 +250,8 @@ async function seedProduction() {
       throw itineraryFetchError;
     }
 
-    const existingPorts = (existingItinerary || []).map(i =>
-      `${new Date(i.date).toISOString().split('T')[0]}-${i.location_id || 'unknown'}`
+    const existingPorts = (existingItinerary || []).map(
+      i => `${new Date(i.date).toISOString().split('T')[0]}-${i.location_id || 'unknown'}`
     );
 
     let newItineraryCount = 0;
@@ -270,24 +273,24 @@ async function seedProduction() {
           allAboardTime = stop.depart; // Simplified - use departure time as all aboard
         }
 
-        const { error: itineraryInsertError } = await supabaseAdmin
-          .from('itinerary')
-          .insert({
-            trip_id: cruise.id,
-            date: stopDate.toISOString(),
-            day: dayNumber,
-            location_id: null, // Will be set to actual location IDs later if needed
-            location_type_id: null,
-            arrival_time: stop.arrive === '—' ? '' : stop.arrive,
-            departure_time: stop.depart === '—' ? '' : stop.depart,
-            all_aboard_time: allAboardTime,
-            description: stop.port.includes('Sea') ? 'Enjoy a relaxing day at sea with all the ship amenities and Atlantis activities.' : '',
-            order_index: index,
-            segment: null,
-            highlights: null,
-            location_image_url: null,
-            port_image_url: null
-          });
+        const { error: itineraryInsertError } = await supabaseAdmin.from('itinerary').insert({
+          trip_id: cruise.id,
+          date: stopDate.toISOString(),
+          day: dayNumber,
+          location_id: null, // Will be set to actual location IDs later if needed
+          location_type_id: null,
+          arrival_time: stop.arrive === '—' ? '' : stop.arrive,
+          departure_time: stop.depart === '—' ? '' : stop.depart,
+          all_aboard_time: allAboardTime,
+          description: stop.port.includes('Sea')
+            ? 'Enjoy a relaxing day at sea with all the ship amenities and Atlantis activities.'
+            : '',
+          order_index: index,
+          segment: null,
+          highlights: null,
+          location_image_url: null,
+          port_image_url: null,
+        });
 
         if (itineraryInsertError) {
           console.error(`Error creating itinerary stop ${stop.port}:`, itineraryInsertError);
@@ -311,8 +314,8 @@ async function seedProduction() {
       throw eventsFetchError;
     }
 
-    const existingEventKeys = (existingEvents || []).map((e: any) =>
-      `${new Date(e.date).toISOString().split('T')[0]}-${e.time}-${e.title}`
+    const existingEventKeys = (existingEvents || []).map(
+      (e: any) => `${new Date(e.date).toISOString().split('T')[0]}-${e.time}-${e.title}`
     );
 
     let newEventCount = 0;
@@ -329,8 +332,10 @@ async function seedProduction() {
           // Find talent IDs mentioned in the event
           const talentIds = [];
           for (const [talentName, talentId] of Array.from(talentMap.entries())) {
-            if (item.title.toLowerCase().includes(talentName.toLowerCase()) ||
-                (talentName === 'The Diva (Bingo)' && item.title.toLowerCase().includes('bingo'))) {
+            if (
+              item.title.toLowerCase().includes(talentName.toLowerCase()) ||
+              (talentName === 'The Diva (Bingo)' && item.title.toLowerCase().includes('bingo'))
+            ) {
               talentIds.push(talentId);
             }
           }
@@ -342,20 +347,22 @@ async function seedProduction() {
             themeDesc = theme?.desc || null;
           }
 
-          const { error: eventInsertError } = await supabaseAdmin
-            .from('events')
-            .insert({
-              trip_id: cruise.id,
-              date: eventDate.toISOString(),
-              time: item.time,
-              title: item.title,
-              type: item.type,
-              venue: item.venue,
-              description: themeDesc,
-              short_description: themeDesc ? (themeDesc.length > 100 ? themeDesc.substring(0, 100) + '...' : themeDesc) : null,
-              talent_ids: talentIds.length > 0 ? talentIds : null,
-              requires_reservation: item.venue === 'The Manor' || item.venue === 'Pink Agave'
-            });
+          const { error: eventInsertError } = await supabaseAdmin.from('events').insert({
+            trip_id: cruise.id,
+            date: eventDate.toISOString(),
+            time: item.time,
+            title: item.title,
+            type: item.type,
+            venue: item.venue,
+            description: themeDesc,
+            short_description: themeDesc
+              ? themeDesc.length > 100
+                ? `${themeDesc.substring(0, 100)}...`
+                : themeDesc
+              : null,
+            talent_ids: talentIds.length > 0 ? talentIds : null,
+            requires_reservation: item.venue === 'The Manor' || item.venue === 'Pink Agave',
+          });
 
           if (eventInsertError) {
             console.error(`Error creating event ${item.title}:`, eventInsertError);
@@ -375,7 +382,6 @@ async function seedProduction() {
     console.log(`   - New talent added: ${newTalentCount}`);
     console.log(`   - New itinerary stops: ${newItineraryCount}`);
     console.log(`   - New events added: ${newEventCount}`);
-
   } catch (error: unknown) {
     console.error('❌ Error in production seeding:', error);
     throw error;
@@ -389,7 +395,7 @@ if (process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').h
       console.log('✅ Production seeding completed');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('❌ Production seeding failed:', error);
       process.exit(1);
     });
@@ -399,7 +405,7 @@ if (process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').h
     .then(() => {
       console.log('✅ Production seeding completed');
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('❌ Production seeding failed:', error);
     });
 }
