@@ -108,7 +108,7 @@ export function transformTripData(data: TripData) {
 
     // Map talent IDs to talent info (defensive check)
     const eventTalent = event.talentIds ?
-      (data.talent || []).filter(t => event.talentIds.includes(t.id)) : [];
+      (data.talent || []).filter(t => event.talentIds?.includes(t.id)) : [];
 
     dailyEvents[dateKey].push({
       time: event.time,
@@ -130,7 +130,7 @@ export function transformTripData(data: TripData) {
   // Transform daily events to match DAILY format
   const daily = Object.keys(dailyEvents).map(key => ({
     key,
-    items: dailyEvents[key].sort((a, b) => a.time.localeCompare(b.time))
+    items: (dailyEvents[key] || []).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
   }));
 
   // Transform talent (defensive check)

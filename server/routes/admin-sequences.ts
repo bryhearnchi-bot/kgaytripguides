@@ -40,14 +40,14 @@ export function registerAdminSequenceRoutes(app: Express) {
   app.get("/api/admin/sequences/fix-sql", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const sql = await generateCompleteSequenceFixSQL();
-      res.json({
+      return res.json({
         success: true,
         sql,
         instructions: "Run this SQL in your Supabase dashboard SQL editor to fix all sequences"
       });
     } catch (error: unknown) {
       logger.error('Error generating fix SQL', { error });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to generate fix SQL',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -61,6 +61,10 @@ export function registerAdminSequenceRoutes(app: Express) {
 
       if (!tableName) {
         return res.status(400).json({ error: 'Table name is required' });
+      }
+
+      if (!tableName || tableName.length === 0) {
+        return res.status(400).json({ error: 'Invalid table name' });
       }
 
       logger.info(`Fixing sequence for table: ${tableName}`);
@@ -77,13 +81,13 @@ export function registerAdminSequenceRoutes(app: Express) {
         });
       }
 
-      res.json({
+      return res.json({
         success: result.fixed,
         result
       });
     } catch (error: unknown) {
       logger.error('Error fixing table sequence', { error });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to fix table sequence',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -91,7 +95,7 @@ export function registerAdminSequenceRoutes(app: Express) {
   });
 
   // Fix all table sequences
-  app.post("/api/admin/sequences/fix-all", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/admin/sequences/fix-all", requireSuperAdmin, async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       logger.info('Starting fix for all table sequences...');
       const results = await fixAllSequences();
@@ -143,7 +147,7 @@ export function registerAdminSequenceRoutes(app: Express) {
   });
 
   // Check sequence status for all tables
-  app.get("/api/admin/sequences/status", requireSuperAdmin, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/admin/sequences/status", requireSuperAdmin, async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       const { getSupabaseAdmin } = await import('../supabase-admin');
       const supabaseAdmin = getSupabaseAdmin();
@@ -175,7 +179,7 @@ export function registerAdminSequenceRoutes(app: Express) {
             continue;
           }
 
-          const maxId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id : 0;
+          const maxId = maxIdData && maxIdData.length > 0 ? maxIdData[0]?.id ?? 0 : 0;
 
           status.push({
             tableName,

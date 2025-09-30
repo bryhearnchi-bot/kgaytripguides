@@ -246,7 +246,8 @@ export function handleDatabaseError(error: any): ApiError {
   };
 
   if (error.code && pgErrorCodes[error.code]) {
-    return pgErrorCodes[error.code]();
+    const errorHandler = pgErrorCodes[error.code];
+    return errorHandler ? errorHandler() : ApiError.databaseError(error.message, error);
   }
 
   // Generic database error

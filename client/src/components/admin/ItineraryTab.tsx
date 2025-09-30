@@ -556,7 +556,7 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
           <div className="flex-1 overflow-hidden">
             <LocationManagement
               showSelectMode={true}
-              onSelectLocation={handleLocationSelection}
+              onSelectLocation={(location: any) => handleLocationSelection(location)}
             />
           </div>
         </DialogContent>

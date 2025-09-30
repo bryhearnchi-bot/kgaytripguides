@@ -11,7 +11,7 @@ import { LocationSearchBar } from './LocationSearchBar';
 import { locationService, type LocationData } from '@/lib/location-service';
 
 interface Resort {
-  id: number;
+  id?: number;
   name: string;
   location: string;
   city?: string;
@@ -91,10 +91,10 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       setFormData({
         name: resort.name || '',
         location: resort.location || '',
-        city: locationData.city || '',
-        state_province: locationData.state_province || '',
+        city: 'city' in locationData ? locationData.city || '' : '',
+        state_province: 'state_province' in locationData ? locationData.state_province || '' : '',
         country: locationData.country || '',
-        country_code: locationData.country_code || '',
+        country_code: 'country_code' in locationData ? locationData.country_code || '' : '',
         capacity: resort.capacity?.toString() || '',
         roomCount: resort.roomCount?.toString() || '',
         imageUrl: resort.imageUrl || '',
@@ -105,7 +105,9 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       });
 
       // Load resort's amenities and venues
-      loadResortRelations(resort.id);
+      if (resort.id) {
+        loadResortRelations(resort.id);
+      }
     } else if (!resort) {
       // Reset form for new resort
       setFormData({

@@ -160,7 +160,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   res.on('finish', () => {
     const duration = Date.now() - req.startTime;
 
-    const responseData = {
+    const responseData: Record<string, any> = {
       statusCode: res.statusCode,
       statusMessage: res.statusMessage,
       duration,
@@ -232,7 +232,11 @@ export function auditLogger(action: string) {
     };
 
     // Log the audit event
-    req.logger?.audit(action, auditData) || logger.audit(action, auditData);
+    if (req.logger) {
+      req.logger.audit(action, auditData);
+    } else {
+      logger.audit(action, auditData);
+    }
 
     // Track response
     const originalJson = res.json;
@@ -244,8 +248,11 @@ export function auditLogger(action: string) {
         response: process.env.NODE_ENV === 'production' ? undefined : sanitizeData(data),
       };
 
-      req.logger?.audit(`${action}_COMPLETE`, auditResponse) ||
+      if (req.logger) {
+        req.logger.audit(`${action}_COMPLETE`, auditResponse);
+      } else {
         logger.audit(`${action}_COMPLETE`, auditResponse);
+      }
 
       return originalJson.call(this, data);
     };
@@ -282,8 +289,11 @@ export function performanceLogger(operation: string) {
         statusCode: res.statusCode,
       };
 
-      req.logger?.performance(operation, duration, performanceData) ||
+      if (req.logger) {
+        req.logger.performance(operation, duration, performanceData);
+      } else {
         logger.performance(operation, duration, performanceData);
+      }
     });
 
     next();
@@ -342,7 +352,11 @@ export function securityLogger(event: string, metadata?: Record<string, any>) {
       ...metadata,
     };
 
-    req.logger?.security(event, securityData) || logger.security(event, securityData);
+    if (req.logger) {
+      req.logger.security(event, securityData);
+    } else {
+      logger.security(event, securityData);
+    }
 
     next();
   };

@@ -175,21 +175,17 @@ export default function AccountSetup() {
       const profileData = profileForm.getValues();
 
       // Create account via Supabase
-      const { error: signUpError } = await signUp({
-        email: invitationData.email,
-        password: passwordData.password,
-        options: {
-          data: {
-            name: profileData.name,
-            phone_number: profileData.phoneNumber,
-            role: invitationData.role,
-            email_notifications: profileData.emailNotifications,
-            sms_notifications: profileData.smsNotifications,
-          },
-        },
+      const result = await signUp(invitationData.email, passwordData.password, {
+        name: profileData.name,
+        phone_number: profileData.phoneNumber,
+        role: invitationData.role,
+        email_notifications: profileData.emailNotifications,
+        sms_notifications: profileData.smsNotifications,
       });
 
-      if (signUpError) throw signUpError;
+      if (!result || 'error' in result) {
+        throw new Error((result as any)?.error?.message || 'Failed to create account');
+      }
 
       // Consume invitation
       const response = await fetch('/api/invitations/accept', {
@@ -379,7 +375,7 @@ export default function AccountSetup() {
                   </div>
                   {passwordForm.formState.errors.password && (
                     <p className="text-sm text-red-600">
-                      {passwordForm.formState.errors.password.message}
+                      {String(passwordForm.formState.errors.password.message || 'Invalid password')}
                     </p>
                   )}
                 </div>
@@ -408,7 +404,7 @@ export default function AccountSetup() {
                   </div>
                   {passwordForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-red-600">
-                      {passwordForm.formState.errors.confirmPassword.message}
+                      {String(passwordForm.formState.errors.confirmPassword.message || 'Passwords must match')}
                     </p>
                   )}
                 </div>

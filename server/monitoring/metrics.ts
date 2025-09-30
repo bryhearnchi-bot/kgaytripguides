@@ -342,7 +342,7 @@ export function httpMetrics(req: Request, res: Response, next: NextFunction) {
  */
 export function recordQueryMetrics(query: string, duration: number, success: boolean) {
   // Extract query type (SELECT, INSERT, UPDATE, DELETE, etc.)
-  const queryType = query.trim().split(/\s+/)[0].toUpperCase();
+  const queryType = query.trim().split(/\s+/)[0]?.toUpperCase() || 'UNKNOWN';
 
   metrics.increment('database_queries_total', 1, {
     type: queryType,

@@ -124,7 +124,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
 // Clean up old rate limit entries periodically
 setInterval(() => {
   const now = Date.now();
-  for (const [key, record] of rateLimitStore.entries()) {
+  for (const [key, record] of Array.from(rateLimitStore.entries())) {
     if (now > record.resetTime) {
       rateLimitStore.delete(key);
     }

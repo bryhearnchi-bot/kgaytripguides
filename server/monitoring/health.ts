@@ -150,7 +150,7 @@ function checkCPUHealth(): HealthStatus {
   const usage = 100 - Math.floor((idle * 100) / total);
 
   // Check if CPU load is too high (load average > number of CPUs)
-  const isHealthy = loadAvg[0] < cpuCount * 2;
+  const isHealthy = (loadAvg[0] ?? 0) < cpuCount * 2;
 
   if (!isHealthy) {
     logger.warn('High CPU load detected', {
@@ -166,9 +166,9 @@ function checkCPUHealth(): HealthStatus {
       cores: cpuCount,
       usage: `${usage}%`,
       loadAverage: {
-        '1min': loadAvg[0].toFixed(2),
-        '5min': loadAvg[1].toFixed(2),
-        '15min': loadAvg[2].toFixed(2),
+        '1min': (loadAvg[0] ?? 0).toFixed(2),
+        '5min': (loadAvg[1] ?? 0).toFixed(2),
+        '15min': (loadAvg[2] ?? 0).toFixed(2),
       },
       model: cpus[0]?.model,
     },

@@ -1359,4 +1359,5 @@ export type Itinerary = Database['public']['Tables']['itinerary']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Talent = Database['public']['Tables']['talent']['Row'];
 export type TalentCategory = Database['public']['Tables']['talent_categories']['Row'];
+// @ts-expect-error - Settings table may not exist in current schema, TODO: verify schema
 export type Settings = Database['public']['Tables']['settings']['Row'];

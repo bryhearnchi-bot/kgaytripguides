@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from './supabase-admin';
+// @ts-expect-error - Legacy data import for seeding, will be removed in Phase 6
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 
 // Trip type settings with metadata for production
@@ -337,7 +338,7 @@ async function seedProduction() {
           // Find party theme description
           let themeDesc = null;
           if (item.type === 'party' || item.type === 'after') {
-            const theme = PARTY_THEMES.find(p => item.title.includes(p.key));
+            const theme = (PARTY_THEMES as any[]).find((p: any) => item.title.includes(p.key));
             themeDesc = theme?.desc || null;
           }
 
@@ -382,7 +383,7 @@ async function seedProduction() {
 }
 
 // Run if called directly
-if (import.meta.url === new URL(process.argv[1], 'file://').href) {
+if (process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
   seedProduction()
     .then(() => {
       console.log('✅ Production seeding completed');

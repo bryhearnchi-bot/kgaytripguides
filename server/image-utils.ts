@@ -260,12 +260,14 @@ export async function deleteImage(imageUrl: string): Promise<void> {
         const bucket = match[1];
         const filePath = match[2];
 
-        const { error } = await supabase.storage
-          .from(bucket)
-          .remove([filePath]);
+        if (bucket && filePath) {
+          const { error } = await supabase.storage
+            .from(bucket)
+            .remove([filePath]);
 
-        if (error) {
-          // Deletion failed but don't throw
+          if (error) {
+            // Deletion failed but don't throw
+          }
         }
         return;
       }
@@ -276,6 +278,10 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     const segments = urlPath.split('/');
     const filename = segments[segments.length - 1];
     const imageType = segments[segments.length - 2];
+
+    if (!filename) {
+      return; // No filename to delete
+    }
 
     let directory: string;
     switch (imageType) {

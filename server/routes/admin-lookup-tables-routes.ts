@@ -101,7 +101,7 @@ const TABLES = {
 export function registerAdminLookupTablesRoutes(app: Express) {
 
   // GET /api/admin/lookup-tables/:table - List all items for a specific table (viewers and above can view)
-  app.get("/api/admin/lookup-tables/:table", requireAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/admin/lookup-tables/:table", requireAuth, async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       // Check if user has viewer role or above
       const userRole = req.user?.role;
@@ -144,12 +144,12 @@ export function registerAdminLookupTablesRoutes(app: Express) {
 
     } catch (error: unknown) {
       logger.error('Error fetching settings items', { error });
-      res.status(500).json({ error: 'Failed to fetch items' });
+      return res.status(500).json({ error: 'Failed to fetch items' });
     }
   });
 
   // POST /api/admin/lookup-tables/:table - Create new item (super admin only)
-  app.post("/api/admin/lookup-tables/:table", requireSuperAdmin, auditLogger('admin.lookup_tables.create'), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/admin/lookup-tables/:table", requireSuperAdmin, auditLogger('admin.lookup_tables.create'), async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       const tableKey = req.params.table as keyof typeof TABLES;
       const tableConfig = TABLES[tableKey];
@@ -217,12 +217,12 @@ export function registerAdminLookupTablesRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to create item' });
+      return res.status(500).json({ error: 'Failed to create item' });
     }
   });
 
   // PUT /api/admin/lookup-tables/:table/:id - Update existing item (super admin only)
-  app.put("/api/admin/lookup-tables/:table/:id", requireSuperAdmin, auditLogger('admin.lookup_tables.update'), async (req: AuthenticatedRequest, res) => {
+  app.put("/api/admin/lookup-tables/:table/:id", requireSuperAdmin, auditLogger('admin.lookup_tables.update'), async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       const tableKey = req.params.table as keyof typeof TABLES;
       const itemId = req.params.id;
@@ -305,12 +305,12 @@ export function registerAdminLookupTablesRoutes(app: Express) {
         });
       }
 
-      res.status(500).json({ error: 'Failed to update item' });
+      return res.status(500).json({ error: 'Failed to update item' });
     }
   });
 
   // GET /api/admin/lookup-tables/counts - Get count of items in each table (viewers and above can view)
-  app.get("/api/admin/lookup-tables/counts", requireAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/admin/lookup-tables/counts", requireAuth, async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       // Check if user has viewer role or above
       const userRole = req.user?.role;
@@ -345,7 +345,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
 
     } catch (error: unknown) {
       logger.error('Error fetching counts', { error });
-      res.status(500).json({ error: 'Failed to fetch counts' });
+      return res.status(500).json({ error: 'Failed to fetch counts' });
     }
   });
 

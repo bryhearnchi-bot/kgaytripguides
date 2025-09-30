@@ -236,7 +236,7 @@ export default function ArtistsManagement() {
 
   const filteredArtists = artists.filter(artist =>
     artist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    artist.category.toLowerCase().includes(searchTerm.toLowerCase())
+    artist.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getCategoryIcon = (category: string) => {

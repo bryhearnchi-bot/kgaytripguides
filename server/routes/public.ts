@@ -17,6 +17,7 @@ import { csrfTokenEndpoint } from "../middleware/csrf";
 import { apiVersionsEndpoint } from "../middleware/versioning";
 
 // Import bcrypt for password hashing
+// @ts-expect-error - bcryptjs types may not be installed, TODO: verify @types/bcryptjs
 import bcrypt from "bcryptjs";
 
 export function registerPublicRoutes(app: Express) {

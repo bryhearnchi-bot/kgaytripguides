@@ -39,11 +39,20 @@ export function ProfileView({ onEdit }: ProfileViewProps) {
       return `${profile.name.first[0]}${profile.name.last[0]}`.toUpperCase();
     }
     if (profile?.name?.full) {
-      const parts = profile.name.full.split(' ');
-      if (parts.length > 1 && parts[0]?.[0] && parts[parts.length - 1]?.[0]) {
-        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      const parts = profile.name.full.split(' ').filter(Boolean);
+      if (parts.length > 1) {
+        const firstPart = parts[0];
+        const lastPart = parts[parts.length - 1];
+        if (firstPart && lastPart) {
+          const first = firstPart[0];
+          const last = lastPart[0];
+          if (first && last) {
+            return `${first}${last}`.toUpperCase();
+          }
+        }
       }
-      return parts[0]?.[0]?.toUpperCase() || 'U';
+      const firstPart = parts[0];
+      return (firstPart && firstPart[0]?.toUpperCase()) || 'U';
     }
     return 'U';
   };

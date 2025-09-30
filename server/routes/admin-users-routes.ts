@@ -553,7 +553,7 @@ export function registerAdminUsersRoutes(app: Express) {
         }
 
         const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
-          userId,
+          userId!,
           updateData
         );
 
@@ -753,7 +753,7 @@ export function registerAdminUsersRoutes(app: Express) {
         });
       }
 
-      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId!);
       if (authError) {
         console.error('Supabase Auth delete error:', authError);
         return res.status(400).json({

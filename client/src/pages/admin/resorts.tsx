@@ -292,7 +292,7 @@ export default function ResortsManagement() {
       <ResortFormModal
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
-        resort={editingResort}
+        resort={editingResort || undefined}
         onSuccess={handleModalSuccess}
       />
     </div>

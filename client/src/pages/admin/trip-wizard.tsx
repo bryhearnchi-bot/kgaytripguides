@@ -182,7 +182,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
   };
 
   const handleShipSelect = (shipId: string) => {
-    const ship = ships.find(s => s.id === parseInt(shipId));
+    const ship = ships.find((s: any) => s.id === parseInt(shipId));
     if (ship) {
       setFormData({
         ...formData,
@@ -338,7 +338,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                       <SelectValue placeholder="Choose a ship" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ships.map((ship) => (
+                      {ships.map((ship: any) => (
                         <SelectItem key={ship.id} value={ship.id.toString()}>
                           {ship.name} - {ship.cruiseLine}
                         </SelectItem>
@@ -378,7 +378,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                 <div className="space-y-4">
                   <Label>Select Locations</Label>
                   <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                    {locations.map((location) => (
+                    {locations.map((location: any) => (
                       <label
                         key={location.id}
                         className="flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer"
@@ -417,7 +417,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                 <div className="space-y-4">
                   <Label>Select Artists/Talent</Label>
                   <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                    {talent.map((artist) => (
+                    {talent.map((artist: any) => (
                       <label
                         key={artist.id}
                         className="flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer"
@@ -473,8 +473,9 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
             variant="outline"
             onClick={() => {
               const currentIndex = tabs.findIndex(t => t.id === currentTab);
-              if (currentIndex > 0) {
-                setCurrentTab(tabs[currentIndex - 1].id);
+              const prevTab = tabs[currentIndex - 1];
+              if (currentIndex > 0 && prevTab) {
+                setCurrentTab(prevTab.id);
               }
             }}
             disabled={currentTab === 'basic'}
@@ -486,8 +487,9 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
           <Button
             onClick={() => {
               const currentIndex = tabs.findIndex(t => t.id === currentTab);
-              if (currentIndex < tabs.length - 1) {
-                setCurrentTab(tabs[currentIndex + 1].id);
+              const nextTab = tabs[currentIndex + 1];
+              if (currentIndex < tabs.length - 1 && nextTab) {
+                setCurrentTab(nextTab.id);
               }
             }}
             disabled={currentTab === 'info'}

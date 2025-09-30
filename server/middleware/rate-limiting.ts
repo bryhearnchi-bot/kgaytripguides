@@ -268,7 +268,7 @@ export const bulkRateLimit = createRateLimit('bulk');
 export const ipRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   maxRequests: 500,
-  keyGenerator: (req) => req.ip,
+  keyGenerator: (req) => req.ip || 'unknown',
   message: 'Too many requests from this IP address'
 });
 
@@ -278,7 +278,7 @@ export const userRateLimit = createRateLimit({
   maxRequests: 2000,
   keyGenerator: (req) => {
     const user = (req as any).user;
-    return user ? `user:${user.id}` : req.ip;
+    return user ? `user:${user.id}` : (req.ip || 'unknown');
   },
   message: 'Too many requests from this user account'
 });

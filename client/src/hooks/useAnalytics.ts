@@ -275,6 +275,8 @@ export const usePerformanceTracking = (): void => {
         clsObserver.disconnect();
       };
     }
+
+    return undefined;
   }, [track]);
 };
 

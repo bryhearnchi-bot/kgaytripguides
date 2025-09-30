@@ -49,7 +49,7 @@ describe('useSupabaseAuth - Loading State Fix', () => {
     });
 
     // Mock onAuthStateChange to capture the callback
-    (supabase.auth.onAuthStateChange as any).mockImplementation((callback) => {
+    (supabase.auth.onAuthStateChange as any).mockImplementation((callback: (event: string, session: any) => void) => {
       mockAuthStateCallback = callback;
       return { data: { subscription: mockSubscription } };
     });

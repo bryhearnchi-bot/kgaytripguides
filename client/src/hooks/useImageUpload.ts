@@ -146,7 +146,7 @@ export function useImageUpload() {
     try {
       setState(prev => ({ ...prev, progress: 50 }));
 
-      const response = await api.delete('/api/images', { url });
+      const response = await api.delete(`/api/images?url=${encodeURIComponent(url)}`);
 
       if (!response.ok) {
         const errorData = await response.json();

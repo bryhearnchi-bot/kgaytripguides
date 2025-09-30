@@ -168,7 +168,7 @@ export class Logger {
   }
 
   private log(level: string, message: string, metadata?: Record<string, any>) {
-    const logData = {
+    const logData: Record<string, any> = {
       ...this.metadata,
       ...metadata,
       requestId: this.requestId,

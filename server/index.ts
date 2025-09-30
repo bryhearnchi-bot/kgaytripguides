@@ -40,6 +40,7 @@ function validateEnvironment() {
 validateEnvironment();
 
 import express, { type Request, Response, NextFunction } from "express";
+import { type AuthenticatedRequest } from "./auth";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -181,8 +182,8 @@ let manifestPath = path.join(distPath, 'manifest.json');
       if (err) {
         logger.error('Failed to serve manifest.json', {
           error: err.message,
-          code: err.code,
-          path: manifestPath, 
+          code: (err as any).code,
+          path: manifestPath,
           exists: fs.existsSync(manifestPath),
           distExists: fs.existsSync(distPath),
           clientExists: fs.existsSync(clientPublicPath),
@@ -205,7 +206,7 @@ let swPath = path.join(distPath, 'sw.js');
       if (err) {
         logger.error('Failed to serve sw.js', {
           error: err.message,
-          code: err.code,
+          code: (err as any).code,
           path: swPath,
           exists: fs.existsSync(swPath),
           distExists: fs.existsSync(distPath),

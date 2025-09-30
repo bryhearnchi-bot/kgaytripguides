@@ -271,7 +271,7 @@ export default function ShipsManagement() {
       <ShipFormModal
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
-        ship={editingShip}
+        ship={editingShip || undefined}
         onSuccess={handleModalSuccess}
       />
     </div>

@@ -73,7 +73,8 @@ export async function fixTableSequence(tableInfo: SequenceInfo): Promise<Sequenc
       };
     }
 
-    const currentMaxId = maxIdData && maxIdData.length > 0 ? maxIdData[0][idColumn] : 0;
+    const maxRecord = maxIdData && maxIdData.length > 0 ? maxIdData[0] : null;
+    const currentMaxId = maxRecord && idColumn in maxRecord ? (maxRecord as any)[idColumn] : 0;
     const newSequenceValue = currentMaxId + 1;
 
     logger.info(`Fixing sequence for ${tableName}`, { currentMaxId, newSequenceValue });

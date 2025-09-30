@@ -9,7 +9,7 @@ import { ImageUploadField } from './ImageUploadField';
 import { Ship as ShipIcon } from 'lucide-react';
 
 interface Ship {
-  id: number;
+  id?: number;
   name: string;
   cruiseLine: string;
   capacity?: number;
@@ -71,7 +71,9 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       });
 
       // Load ship's amenities and venues
-      loadShipRelations(ship.id);
+      if (ship.id) {
+        loadShipRelations(ship.id);
+      }
     } else if (!ship) {
       // Reset form for new ship
       setFormData({

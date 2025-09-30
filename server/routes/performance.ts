@@ -81,9 +81,9 @@ export function registerPerformanceRoutes(app: Express) {
       };
 
       res.json({
-        timestamp: new Date().toISOString(),
         ...metrics,
-        cache: cacheStats
+        cache: cacheStats,
+        timestamp: new Date().toISOString()
       });
     } catch (error: unknown) {
       console.error('Error fetching performance metrics:', error);
@@ -106,7 +106,7 @@ export function registerPerformanceRoutes(app: Express) {
   });
 
   // Get cache statistics
-  app.get("/api/admin/performance/cache", requireContentEditor, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/admin/performance/cache", requireContentEditor, async (req: AuthenticatedRequest, res): Promise<any> => {
     try {
       const { layer } = req.query;
 
@@ -129,7 +129,7 @@ export function registerPerformanceRoutes(app: Express) {
       }
     } catch (error: unknown) {
       console.error('Error fetching cache statistics:', error);
-      res.status(500).json({ error: 'Failed to fetch cache statistics' });
+      return res.status(500).json({ error: 'Failed to fetch cache statistics' });
     }
   });
 

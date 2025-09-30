@@ -510,7 +510,7 @@ router.post(
       // Send invitation email if requested
       let emailSent = false;
       if (sendEmail) {
-        emailSent = await sendInvitationEmail(email, token, inviter.name || inviter.username || 'Admin', role);
+        emailSent = await sendInvitationEmail(email, token, String(inviter.name || inviter.username || 'Admin'), role);
       }
 
       // Audit log the invitation creation
@@ -800,7 +800,7 @@ router.post(
       const emailSent = await sendInvitationEmail(
         invitation.email,
         token,
-        admin.name || admin.username || 'Admin',
+        String(admin.name || admin.username || 'Admin'),
         invitation.role
       );
 

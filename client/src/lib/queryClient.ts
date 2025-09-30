@@ -50,11 +50,9 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes before refetching
       retry: (failureCount, error) => shouldRetry(error, failureCount),
-      onError: (error) => logError(error, 'Query'),
     },
     mutations: {
       retry: (failureCount, error) => shouldRetry(error, failureCount),
-      onError: (error) => logError(error, 'Mutation'),
     },
   },
 });

@@ -174,7 +174,7 @@ export class CacheManager {
   // Clear all caches
   async clearAll(): Promise<void> {
     this.memoryCache.clear();
-    for (const [name, cache] of this.cacheLayers) {
+    for (const [name, cache] of Array.from(this.cacheLayers)) {
       cache.clear();
     }
     this.resetStats();
@@ -185,7 +185,7 @@ export class CacheManager {
     const cache = this.cacheLayers.get(layer) || this.memoryCache;
     let invalidated = 0;
 
-    for (const key of cache.keys()) {
+    for (const key of Array.from(cache.keys())) {
       if (pattern.test(key)) {
         cache.delete(key);
         invalidated++;
@@ -242,7 +242,7 @@ export class CacheManager {
     const cache = this.cacheLayers.get(layer) || this.memoryCache;
     const options = ttl ? { ttl } : undefined;
 
-    for (const [key, value] of entries) {
+    for (const [key, value] of Array.from(entries)) {
       cache.set(key, value, options);
       this.stats.sets++;
     }
@@ -277,7 +277,7 @@ export class CacheManager {
   getAllLayersStats(): Map<string, any> {
     const stats = new Map<string, any>();
 
-    for (const [name, cache] of this.cacheLayers) {
+    for (const [name, cache] of Array.from(this.cacheLayers)) {
       stats.set(name, {
         size: cache.size,
         maxSize: cache.max,
