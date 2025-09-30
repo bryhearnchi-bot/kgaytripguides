@@ -354,9 +354,14 @@ if (process.env.NODE_ENV === 'production') {
         req.path.endsWith('.ico') ||
         req.path.endsWith('.webp')
       ) {
-        return next(); // Let it 404 if file not found
+        // Return 404 for missing static assets instead of SPA fallback
+        return res.status(404).send('Not found');
       }
       // For all other requests, serve index.html (SPA fallback)
+      // Set no-cache headers to prevent stale cached versions
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
