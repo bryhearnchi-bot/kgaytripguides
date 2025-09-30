@@ -65,14 +65,17 @@ if (process.env.NODE_ENV !== 'test') {
   transports.push(
     new winston.transports.Console({
       format: process.env.NODE_ENV === 'production' ? format : consoleFormat,
-      level: process.env.LOG_LEVEL || 'warn',
+      level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'warn'),
+      handleExceptions: true,
+      handleRejections: true,
     })
   );
 }
 
-// File transports for production
-if (process.env.NODE_ENV === 'production') {
-  const logsDirectory = process.env.LOG_DIR || path.join(process.cwd(), 'logs');
+// File transports for production (only if LOG_DIR is explicitly set)
+// Railway has ephemeral filesystem - use stdout/stderr instead
+if (process.env.NODE_ENV === 'production' && process.env.LOG_DIR) {
+  const logsDirectory = process.env.LOG_DIR;
 
   // Rotate daily logs for all levels
   transports.push(

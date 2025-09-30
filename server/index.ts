@@ -133,6 +133,28 @@ if (process.env.NODE_ENV === 'production') {
   // Log the path for debugging
   logger.info('Serving static files from:', { distPath, clientPublicPath, cwd: process.cwd() });
 
+  // Memory profiling endpoint
+  app.get('/api/debug/memory', (_req, res) => {
+    const usage = process.memoryUsage();
+    const formatBytes = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+
+    res.json({
+      memory: {
+        rss: formatBytes(usage.rss),
+        heapTotal: formatBytes(usage.heapTotal),
+        heapUsed: formatBytes(usage.heapUsed),
+        external: formatBytes(usage.external),
+        arrayBuffers: formatBytes(usage.arrayBuffers),
+      },
+      percentages: {
+        heapUsedPercent: `${((usage.heapUsed / usage.heapTotal) * 100).toFixed(2)}%`,
+      },
+      uptime: `${Math.floor(process.uptime())}s`,
+      nodeVersion: process.version,
+      platform: process.platform,
+    });
+  });
+
   // Debug endpoint to check file paths and existence
   app.get('/api/debug/paths', (_req, res) => {
     try {
