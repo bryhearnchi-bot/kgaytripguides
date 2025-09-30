@@ -49,7 +49,7 @@ export enum ErrorCode {
 
 export interface ApiErrorOptions {
   code?: ErrorCode;
-  details?: any;
+  details?: Record<string, unknown> | string;
   isOperational?: boolean;
   originalError?: Error;
 }
@@ -57,16 +57,12 @@ export interface ApiErrorOptions {
 export class ApiError extends Error {
   public readonly statusCode: number;
   public readonly code: ErrorCode;
-  public readonly details?: any;
+  public readonly details?: Record<string, unknown> | string;
   public readonly isOperational: boolean;
   public readonly timestamp: string;
   public readonly originalError?: Error;
 
-  constructor(
-    statusCode: number,
-    message: string,
-    options: ApiErrorOptions = {}
-  ) {
+  constructor(statusCode: number, message: string, options: ApiErrorOptions = {}) {
     super(message);
 
     this.name = 'ApiError';
@@ -101,48 +97,48 @@ export class ApiError extends Error {
    * Factory methods for common error types
    */
 
-  static badRequest(message: string, details?: any): ApiError {
+  static badRequest(message: string, details?: Record<string, unknown> | string): ApiError {
     return new ApiError(400, message, {
       code: ErrorCode.INVALID_INPUT,
-      details
+      details,
     });
   }
 
   static unauthorized(message = 'Authentication required'): ApiError {
     return new ApiError(401, message, {
-      code: ErrorCode.UNAUTHORIZED
+      code: ErrorCode.UNAUTHORIZED,
     });
   }
 
   static forbidden(message = 'Access denied'): ApiError {
     return new ApiError(403, message, {
-      code: ErrorCode.FORBIDDEN
+      code: ErrorCode.FORBIDDEN,
     });
   }
 
   static notFound(resource = 'Resource'): ApiError {
     return new ApiError(404, `${resource} not found`, {
-      code: ErrorCode.NOT_FOUND
+      code: ErrorCode.NOT_FOUND,
     });
   }
 
-  static conflict(message: string, details?: any): ApiError {
+  static conflict(message: string, details?: Record<string, unknown> | string): ApiError {
     return new ApiError(409, message, {
       code: ErrorCode.CONFLICT,
-      details
+      details,
     });
   }
 
-  static validationError(message: string, details?: any): ApiError {
+  static validationError(message: string, details?: Record<string, unknown> | string): ApiError {
     return new ApiError(422, message, {
       code: ErrorCode.VALIDATION_ERROR,
-      details
+      details,
     });
   }
 
   static rateLimitExceeded(message = 'Too many requests'): ApiError {
     return new ApiError(429, message, {
-      code: ErrorCode.RATE_LIMIT_EXCEEDED
+      code: ErrorCode.RATE_LIMIT_EXCEEDED,
     });
   }
 
@@ -150,7 +146,7 @@ export class ApiError extends Error {
     return new ApiError(500, message, {
       code: ErrorCode.INTERNAL_SERVER_ERROR,
       isOperational: false,
-      originalError
+      originalError,
     });
   }
 
@@ -158,28 +154,31 @@ export class ApiError extends Error {
     return new ApiError(500, message, {
       code: ErrorCode.DATABASE_ERROR,
       isOperational: false,
-      originalError
+      originalError,
     });
   }
 
   static externalServiceError(service: string, originalError?: Error): ApiError {
     return new ApiError(502, `External service error: ${service}`, {
       code: ErrorCode.EXTERNAL_SERVICE_ERROR,
-      originalError
+      originalError,
     });
   }
 
-  static businessRuleViolation(message: string, details?: any): ApiError {
+  static businessRuleViolation(
+    message: string,
+    details?: Record<string, unknown> | string
+  ): ApiError {
     return new ApiError(422, message, {
       code: ErrorCode.BUSINESS_RULE_VIOLATION,
-      details
+      details,
     });
   }
 
-  static serviceUnavailable(message: string, details?: Record<string, any> | string): ApiError {
+  static serviceUnavailable(message: string, details?: Record<string, unknown> | string): ApiError {
     return new ApiError(503, message, {
       code: ErrorCode.SERVICE_UNAVAILABLE,
-      details: typeof details === 'string' ? { message: details } : details
+      details: typeof details === 'string' ? { message: details } : details,
     });
   }
 
@@ -187,13 +186,22 @@ export class ApiError extends Error {
    * Convert to a JSON response object
    */
   toJSON() {
-    const response: any = {
+    const response: {
+      error: {
+        message: string;
+        code: ErrorCode;
+        statusCode: number;
+        timestamp: string;
+        details?: Record<string, unknown> | string;
+        stack?: string[];
+      };
+    } = {
       error: {
         message: this.message,
         code: this.code,
         statusCode: this.statusCode,
         timestamp: this.timestamp,
-      }
+      },
     };
 
     // Include details only if present
@@ -235,10 +243,10 @@ export function toApiError(error: unknown): ApiError {
   if (error instanceof Error) {
     // Handle common error types
     if (error.message.includes('duplicate key')) {
-      return ApiError.conflict('Resource already exists', { originalError: error });
+      return ApiError.conflict('Resource already exists', { originalError: error.message });
     }
     if (error.message.includes('foreign key')) {
-      return ApiError.badRequest('Invalid reference', { originalError: error });
+      return ApiError.badRequest('Invalid reference', { originalError: error.message });
     }
     if (error.message.includes('connection') || error.message.includes('ECONNREFUSED')) {
       return ApiError.databaseError('Database connection error', error);

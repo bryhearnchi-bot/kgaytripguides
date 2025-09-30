@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from './supabase-admin';
+import { logger } from './logging/logger';
 // @ts-expect-error - Legacy data import for seeding, will be removed in Phase 6
 import { ITINERARY, DAILY, TALENT, PARTY_THEMES } from '../client/src/data/cruise-data';
 
@@ -52,13 +53,13 @@ const TRIP_TYPE_SETTINGS = [
  * - Subsequent deployments: Only adds new/changed data
  */
 async function seedProduction() {
-  console.log('🚀 Starting production database seeding...');
+  logger.info('🚀 Starting production database seeding...');
 
   // Only use real Greek Isles data in production
   const isProduction = process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
-    console.log('⏭️ Skipping production seed - not in production environment');
+    logger.info('⏭️ Skipping production seed - not in production environment');
     return;
   }
 
@@ -66,14 +67,14 @@ async function seedProduction() {
     const supabaseAdmin = getSupabaseAdmin();
 
     // 1. Check if Greek Isles cruise exists
-    console.log('🔍 Checking existing cruise data...');
+    logger.info('🔍 Checking existing cruise data...');
     const { data: existingCruise, error: checkError } = await supabaseAdmin
       .from('trips')
       .select('*')
       .eq('slug', 'greek-isles-2025');
 
     if (checkError) {
-      console.error('Error checking existing cruise:', checkError);
+      logger.error('Error checking existing cruise', checkError);
       throw checkError;
     }
 
@@ -81,7 +82,7 @@ async function seedProduction() {
 
     if (!existingCruise || existingCruise.length === 0) {
       // First time deployment - create the main cruise
-      console.log('🆕 First deployment detected - creating Greek Isles cruise...');
+      logger.info('🆕 First deployment detected - creating Greek Isles cruise...');
       const { data: cruiseData, error: insertError } = await supabaseAdmin
         .from('trips')
         .insert({
@@ -124,26 +125,26 @@ async function seedProduction() {
         .single();
 
       if (insertError) {
-        console.error('Error creating cruise:', insertError);
+        logger.error('Error creating cruise', insertError);
         throw insertError;
       }
 
       cruise = cruiseData;
-      console.log(`✅ Created cruise: ${cruise.name} (ID: ${cruise.id})`);
+      logger.info(`✅ Created cruise: ${cruise.name} (ID: ${cruise.id})`);
     } else {
       cruise = existingCruise[0];
-      console.log(`✅ Found existing cruise: ${cruise.name} (ID: ${cruise.id})`);
+      logger.info(`✅ Found existing cruise: ${cruise.name} (ID: ${cruise.id})`);
     }
 
     // 2. Seed/Update Settings (check for new trip type settings)
-    console.log('⚙️ Checking trip type settings...');
+    logger.info('⚙️ Checking trip type settings...');
     const { data: existingSettings, error: settingsError } = await supabaseAdmin
       .from('settings')
       .select('*')
       .eq('category', 'trip_types');
 
     if (settingsError) {
-      console.error('Error fetching existing settings:', settingsError);
+      logger.error('Error fetching existing settings', settingsError);
       throw settingsError;
     }
 
@@ -152,7 +153,7 @@ async function seedProduction() {
     let newSettingsCount = 0;
     for (const settingData of TRIP_TYPE_SETTINGS) {
       if (!existingSettingKeys.includes(settingData.key)) {
-        console.log(`➕ Adding new trip type setting: ${settingData.label}`);
+        logger.info(`➕ Adding new trip type setting: ${settingData.label}`);
 
         const { error: insertSettingError } = await supabaseAdmin.from('settings').insert({
           category: 'trip_types',
@@ -166,23 +167,23 @@ async function seedProduction() {
         });
 
         if (insertSettingError) {
-          console.error(`Error creating setting ${settingData.key}:`, insertSettingError);
+          logger.error(`Error creating setting ${settingData.key}`, insertSettingError);
           throw insertSettingError;
         }
 
         newSettingsCount++;
       }
     }
-    console.log(`✅ Trip type settings check complete. Added ${newSettingsCount} new settings.`);
+    logger.info(`✅ Trip type settings check complete. Added ${newSettingsCount} new settings.`);
 
     // 3. Seed/Update Talent (check for new talent)
-    console.log('🎭 Checking talent data...');
+    logger.info('🎭 Checking talent data...');
     const { data: existingTalent, error: talentFetchError } = await supabaseAdmin
       .from('talent')
       .select('*');
 
     if (talentFetchError) {
-      console.error('Error fetching existing talent:', talentFetchError);
+      logger.error('Error fetching existing talent', talentFetchError);
       throw talentFetchError;
     }
 
@@ -192,7 +193,7 @@ async function seedProduction() {
     let newTalentCount = 0;
     for (const t of TALENT) {
       if (!existingTalentNames.includes(t.name)) {
-        console.log(`➕ Adding new talent: ${t.name}`);
+        logger.info(`➕ Adding new talent: ${t.name}`);
         const { data: talentRecord, error: talentInsertError } = await supabaseAdmin
           .from('talent')
           .insert({
@@ -208,7 +209,7 @@ async function seedProduction() {
           .single();
 
         if (talentInsertError) {
-          console.error(`Error creating talent ${t.name}:`, talentInsertError);
+          logger.error(`Error creating talent ${t.name}`, talentInsertError);
           throw talentInsertError;
         }
 
@@ -229,24 +230,24 @@ async function seedProduction() {
         });
 
         if (linkError) {
-          console.error(`Error linking talent ${t.name} to cruise:`, linkError);
+          logger.error(`Error linking talent ${t.name} to cruise`, linkError);
           throw linkError;
         }
 
         newTalentCount++;
       }
     }
-    console.log(`✅ Talent check complete. Added ${newTalentCount} new performers.`);
+    logger.info(`✅ Talent check complete. Added ${newTalentCount} new performers.`);
 
     // 4. Seed/Update Itinerary (check for new stops)
-    console.log('🗺️ Checking itinerary data...');
+    logger.info('🗺️ Checking itinerary data...');
     const { data: existingItinerary, error: itineraryFetchError } = await supabaseAdmin
       .from('itinerary')
       .select('*')
       .eq('trip_id', cruise.id);
 
     if (itineraryFetchError) {
-      console.error('Error fetching existing itinerary:', itineraryFetchError);
+      logger.error('Error fetching existing itinerary', itineraryFetchError);
       throw itineraryFetchError;
     }
 
@@ -262,7 +263,7 @@ async function seedProduction() {
       const stopKey = `${stopDate.toISOString().split('T')[0]}-${stop.port}`;
 
       if (!existingPorts.includes(stopKey)) {
-        console.log(`➕ Adding new itinerary stop: ${stop.port} on ${stop.key}`);
+        logger.info(`➕ Adding new itinerary stop: ${stop.port} on ${stop.key}`);
 
         // Calculate day number based on index + 1
         const dayNumber = index + 1;
@@ -293,24 +294,24 @@ async function seedProduction() {
         });
 
         if (itineraryInsertError) {
-          console.error(`Error creating itinerary stop ${stop.port}:`, itineraryInsertError);
+          logger.error(`Error creating itinerary stop ${stop.port}`, itineraryInsertError);
           throw itineraryInsertError;
         }
 
         newItineraryCount++;
       }
     }
-    console.log(`✅ Itinerary check complete. Added ${newItineraryCount} new stops.`);
+    logger.info(`✅ Itinerary check complete. Added ${newItineraryCount} new stops.`);
 
     // 5. Seed/Update Events (check for new events)
-    console.log('🎉 Checking events data...');
+    logger.info('🎉 Checking events data...');
     const { data: existingEvents, error: eventsFetchError } = await supabaseAdmin
       .from('events')
       .select('*')
       .eq('trip_id', cruise.id);
 
     if (eventsFetchError) {
-      console.error('Error fetching existing events:', eventsFetchError);
+      logger.error('Error fetching existing events', eventsFetchError);
       throw eventsFetchError;
     }
 
@@ -327,7 +328,7 @@ async function seedProduction() {
         const eventKey = `${eventDate.toISOString().split('T')[0]}-${item.time}-${item.title}`;
 
         if (!existingEventKeys.includes(eventKey)) {
-          console.log(`➕ Adding new event: ${item.title} on ${daily.key}`);
+          logger.info(`➕ Adding new event: ${item.title} on ${daily.key}`);
 
           // Find talent IDs mentioned in the event
           const talentIds = [];
@@ -365,7 +366,7 @@ async function seedProduction() {
           });
 
           if (eventInsertError) {
-            console.error(`Error creating event ${item.title}:`, eventInsertError);
+            logger.error(`Error creating event ${item.title}`, eventInsertError);
             throw eventInsertError;
           }
 
@@ -373,17 +374,17 @@ async function seedProduction() {
         }
       }
     }
-    console.log(`✅ Events check complete. Added ${newEventCount} new events.`);
+    logger.info(`✅ Events check complete. Added ${newEventCount} new events.`);
 
-    console.log('🎯 Production seeding completed successfully!');
-    console.log(`📊 Summary:`);
-    console.log(`   - Cruise: ${cruise.name} (${cruise.status})`);
-    console.log(`   - New trip type settings: ${newSettingsCount}`);
-    console.log(`   - New talent added: ${newTalentCount}`);
-    console.log(`   - New itinerary stops: ${newItineraryCount}`);
-    console.log(`   - New events added: ${newEventCount}`);
+    logger.info('🎯 Production seeding completed successfully!');
+    logger.info(`📊 Summary:`);
+    logger.info(`   - Cruise: ${cruise.name} (${cruise.status})`);
+    logger.info(`   - New trip type settings: ${newSettingsCount}`);
+    logger.info(`   - New talent added: ${newTalentCount}`);
+    logger.info(`   - New itinerary stops: ${newItineraryCount}`);
+    logger.info(`   - New events added: ${newEventCount}`);
   } catch (error: unknown) {
-    console.error('❌ Error in production seeding:', error);
+    logger.error('❌ Error in production seeding', error);
     throw error;
   }
 }
@@ -392,21 +393,21 @@ async function seedProduction() {
 if (process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
   seedProduction()
     .then(() => {
-      console.log('✅ Production seeding completed');
+      logger.info('✅ Production seeding completed');
       process.exit(0);
     })
     .catch(error => {
-      console.error('❌ Production seeding failed:', error);
+      logger.error('❌ Production seeding failed', error);
       process.exit(1);
     });
 } else if (process.env.NODE_ENV === 'production') {
   // Run seeding in background during production startup, but don't exit
   seedProduction()
     .then(() => {
-      console.log('✅ Production seeding completed');
+      logger.info('✅ Production seeding completed');
     })
     .catch(error => {
-      console.error('❌ Production seeding failed:', error);
+      logger.error('❌ Production seeding failed', error);
     });
 }
 

@@ -3,38 +3,29 @@ import { Request, Response, NextFunction } from 'express';
 // Security middleware for setting various security headers
 export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
   // Content Security Policy
+  // Note: unsafe-inline and unsafe-eval are only for development
+  // In production, use nonce-based CSP or remove these directives
+  const isProduction = process.env.NODE_ENV === 'production';
+
   const cspDirectives = {
-    'default-src': ["'self'", "https:"],
-    'script-src': [
-      "'self'",
-      "'unsafe-inline'", // Required for Vite in development
-      "'unsafe-eval'", // Required for development
-      "https:"
-    ],
-    'style-src': [
-      "'self'",
-      "'unsafe-inline'", // Required for CSS-in-JS libraries
-      "https:"
-    ],
-    'font-src': [
-      "'self'",
-      "https:"
-    ],
+    'default-src': ["'self'", 'https:'],
+    'script-src': isProduction
+      ? ["'self'", 'https:']
+      : ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:'],
+    'style-src': isProduction ? ["'self'", 'https:'] : ["'self'", "'unsafe-inline'", 'https:'],
+    'font-src': ["'self'", 'https:'],
     'img-src': [
       "'self'",
-      "data:",
-      "blob:",
-      "https:" // Allow all HTTPS images
+      'data:',
+      'blob:',
+      'https:', // Allow all HTTPS images
     ],
-    'connect-src': [
-      "'self'",
-      "https:"
-    ],
-    'media-src': ["'self'", "https:"],
+    'connect-src': ["'self'", 'https:'],
+    'media-src': ["'self'", 'https:'],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
-    'frame-ancestors': ["'none'"]
+    'frame-ancestors': ["'none'"],
   };
 
   // Build CSP header string
@@ -60,16 +51,19 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Permissions-Policy - Control browser features
-  res.setHeader('Permissions-Policy', [
-    'camera=()',
-    'microphone=()',
-    'geolocation=()',
-    'payment=()',
-    'usb=()',
-    'magnetometer=()',
-    'gyroscope=()',
-    'accelerometer=()'
-  ].join(', '));
+  res.setHeader(
+    'Permissions-Policy',
+    [
+      'camera=()',
+      'microphone=()',
+      'geolocation=()',
+      'payment=()',
+      'usb=()',
+      'magnetometer=()',
+      'gyroscope=()',
+      'accelerometer=()',
+    ].join(', ')
+  );
 
   // Strict-Transport-Security - Force HTTPS (only in production)
   if (process.env.NODE_ENV === 'production') {
@@ -80,7 +74,11 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   res.removeHeader('X-Powered-By');
 
   // Cache-Control for security-sensitive endpoints
-  if (req.path.startsWith('/api/admin') || req.path.includes('login') || req.path.includes('auth')) {
+  if (
+    req.path.startsWith('/api/admin') ||
+    req.path.includes('login') ||
+    req.path.includes('auth')
+  ) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -112,7 +110,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
       res.status(429).json({
         error: 'Too Many Requests',
         message: 'Rate limit exceeded. Please try again later.',
-        retryAfter: Math.ceil((record.resetTime - now) / 1000)
+        retryAfter: Math.ceil((record.resetTime - now) / 1000),
       });
       return;
     }
@@ -122,11 +120,14 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
 };
 
 // Clean up old rate limit entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of Array.from(rateLimitStore.entries())) {
-    if (now > record.resetTime) {
-      rateLimitStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, record] of Array.from(rateLimitStore.entries())) {
+      if (now > record.resetTime) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 10 * 60 * 1000); // Clean up every 10 minutes
+  },
+  10 * 60 * 1000
+); // Clean up every 10 minutes

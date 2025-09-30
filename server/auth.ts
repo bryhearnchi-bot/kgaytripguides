@@ -52,12 +52,12 @@ export class AuthService {
   static verifyAccessToken(token: string): TokenPayload | null {
     try {
       return jwt.verify(token, getJWTSecret()) as TokenPayload;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Provide more specific error information
-      if (error.name === 'TokenExpiredError') {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new ApiError(401, 'Token has expired', { code: ErrorCode.TOKEN_EXPIRED });
       }
-      if (error.name === 'JsonWebTokenError') {
+      if (error instanceof Error && error.name === 'JsonWebTokenError') {
         throw new ApiError(401, 'Invalid token', { code: ErrorCode.INVALID_TOKEN });
       }
       return null;
@@ -67,11 +67,11 @@ export class AuthService {
   static verifyRefreshToken(token: string): TokenPayload | null {
     try {
       return jwt.verify(token, getJWTRefreshSecret()) as TokenPayload;
-    } catch (error: any) {
-      if (error.name === 'TokenExpiredError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new ApiError(401, 'Refresh token has expired', { code: ErrorCode.TOKEN_EXPIRED });
       }
-      if (error.name === 'JsonWebTokenError') {
+      if (error instanceof Error && error.name === 'JsonWebTokenError') {
         throw new ApiError(401, 'Invalid refresh token', { code: ErrorCode.INVALID_TOKEN });
       }
       return null;
@@ -83,84 +83,89 @@ export class AuthService {
 export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.accessToken;
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : req.cookies?.accessToken;
 
     if (!token) {
       throw ApiError.unauthorized('Authentication required');
     }
 
-  // First, try Supabase authentication
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    // First, try Supabase authentication
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase credentials not configured');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (user && !error) {
-      // Get user profile from database using Supabase Admin
-      const { getSupabaseAdmin } = await import('./supabase-admin');
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profile) {
-        req.user = {
-          id: user.id,
-          username: user.email || '',
-          email: user.email || '',
-          role: profile.role || 'viewer',
-        } as Profile;
-        return next();
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase credentials not configured');
       }
 
-      // Fallback when profile is unavailable (e.g., mock mode): use Supabase user metadata
-      const metaRole = (user.user_metadata as any)?.role as string | undefined;
-      if (metaRole) {
-        req.user = {
-          id: user.id,
-          username: user.email || '',
-          email: user.email || '',
-          role: metaRole,
-        } as Profile;
-        return next();
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser(token);
+
+      if (user && !error) {
+        // Get user profile from database using Supabase Admin
+        const { getSupabaseAdmin } = await import('./supabase-admin');
+        const supabaseAdmin = getSupabaseAdmin();
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          req.user = {
+            id: user.id,
+            username: user.email || '',
+            email: user.email || '',
+            role: profile.role || 'viewer',
+          } as Profile;
+          return next();
+        }
+
+        // Fallback when profile is unavailable (e.g., mock mode): use Supabase user metadata
+        const metaRole = (user.user_metadata as Record<string, unknown>)?.role;
+        if (typeof metaRole === 'string') {
+          req.user = {
+            id: user.id,
+            username: user.email || '',
+            email: user.email || '',
+            role: metaRole,
+          } as Profile;
+          return next();
+        }
       }
-    }
-  } catch (supabaseError) {
-    // Supabase auth failed, try custom JWT
-  }
-
-  // Fall back to custom JWT authentication
-  try {
-    const payload = AuthService.verifyAccessToken(token);
-    if (!payload) {
-      throw new ApiError(401, 'Invalid or expired token', { code: ErrorCode.INVALID_TOKEN });
+    } catch (supabaseError) {
+      // Supabase auth failed, try custom JWT
     }
 
-    // Add user info to request for use in subsequent middleware/routes
-    req.user = {
-      id: payload.userId,
-      username: payload.username,
-      role: payload.role,
-    } as Profile;
+    // Fall back to custom JWT authentication
+    try {
+      const payload = AuthService.verifyAccessToken(token);
+      if (!payload) {
+        throw new ApiError(401, 'Invalid or expired token', { code: ErrorCode.INVALID_TOKEN });
+      }
 
-    next();
-  } catch (error: unknown) {
-    // Pass JWT verification errors to the error handler
-    if (error instanceof ApiError) {
-      return next(error);
+      // Add user info to request for use in subsequent middleware/routes
+      req.user = {
+        id: payload.userId,
+        username: payload.username,
+        role: payload.role,
+      } as Profile;
+
+      next();
+    } catch (error: unknown) {
+      // Pass JWT verification errors to the error handler
+      if (error instanceof ApiError) {
+        return next(error);
+      }
+      // For backwards compatibility, return standard error format
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
-    // For backwards compatibility, return standard error format
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
   } catch (error: unknown) {
     // Handle any errors in the auth middleware
     if (error instanceof ApiError) {
@@ -181,7 +186,7 @@ export function requireRole(allowedRoles: string[]) {
       if (!allowedRoles.includes(req.user.role || '')) {
         throw new ApiError(403, 'Insufficient permissions', {
           code: ErrorCode.INSUFFICIENT_PERMISSIONS,
-          details: { userRole: req.user.role, requiredRoles: allowedRoles }
+          details: { userRole: req.user.role, requiredRoles: allowedRoles },
         });
       }
 
@@ -197,9 +202,11 @@ export function requireRole(allowedRoles: string[]) {
 }
 
 // Middleware composition helper
-function composeAuth(roleCheck: (req: AuthenticatedRequest, res: Response, next: NextFunction) => void) {
+function composeAuth(
+  roleCheck: (req: AuthenticatedRequest, res: Response, next: NextFunction) => void
+) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    requireAuth(req, res, (error?: any) => {
+    requireAuth(req, res, (error?: unknown) => {
       if (error) return next(error);
       roleCheck(req, res, next);
     });
@@ -216,15 +223,27 @@ export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next
   // Default to admin-level access to preserve current behavior
   return composeAuth(requireRole(['admin', 'super_admin']))(req, res, next);
 };
-export const requireTripAdmin = composeAuth(requireRole(['admin', 'super_admin', 'content_manager']));
-export const requireContentEditor = composeAuth(requireRole(['admin', 'super_admin', 'content_manager']));
-export const requireMediaManager = composeAuth(requireRole(['admin', 'super_admin', 'content_manager']));
+export const requireTripAdmin = composeAuth(
+  requireRole(['admin', 'super_admin', 'content_manager'])
+);
+export const requireContentEditor = composeAuth(
+  requireRole(['admin', 'super_admin', 'content_manager'])
+);
+export const requireMediaManager = composeAuth(
+  requireRole(['admin', 'super_admin', 'content_manager'])
+);
 
 // Backward compatibility alias
 export const requireCruiseAdmin = requireTripAdmin;
 
 // Audit logging middleware (disabled for simplified schema)
-export async function auditLog(action: string, tableName: string, recordId?: string, oldValues?: any, newValues?: any) {
+export async function auditLog(
+  action: string,
+  tableName: string,
+  recordId?: string,
+  oldValues?: Record<string, unknown>,
+  newValues?: Record<string, unknown>
+) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       // TODO: Re-enable when audit log table is added back

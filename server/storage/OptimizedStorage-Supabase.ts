@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '../supabase-admin';
+import { logger } from '../logging/logger';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Performance monitoring
@@ -18,14 +19,14 @@ class PerformanceMonitor {
       query,
       duration,
       timestamp: new Date(),
-      rowCount
+      rowCount,
     };
 
     this.metrics.push(metric);
 
     // Log slow queries
     if (duration > this.slowQueryThreshold) {
-      console.warn(`⚠️ Slow query detected (${duration}ms):`, query.substring(0, 100));
+      logger.warn(`⚠️ Slow query detected (${duration}ms): ${query.substring(0, 100)}`);
     }
 
     // Keep only last 1000 queries in memory
@@ -37,9 +38,10 @@ class PerformanceMonitor {
   getMetrics() {
     return {
       totalQueries: this.metrics.length,
-      averageDuration: this.metrics.reduce((sum, m) => sum + m.duration, 0) / this.metrics.length || 0,
+      averageDuration:
+        this.metrics.reduce((sum, m) => sum + m.duration, 0) / this.metrics.length || 0,
       slowQueries: this.metrics.filter(m => m.duration > this.slowQueryThreshold),
-      recentQueries: this.metrics.slice(-10)
+      recentQueries: this.metrics.slice(-10),
     };
   }
 
@@ -70,23 +72,20 @@ export class OptimizedDatabaseConnection {
       this.supabaseAdmin = getSupabaseAdmin();
 
       // Test connection
-      const { error } = await this.supabaseAdmin
-        .from('trips')
-        .select('id')
-        .limit(1);
+      const { error } = await this.supabaseAdmin.from('trips').select('id').limit(1);
 
       if (error) {
         throw error;
       }
 
-      console.log('✅ Optimized Supabase connection established');
+      logger.info('✅ Optimized Supabase connection established');
 
       // Set up connection health monitoring
       this.startHealthMonitoring();
 
       return this.supabaseAdmin;
     } catch (error: unknown) {
-      console.error('❌ Failed to initialize Supabase connection:', error);
+      logger.error('❌ Failed to initialize Supabase connection', error);
       throw error;
     }
   }
@@ -96,20 +95,17 @@ export class OptimizedDatabaseConnection {
     setInterval(async () => {
       try {
         const start = Date.now();
-        const { error } = await this.supabaseAdmin
-          .from('trips')
-          .select('id')
-          .limit(1);
+        const { error } = await this.supabaseAdmin.from('trips').select('id').limit(1);
 
         const duration = Date.now() - start;
 
         if (duration > 1000) {
-          console.warn(`⚠️ Database health check slow (${duration}ms)`);
+          logger.warn(`⚠️ Database health check slow (${duration}ms)`);
         }
 
         this.isHealthy = !error;
       } catch (error: unknown) {
-        console.error('❌ Health check failed:', error);
+        logger.error('❌ Health check failed', error);
         this.isHealthy = false;
       }
     }, 30000);
@@ -124,10 +120,7 @@ export class OptimizedDatabaseConnection {
   }
 
   // Execute a query with metrics
-  async executeWithMetrics<T>(
-    queryFn: () => Promise<T>,
-    queryName: string
-  ): Promise<T> {
+  async executeWithMetrics<T>(queryFn: () => Promise<T>, queryName: string): Promise<T> {
     const start = Date.now();
     try {
       const result = await queryFn();
@@ -157,7 +150,7 @@ export class OptimizedDatabaseConnection {
 
   async close() {
     // Supabase client doesn't need explicit closing
-    console.log('🔒 Supabase connection closed');
+    logger.info('🔒 Supabase connection closed');
   }
 }
 
@@ -178,17 +171,10 @@ export class BatchQueryBuilder {
       // Execute all queries in parallel
       const [trips, events, itinerary, talent, infoSections] = await Promise.all([
         // Load trips
-        this.supabaseAdmin
-          .from('trips')
-          .select('*')
-          .in('id', tripIds),
+        this.supabaseAdmin.from('trips').select('*').in('id', tripIds),
 
         // Load events
-        this.supabaseAdmin
-          .from('events')
-          .select('*')
-          .in('trip_id', tripIds)
-          .order('start_time'),
+        this.supabaseAdmin.from('events').select('*').in('trip_id', tripIds).order('start_time'),
 
         // Load itinerary
         this.supabaseAdmin
@@ -201,10 +187,12 @@ export class BatchQueryBuilder {
         // Load talent assignments
         this.supabaseAdmin
           .from('trip_talent')
-          .select(`
+          .select(
+            `
             *,
             talent(*)
-          `)
+          `
+          )
           .in('trip_id', tripIds),
 
         // Load info sections
@@ -212,7 +200,7 @@ export class BatchQueryBuilder {
           .from('trip_info_sections')
           .select('*')
           .in('trip_id', tripIds)
-          .order('display_order')
+          .order('display_order'),
       ]);
 
       const duration = Date.now() - start;
@@ -232,7 +220,7 @@ export class BatchQueryBuilder {
           events: [],
           itinerary: [],
           talent: [],
-          infoSections: []
+          infoSections: [],
         });
       });
 
@@ -273,18 +261,14 @@ export class BatchQueryBuilder {
   }
 
   // Batch insert with conflict handling
-  async batchInsert<T>(
-    tableName: string,
-    records: T[],
-    onConflict?: string
-  ): Promise<any[]> {
+  async batchInsert<T>(tableName: string, records: T[], onConflict?: string): Promise<any[]> {
     const start = Date.now();
 
     try {
       const { data, error } = await this.supabaseAdmin
         .from(tableName)
         .upsert(records, {
-          onConflict: onConflict || 'id'
+          onConflict: onConflict || 'id',
         })
         .select();
 
@@ -321,11 +305,7 @@ export class BatchQueryBuilder {
 
       // Execute grouped updates in parallel
       const updatePromises = Array.from(updateGroups.values()).map(group =>
-        this.supabaseAdmin
-          .from(tableName)
-          .update(group.data)
-          .in('id', group.ids)
-          .select()
+        this.supabaseAdmin.from(tableName).update(group.data).in('id', group.ids).select()
       );
 
       const results = await Promise.all(updatePromises);
@@ -342,17 +322,11 @@ export class BatchQueryBuilder {
   }
 
   // Batch delete with optimized queries
-  async batchDelete(
-    tableName: string,
-    ids: (number | string)[]
-  ): Promise<void> {
+  async batchDelete(tableName: string, ids: (number | string)[]): Promise<void> {
     const start = Date.now();
 
     try {
-      const { error } = await this.supabaseAdmin
-        .from(tableName)
-        .delete()
-        .in('id', ids);
+      const { error } = await this.supabaseAdmin.from(tableName).delete().in('id', ids);
 
       const duration = Date.now() - start;
       this.monitor.logQuery(`batchDelete(${tableName}, ${ids.length} records)`, duration);
@@ -379,8 +353,8 @@ export let batchQueryBuilder: BatchQueryBuilder;
   try {
     const db = await optimizedConnection.initialize();
     batchQueryBuilder = new BatchQueryBuilder(db);
-    console.log('✅ Optimized Supabase storage initialized');
+    logger.info('✅ Optimized Supabase storage initialized');
   } catch (error: unknown) {
-    console.error('❌ Failed to initialize optimized storage:', error);
+    logger.error('❌ Failed to initialize optimized storage', error);
   }
 })();

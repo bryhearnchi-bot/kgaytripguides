@@ -132,7 +132,7 @@ export class Logger {
   private baseLogger = winstonLogger;
   private requestId?: string;
   private userId?: string;
-  private metadata: Record<string, any> = {};
+  private metadata: Record<string, unknown> = {};
 
   constructor() {
     if (Logger.instance) {
@@ -144,7 +144,7 @@ export class Logger {
   /**
    * Set request context for all subsequent logs
    */
-  setContext(context: { requestId?: string; userId?: string; [key: string]: any }) {
+  setContext(context: { requestId?: string; userId?: string; [key: string]: unknown }) {
     this.requestId = context.requestId;
     this.userId = context.userId;
     this.metadata = { ...context };
@@ -162,7 +162,7 @@ export class Logger {
   /**
    * Create child logger with additional metadata
    */
-  child(metadata: Record<string, any>): Logger {
+  child(metadata: Record<string, unknown>): Logger {
     const childLogger = new Logger();
     childLogger.metadata = { ...this.metadata, ...metadata };
     childLogger.requestId = this.requestId;
@@ -170,8 +170,8 @@ export class Logger {
     return childLogger;
   }
 
-  private log(level: string, message: string, metadata?: Record<string, any>) {
-    const logData: Record<string, any> = {
+  private log(level: string, message: string, metadata?: Record<string, unknown>) {
+    const logData: Record<string, unknown> = {
       ...this.metadata,
       ...metadata,
       requestId: this.requestId,
@@ -188,39 +188,45 @@ export class Logger {
     this.baseLogger.log(level, message, logData);
   }
 
-  error(message: string, error?: Error | any, metadata?: Record<string, any>) {
-    const errorData = error
-      ? {
-          errorMessage: error.message || error,
-          errorStack: error.stack,
-          errorName: error.name,
-          ...metadata,
-        }
-      : metadata;
+  error(message: string, error?: Error | unknown, metadata?: Record<string, unknown>) {
+    const errorData =
+      error instanceof Error
+        ? {
+            errorMessage: error.message,
+            errorStack: error.stack,
+            errorName: error.name,
+            ...metadata,
+          }
+        : error
+          ? {
+              errorMessage: String(error),
+              ...metadata,
+            }
+          : metadata;
 
     this.log('error', message, errorData);
   }
 
-  warn(message: string, metadata?: Record<string, any>) {
+  warn(message: string, metadata?: Record<string, unknown>) {
     this.log('warn', message, metadata);
   }
 
-  info(message: string, metadata?: Record<string, any>) {
+  info(message: string, metadata?: Record<string, unknown>) {
     this.log('info', message, metadata);
   }
 
-  http(message: string, metadata?: Record<string, any>) {
+  http(message: string, metadata?: Record<string, unknown>) {
     this.log('http', message, metadata);
   }
 
-  debug(message: string, metadata?: Record<string, any>) {
+  debug(message: string, metadata?: Record<string, unknown>) {
     this.log('debug', message, metadata);
   }
 
   /**
    * Audit log for sensitive operations
    */
-  audit(action: string, metadata: Record<string, any>) {
+  audit(action: string, metadata: Record<string, unknown>) {
     const auditData = {
       action,
       timestamp: new Date().toISOString(),
@@ -239,7 +245,7 @@ export class Logger {
   /**
    * Performance log for tracking metrics
    */
-  performance(operation: string, duration: number, metadata?: Record<string, any>) {
+  performance(operation: string, duration: number, metadata?: Record<string, unknown>) {
     this.log('info', `Performance: ${operation}`, {
       performance: true,
       operation,
@@ -251,7 +257,7 @@ export class Logger {
   /**
    * Security log for security-related events
    */
-  security(event: string, metadata: Record<string, any>) {
+  security(event: string, metadata: Record<string, unknown>) {
     this.log('warn', `SECURITY: ${event}`, {
       security: true,
       event,
@@ -262,7 +268,7 @@ export class Logger {
   /**
    * Database query log
    */
-  query(query: string, duration: number, metadata?: Record<string, any>) {
+  query(query: string, duration: number, metadata?: Record<string, unknown>) {
     this.log('debug', 'Database query executed', {
       query: process.env.NODE_ENV === 'production' ? query.substring(0, 100) : query,
       duration,
@@ -289,7 +295,7 @@ if (process.env.NODE_ENV === 'production') {
     setTimeout(() => process.exit(1), 1000);
   });
 
-  process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
     loggerInstance.error('Unhandled Rejection', reason, {
       promise: promise.toString(),
     });

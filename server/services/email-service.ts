@@ -14,13 +14,31 @@ import { Resend } from 'resend';
 // Initialize Resend with API key from environment
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Email configuration
-const EMAIL_CONFIG = {
-  fromEmail: process.env.FROM_EMAIL || 'noreply@kgaytravelguides.com',
-  fromName: 'K-GAY Travel Guides',
-  replyTo: process.env.REPLY_TO_EMAIL || 'bryhearnchi@gmail.com',
-  baseUrl: process.env.FRONTEND_BASE_URL || 'https://kgaytravelguides.com',
-};
+// Email configuration - fail fast if not configured
+function getEmailConfig() {
+  const fromEmail = process.env.FROM_EMAIL;
+  const replyTo = process.env.REPLY_TO_EMAIL;
+  const baseUrl = process.env.FRONTEND_BASE_URL;
+
+  if (!fromEmail) {
+    throw new Error('FATAL: FROM_EMAIL environment variable is required');
+  }
+  if (!replyTo) {
+    throw new Error('FATAL: REPLY_TO_EMAIL environment variable is required');
+  }
+  if (!baseUrl) {
+    throw new Error('FATAL: FRONTEND_BASE_URL environment variable is required');
+  }
+
+  return {
+    fromEmail,
+    fromName: 'K-GAY Travel Guides',
+    replyTo,
+    baseUrl,
+  };
+}
+
+const EMAIL_CONFIG = getEmailConfig();
 
 /**
  * Send invitation email with professional HTML template
@@ -36,7 +54,7 @@ export async function sendInvitationEmail(
     if (!process.env.RESEND_API_KEY) {
       return {
         success: false,
-        error: 'Email service not configured'
+        error: 'Email service not configured',
       };
     }
 
@@ -49,7 +67,7 @@ export async function sendInvitationEmail(
       inviterName,
       role,
       invitationUrl,
-      expiresIn: '72 hours'
+      expiresIn: '72 hours',
     });
 
     // Create plain text version
@@ -58,7 +76,7 @@ export async function sendInvitationEmail(
       inviterName,
       role,
       invitationUrl,
-      expiresIn: '72 hours'
+      expiresIn: '72 hours',
     });
 
     // Send email via Resend
@@ -79,20 +97,19 @@ export async function sendInvitationEmail(
       console.error('Resend API error:', result.error);
       return {
         success: false,
-        error: result.error.message || 'Failed to send email'
+        error: result.error.message || 'Failed to send email',
       };
     }
 
     return {
       success: true,
-      messageId: result.data?.id
+      messageId: result.data?.id,
     };
-
   } catch (error: unknown) {
     console.error('Error sending invitation email:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
 }
@@ -105,7 +122,7 @@ function createInvitationEmailTemplate({
   inviterName,
   role,
   invitationUrl,
-  expiresIn
+  expiresIn,
 }: {
   recipientEmail: string;
   inviterName: string;
@@ -114,10 +131,10 @@ function createInvitationEmailTemplate({
   expiresIn: string;
 }): string {
   const roleDisplayNames: Record<string, string> = {
-    'admin': 'Administrator',
-    'content_editor': 'Content Editor',
-    'media_manager': 'Media Manager',
-    'viewer': 'Viewer'
+    admin: 'Administrator',
+    content_editor: 'Content Editor',
+    media_manager: 'Media Manager',
+    viewer: 'Viewer',
   };
 
   const roleDisplay = roleDisplayNames[role] || role;
@@ -303,7 +320,7 @@ function createInvitationEmailText({
   inviterName,
   role,
   invitationUrl,
-  expiresIn
+  expiresIn,
 }: {
   recipientEmail: string;
   inviterName: string;
@@ -312,10 +329,10 @@ function createInvitationEmailText({
   expiresIn: string;
 }): string {
   const roleDisplayNames: Record<string, string> = {
-    'admin': 'Administrator',
-    'content_editor': 'Content Editor',
-    'media_manager': 'Media Manager',
-    'viewer': 'Viewer'
+    admin: 'Administrator',
+    content_editor: 'Content Editor',
+    media_manager: 'Media Manager',
+    viewer: 'Viewer',
   };
 
   const roleDisplay = roleDisplayNames[role] || role;
@@ -358,7 +375,7 @@ export async function sendPasswordResetEmail(
     if (!process.env.RESEND_API_KEY) {
       return {
         success: false,
-        error: 'Email service not configured'
+        error: 'Email service not configured',
       };
     }
 
@@ -380,29 +397,26 @@ export async function sendPasswordResetEmail(
         </div>
       `,
       text: `Hi ${userName}, you requested to reset your password. Click this link: ${resetUrl} (expires in 1 hour)`,
-      tags: [
-        { name: 'type', value: 'password-reset' },
-      ],
+      tags: [{ name: 'type', value: 'password-reset' }],
     });
 
     if (result.error) {
       console.error('Resend API error:', result.error);
       return {
         success: false,
-        error: result.error.message || 'Failed to send email'
+        error: result.error.message || 'Failed to send email',
       };
     }
 
     return {
       success: true,
-      messageId: result.data?.id
+      messageId: result.data?.id,
     };
-
   } catch (error: unknown) {
     console.error('Error sending password reset email:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
 }

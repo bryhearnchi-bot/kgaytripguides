@@ -1,41 +1,23 @@
-// Data service that provides environment-based data selection
+// Data service - NO MOCK DATA ALLOWED per CLAUDE.md
+// All data comes from trip-data.ts only
 import { ITINERARY, TALENT, DAILY, PARTY_THEMES, CITY_ATTRACTIONS } from './trip-data';
-import { MOCK_ITINERARY, MOCK_TALENT, MOCK_DAILY, MOCK_PARTY_THEMES, MOCK_CITY_ATTRACTIONS } from './mock-data';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+// Always use real Greek trip data - NO MOCK DATA
+export const getItineraryData = () => ITINERARY;
 
-// In production, always use real Greek trip data
-// In development, allow mock data if VITE_USE_MOCK_DATA is set to 'true'
-const shouldUseMockData = !isProduction && useMockData;
+export const getTalentData = () => TALENT;
 
-export const getItineraryData = () => {
-  return shouldUseMockData ? MOCK_ITINERARY : ITINERARY;
-};
+export const getDailyScheduleData = () => DAILY;
 
-export const getTalentData = () => {
-  return shouldUseMockData ? MOCK_TALENT : TALENT;
-};
+export const getPartyThemesData = () => PARTY_THEMES;
 
-export const getDailyScheduleData = () => {
-  return shouldUseMockData ? MOCK_DAILY : DAILY;
-};
+export const getCityAttractionsData = () => CITY_ATTRACTIONS;
 
-export const getPartyThemesData = () => {
-  return shouldUseMockData ? MOCK_PARTY_THEMES : PARTY_THEMES;
-};
+// Get the trip slug - always real data
+export const getTripSlug = () => 'greek-isles-2025';
 
-export const getCityAttractionsData = () => {
-  return shouldUseMockData ? MOCK_CITY_ATTRACTIONS : CITY_ATTRACTIONS;
-};
-
-// Get the appropriate trip slug based on environment
-export const getTripSlug = () => {
-  return shouldUseMockData ? 'mock-trip-2024' : 'greek-isles-2025';
-};
-
-// Helper to check if we're using mock data
-export const isUsingMockData = () => shouldUseMockData;
+// Helper to check if we're using mock data - always false
+export const isUsingMockData = () => false;
 
 // Alias for backward compatibility
 export const getCruiseSlug = getTripSlug;

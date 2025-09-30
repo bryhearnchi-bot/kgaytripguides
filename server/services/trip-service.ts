@@ -22,14 +22,9 @@ import {
   getPaginationParams,
   buildPaginatedResponse,
   type PaginationParams,
-  type PaginatedResponse
+  type PaginatedResponse,
 } from '../utils/errorUtils';
-import {
-  tripStorage,
-  itineraryStorage,
-  eventStorage,
-  tripInfoStorage
-} from '../storage';
+import { tripStorage, itineraryStorage, eventStorage, tripInfoStorage } from '../storage';
 import { getSupabaseAdmin } from '../supabase-admin';
 import type { Trip, Itinerary, Event } from '../../shared/supabase-types';
 
@@ -40,7 +35,11 @@ export interface TripExportData {
   trip: Trip;
   itinerary?: Itinerary[];
   events?: Event[];
-  tripInfoSections?: any[];
+  tripInfoSections?: Array<{
+    id: number;
+    assignment: { orderIndex: number };
+    [key: string]: unknown;
+  }>;
 }
 
 /**
@@ -50,7 +49,7 @@ export interface TripImportData {
   trip: Partial<Trip>;
   itinerary?: Partial<Itinerary>[];
   events?: Partial<Event>[];
-  tripInfoSections?: any[];
+  tripInfoSections?: Array<{ id?: number; orderIndex?: number; [key: string]: unknown }>;
 }
 
 /**
@@ -136,7 +135,7 @@ export class TripService {
         status: 'draft', // Always start as draft
         created_at: new Date(),
         updated_at: new Date(),
-        created_by: userId
+        created_by: userId,
       };
 
       // Save the new trip
@@ -149,13 +148,13 @@ export class TripService {
       await Promise.all([
         this.duplicateItinerary(tripId, duplicatedTrip.id),
         this.duplicateEvents(tripId, duplicatedTrip.id),
-        this.duplicateTripInfoSections(tripId, duplicatedTrip.id)
+        this.duplicateTripInfoSections(tripId, duplicatedTrip.id),
       ]);
 
       this.logger.info('Trip duplicated successfully', {
         originalTripId: tripId,
         newTripId: duplicatedTrip.id,
-        newSlug
+        newSlug,
       });
 
       // Audit log
@@ -164,11 +163,10 @@ export class TripService {
         newTripId: duplicatedTrip.id,
         newName,
         newSlug,
-        userId
+        userId,
       });
 
       return duplicatedTrip;
-
     } catch (error) {
       this.logger.error('Failed to duplicate trip', error as Error, { tripId, newName, newSlug });
       throw error;
@@ -186,12 +184,12 @@ export class TripService {
       );
 
       if (itinerary.length > 0) {
-        const itineraryToCopy = itinerary.map((item: any) => ({
+        const itineraryToCopy = itinerary.map(item => ({
           ...item,
           id: undefined,
           trip_id: newTripId,
           created_at: new Date(),
-          updated_at: new Date()
+          updated_at: new Date(),
         }));
 
         await executeDbOperation(
@@ -202,11 +200,14 @@ export class TripService {
         this.logger.debug('Itinerary duplicated', {
           originalTripId,
           newTripId,
-          itemCount: itinerary.length
+          itemCount: itinerary.length,
         });
       }
     } catch (error) {
-      this.logger.error('Failed to duplicate itinerary', error as Error, { originalTripId, newTripId });
+      this.logger.error('Failed to duplicate itinerary', error as Error, {
+        originalTripId,
+        newTripId,
+      });
       // Don't throw - allow trip duplication to succeed even if itinerary fails
     }
   }
@@ -222,12 +223,12 @@ export class TripService {
       );
 
       if (events.length > 0) {
-        const eventsToCopy = events.map((event: any) => ({
+        const eventsToCopy = events.map(event => ({
           ...event,
           id: undefined,
           trip_id: newTripId,
           created_at: new Date(),
-          updated_at: new Date()
+          updated_at: new Date(),
         }));
 
         await executeDbOperation(
@@ -238,11 +239,14 @@ export class TripService {
         this.logger.debug('Events duplicated', {
           originalTripId,
           newTripId,
-          eventCount: events.length
+          eventCount: events.length,
         });
       }
     } catch (error) {
-      this.logger.error('Failed to duplicate events', error as Error, { originalTripId, newTripId });
+      this.logger.error('Failed to duplicate events', error as Error, {
+        originalTripId,
+        newTripId,
+      });
       // Don't throw - allow trip duplication to succeed even if events fail
     }
   }
@@ -250,7 +254,10 @@ export class TripService {
   /**
    * Duplicate trip info sections
    */
-  private async duplicateTripInfoSections(originalTripId: number, newTripId: number): Promise<void> {
+  private async duplicateTripInfoSections(
+    originalTripId: number,
+    newTripId: number
+  ): Promise<void> {
     try {
       const sections = await executeDbOperation(
         () => tripInfoStorage.getTripSections(originalTripId),
@@ -261,11 +268,12 @@ export class TripService {
         // Create assignments for the new trip
         for (const section of sections) {
           await executeDbOperation(
-            () => tripInfoStorage.assignSectionToTrip(
-              newTripId,
-              section.id,
-              section.assignment.orderIndex
-            ),
+            () =>
+              tripInfoStorage.assignSectionToTrip(
+                newTripId,
+                section.id,
+                section.assignment.orderIndex
+              ),
             'Failed to assign section to duplicated trip'
           );
         }
@@ -273,11 +281,14 @@ export class TripService {
         this.logger.debug('Trip info sections duplicated', {
           originalTripId,
           newTripId,
-          sectionCount: sections.length
+          sectionCount: sections.length,
         });
       }
     } catch (error) {
-      this.logger.error('Failed to duplicate trip info sections', error as Error, { originalTripId, newTripId });
+      this.logger.error('Failed to duplicate trip info sections', error as Error, {
+        originalTripId,
+        newTripId,
+      });
       // Don't throw - allow trip duplication to succeed even if sections fail
     }
   }
@@ -323,7 +334,7 @@ export class TripService {
           executeDbOperation(
             () => tripInfoStorage.getTripSections(tripId),
             'Failed to retrieve trip info sections for export'
-          )
+          ),
         ]);
 
         exportData.itinerary = itinerary;
@@ -339,7 +350,6 @@ export class TripService {
       this.logger.info('Trip exported successfully', { tripId, format });
 
       return exportData;
-
     } catch (error) {
       this.logger.error('Failed to export trip', error as Error, { tripId, format });
       throw error;
@@ -358,7 +368,9 @@ export class TripService {
     lines.push('Trip Information');
     lines.push('ID,Name,Slug,Status,Start Date,End Date,Ship Name,Cruise Line');
     const trip = data.trip;
-    lines.push(`${trip.id},"${trip.name}","${trip.slug}","${trip.status}","${trip.start_date}","${trip.end_date}","${trip.ship_name || ''}","${trip.cruise_line || ''}"`);
+    lines.push(
+      `${trip.id},"${trip.name}","${trip.slug}","${trip.status}","${trip.start_date}","${trip.end_date}","${trip.ship_name || ''}","${trip.cruise_line || ''}"`
+    );
     lines.push('');
 
     // Itinerary data
@@ -366,7 +378,9 @@ export class TripService {
       lines.push('Itinerary');
       lines.push('Day,Date,Location,Arrival,Departure');
       data.itinerary.forEach(item => {
-        lines.push(`${item.day},"${item.date || ''}","${item.location_name || ''}","${item.arrival_time || ''}","${item.departure_time || ''}"`);
+        lines.push(
+          `${item.day},"${item.date || ''}","${item.location_name || ''}","${item.arrival_time || ''}","${item.departure_time || ''}"`
+        );
       });
       lines.push('');
     }
@@ -376,7 +390,9 @@ export class TripService {
       lines.push('Events');
       lines.push('Date,Time,Title,Type,Venue');
       data.events.forEach(event => {
-        lines.push(`"${event.date || ''}","${event.time || ''}","${event.title}","${event.type || ''}","${event.venue || ''}"`);
+        lines.push(
+          `"${event.date || ''}","${event.time || ''}","${event.title}","${event.type || ''}","${event.venue || ''}"`
+        );
       });
     }
 
@@ -428,11 +444,12 @@ export class TripService {
       if (existingTrip && overwrite) {
         // Update existing trip
         importedTrip = await executeDbOperation(
-          () => tripStorage.updateTrip(existingTrip.id, {
-            ...tripData,
-            updated_at: new Date(),
-            updated_by: userId
-          }),
+          () =>
+            tripStorage.updateTrip(existingTrip.id, {
+              ...tripData,
+              updated_at: new Date(),
+              updated_by: userId,
+            }),
           'Failed to update existing trip'
         );
 
@@ -441,23 +458,24 @@ export class TripService {
 
         this.logger.info('Existing trip updated for import', {
           tripId: existingTrip.id,
-          slug: tripData.slug
+          slug: tripData.slug,
         });
       } else {
         // Create new trip
         importedTrip = await executeDbOperation(
-          () => tripStorage.createTrip({
-            ...tripData,
-            created_at: new Date(),
-            updated_at: new Date(),
-            created_by: userId
-          }),
+          () =>
+            tripStorage.createTrip({
+              ...tripData,
+              created_at: new Date(),
+              updated_at: new Date(),
+              created_by: userId,
+            }),
           'Failed to create imported trip'
         );
 
         this.logger.info('New trip created from import', {
           tripId: importedTrip.id,
-          slug: tripData.slug
+          slug: tripData.slug,
         });
       }
 
@@ -469,11 +487,10 @@ export class TripService {
         tripId: importedTrip.id,
         slug: tripData.slug,
         overwrite,
-        userId
+        userId,
       });
 
       return importedTrip;
-
     } catch (error) {
       this.logger.error('Failed to import trip', error as Error, { format, overwrite });
       throw error;
@@ -489,22 +506,13 @@ export class TripService {
     try {
       await Promise.all([
         // Clear itinerary
-        supabaseAdmin
-          .from('itinerary')
-          .delete()
-          .eq('trip_id', tripId),
+        supabaseAdmin.from('itinerary').delete().eq('trip_id', tripId),
 
         // Clear events
-        supabaseAdmin
-          .from('events')
-          .delete()
-          .eq('trip_id', tripId),
+        supabaseAdmin.from('events').delete().eq('trip_id', tripId),
 
         // Clear trip section assignments
-        supabaseAdmin
-          .from('trip_section_assignments')
-          .delete()
-          .eq('trip_id', tripId)
+        supabaseAdmin.from('trip_section_assignments').delete().eq('trip_id', tripId),
       ]);
 
       this.logger.debug('Cleared related data for trip', { tripId });
@@ -525,12 +533,12 @@ export class TripService {
 
     // Import itinerary
     if (itinerary && itinerary.length > 0) {
-      const itineraryToImport = itinerary.map((item: any) => ({
+      const itineraryToImport = itinerary.map(item => ({
         ...item,
         id: undefined,
         trip_id: tripId,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       }));
 
       await executeDbOperation(
@@ -543,12 +551,12 @@ export class TripService {
 
     // Import events
     if (events && events.length > 0) {
-      const eventsToImport = events.map((event: any) => ({
+      const eventsToImport = events.map(event => ({
         ...event,
         id: undefined,
         trip_id: tripId,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       }));
 
       await executeDbOperation(
@@ -564,7 +572,7 @@ export class TripService {
     if (tripInfoSections && tripInfoSections.length > 0) {
       this.logger.warn('Trip info sections import not yet implemented', {
         tripId,
-        sectionCount: tripInfoSections.length
+        sectionCount: tripInfoSections.length,
       });
     }
   }
@@ -598,7 +606,7 @@ export class TripService {
         past: 0,
         totalCapacity: 0,
         totalBookings: 0,
-        avgOccupancy: 0
+        avgOccupancy: 0,
       };
 
       if (!trips || trips.length === 0) {
@@ -637,20 +645,19 @@ export class TripService {
         stats.totalBookings += bookings;
 
         if (capacity > 0) {
-          occupancySum += (bookings / capacity * 100);
+          occupancySum += (bookings / capacity) * 100;
           tripsWithCapacity++;
         }
       });
 
       // Calculate average occupancy
       if (tripsWithCapacity > 0) {
-        stats.avgOccupancy = Math.round(occupancySum / tripsWithCapacity * 100) / 100;
+        stats.avgOccupancy = Math.round((occupancySum / tripsWithCapacity) * 100) / 100;
       }
 
-      this.logger.info('Trip statistics fetched', stats);
+      this.logger.info('Trip statistics fetched', stats as unknown as Record<string, unknown>);
 
       return stats;
-
     } catch (error) {
       this.logger.error('Failed to fetch trip statistics', error as Error);
       throw error;
@@ -718,11 +725,10 @@ export class TripService {
       this.logger.info('Admin trips fetched', {
         total: count,
         page: pagination.page,
-        limit: pagination.limit
+        limit: pagination.limit,
       });
 
       return response;
-
     } catch (error) {
       this.logger.error('Failed to fetch admin trips', error as Error, { filters, pagination });
       throw error;
@@ -750,7 +756,7 @@ export class TripService {
       if (!validStatuses.includes(status)) {
         throw ApiError.validationError('Invalid status value', {
           validStatuses,
-          providedStatus: status
+          providedStatus: status,
         });
       }
 
@@ -775,11 +781,12 @@ export class TripService {
 
       // Update the status
       const updatedTrip = await executeDbOperation(
-        () => tripStorage.updateTrip(tripId, {
-          status,
-          updated_at: new Date(),
-          updated_by: userId
-        }),
+        () =>
+          tripStorage.updateTrip(tripId, {
+            status,
+            updated_at: new Date(),
+            updated_by: userId,
+          }),
         'Failed to update trip status'
       );
 
@@ -788,17 +795,16 @@ export class TripService {
         tripId,
         oldStatus: currentStatus,
         newStatus: status,
-        userId
+        userId,
       });
 
       this.logger.info('Trip status updated', {
         tripId,
         oldStatus: currentStatus,
-        newStatus: status
+        newStatus: status,
       });
 
       return updatedTrip;
-
     } catch (error) {
       this.logger.error('Failed to update trip status', error as Error, { tripId, status });
       throw error;
@@ -811,9 +817,9 @@ export class TripService {
   private validateStatusTransition(currentStatus: string, newStatus: string): void {
     // Define allowed transitions
     const allowedTransitions: Record<string, string[]> = {
-      'draft': ['published', 'archived'],
-      'published': ['draft', 'archived'],
-      'archived': ['draft']
+      draft: ['published', 'archived'],
+      published: ['draft', 'archived'],
+      archived: ['draft'],
     };
 
     const allowed = allowedTransitions[currentStatus] || [];
@@ -862,11 +868,8 @@ export class TripService {
   /**
    * Business rule violation error helper
    */
-  private businessRuleViolation(message: string, details?: any): ApiError {
-    return new ApiError(422, message, {
-      code: 'BUSINESS_RULE_VIOLATION' as any,
-      details
-    });
+  private businessRuleViolation(message: string, details?: Record<string, unknown>): ApiError {
+    return ApiError.businessRuleViolation(message, details);
   }
 }
 
