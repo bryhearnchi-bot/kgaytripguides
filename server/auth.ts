@@ -1,7 +1,7 @@
 import * as argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
-import type { Profile } from '@shared/schema';
+import type { Profile } from '../shared/supabase-types';
 import { ApiError, ErrorCode } from './utils/ApiError';
 import { logger } from './logging/logger';
 
@@ -150,7 +150,7 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
       id: payload.userId,
       username: payload.username,
       role: payload.role,
-    } as User;
+    } as Profile;
 
     next();
   } catch (error: unknown) {
@@ -185,7 +185,7 @@ export function requireRole(allowedRoles: string[]) {
         });
       }
 
-      next();
+      return next();
     } catch (error: unknown) {
       if (error instanceof ApiError) {
         // For backwards compatibility, return JSON response
