@@ -1,16 +1,188 @@
 # Trip Wizard - User Flow & Requirements
 
 ## Overview
+
 The purpose of this feature is to enable users to add brand new trips into the database through a graphical interface with AI-powered assistance.
 
 ### Key Components
+
 1. **Add New Trip (Wizard)** - Step-by-step wizard interface for creating new trips
 2. **Update Trip (Tabbed Modal)** - Modal with multiple tabs for editing existing trips
 
 ### AI Integration
+
 - AI generation features will be incorporated to assist with trip creation
 - This is the foundation for future AI components throughout the application
 - Will require implementing an AI plan/integration strategy
+
+## Implementation Checklist
+
+### Database & Schema ✓
+
+- [ ] Create `resort_schedules` table with proper indexes
+- [ ] Remove unused columns from `trips` table (ship_name, cruise_line, status, pricing, includes_info)
+- [ ] Verify `trip_status_id` default is set to 1 (Upcoming)
+- [ ] Verify `resort_id` and `ship_id` foreign keys exist in trips table
+- [ ] Verify venue relationships are ONE-TO-ONE (unique constraints)
+- [ ] Verify amenity relationships are MANY-TO-MANY
+- [ ] Verify itineraries table has correct day_number/order_index logic
+- [ ] Ensure constraint: trips must have EITHER resort_id OR ship_id, never both
+
+### Backend API ✓
+
+- [ ] OpenAI service (URL extraction, PDF extraction, chat, image search)
+- [ ] Image service (download, upload to Supabase, cleanup)
+- [ ] Trip creation endpoints (all wizard steps)
+- [ ] Validation schemas with Zod
+- [ ] Auto-generate schedule/itinerary entries when dates are saved
+- [ ] Slug generation with uniqueness checking
+- [ ] Venue management (create and link to resort/ship)
+- [ ] Amenity management (find-or-create and link)
+- [ ] Error handling with proper cleanup
+- [ ] Authentication/authorization on all endpoints
+
+### Frontend Components ✓
+
+- [x] **TripWizard main component** - `/client/src/components/admin/TripWizard/TripWizard.tsx` (COMPLETE)
+  - Modal wrapper with custom styling
+  - Page routing and navigation
+  - Cleanup on unmount
+- [x] **TripWizardContext for state management** - `/client/src/contexts/TripWizardContext.tsx` (COMPLETE)
+  - Manages wizard state (currentPage, tripType, buildMethod, tripData)
+  - Provides state update functions
+  - Tracks trip type for conditional page rendering
+- [x] **BuildMethodPage (Initial Screen)** - `/client/src/components/admin/TripWizard/BuildMethodPage.tsx` (COMPLETE)
+  - Three build method options (URL/PDF/Manual)
+  - Interactive selection cards with ocean theme
+  - AI-powered badges
+  - Navigation to BasicInfoPage
+- [x] **BasicInfoPage (Page 1)** - `/client/src/components/admin/TripWizard/BasicInfoPage.tsx` (COMPLETE)
+  - Charter company dropdown (SingleDropDownNew)
+  - Trip type selector with visual indicator
+  - Trip name with auto-slug generation
+  - Start/End date pickers with compact calendar
+  - Hero image upload (ImageUploadField)
+  - Description and highlights textareas
+  - Two-column responsive layout
+  - All components styled per TRIP-WIZARD-STYLE-GUIDE.md
+- [ ] ResortDetailsPage (Page 2A)
+- [ ] ShipDetailsPage (Page 2B)
+- [ ] ResortVenuesAmenitiesPage (Page 3A)
+- [ ] ShipVenuesAmenitiesPage (Page 3B)
+- [ ] ResortSchedulePage (Page 4A)
+- [ ] CruiseItineraryPage (Page 4B)
+- [ ] CompletionPage (Page 5)
+- [ ] AIAssistantChat component (collapsible, persistent)
+- [ ] VenueSelector with venue type dropdown
+- [ ] AmenitySelector (multi-select)
+- [ ] LocationPicker for cruise itinerary (search/autocomplete)
+- [x] **ImageUpload component** - Using existing ImageUploadField component (COMPLETE)
+- [ ] WizardNavigation (Next/Back/Save buttons)
+
+### UI/UX ✓
+
+- [ ] "Add New Trip" button on admin trips page
+- [x] **Follow TRIP-WIZARD-STYLE-GUIDE.md** for ALL styling patterns (COMPLETE)
+  - [x] Use ocean theme colors (cyan-400 accents, white/[0.04] backgrounds)
+  - [x] Apply compact spacing system (space-y-2.5, gap-3)
+  - [x] Use standard component sizing (h-10 inputs)
+  - [x] Implement focus states with shadow rings
+  - [x] Follow typography scale (text-xs labels, text-[10px] helpers)
+- [x] Follow AdminFormModal.tsx styling (ocean theme, frosted glass) (COMPLETE)
+- [x] All components use Shadcn/ui (COMPLETE)
+- [x] Loading states for async operations (COMPLETE - implemented in BasicInfoPage)
+- [ ] Progress indicator showing current wizard step
+- [ ] Real-time field validation
+- [ ] Error messages and success confirmations
+- [x] Mobile responsive design (COMPLETE - two-column layout with lg: breakpoint)
+- [ ] Keyboard navigation
+- [ ] ARIA labels for accessibility
+
+### AI Integration ✓
+
+- [ ] URL extraction with OpenAI
+- [ ] PDF extraction with OpenAI Vision
+- [ ] Persistent chat window throughout wizard
+- [ ] Context-aware chat (knows current page)
+- [ ] Streaming responses
+- [ ] Auto-populate form fields from extracted data
+- [ ] Image search and download
+- [ ] Description generation
+- [ ] Venue/amenity suggestions
+- [ ] Store chat history in wizard state
+- [ ] Clear chat history on completion
+
+### Image Handling ✓
+
+- [ ] Download external images to temp storage
+- [ ] Upload to Supabase storage
+- [ ] Delete temp files immediately after upload (finally blocks)
+- [ ] Cleanup on wizard completion
+- [ ] Cleanup on wizard cancel/close
+- [ ] Cleanup on error
+- [ ] Track all temp files in wizard state
+- [ ] Never store external image URLs in database
+- [ ] Update CLAUDE.md with image storage rules
+
+### Data Flow ✓
+
+- [ ] Page 1: Save basic trip info, auto-generate schedule/itinerary entries
+- [ ] Page 2A: Create resort, link to trip via trip.resort_id
+- [ ] Page 2B: Create ship, link to trip via trip.ship_id
+- [ ] Page 3A: Create resort venues (ONE-TO-ONE), link resort amenities (MANY-TO-MANY)
+- [ ] Page 3B: Create ship venues (ONE-TO-ONE), link ship amenities (MANY-TO-MANY)
+- [ ] Page 4A: Fill in resort schedule descriptions and images
+- [ ] Page 4B: Fill in cruise itinerary locations, times, and images
+- [ ] Page 5: Finalize, cleanup temp files, show link to trip page
+
+### Edge Cases & Error Handling ✓
+
+- [ ] AI extraction fails → Allow manual entry
+- [ ] Image upload fails → Show error, allow retry
+- [ ] Wizard cancelled → Cleanup temp files, optionally delete draft trip
+- [ ] Browser closed mid-wizard → Handle on next load or cleanup job
+- [ ] Invalid dates → Validation error
+- [ ] Slug already exists → Append number
+- [ ] No locations found → Allow creating new location
+- [ ] Venue type not found → Allow creating new venue type
+
+### Testing ✓
+
+- [ ] Complete resort workflow end-to-end
+- [ ] Complete cruise workflow end-to-end
+- [ ] Test URL extraction with multiple charter websites
+- [ ] Test PDF extraction
+- [ ] Test AI chat throughout wizard
+- [ ] Test image upload and cleanup
+- [ ] Test navigation (back/forward)
+- [ ] Test cancel/close cleanup
+- [ ] Test venue ONE-TO-ONE constraint
+- [ ] Test amenity MANY-TO-MANY relationship
+- [ ] Test slug uniqueness
+- [ ] Test auto-generation of schedule/itinerary
+- [ ] Test trip guide page tab label (Schedule vs Itinerary)
+
+### Environment & Deployment ✓
+
+- [ ] Add OPENAI_API_KEY to environment variables
+- [ ] Rotate exposed OpenAI key after adding to .env
+- [ ] Verify Supabase storage buckets configured
+- [ ] Verify temp file directory exists and has write permissions
+- [ ] Update existing ship/resort edit modals to match venue/amenity logic
+
+### Documentation ✓
+
+- [x] **TRIP-WIZARD-STYLE-GUIDE.md v1.1** - Comprehensive styling documentation (completed)
+  - [x] Implementation Status section added
+  - [x] Completed components documented (BuildMethodPage, BasicInfoPage)
+  - [x] Component fixes documented (z-index, pointer-events, calendar compact mode)
+  - [x] Pending pages listed
+- [x] Reference style guide in trip-wizard.md (completed)
+- [x] Update Component Library section with DatePicker component (completed)
+- [ ] API endpoint documentation
+- [ ] Code comments in complex functions
+- [x] Update CLAUDE.md with image storage rules (completed)
+- [ ] Implementation notes for future developers
 
 ## User Flow
 
@@ -21,6 +193,7 @@ The purpose of this feature is to enable users to add brand new trips into the d
 **"How would you like to build this trip?"**
 
 Three options:
+
 1. **Import from URL**
    - User provides URL to charter company's trip page
    - AI extracts data automatically
@@ -32,6 +205,7 @@ Three options:
    - No AI assistance (or minimal)
 
 **Selected option determines AI Assistant behavior:**
+
 - URL/PDF → AI Assistant chat window opens after import
 - Manual → Skip AI Assistant or provide minimal help
 
@@ -40,20 +214,24 @@ Three options:
 ### Page 1: New Trip Wizard - Basic Information
 
 #### Step 0 (Conditional): AI Assistant - Persistent Chat Window
+
 **Only appears if user selected "Import from URL" or "Upload PDF"**
 
 **Feature: "AI Trip Builder Assistant"**
 
 **For URL Import:**
+
 - User provides URL to the charter company's trip page
 - AI fetches and extracts all available trip data from HTML
 
 **For PDF Upload:**
+
 - User uploads PDF file
 - AI extracts text and data from PDF document
 - OpenAI Vision can process PDF pages as images if needed
 
 **Common Flow (both URL and PDF):**
+
 - AI does initial extraction of all available trip data
 - **Small collapsible chat window remains available throughout entire wizard**
 - User can iteratively request additional extractions via chat:
@@ -65,6 +243,7 @@ Three options:
 - Chat persists across all wizard pages
 
 **Initial Extraction Includes:**
+
 - Trip name, dates, description, highlights
 - Itinerary (for cruises)
 - Activities (for resorts)
@@ -72,6 +251,7 @@ Three options:
 - Images (for locations/ports)
 
 **UX Flow:**
+
 1. User selects "Import from URL" or "Upload PDF"
 2. Input modal appears (URL input or file upload)
 3. User submits → AI processes (show loading state)
@@ -85,6 +265,7 @@ Three options:
 8. User can still manually edit any field at any time
 
 **Chat Window Features:**
+
 - Collapsible panel (like support widget)
 - Context-aware: knows which wizard page user is on
 - Shows extraction history/log
@@ -92,6 +273,7 @@ Three options:
 - "Re-scan" button for full re-extraction (URL or PDF)
 
 **Technical Notes:**
+
 - Use OpenAI API with streaming for chat responses
 - GPT-4 Vision for PDF processing (treats pages as images)
 - Maintain conversation context across wizard pages
@@ -100,15 +282,19 @@ Three options:
 - Cache original source (HTML or PDF) for follow-up extractions
 
 #### Step 1: Charter Company Selection
+
 - User selects which charter company this trip is with
 - Data source: Charter companies from database
 
 #### Step 2: Trip Type Selection
+
 - User chooses trip type (Resort or Cruise)
 - Data source: `trip_types` table in database
 
 #### Step 3: Trip Details Form
+
 **Required Fields:**
+
 - **Trip Name** (text input)
   - Auto-generate slug from trip name
 - **Start Date** (date picker)
@@ -116,13 +302,16 @@ Three options:
 - **Status**: Automatically set to "Upcoming" (trip_status_id = 1, verify this ID)
 
 #### Step 4: Image Upload
+
 - Use existing image upload modal
 - Upload trip cover image
 
 #### Step 5: Description
+
 - Text area for trip description
 
 #### Step 6: Highlights
+
 - Input for trip highlights
 
 ---
@@ -132,9 +321,11 @@ Three options:
 **Flow branches based on Trip Type selected in Page 1**
 
 #### Page 2A: Resort Details (if Trip Type = Resort)
+
 **Data goes to: `resorts` table**
 
 **Required Fields:**
+
 - **Resort Name** (text input)
 - **Location** (location picker/input)
 - **Capacity** (number input)
@@ -150,6 +341,7 @@ Three options:
   - AI can search/find if not provided
 
 **AI Assistant Tasks for this page:**
+
 - Try to find high-quality image of resort
 - Search for property map URL
 - Search for check-in/check-out times if not provided
@@ -163,16 +355,20 @@ Three options:
 **Data goes to: `resort_venues` and `resort_amenities` junction tables**
 
 #### Resort Venues
+
 **Database Schema:**
+
 - `venues` table - Master list of all venues
 - `venue_types` table - Categories: Dining, Entertainment, Bars, Spa, Recreation
 - `resort_venues` table - Junction table linking resort_id ↔ venue_id
 
 **Important:**
+
 - ⚠️ **Venues are ONE-TO-ONE** - A venue can only be attached to ONE resort
 - Each venue is unique to this specific resort
 
 **UI/UX:**
+
 - **Multi-select tagging interface** (reuse existing component from ship/resort edit modals)
 - Add/create venues for this resort
 - **Assign venue type to each venue** from dropdown:
@@ -182,22 +378,27 @@ Three options:
 - AI searches web for venue list if not in URL/PDF
 
 #### Resort Amenities
+
 **Database Schema:**
+
 - `amenities` table - Master list of amenities (reusable)
 - `resort_amenities` table - Junction table linking resort_id ↔ amenity_id
 
 **Important:**
+
 - ✅ **Amenities are MANY-TO-MANY** - Amenities can be attached to multiple resorts
 - Select from existing amenities pool (e.g., "Pool", "Gym", "WiFi")
 - Standard amenities reused across all resorts
 
 **UI/UX:**
+
 - **Multi-select tagging interface** (reuse existing component from ship/resort edit modals)
 - Select amenities from master list
 - Can add new amenities to master list if needed
 - AI searches web for amenities if not in URL/PDF
 
 **AI Assistant Tasks for this page:**
+
 - Search web for resort venues if not provided
 - Search web for resort amenities if not provided
 - Suggest venue types if current categories don't fit
@@ -206,9 +407,11 @@ Three options:
 ---
 
 #### Page 2B: Ship Details (if Trip Type = Cruise)
+
 **Data goes to: `ships` table**
 
 **Required Fields:**
+
 - **Ship Name** (text input)
 - **Cruise Line** (dropdown or text input)
   - Which cruise line the ship belongs to
@@ -221,6 +424,7 @@ Three options:
   - AI searches cruisemapper.com for deck plans
 
 **AI Assistant Tasks for this page:**
+
 - Try to find high-quality image of ship
 - Search cruisemapper.com for deck plans
 - Generate concise, interesting ship description
@@ -234,16 +438,20 @@ Three options:
 **Data goes to: `ship_venues` and `ship_amenities` junction tables**
 
 #### Ship Venues
+
 **Database Schema:**
+
 - `venues` table - Master list of all venues
 - `venue_types` table - Categories: Dining, Entertainment, Bars, Spa, Recreation
 - `ship_venues` table - Junction table linking ship_id ↔ venue_id
 
 **Important:**
+
 - ⚠️ **Venues are ONE-TO-ONE** - A venue can only be attached to ONE ship
 - Each venue is unique to this specific ship
 
 **UI/UX:**
+
 - **Multi-select tagging interface** (reuse existing component from ship/resort edit modals)
 - Add/create venues for this ship
 - **Assign venue type to each venue** from dropdown:
@@ -253,22 +461,27 @@ Three options:
 - AI searches web for venue list if not in URL/PDF
 
 #### Ship Amenities
+
 **Database Schema:**
+
 - `amenities` table - Master list of amenities (reusable)
 - `ship_amenities` table - Junction table linking ship_id ↔ amenity_id
 
 **Important:**
+
 - ✅ **Amenities are MANY-TO-MANY** - Amenities can be attached to multiple ships
 - Select from existing amenities pool (e.g., "Pool", "Gym", "WiFi")
 - Standard amenities reused across all ships
 
 **UI/UX:**
+
 - **Multi-select tagging interface** (reuse existing component from ship/resort edit modals)
 - Select amenities from master list
 - Can add new amenities to master list if needed
 - AI searches web for amenities if not in URL/PDF
 
 **AI Assistant Tasks for this page:**
+
 - Search web for ship venues if not provided
 - Search web for ship amenities if not provided
 - Suggest venue types if current categories don't fit
@@ -283,10 +496,12 @@ Three options:
 **Create new table: `resort_schedules`**
 
 **Purpose:**
+
 - Resorts stay in one location, so they need a daily schedule instead of an itinerary
 - Shows what activities/events happen each day of the trip
 
 **Required Fields:**
+
 - `trip_id` (foreign key to trips table)
 - `date` (date field, auto-calculated from trip start_date + day_number)
 - `day_number` (integer, starts at 0 for pre-trip activities)
@@ -306,11 +521,13 @@ Three options:
   - Example: "Day 1: Welcome reception and beach party"
 
 **Auto-Generation:**
+
 - ✅ As soon as start_date and end_date are known, automatically create schedule entries for each day
 - Creates one entry per day between start_date and end_date
 - User fills in descriptions and images on this page
 
 **UI/UX:**
+
 - List of days with ability to add/remove/reorder
 - Each day has: day number, date, image, description
 - AI can extract schedule from URL/PDF
@@ -318,6 +535,7 @@ Three options:
 - User can ask AI for different image suggestions
 
 **AI Assistant Tasks:**
+
 - Extract daily schedule from source document
 - Find appropriate images for each day (download to temp → upload to Supabase → delete temp)
 - Generate descriptions if not provided
@@ -332,10 +550,12 @@ Three options:
 **Uses existing table: `itineraries`**
 
 **Purpose:**
+
 - Cruises travel to multiple locations
 - Needs embarkation/disembarkation info, ports, times
 
 **Required Fields (verify existing schema):**
+
 - `trip_id` (foreign key)
 - `date` (date field, auto-calculated from trip start_date + day_number)
 - `day_number` (integer, starts at 0 for pre-cruise activities)
@@ -354,17 +574,20 @@ Three options:
 - `image_url` (text, optional)
 
 **Auto-Generation:**
+
 - ✅ As soon as start_date and end_date are known, automatically create itinerary entries for each day
 - Creates one entry per day between start_date and end_date
 - User fills in locations, times, and descriptions on this page
 
 **Schema Verification Needed:**
+
 - ⚠️ **Check how day_number and order_index are currently used in trip guide page**
 - Ensure day_number starts at 0 (Day 0, Day 1, Day 2...)
 - Ensure order_index starts at 1 (1, 2, 3, 4...)
 - Verify relationship: `order_index = day_number + 1`
 
 **UI/UX:**
+
 - List of ports/days with ability to add/remove/reorder
 - Each day has: location, times, image, description
 - AI can extract itinerary from URL/PDF
@@ -374,6 +597,7 @@ Three options:
   - Shows location details (city, country)
 
 **AI Assistant Tasks:**
+
 - Extract cruise itinerary from source document
 - Match locations to existing locations in database
 - Extract times (arrival, departure, all aboard)
@@ -390,11 +614,13 @@ Three options:
 ### Page 5: Completion & Success
 
 **Purpose:**
+
 - Save all trip data to database
 - Show success message
 - Provide link to view the live trip page
 
 **Actions on This Page:**
+
 1. **Save all data to database:**
    - Trip basic info
    - Resort/Ship details
@@ -419,11 +645,13 @@ Three options:
    - Button: "Back to Dashboard" - Returns to admin dashboard
 
 **Cleanup:**
+
 - ⚠️ Delete all temporary files from local storage
 - Clear wizard state/context
 - Clear AI Assistant chat history
 
 **UI/UX:**
+
 - Success celebration (animation or icon)
 - Clear call-to-action buttons
 - Link prominently displayed
@@ -435,6 +663,7 @@ Three options:
 ### Wizard Entry Point
 
 **Location:** Admin Trips Page (`/client/src/pages/admin/trips.tsx`)
+
 - Add "Add New Trip" button in the header/toolbar
 - Button opens the TripWizard modal/page
 - Only visible to admin users
@@ -444,6 +673,7 @@ Three options:
 **Initial Screen:** Choose build method (URL, PDF, or Manual)
 
 **Page 1:** Basic Trip Information
+
 - Charter company selection
 - Trip type (Resort/Cruise)
 - Trip name, dates, status
@@ -451,18 +681,22 @@ Three options:
 - Description and highlights
 
 **Page 2A/2B:** Resort or Ship Details (workflow fork)
+
 - **2A Resort:** Name, location, capacity, rooms, image, description, property map, check-in/out times
 - **2B Ship:** Name, cruise line, capacity, decks, image, description, deck plans
 
 **Page 3A/3B:** Venues & Amenities (workflow fork)
+
 - **3A Resort:** Resort venues (one-to-one), resort amenities (many-to-many)
 - **3B Ship:** Ship venues (one-to-one), ship amenities (many-to-many)
 
 **Page 4A/4B:** Schedule or Itinerary (workflow fork)
+
 - **4A Resort:** Daily schedule with images and descriptions
 - **4B Cruise:** Port-by-port itinerary with locations, times, images
 
 **Page 5:** Completion & Success
+
 - Save all data
 - Show success message
 - Link to live trip page
@@ -472,7 +706,9 @@ Three options:
 ## Database Schema Changes Required
 
 ### Schema Verification Needed
+
 **Verify the following relationships are correctly set up:**
+
 - Venues: ONE-TO-ONE with resorts/ships (each venue belongs to only one property)
 - Amenities: MANY-TO-MANY with resorts/ships (amenities are reusable)
 - Check foreign key constraints match this logic
@@ -480,6 +716,7 @@ Three options:
 ### Existing UI Components to Update
 
 **Ship/Resort Edit Modals:**
+
 - ⚠️ **Current ship edit modal may not follow correct venue/amenity logic**
 - Need to ensure multi-select components allow:
   - Creating new venues (ONE-TO-ONE)
@@ -488,15 +725,18 @@ Three options:
 - Reuse these updated components in the wizard
 
 **Trip Guide Page (Public View):**
+
 - ⚠️ **Update tab label based on trip type**
 - If trip type = Resort → First tab: "Schedule"
 - If trip type = Cruise → First tab: "Itinerary"
 - Simple conditional: `{tripType === 'resort' ? 'Schedule' : 'Itinerary'}`
 
 ### New Table to Create: `resort_schedules`
+
 **Purpose:** Daily schedule for resort trips (separate from cruise itineraries)
 
 **Columns:**
+
 - `id` (primary key)
 - `trip_id` (foreign key to trips table)
 - `date` (date, auto-calculated from start_date + day_number)
@@ -508,10 +748,12 @@ Three options:
 - `updated_at` (timestamp)
 
 **Indexes:**
+
 - Foreign key on `trip_id`
 - Index on `trip_id, order_index` for sorting
 
 **Auto-Generation Logic:**
+
 - When trip start_date and end_date are saved (Page 1), automatically create schedule entries
 - Calculate number of days: `(end_date - start_date) + 1`
 - Create entries with:
@@ -521,15 +763,18 @@ Three options:
   - description: empty (to be filled by user on Page 4A)
 
 ### Existing Table Verification: `itineraries`
+
 **Purpose:** Port-by-port itinerary for cruise trips
 
 ⚠️ **Need to verify:**
+
 - How `day_number` and `order_index` are currently implemented
 - How they're used in the trip guide page
 - Ensure `day_number` starts at 0
 - Ensure `order_index` starts at 1
 
 **Auto-Generation Logic:**
+
 - When trip start_date and end_date are saved (Page 1), automatically create itinerary entries
 - Calculate number of days: `(end_date - start_date) + 1`
 - Create entries with:
@@ -540,7 +785,9 @@ Three options:
   - times: null (to be filled by user on Page 4B)
 
 ### Trips Table Modifications
+
 **Columns to Remove:**
+
 1. `ship_name` - No longer needed
 2. `cruise_line` - No longer needed
 3. `status` (text column) - Redundant, using `trip_status_id` instead
@@ -548,11 +795,13 @@ Three options:
 5. `includes_info` - No longer needed
 
 **Columns to Keep/Use:**
+
 - `trip_status_id` - This will be the primary status field
   - Default value for new trips: 1 (Upcoming) - **verify this ID**
   - References `trip_statuses` table (should have: Upcoming, Active, Past)
 
 **Critical Foreign Keys (Already Exist):**
+
 - `resort_id` - Links trip to resort (for resort trips)
 - `ship_id` - Links trip to ship (for cruise trips)
 - ⚠️ **IMPORTANT**: Trips must have EITHER resort_id OR ship_id, never both
@@ -562,7 +811,9 @@ Three options:
 ## Technical Implementation Notes
 
 ### Development Approach
+
 **Phase 1: Design Mockups**
+
 - Create HTML mockups for each page/step of the wizard
 - Review and finalize design before implementation
 - Ensure mockups follow the admin style guide (ocean theme, frosted glass effects)
@@ -573,18 +824,64 @@ Three options:
 ### UI Component Guidelines
 
 **Component Library:**
+
 - ✅ Use Shadcn/ui components for all new components
 - ✅ Reuse existing components where possible
+- ✅ **ALWAYS use `SingleDropDownNew`** component for all single-select dropdowns
+  - Located at: `/client/src/components/ui/single-drop-down-new.tsx`
+  - Provides searchable dropdown with icon support
+  - Matches ocean theme styling automatically
+  - Replaces native HTML `<select>` elements
+  - **IMPLEMENTED**: Used in BasicInfoPage for Charter Company and Trip Type selection
+- ✅ **ALWAYS use `DatePicker`** component for date selection
+  - Located at: `/client/src/components/ui/date-picker.tsx`
+  - Provides calendar popup with compact mode for tight spaces
+  - Uses `Calendar` component internally with ocean theme styling
+  - Automatically constrains popup width to match trigger button
+  - **IMPLEMENTED**: Used in BasicInfoPage for Start Date and End Date fields
 
 **Design Reference:**
+
+- **📘 COMPREHENSIVE STYLE GUIDE**: `/client/src/components/admin/TripWizard/TRIP-WIZARD-STYLE-GUIDE.md`
+  - Complete documentation of all styling patterns
+  - Color system (ocean theme with cyan-400 accents)
+  - Spacing system (space-y-2.5, gap-3, etc.)
+  - Typography scale (text-xs labels, text-[10px] helpers)
+  - Component sizing standards (h-10 inputs, icon sizes)
+  - Interactive states (focus rings, hover effects)
+  - Complete code examples
+  - **Use this guide for ALL Trip Wizard pages and future AdminFormModal updates**
 - Follow style of `/client/src/components/admin/AdminFormModal.tsx`
 - Ocean theme with frosted glass effects
 - Consistent with existing admin interface
 - Use same spacing, colors, and interaction patterns
 
+**SingleDropDownNew Usage:**
+
+```typescript
+import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
+import { Ship, Building2, Calendar } from 'lucide-react';
+
+// Example: Trip Type selector
+<SingleDropDownNew
+  label="Trip Type"
+  placeholder="Select a trip type"
+  emptyMessage="No trip type found."
+  options={tripTypes.map(type => ({
+    value: type.id.toString(),
+    label: type.trip_type,
+    icon: type.trip_type.toLowerCase() === 'cruise' ? Ship : Calendar
+  }))}
+  value={selectedValue}
+  onChange={handleChange}
+  required
+/>
+```
+
 ### Temporary File Management Strategy
 
 **Image Download Flow:**
+
 ```typescript
 // 1. AI finds external image URL
 const externalImageUrl = 'https://example.com/image.jpg';
@@ -598,7 +895,6 @@ try {
 
   // 4. Store Supabase URL in database
   await saveToDatabase({ image_url: supabaseUrl });
-
 } finally {
   // 5. Delete temporary file (always executes)
   await deleteTempFile(tempFilePath);
@@ -606,12 +902,14 @@ try {
 ```
 
 **Cleanup Triggers:**
+
 1. **Immediately after Supabase upload** - Delete each temp file right after upload succeeds
 2. **Wizard completion** - Delete all temp files when user clicks "Save" or "Finish"
 3. **Wizard cancel/close** - Delete all temp files when user cancels or closes wizard
 4. **Error handling** - Use `finally` blocks to ensure cleanup even on errors
 
 **Implementation Details:**
+
 - Store temp file paths in wizard state/context
 - Track all temp files created during session
 - Implement cleanup function that iterates through all tracked temp files
@@ -620,7 +918,9 @@ try {
 ### AI Implementation Strategy
 
 #### Recommended Approach: Extract → Preview → Approve
+
 **Why this approach:**
+
 - ✅ User has full visibility into what AI extracted
 - ✅ Prevents bad data from entering database without review
 - ✅ User maintains control over all data
@@ -628,17 +928,21 @@ try {
 - ✅ Can highlight confidence levels for each extracted field
 
 **Alternative approaches considered:**
+
 - Auto-fill without preview: Too risky, no user control
 - Progressive extraction: More complex, less transparent
 
 #### OpenAI Integration
+
 **API Configuration:**
+
 - Add to `.env`: `OPENAI_API_KEY=sk-...`
 - **⚠️ SECURITY NOTE**: The API key provided in chat should be rotated immediately after adding to environment variables (exposed keys should never be used)
 - Use GPT-4 Turbo with Vision for comprehensive extraction
 - Implement structured output using function calling/JSON mode
 
 **Extraction Process:**
+
 1. Fetch HTML content from provided URL
 2. Send to OpenAI with structured extraction prompt
 3. Parse response into structured data
@@ -647,6 +951,7 @@ try {
 6. Auto-populate wizard forms across all pages
 
 **Data to Extract:**
+
 - Basic trip info (name, dates, description)
 - Itinerary (cruises) or activities (resorts)
 - Location details with coordinates
@@ -655,11 +960,13 @@ try {
 - Highlights and key features
 
 **Image Handling:**
+
 - ⚠️ **CRITICAL**: All images must be stored in Supabase storage
 - AI finds external image URLs → Download to temp local storage → Upload to Supabase → Delete local temp file → Use Supabase URL
 - Never store external image URLs in database
 
 **Temporary File Cleanup:**
+
 - Delete local temp files immediately after uploading to Supabase
 - On wizard completion/save: Delete all temporary files from local storage
 - On wizard cancel/close: Delete all temporary files from local storage
@@ -674,6 +981,7 @@ try {
 #### 1.1 Create New Tables
 
 **Migration: `resort_schedules` table**
+
 ```sql
 CREATE TABLE resort_schedules (
   id SERIAL PRIMARY KEY,
@@ -694,6 +1002,7 @@ CREATE INDEX idx_resort_schedules_trip_order ON resort_schedules(trip_id, order_
 #### 1.2 Modify Existing Tables
 
 **Migration: Remove columns from `trips` table**
+
 ```sql
 ALTER TABLE trips
   DROP COLUMN IF EXISTS ship_name,
@@ -704,6 +1013,7 @@ ALTER TABLE trips
 ```
 
 **Verification: Check `trip_status_id` default**
+
 ```sql
 -- Verify trip_statuses table has correct entries
 SELECT * FROM trip_statuses;
@@ -716,6 +1026,7 @@ ALTER TABLE trips ALTER COLUMN trip_status_id SET DEFAULT 1;
 #### 1.3 Verify Junction Table Relationships
 
 **Check venue relationships (ONE-TO-ONE):**
+
 ```sql
 -- Verify resort_venues has unique constraint on venue_id
 -- Verify ship_venues has unique constraint on venue_id
@@ -723,6 +1034,7 @@ ALTER TABLE trips ALTER COLUMN trip_status_id SET DEFAULT 1;
 ```
 
 **Check amenities relationships (MANY-TO-MANY):**
+
 ```sql
 -- Verify resort_amenities allows multiple resorts per amenity
 -- Verify ship_amenities allows multiple ships per amenity
@@ -731,6 +1043,7 @@ ALTER TABLE trips ALTER COLUMN trip_status_id SET DEFAULT 1;
 #### 1.4 Verify `itineraries` Table Schema
 
 **Check day_number and order_index logic:**
+
 ```sql
 -- Review existing itineraries table structure
 -- Ensure day_number starts at 0
@@ -749,16 +1062,17 @@ ALTER TABLE trips ALTER COLUMN trip_status_id SET DEFAULT 1;
 ```typescript
 export class OpenAIService {
   // Initialize OpenAI client
-  async extractFromURL(url: string): Promise<ExtractedTripData>
-  async extractFromPDF(pdfFile: Buffer): Promise<ExtractedTripData>
-  async chatCompletion(messages: ChatMessage[]): Promise<string>
-  async downloadAndUploadImage(imageUrl: string): Promise<string>
-  async findImages(query: string, count: number): Promise<string[]>
-  async generateDescription(context: string): Promise<string>
+  async extractFromURL(url: string): Promise<ExtractedTripData>;
+  async extractFromPDF(pdfFile: Buffer): Promise<ExtractedTripData>;
+  async chatCompletion(messages: ChatMessage[]): Promise<string>;
+  async downloadAndUploadImage(imageUrl: string): Promise<string>;
+  async findImages(query: string, count: number): Promise<string[]>;
+  async generateDescription(context: string): Promise<string>;
 }
 ```
 
 **Key Functions:**
+
 - HTML/PDF extraction using GPT-4
 - Streaming chat responses for AI Assistant
 - Image search and download
@@ -770,15 +1084,16 @@ export class OpenAIService {
 
 ```typescript
 export class ImageService {
-  async downloadToTemp(url: string): Promise<string>
-  async uploadToSupabase(tempPath: string, bucket: string): Promise<string>
-  async deleteTempFile(tempPath: string): Promise<void>
-  async cleanupTempFiles(paths: string[]): Promise<void>
-  async resizeImage(path: string, dimensions: Dimensions): Promise<string>
+  async downloadToTemp(url: string): Promise<string>;
+  async uploadToSupabase(tempPath: string, bucket: string): Promise<string>;
+  async deleteTempFile(tempPath: string): Promise<void>;
+  async cleanupTempFiles(paths: string[]): Promise<void>;
+  async resizeImage(path: string, dimensions: Dimensions): Promise<string>;
 }
 ```
 
 **Key Functions:**
+
 - Download external images to temp storage
 - Upload to Supabase storage
 - Cleanup temp files with error handling
@@ -864,8 +1179,8 @@ interface TripWizardState {
   aiChatHistory: ChatMessage[];
 }
 
-export const TripWizardProvider: React.FC
-export const useTripWizard: () => TripWizardContextType
+export const TripWizardProvider: React.FC;
+export const useTripWizard: () => TripWizardContextType;
 ```
 
 #### 3.2 Main Wizard Component
@@ -878,12 +1193,13 @@ export const TripWizard: React.FC = () => {
   // Page routing
   // Progress indicator
   // Cleanup on unmount
-}
+};
 ```
 
 #### 3.3 Wizard Pages (Components)
 
 **File Structure:**
+
 ```
 client/src/components/admin/TripWizard/
 ├── TripWizard.tsx                    // Main wizard container
@@ -923,10 +1239,11 @@ export const AIAssistantChat: React.FC = () => {
   // Streaming responses
   // Context-aware suggestions
   // Real-time field updates
-}
+};
 ```
 
 **Features:**
+
 - Docked/collapsible panel
 - Shows extraction history
 - Allows follow-up questions
@@ -936,14 +1253,17 @@ export const AIAssistantChat: React.FC = () => {
 #### 3.5 Reusable Components
 
 **Multi-select Components:**
+
 - Use existing multi-select from AdminFormModal.tsx
 - Adapt for venues (create new) and amenities (select existing)
 
 **Image Upload:**
+
 - Use existing image modal
 - Add AI image search integration
 
 **Date/Time Pickers:**
+
 - Use Shadcn/ui date picker
 - Time picker for cruise itinerary
 
@@ -954,6 +1274,7 @@ export const AIAssistantChat: React.FC = () => {
 #### 4.1 Auto-Generate Schedule/Itinerary Entries
 
 **Function: `createScheduleEntries`**
+
 ```typescript
 async function createScheduleEntries(tripId: number, startDate: Date, endDate: Date) {
   const days = calculateDays(startDate, endDate);
@@ -966,7 +1287,7 @@ async function createScheduleEntries(tripId: number, startDate: Date, endDate: D
       day_number: i,
       order_index: i + 1,
       description: '',
-      image_url: null
+      image_url: null,
     });
   }
 
@@ -975,6 +1296,7 @@ async function createScheduleEntries(tripId: number, startDate: Date, endDate: D
 ```
 
 **Function: `createItineraryEntries`**
+
 ```typescript
 async function createItineraryEntries(tripId: number, startDate: Date, endDate: Date) {
   // Similar to createScheduleEntries but for itineraries table
@@ -985,6 +1307,7 @@ async function createItineraryEntries(tripId: number, startDate: Date, endDate: 
 #### 4.2 Slug Generation
 
 **Function: `generateSlug`**
+
 ```typescript
 function generateSlug(name: string): string {
   return name
@@ -1010,9 +1333,14 @@ async function ensureUniqueSlug(slug: string): Promise<string> {
 #### 4.3 Venue/Amenity Management
 
 **Venues (ONE-TO-ONE):**
+
 ```typescript
 // When creating venues, ensure they're unique to this resort/ship
-async function createVenues(propertyId: number, propertyType: 'resort' | 'ship', venues: VenueInput[]) {
+async function createVenues(
+  propertyId: number,
+  propertyType: 'resort' | 'ship',
+  venues: VenueInput[]
+) {
   for (const venue of venues) {
     // Create venue in venues table
     const venueId = await createVenue(venue);
@@ -1028,9 +1356,14 @@ async function createVenues(propertyId: number, propertyType: 'resort' | 'ship',
 ```
 
 **Amenities (MANY-TO-MANY):**
+
 ```typescript
 // When selecting amenities, reuse existing or create new
-async function attachAmenities(propertyId: number, propertyType: 'resort' | 'ship', amenityNames: string[]) {
+async function attachAmenities(
+  propertyId: number,
+  propertyType: 'resort' | 'ship',
+  amenityNames: string[]
+) {
   for (const name of amenityNames) {
     // Find or create amenity
     let amenityId = await findAmenityByName(name);
@@ -1055,6 +1388,7 @@ async function attachAmenities(propertyId: number, propertyType: 'resort' | 'shi
 #### 5.1 OpenAI Integration Testing
 
 **Test Cases:**
+
 - URL extraction with various charter company websites
 - PDF extraction with different PDF formats
 - Chat completion with context
@@ -1064,6 +1398,7 @@ async function attachAmenities(propertyId: number, propertyType: 'resort' | 'shi
 #### 5.2 Image Pipeline Testing
 
 **Test Cases:**
+
 - Download external image to temp
 - Upload to Supabase storage
 - Cleanup temp files
@@ -1073,6 +1408,7 @@ async function attachAmenities(propertyId: number, propertyType: 'resort' | 'shi
 #### 5.3 Wizard Flow Testing
 
 **Test Cases:**
+
 - Complete wizard flow (resort)
 - Complete wizard flow (cruise)
 - Navigate back/forward between pages
@@ -1083,6 +1419,7 @@ async function attachAmenities(propertyId: number, propertyType: 'resort' | 'shi
 #### 5.4 Database Integrity Testing
 
 **Test Cases:**
+
 - Verify venue ONE-TO-ONE constraints
 - Verify amenity MANY-TO-MANY relationships
 - Verify auto-generated schedule/itinerary entries
@@ -1122,7 +1459,7 @@ try {
 
   return res.status(500).json({
     error: 'Failed to create trip',
-    code: 'TRIP_CREATE_ERROR'
+    code: 'TRIP_CREATE_ERROR',
   });
 }
 ```
@@ -1325,35 +1662,45 @@ try {
 ## Technical Risks & Mitigations
 
 ### Risk 1: AI Extraction Accuracy
+
 **Mitigation:**
+
 - Allow manual editing of all extracted data
 - Show confidence scores
 - Provide "Re-scan" functionality
 - Test with multiple charter company websites
 
 ### Risk 2: Temporary File Cleanup Failures
+
 **Mitigation:**
+
 - Multiple cleanup triggers (success, error, cancel)
 - Use finally blocks
 - Background cleanup job for orphaned files
 - Monitor temp directory size
 
 ### Risk 3: Complex State Management
+
 **Mitigation:**
+
 - Use React Context for wizard state
 - Consider Zustand for more complex state
 - Implement save/restore functionality
 - Test navigation edge cases
 
 ### Risk 4: OpenAI API Costs
+
 **Mitigation:**
+
 - Cache extraction results
 - Rate limiting on AI endpoints
 - Monitor usage and costs
 - Use appropriate model sizes (GPT-4 Mini for chat, GPT-4 for extraction)
 
 ### Risk 5: Database Performance
+
 **Mitigation:**
+
 - Index foreign keys properly
 - Batch insert for schedule/itinerary entries
 - Optimize queries with joins
@@ -1364,16 +1711,19 @@ try {
 ## Success Metrics
 
 ### User Experience
+
 - Time to create trip: < 10 minutes (with AI) vs 30 minutes (manual)
 - AI extraction accuracy: > 90% for major fields
 - User satisfaction: Gather feedback after launch
 
 ### Performance
+
 - Wizard load time: < 2 seconds
 - AI extraction time: < 30 seconds for URL, < 60 seconds for PDF
 - Image upload time: < 5 seconds per image
 
 ### Reliability
+
 - Temp file cleanup rate: 100%
 - Wizard completion rate: > 80%
 - Error rate: < 5%
@@ -1383,6 +1733,7 @@ try {
 ## Future Enhancements
 
 ### Phase 2 Features (Post-Launch)
+
 1. **Save as draft** - Allow users to save incomplete wizards
 2. **Template trips** - Duplicate similar trips
 3. **Bulk import** - Import multiple trips from spreadsheet
@@ -1391,6 +1742,7 @@ try {
 6. **Multi-language support** - Extract data in multiple languages
 
 ### Advanced AI Features
+
 1. **Smart scheduling** - AI suggests optimal schedule based on trip type
 2. **Venue recommendations** - AI suggests venues based on resort/ship
 3. **Description enhancement** - AI improves user-written descriptions
@@ -1401,167 +1753,46 @@ try {
 ## Critical Implementation Reminders
 
 ### 🚨 Database Relationships
+
 1. **Trips → Resort/Ship**: When creating a resort (Page 2A), set `trip.resort_id`. When creating a ship (Page 2B), set `trip.ship_id`. NEVER set both.
 2. **Venues**: ONE-TO-ONE relationship. Each venue belongs to only ONE resort or ship. Verify unique constraints exist.
 3. **Amenities**: MANY-TO-MANY relationship. Amenities can be reused across multiple resorts/ships.
 
 ### 🚨 Image Handling
+
 1. **NEVER store external image URLs** in the database. Always download → upload to Supabase → store Supabase URL.
 2. **ALWAYS delete temp files** immediately after uploading to Supabase using `finally` blocks.
 3. **Cleanup triggers**: On completion, on cancel, on close, on error.
 
 ### 🚨 Auto-Generation Logic
+
 1. **Schedule/Itinerary entries** are auto-generated when start_date and end_date are saved on Page 1.
 2. **day_number** starts at 0 (Day 0, Day 1, Day 2...)
 3. **order_index** starts at 1 (1, 2, 3, 4...)
 4. Relationship: `order_index = day_number + 1` (initially)
 
 ### 🚨 AI Integration
+
 1. **OpenAI API key** must be in environment variables, never hardcoded.
 2. **Rotate the exposed API key** from chat immediately after adding to .env.
 3. **Chat window** persists across all wizard pages - store in wizard context.
 4. **Cache** the original source (HTML or PDF) for follow-up AI requests.
 
 ### 🚨 User Experience
+
 1. **Wizard entry point**: "Add New Trip" button on `/admin/trips` page.
 2. **Trip guide page**: Tab label changes based on trip type (Schedule vs Itinerary).
 3. **Completion page**: Shows link to live trip page at `/trip-guide/[slug]`.
 4. **Styling**: Follow `AdminFormModal.tsx` - ocean theme, frosted glass.
 
 ### 🚨 Data Validation
+
 1. **Zod schemas** for all wizard steps - validate on both client and server.
 2. **Slug uniqueness** - append number if slug exists.
 3. **Required fields** - clearly mark and validate before allowing navigation.
 
 ---
 
-## Implementation Checklist
-
-### Database & Schema ✓
-- [ ] Create `resort_schedules` table with proper indexes
-- [ ] Remove unused columns from `trips` table (ship_name, cruise_line, status, pricing, includes_info)
-- [ ] Verify `trip_status_id` default is set to 1 (Upcoming)
-- [ ] Verify `resort_id` and `ship_id` foreign keys exist in trips table
-- [ ] Verify venue relationships are ONE-TO-ONE (unique constraints)
-- [ ] Verify amenity relationships are MANY-TO-MANY
-- [ ] Verify itineraries table has correct day_number/order_index logic
-- [ ] Ensure constraint: trips must have EITHER resort_id OR ship_id, never both
-
-### Backend API ✓
-- [ ] OpenAI service (URL extraction, PDF extraction, chat, image search)
-- [ ] Image service (download, upload to Supabase, cleanup)
-- [ ] Trip creation endpoints (all wizard steps)
-- [ ] Validation schemas with Zod
-- [ ] Auto-generate schedule/itinerary entries when dates are saved
-- [ ] Slug generation with uniqueness checking
-- [ ] Venue management (create and link to resort/ship)
-- [ ] Amenity management (find-or-create and link)
-- [ ] Error handling with proper cleanup
-- [ ] Authentication/authorization on all endpoints
-
-### Frontend Components ✓
-- [ ] TripWizard main component
-- [ ] TripWizardContext for state management
-- [ ] BuildMethodPage (URL/PDF/Manual selection)
-- [ ] BasicInfoPage (Page 1)
-- [ ] ResortDetailsPage (Page 2A)
-- [ ] ShipDetailsPage (Page 2B)
-- [ ] ResortVenuesAmenitiesPage (Page 3A)
-- [ ] ShipVenuesAmenitiesPage (Page 3B)
-- [ ] ResortSchedulePage (Page 4A)
-- [ ] CruiseItineraryPage (Page 4B)
-- [ ] CompletionPage (Page 5)
-- [ ] AIAssistantChat component (collapsible, persistent)
-- [ ] VenueSelector with venue type dropdown
-- [ ] AmenitySelector (multi-select)
-- [ ] LocationPicker for cruise itinerary (search/autocomplete)
-- [ ] ImageUpload component
-- [ ] WizardNavigation (Next/Back/Save buttons)
-
-### UI/UX ✓
-- [ ] "Add New Trip" button on admin trips page
-- [ ] Follow AdminFormModal.tsx styling (ocean theme, frosted glass)
-- [ ] All components use Shadcn/ui
-- [ ] Loading states for all async operations
-- [ ] Progress indicator showing current wizard step
-- [ ] Real-time field validation
-- [ ] Error messages and success confirmations
-- [ ] Mobile responsive design
-- [ ] Keyboard navigation
-- [ ] ARIA labels for accessibility
-
-### AI Integration ✓
-- [ ] URL extraction with OpenAI
-- [ ] PDF extraction with OpenAI Vision
-- [ ] Persistent chat window throughout wizard
-- [ ] Context-aware chat (knows current page)
-- [ ] Streaming responses
-- [ ] Auto-populate form fields from extracted data
-- [ ] Image search and download
-- [ ] Description generation
-- [ ] Venue/amenity suggestions
-- [ ] Store chat history in wizard state
-- [ ] Clear chat history on completion
-
-### Image Handling ✓
-- [ ] Download external images to temp storage
-- [ ] Upload to Supabase storage
-- [ ] Delete temp files immediately after upload (finally blocks)
-- [ ] Cleanup on wizard completion
-- [ ] Cleanup on wizard cancel/close
-- [ ] Cleanup on error
-- [ ] Track all temp files in wizard state
-- [ ] Never store external image URLs in database
-- [ ] Update CLAUDE.md with image storage rules
-
-### Data Flow ✓
-- [ ] Page 1: Save basic trip info, auto-generate schedule/itinerary entries
-- [ ] Page 2A: Create resort, link to trip via trip.resort_id
-- [ ] Page 2B: Create ship, link to trip via trip.ship_id
-- [ ] Page 3A: Create resort venues (ONE-TO-ONE), link resort amenities (MANY-TO-MANY)
-- [ ] Page 3B: Create ship venues (ONE-TO-ONE), link ship amenities (MANY-TO-MANY)
-- [ ] Page 4A: Fill in resort schedule descriptions and images
-- [ ] Page 4B: Fill in cruise itinerary locations, times, and images
-- [ ] Page 5: Finalize, cleanup temp files, show link to trip page
-
-### Edge Cases & Error Handling ✓
-- [ ] AI extraction fails → Allow manual entry
-- [ ] Image upload fails → Show error, allow retry
-- [ ] Wizard cancelled → Cleanup temp files, optionally delete draft trip
-- [ ] Browser closed mid-wizard → Handle on next load or cleanup job
-- [ ] Invalid dates → Validation error
-- [ ] Slug already exists → Append number
-- [ ] No locations found → Allow creating new location
-- [ ] Venue type not found → Allow creating new venue type
-
-### Testing ✓
-- [ ] Complete resort workflow end-to-end
-- [ ] Complete cruise workflow end-to-end
-- [ ] Test URL extraction with multiple charter websites
-- [ ] Test PDF extraction
-- [ ] Test AI chat throughout wizard
-- [ ] Test image upload and cleanup
-- [ ] Test navigation (back/forward)
-- [ ] Test cancel/close cleanup
-- [ ] Test venue ONE-TO-ONE constraint
-- [ ] Test amenity MANY-TO-MANY relationship
-- [ ] Test slug uniqueness
-- [ ] Test auto-generation of schedule/itinerary
-- [ ] Test trip guide page tab label (Schedule vs Itinerary)
-
-### Environment & Deployment ✓
-- [ ] Add OPENAI_API_KEY to environment variables
-- [ ] Rotate exposed OpenAI key after adding to .env
-- [ ] Verify Supabase storage buckets configured
-- [ ] Verify temp file directory exists and has write permissions
-- [ ] Update existing ship/resort edit modals to match venue/amenity logic
-
-### Documentation ✓
-- [ ] API endpoint documentation
-- [ ] Code comments in complex functions
-- [ ] Update CLAUDE.md with image storage rules (completed)
-- [ ] Implementation notes for future developers
-
 ---
 
-*End of Technical Implementation Plan*
+_End of Technical Implementation Plan_
