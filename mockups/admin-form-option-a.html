@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Form Concept A - Aurora Glass</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            midnight: '#0f1629',
+            midnightSoft: '#10192f',
+            cyanPulse: '#22d3ee',
+            aquaGlow: '#48cae4',
+            magentaWave: '#c77dff',
+            slateInk: '#94a3b8',
+            panelGlass: 'rgba(15, 23, 42, 0.82)',
+            panelOutline: 'rgba(148, 163, 184, 0.18)'
+          },
+          boxShadow: {
+            panel: '0 34px 90px rgba(8, 15, 35, 0.55)',
+            insetGlow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+          },
+          borderRadius: {
+            xlplus: '24px'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .form-field input,
+    .form-field textarea,
+    .form-field select {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 23, 42, 0.62);
+      color: rgba(226, 232, 240, 0.95);
+      padding: 0 16px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .form-field textarea {
+      min-height: 110px;
+      padding: 14px 16px;
+      resize: vertical;
+    }
+    .form-field input::placeholder,
+    .form-field textarea::placeholder,
+    .form-field select::placeholder {
+      color: rgba(148, 163, 184, 0.55);
+    }
+    .form-field input:focus,
+    .form-field textarea:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: rgba(72, 202, 228, 0.85);
+      box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.18);
+      background: rgba(15, 23, 42, 0.82);
+    }
+  </style>
+</head>
+<body class="bg-[radial-gradient(circle_at_top,_#172544,_#070a17)] text-white font-sans">
+  <div class="min-h-screen px-6 py-12">
+    <div class="max-w-5xl mx-auto space-y-6">
+      <!-- Top Bar -->
+      <header class="rounded-xlplus border border-panelOutline bg-gradient-to-r from-[#0f1f3f] via-[#13264c] to-[#0f1f3f] px-6 py-5 shadow-panel shadow-insetGlow flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.32em] text-slateInk/60">Admin Control</p>
+          <h1 class="mt-1 text-2xl font-semibold">Create Cruise Experience</h1>
+          <p class="text-xs text-slateInk/70 mt-1">Auto-drafted from AI import · Completeness: 72%</p>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em]">
+          <button class="rounded-full border border-white/12 px-3.5 py-1.5 text-slateInk/75 hover:text-white hover:border-cyanPulse/40">Save Draft</button>
+          <button class="rounded-full bg-gradient-to-r from-cyanPulse via-aquaGlow to-magentaWave px-4.5 py-1.5 text-midnight shadow-panel">Publish</button>
+        </div>
+      </header>
+
+      <!-- Form Body -->
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <section class="rounded-xlplus border border-panelOutline bg-panelGlass backdrop-blur-xl shadow-panel shadow-insetGlow">
+          <div class="border-b border-white/10 px-8 py-5">
+            <nav class="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.24em] text-slateInk/60">
+              <span class="rounded-full bg-cyanPulse/15 px-3 py-1 text-cyanPulse">Details</span>
+              <span class="rounded-full bg-white/5 px-3 py-1 text-white/70">Itinerary</span>
+              <span class="rounded-full bg-white/5 px-3 py-1 text-white/50">Entertainment</span>
+            </nav>
+          </div>
+
+          <div class="px-8 py-6 space-y-6">
+            <div class="grid gap-4 md:grid-cols-2 form-field">
+              <label class="text-sm font-semibold text-white/85">
+                Trip Name
+                <input type="text" value="Atlantis Mediterranean Odyssey" />
+              </label>
+              <label class="text-sm font-semibold text-white/85">
+                Charter Company
+                <select>
+                  <option>Atlantis Events</option>
+                  <option>RSVP Vacations</option>
+                  <option>VACAYA</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-3 form-field">
+              <label class="text-sm font-semibold text-white/85">
+                Start Date
+                <input type="date" value="2025-05-11" />
+              </label>
+              <label class="text-sm font-semibold text-white/85">
+                End Date
+                <input type="date" value="2025-05-18" />
+              </label>
+              <label class="text-sm font-semibold text-white/85">
+                Status
+                <select>
+                  <option>Upcoming</option>
+                  <option>Draft</option>
+                  <option>Past</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+              <div class="form-field">
+                <label class="text-sm font-semibold text-white/85">
+                  Hero Tagline
+                  <input type="text" placeholder="Sail the Aegean with world-class LGBTQ+ entertainment" />
+                </label>
+                <label class="mt-4 text-sm font-semibold text-white/85">
+                  Description
+                  <textarea placeholder="Share the highlight experiences for guests..."></textarea>
+                </label>
+              </div>
+
+              <aside class="rounded-2xl border border-white/10 bg-black/25 p-4 space-y-4">
+                <div class="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-slateInk/60">
+                  <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-cyanPulse/15 text-cyanPulse">IMG</span>
+                  <div>
+                    <p class="text-xs text-slateInk/60">Hero image</p>
+                    <p class="text-sm font-semibold text-white/85">mediterranean-hero.jpg</p>
+                  </div>
+                </div>
+                <div class="image-preview h-36 rounded-xl border-2 border-dashed border-cyanPulse/35 bg-gradient-to-br from-cyanPulse/20 via-white/5 to-magentaWave/10 flex items-center justify-center text-xs text-cyanPulse/80">
+                  1200×800 • Drop new asset or fetch via URL
+                </div>
+                <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
+                  <button class="rounded-full border border-cyanPulse/40 px-3 py-1 text-white">Change</button>
+                  <button class="rounded-full border border-white/12 px-3 py-1 text-slateInk/70">Remove</button>
+                </div>
+              </aside>
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-black/20 p-4 space-y-4">
+              <header class="flex items-center justify-between text-sm text-slateInk/70">
+                <div>
+                  <p class="text-xs uppercase tracking-[0.28em] text-slateInk/55">Highlights</p>
+                  <h2 class="mt-1 text-base font-semibold text-white/90">Marquee touchpoints</h2>
+                </div>
+                <button class="rounded-full border border-cyanPulse/40 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-cyanPulse">Magic wand</button>
+              </header>
+              <div class="grid gap-3 md:grid-cols-2 text-xs text-slateInk/65">
+                <div class="rounded-xl border border-white/10 bg-black/15 p-3 space-y-2">
+                  <p class="text-[10px] uppercase tracking-[0.3em] text-white/40">Highlight 01</p>
+                  <h3 class="text-sm font-semibold text-white/90">Santorini Sunset Deck Party</h3>
+                  <p>Assistant sourced from import • DJ Kate Monroe confirmed</p>
+                </div>
+                <div class="rounded-xl border border-dashed border-white/15 bg-black/10 p-3 text-center flex flex-col justify-center">
+                  <p class="text-xs text-slateInk/60">Add highlight or ask assistant for more inspiration</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="space-y-6">
+          <div class="rounded-xlplus border border-panelOutline bg-panelGlass backdrop-blur-xl shadow-panel shadow-insetGlow p-5 space-y-4">
+            <header class="flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.3em] text-cyanPulse/70">Snapshot</p>
+                <h2 class="text-sm font-semibold">Live Preview</h2>
+              </div>
+              <button class="rounded-full border border-white/12 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slateInk/65">Switch view</button>
+            </header>
+            <div class="rounded-2xl border border-white/10 bg-black/20 p-4 space-y-3 text-xs text-slateInk/70">
+              <div class="flex items-center gap-3">
+                <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-cyanPulse/35 via-white/10 to-magentaWave/20"></div>
+                <div>
+                  <p class="text-sm font-semibold text-white/90">Atlantis Mediterranean Odyssey</p>
+                  <p class="text-xs">May 11 – May 18 · Celebrity Apex</p>
+                </div>
+              </div>
+              <p class="leading-relaxed">Explore Mykonos, Santorini, Valletta, and Barcelona with curated entertainment each evening.</p>
+              <button class="w-full rounded-lg bg-gradient-to-r from-cyanPulse to-aquaGlow px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-midnight">View trip page</button>
+            </div>
+          </div>
+
+          <div class="rounded-xlplus border border-panelOutline bg-panelGlass backdrop-blur-xl shadow-panel shadow-insetGlow p-5 space-y-4">
+            <header class="flex items-center justify-between text-xs text-slateInk/70">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.3em] text-cyanPulse/70">AI Assistant</p>
+                <h2 class="text-sm font-semibold text-white/85">Extraction Log</h2>
+              </div>
+              <button class="rounded-full border border-cyanPulse/40 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white">Re-scan</button>
+            </header>
+            <div class="space-y-3 text-xs text-slateInk/70">
+              <div class="rounded-xl border border-white/10 bg-black/18 p-3">
+                <p class="text-cyanPulse font-semibold">Assistant:</p>
+                <p>Parsed hero copy, 6 highlights, 4 port descriptions from URL import.</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-black/18 p-3">
+                <p class="text-white/80 font-semibold">You:</p>
+                <p>“Confirm embarkation call time from deck plans.”</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-black/18 p-3">
+                <p class="text-cyanPulse font-semibold">Assistant:</p>
+                <p>Boarding begins 11:30 AM (Gate 4). Added note to itinerary.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs">
+              <input type="text" placeholder="Ask for pricing table extraction..." class="h-10 flex-1 rounded-full border border-white/12 bg-black/20 px-3 text-sm text-white placeholder:text-slateInk/65 focus:border-cyanPulse/40 focus:outline-none" />
+              <button class="h-10 rounded-full bg-gradient-to-r from-cyanPulse to-aquaGlow px-4 text-sm font-semibold text-midnight">Send</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -12,7 +12,6 @@ import { ImageUploadField } from './ImageUploadField';
 import { api } from '@/lib/api-client';
 import { MapPin, Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
 
-
 interface Location {
   id?: number;
   name: string;
@@ -34,7 +33,10 @@ interface LocationManagementProps {
   onSelectLocation?: (location: LocationWithType) => void;
 }
 
-export default function LocationManagement({ showSelectMode = false, onSelectLocation }: LocationManagementProps = {}) {
+export default function LocationManagement({
+  showSelectMode = false,
+  onSelectLocation,
+}: LocationManagementProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,7 +62,7 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
       const response = await api.get('/api/locations');
       if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
-    }
+    },
   });
 
   // Create location mutation
@@ -79,13 +81,13 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
         description: 'Location created successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to create location',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update location mutation
@@ -104,13 +106,13 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
         description: 'Location updated successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to update location',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Delete location mutation
@@ -137,7 +139,7 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
           : 'Failed to delete location',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const resetForm = () => {
@@ -168,9 +170,10 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
     }
   };
 
-  const filteredLocations = locations.filter(location =>
-    location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.country.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLocations = locations.filter(
+    location =>
+      location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      location.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getRegionIcon = (country: string) => {
@@ -186,14 +189,16 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
               <MapPin className="h-6 w-6" />
               Locations & Destinations
             </h1>
-            <p className="text-sm text-white/60">Manage travel destinations across Atlantis sailings.</p>
+            <p className="text-sm text-white/60">
+              Manage travel destinations across Atlantis sailings.
+            </p>
           </div>
           <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               placeholder="Search locations by name or country"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -203,8 +208,12 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
       <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
         <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Locations ({filteredLocations.length})</h2>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Across all destinations</p>
+            <h2 className="text-lg font-semibold text-white">
+              All Locations ({filteredLocations.length})
+            </h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+              Across all destinations
+            </p>
           </div>
           <Button
             onClick={() => {
@@ -222,7 +231,11 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
         {filteredLocations.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <MapPin className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No locations match your search.' : 'Get started by adding your first location.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No locations match your search.'
+                : 'Get started by adding your first location.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -265,7 +278,8 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
                       )}
                       {location.coordinates && (
                         <p className="text-xs text-white/40">
-                          {location.coordinates.lat.toFixed(4)}, {location.coordinates.lng.toFixed(4)}
+                          {location.coordinates.lat.toFixed(4)},{' '}
+                          {location.coordinates.lng.toFixed(4)}
                         </p>
                       )}
                     </div>
@@ -299,13 +313,17 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
               {
                 label: 'Delete Location',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (location) => handleDelete(location.id!),
+                onClick: location => handleDelete(location.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No locations match your search.' : 'Get started by adding your first location.'}
+            emptyMessage={
+              searchTerm
+                ? 'No locations match your search.'
+                : 'Get started by adding your first location.'
+            }
           />
         )}
 
@@ -324,7 +342,9 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
         onSubmit={handleSubmit}
         primaryAction={{
           label: editingLocation ? 'Save Changes' : 'Create Location',
-          loading: editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending,
+          loading: editingLocation
+            ? updateLocationMutation.isPending
+            : createLocationMutation.isPending,
           loadingLabel: editingLocation ? 'Saving...' : 'Creating...',
         }}
         secondaryAction={{
@@ -332,7 +352,7 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
           onClick: () => handleModalOpenChange(false),
         }}
         maxWidthClassName="max-w-3xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
       >
         {/* Basic Information */}
         <div className="space-y-2">
@@ -340,7 +360,7 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
             required
             placeholder="Enter location name"
           />
@@ -351,7 +371,7 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
           <Input
             id="country"
             value={formData.country}
-            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+            onChange={e => setFormData({ ...formData, country: e.target.value })}
             required
             placeholder="Enter country name"
           />
@@ -363,7 +383,7 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
           <Textarea
             id="description"
             value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
             rows={4}
             placeholder="Describe this travel destination..."
           />
@@ -377,13 +397,15 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
             type="number"
             step="any"
             value={formData.coordinates?.lat?.toString() || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              coordinates: {
-                lat: parseFloat(e.target.value) || 0,
-                lng: formData.coordinates?.lng || 0,
-              },
-            })}
+            onChange={e =>
+              setFormData({
+                ...formData,
+                coordinates: {
+                  lat: parseFloat(e.target.value) || 0,
+                  lng: formData.coordinates?.lng || 0,
+                },
+              })
+            }
             placeholder="e.g., 40.7128"
           />
         </div>
@@ -395,13 +417,15 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
             type="number"
             step="any"
             value={formData.coordinates?.lng?.toString() || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              coordinates: {
-                lat: formData.coordinates?.lat || 0,
-                lng: parseFloat(e.target.value) || 0,
-              },
-            })}
+            onChange={e =>
+              setFormData({
+                ...formData,
+                coordinates: {
+                  lat: formData.coordinates?.lat || 0,
+                  lng: parseFloat(e.target.value) || 0,
+                },
+              })
+            }
             placeholder="e.g., -74.0060"
           />
         </div>
@@ -412,10 +436,12 @@ export default function LocationManagement({ showSelectMode = false, onSelectLoc
           <ImageUploadField
             label="Location Image"
             value={formData.imageUrl || ''}
-            onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
+            onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
             imageType="locations"
             placeholder="No location image uploaded"
-            disabled={editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending}
+            disabled={
+              editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending
+            }
           />
         </div>
       </AdminFormModal>

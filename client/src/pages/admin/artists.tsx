@@ -14,7 +14,6 @@ import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
 
-
 interface TalentCategory {
   id: number;
   category: string;
@@ -60,11 +59,15 @@ export default function ArtistsManagement() {
       return response.json();
     },
     ...adminQueryOptions,
-    placeholderData: []
+    placeholderData: [],
   });
 
   // Fetch artists with optimized caching
-  const { data: artists = [], isLoading, isPlaceholderData } = useQuery<Talent[]>({
+  const {
+    data: artists = [],
+    isLoading,
+    isPlaceholderData,
+  } = useQuery<Talent[]>({
     queryKey: ['talent'],
     queryFn: async () => {
       const response = await api.get('/api/talent');
@@ -72,7 +75,7 @@ export default function ArtistsManagement() {
       return response.json();
     },
     ...adminQueryOptions,
-    placeholderData: []
+    placeholderData: [],
   });
 
   // Create artist mutation
@@ -91,13 +94,13 @@ export default function ArtistsManagement() {
         description: 'Artist created successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to create artist',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update artist mutation
@@ -117,13 +120,13 @@ export default function ArtistsManagement() {
         description: 'Artist updated successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to update artist',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Delete artist mutation
@@ -150,7 +153,7 @@ export default function ArtistsManagement() {
           : 'Failed to delete artist',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Create talent category mutation
@@ -160,7 +163,7 @@ export default function ArtistsManagement() {
       if (!response.ok) throw new Error('Failed to create talent category');
       return response.json();
     },
-    onSuccess: (newCategory) => {
+    onSuccess: newCategory => {
       queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
       // Update form data to use the new category
       setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
@@ -169,13 +172,13 @@ export default function ArtistsManagement() {
         description: 'Talent category created successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to create talent category',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const resetForm = () => {
@@ -234,19 +237,23 @@ export default function ArtistsManagement() {
     }
   };
 
-  const filteredArtists = artists.filter(artist =>
-    artist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    artist.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredArtists = artists.filter(
+    artist =>
+      artist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      artist.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getCategoryIcon = (category: string) => {
     switch (category.toLowerCase()) {
       case 'dj':
-      case 'djs': return <Music size={16} />;
+      case 'djs':
+        return <Music size={16} />;
       case 'drag':
       case 'comedy':
-      case 'comedian': return <Mic size={16} />;
-      default: return <Users size={16} />;
+      case 'comedian':
+        return <Mic size={16} />;
+      default:
+        return <Users size={16} />;
     }
   };
 
@@ -264,14 +271,16 @@ export default function ArtistsManagement() {
               <Users className="h-6 w-6" />
               Artists & Talent Management
             </h1>
-            <p className="text-sm text-white/60">Manage entertainment roster across Atlantis sailings.</p>
+            <p className="text-sm text-white/60">
+              Manage entertainment roster across Atlantis sailings.
+            </p>
           </div>
           <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               placeholder="Search artists by name or category"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -301,7 +310,11 @@ export default function ArtistsManagement() {
         {filteredArtists.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <Users className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No artists match your search.' : 'Get started by adding your first artist.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No artists match your search.'
+                : 'Get started by adding your first artist.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -351,9 +364,7 @@ export default function ArtistsManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: (value) => (
-                  <p className="font-bold text-xs text-white">{value}</p>
-                ),
+                render: value => <p className="font-bold text-xs text-white">{value}</p>,
               },
               {
                 key: 'category',
@@ -374,10 +385,8 @@ export default function ArtistsManagement() {
                 priority: 'medium',
                 sortable: false,
                 minWidth: 250,
-                render: (value) => (
-                  <span className="text-white/70 line-clamp-2">
-                    {value || 'No bio'}
-                  </span>
+                render: value => (
+                  <span className="text-white/70 line-clamp-2">{value || 'No bio'}</span>
                 ),
               },
               {
@@ -386,10 +395,8 @@ export default function ArtistsManagement() {
                 priority: 'low',
                 sortable: false,
                 minWidth: 200,
-                render: (value) => (
-                  <span className="text-xs text-white/60">
-                    {value || 'Not specified'}
-                  </span>
+                render: value => (
+                  <span className="text-xs text-white/60">{value || 'Not specified'}</span>
                 ),
               },
             ]}
@@ -402,13 +409,17 @@ export default function ArtistsManagement() {
               {
                 label: 'Delete Artist',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (artist) => handleDelete(artist.id!),
+                onClick: artist => handleDelete(artist.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No artists match your search.' : 'Get started by adding your first artist.'}
+            emptyMessage={
+              searchTerm
+                ? 'No artists match your search.'
+                : 'Get started by adding your first artist.'
+            }
           />
         )}
 
@@ -432,14 +443,14 @@ export default function ArtistsManagement() {
         primaryAction={{
           label: editingArtist ? 'Save Changes' : 'Create Artist',
           loading: editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending,
-          loadingLabel: editingArtist ? 'Saving...' : 'Creating...'
+          loadingLabel: editingArtist ? 'Saving...' : 'Creating...',
         }}
         secondaryAction={{
           label: 'Cancel',
-          onClick: () => handleModalOpenChange(false)
+          onClick: () => handleModalOpenChange(false),
         }}
         maxWidthClassName="max-w-3xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
       >
         {/* Basic Information */}
         <div className="space-y-2">
@@ -447,7 +458,7 @@ export default function ArtistsManagement() {
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
             required
             placeholder="Enter artist name"
           />
@@ -458,7 +469,7 @@ export default function ArtistsManagement() {
           <SingleSelectWithCreate
             options={talentCategories.map(cat => ({ id: cat.id, name: cat.category }))}
             value={formData.talentCategoryId}
-            onValueChange={(value) => setFormData({ ...formData, talentCategoryId: Number(value) })}
+            onValueChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
             onCreateNew={createCategoryMutation.mutateAsync}
             placeholder="Select talent category..."
             searchPlaceholder="Search categories..."
@@ -472,7 +483,7 @@ export default function ArtistsManagement() {
           <Textarea
             id="bio"
             value={formData.bio || ''}
-            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            onChange={e => setFormData({ ...formData, bio: e.target.value })}
             rows={4}
             placeholder="Artist biography and background..."
           />
@@ -483,7 +494,7 @@ export default function ArtistsManagement() {
           <Input
             id="knownFor"
             value={formData.knownFor || ''}
-            onChange={(e) => setFormData({ ...formData, knownFor: e.target.value })}
+            onChange={e => setFormData({ ...formData, knownFor: e.target.value })}
             placeholder="e.g., RuPaul's Drag Race, Comedy Central"
           />
         </div>
@@ -494,10 +505,12 @@ export default function ArtistsManagement() {
           <Input
             id="instagram"
             value={formData.socialLinks?.instagram || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              socialLinks: { ...formData.socialLinks, instagram: e.target.value }
-            })}
+            onChange={e =>
+              setFormData({
+                ...formData,
+                socialLinks: { ...formData.socialLinks, instagram: e.target.value },
+              })
+            }
             placeholder="https://instagram.com/..."
           />
         </div>
@@ -507,7 +520,7 @@ export default function ArtistsManagement() {
           <Input
             id="website"
             value={formData.website || ''}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            onChange={e => setFormData({ ...formData, website: e.target.value })}
             placeholder="https://..."
           />
         </div>
@@ -518,10 +531,12 @@ export default function ArtistsManagement() {
           <ImageUploadField
             label="Profile Image"
             value={formData.profileImageUrl || ''}
-            onChange={(url) => setFormData({ ...formData, profileImageUrl: url || '' })}
+            onChange={url => setFormData({ ...formData, profileImageUrl: url || '' })}
             imageType="talent"
             placeholder="No profile image uploaded"
-            disabled={editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending}
+            disabled={
+              editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending
+            }
           />
         </div>
       </AdminFormModal>

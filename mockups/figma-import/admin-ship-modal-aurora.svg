@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1050" height="760" viewBox="0 0 1050 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1050" height="760" rx="32" fill="#0F172A" />
+  <rect x="30" y="30" width="990" height="700" rx="26" fill="#16233C" stroke="#1E2D4D" stroke-width="2" />
+
+  <!-- Header -->
+  <rect x="30" y="30" width="990" height="118" rx="26" fill="#172B4D" />
+  <text x="70" y="78" fill="#89A2D2" font-family="Inter" font-size="12" letter-spacing="8">SHIP MANAGER</text>
+  <text x="70" y="112" fill="white" font-family="Inter" font-size="24" font-weight="600">Edit Ship: Resilient Lady</text>
+  <text x="70" y="140" fill="#89A2D2" font-family="Inter" font-size="14">Update ship profile, amenities, and deck resources</text>
+
+  <!-- Header buttons -->
+  <g font-family="Inter" font-size="11" font-weight="600" letter-spacing="3" text-anchor="middle">
+    <rect x="775" y="96" width="90" height="32" rx="16" fill="#203152" stroke="#3B4C73" />
+    <text x="820" y="117" fill="#D0DCF8">SAVE</text>
+    <rect x="875" y="92" width="110" height="40" rx="20" fill="#22D3EE" />
+    <text x="930" y="116" fill="#08304A">UPDATE</text>
+    <rect x="995" y="102" width="26" height="26" rx="13" fill="#203152" stroke="#3B4C73" />
+    <text x="1008" y="121" fill="#A9B8DB">✕</text>
+  </g>
+
+  <!-- Basic Information section -->
+  <text x="70" y="186" fill="#6E7FA7" font-family="Inter" font-size="11" letter-spacing="7">BASIC INFORMATION</text>
+  <text x="70" y="212" fill="white" font-family="Inter" font-size="18" font-weight="600">Ship Details</text>
+  <g font-family="Inter" font-size="12" fill="#C4CFE7">
+    <text x="70" y="246">Ship Name</text>
+    <text x="370" y="246">Cruise Line</text>
+    <text x="70" y="304">Capacity</text>
+    <text x="370" y="304">Decks</text>
+    <text x="70" y="362">Deck Plans URL</text>
+  </g>
+  <g fill="#1C2F4A" stroke="#243659" stroke-width="1.5" rx="12">
+    <rect x="70" y="254" width="260" height="44" rx="12" />
+    <rect x="370" y="254" width="260" height="44" rx="12" />
+    <rect x="70" y="312" width="260" height="44" rx="12" />
+    <rect x="370" y="312" width="260" height="44" rx="12" />
+    <rect x="70" y="370" width="560" height="44" rx="12" />
+  </g>
+  <text x="660" y="394" fill="#22D3EE" font-family="Inter" font-size="11" font-weight="600" letter-spacing="4">AI ASSIST</text>
+
+  <!-- Hero & Description -->
+  <text x="70" y="430" fill="#6E7FA7" font-family="Inter" font-size="11" letter-spacing="7">MEDIA & OVERVIEW</text>
+  <g>
+    <rect x="70" y="450" width="260" height="150" rx="18" fill="#11213C" stroke="#2A3F66" stroke-dasharray="6 6" />
+    <text x="200" y="528" fill="#8FA0C6" font-family="Inter" font-size="12" text-anchor="middle">Drag & drop or fetch hero image</text>
+    <rect x="70" y="610" width="120" height="34" rx="17" fill="#203152" stroke="#41527A" />
+    <text x="130" y="632" fill="#D0DCF8" font-family="Inter" font-size="11" letter-spacing="3" text-anchor="middle">UPLOAD</text>
+    <rect x="200" y="610" width="130" height="34" rx="17" fill="#203152" stroke="#41527A" />
+    <text x="265" y="632" fill="#D0DCF8" font-family="Inter" font-size="11" letter-spacing="3" text-anchor="middle">FROM URL</text>
+    <rect x="70" y="654" width="260" height="70" rx="12" fill="#11203A" stroke="#2A3F66" stroke-dasharray="5 5" />
+    <text x="85" y="678" fill="#8FA0C6" font-family="Inter" font-size="11">Current Image</text>
+    <text x="85" y="695" fill="#CAD4F0" font-family="Inter" font-size="12">Valiant%20lady-2252×1266.png</text>
+  </g>
+
+  <text x="370" y="470" fill="#C4CFE7" font-family="Inter" font-size="12">Description</text>
+  <rect x="370" y="480" width="560" height="180" rx="12" fill="#11203A" stroke="#2A3F66" />
+  <text x="390" y="512" fill="#9AA9C7" font-family="Inter" font-size="13">
+    Resilient Lady is the third ship in Virgin Voyages' fleet,
+  </text>
+  <text x="390" y="532" fill="#9AA9C7" font-family="Inter" font-size="13">
+    continuing the brand's commitment to sustainable cruising with
+  </text>
+  <text x="390" y="552" fill="#9AA9C7" font-family="Inter" font-size="13">
+    innovative design and experiences.
+  </text>
+
+  <!-- Footer -->
+  <rect x="30" y="650" width="990" height="80" fill="#172B4D" />
+  <text x="70" y="696" fill="#8FA0C6" font-family="Inter" font-size="12">Changes not saved • Last synced 3 mins ago</text>
+  <g font-family="Inter" font-size="11" font-weight="600" letter-spacing="3" text-anchor="middle">
+    <rect x="780" y="676" width="96" height="36" rx="18" fill="#1B2942" stroke="#35476A" />
+    <text x="828" y="698" fill="#D0DCF8">CANCEL</text>
+    <rect x="886" y="672" width="120" height="44" rx="22" fill="#22D3EE" />
+    <text x="946" y="698" fill="#08304A">UPDATE SHIP</text>
+  </g>
+</svg>

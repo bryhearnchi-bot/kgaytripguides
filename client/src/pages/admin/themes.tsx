@@ -13,7 +13,6 @@ import { Palette, Plus, PlusSquare, Edit2, Trash2, Search, Sparkles } from 'luci
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 
-
 interface PartyTheme {
   id?: number;
   name: string;
@@ -44,7 +43,11 @@ export default function ThemesManagement() {
   });
 
   // Fetch themes with optimized caching
-  const { data: themes = [], isLoading, isPlaceholderData } = useQuery<PartyTheme[]>({
+  const {
+    data: themes = [],
+    isLoading,
+    isPlaceholderData,
+  } = useQuery<PartyTheme[]>({
     queryKey: ['party-themes'],
     queryFn: async () => {
       const response = await api.get('/api/party-themes');
@@ -52,7 +55,7 @@ export default function ThemesManagement() {
       return response.json();
     },
     ...adminQueryOptions,
-    placeholderData: []
+    placeholderData: [],
   });
 
   // Create theme mutation
@@ -71,13 +74,13 @@ export default function ThemesManagement() {
         description: 'Party theme created successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to create party theme',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update theme mutation
@@ -96,13 +99,13 @@ export default function ThemesManagement() {
         description: 'Party theme updated successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to update party theme',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Delete theme mutation
@@ -129,7 +132,7 @@ export default function ThemesManagement() {
           : 'Failed to delete party theme',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const resetForm = () => {
@@ -172,11 +175,12 @@ export default function ThemesManagement() {
     }
   };
 
-  const filteredThemes = themes.filter(theme =>
-    theme.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theme.longDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theme.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theme.costumeIdeas?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredThemes = themes.filter(
+    theme =>
+      theme.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      theme.longDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      theme.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      theme.costumeIdeas?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getThemeIcon = (theme: string) => {
@@ -197,14 +201,16 @@ export default function ThemesManagement() {
               <Palette className="h-6 w-6" />
               Party Themes Management
             </h1>
-            <p className="text-sm text-white/60">Manage reusable party themes across Atlantis sailings.</p>
+            <p className="text-sm text-white/60">
+              Manage reusable party themes across Atlantis sailings.
+            </p>
           </div>
           <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               placeholder="Search themes by name or description"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -234,7 +240,11 @@ export default function ThemesManagement() {
         {filteredThemes.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <Palette className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No themes match your search.' : 'Get started by adding your first theme.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No themes match your search.'
+                : 'Get started by adding your first theme.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -284,9 +294,7 @@ export default function ThemesManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: (value) => (
-                  <p className="font-bold text-xs text-white">{value}</p>
-                ),
+                render: value => <p className="font-bold text-xs text-white">{value}</p>,
               },
               {
                 key: 'shortDescription',
@@ -294,10 +302,8 @@ export default function ThemesManagement() {
                 priority: 'medium',
                 sortable: false,
                 minWidth: 250,
-                render: (value) => (
-                  <span className="text-white/70 line-clamp-2">
-                    {value || 'No description'}
-                  </span>
+                render: value => (
+                  <span className="text-white/70 line-clamp-2">{value || 'No description'}</span>
                 ),
               },
               {
@@ -306,7 +312,7 @@ export default function ThemesManagement() {
                 priority: 'low',
                 sortable: false,
                 minWidth: 250,
-                render: (value) => (
+                render: value => (
                   <span className="text-xs text-white/60 line-clamp-2">
                     {value || 'No ideas specified'}
                   </span>
@@ -322,13 +328,17 @@ export default function ThemesManagement() {
               {
                 label: 'Delete Theme',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (theme) => handleDelete(theme.id!),
+                onClick: theme => handleDelete(theme.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No themes match your search.' : 'Get started by adding your first theme.'}
+            emptyMessage={
+              searchTerm
+                ? 'No themes match your search.'
+                : 'Get started by adding your first theme.'
+            }
           />
         )}
 
@@ -352,14 +362,14 @@ export default function ThemesManagement() {
         primaryAction={{
           label: editingTheme ? 'Save Changes' : 'Create Theme',
           loading: editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending,
-          loadingLabel: editingTheme ? 'Saving...' : 'Creating...'
+          loadingLabel: editingTheme ? 'Saving...' : 'Creating...',
         }}
         secondaryAction={{
           label: 'Cancel',
-          onClick: () => handleModalOpenChange(false)
+          onClick: () => handleModalOpenChange(false),
         }}
         maxWidthClassName="max-w-3xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
       >
         {/* Theme Name - spans full width */}
         <div className="lg:col-span-2 space-y-2">
@@ -367,7 +377,7 @@ export default function ThemesManagement() {
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g., White Party, Glow Night"
             required
           />
@@ -378,7 +388,7 @@ export default function ThemesManagement() {
           <Input
             id="shortDescription"
             value={formData.shortDescription || ''}
-            onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+            onChange={e => setFormData({ ...formData, shortDescription: e.target.value })}
             placeholder="Brief theme summary"
           />
         </div>
@@ -389,7 +399,7 @@ export default function ThemesManagement() {
           <ImageUploadField
             label="Theme Image"
             value={formData.imageUrl || ''}
-            onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
+            onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
             imageType="general"
             placeholder="No theme image uploaded"
             disabled={editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending}
@@ -402,7 +412,7 @@ export default function ThemesManagement() {
           <Textarea
             id="longDescription"
             value={formData.longDescription || ''}
-            onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+            onChange={e => setFormData({ ...formData, longDescription: e.target.value })}
             placeholder="Detailed description of the party theme"
             rows={3}
           />
@@ -413,7 +423,7 @@ export default function ThemesManagement() {
           <Textarea
             id="costumeIdeas"
             value={formData.costumeIdeas || ''}
-            onChange={(e) => setFormData({ ...formData, costumeIdeas: e.target.value })}
+            onChange={e => setFormData({ ...formData, costumeIdeas: e.target.value })}
             placeholder="e.g., All white attire, UV reactive clothing, neon accessories"
             rows={3}
           />
@@ -425,7 +435,7 @@ export default function ThemesManagement() {
             id="amazonShoppingListUrl"
             type="url"
             value={formData.amazonShoppingListUrl || ''}
-            onChange={(e) => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
+            onChange={e => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
             placeholder="https://www.amazon.com/shop/..."
           />
         </div>

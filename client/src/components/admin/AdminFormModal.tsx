@@ -62,6 +62,37 @@ const modalFieldStyles = `
     margin-bottom: 8px;
     display: block;
   }
+
+  /* Force visible scrollbars on ALL admin modal content */
+  /* Use attribute selector (like cmdk) for higher specificity and add critical display properties */
+  .admin-form-modal [data-scrollable="true"] {
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .admin-form-modal [data-scrollable="true"]::-webkit-scrollbar {
+    width: 10px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .admin-form-modal [data-scrollable="true"]::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 5px !important;
+  }
+
+  .admin-form-modal [data-scrollable="true"]::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 5px !important;
+    min-height: 30px !important;
+  }
+
+  .admin-form-modal [data-scrollable="true"]::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+  }
 `;
 
 interface ActionConfig {
@@ -134,7 +165,7 @@ export function AdminFormModal({
             'admin-form-modal',
             'w-[calc(100%-1rem)] sm:w-full',
             maxWidthClassName,
-            'max-h-[85vh] overflow-hidden',
+            'max-h-[85vh] !flex !flex-col overflow-hidden min-h-0',
             // Clean design without gradients
             'bg-gradient-to-b from-[#10192f] to-[#0f1629]',
             'border border-white/10',
@@ -163,7 +194,9 @@ export function AdminFormModal({
                     disabled={primaryAction.disabled || primaryAction.loading}
                     onClick={primaryType === 'button' ? primaryAction.onClick : undefined}
                     className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[8px] min-w-[70px] font-semibold text-[12px] transition-colors duration-200"
-                    form={primaryType === 'submit' && onSubmit ? 'admin-modal-form' : primaryAction.form}
+                    form={
+                      primaryType === 'submit' && onSubmit ? 'admin-modal-form' : primaryAction.form
+                    }
                   >
                     {renderPrimaryLabel()}
                   </Button>
@@ -180,26 +213,32 @@ export function AdminFormModal({
             </div>
           </DialogHeader>
 
-        {onSubmit ? (
-          <form id="admin-modal-form" onSubmit={onSubmit} className="flex flex-col h-full">
-            <div className={cn('px-7 py-6 overflow-y-auto flex-1', contentClassName)}>
-              {children}
-            </div>
-          </form>
-        ) : (
-          <div className="flex flex-col h-full">
-            <div className={cn('px-7 py-6 overflow-y-auto flex-1', contentClassName)}>
-              {children}
-            </div>
-            {footer && (
-              <div className="px-7 py-4">
-                {footer}
+          {onSubmit ? (
+            <form
+              id="admin-modal-form"
+              onSubmit={onSubmit}
+              className="flex flex-col flex-1 min-h-0 overflow-hidden"
+            >
+              <div
+                data-scrollable="true"
+                className={cn('px-7 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
+              >
+                {children}
               </div>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+            </form>
+          ) : (
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div
+                data-scrollable="true"
+                className={cn('px-7 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
+              >
+                {children}
+              </div>
+              {footer && <div className="px-7 py-4">{footer}</div>}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

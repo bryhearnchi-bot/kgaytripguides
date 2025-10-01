@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ship Modal • Aurora Admin</title>
+  <style>
+    :root { color-scheme: dark; font-family: 'Inter', system-ui, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: radial-gradient(circle at top, #15243e 0%, #050914 70%);
+      color: #e4ebff;
+    }
+    .shell {
+      width: 880px;
+      background: rgba(16, 25, 47, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 26px;
+      box-shadow: 0 36px 120px rgba(3, 10, 24, 0.65);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 28px 32px 24px;
+      background: linear-gradient(90deg, #0d1d3b 0%, #102446 60%, #0d1d3b 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    header h1 {
+      margin: 8px 0 4px;
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    header p.sub {
+      margin: 0;
+      color: rgba(190, 206, 238, 0.75);
+      font-size: 13px;
+    }
+    header .tag {
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: rgba(148, 170, 209, 0.6);
+    }
+    .pill-row { display: flex; align-items: center; gap: 10px; letter-spacing: 0.18em; text-transform: uppercase; font-size: 11px; }
+    .pill { border-radius: 999px; padding: 8px 18px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: all 0.18s ease; }
+    .pill.ghost { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: rgba(226,232,240,0.86); }
+    .pill.primary { background: linear-gradient(90deg, #22d3ee 0%, #48cae4 60%, #0ea5e9 100%); color: #052845; border: none; box-shadow: 0 10px 24px rgba(34, 211, 238, 0.35); }
+    .pill.icon { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; color: rgba(226,232,240,0.75); }
+
+    main { padding: 28px 32px 30px; display: flex; flex-direction: column; gap: 28px; }
+    .section-title { font-size: 12px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(160,178,219,0.55); margin-bottom: 12px; }
+    .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+    label span { display:block; font-size: 13px; font-weight:600; margin-bottom:6px; color: rgba(222,230,255,0.95); }
+    input, textarea { width:100%; border-radius:10px; background: rgba(17,35,60,0.65); border:1.5px solid rgba(118,139,183,0.28); color:#e6edff; font-size:13px; padding:0 12px; transition: all 0.18s ease; }
+    input { height:38px; }
+    input:focus, textarea:focus { border-color: rgba(72,202,228,0.7); box-shadow:0 0 0 3px rgba(72,202,228,0.18); outline:none; background: rgba(17,35,60,0.82); }
+    textarea { min-height:118px; padding:12px; line-height:1.5; resize:vertical; }
+
+    .media-layout { display:grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap:22px; align-items:flex-start; }
+    .upload-card { border-radius:16px; border:1px solid rgba(72,202,228,0.4); background: rgba(10,24,42,0.6); padding:16px; display:flex; flex-direction:column; gap:14px; }
+    .upload-drop { border-radius:14px; border:2px dashed rgba(72,202,228,0.45); background: rgba(17,40,66,0.55); height:140px; display:flex; align-items:center; justify-content:center; text-align:center; color: rgba(169,188,226,0.75); font-size:12px; padding:0 20px; }
+    .upload-actions { display:flex; gap:10px; letter-spacing:0.18em; text-transform:uppercase; font-size:11px; }
+    .meta { border-radius:12px; border:1px dashed rgba(141,171,214,0.35); padding:12px; font-size:12px; color:#aebede; background: rgba(9,24,44,0.55); }
+
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <div class="tag">SHIP MANAGER</div>
+        <h1>
+          <span style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:50%; background:rgba(34,211,238,0.25); color:#22d3ee;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 19h18M4 12h16l-2 7H6l-2-7Zm2-5h12v5H6V7Zm3-4h6v4H9V3Z" />
+            </svg>
+          </span>
+          Edit Ship: Resilient Lady
+        </h1>
+        <p class="sub">Update ship profile, amenities, and deck resources</p>
+      </div>
+      <div class="pill-row">
+        <button class="pill ghost" style="border-color:rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:rgba(226,232,240,0.86);">Save</button>
+        <button class="pill primary">Update</button>
+        <button class="pill icon">✕</button>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <div class="section-title">Basic Information</div>
+        <div class="grid-two">
+          <label>
+            <span>Ship Name</span>
+            <input type="text" value="Resilient Lady" />
+          </label>
+          <label>
+            <span>Cruise Line</span>
+            <input type="text" value="Virgin Voyages" />
+          </label>
+          <label>
+            <span>Capacity</span>
+            <input type="number" value="2770" />
+          </label>
+          <label>
+            <span>Decks</span>
+            <input type="number" value="17" />
+          </label>
+        </div>
+      </section>
+
+      <section class="media-layout">
+        <div class="upload-card">
+          <label style="font-size:13px; font-weight:600; color:#e1eaff; display:block;">
+            Deck Plans URL
+            <input type="url" class="modal-input mt-1" placeholder="https://example.com/deck-plans.pdf" />
+          </label>
+          <div class="upload-drop">Drag &amp; drop or fetch hero image</div>
+          <div class="upload-actions">
+            <button class="pill ghost" style="padding:0.35rem 0.9rem; border-color:rgba(34,211,238,0.4); background:rgba(34,211,238,0.12); color:#20d3f0;">Upload</button>
+            <button class="pill ghost" style="padding:0.35rem 0.9rem; border-color:rgba(34,211,238,0.4); background:rgba(34,211,238,0.12); color:#20d3f0;">From URL</button>
+          </div>
+          <div class="meta">
+            <div style="font-weight:600; color:#e5ecff;">Current Image</div>
+            <div style="margin-top:6px;">Valiant%20lady-2252×1266.png</div>
+            <div style="font-size:11px; color:#8fa0c6;">Stored in Supabase</div>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:13px; font-weight:600; color:#e1eaff;">
+            Description
+            <textarea class="mt-1" placeholder="Resilient Lady is the third ship in Virgin Voyages' fleet, continuing the brand's commitment to sustainable cruising."></textarea>
+          </label>
+        </div>
+      </section>
+    </main>
+
+    <footer style="border-top:1px solid rgba(255,255,255,0.08); padding:20px 32px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#94a3c8;">
+      <span>Changes not saved · Last synced 3 mins ago</span>
+      <div class="pill-row">
+        <button class="pill ghost">Cancel</button>
+        <button class="pill primary">Update Ship</button>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

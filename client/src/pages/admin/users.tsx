@@ -10,7 +10,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
 import { api } from '@/lib/api-client';
-import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Shield, UserCheck, UserX } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  PlusSquare,
+  Edit2,
+  Trash2,
+  Search,
+  Shield,
+  UserCheck,
+  UserX,
+} from 'lucide-react';
 import { useAdminUsers, useAdminUserMutations } from '@/hooks/use-admin-users-cache';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
@@ -92,7 +102,6 @@ interface UserFormData {
   trip_updates_opt_in?: boolean;
 }
 
-
 interface UsersResponse {
   users: UserData[];
   pagination?: {
@@ -103,7 +112,8 @@ interface UsersResponse {
   };
 }
 
-const fieldBaseClasses = "h-10 rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3";
+const fieldBaseClasses =
+  'h-10 rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3';
 
 const ROLE_OPTIONS = [
   { value: 'viewer', label: 'Viewer' },
@@ -149,14 +159,15 @@ export default function UsersManagement() {
   const canDeleteUsers = userRole === 'super_admin';
 
   // Use optimized caching hook
-  const { updateUserOptimistically, addUserOptimistically, removeUserOptimistically, invalidateUsers } = useAdminUserMutations();
+  const {
+    updateUserOptimistically,
+    addUserOptimistically,
+    removeUserOptimistically,
+    invalidateUsers,
+  } = useAdminUserMutations();
 
   // Fetch users with optimized caching
-  const {
-    data,
-    isLoading,
-    error,
-  } = useAdminUsers({
+  const { data, isLoading, error } = useAdminUsers({
     search: searchTerm || undefined,
     page: 1,
     limit: 20,
@@ -172,7 +183,7 @@ export default function UsersManagement() {
       if (!response.ok) throw new Error('Failed to create user');
       return response.json();
     },
-    onSuccess: (result) => {
+    onSuccess: result => {
       if (result.user) {
         addUserOptimistically(result.user);
       }
@@ -184,13 +195,13 @@ export default function UsersManagement() {
         description: 'User created successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to create user',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update user mutation
@@ -202,7 +213,7 @@ export default function UsersManagement() {
       if (!response.ok) throw new Error('Failed to update user');
       return response.json();
     },
-    onSuccess: (result) => {
+    onSuccess: result => {
       if (result.user && editingUser) {
         updateUserOptimistically(editingUser.id, result.user);
       }
@@ -215,13 +226,13 @@ export default function UsersManagement() {
         description: 'User updated successfully',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: 'Failed to update user',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Delete user mutation
@@ -234,7 +245,7 @@ export default function UsersManagement() {
       }
       return { userId: id };
     },
-    onSuccess: (result) => {
+    onSuccess: result => {
       removeUserOptimistically(result.userId);
       invalidateUsers();
       toast({
@@ -248,7 +259,7 @@ export default function UsersManagement() {
         description: 'Failed to delete user',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const resetForm = () => {
@@ -324,7 +335,8 @@ export default function UsersManagement() {
       avatar_url: user.avatar_url || user.avatarUrl || '',
       phone_number: user.phone_number || '',
       city: user.city || user.location?.city || '',
-      stateProvince: user.stateProvince || (user as any).state_province || user.location?.state || '',
+      stateProvince:
+        user.stateProvince || (user as any).state_province || user.location?.state || '',
       country: user.country || user.location?.country || '',
       countryCode: user.countryCode || (user as any).country_code || '',
       instagram: user.social_links?.instagram || '',
@@ -353,9 +365,8 @@ export default function UsersManagement() {
   };
 
   const filteredUsers = users.filter(user => {
-    const displayName = user.name?.first && user.name?.last
-      ? `${user.name.first} ${user.name.last}`
-      : '';
+    const displayName =
+      user.name?.first && user.name?.last ? `${user.name.first} ${user.name.last}` : '';
     return (
       (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -394,7 +405,7 @@ export default function UsersManagement() {
             <Input
               placeholder="Search users by name, email, or role"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -427,14 +438,18 @@ export default function UsersManagement() {
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60 text-center">
             <Users className="h-10 w-10 text-white/30" />
             <p className="text-sm font-medium text-white">Insufficient permissions</p>
-            <p className="text-xs text-white/60">You need admin access to view or manage user profiles.</p>
+            <p className="text-xs text-white/60">
+              You need admin access to view or manage user profiles.
+            </p>
           </div>
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center text-white/70">
             <Users className="h-10 w-10 text-white/30" />
             <div className="space-y-2">
               <p className="text-sm font-medium text-white">Unable to load users</p>
-              <p className="text-xs text-white/60">{loadError.message || 'An unexpected error occurred fetching profile data.'}</p>
+              <p className="text-xs text-white/60">
+                {loadError.message || 'An unexpected error occurred fetching profile data.'}
+              </p>
             </div>
             <Button
               onClick={() => invalidateUsers()}
@@ -446,7 +461,11 @@ export default function UsersManagement() {
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <Users className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No users match your search.' : 'Get started by adding your first user.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No users match your search.'
+                : 'Get started by adding your first user.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -475,12 +494,15 @@ export default function UsersManagement() {
                 minWidth: 80,
                 maxWidth: 80,
                 render: (_value, user) => {
-                  const profileImageUrl = user.avatar_url || user.avatarUrl || user.profile_image_url;
+                  const profileImageUrl =
+                    user.avatar_url || user.avatarUrl || user.profile_image_url;
                   // Get display name from first/last name
-                  const displayName = user.name?.first && user.name?.last
-                    ? `${user.name.first} ${user.name.last}`
-                    : user.username || user.email;
-                  const initials = displayName.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase();
+                  const displayName =
+                    user.name?.first && user.name?.last
+                      ? `${user.name.first} ${user.name.last}`
+                      : user.username || user.email;
+                  const initials =
+                    displayName.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase();
 
                   return (
                     <div className="flex items-center justify-center">
@@ -509,9 +531,7 @@ export default function UsersManagement() {
                 sortable: true,
                 minWidth: 120,
                 render: (_value, user) => {
-                  return (
-                    <p className="font-bold text-xs text-white">{user.name?.first || '-'}</p>
-                  );
+                  return <p className="font-bold text-xs text-white">{user.name?.first || '-'}</p>;
                 },
               },
               {
@@ -521,9 +541,7 @@ export default function UsersManagement() {
                 sortable: true,
                 minWidth: 120,
                 render: (_value, user) => {
-                  return (
-                    <p className="font-bold text-xs text-white">{user.name?.last || '-'}</p>
-                  );
+                  return <p className="font-bold text-xs text-white">{user.name?.last || '-'}</p>;
                 },
               },
               {
@@ -532,9 +550,7 @@ export default function UsersManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: (value) => (
-                  <span className="text-xs text-white/80">{value}</span>
-                ),
+                render: value => <span className="text-xs text-white/80">{value}</span>,
               },
               {
                 key: 'location_text',
@@ -544,13 +560,14 @@ export default function UsersManagement() {
                 minWidth: 150,
                 render: (_value, user) => {
                   const locationText = user.locationText || user.location_text;
-                  const fallbackLocation = user.location ?
-                    [user.location.city, user.location.state, user.location.country].filter(Boolean).join(', ') : '';
+                  const fallbackLocation = user.location
+                    ? [user.location.city, user.location.state, user.location.country]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
                   const displayLocation = locationText || fallbackLocation || '-';
 
-                  return (
-                    <span className="text-xs text-white/70">{displayLocation}</span>
-                  );
+                  return <span className="text-xs text-white/70">{displayLocation}</span>;
                 },
               },
               {
@@ -572,7 +589,7 @@ export default function UsersManagement() {
                 priority: 'medium',
                 sortable: true,
                 minWidth: 120,
-                render: (value: boolean) => (
+                render: (value: boolean) =>
                   value ? (
                     <span className="inline-flex items-center gap-2 rounded-full bg-[#34d399]/15 px-3 py-1 text-xs font-medium text-[#34d399]">
                       <UserCheck className="h-3.5 w-3.5" /> Active
@@ -581,8 +598,7 @@ export default function UsersManagement() {
                     <span className="inline-flex items-center gap-2 rounded-full bg-[#fb7185]/15 px-3 py-1 text-xs font-medium text-[#fb7185]">
                       <UserX className="h-3.5 w-3.5" /> Inactive
                     </span>
-                  )
-                ),
+                  ),
               },
             ]}
             actions={[
@@ -595,14 +611,16 @@ export default function UsersManagement() {
               {
                 label: 'Delete User',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (user) => handleDelete(user.id),
+                onClick: user => handleDelete(user.id),
                 variant: 'destructive',
                 disabled: () => !canDeleteUsers,
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No users match your search.' : 'Get started by adding your first user.'}
+            emptyMessage={
+              searchTerm ? 'No users match your search.' : 'Get started by adding your first user.'
+            }
           />
         )}
 
@@ -633,11 +651,13 @@ export default function UsersManagement() {
           onClick: () => handleModalOpenChange(false),
         }}
         maxWidthClassName="max-w-4xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-auto"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
       >
         {/* Basic Information */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Basic Information</h3>
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">
+            Basic Information
+          </h3>
 
           <div>
             <Label htmlFor="email">Email Address *</Label>
@@ -645,7 +665,7 @@ export default function UsersManagement() {
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={e => setFormData({ ...formData, email: e.target.value })}
               placeholder="user@example.com"
               required
               className={fieldBaseClasses}
@@ -657,7 +677,7 @@ export default function UsersManagement() {
             <Input
               id="username"
               value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              onChange={e => setFormData({ ...formData, username: e.target.value })}
               placeholder="Optional unique username"
               className={fieldBaseClasses}
             />
@@ -669,7 +689,7 @@ export default function UsersManagement() {
               <Input
                 id="firstName"
                 value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                onChange={e => setFormData({ ...formData, firstName: e.target.value })}
                 placeholder="John"
                 required
                 className={fieldBaseClasses}
@@ -681,7 +701,7 @@ export default function UsersManagement() {
               <Input
                 id="lastName"
                 value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                onChange={e => setFormData({ ...formData, lastName: e.target.value })}
                 placeholder="Doe"
                 required
                 className={fieldBaseClasses}
@@ -689,14 +709,13 @@ export default function UsersManagement() {
             </div>
           </div>
 
-
           <div>
             <Label htmlFor="phone_number">Phone Number</Label>
             <Input
               id="phone_number"
               type="tel"
               value={formData.phone_number}
-              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              onChange={e => setFormData({ ...formData, phone_number: e.target.value })}
               placeholder="(555) 123-4567"
               className={fieldBaseClasses}
             />
@@ -708,7 +727,7 @@ export default function UsersManagement() {
               id="password"
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={e => setFormData({ ...formData, password: e.target.value })}
               placeholder={editingUser ? 'Leave blank to keep current' : 'Enter password'}
               className={fieldBaseClasses}
             />
@@ -719,7 +738,7 @@ export default function UsersManagement() {
             <SingleSelectWithCreate
               options={ROLE_OPTIONS.map(role => ({ id: role.value, name: role.label }))}
               value={formData.role}
-              onValueChange={(value) => setFormData({ ...formData, role: String(value) })}
+              onValueChange={value => setFormData({ ...formData, role: String(value) })}
               placeholder="Select role..."
               showSearch={false}
               showCreateNew={false}
@@ -732,10 +751,10 @@ export default function UsersManagement() {
               options={[
                 { id: 'active', name: 'Active' },
                 { id: 'suspended', name: 'Suspended' },
-                { id: 'pending_verification', name: 'Pending Verification' }
+                { id: 'pending_verification', name: 'Pending Verification' },
               ]}
               value={formData.account_status}
-              onValueChange={(value) => setFormData({ ...formData, account_status: String(value) })}
+              onValueChange={value => setFormData({ ...formData, account_status: String(value) })}
               placeholder="Select status..."
               showSearch={false}
               showCreateNew={false}
@@ -747,7 +766,7 @@ export default function UsersManagement() {
               type="checkbox"
               id="isActive"
               checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
               className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
             />
             <Label htmlFor="isActive">Active user account</Label>
@@ -756,14 +775,16 @@ export default function UsersManagement() {
 
         {/* Profile & Additional Information */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Profile & Additional Information</h3>
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">
+            Profile & Additional Information
+          </h3>
 
           <div>
             <Label htmlFor="avatar_url">Profile Avatar</Label>
             <ImageUploadField
               label="Profile Avatar"
               value={formData.avatar_url || ''}
-              onChange={(url) => setFormData({ ...formData, avatar_url: url || '' })}
+              onChange={url => setFormData({ ...formData, avatar_url: url || '' })}
               imageType="profiles"
               placeholder="No avatar uploaded"
               disabled={editingUser ? updateUserMutation.isPending : createUserMutation.isPending}
@@ -776,7 +797,7 @@ export default function UsersManagement() {
               id="website"
               type="url"
               value={formData.website}
-              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              onChange={e => setFormData({ ...formData, website: e.target.value })}
               placeholder="https://example.com"
               className={fieldBaseClasses}
             />
@@ -788,7 +809,7 @@ export default function UsersManagement() {
               id="bio"
               rows={3}
               value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              onChange={e => setFormData({ ...formData, bio: e.target.value })}
               placeholder="Tell us about this user..."
               className="min-h-[80px] rounded-lg border border-white/15 bg-white/8 text-sm text-white placeholder:text-white/40 focus:border-[#22d3ee] focus:ring-0 focus:ring-offset-0 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.1)] px-3 py-2"
             />
@@ -802,30 +823,32 @@ export default function UsersManagement() {
                 city: formData.city || '',
                 state: formData.stateProvince || '',
                 country: formData.country || '',
-                countryCode: formData.countryCode || ''
+                countryCode: formData.countryCode || '',
               }}
-              onChange={(location) => {
+              onChange={location => {
                 setFormData({
                   ...formData,
                   locationText: location.formatted || '',
                   city: location.city || '',
                   stateProvince: location.state || '',
                   country: location.country || '',
-                  countryCode: location.countryCode || ''
+                  countryCode: location.countryCode || '',
                 });
               }}
             />
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">Social Links</h4>
+            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Social Links
+            </h4>
 
             <div>
               <Label htmlFor="instagram">Instagram</Label>
               <Input
                 id="instagram"
                 value={formData.instagram}
-                onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                onChange={e => setFormData({ ...formData, instagram: e.target.value })}
                 placeholder="@username or full URL"
                 className={fieldBaseClasses}
               />
@@ -836,7 +859,7 @@ export default function UsersManagement() {
               <Input
                 id="twitter"
                 value={formData.twitter}
-                onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                onChange={e => setFormData({ ...formData, twitter: e.target.value })}
                 placeholder="@username or full URL"
                 className={fieldBaseClasses}
               />
@@ -847,7 +870,7 @@ export default function UsersManagement() {
               <Input
                 id="facebook"
                 value={formData.facebook}
-                onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                onChange={e => setFormData({ ...formData, facebook: e.target.value })}
                 placeholder="Profile URL or username"
                 className={fieldBaseClasses}
               />
@@ -858,7 +881,7 @@ export default function UsersManagement() {
               <Input
                 id="linkedin"
                 value={formData.linkedin}
-                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                onChange={e => setFormData({ ...formData, linkedin: e.target.value })}
                 placeholder="Profile URL"
                 className={fieldBaseClasses}
               />
@@ -869,7 +892,7 @@ export default function UsersManagement() {
               <Input
                 id="tiktok"
                 value={formData.tiktok}
-                onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
+                onChange={e => setFormData({ ...formData, tiktok: e.target.value })}
                 placeholder="@username or full URL"
                 className={fieldBaseClasses}
               />
@@ -877,14 +900,16 @@ export default function UsersManagement() {
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">Preferences</h4>
+            <h4 className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Preferences
+            </h4>
 
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 id="marketing_emails"
                 checked={formData.marketing_emails}
-                onChange={(e) => setFormData({ ...formData, marketing_emails: e.target.checked })}
+                onChange={e => setFormData({ ...formData, marketing_emails: e.target.checked })}
                 className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
               />
               <Label htmlFor="marketing_emails">Marketing emails</Label>
@@ -895,7 +920,7 @@ export default function UsersManagement() {
                 type="checkbox"
                 id="trip_updates_opt_in"
                 checked={formData.trip_updates_opt_in}
-                onChange={(e) => setFormData({ ...formData, trip_updates_opt_in: e.target.checked })}
+                onChange={e => setFormData({ ...formData, trip_updates_opt_in: e.target.checked })}
                 className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#22d3ee] focus:ring-[#22d3ee] focus:ring-offset-0"
               />
               <Label htmlFor="trip_updates_opt_in">Trip updates opt-in</Label>
@@ -909,8 +934,14 @@ export default function UsersManagement() {
                 User Communication Preferences (Read-only)
               </h4>
               <div className="text-xs text-amber-200/80 space-y-1">
-                <div>Email updates: {editingUser.communication_preferences.email ? 'Enabled' : 'Disabled'}</div>
-                <div>SMS notifications: {editingUser.communication_preferences.sms ? 'Enabled' : 'Disabled'}</div>
+                <div>
+                  Email updates:{' '}
+                  {editingUser.communication_preferences.email ? 'Enabled' : 'Disabled'}
+                </div>
+                <div>
+                  SMS notifications:{' '}
+                  {editingUser.communication_preferences.sms ? 'Enabled' : 'Disabled'}
+                </div>
                 <div>Trip updates: {editingUser.trip_updates_opt_in ? 'Enabled' : 'Disabled'}</div>
                 <div>Marketing: {editingUser.marketing_emails ? 'Enabled' : 'Disabled'}</div>
               </div>

@@ -57,7 +57,9 @@ export function ImageUploadField({
         console.log('Auto-saving profile image to database...');
 
         // Get authentication token
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!session?.access_token) {
           throw new Error('No authentication token');
         }
@@ -67,12 +69,12 @@ export function ImageUploadField({
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
+            Authorization: `Bearer ${session.access_token}`,
           },
           credentials: 'include',
           body: JSON.stringify({
-            profile_image_url: result.url
-          })
+            profile_image_url: result.url,
+          }),
         });
 
         if (!response.ok) {
@@ -123,22 +125,22 @@ export function ImageUploadField({
   };
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={`space-y-0 ${className}`}>
       {/* Image Upload Section */}
       <div
         data-image-upload="true"
-        className="bg-white/3 border border-white/10 rounded-xl p-4"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={(e) => {
+        className="bg-white/3 border border-white/10 rounded-xl p-3"
+        onClick={e => e.stopPropagation()}
+        onSubmit={e => {
           console.log('Form submit event captured and prevented');
           e.preventDefault();
           e.stopPropagation();
         }}
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* Image Preview */}
-          <div className="relative w-24 h-24 flex-shrink-0">
-            <div className="w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-2 border-dashed border-blue-400/30 flex items-center justify-center">
+          <div className="relative w-16 h-16 flex-shrink-0">
+            <div className="w-full h-full rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-2 border-dashed border-blue-400/30 flex items-center justify-center">
               {hasImage && !imageError ? (
                 <img
                   src={value}
@@ -149,9 +151,9 @@ export function ImageUploadField({
                   style={{ display: imageLoading ? 'none' : 'block' }}
                 />
               ) : (
-                <div className="flex flex-col items-center gap-2 p-2">
-                  <Image className="h-6 w-6 text-white/30" />
-                  <span className="text-xs text-white/30 text-center leading-tight">
+                <div className="flex flex-col items-center gap-1 p-1">
+                  <Image className="h-5 w-5 text-white/30" />
+                  <span className="text-[9px] text-white/30 text-center leading-tight">
                     {imageError ? 'Error' : 'No Image'}
                   </span>
                 </div>
@@ -159,7 +161,7 @@ export function ImageUploadField({
 
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white/5">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
                 </div>
               )}
             </div>
@@ -167,26 +169,24 @@ export function ImageUploadField({
 
           {/* Image Info and Actions */}
           <div className="flex-1 min-w-0">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {/* Image Name */}
               <div>
-                <h4 className="text-sm font-medium text-white/90 truncate">
+                <h4 className="text-xs font-medium text-white/90 truncate leading-tight">
                   {hasImage && !imageError ? getImageName(value) : placeholder}
                 </h4>
                 {hasImage && !imageError && (
-                  <p className="text-xs text-white/50">
-                    Image uploaded • Stored in Supabase
-                  </p>
+                  <p className="text-[10px] text-white/50 mt-0.5">Stored in Supabase</p>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+              <div className="flex gap-1.5 mt-1.5" onClick={e => e.stopPropagation()}>
                 {hasImage ? (
                   <>
                     <button
                       type="button"
-                      onClick={(e) => {
+                      onClick={e => {
                         console.log('Change button onClick triggered');
                         console.log('Event type:', e.type);
                         console.log('Button type:', e.currentTarget.type);
@@ -195,7 +195,7 @@ export function ImageUploadField({
                         console.log('Opening popup (now using portal)');
                         setShowUploadPopup(true);
                       }}
-                      onKeyDown={(e) => {
+                      onKeyDown={e => {
                         console.log('Change button keyDown:', e.key);
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
@@ -203,33 +203,33 @@ export function ImageUploadField({
                         }
                       }}
                       disabled={disabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-solid border-transparent cursor-pointer transition-all duration-200 text-xs font-medium bg-blue-400/10 border-blue-400/30 text-blue-400 hover:bg-blue-400/20 hover:border-blue-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-solid border-transparent cursor-pointer transition-all duration-200 text-[11px] font-medium bg-blue-400/10 border-blue-400/30 text-blue-400 hover:bg-blue-400/20 hover:border-blue-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3 h-3" />
                       Change
                     </button>
                     <button
                       type="button"
                       onClick={handleRemoveImage}
                       disabled={disabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-solid border-transparent cursor-pointer transition-all duration-200 text-xs font-medium bg-rose-400/10 border-rose-400/30 text-rose-400 hover:bg-rose-400/20 hover:border-rose-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-solid border-transparent cursor-pointer transition-all duration-200 text-[11px] font-medium bg-rose-400/10 border-rose-400/30 text-rose-400 hover:bg-rose-400/20 hover:border-rose-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3 h-3" />
                       Remove
                     </button>
                   </>
                 ) : (
                   <button
                     type="button"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
                       setShowUploadPopup(true);
                     }}
                     disabled={disabled}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-solid border-transparent cursor-pointer transition-all duration-200 text-xs font-medium bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500/20 hover:border-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-solid border-transparent cursor-pointer transition-all duration-200 text-[11px] font-medium bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500/20 hover:border-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3 h-3" />
                     Add Image
                   </button>
                 )}

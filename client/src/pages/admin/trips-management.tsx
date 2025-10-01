@@ -1,24 +1,25 @@
-import { useMemo, useState, useEffect } from "react";
-import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { differenceInDays, format } from "date-fns";
-import { api } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useMemo, useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { differenceInDays, format } from 'date-fns';
+import { api } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TripWizard } from '@/components/admin/TripWizard/TripWizard';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,23 +30,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { FilterBar } from "@/components/admin/FilterBar";
-import { AdminTable } from "@/components/admin/AdminTable";
-import { EnhancedTripsTable } from "@/components/admin/EnhancedTripsTable";
-import { StatusBadge } from "@/components/admin/StatusBadge";
-import { CategoryChip } from "@/components/admin/CategoryChip";
-import { PageStats } from "@/components/admin/PageStats";
-import { useSupabaseAuthContext } from "@/contexts/SupabaseAuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { dateOnly } from "@/lib/utils";
+} from '@/components/ui/alert-dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FilterBar } from '@/components/admin/FilterBar';
+import { AdminTable } from '@/components/admin/AdminTable';
+import { EnhancedTripsTable } from '@/components/admin/EnhancedTripsTable';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { CategoryChip } from '@/components/admin/CategoryChip';
+import { PageStats } from '@/components/admin/PageStats';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { dateOnly } from '@/lib/utils';
 import {
   Activity,
   Archive,
@@ -66,7 +61,7 @@ import {
   Trash2,
   TreePalm,
   Users,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface Trip {
   id: number;
@@ -77,7 +72,7 @@ interface Trip {
   endDate: string;
   shipName: string;
   cruiseLine?: string;
-  status: "upcoming" | "ongoing" | "past" | "archived";
+  status: 'upcoming' | 'ongoing' | 'past' | 'archived';
   heroImageUrl?: string;
   guestCount?: number;
   ports?: number;
@@ -90,7 +85,7 @@ interface Trip {
   updatedAt: string;
 }
 
-type StatusFilter = "all" | "upcoming" | "current" | "past" | "archived";
+type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived';
 
 interface GroupedTrips {
   upcoming: Trip[];
@@ -106,17 +101,18 @@ export default function TripsManagement() {
   const queryClient = useQueryClient();
   const { profile } = useSupabaseAuthContext();
 
-  const userRole = profile?.role ?? "viewer";
-  const canCreateOrEditTrips = ["super_admin", "content_manager"].includes(userRole);
-  const canArchiveTrips = canCreateOrEditTrips || userRole === "super_admin";
-  const canDeleteTrips = ["super_admin", "content_manager"].includes(userRole);
-  const canExportTrips = canCreateOrEditTrips || userRole === "super_admin";
+  const userRole = profile?.role ?? 'viewer';
+  const canCreateOrEditTrips = ['super_admin', 'content_manager'].includes(userRole);
+  const canArchiveTrips = canCreateOrEditTrips || userRole === 'super_admin';
+  const canDeleteTrips = ['super_admin', 'content_manager'].includes(userRole);
+  const canExportTrips = canCreateOrEditTrips || userRole === 'super_admin';
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [yearFilter, setYearFilter] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [tripPendingDeletion, setTripPendingDeletion] = useState<Trip | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,11 +123,11 @@ export default function TripsManagement() {
     isLoading,
     error,
   } = useQuery<Trip[]>({
-    queryKey: ["admin-trips"],
+    queryKey: ['admin-trips'],
     queryFn: async () => {
-      const response = await api.get("/api/trips");
+      const response = await api.get('/api/trips');
       if (!response.ok) {
-        throw new Error("Failed to fetch trips");
+        throw new Error('Failed to fetch trips');
       }
       return response.json();
     },
@@ -140,32 +136,35 @@ export default function TripsManagement() {
   const archiveTrip = useMutation({
     mutationFn: async (tripId: number) => {
       if (!canArchiveTrips) {
-        throw new Error("You do not have permission to archive trips.");
+        throw new Error('You do not have permission to archive trips.');
       }
-      const tripToArchive = allTrips.find((trip) => trip.id === tripId);
+      const tripToArchive = allTrips.find(trip => trip.id === tripId);
       if (!tripToArchive) {
-        throw new Error("Trip not found");
+        throw new Error('Trip not found');
       }
 
-      const response = await api.put(`/api/trips/${tripId}`, { ...tripToArchive, status: "archived" });
+      const response = await api.put(`/api/trips/${tripId}`, {
+        ...tripToArchive,
+        status: 'archived',
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to archive trip");
+        throw new Error('Failed to archive trip');
       }
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Trip archived",
-        description: "The voyage has been moved to archives.",
+        title: 'Trip archived',
+        description: 'The voyage has been moved to archives.',
       });
-      queryClient.invalidateQueries({ queryKey: ["admin-trips"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
     },
     onError: () => {
       toast({
-        title: "Archive failed",
-        description: "We could not archive this trip. Please try again.",
-        variant: "destructive",
+        title: 'Archive failed',
+        description: 'We could not archive this trip. Please try again.',
+        variant: 'destructive',
       });
     },
   });
@@ -173,25 +172,25 @@ export default function TripsManagement() {
   const deleteTrip = useMutation({
     mutationFn: async (tripId: number) => {
       if (!canDeleteTrips) {
-        throw new Error("You do not have permission to delete trips.");
+        throw new Error('You do not have permission to delete trips.');
       }
       const response = await api.delete(`/api/trips/${tripId}`);
       if (!response.ok) {
-        throw new Error("Failed to delete trip");
+        throw new Error('Failed to delete trip');
       }
     },
     onSuccess: () => {
       toast({
-        title: "Trip deleted",
-        description: "The voyage has been removed from the roster.",
+        title: 'Trip deleted',
+        description: 'The voyage has been removed from the roster.',
       });
-      queryClient.invalidateQueries({ queryKey: ["admin-trips"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
     },
     onError: () => {
       toast({
-        title: "Delete failed",
-        description: "This trip could not be deleted.",
-        variant: "destructive",
+        title: 'Delete failed',
+        description: 'This trip could not be deleted.',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
@@ -202,19 +201,19 @@ export default function TripsManagement() {
   const exportTripData = useMutation({
     mutationFn: async (tripId: number) => {
       if (!canExportTrips) {
-        throw new Error("You do not have permission to export trips.");
+        throw new Error('You do not have permission to export trips.');
       }
-      const trip = allTrips.find((entry) => entry.id === tripId);
+      const trip = allTrips.find(entry => entry.id === tripId);
       if (!trip) {
-        throw new Error("Trip not found");
+        throw new Error('Trip not found');
       }
 
       const dataStr = JSON.stringify(trip, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
+      const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
+      const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `trip-${tripId}-data-${new Date().toISOString().split("T")[0]}.json`;
+      anchor.download = `trip-${tripId}-data-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(anchor);
       anchor.click();
       window.URL.revokeObjectURL(url);
@@ -222,15 +221,15 @@ export default function TripsManagement() {
     },
     onSuccess: () => {
       toast({
-        title: "Export complete",
-        description: "Trip details downloaded as JSON.",
+        title: 'Export complete',
+        description: 'Trip details downloaded as JSON.',
       });
     },
     onError: () => {
       toast({
-        title: "Export failed",
+        title: 'Export failed',
         description: "We couldn't export this trip.",
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -243,7 +242,7 @@ export default function TripsManagement() {
 
   const availableYears = useMemo(() => {
     const yearValues = new Set<number>();
-    allTrips.forEach((trip) => {
+    allTrips.forEach(trip => {
       yearValues.add(dateOnly(trip.startDate).getFullYear());
     });
     return Array.from(yearValues).sort((a, b) => b - a);
@@ -251,11 +250,11 @@ export default function TripsManagement() {
 
   const statusFilters = useMemo(
     () => [
-      { value: "all", label: "All voyages", count: groupedTrips.active.length },
-      { value: "upcoming", label: "Upcoming", count: groupedTrips.upcoming.length },
-      { value: "current", label: "Sailing now", count: groupedTrips.current.length },
-      { value: "past", label: "Completed", count: groupedTrips.past.length },
-      { value: "archived", label: "Archived", count: groupedTrips.archived.length },
+      { value: 'all', label: 'All voyages', count: groupedTrips.active.length },
+      { value: 'upcoming', label: 'Upcoming', count: groupedTrips.upcoming.length },
+      { value: 'current', label: 'Sailing now', count: groupedTrips.current.length },
+      { value: 'past', label: 'Completed', count: groupedTrips.past.length },
+      { value: 'archived', label: 'Archived', count: groupedTrips.archived.length },
     ],
     [groupedTrips]
   );
@@ -263,27 +262,27 @@ export default function TripsManagement() {
   const pageStats = useMemo(
     () => [
       {
-        label: "Voyages",
+        label: 'Voyages',
         value: groupedTrips.active.length,
-        helpText: "Active across the fleet",
+        helpText: 'Active across the fleet',
         icon: <Ship className="h-4 w-4" />,
       },
       {
-        label: "Upcoming",
+        label: 'Upcoming',
         value: groupedTrips.upcoming.length,
-        helpText: "Departing soon",
+        helpText: 'Departing soon',
         icon: <Clock className="h-4 w-4" />,
       },
       {
-        label: "Sailing now",
+        label: 'Sailing now',
         value: groupedTrips.current.length,
-        helpText: groupedTrips.current.length ? "In progress" : "Awaiting departure",
+        helpText: groupedTrips.current.length ? 'In progress' : 'Awaiting departure',
         icon: <Activity className="h-4 w-4" />,
       },
       {
-        label: "Archived",
+        label: 'Archived',
         value: groupedTrips.archived.length,
-        helpText: "Stored voyages",
+        helpText: 'Stored voyages',
         icon: <Archive className="h-4 w-4" />,
       },
     ],
@@ -301,23 +300,22 @@ export default function TripsManagement() {
     setCurrentPage(1);
   }, [statusFilter, yearFilter, searchTerm]);
 
-  const isFiltered =
-    statusFilter !== "all" || yearFilter !== "all" || searchTerm.trim().length > 0;
+  const isFiltered = statusFilter !== 'all' || yearFilter !== 'all' || searchTerm.trim().length > 0;
   const loadError = error as Error | null;
   const showError = Boolean(loadError);
   const showEmpty = !isLoading && !showError && filteredTrips.length === 0;
 
   const totalForFilter = useMemo(() => {
     switch (statusFilter) {
-      case "upcoming":
+      case 'upcoming':
         return groupedTrips.upcoming.length;
-      case "current":
+      case 'current':
         return groupedTrips.current.length;
-      case "past":
+      case 'past':
         return groupedTrips.past.length;
-      case "archived":
+      case 'archived':
         return groupedTrips.archived.length;
-      case "all":
+      case 'all':
       default:
         return groupedTrips.active.length;
     }
@@ -325,7 +323,7 @@ export default function TripsManagement() {
 
   const tableFooter = !showError
     ? filteredTrips.length === 0
-      ? "No trips to display"
+      ? 'No trips to display'
       : `Showing ${paginatedTrips.length} of ${filteredTrips.length} trips`
     : undefined;
 
@@ -333,10 +331,10 @@ export default function TripsManagement() {
     <>
       <Ship className="h-10 w-10 text-white/30" />
       <p className="text-sm text-white/70">
-        {loadError?.message || "Something went wrong while loading voyages."}
+        {loadError?.message || 'Something went wrong while loading voyages.'}
       </p>
       <Button
-        onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-trips"] })}
+        onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-trips'] })}
         className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15"
       >
         Retry fetch
@@ -348,13 +346,13 @@ export default function TripsManagement() {
       <p className="text-sm text-white/70">
         {isFiltered
           ? "No voyages match the filters you've applied."
-          : "Create your first voyage to populate the roster."}
+          : 'Create your first voyage to populate the roster.'}
       </p>
       {!isFiltered && canCreateOrEditTrips && (
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/admin/trips/new")}
+          onClick={() => setIsWizardOpen(true)}
           className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
           title="Add New Trip"
         >
@@ -401,7 +399,7 @@ export default function TripsManagement() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={event => setSearchTerm(event.target.value)}
               placeholder="Search voyages by name, ship, or cruise line"
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70 focus:ring-0"
             />
@@ -409,10 +407,9 @@ export default function TripsManagement() {
         </div>
       </section>
 
-
       <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
         <div className="flex flex-wrap items-center gap-2">
-          {statusFilters.map((filter) => {
+          {statusFilters.map(filter => {
             const isActive = statusFilter === filter.value;
             return (
               <button
@@ -420,13 +417,13 @@ export default function TripsManagement() {
                 onClick={() => setStatusFilter(filter.value as StatusFilter)}
                 className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition ${
                   isActive
-                    ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-900/30"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white"
+                    ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-900/30'
+                    : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white'
                 }`}
                 type="button"
               >
                 <span>{filter.label}</span>
-                {typeof filter.count === "number" && (
+                {typeof filter.count === 'number' && (
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] leading-none text-white/70">
                     {filter.count}
                   </span>
@@ -439,10 +436,13 @@ export default function TripsManagement() {
               <SelectValue placeholder="All years" />
             </SelectTrigger>
             <SelectContent className="border-white/10 bg-[#10192f] text-white">
-              <SelectItem value="all" className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white">
+              <SelectItem
+                value="all"
+                className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
+              >
                 All years
               </SelectItem>
-              {availableYears.map((year) => (
+              {availableYears.map(year => (
                 <SelectItem
                   key={year}
                   value={year.toString()}
@@ -465,7 +465,7 @@ export default function TripsManagement() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/admin/trips/new")}
+              onClick={() => setIsWizardOpen(true)}
               className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
               title="Add New Trip"
             >
@@ -526,19 +526,14 @@ export default function TripsManagement() {
                 render: (_value, trip) => (
                   <div className="space-y-1">
                     <p className="text-xs text-white font-medium">
-                      {format(dateOnly(trip.startDate), "MMM dd")} – {format(
-                        dateOnly(trip.endDate),
-                        "MMM dd, yyyy"
-                      )}
+                      {format(dateOnly(trip.startDate), 'MMM dd')} –{' '}
+                      {format(dateOnly(trip.endDate), 'MMM dd, yyyy')}
                     </p>
                     <p className="text-xs text-white/50">
                       {Math.max(
                         1,
-                        differenceInDays(
-                          dateOnly(trip.endDate),
-                          dateOnly(trip.startDate)
-                        )
-                      )}{" "}
+                        differenceInDays(dateOnly(trip.endDate), dateOnly(trip.startDate))
+                      )}{' '}
                       days on board
                     </p>
                   </div>
@@ -595,28 +590,44 @@ export default function TripsManagement() {
               },
             ]}
             actions={[
-              ...(canCreateOrEditTrips ? [{
-                label: 'Edit Trip',
-                icon: <Edit className="h-4 w-4" />,
-                onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
-              }] : []),
-              ...(canDeleteTrips ? [{
-                label: 'Delete Trip',
-                icon: <Trash2 className="h-4 w-4" />,
-                onClick: (trip: Trip) => {
-                  setTripPendingDeletion(trip);
-                  // Note: This will trigger the AlertDialog, but we need to handle it differently
-                  // For now, we'll use a simple confirm dialog
-                  if (confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
-                    deleteTrip.mutate(trip.id);
-                  }
-                },
-                variant: 'destructive' as const,
-              }] : []),
+              ...(canCreateOrEditTrips
+                ? [
+                    {
+                      label: 'Edit Trip',
+                      icon: <Edit className="h-4 w-4" />,
+                      onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
+                    },
+                  ]
+                : []),
+              ...(canDeleteTrips
+                ? [
+                    {
+                      label: 'Delete Trip',
+                      icon: <Trash2 className="h-4 w-4" />,
+                      onClick: (trip: Trip) => {
+                        setTripPendingDeletion(trip);
+                        // Note: This will trigger the AlertDialog, but we need to handle it differently
+                        // For now, we'll use a simple confirm dialog
+                        if (
+                          confirm(
+                            `Are you sure you want to delete "${trip.name}"? This action cannot be undone.`
+                          )
+                        ) {
+                          deleteTrip.mutate(trip.id);
+                        }
+                      },
+                      variant: 'destructive' as const,
+                    },
+                  ]
+                : []),
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={isFiltered ? 'No voyages match the filters you\'ve applied.' : 'Create your first voyage to populate the roster.'}
+            emptyMessage={
+              isFiltered
+                ? "No voyages match the filters you've applied."
+                : 'Create your first voyage to populate the roster.'
+            }
           />
         )}
 
@@ -650,7 +661,7 @@ export default function TripsManagement() {
         )}
       </section>
 
-      <Dialog open={quickViewOpen} onOpenChange={(open) => !open && closeQuickView()}>
+      <Dialog open={quickViewOpen} onOpenChange={open => !open && closeQuickView()}>
         <DialogContent className="max-w-3xl border border-white/10 bg-[#0f172a] text-white shadow-2xl">
           <DialogHeader className="border-b border-white/10 pb-4">
             <DialogTitle className="text-xl font-semibold text-white">
@@ -667,7 +678,7 @@ export default function TripsManagement() {
                 <div>
                   <p className="text-sm text-white/60">
                     {selectedTrip.shipName}
-                    {selectedTrip.cruiseLine ? ` • ${selectedTrip.cruiseLine}` : ""}
+                    {selectedTrip.cruiseLine ? ` • ${selectedTrip.cruiseLine}` : ''}
                   </p>
                   <p className="text-xs text-white/40">Slug: {selectedTrip.slug}</p>
                 </div>
@@ -680,11 +691,11 @@ export default function TripsManagement() {
                   <div className="mt-3 space-y-2 text-sm text-white/70">
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Departure</span>
-                      <span>{format(dateOnly(selectedTrip.startDate), "MMM dd, yyyy")}</span>
+                      <span>{format(dateOnly(selectedTrip.startDate), 'MMM dd, yyyy')}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Return</span>
-                      <span>{format(dateOnly(selectedTrip.endDate), "MMM dd, yyyy")}</span>
+                      <span>{format(dateOnly(selectedTrip.endDate), 'MMM dd, yyyy')}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Duration</span>
@@ -695,7 +706,7 @@ export default function TripsManagement() {
                             dateOnly(selectedTrip.endDate),
                             dateOnly(selectedTrip.startDate)
                           )
-                        )}{" "}
+                        )}{' '}
                         days
                       </span>
                     </div>
@@ -711,7 +722,7 @@ export default function TripsManagement() {
                   <div className="mt-3 space-y-2 text-sm text-white/70">
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Guests</span>
-                      <span>{selectedTrip.guestCount?.toLocaleString() ?? "Not set"}</span>
+                      <span>{selectedTrip.guestCount?.toLocaleString() ?? 'Not set'}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Ports</span>
@@ -762,7 +773,7 @@ export default function TripsManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={reportModalOpen} onOpenChange={(open) => !open && closeReportModal()}>
+      <Dialog open={reportModalOpen} onOpenChange={open => !open && closeReportModal()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0f172a] text-white shadow-2xl">
           <DialogHeader className="border-b border-white/10 pb-4">
             <DialogTitle className="text-xl font-semibold text-white">
@@ -778,23 +789,23 @@ export default function TripsManagement() {
               <PageStats
                 stats={[
                   {
-                    label: "Guests",
-                    value: selectedTrip.guestCount?.toLocaleString() ?? "N/A",
-                    helpText: "Manifested",
+                    label: 'Guests',
+                    value: selectedTrip.guestCount?.toLocaleString() ?? 'N/A',
+                    helpText: 'Manifested',
                     icon: <Users className="h-4 w-4" />,
                   },
                   {
-                    label: "Average rating",
+                    label: 'Average rating',
                     value: selectedTrip.averageRating
                       ? selectedTrip.averageRating.toFixed(1)
-                      : "N/A",
+                      : 'N/A',
                     helpText: `${selectedTrip.feedbackCount ?? 0} reviews`,
                     icon: <Star className="h-4 w-4" />,
                   },
                   {
-                    label: "Events",
+                    label: 'Events',
                     value: selectedTrip.eventsCount ?? 0,
-                    helpText: "On the itinerary",
+                    helpText: 'On the itinerary',
                     icon: <Calendar className="h-4 w-4" />,
                   },
                 ]}
@@ -824,7 +835,7 @@ export default function TripsManagement() {
                             dateOnly(selectedTrip.endDate),
                             dateOnly(selectedTrip.startDate)
                           )
-                        )}{" "}
+                        )}{' '}
                         days
                       </span>
                     </div>
@@ -843,11 +854,10 @@ export default function TripsManagement() {
                       <span>
                         {selectedTrip.guestCount && selectedTrip.feedbackCount
                           ? `${(
-                              (selectedTrip.feedbackCount /
-                                selectedTrip.guestCount) *
+                              (selectedTrip.feedbackCount / selectedTrip.guestCount) *
                               100
                             ).toFixed(1)}%`
-                          : "N/A"}
+                          : 'N/A'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -855,7 +865,7 @@ export default function TripsManagement() {
                       <span>
                         {selectedTrip.totalRevenue
                           ? `$${selectedTrip.totalRevenue.toLocaleString()}`
-                          : "Not provided"}
+                          : 'Not provided'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -887,6 +897,19 @@ export default function TripsManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Trip Wizard Modal */}
+      <TripWizard
+        isOpen={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+          toast({
+            title: 'Success',
+            description: 'Trip created successfully!',
+          });
+        }}
+      />
     </div>
   );
 }
@@ -898,8 +921,8 @@ function groupTrips(trips: Trip[]): GroupedTrips {
   const past: Trip[] = [];
   const archived: Trip[] = [];
 
-  trips.forEach((trip) => {
-    if (trip.status === "archived") {
+  trips.forEach(trip => {
+    if (trip.status === 'archived') {
       archived.push(trip);
       return;
     }
@@ -907,7 +930,7 @@ function groupTrips(trips: Trip[]): GroupedTrips {
     const start = dateOnly(trip.startDate);
     const end = dateOnly(trip.endDate);
 
-    if (trip.status === "ongoing" || (now >= start && now <= end)) {
+    if (trip.status === 'ongoing' || (now >= start && now <= end)) {
       current.push(trip);
       return;
     }
@@ -939,25 +962,25 @@ function filterTrips(
 
   let source: Trip[];
   switch (status) {
-    case "upcoming":
+    case 'upcoming':
       source = groups.upcoming;
       break;
-    case "current":
+    case 'current':
       source = groups.current;
       break;
-    case "past":
+    case 'past':
       source = groups.past;
       break;
-    case "archived":
+    case 'archived':
       source = groups.archived;
       break;
-    case "all":
+    case 'all':
     default:
       source = groups.active;
       break;
   }
 
-  return source.filter((trip) => {
+  return source.filter(trip => {
     const matchesSearch =
       !normalizedSearch ||
       trip.name.toLowerCase().includes(normalizedSearch) ||
@@ -968,7 +991,7 @@ function filterTrips(
       return false;
     }
 
-    if (year === "all") {
+    if (year === 'all') {
       return true;
     }
 
@@ -978,8 +1001,8 @@ function filterTrips(
 }
 
 function getTripSortableStatus(trip: Trip): string {
-  if (trip.status === "archived") {
-    return "archived";
+  if (trip.status === 'archived') {
+    return 'archived';
   }
 
   const now = new Date();
@@ -987,18 +1010,18 @@ function getTripSortableStatus(trip: Trip): string {
   const end = dateOnly(trip.endDate);
 
   if (now < start) {
-    return "upcoming";
+    return 'upcoming';
   }
 
   if (now >= start && now <= end) {
-    return "current";
+    return 'current';
   }
 
-  return "past";
+  return 'past';
 }
 
 function getTripStatusBadge(trip: Trip) {
-  if (trip.status === "archived") {
+  if (trip.status === 'archived') {
     return <StatusBadge status="archived" />;
   }
 
@@ -1008,13 +1031,13 @@ function getTripStatusBadge(trip: Trip) {
 
   if (now < start) {
     const daysUntil = Math.max(0, differenceInDays(start, now));
-    const label = daysUntil === 0 ? "Departs today" : `${daysUntil} days out`;
+    const label = daysUntil === 0 ? 'Departs today' : `${daysUntil} days out`;
     return <StatusBadge status="upcoming" label={label} />;
   }
 
   if (now >= start && now <= end) {
     const daysRemaining = Math.max(0, differenceInDays(end, now));
-    const label = daysRemaining === 0 ? "Docking soon" : `${daysRemaining} days left`;
+    const label = daysRemaining === 0 ? 'Docking soon' : `${daysRemaining} days left`;
     return <StatusBadge status="current" label={label} />;
   }
 
@@ -1028,13 +1051,11 @@ function renderRatingStars(rating?: number) {
 
   return (
     <div className="flex items-center gap-1 text-amber-300">
-      {[1, 2, 3, 4, 5].map((value) => (
+      {[1, 2, 3, 4, 5].map(value => (
         <Star
           key={value}
           className={`h-3.5 w-3.5 ${
-            value <= Math.round(rating)
-              ? "fill-current text-amber-300"
-              : "text-white/20"
+            value <= Math.round(rating) ? 'fill-current text-amber-300' : 'text-white/20'
           }`}
         />
       ))}

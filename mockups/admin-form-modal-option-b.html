@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Modal Concept B - Split Navigator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            midnight: '#0f1629',
+            midnightSoft: '#111f3a',
+            cyanPulse: '#22d3ee',
+            aquaGlow: '#48cae4',
+            magentaWave: '#c77dff',
+            slateInk: '#94a3b8'
+          },
+          boxShadow: {
+            modal: '0 36px 110px rgba(0,0,0,0.65)',
+            insetGlow: 'inset 0 1px 0 rgba(255,255,255,0.08)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .wizard-field input,
+    .wizard-field textarea,
+    .wizard-field select {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(15, 23, 42, 0.6);
+      color: rgba(226,232,240,0.95);
+      padding: 0 16px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .wizard-field textarea {
+      min-height: 110px;
+      padding: 14px 16px;
+    }
+    .wizard-field input:focus,
+    .wizard-field textarea:focus,
+    .wizard-field select:focus {
+      outline: none;
+      border-color: rgba(72,202,228,0.9);
+      box-shadow: 0 0 0 3px rgba(72,202,228,0.18);
+    }
+  </style>
+</head>
+<body class="bg-[#020713] text-white font-sans">
+  <div class="min-h-screen flex items-center justify-center px-4 py-12 relative">
+    <div class="absolute inset-0 bg-black/75"></div>
+
+    <div class="relative w-full max-w-5xl rounded-[26px] border border-white/12 bg-[#0f1f3a]/95 shadow-modal shadow-insetGlow overflow-hidden">
+      <header class="px-6 py-5 bg-gradient-to-r from-[#0c1a33] via-[#102242] to-[#0c1a33] border-b border-white/10 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 text-sm">
+          <div class="rounded-full bg-cyanPulse/20 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-cyanPulse">Wizard</div>
+          <div>
+            <h1 class="text-xl font-semibold">Trip Creation Modal</h1>
+            <p class="text-xs text-slateInk/70">Step 1: Core Details</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
+          <button class="rounded-full border border-white/15 px-3.5 py-1.5 text-slateInk/70">Cancel</button>
+          <button class="rounded-full bg-gradient-to-r from-cyanPulse via-aquaGlow to-magentaWave px-4.5 py-1.5 text-midnight">Next Step</button>
+          <button class="rounded-full border border-white/15 px-2.5 py-1 text-white/70">✕</button>
+        </div>
+      </header>
+
+      <div class="grid lg:grid-cols-[220px_minmax(0,1fr)]">
+        <!-- Progress Column -->
+        <aside class="border-r border-white/8 bg-[#0b182f]/90 py-6">
+          <nav class="space-y-2 text-sm">
+            <button class="w-full text-left px-5 py-3 bg-cyanPulse/15 text-cyanPulse font-semibold flex items-center gap-3">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-cyanPulse text-midnight text-sm font-bold">1</span>
+              Method
+            </button>
+            <button class="w-full text-left px-5 py-3 bg-white/5 text-white/80 flex items-center gap-3">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white/70 text-sm font-semibold">2</span>
+              Basics
+            </button>
+            <button class="w-full text-left px-5 py-3 text-white/60 flex items-center gap-3">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/50 text-sm font-semibold">3</span>
+              Ship
+            </button>
+            <button class="w-full text-left px-5 py-3 text-white/50 flex items-center gap-3">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/45 text-sm font-semibold">4</span>
+              Entertainment
+            </button>
+            <button class="w-full text-left px-5 py-3 text-white/40 flex items-center gap-3">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/40 text-sm font-semibold">5</span>
+              Review
+            </button>
+          </nav>
+          <div class="mt-6 px-5 text-xs text-slateInk/70">
+            <p class="uppercase tracking-[0.26em] text-white/50">Assistant Log</p>
+            <p class="mt-2 leading-relaxed">AI pulled hero copy, itinerary draft, and 6 highlights from last import.</p>
+          </div>
+        </aside>
+
+        <!-- Form Content -->
+        <main class="px-8 py-6 space-y-6">
+          <section class="space-y-3">
+            <header class="flex items-center justify-between text-sm text-slateInk/70">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.28em] text-slateInk/60">Trip Basics</p>
+                <h2 class="mt-1 text-lg font-semibold text-white/90">General Information</h2>
+              </div>
+              <button class="rounded-full border border-white/12 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slateInk/70">Generate Slug</button>
+            </header>
+            <div class="grid gap-4 md:grid-cols-2 wizard-field">
+              <label class="text-sm font-semibold text-white/80">
+                Trip Name
+                <input type="text" value="Atlantis Mediterranean Odyssey" />
+              </label>
+              <label class="text-sm font-semibold text-white/80">
+                Slug
+                <input type="text" value="atlantis-mediterranean-odyssey" />
+              </label>
+              <label class="text-sm font-semibold text-white/80">
+                Charter Company
+                <select>
+                  <option>Atlantis Events</option>
+                  <option>RSVP Vacations</option>
+                </select>
+              </label>
+              <label class="text-sm font-semibold text-white/80">
+                Trip Type
+                <select>
+                  <option>Cruise</option>
+                  <option>Resort</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="space-y-3">
+            <header class="flex items-center justify-between text-sm text-slateInk/70">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.28em] text-slateInk/60">Schedule</p>
+                <h2 class="mt-1 text-lg font-semibold text-white/90">Key Dates</h2>
+              </div>
+              <button class="rounded-full border border-white/12 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slateInk/70">Sync Calendar</button>
+            </header>
+            <div class="grid gap-4 md:grid-cols-3 wizard-field">
+              <label class="text-sm font-semibold text-white/80">
+                Start Date
+                <input type="date" value="2025-05-11" />
+              </label>
+              <label class="text-sm font-semibold text-white/80">
+                End Date
+                <input type="date" value="2025-05-18" />
+              </label>
+              <label class="text-sm font-semibold text-white/80">
+                Status
+                <select>
+                  <option>Upcoming</option>
+                  <option>Draft</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="space-y-3">
+            <header class="flex items-center justify-between text-sm text-slateInk/70">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.28em] text-slateInk/60">Hero Content</p>
+                <h2 class="mt-1 text-lg font-semibold text-white/90">Description & Media</h2>
+              </div>
+              <button class="rounded-full border border-cyanPulse/40 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">Ask AI to rewrite</button>
+            </header>
+            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+              <div class="wizard-field">
+                <label class="text-sm font-semibold text-white/80">
+                  Hero Tagline
+                  <input type="text" placeholder="Sail the Aegean with world-class LGBTQ+ entertainment" />
+                </label>
+                <label class="mt-4 text-sm font-semibold text-white/80">
+                  Description
+                  <textarea placeholder="Describe the experience in detail"></textarea>
+                </label>
+              </div>
+              <aside class="rounded-2xl border border-white/12 bg-black/18 p-4 space-y-3 text-xs text-slateInk/70">
+                <div class="h-28 rounded-xl border-2 border-dashed border-cyanPulse/40 bg-gradient-to-br from-cyanPulse/15 via-white/5 to-magentaWave/20 flex items-center justify-center text-center px-4">
+                  Hero image preview area
+                </div>
+                <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]">
+                  <button class="rounded-full border border-cyanPulse/40 px-3 py-1 text-white">Change</button>
+                  <button class="rounded-full border border-white/12 px-3 py-1 text-slateInk/70">Remove</button>
+                </div>
+                <p>Image uploaded • Stored in Supabase</p>
+              </aside>
+            </div>
+          </section>
+
+          <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm text-slateInk/70">
+            <div class="flex items-center gap-3">
+              <span class="text-cyanPulse">Step 1 of 5</span>
+              <span>Next: Assign ship & itinerary</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
+              <button class="rounded-full border border-white/12 px-3.5 py-1.5 text-slateInk/75">Back</button>
+              <button class="rounded-full bg-gradient-to-r from-cyanPulse via-aquaGlow to-magentaWave px-4.5 py-1.5 text-midnight">Save & Continue</button>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

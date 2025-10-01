@@ -1,38 +1,39 @@
-import { useEffect, lazy, Suspense } from "react";
-import { Switch, Route, Redirect } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
-import { TimeFormatProvider } from "@/contexts/TimeFormatContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import NavigationBanner from "@/components/navigation-banner";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { useEffect, lazy, Suspense } from 'react';
+import { Switch, Route, Redirect } from 'wouter';
+import { queryClient } from './lib/queryClient';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext';
+import { TimeFormatProvider } from '@/contexts/TimeFormatContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import NavigationBanner from '@/components/navigation-banner';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 // Lazy load all route components for code splitting
-const LandingPage = lazy(() => import("@/pages/landing"));
-const TripPage = lazy(() => import("@/pages/trip"));
-const LoginPage = lazy(() => import("@/pages/auth/login"));
-const AuthCallback = lazy(() => import("@/pages/auth/AuthCallback").then(m => ({ default: m.AuthCallback })));
-const AccountSetup = lazy(() => import("@/pages/auth/AccountSetup"));
-const NotFound = lazy(() => import("@/pages/not-found"));
-const ImageTest = lazy(() => import("@/pages/image-test"));
+const LandingPage = lazy(() => import('@/pages/landing'));
+const TripPage = lazy(() => import('@/pages/trip'));
+const LoginPage = lazy(() => import('@/pages/auth/login'));
+const AuthCallback = lazy(() =>
+  import('@/pages/auth/AuthCallback').then(m => ({ default: m.AuthCallback }))
+);
+const AccountSetup = lazy(() => import('@/pages/auth/AccountSetup'));
+const NotFound = lazy(() => import('@/pages/not-found'));
+const ImageTest = lazy(() => import('@/pages/image-test'));
 
 // Admin pages - lazy loaded
-const ShipsManagement = lazy(() => import("@/pages/admin/ships"));
-const LocationsManagement = lazy(() => import("@/pages/admin/locations"));
-const ResortsManagement = lazy(() => import("@/pages/admin/resorts"));
-const ArtistsManagement = lazy(() => import("@/pages/admin/artists"));
-const ThemesManagement = lazy(() => import("@/pages/admin/themes"));
-const TripInfoSectionsManagement = lazy(() => import("@/pages/admin/trip-info-sections"));
-const UsersManagement = lazy(() => import("@/pages/admin/users"));
-const AdminLookupTables = lazy(() => import("@/pages/admin/lookup-tables"));
-const AdminProfile = lazy(() => import("@/pages/admin/profile"));
-const TripWizard = lazy(() => import("@/pages/admin/trip-wizard"));
-const TripDetail = lazy(() => import("@/pages/admin/trip-detail"));
-const TripsManagement = lazy(() => import("@/pages/admin/trips-management"));
-const InvitationsManagement = lazy(() => import("@/pages/admin/invitations"));
+const ShipsManagement = lazy(() => import('@/pages/admin/ships'));
+const LocationsManagement = lazy(() => import('@/pages/admin/locations'));
+const ResortsManagement = lazy(() => import('@/pages/admin/resorts'));
+const ArtistsManagement = lazy(() => import('@/pages/admin/artists'));
+const ThemesManagement = lazy(() => import('@/pages/admin/themes'));
+const TripInfoSectionsManagement = lazy(() => import('@/pages/admin/trip-info-sections'));
+const UsersManagement = lazy(() => import('@/pages/admin/users'));
+const AdminLookupTables = lazy(() => import('@/pages/admin/lookup-tables'));
+const AdminProfile = lazy(() => import('@/pages/admin/profile'));
+const TripDetail = lazy(() => import('@/pages/admin/trip-detail'));
+const TripsManagement = lazy(() => import('@/pages/admin/trips-management'));
+const InvitationsManagement = lazy(() => import('@/pages/admin/invitations'));
 
 // Loading fallback component
 function PageLoader() {
@@ -62,20 +63,126 @@ function Router() {
         <Route path="/profile" component={() => <Redirect to="/admin/profile" />} />
         <Route path="/admin" component={() => <Redirect to="/admin/trips" />} />
         <Route path="/admin/dashboard" component={() => <Redirect to="/admin/trips" />} />
-        <Route path="/admin/ships" component={() => <ProtectedRoute><AdminLayout><ShipsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/resorts" component={() => <ProtectedRoute><AdminLayout><ResortsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/locations" component={() => <ProtectedRoute><AdminLayout><LocationsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/artists" component={() => <ProtectedRoute><AdminLayout><ArtistsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/themes" component={() => <ProtectedRoute><AdminLayout><ThemesManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/trip-info-sections" component={() => <ProtectedRoute><AdminLayout><TripInfoSectionsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/users" component={() => <ProtectedRoute><AdminLayout><UsersManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/invitations" component={() => <ProtectedRoute><AdminLayout><InvitationsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/lookup-tables" component={() => <ProtectedRoute><AdminLayout><AdminLookupTables /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/profile" component={() => <ProtectedRoute><AdminLayout><AdminProfile /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/trips" component={() => <ProtectedRoute><AdminLayout><TripsManagement /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/trips/new" component={() => <ProtectedRoute><AdminLayout><TripWizard /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/trips/:id/edit" component={() => <ProtectedRoute><AdminLayout><TripWizard isEditing={true} /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/trips/:id" component={() => <ProtectedRoute><AdminLayout><TripDetail /></AdminLayout></ProtectedRoute>} />
+        <Route
+          path="/admin/ships"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <ShipsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/resorts"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <ResortsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/locations"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <LocationsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/artists"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <ArtistsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/themes"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <ThemesManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/trip-info-sections"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <TripInfoSectionsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/users"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <UsersManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/invitations"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <InvitationsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/lookup-tables"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminLookupTables />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/profile"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminProfile />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/trips"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <TripsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/trips/:id"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <TripDetail />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -134,7 +241,9 @@ function App() {
           <TimeFormatProvider>
             <TooltipProvider>
               <NavigationBanner />
-              <div className="pt-10 w-full"> {/* Add padding to account for fixed banner */}
+              <div className="pt-10 w-full">
+                {' '}
+                {/* Add padding to account for fixed banner */}
                 <Toaster />
                 <Router />
               </div>

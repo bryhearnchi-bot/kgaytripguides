@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ship Modal • Aurora Admin</title>
+  <style>
+    :root { color-scheme: dark; font-family: 'Inter', system-ui, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: radial-gradient(circle at top, #15243e 0%, #050914 70%);
+      color: #e4ebff;
+    }
+    .shell {
+      width: 880px;
+      max-width: 95vw;
+      background: rgba(16, 25, 47, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 36px 120px rgba(3, 10, 24, 0.65);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 20px 28px 18px;
+      background: linear-gradient(90deg, #0d1d3b 0%, #102446 60%, #0d1d3b 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    header h1 {
+      margin: 6px 0 4px;
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header p.sub {
+      margin: 0;
+      color: rgba(190, 206, 238, 0.75);
+      font-size: 12px;
+    }
+    header .tag {
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: rgba(148, 170, 209, 0.6);
+    }
+    .pill-row { display: flex; align-items: center; gap: 8px; letter-spacing: 0.16em; text-transform: uppercase; font-size: 10px; }
+    .pill { border-radius: 999px; padding: 7px 16px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: all 0.18s ease; }
+    .pill.ghost { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: rgba(226,232,240,0.86); }
+    .pill.primary { background: linear-gradient(90deg, #22d3ee 0%, #48cae4 60%, #0ea5e9 100%); color: #052845; border: none; box-shadow: 0 10px 24px rgba(34, 211, 238, 0.35); }
+    .pill.icon { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; color: rgba(226,232,240,0.75); }
+
+    main { padding: 22px 28px 24px; }
+    .modal-input,
+    .modal-select {
+      width: 100%;
+      height: 32px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: white;
+      padding: 0 14px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .modal-input:focus,
+    .modal-select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: rgba(34,211,238,0.6);
+      background: rgba(34,211,238,0.03);
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.08);
+    }
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: white;
+      font-size: 14px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+    .modal-input::placeholder,
+    textarea::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    .combo-trigger {
+      height: 36px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: rgba(226,232,240,0.88);
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+    }
+    .combo-trigger:hover {
+      border-color: rgba(34,211,238,0.6);
+      background: rgba(34,211,238,0.03);
+    }
+    .combo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(34,211,238,0.12);
+      border: 1px solid rgba(34,211,238,0.28);
+      font-size: 12px;
+      color: rgba(226,232,240,0.9);
+    }
+    .ai-assist-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(34,211,238,0.3);
+      background: rgba(34,211,238,0.08);
+      color: rgba(34,211,238,0.95);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .ai-assist-button:hover {
+      border-color: rgba(34,211,238,0.5);
+      background: rgba(34,211,238,0.15);
+    }
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 8px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <div class="tag">SHIP MANAGER</div>
+        <h1>
+          <span style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:50%; background:rgba(34,211,238,0.25); color:#22d3ee;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 19h18M4 12h16l-2 7H6l-2-7Zm2-5h12v5H6V7Zm3-4h6v4H9V3Z" />
+            </svg>
+          </span>
+          Edit Ship: Resilient Lady
+        </h1>
+        <p class="sub">Update ship profile, amenities, and deck resources</p>
+      </div>
+      <div class="pill-row">
+        <button class="pill ghost" style="border-color:rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:rgba(226,232,240,0.86);">Save</button>
+        <button class="pill primary">Update</button>
+        <button class="pill icon">✕</button>
+      </div>
+    </header>
+
+    <main>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Left Column -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <label>
+            Ship Name *
+            <input class="modal-input" value="Resilient Lady" />
+          </label>
+
+          <label>
+            Cruise Line *
+            <input class="modal-input" value="Virgin Voyages" />
+          </label>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <label>
+              Capacity
+              <input class="modal-input" type="number" value="2770" />
+            </label>
+            <label>
+              Decks
+              <input class="modal-input" type="number" value="17" />
+            </label>
+          </div>
+
+          <label>
+            Ship Image URL
+            <input class="modal-input" value="https://virginvoyages.imgix.net/dam/jcr:dbe60aac-ae9f-46..." />
+          </label>
+
+          <label>
+            Deck Plans URL
+            <input class="modal-input" placeholder="https://example.com/deck-plans.pdf" />
+          </label>
+
+          <label>
+            Description
+            <textarea placeholder="Enter ship description...">Resilient Lady is the third ship in Virgin Voyages' fleet, continuing the brand's commitment to sustainable cruising.</textarea>
+          </label>
+        </div>
+
+        <!-- Right Column - Venues & Amenities -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <label style="margin: 0;">Ship Venues</label>
+              <span style="font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">3 selected</span>
+            </div>
+            <div class="combo-trigger">
+              <span style="color: rgba(255,255,255,0.6);">Select venues...</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+              </svg>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+              <span class="combo-chip">Italian Bistro</span>
+              <span class="combo-chip">Pool Grill</span>
+              <span class="combo-chip">Sushi Bar</span>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <label style="margin: 0;">Ship Amenities</label>
+              <span style="font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">5 selected</span>
+            </div>
+            <div class="combo-trigger">
+              <span style="color: rgba(255,255,255,0.6);">Select amenities...</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+              </svg>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+              <span class="combo-chip">Spa Complex</span>
+              <span class="combo-chip">The Manor Nightclub</span>
+              <span class="combo-chip">Dock House</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer style="border-top:1px solid rgba(255,255,255,0.08); padding:16px 28px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#94a3c8;">
+      <span>Changes not saved · Last synced 3 mins ago</span>
+      <div class="pill-row">
+        <button class="pill ghost">Cancel</button>
+        <button class="pill primary">Update Ship</button>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
