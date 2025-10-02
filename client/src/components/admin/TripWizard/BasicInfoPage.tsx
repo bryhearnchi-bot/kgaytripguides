@@ -49,6 +49,23 @@ export function BasicInfoPage() {
     }
   };
 
+  // Helper function to format date without timezone issues
+  const formatDateForStorage = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Calculate minimum end date (one day after start date)
+  const getMinimumEndDate = (): Date | undefined => {
+    if (!state.tripData.startDate) return undefined;
+    const startDate = new Date(state.tripData.startDate);
+    const minEndDate = new Date(startDate);
+    minEndDate.setDate(minEndDate.getDate() + 1);
+    return minEndDate;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     updateTripData({ [field]: value });
 
@@ -151,9 +168,22 @@ export function BasicInfoPage() {
               <label className="text-xs font-semibold text-white/90">Start Date *</label>
               <DatePicker
                 value={state.tripData.startDate}
-                onChange={date =>
-                  updateTripData({ startDate: date ? date.toISOString().split('T')[0] : '' })
-                }
+                onChange={date => {
+                  const newStartDate = date ? formatDateForStorage(date) : '';
+
+                  // Clear end date if it's now invalid (same as or before new start date)
+                  if (state.tripData.endDate && newStartDate) {
+                    const startDateObj = new Date(newStartDate);
+                    const endDateObj = new Date(state.tripData.endDate);
+
+                    if (endDateObj <= startDateObj) {
+                      updateTripData({ startDate: newStartDate, endDate: '' });
+                      return;
+                    }
+                  }
+
+                  updateTripData({ startDate: newStartDate });
+                }}
                 placeholder="Pick start date"
               />
             </div>
@@ -163,10 +193,17 @@ export function BasicInfoPage() {
               <DatePicker
                 value={state.tripData.endDate}
                 onChange={date =>
-                  updateTripData({ endDate: date ? date.toISOString().split('T')[0] : '' })
+                  updateTripData({ endDate: date ? formatDateForStorage(date) : '' })
                 }
                 placeholder="Pick end date"
+                disabled={!state.tripData.startDate}
+                fromDate={getMinimumEndDate()}
               />
+              {state.tripData.startDate && (
+                <p className="text-[10px] text-white/50 mt-0.5">
+                  Must be at least one day after start date
+                </p>
+              )}
             </div>
           </div>
         </div>

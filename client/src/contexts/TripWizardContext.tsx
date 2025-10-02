@@ -37,6 +37,27 @@ interface ShipData {
   deckPlansUrl: string;
 }
 
+export interface ScheduleEntry {
+  id?: number;
+  dayNumber: number;
+  date: string;
+  imageUrl: string;
+  description: string;
+}
+
+export interface ItineraryEntry {
+  id?: number;
+  dayNumber: number;
+  date: string;
+  locationId?: number;
+  locationName: string;
+  arrivalTime: string;
+  departureTime: string;
+  allAboardTime: string;
+  description: string;
+  imageUrl: string;
+}
+
 interface TripWizardState {
   currentPage: number;
   tripType: TripType;
@@ -46,6 +67,8 @@ interface TripWizardState {
   shipData: Partial<ShipData> | null;
   amenityIds: number[];
   venueIds: number[];
+  scheduleEntries: ScheduleEntry[];
+  itineraryEntries: ItineraryEntry[];
   tempFiles: string[];
 }
 
@@ -59,6 +82,12 @@ interface TripWizardContextType {
   updateShipData: (data: Partial<ShipData>) => void;
   setAmenityIds: (ids: number[]) => void;
   setVenueIds: (ids: number[]) => void;
+  setScheduleEntries: (entries: ScheduleEntry[]) => void;
+  updateScheduleEntry: (index: number, data: Partial<ScheduleEntry>) => void;
+  addScheduleEntry: (entry: ScheduleEntry) => void;
+  setItineraryEntries: (entries: ItineraryEntry[]) => void;
+  updateItineraryEntry: (index: number, data: Partial<ItineraryEntry>) => void;
+  addItineraryEntry: (entry: ItineraryEntry) => void;
   addTempFile: (path: string) => void;
   clearWizard: () => void;
 }
@@ -82,6 +111,8 @@ const initialState: TripWizardState = {
   shipData: null,
   amenityIds: [],
   venueIds: [],
+  scheduleEntries: [],
+  itineraryEntries: [],
   tempFiles: [],
 };
 
@@ -129,6 +160,46 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, venueIds: ids }));
   };
 
+  const setScheduleEntries = (entries: ScheduleEntry[]) => {
+    setState(prev => ({ ...prev, scheduleEntries: entries }));
+  };
+
+  const updateScheduleEntry = (index: number, data: Partial<ScheduleEntry>) => {
+    setState(prev => ({
+      ...prev,
+      scheduleEntries: prev.scheduleEntries.map((entry, i) =>
+        i === index ? { ...entry, ...data } : entry
+      ),
+    }));
+  };
+
+  const setItineraryEntries = (entries: ItineraryEntry[]) => {
+    setState(prev => ({ ...prev, itineraryEntries: entries }));
+  };
+
+  const updateItineraryEntry = (index: number, data: Partial<ItineraryEntry>) => {
+    setState(prev => ({
+      ...prev,
+      itineraryEntries: prev.itineraryEntries.map((entry, i) =>
+        i === index ? { ...entry, ...data } : entry
+      ),
+    }));
+  };
+
+  const addScheduleEntry = (entry: ScheduleEntry) => {
+    setState(prev => ({
+      ...prev,
+      scheduleEntries: [...prev.scheduleEntries, entry],
+    }));
+  };
+
+  const addItineraryEntry = (entry: ItineraryEntry) => {
+    setState(prev => ({
+      ...prev,
+      itineraryEntries: [...prev.itineraryEntries, entry],
+    }));
+  };
+
   const addTempFile = (path: string) => {
     setState(prev => ({
       ...prev,
@@ -150,6 +221,12 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     updateShipData,
     setAmenityIds,
     setVenueIds,
+    setScheduleEntries,
+    updateScheduleEntry,
+    addScheduleEntry,
+    setItineraryEntries,
+    updateItineraryEntry,
+    addItineraryEntry,
     addTempFile,
     clearWizard,
   };

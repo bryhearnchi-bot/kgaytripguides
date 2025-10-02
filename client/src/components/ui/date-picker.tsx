@@ -13,6 +13,9 @@ interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  fromDate?: Date; // Minimum selectable date
+  toDate?: Date; // Maximum selectable date
+  disabledDates?: (date: Date) => boolean; // Custom function to disable specific dates
 }
 
 export function DatePicker({
@@ -21,11 +24,21 @@ export function DatePicker({
   placeholder = 'Pick a date',
   disabled = false,
   className = '',
+  fromDate,
+  toDate,
+  disabledDates,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
-  // Convert string to Date if needed
-  const dateValue = value instanceof Date ? value : value ? new Date(value) : undefined;
+  // Helper to parse date string in local timezone (not UTC)
+  const parseDateString = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Convert string to Date if needed - parse in local timezone
+  const dateValue =
+    value instanceof Date ? value : value ? parseDateString(value as string) : undefined;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -66,6 +79,14 @@ export function DatePicker({
               onChange(date);
               setOpen(false);
             }}
+            disabled={date => {
+              if (fromDate && date < fromDate) return true;
+              if (toDate && date > toDate) return true;
+              if (disabledDates && disabledDates(date)) return true;
+              return false;
+            }}
+            fromDate={fromDate}
+            toDate={toDate}
             className="calendar-compact"
           />
         </div>

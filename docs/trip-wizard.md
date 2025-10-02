@@ -65,18 +65,61 @@ The purpose of this feature is to enable users to add brand new trips into the d
   - Description and highlights textareas
   - Two-column responsive layout
   - All components styled per TRIP-WIZARD-STYLE-GUIDE.md
-- [ ] ResortDetailsPage (Page 2A)
-- [ ] ShipDetailsPage (Page 2B)
-- [ ] ResortVenuesAmenitiesPage (Page 3A)
-- [ ] ShipVenuesAmenitiesPage (Page 3B)
-- [ ] ResortSchedulePage (Page 4A)
-- [ ] CruiseItineraryPage (Page 4B)
+- [x] **ResortDetailsPage (Page 2A)** - Complete resort details form
+  - Two-column responsive layout (grid-cols-1 lg:grid-cols-2)
+  - Fields: Resort name, location (LocationSearchBar), capacity, rooms, check-in/check-out times (TimePicker), image upload, description, property map URL
+  - Conditional rendering based on tripType === 'resort'
+  - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
+  - **FILE**: `/client/src/components/admin/TripWizard/ResortDetailsPage.tsx`
+- [x] **ShipDetailsPage (Page 2B)** - Complete ship details form
+  - Two-column responsive layout (grid-cols-1 lg:grid-cols-2)
+  - Fields: Ship name, cruise line, capacity, decks, image upload, description, deck plans URL
+  - Conditional rendering based on tripType === 'cruise'
+  - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
+  - **FILE**: `/client/src/components/admin/TripWizard/ShipDetailsPage.tsx`
+- [x] **ResortVenuesAmenitiesPage (Page 3A)** - Venues and amenities selection for resorts
+  - Single column layout with two sections (Venues, Amenities)
+  - Uses existing VenueSelector component (multi-select with create)
+  - Uses existing AmenitySelector component (multi-select with create)
+  - Conditional rendering based on tripType === 'resort'
+  - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
+  - **FILE**: `/client/src/components/admin/TripWizard/ResortVenuesAmenitiesPage.tsx`
+- [x] **ShipVenuesAmenitiesPage (Page 3B)** - Venues and amenities selection for ships
+  - Single column layout with two sections (Venues, Amenities)
+  - Uses existing VenueSelector component (multi-select with create)
+  - Uses existing AmenitySelector component (multi-select with create)
+  - Conditional rendering based on tripType === 'cruise'
+  - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
+  - **FILE**: `/client/src/components/admin/TripWizard/ShipVenuesAmenitiesPage.tsx`
+- [x] **ResortSchedulePage** (Page 4A) - COMPLETE
+  - Daily schedule builder with auto-generated entries from trip dates
+  - Two-column layout (image + description) per day
+  - ImageUploadField for optional day images, Textarea for descriptions
+  - Displays day number and formatted date for each entry
+  - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
+  - **FILE**: `/client/src/components/admin/TripWizard/ResortSchedulePage.tsx`
+- [x] **CruiseItineraryPage** (Page 4B) - COMPLETE
+  - Port-by-port itinerary with auto-generated entries from trip dates
+  - LocationSearchBar for port/location selection
+  - TimePicker fields (arrival, departure, all aboard) in 24-hour format
+  - ImageUploadField for optional port images, Textarea for descriptions
+  - Displays day number and formatted date for each entry
+  - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
+  - **FILE**: `/client/src/components/admin/TripWizard/CruiseItineraryPage.tsx`
 - [ ] CompletionPage (Page 5)
 - [ ] AIAssistantChat component (collapsible, persistent)
-- [ ] VenueSelector with venue type dropdown
-- [ ] AmenitySelector (multi-select)
-- [ ] LocationPicker for cruise itinerary (search/autocomplete)
+- [x] **VenueSelector** - Multi-select with create modal, single-line display (name + venue type) (COMPLETE)
+- [x] **AmenitySelector** - Multi-select with create modal, single-line display (name only) (COMPLETE)
+- [x] **LocationSearchBar** - Photon API integration for location search (COMPLETE)
+- [ ] **LocationSelector** - Database location picker with create modal (PENDING)
+  - Searches `locations` table in database (NOT Photon API)
+  - "Add New Location" always shown at top of dropdown
+  - Opens modal with LocationSearchBar + additional fields
+  - Saves new location to database
+  - Returns selected location
+  - **AI Note**: When AI integration is added, AI should be able to suggest and auto-fill location details in the create modal
 - [x] **ImageUpload component** - Using existing ImageUploadField component (COMPLETE)
+- [x] **Add Day Functionality** - Modal for adding pre/post-trip days with date validation (COMPLETE)
 - [ ] WizardNavigation (Next/Back/Save buttons)
 
 ### UI/UX ✓
@@ -174,15 +217,260 @@ The purpose of this feature is to enable users to add brand new trips into the d
 
 - [x] **TRIP-WIZARD-STYLE-GUIDE.md v1.1** - Comprehensive styling documentation (completed)
   - [x] Implementation Status section added
-  - [x] Completed components documented (BuildMethodPage, BasicInfoPage)
+  - [x] Completed components documented (BuildMethodPage, BasicInfoPage, ResortDetailsPage, ShipDetailsPage)
   - [x] Component fixes documented (z-index, pointer-events, calendar compact mode)
   - [x] Pending pages listed
+  - [x] **CRITICAL RULE ADDED:** No page headers in wizard pages (modal already displays title)
+  - [x] **FUTURE MIGRATION DOCUMENTED:** 24-hour time standardization across database and app
 - [x] Reference style guide in trip-wizard.md (completed)
 - [x] Update Component Library section with DatePicker component (completed)
+- [x] Update Component Library section with TimePicker component (completed)
 - [ ] API endpoint documentation
 - [ ] Code comments in complex functions
 - [x] Update CLAUDE.md with image storage rules (completed)
 - [ ] Implementation notes for future developers
+
+### ⚠️ Important Development Notes
+
+**DO NOT Add Page Headers in Wizard Pages**
+
+The TripWizard modal already displays dynamic page titles in the modal header via `getPageTitle()` and `getPageDescription()`. Adding additional headers inside wizard page components (like `<h2>Resort Details</h2>`) creates duplicate headers and wastes vertical space.
+
+❌ **WRONG:**
+
+```typescript
+export function MyWizardPage() {
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 mb-4">
+        <Icon className="w-5 h-5 text-cyan-400" />
+        <h2 className="text-lg font-semibold text-white">Page Title</h2>
+      </div>
+      {/* form fields */}
+    </div>
+  );
+}
+```
+
+✅ **CORRECT:**
+
+```typescript
+export function MyWizardPage() {
+  return (
+    <div className="space-y-2.5">
+      {/* Start directly with form content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* form fields */}
+      </div>
+    </div>
+  );
+}
+```
+
+**24-Hour Time Standardization (Future Migration)**
+
+All time fields will be standardized to 24-hour format (HH:MM) before production launch. This includes:
+
+1. **Database Migration:**
+   - Review all time columns across tables (trips, resorts, ships, schedules, events)
+   - Convert any AM/PM formatted times to HH:MM format
+   - Create migration script for existing data
+
+2. **Application Updates:**
+   - Audit all time-related components (already done for TimePicker)
+   - Update any time formatting utilities
+   - Search for AM/PM displays and convert to 24-hour
+   - Update validation to enforce HH:MM format
+
+**Status:** TimePicker component already uses 24-hour format. Full migration to be completed later.
+**Priority:** Medium - Must complete before production launch.
+
+---
+
+### ⚡ Timezone-Safe Date Handling (IMPLEMENTED)
+
+**CRITICAL:** This application NEVER converts timezones. All dates and times are in the destination's local timezone.
+
+**Implementation Details:**
+
+1. **Date Parsing - Always Use Local Timezone:**
+
+```typescript
+// ❌ WRONG - Causes UTC conversion
+const date = new Date('2025-10-12'); // Interprets as UTC midnight
+
+// ✅ CORRECT - Parse in local timezone
+const parseDateString = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+```
+
+2. **Date Formatting - Never Use toISOString():**
+
+```typescript
+// ❌ WRONG - Converts to UTC
+const dateString = date.toISOString().split('T')[0];
+
+// ✅ CORRECT - Format without timezone conversion
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+const dateString = `${year}-${month}-${day}`;
+```
+
+3. **Implemented in All Date Components:**
+   - `DatePicker` component - Uses parseDateString helper
+   - `ResortSchedulePage` - formatDate, getMinMaxDates, useEffect
+   - `CruiseItineraryPage` - formatDate, getMinMaxDates, useEffect
+   - All date calculations use local timezone parsing
+
+**Why This Matters:**
+
+- Trip on Oct 12-18 displays as Oct 12-18 everywhere (not Oct 11-17)
+- Cruise departure at 14:00 means 2:00 PM ship time
+- No off-by-one date bugs
+
+**Reference:** CLAUDE.md Critical Rule #1 - NO TIMEZONE CONVERSIONS
+
+---
+
+### 🗓️ Day Numbering System (IMPLEMENTED)
+
+**Day Number Logic:**
+
+| Day Type  | Day Number Range         | Display Label       | Use Case                |
+| --------- | ------------------------ | ------------------- | ----------------------- |
+| Pre-trip  | Negative (-1, -2, -3...) | "Pre-Trip"          | Days before trip starts |
+| Regular   | 1 to 99                  | "Day 1", "Day 2"... | Main trip days          |
+| Post-trip | 100+ (100, 101, 102...)  | "Post-Trip"         | Days after trip ends    |
+
+**Calculation:**
+
+- **Pre-trip days**: `dayNumber = -(days before start date)`
+  - Example: Oct 11 is 1 day before Oct 12 start → dayNumber = -1
+- **Regular days**: `dayNumber = 1, 2, 3...` (starts at Day 1, not Day 0)
+- **Post-trip days**: `dayNumber = 100 + (days after end date) - 1`
+  - Example: Oct 19 is 1 day after Oct 18 end → dayNumber = 100
+
+**Implementation:**
+
+```typescript
+// Display logic
+{
+  entry.dayNumber < 1
+    ? 'Pre-Trip'
+    : entry.dayNumber >= 100
+      ? 'Post-Trip'
+      : `Day ${entry.dayNumber}`;
+}
+
+// Calculate pre-trip day number
+const startDateObj = parseDateString(state.tripData.startDate);
+const daysDiff = Math.floor(
+  (startDateObj.getTime() - selectedDateObj.getTime()) / (1000 * 60 * 60 * 24)
+);
+newDayNumber = -daysDiff;
+
+// Calculate post-trip day number
+const endDateObj = parseDateString(state.tripData.endDate);
+const daysDiff = Math.floor(
+  (selectedDateObj.getTime() - endDateObj.getTime()) / (1000 * 60 * 60 * 24)
+);
+newDayNumber = 100 + daysDiff - 1;
+```
+
+**Add Day Functionality:**
+
+- Modal allows adding pre-trip or post-trip days
+- Calendar grays out already-added dates (`disabledDates` prop)
+- Duplicate date prevention with alert
+- Auto-scroll: Top for pre-trip, bottom for post-trip
+- Validation: Prevents navigation with incomplete entries
+
+**Database Storage:**
+
+- Day numbers stored as-is in database (including negatives and 100+)
+- Sorted by date for display
+- UI displays appropriate label based on day number range
+
+---
+
+### 📍 Location Selection System (PENDING IMPLEMENTATION)
+
+**Two Different Location Components:**
+
+1. **LocationSearchBar** (Existing - for user profiles, etc.)
+   - Direct Photon API search
+   - Used in user profiles and other non-wizard contexts
+   - No database storage of locations
+   - Simple search and select
+
+2. **LocationSelector** (New - for Trip Wizard ONLY)
+   - Searches `locations` database table
+   - "Add New Location" option always at top
+   - Opens modal to create new locations
+   - Saves to database for reuse
+
+---
+
+**LocationSelector Component Specification:**
+
+**Purpose:** Allow selecting existing locations OR creating new ones during trip wizard flow
+
+**Behavior:**
+
+1. **Dropdown Search:**
+   - Searches `locations` table in database (NOT Photon API)
+   - Shows matching locations from database
+   - **"Add New Location" always appears at the top** of dropdown menu
+   - Single-select (user picks one location)
+
+2. **Add New Location Modal:**
+   - Triggered by clicking "Add New Location"
+   - Contains:
+     - **LocationSearchBar component** (existing Photon API search)
+     - All additional fields needed for `locations` table
+     - Save button
+   - User workflow:
+     1. Click "Add New Location"
+     2. Modal opens
+     3. Use LocationSearchBar to search Photon API
+     4. Fill in additional location details
+     5. Click Save → Location added to `locations` table
+     6. Modal closes → New location is auto-selected in LocationSelector
+
+3. **Where Used:**
+   - **ResortDetailsPage**: Resort location field
+   - **CruiseItineraryPage**: Port/location field for each itinerary entry
+
+4. **Component Pattern:**
+   - Follows VenueSelector/AmenitySelector pattern
+   - Ocean theme modal styling
+   - Wizard mode support
+   - Database integration
+
+**AI Integration (Future):**
+
+- When AI Assistant is implemented, AI should:
+  - Suggest locations based on trip context
+  - Auto-fill location details in create modal
+  - Search for location data from trip URL/PDF
+  - Match locations to existing database entries when possible
+
+**Database Fields (locations table):**
+
+- `name` - Location name
+- `city` - City name
+- `state` - State/province
+- `country` - Country
+- `latitude` - Geographic coordinate
+- `longitude` - Geographic coordinate
+- Additional fields as needed
+
+**Implementation Priority:** Must be completed before Page 4 (Itinerary) is functional
+
+---
 
 ## User Flow
 
@@ -838,7 +1126,17 @@ Three options:
   - Provides calendar popup with compact mode for tight spaces
   - Uses `Calendar` component internally with ocean theme styling
   - Automatically constrains popup width to match trigger button
+  - **Supports date constraints**: `fromDate`, `toDate`, and `disabledDates` props
+  - **Timezone-safe**: Parses date strings in local timezone (no UTC conversion)
   - **IMPLEMENTED**: Used in BasicInfoPage for Start Date and End Date fields
+  - **IMPLEMENTED**: Used in ResortSchedulePage and CruiseItineraryPage with disabled dates
+- ✅ **ALWAYS use `TimePicker`** component for time selection
+  - Located at: `/client/src/components/ui/time-picker.tsx`
+  - Provides 24-hour time input with automatic formatting (HH:MM)
+  - Validates hours (0-23) and minutes (0-59)
+  - Displays 12-hour format hint below input for user convenience
+  - Matches ocean theme styling with cyan-400 accents
+  - **IMPLEMENTED**: Used in ResortDetailsPage for Check-in and Check-out times
 
 **Design Reference:**
 

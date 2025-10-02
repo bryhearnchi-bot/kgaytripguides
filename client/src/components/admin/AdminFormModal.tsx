@@ -19,8 +19,8 @@ const modalFieldStyles = `
   .admin-form-modal input,
   .admin-form-modal select,
   .admin-form-modal textarea {
-    height: 44px;
-    padding: 0 14px;
+    height: 40px;
+    padding: 0 12px;
     background: rgba(255, 255, 255, 0.04);
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
@@ -38,28 +38,32 @@ const modalFieldStyles = `
     display: none !important;
   }
   .admin-form-modal textarea {
-    height: 90px;
-    padding: 12px 14px;
+    height: auto;
+    padding: 8px 12px;
     resize: vertical;
     font-family: inherit;
+    line-height: 1.375;
   }
   .admin-form-modal input::placeholder,
-  .admin-form-modal textarea::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+  .admin-form-modal textarea::placeholder,
+  .admin-form-modal select::placeholder {
+    color: rgba(255, 255, 255, 0.5);
   }
   .admin-form-modal input:focus,
   .admin-form-modal select:focus,
   .admin-form-modal textarea:focus {
-    outline: none;
-    border-color: rgba(34, 211, 238, 0.6);
-    background: rgba(34, 211, 238, 0.03);
-    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+    outline: none !important;
+    border-color: rgba(34, 211, 238, 0.6) !important;
+    background: rgba(34, 211, 238, 0.03) !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08) !important;
+    --tw-ring-offset-width: 0px !important;
+    --tw-ring-width: 0px !important;
   }
   .admin-form-modal label {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: block;
   }
 

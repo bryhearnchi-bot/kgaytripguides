@@ -2,6 +2,12 @@ import { useTripWizard, TripWizardProvider } from '@/contexts/TripWizardContext'
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { BuildMethodPage } from './BuildMethodPage';
 import { BasicInfoPage } from './BasicInfoPage';
+import { ResortDetailsPage } from './ResortDetailsPage';
+import { ShipDetailsPage } from './ShipDetailsPage';
+import { ResortVenuesAmenitiesPage } from './ResortVenuesAmenitiesPage';
+import { ShipVenuesAmenitiesPage } from './ShipVenuesAmenitiesPage';
+import { ResortSchedulePage } from './ResortSchedulePage';
+import { CruiseItineraryPage } from './CruiseItineraryPage';
 import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -42,19 +48,33 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
     }
 
     if (state.currentPage === 1) {
-      // Validate basic info
-      const { charterCompanyId, tripTypeId, name, startDate, endDate, heroImageUrl, description } =
-        state.tripData;
-      if (
-        !charterCompanyId ||
-        !tripTypeId ||
-        !name ||
-        !startDate ||
-        !endDate ||
-        !heroImageUrl ||
-        !description
-      ) {
-        return; // Don't proceed if required fields are missing
+      // Only require trip type to proceed (determines resort vs cruise flow)
+      const { tripTypeId } = state.tripData;
+      if (!tripTypeId) {
+        return; // Don't proceed if no trip type selected
+      }
+    }
+
+    if (state.currentPage === 4) {
+      // Validate schedule/itinerary entries
+      if (state.tripType === 'resort') {
+        // Check that all schedule entries have descriptions
+        const hasIncompleteEntries = state.scheduleEntries.some(
+          entry => !entry.description?.trim()
+        );
+        if (hasIncompleteEntries) {
+          alert('Please add descriptions for all days before continuing.');
+          return;
+        }
+      } else if (state.tripType === 'cruise') {
+        // Check that all itinerary entries have location names
+        const hasIncompleteEntries = state.itineraryEntries.some(
+          entry => !entry.locationName?.trim()
+        );
+        if (hasIncompleteEntries) {
+          alert('Please add port/location names for all days before continuing.');
+          return;
+        }
       }
     }
 
@@ -68,24 +88,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
   };
 
   const canProceed = () => {
-    if (state.currentPage === 0) {
-      return !!state.buildMethod;
-    }
-
-    if (state.currentPage === 1) {
-      const { charterCompanyId, tripTypeId, name, startDate, endDate, heroImageUrl, description } =
-        state.tripData;
-      return !!(
-        charterCompanyId &&
-        tripTypeId &&
-        name &&
-        startDate &&
-        endDate &&
-        heroImageUrl &&
-        description
-      );
-    }
-
+    // For testing: No required fields - allow navigation freely
     return true;
   };
 
@@ -95,8 +98,48 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
         return <BuildMethodPage />;
       case 1:
         return <BasicInfoPage />;
+      case 2:
+        // Conditional rendering based on trip type
+        if (state.tripType === 'resort') {
+          return <ResortDetailsPage />;
+        } else if (state.tripType === 'cruise') {
+          return <ShipDetailsPage />;
+        } else {
+          // Fallback if trip type not yet selected
+          return (
+            <div className="text-white/60 text-center py-8">
+              Please select a trip type on the previous page.
+            </div>
+          );
+        }
+      case 3:
+        // Conditional rendering for venues and amenities
+        if (state.tripType === 'resort') {
+          return <ResortVenuesAmenitiesPage />;
+        } else if (state.tripType === 'cruise') {
+          return <ShipVenuesAmenitiesPage />;
+        } else {
+          return (
+            <div className="text-white/60 text-center py-8">
+              Please select a trip type on the previous page.
+            </div>
+          );
+        }
+      case 4:
+        // Conditional rendering for schedule/itinerary
+        if (state.tripType === 'resort') {
+          return <ResortSchedulePage />;
+        } else if (state.tripType === 'cruise') {
+          return <CruiseItineraryPage />;
+        } else {
+          return (
+            <div className="text-white/60 text-center py-8">
+              Please select a trip type on the previous page.
+            </div>
+          );
+        }
       default:
-        return <div>Page under construction</div>;
+        return <div className="text-white/60 text-center py-8">Page under construction</div>;
     }
   };
 
@@ -106,6 +149,27 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
         return 'How would you like to build this trip?';
       case 1:
         return 'Basic Trip Information';
+      case 2:
+        if (state.tripType === 'resort') {
+          return 'Resort Details';
+        } else if (state.tripType === 'cruise') {
+          return 'Ship Details';
+        }
+        return 'Property Details';
+      case 3:
+        if (state.tripType === 'resort') {
+          return 'Resort Venues & Amenities';
+        } else if (state.tripType === 'cruise') {
+          return 'Ship Venues & Amenities';
+        }
+        return 'Venues & Amenities';
+      case 4:
+        if (state.tripType === 'resort') {
+          return 'Resort Schedule';
+        } else if (state.tripType === 'cruise') {
+          return 'Cruise Itinerary';
+        }
+        return 'Schedule & Itinerary';
       default:
         return 'Create New Trip';
     }
@@ -117,12 +181,33 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
         return 'Choose your preferred method to create a new trip';
       case 1:
         return 'Enter the essential details for your new trip';
+      case 2:
+        if (state.tripType === 'resort') {
+          return 'Provide resort information and amenities';
+        } else if (state.tripType === 'cruise') {
+          return 'Provide ship specifications and details';
+        }
+        return 'Enter property details';
+      case 3:
+        if (state.tripType === 'resort') {
+          return 'Select venues and amenities available at the resort';
+        } else if (state.tripType === 'cruise') {
+          return 'Select venues and amenities available on the ship';
+        }
+        return 'Select venues and amenities';
+      case 4:
+        if (state.tripType === 'resort') {
+          return 'Add daily schedule with images and descriptions';
+        } else if (state.tripType === 'cruise') {
+          return 'Add port-by-port itinerary with times and locations';
+        }
+        return 'Build your schedule or itinerary';
       default:
         return '';
     }
   };
 
-  const totalPages = 2; // For now, just the initial selection and basic info pages
+  const totalPages = 5; // Initial selection, basic info, resort/ship details, venues/amenities, schedule/itinerary
   const progress = ((state.currentPage + 1) / totalPages) * 100;
 
   return (

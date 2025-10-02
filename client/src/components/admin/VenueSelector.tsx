@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { MultiSelectWithCreate, MultiSelectItem, type MultiSelectMenuVariant } from './MultiSelectWithCreate';
-import { AlertCircle } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  MultiSelectWithCreate,
+  MultiSelectItem,
+  type MultiSelectMenuVariant,
+} from './MultiSelectWithCreate';
+import { AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { OceanInput } from '@/components/ui/ocean-input';
+import { OceanTextarea } from '@/components/ui/ocean-textarea';
 import {
   Select,
   SelectContent,
@@ -18,6 +17,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Trip Wizard style guide for modal inputs
+const modalFieldStyles = `
+  .admin-form-modal input,
+  .admin-form-modal select,
+  .admin-form-modal textarea {
+    height: 40px;
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  .admin-form-modal textarea {
+    height: auto;
+    padding: 8px 12px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.375;
+  }
+  .admin-form-modal input::placeholder,
+  .admin-form-modal textarea::placeholder,
+  .admin-form-modal select::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .admin-form-modal input:focus,
+  .admin-form-modal select:focus,
+  .admin-form-modal textarea:focus {
+    outline: none !important;
+    border-color: rgba(34, 211, 238, 0.6) !important;
+    background: rgba(34, 211, 238, 0.03) !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08) !important;
+    --tw-ring-offset-width: 0px !important;
+    --tw-ring-width: 0px !important;
+  }
+  .admin-form-modal label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 4px;
+    display: block;
+  }
+`;
 
 interface Venue {
   id: number;
@@ -40,6 +84,7 @@ interface VenueSelectorProps {
   disabled?: boolean;
   className?: string;
   menuVariant?: MultiSelectMenuVariant;
+  wizardMode?: boolean; // When true, start with empty list and only show created venues
 }
 
 interface CreateVenueFormData {
@@ -54,10 +99,11 @@ export function VenueSelector({
   disabled = false,
   className,
   menuVariant = 'compact',
+  wizardMode = false,
 }: VenueSelectorProps) {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!wizardMode); // Don't show loading in wizard mode
   const [error, setError] = useState<string | null>(null);
 
   // Create venue modal state
@@ -71,6 +117,24 @@ export function VenueSelector({
   const portalContainerRef = React.useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
+    // In wizard mode, don't fetch venues from API - start with empty list
+    if (wizardMode) {
+      setLoading(false);
+      try {
+        // Still fetch venue types for the create modal
+        const venueTypesResponse = await api.get('/api/venue-types');
+        if (!venueTypesResponse.ok) {
+          throw new Error(`Failed to fetch venue types: ${venueTypesResponse.status}`);
+        }
+        const venueTypesData = await venueTypesResponse.json();
+        setVenueTypes(venueTypesData);
+      } catch (error) {
+        console.error('Error fetching venue types:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch venue types');
+      }
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -167,12 +231,11 @@ export function VenueSelector({
   const renderVenueItem = (item: MultiSelectItem) => {
     const venue = venues.find(v => v.id === item.id);
     return (
-      <div>
-        <div className="font-medium text-white">{item.name}</div>
-        <div className="text-sm text-white/60">
-          {venue?.venueTypeName}
-          {venue?.description && ` • ${venue.description}`}
-        </div>
+      <div className="font-medium text-white truncate">
+        {item.name}
+        {venue?.venueTypeName && (
+          <span className="text-sm text-white/60 ml-2">• {venue.venueTypeName}</span>
+        )}
       </div>
     );
   };
@@ -184,9 +247,7 @@ export function VenueSelector({
         <div className="flex">
           <AlertCircle className="h-5 w-5 text-red-400" />
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">
-              Error loading venues
-            </h3>
+            <h3 className="text-sm font-medium text-red-800">Error loading venues</h3>
             <p className="mt-1 text-sm text-red-700">{error}</p>
             <button
               onClick={fetchData}
@@ -207,6 +268,7 @@ export function VenueSelector({
 
   return (
     <div className={className} ref={portalContainerRef}>
+      <style>{modalFieldStyles}</style>
       <MultiSelectWithCreate
         items={items}
         selectedIds={selectedIds}
@@ -223,74 +285,73 @@ export function VenueSelector({
         maxItems={99}
         container={portalContainerRef.current ?? undefined}
       />
-      {loading && (
-        <p className="mt-2 text-sm text-gray-500">Loading venues...</p>
-      )}
+      {loading && <p className="mt-2 text-sm text-gray-500">Loading venues...</p>}
 
       {/* Create Venue Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+        <DialogContent className="admin-form-modal sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
           <DialogHeader>
             <DialogTitle className="text-white">Create New Venue</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white/90">
-                Venue Name *
-              </label>
-              <Input
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-white/90">Venue Name *</label>
+              <OceanInput
                 placeholder="Enter venue name"
                 value={createForm.name}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
                 disabled={creating}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white/90">
-                Venue Type *
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-white/90">Venue Type *</label>
               <Select
                 value={createForm.venueTypeId}
-                onValueChange={(value) => setCreateForm(prev => ({ ...prev, venueTypeId: value }))}
+                onValueChange={value => setCreateForm(prev => ({ ...prev, venueTypeId: value }))}
                 disabled={creating}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full h-10 px-3 font-normal bg-white/[0.04] border border-white/10 rounded-[10px] text-white text-sm hover:bg-white/[0.06] hover:border-white/10 transition-all focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:border-cyan-400/60 focus-visible:bg-cyan-400/[0.03] focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.08)] disabled:opacity-40 disabled:cursor-not-allowed data-[placeholder]:text-white/50">
                   <SelectValue placeholder="Select venue type" />
                 </SelectTrigger>
-                <SelectContent>
-                  {venueTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id.toString()}>
+                <SelectContent className="bg-[#0a1628] border border-white/10 shadow-xl p-1">
+                  {venueTypes.map(type => (
+                    <SelectItem
+                      key={type.id}
+                      value={type.id.toString()}
+                      className="px-3 py-2.5 cursor-pointer rounded-md transition-colors text-white/90 hover:bg-cyan-400/10 hover:text-white focus:bg-cyan-400/10 focus:text-white data-[state=checked]:bg-cyan-400/10 data-[state=checked]:text-white"
+                    >
                       {type.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white/90">
-                Description (Optional)
-              </label>
-              <Textarea
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-white/90">Description (Optional)</label>
+              <OceanTextarea
                 placeholder="Enter venue description"
                 value={createForm.description}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
                 disabled={creating}
                 rows={3}
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-2">
             <Button
+              type="button"
               variant="outline"
               onClick={cancelCreateVenue}
               disabled={creating}
+              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={submitCreateVenue}
               disabled={creating || !createForm.name.trim() || !createForm.venueTypeId}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {creating ? 'Creating...' : 'Create Venue'}
             </Button>

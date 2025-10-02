@@ -1,6 +1,6 @@
 # Trip Wizard Style Guide
 
-**Version:** 1.1
+**Version:** 1.3
 **Last Updated:** October 1, 2025
 **Status:** Active - Use for all Trip Wizard pages and future AdminFormModal updates
 
@@ -66,23 +66,166 @@ The Trip Wizard uses an **ocean-themed design system** with frosted glass effect
 - Complete focus states with shadow rings
 - Fully implements style guide patterns
 
+**Page 2A - ResortDetailsPage** (`ResortDetailsPage.tsx`)
+
+- Two-column responsive layout (grid-cols-1 lg:grid-cols-2)
+- Resort name, location, capacity, rooms
+- **Location field**: Currently uses LocationSearchBar (Photon API)
+  - ⚠️ **NEEDS UPDATE**: Should use LocationSelector (database search + create modal)
+- Check-in/check-out times (TimePicker) - 24-hour format with 12-hour hint
+- Image upload (ImageUploadField)
+- Description textarea (7 rows for right column height balance)
+- Property map URL input
+- AI assistance notice box
+- Conditional rendering based on tripType === 'resort'
+- All spacing follows compact system (space-y-2.5, gap-3, gap-2)
+- All components use h-10 standard sizing
+- Complete focus states with shadow rings
+- Fully implements style guide patterns
+
+**Page 2B - ShipDetailsPage** (`ShipDetailsPage.tsx`)
+
+- Two-column responsive layout (grid-cols-1 lg:grid-cols-2)
+- Ship name, cruise line, capacity, decks
+- Number inputs with helper text for capacity/decks
+- Image upload (ImageUploadField)
+- Description textarea (7 rows for right column height balance)
+- Deck plans URL input with helper text
+- AI assistance notice box
+- Conditional rendering based on tripType === 'cruise'
+- All spacing follows compact system (space-y-2.5, gap-3, gap-2)
+- All components use h-10 standard sizing
+- Complete focus states with shadow rings
+- Fully implements style guide patterns
+
+**Page 3A - ResortVenuesAmenitiesPage** (`ResortVenuesAmenitiesPage.tsx`)
+
+- Single column layout with two major sections
+- Venues section using VenueSelector (multi-select with create functionality)
+- Amenities section using AmenitySelector (multi-select with create functionality)
+- Helper text explaining what each section is for
+- AI assistance notice box
+- Conditional rendering based on tripType === 'resort'
+- All spacing follows compact system (space-y-2.5, space-y-4, space-y-1)
+- Uses menuVariant="default" for selectors
+- Fully implements style guide patterns
+
+**Page 3B - ShipVenuesAmenitiesPage** (`ShipVenuesAmenitiesPage.tsx`)
+
+- Single column layout with two major sections
+- Venues section using VenueSelector (multi-select with create functionality)
+- Amenities section using AmenitySelector (multi-select with create functionality)
+- Helper text explaining what each section is for (ship-specific wording)
+- AI assistance notice box with ship-specific tips
+- Conditional rendering based on tripType === 'cruise'
+- All spacing follows compact system (space-y-2.5, space-y-4, space-y-1)
+- Uses menuVariant="default" for selectors
+- Fully implements style guide patterns
+
+**Page 4A - ResortSchedulePage** (`ResortSchedulePage.tsx`)
+
+- Auto-generates schedule entries from trip start/end dates
+- **Day numbering**: Starts at Day 1 (not Day 0), supports pre-trip (negative) and post-trip (100+)
+- **Add Day functionality**: Modal to add pre-trip or post-trip days
+- **Pre-trip days**: Negative day numbers (-1, -2, -3...), displays "Pre-Trip" label
+- **Post-trip days**: 100+ day numbers (100, 101, 102...), displays "Post-Trip" label
+- **Timezone handling**: All date parsing uses local timezone (no UTC conversion)
+- **Duplicate prevention**: Grays out already-added dates in calendar
+- **Auto-scroll**: Scrolls to top for pre-trip, bottom for post-trip after adding
+- **Validation**: Prevents navigation with incomplete entries (missing descriptions)
+- Displays day number and formatted date for each entry
+- Two-column layout (image + description) per day
+- ImageUploadField for optional day images
+- Textarea for day descriptions (4 rows, required)
+- Card-based layout with hover effects
+- Calendar icon indicator for each day
+- AI assistance notice box
+- Conditional rendering based on tripType === 'resort'
+- All spacing follows compact system (space-y-2.5, gap-3, mb-2.5)
+- Fully implements style guide patterns
+
+**Page 4B - CruiseItineraryPage** (`CruiseItineraryPage.tsx`)
+
+- Auto-generates itinerary entries from trip start/end dates
+- **Day numbering**: Starts at Day 1 (not Day 0), supports pre-cruise (negative) and post-cruise (100+)
+- **Add Day functionality**: Modal to add pre-cruise or post-cruise days
+- **Pre-cruise days**: Negative day numbers (-1, -2, -3...), displays "Pre-Trip" label
+- **Post-cruise days**: 100+ day numbers (100, 101, 102...), displays "Post-Trip" label
+- **Timezone handling**: All date parsing uses local timezone (no UTC conversion)
+- **Duplicate prevention**: Grays out already-added dates in calendar
+- **Auto-scroll**: Scrolls to top for pre-trip, bottom for post-trip after adding
+- **Validation**: Prevents navigation with incomplete entries (missing port/location names)
+- Displays day number and formatted date for each entry
+- Single column layout with nested grids for fields
+- **Port/Location field**: Currently uses LocationSearchBar (Photon API)
+  - ⚠️ **NEEDS UPDATE**: Should use LocationSelector (database search + create modal)
+- Three TimePicker fields (arrival, departure, all aboard) in grid-cols-3
+- Two-column grid for image and description
+- ImageUploadField for optional port images
+- Textarea for optional port descriptions (3 rows)
+- Card-based layout with hover effects
+- Anchor icon indicator for each port
+- AI assistance notice box
+- Conditional rendering based on tripType === 'cruise'
+- All spacing follows compact system (space-y-2.5, gap-3, gap-2, mb-2.5)
+- Fully implements style guide patterns
+
 **Core Components**
 
-- TripWizard main component (`TripWizard.tsx`) - Modal wrapper with navigation
-- TripWizardContext (`/contexts/TripWizardContext.tsx`) - State management
+- TripWizard main component (`TripWizard.tsx`) - Modal wrapper with conditional page routing
+- TripWizardContext (`/contexts/TripWizardContext.tsx`) - State management with resortData/shipData/venueIds/amenityIds
 - SingleDropDownNew (`/components/ui/single-drop-down-new.tsx`) - Searchable dropdown
 - DatePicker (`/components/ui/date-picker.tsx`) - Calendar with compact mode
+- TimePicker (`/components/ui/time-picker.tsx`) - 24-hour time input with formatting
 - Calendar (`/components/ui/calendar.tsx`) - Compact mode implementation
+- LocationSearchBar (`/components/admin/LocationSearchBar.tsx`) - Photon API integration
+- VenueSelector (`/components/admin/VenueSelector.tsx`) - Multi-select with create modal, single-line items (name + type)
+- AmenitySelector (`/components/admin/AmenitySelector.tsx`) - Multi-select with create modal, single-line items (name only)
+
+### 🚧 Pending Components
+
+**LocationSelector** - Database location picker with create modal
+
+- **NOT YET IMPLEMENTED**
+- Searches `locations` table in database (NOT Photon API)
+- "Add New Location" option always shown at top of dropdown
+- Opens modal with LocationSearchBar + additional location fields
+- Saves new locations to database for reuse
+- Pattern follows VenueSelector/AmenitySelector
+- Required for ResortDetailsPage and CruiseItineraryPage
+- **AI Integration Note**: When AI is added, AI should suggest and auto-fill location details
 
 ### 🚧 Pending Pages
 
-- Page 2A: ResortDetailsPage
-- Page 2B: ShipDetailsPage
-- Page 3A: ResortVenuesAmenitiesPage
-- Page 3B: ShipVenuesAmenitiesPage
-- Page 4A: ResortSchedulePage
-- Page 4B: CruiseItineraryPage
 - Page 5: CompletionPage
+
+### 📅 Pending Database Migrations
+
+**24-Hour Time Standardization (Future Task)**
+
+All time fields across the application will be standardized to 24-hour format (HH:MM). This migration will include:
+
+1. **Database Updates:**
+   - Review all time columns in database tables (trips, resorts, ships, schedules, events, etc.)
+   - Convert any AM/PM formatted times to 24-hour format (HH:MM)
+   - Update database schema documentation to reflect 24-hour time standard
+   - Create migration script to convert existing time data
+
+2. **Application Updates:**
+   - Audit all time-related components and ensure they use 24-hour format
+   - Update TimePicker component to display only 24-hour format (already done)
+   - Review and update any time formatting utilities
+   - Update validation schemas to enforce 24-hour format
+   - Search for any AM/PM time displays and convert to 24-hour
+
+3. **Validation:**
+   - All time inputs should validate HH:MM format (00:00 to 23:59)
+   - Database should reject AM/PM formatted times
+   - API responses should return times in 24-hour format
+
+**Status:** Documented for future implementation. TimePicker component already uses 24-hour format as of October 1, 2025.
+
+**Priority:** Medium - Should be completed before production launch to ensure data consistency.
 
 ### 🔧 Component Fixes Applied
 
@@ -568,6 +711,49 @@ className = 'transition-all duration-200'; // Explicit 200ms
 </div>
 ```
 
+### Multi-Select Fields (Venues & Amenities)
+
+```typescript
+// Venue Selector with create modal
+<div className="space-y-1">
+  <label className="text-xs font-semibold text-white/90">
+    Venues
+  </label>
+  <VenueSelector
+    selectedIds={venueIds}
+    onSelectionChange={setVenueIds}
+    menuVariant="default"
+    wizardMode={true}
+  />
+  <p className="text-[10px] text-white/50 mt-0.5">
+    Select or create venues for this property
+  </p>
+</div>
+
+// Amenity Selector with create modal
+<div className="space-y-1">
+  <label className="text-xs font-semibold text-white/90">
+    Amenities
+  </label>
+  <AmenitySelector
+    selectedIds={amenityIds}
+    onSelectionChange={setAmenityIds}
+    menuVariant="default"
+    wizardMode={true}
+  />
+  <p className="text-[10px] text-white/50 mt-0.5">
+    Select or create amenities available
+  </p>
+</div>
+```
+
+**Multi-Select Item Display:**
+
+- **Venues**: Single line with name and venue type (e.g., "Pool Deck • Outdoor Space")
+- **Amenities**: Single line with name only (e.g., "Wi-Fi")
+- Uses `truncate` class to handle overflow gracefully
+- Ocean-themed create modals match venue creation modal styling
+
 **Internal Styling (DatePicker component):**
 
 ```typescript
@@ -595,6 +781,40 @@ className = 'transition-all duration-200'; // Explicit 200ms
 ---
 
 ## Design Patterns
+
+### ⚠️ CRITICAL: No Page Headers in Wizard Pages
+
+**DO NOT add page headers inside wizard page components.** The TripWizard modal already displays the page title dynamically in the modal header. Adding a duplicate header creates visual clutter and wastes vertical space.
+
+```typescript
+// ❌ WRONG - Creates duplicate header
+export function MyWizardPage() {
+  return (
+    <div className="space-y-2.5">
+      {/* Page Header - DON'T DO THIS! */}
+      <div className="flex items-center gap-2 mb-4">
+        <Icon className="w-5 h-5 text-cyan-400" />
+        <h2 className="text-lg font-semibold text-white">Page Title</h2>
+      </div>
+      {/* Form content */}
+    </div>
+  );
+}
+
+// ✅ CORRECT - No duplicate header
+export function MyWizardPage() {
+  return (
+    <div className="space-y-2.5">
+      {/* Form content starts immediately */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Fields */}
+      </div>
+    </div>
+  );
+}
+```
+
+**Why?** The TripWizard component already handles dynamic titles via `getPageTitle()` and `getPageDescription()`, which appear in the modal header. Page components should start immediately with their form content.
 
 ### Interactive Selection Cards
 
@@ -886,10 +1106,26 @@ When updating the AdminFormModal component to match this style:
 
 ## Changelog
 
+**v1.3 (October 1, 2025)**
+
+- Added ResortSchedulePage and CruiseItineraryPage to completed pages
+- Documented auto-generation of schedule/itinerary entries from trip dates
+- Added implementation details for both page 4 variants
+- Updated Core Components list with schedule/itinerary state management
+- Updated TripWizardContext with ScheduleEntry and ItineraryEntry interfaces
+
+**v1.2 (October 1, 2025)**
+
+- Updated VenueSelector and AmenitySelector documentation
+- Added Multi-Select Fields section with usage examples
+- Documented single-line item display patterns for selectors
+- Updated component descriptions to reflect create modal functionality
+
 **v1.1 (October 1, 2025)**
 
 - Added Implementation Status section
-- Documents completed components (BuildMethodPage, BasicInfoPage)
+- Documents completed components (BuildMethodPage, BasicInfoPage, ResortDetailsPage, ShipDetailsPage)
+- Documents completed pages (ResortVenuesAmenitiesPage, ShipVenuesAmenitiesPage)
 - Lists pending pages to be implemented
 - Documents component fixes applied (z-index, pointer-events, calendar compact mode)
 - Added component tracking for development progress

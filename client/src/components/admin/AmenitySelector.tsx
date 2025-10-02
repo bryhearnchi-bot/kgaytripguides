@@ -1,7 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { MultiSelectWithCreate, MultiSelectItem, type MultiSelectMenuVariant } from './MultiSelectWithCreate';
+import {
+  MultiSelectWithCreate,
+  MultiSelectItem,
+  type MultiSelectMenuVariant,
+} from './MultiSelectWithCreate';
 import { AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { OceanInput } from '@/components/ui/ocean-input';
+import { OceanTextarea } from '@/components/ui/ocean-textarea';
+
+// Trip Wizard style guide for modal inputs
+const modalFieldStyles = `
+  .admin-form-modal input,
+  .admin-form-modal select,
+  .admin-form-modal textarea {
+    height: 40px;
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  .admin-form-modal textarea {
+    height: auto;
+    padding: 8px 12px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.375;
+  }
+  .admin-form-modal input::placeholder,
+  .admin-form-modal textarea::placeholder,
+  .admin-form-modal select::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .admin-form-modal input:focus,
+  .admin-form-modal select:focus,
+  .admin-form-modal textarea:focus {
+    outline: none !important;
+    border-color: rgba(34, 211, 238, 0.6) !important;
+    background: rgba(34, 211, 238, 0.03) !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08) !important;
+    --tw-ring-offset-width: 0px !important;
+    --tw-ring-width: 0px !important;
+  }
+  .admin-form-modal label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 4px;
+    display: block;
+  }
+`;
 
 interface Amenity {
   id: number;
@@ -17,6 +70,12 @@ interface AmenitySelectorProps {
   disabled?: boolean;
   className?: string;
   menuVariant?: MultiSelectMenuVariant;
+  wizardMode?: boolean; // When true, start with empty list and only show created amenities
+}
+
+interface CreateAmenityFormData {
+  name: string;
+  description: string;
 }
 
 export function AmenitySelector({
@@ -25,13 +84,28 @@ export function AmenitySelector({
   disabled = false,
   className,
   menuVariant = 'compact',
+  wizardMode = false,
 }: AmenitySelectorProps) {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!wizardMode); // Don't show loading in wizard mode
   const [error, setError] = useState<string | null>(null);
   const portalContainerRef = React.useRef<HTMLDivElement>(null);
 
+  // Create amenity modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateAmenityFormData>({
+    name: '',
+    description: '',
+  });
+
   const fetchAmenities = async () => {
+    // In wizard mode, don't fetch amenities from API - start with empty list
+    if (wizardMode) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -51,11 +125,25 @@ export function AmenitySelector({
     }
   };
 
-  const createAmenity = async (name: string) => {
+  const handleCreateAmenity = async (name: string) => {
+    // Open the modal with the name pre-filled
+    setCreateForm({
+      name: name.trim(),
+      description: '',
+    });
+    setShowCreateModal(true);
+  };
+
+  const submitCreateAmenity = async () => {
+    if (!createForm.name.trim()) {
+      return;
+    }
+
     try {
+      setCreating(true);
       const response = await api.post('/api/amenities', {
-        name: name.trim(),
-        description: null
+        name: createForm.name.trim(),
+        description: createForm.description.trim() || null,
       });
 
       if (!response.ok) {
@@ -69,10 +157,21 @@ export function AmenitySelector({
 
       // Auto-select the newly created amenity
       onSelectionChange([...selectedIds, newAmenity.id]);
+
+      // Reset form and close modal
+      setCreateForm({ name: '', description: '' });
+      setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating amenity:', error);
-      throw error; // Re-throw to let MultiSelectWithCreate handle the error state
+      // You could show an error toast here
+    } finally {
+      setCreating(false);
     }
+  };
+
+  const cancelCreateAmenity = () => {
+    setCreateForm({ name: '', description: '' });
+    setShowCreateModal(false);
   };
 
   useEffect(() => {
@@ -88,12 +187,7 @@ export function AmenitySelector({
 
   // Custom render function for amenity items
   const renderAmenityItem = (item: MultiSelectItem) => (
-    <div>
-      <div className="font-medium text-white">{item.name}</div>
-      {item.description && (
-        <div className="text-sm text-white/60">{item.description}</div>
-      )}
-    </div>
+    <div className="font-medium text-white truncate">{item.name}</div>
   );
 
   // Show error state
@@ -103,9 +197,7 @@ export function AmenitySelector({
         <div className="flex">
           <AlertCircle className="h-5 w-5 text-red-400" />
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">
-              Error loading amenities
-            </h3>
+            <h3 className="text-sm font-medium text-red-800">Error loading amenities</h3>
             <p className="mt-1 text-sm text-red-700">{error}</p>
             <button
               onClick={fetchAmenities}
@@ -126,11 +218,12 @@ export function AmenitySelector({
 
   return (
     <div className={className} ref={portalContainerRef}>
+      <style>{modalFieldStyles}</style>
       <MultiSelectWithCreate
         items={items}
         selectedIds={selectedIds}
         onSelectionChange={handleSelectionChange}
-        onCreate={createAmenity}
+        onCreate={handleCreateAmenity}
         renderItem={renderAmenityItem}
         placeholder="Select amenities..."
         createButtonText="Create Amenity"
@@ -142,9 +235,56 @@ export function AmenitySelector({
         maxItems={99}
         container={portalContainerRef.current ?? undefined}
       />
-      {loading && (
-        <p className="mt-2 text-sm text-gray-500">Loading amenities...</p>
-      )}
+      {loading && <p className="mt-2 text-sm text-gray-500">Loading amenities...</p>}
+
+      {/* Create Amenity Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="admin-form-modal sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Create New Amenity</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-white/90">Amenity Name *</label>
+              <OceanInput
+                placeholder="Enter amenity name"
+                value={createForm.name}
+                onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                disabled={creating}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-white/90">Description (Optional)</label>
+              <OceanTextarea
+                placeholder="Enter amenity description"
+                value={createForm.description}
+                onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                disabled={creating}
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cancelCreateAmenity}
+              disabled={creating}
+              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={submitCreateAmenity}
+              disabled={creating || !createForm.name.trim()}
+              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {creating ? 'Creating...' : 'Create Amenity'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
