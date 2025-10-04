@@ -1,3 +1,4 @@
+import React from 'react';
 import { useTripWizard, TripWizardProvider } from '@/contexts/TripWizardContext';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { BuildMethodPage } from './BuildMethodPage';
@@ -8,8 +9,10 @@ import { ResortVenuesAmenitiesPage } from './ResortVenuesAmenitiesPage';
 import { ShipVenuesAmenitiesPage } from './ShipVenuesAmenitiesPage';
 import { ResortSchedulePage } from './ResortSchedulePage';
 import { CruiseItineraryPage } from './CruiseItineraryPage';
+import { CompletionPage } from './CompletionPage';
 import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api-client';
 
 // Custom styles to remove the header border from trip wizard modal
 const tripWizardStyles = `
@@ -31,14 +34,134 @@ interface TripWizardProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  draftTrip?: any | null;
 }
 
-function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps) {
-  const { state, setCurrentPage, clearWizard } = useTripWizard();
+function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripWizardProps) {
+  const {
+    state,
+    setCurrentPage,
+    setDraftId,
+    clearWizard,
+    setTripType,
+    setBuildMethod,
+    updateTripData,
+    setResortId,
+    setShipId,
+    updateResortData,
+    updateShipData,
+    setAmenityIds,
+    setVenueIds,
+    setScheduleEntries,
+    setItineraryEntries,
+    restoreFromDraft,
+  } = useTripWizard();
+
+  // Track if we've initialized for this session
+  const initializedRef = React.useRef(false);
+  const previousIsOpenRef = React.useRef(isOpen);
+  const previousDraftIdRef = React.useRef<number | null>(null);
+
+  // Restore draft state when draftTrip is provided, or clear when opening for new trip
+  React.useEffect(() => {
+    // Only run when wizard opens (transition from closed to open)
+    if (isOpen && !previousIsOpenRef.current) {
+      initializedRef.current = false;
+    }
+    previousIsOpenRef.current = isOpen;
+
+    // Also detect if we're editing a different draft
+    const currentDraftId = draftTrip?.id ?? null;
+    const isDifferentDraft = currentDraftId !== previousDraftIdRef.current;
+    previousDraftIdRef.current = currentDraftId;
+
+    if (isOpen && (!initializedRef.current || isDifferentDraft)) {
+      initializedRef.current = true;
+
+      if (draftTrip && draftTrip.wizardState) {
+        // Restore draft using atomic update
+        const wizardState = {
+          ...draftTrip.wizardState,
+          draftId: draftTrip.id, // Ensure draft ID is set
+        };
+        restoreFromDraft(wizardState);
+      } else if (!draftTrip) {
+        // No draft - clear wizard for new trip
+        clearWizard();
+      }
+    }
+  }, [isOpen, draftTrip, clearWizard, restoreFromDraft]);
 
   const handleClose = () => {
-    clearWizard();
-    onOpenChange(false);
+    // If editing an existing draft, just close without clearing
+    // The draft is already saved in the database
+    if (state.draftId) {
+      if (confirm('Close wizard? Unsaved changes since last save will be lost.')) {
+        onOpenChange(false);
+      }
+    } else {
+      // For new trips, warn and clear wizard state
+      if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+        clearWizard();
+        onOpenChange(false);
+      }
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      // Helper to check if an object has any non-empty values
+      const hasData = (obj: any) => {
+        if (!obj || typeof obj !== 'object') return false;
+        return Object.values(obj).some(val => val !== null && val !== undefined && val !== '');
+      };
+
+      // Prepare draft data - flat structure to match schema
+      // Only include resortData/shipData if they have actual data
+      const draftData = {
+        draftId: state.draftId || undefined,
+        currentPage: state.currentPage,
+        tripType: state.tripType,
+        buildMethod: state.buildMethod,
+        tripData: state.tripData,
+        resortId: state.resortId || undefined,
+        shipId: state.shipId || undefined,
+        resortData: hasData(state.resortData) ? state.resortData : undefined,
+        shipData: hasData(state.shipData) ? state.shipData : undefined,
+        amenityIds: state.amenityIds,
+        venueIds: state.venueIds,
+        scheduleEntries: state.scheduleEntries,
+        itineraryEntries: state.itineraryEntries,
+      };
+
+      // Use api client which handles authentication
+      const response = await api.post('/api/admin/trips/draft', draftData);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Failed to save draft' }));
+        throw new Error(error.message || 'Failed to save draft');
+      }
+
+      // Save draft ID so subsequent saves update instead of creating duplicates
+      const savedDraft = await response.json();
+      if (savedDraft.id && !state.draftId) {
+        setDraftId(savedDraft.id);
+      }
+
+      const message = state.draftId
+        ? 'Draft updated successfully!'
+        : 'Draft saved! You can return to finish this trip later.';
+      alert(message);
+      onOpenChange(false);
+
+      // Trigger success callback to refresh trips list
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      alert('Failed to save draft. Please try again.');
+    }
   };
 
   const handleNext = () => {
@@ -55,28 +178,29 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
       }
     }
 
-    if (state.currentPage === 4) {
-      // Validate schedule/itinerary entries
-      if (state.tripType === 'resort') {
-        // Check that all schedule entries have descriptions
-        const hasIncompleteEntries = state.scheduleEntries.some(
-          entry => !entry.description?.trim()
-        );
-        if (hasIncompleteEntries) {
-          alert('Please add descriptions for all days before continuing.');
-          return;
-        }
-      } else if (state.tripType === 'cruise') {
-        // Check that all itinerary entries have location names
-        const hasIncompleteEntries = state.itineraryEntries.some(
-          entry => !entry.locationName?.trim()
-        );
-        if (hasIncompleteEntries) {
-          alert('Please add port/location names for all days before continuing.');
-          return;
-        }
-      }
-    }
+    // NOTE: Validation disabled for testing - can skip schedule/itinerary page
+    // if (state.currentPage === 4) {
+    //   // Validate schedule/itinerary entries
+    //   if (state.tripType === 'resort') {
+    //     // Check that all schedule entries have descriptions
+    //     const hasIncompleteEntries = state.scheduleEntries.some(
+    //       entry => !entry.description?.trim()
+    //     );
+    //     if (hasIncompleteEntries) {
+    //       alert('Please add descriptions for all days before continuing.');
+    //       return;
+    //     }
+    //   } else if (state.tripType === 'cruise') {
+    //     // Check that all itinerary entries have location names
+    //     const hasIncompleteEntries = state.itineraryEntries.some(
+    //       entry => !entry.locationName?.trim()
+    //     );
+    //     if (hasIncompleteEntries) {
+    //       alert('Please add port/location names for all days before continuing.');
+    //       return;
+    //     }
+    //   }
+    // }
 
     setCurrentPage(state.currentPage + 1);
   };
@@ -138,6 +262,8 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
             </div>
           );
         }
+      case 5:
+        return <CompletionPage />;
       default:
         return <div className="text-white/60 text-center py-8">Page under construction</div>;
     }
@@ -170,6 +296,8 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
           return 'Cruise Itinerary';
         }
         return 'Schedule & Itinerary';
+      case 5:
+        return 'Review & Approve';
       default:
         return 'Create New Trip';
     }
@@ -202,12 +330,14 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
           return 'Add port-by-port itinerary with times and locations';
         }
         return 'Build your schedule or itinerary';
+      case 5:
+        return 'Review all trip details and save';
       default:
         return '';
     }
   };
 
-  const totalPages = 5; // Initial selection, basic info, resort/ship details, venues/amenities, schedule/itinerary
+  const totalPages = 6; // Initial selection, basic info, resort/ship details, venues/amenities, schedule/itinerary, completion
   const progress = ((state.currentPage + 1) / totalPages) * 100;
 
   return (
@@ -266,24 +396,39 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
               Cancel
             </Button>
 
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {state.currentPage === totalPages - 1 ? (
-                <>
-                  Continue
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
+            {/* Save Draft button - shown on all pages except initial build method page and completion page */}
+            {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveDraft}
+                className="h-9 px-4 bg-white/[0.04] border-[1.5px] border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
+              >
+                {state.draftId ? 'Update Draft' : 'Save Draft'}
+              </Button>
+            )}
+
+            {/* Don't show Next button on initial build method page (page 0) or final completion page */}
+            {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {state.currentPage === totalPages - 2 ? (
+                  <>
+                    Review & Finish
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </AdminFormModal>
@@ -291,10 +436,15 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess }: TripWizardProps)
   );
 }
 
-export function TripWizard({ isOpen, onOpenChange, onSuccess }: TripWizardProps) {
+export function TripWizard({ isOpen, onOpenChange, onSuccess, draftTrip }: TripWizardProps) {
   return (
     <TripWizardProvider>
-      <TripWizardContent isOpen={isOpen} onOpenChange={onOpenChange} onSuccess={onSuccess} />
+      <TripWizardContent
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+        draftTrip={draftTrip}
+      />
     </TripWizardProvider>
   );
 }

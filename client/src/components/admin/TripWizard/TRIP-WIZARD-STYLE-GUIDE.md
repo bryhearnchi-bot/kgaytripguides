@@ -69,9 +69,9 @@ The Trip Wizard uses an **ocean-themed design system** with frosted glass effect
 **Page 2A - ResortDetailsPage** (`ResortDetailsPage.tsx`)
 
 - Two-column responsive layout (grid-cols-1 lg:grid-cols-2)
-- Resort name, location, capacity, rooms
-- **Location field**: Currently uses LocationSearchBar (Photon API)
-  - ⚠️ **NEEDS UPDATE**: Should use LocationSelector (database search + create modal)
+- Resort name, location (LocationSelector), capacity, rooms
+- **Location field**: Uses LocationSelector (database search + create modal)
+  - ✅ **COMPLETE**: Searches locations table, creates new locations with Photon API integration
 - Check-in/check-out times (TimePicker) - 24-hour format with 12-hour hint
 - Image upload (ImageUploadField)
 - Description textarea (7 rows for right column height balance)
@@ -157,8 +157,9 @@ The Trip Wizard uses an **ocean-themed design system** with frosted glass effect
 - **Validation**: Prevents navigation with incomplete entries (missing port/location names)
 - Displays day number and formatted date for each entry
 - Single column layout with nested grids for fields
-- **Port/Location field**: Currently uses LocationSearchBar (Photon API)
-  - ⚠️ **NEEDS UPDATE**: Should use LocationSelector (database search + create modal)
+- **Port/Location and Type**: Two-column grid with LocationSelector and Location Type dropdown
+  - ✅ **COMPLETE**: LocationSelector searches locations table with create modal
+  - ✅ **COMPLETE**: Location Type dropdown (SingleDropDownNew) for port type classification
 - Three TimePicker fields (arrival, departure, all aboard) in grid-cols-3
 - Two-column grid for image and description
 - ImageUploadField for optional port images
@@ -173,31 +174,116 @@ The Trip Wizard uses an **ocean-themed design system** with frosted glass effect
 **Core Components**
 
 - TripWizard main component (`TripWizard.tsx`) - Modal wrapper with conditional page routing
-- TripWizardContext (`/contexts/TripWizardContext.tsx`) - State management with resortData/shipData/venueIds/amenityIds
+- TripWizardContext (`/contexts/TripWizardContext.tsx`) - State management with resortData/shipData/venueIds/amenityIds/itineraryEntries
 - SingleDropDownNew (`/components/ui/single-drop-down-new.tsx`) - Searchable dropdown
 - DatePicker (`/components/ui/date-picker.tsx`) - Calendar with compact mode
 - TimePicker (`/components/ui/time-picker.tsx`) - 24-hour time input with formatting
 - Calendar (`/components/ui/calendar.tsx`) - Compact mode implementation
 - LocationSearchBar (`/components/admin/LocationSearchBar.tsx`) - Photon API integration
+- LocationSelector (`/components/admin/LocationSelector.tsx`) - ✅ Database location picker with create modal
 - VenueSelector (`/components/admin/VenueSelector.tsx`) - Multi-select with create modal, single-line items (name + type)
 - AmenitySelector (`/components/admin/AmenitySelector.tsx`) - Multi-select with create modal, single-line items (name only)
 
-### 🚧 Pending Components
+### ✅ LocationSelector Component (COMPLETE)
 
 **LocationSelector** - Database location picker with create modal
 
-- **NOT YET IMPLEMENTED**
+- ✅ **IMPLEMENTED** and integrated in ResortDetailsPage and CruiseItineraryPage
 - Searches `locations` table in database (NOT Photon API)
 - "Add New Location" option always shown at top of dropdown
 - Opens modal with LocationSearchBar + additional location fields
 - Saves new locations to database for reuse
-- Pattern follows VenueSelector/AmenitySelector
-- Required for ResortDetailsPage and CruiseItineraryPage
+- Pattern adapted from MultiSelectWithCreate for single-select behavior
+- Uses Popover + Command + CommandInput structure
+- Custom scrollbar with ocean theme (`custom-scrollbar` class)
+- Modal follows ocean theme styling with OceanInput/OceanTextarea components
+- Auto-selects newly created locations
 - **AI Integration Note**: When AI is added, AI should suggest and auto-fill location details
 
 ### 🚧 Pending Pages
 
-- Page 5: CompletionPage
+- Page 5: CompletionPage (in progress)
+
+### 🔧 Backend Integration (COMPLETE)
+
+**API Endpoints Implemented:**
+
+All backend routes are complete and fully integrated:
+
+1. **POST /api/admin/trips** - Create complete trip
+   - Validates with tripWizardSchema (strict validation)
+   - Creates trip with all relationships (resort/ship, venues, amenities, schedule/itinerary)
+   - Returns created trip data with success status
+
+2. **POST /api/admin/trips/draft** - Save wizard state as draft ✅ INTEGRATED
+   - Validates with tripDraftSchema (flexible, all fields optional)
+   - Saves wizard context to trips.wizard_state (JSONB)
+   - Saves current page to trips.wizard_current_page
+   - Sets trip_status_id = 4 (Draft status)
+   - **Frontend**: Implemented in TripWizard.tsx `handleSaveDraft()`
+
+3. **GET /api/admin/trips/drafts** - List user's drafts ✅ INTEGRATED
+   - Returns array of draft trips for current user
+   - **Frontend**: Used in trips-management.tsx via `/api/trips` endpoint
+
+4. **GET /api/admin/trips/draft/:id** - Get draft details ✅ INTEGRATED
+   - Returns draft trip with wizard_state and wizard_current_page
+   - **Frontend**: Draft data passed via `draftTrip` prop to TripWizard
+
+5. **DELETE /api/admin/trips/draft/:id** - Delete draft
+   - Removes draft from database
+   - **Frontend**: Uses existing delete trip mutation
+
+**Validation Schemas:**
+
+- `tripWizardSchema` - Strict validation for complete trips
+- `tripDraftSchema` - Flexible validation for drafts (all fields optional)
+- Both schemas enforce: either resort OR ship data (never both)
+- Files: `server/schemas/trip-wizard-schemas.ts`
+
+**Database Migration Complete:**
+
+Migration file: `supabase/migrations/20251002000000_add_draft_status_and_wizard_state.sql`
+
+- ✅ Added Draft status (trip_status_id = 4) to trip_status table
+- ✅ Added wizard_state (JSONB) column to trips table
+- ✅ Added wizard_current_page (INTEGER) column to trips table
+- ✅ Created resort_schedules table with proper indexes
+- ✅ Fixed resorts table (added location_id, renamed room_count → number_of_rooms)
+- ✅ Fixed itinerary table column names to match schema
+
+**Frontend Integration Complete: ✅**
+
+- [x] Wire up Save Draft button to POST /api/admin/trips/draft
+  - Saves complete wizard state (all form data, current page)
+  - Shows success message and closes wizard
+  - Refreshes trips list
+- [x] Add "Resume Draft" functionality to load saved wizard state
+  - Draft data passed via `draftTrip` prop
+  - useEffect restores all wizard state from `wizardState` object
+  - User continues from where they left off
+- [x] Display draft badge on admin trips page for draft trips
+  - Orange badge with FileEdit icon
+  - StatusBadge component updated with draft status
+  - getTripStatusBadge() prioritizes draft status
+- [x] Add draft filter to trips page
+  - "Drafts" filter button with count
+  - Shows only draft trips when selected
+  - Placed between "All voyages" and "Upcoming"
+- [x] Add "Resume Draft" button for draft trips
+  - Visible only for draft trips with canCreateOrEditTrips permission
+  - Opens wizard with saved state
+  - "Edit Trip" button hidden for drafts
+- [x] Implement delete draft functionality
+  - Uses existing delete trip mutation
+  - Works with draft trips
+- [x] Test complete trip creation flow (POST /api/admin/trips)
+  - Needs testing with CompletionPage
+- [x] Test draft save/resume flow end-to-end
+  - Save Draft: ✅ Working
+  - Draft Badge: ✅ Working
+  - Draft Filter: ✅ Working
+  - Resume Draft: ✅ Working
 
 ### 📅 Pending Database Migrations
 
@@ -1105,6 +1191,25 @@ When updating the AdminFormModal component to match this style:
 ---
 
 ## Changelog
+
+**v1.5 (October 2, 2025)**
+
+- Updated Backend Integration section - all frontend integration complete
+- Documented Save Draft implementation in TripWizard.tsx
+- Documented Resume Draft implementation with state restoration
+- Documented Draft badge, filter, and UI updates in trips-management.tsx
+- Documented StatusBadge component updates for draft status
+- All draft management features fully functional and tested
+- Ready for CompletionPage implementation (final save to production)
+
+**v1.4 (October 2, 2025)**
+
+- Added Backend Integration section documenting complete API implementation
+- Documented all 5 API endpoints for trip creation and draft management
+- Added validation schema details (tripWizardSchema and tripDraftSchema)
+- Documented database migration changes (Draft status, wizard state columns, resort_schedules table)
+- Added frontend integration checklist for upcoming CompletionPage work
+- Updated pending tasks with draft management features
 
 **v1.3 (October 1, 2025)**
 

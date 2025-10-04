@@ -1,25 +1,23 @@
-import type { Express, Request, Response } from "express";
-import express from "express";
-import { createServer, type Server } from "http";
-import path from "path";
-import {
-  generalRateLimit,
-  authRateLimit
-} from "./middleware/rate-limiting";
-import { doubleSubmitCsrf } from "./middleware/csrf";
-import { validateVersion } from "./middleware/versioning";
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
-import invitationRoutes from "./routes/invitation-routes";
-import { registerAdminUsersRoutes } from "./routes/admin-users-routes";
-import { registerAdminLookupTablesRoutes } from "./routes/admin-lookup-tables-routes";
-import { registerTripRoutes } from "./routes/trips";
-import { registerMediaRoutes } from "./routes/media";
-import { registerLocationRoutes } from "./routes/locations";
-import { registerPublicRoutes } from "./routes/public";
-import { registerPerformanceRoutes } from "./routes/performance";
-import { registerPartyThemeRoutes } from "./routes/party-themes";
-import { registerTripInfoSectionRoutes } from "./routes/trip-info-sections";
-import { registerAdminSequenceRoutes } from "./routes/admin-sequences";
+import type { Express, Request, Response } from 'express';
+import express from 'express';
+import { createServer, type Server } from 'http';
+import path from 'path';
+import { generalRateLimit, authRateLimit } from './middleware/rate-limiting';
+import { doubleSubmitCsrf } from './middleware/csrf';
+import { validateVersion } from './middleware/versioning';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import invitationRoutes from './routes/invitation-routes';
+import { registerAdminUsersRoutes } from './routes/admin-users-routes';
+import { registerAdminLookupTablesRoutes } from './routes/admin-lookup-tables-routes';
+import { registerTripRoutes } from './routes/trips';
+import { registerTripWizardRoutes } from './routes/trip-wizard';
+import { registerMediaRoutes } from './routes/media';
+import { registerLocationRoutes } from './routes/locations';
+import { registerPublicRoutes } from './routes/public';
+import { registerPerformanceRoutes } from './routes/performance';
+import { registerPartyThemeRoutes } from './routes/party-themes';
+import { registerTripInfoSectionRoutes } from './routes/trip-info-sections';
+import { registerAdminSequenceRoutes } from './routes/admin-sequences';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ MIDDLEWARE SETUP ============
@@ -60,10 +58,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ STATIC FILE SERVING ============
   // Serve app images from single bucket with folders
-  app.use('/app-images', express.static('server/public/app-images', {
-    maxAge: '24h', // Cache for 24 hours
-    etag: false
-  }));
+  app.use(
+    '/app-images',
+    express.static('server/public/app-images', {
+      maxAge: '24h', // Cache for 24 hours
+      etag: false,
+    })
+  );
 
   // Backward compatibility redirects for old image paths
   app.use('/cruise-images', (req: Request, res: Response) => {
@@ -87,16 +88,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Serve general images from uploads directory
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
-    maxAge: '7d',
-    etag: true
-  }));
+  app.use(
+    '/uploads',
+    express.static(path.join(process.cwd(), 'uploads'), {
+      maxAge: '7d',
+      etag: true,
+    })
+  );
 
   // Serve logos from logos directory
-  app.use('/logos', express.static(path.join(process.cwd(), 'logos'), {
-    maxAge: '30d',
-    etag: true
-  }));
+  app.use(
+    '/logos',
+    express.static(path.join(process.cwd(), 'logos'), {
+      maxAge: '30d',
+      etag: true,
+    })
+  );
 
   // ============ REGISTER MODULAR ROUTES ============
 
@@ -107,6 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register trip and cruise related routes
   registerTripRoutes(app);
+  registerTripWizardRoutes(app);
 
   // Register media and talent related routes
   registerMediaRoutes(app);

@@ -213,10 +213,10 @@ export function registerTripRoutes(app: Express) {
 
       const supabaseAdmin = getSupabaseAdmin();
 
-      // Build the query
+      // Build the query - include trip_status join to get status string
       let query = supabaseAdmin
         .from('trips')
-        .select('*', { count: 'exact' })
+        .select('*, trip_status!inner(status)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
       // Apply filters
@@ -225,7 +225,8 @@ export function registerTripRoutes(app: Express) {
       }
 
       if (status) {
-        query = query.eq('status', status as string);
+        // Filter by the trip_status.status field
+        query = query.eq('trip_status.status', status as string);
       }
 
       // Apply pagination
@@ -326,26 +327,70 @@ export function registerTripRoutes(app: Express) {
     })
   );
 
-  // Get cruise by ID
+  // Get trip by ID (public - excludes drafts)
   app.get(
     '/api/trips/id/:id',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const trip = await tripStorage.getTripById(parseInt(req.params.id || '0'));
-      if (!trip) {
+      const supabaseAdmin = getSupabaseAdmin();
+      const tripId = parseInt(req.params.id || '0');
+
+      // Get "Draft" status ID
+      const { data: draftStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Draft')
+        .single();
+
+      const draftStatusId = draftStatus?.id;
+
+      // Fetch trip excluding drafts
+      let query = supabaseAdmin.from('trips').select('*').eq('id', tripId);
+
+      if (draftStatusId) {
+        query = query.neq('trip_status_id', draftStatusId);
+      }
+
+      const { data, error } = await query.single();
+
+      if (error || !data) {
         throw ApiError.notFound('Trip not found');
       }
+
+      const trip = tripStorage.transformTripData(data);
       return res.json(trip);
     })
   );
 
-  // Get trip by slug
+  // Get trip by slug (public - excludes drafts)
   app.get(
     '/api/trips/:slug',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const trip = await tripStorage.getTripBySlug(req.params.slug || '');
-      if (!trip) {
+      const supabaseAdmin = getSupabaseAdmin();
+      const slug = req.params.slug || '';
+
+      // Get "Draft" status ID
+      const { data: draftStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Draft')
+        .single();
+
+      const draftStatusId = draftStatus?.id;
+
+      // Fetch trip excluding drafts
+      let query = supabaseAdmin.from('trips').select('*').eq('slug', slug);
+
+      if (draftStatusId) {
+        query = query.neq('trip_status_id', draftStatusId);
+      }
+
+      const { data, error } = await query.single();
+
+      if (error || !data) {
         throw ApiError.notFound('Trip not found');
       }
+
+      const trip = tripStorage.transformTripData(data);
       return res.json(trip);
     })
   );
@@ -389,8 +434,36 @@ export function registerTripRoutes(app: Express) {
   app.get(
     '/api/trips',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const allTrips = await tripStorage.getAllTrips();
-      return res.json(allTrips);
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get "Draft" status ID
+      const { data: draftStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Draft')
+        .single();
+
+      const draftStatusId = draftStatus?.id;
+
+      // Fetch all trips excluding drafts
+      let query = supabaseAdmin.from('trips').select('*').order('start_date', { ascending: false });
+
+      if (draftStatusId) {
+        query = query.neq('trip_status_id', draftStatusId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        logger.error('Error fetching trips:', error, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch trips');
+      }
+
+      const transformedTrips = (data || []).map(trip => tripStorage.transformTripData(trip));
+      return res.json(transformedTrips);
     })
   );
 
@@ -398,8 +471,41 @@ export function registerTripRoutes(app: Express) {
   app.get(
     '/api/trips/upcoming',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const upcomingTrips = await tripStorage.getUpcomingTrips();
-      return res.json(upcomingTrips);
+      const supabaseAdmin = getSupabaseAdmin();
+      const today = new Date().toISOString().split('T')[0];
+
+      // Get "Draft" status ID
+      const { data: draftStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Draft')
+        .single();
+
+      const draftStatusId = draftStatus?.id;
+
+      // Fetch upcoming trips excluding drafts
+      let query = supabaseAdmin
+        .from('trips')
+        .select('*')
+        .gte('start_date', today)
+        .order('start_date', { ascending: true });
+
+      if (draftStatusId) {
+        query = query.neq('trip_status_id', draftStatusId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        logger.error('Error fetching upcoming trips:', error, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch upcoming trips');
+      }
+
+      const transformedTrips = (data || []).map(trip => tripStorage.transformTripData(trip));
+      return res.json(transformedTrips);
     })
   );
 
@@ -407,8 +513,41 @@ export function registerTripRoutes(app: Express) {
   app.get(
     '/api/trips/past',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const pastTrips = await tripStorage.getPastTrips();
-      return res.json(pastTrips);
+      const supabaseAdmin = getSupabaseAdmin();
+      const today = new Date().toISOString().split('T')[0];
+
+      // Get "Draft" status ID
+      const { data: draftStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Draft')
+        .single();
+
+      const draftStatusId = draftStatus?.id;
+
+      // Fetch past trips excluding drafts
+      let query = supabaseAdmin
+        .from('trips')
+        .select('*')
+        .lt('end_date', today)
+        .order('start_date', { ascending: false });
+
+      if (draftStatusId) {
+        query = query.neq('trip_status_id', draftStatusId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        logger.error('Error fetching past trips:', error, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch past trips');
+      }
+
+      const transformedTrips = (data || []).map(trip => tripStorage.transformTripData(trip));
+      return res.json(transformedTrips);
     })
   );
 
@@ -689,7 +828,7 @@ export function registerTripRoutes(app: Express) {
 
   // ============ TRIP INFO SECTIONS ============
 
-  // Get complete trip info with all sections
+  // Get complete trip info with all sections (public - excludes drafts)
   app.get(
     '/api/trips/:slug/complete',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -697,6 +836,32 @@ export function registerTripRoutes(app: Express) {
       if (!slug) {
         throw ApiError.badRequest('Trip slug is required');
       }
+
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get "Draft" status ID
+      const { data: draftStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Draft')
+        .single();
+
+      const draftStatusId = draftStatus?.id;
+
+      // First check if trip exists and is not a draft
+      let tripQuery = supabaseAdmin.from('trips').select('trip_status_id').eq('slug', slug);
+
+      if (draftStatusId) {
+        tripQuery = tripQuery.neq('trip_status_id', draftStatusId);
+      }
+
+      const { data: tripCheck } = await tripQuery.single();
+
+      if (!tripCheck) {
+        throw ApiError.notFound('Trip not found');
+      }
+
+      // If not a draft, fetch complete info
       const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
       if (!tripData) {
         throw ApiError.notFound('Trip not found');

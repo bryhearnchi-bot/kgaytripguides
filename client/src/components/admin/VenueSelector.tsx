@@ -115,13 +115,14 @@ export function VenueSelector({
     description: '',
   });
   const portalContainerRef = React.useRef<HTMLDivElement>(null);
+  const fetchedVenueIdsRef = React.useRef<Set<number>>(new Set());
 
   const fetchData = async () => {
-    // In wizard mode, don't fetch venues from API - start with empty list
+    // In wizard mode, only fetch venue types (venues are fetched on-demand via useEffect)
     if (wizardMode) {
       setLoading(false);
       try {
-        // Still fetch venue types for the create modal
+        // Fetch venue types for the create modal
         const venueTypesResponse = await api.get('/api/venue-types');
         if (!venueTypesResponse.ok) {
           throw new Error(`Failed to fetch venue types: ${venueTypesResponse.status}`);
@@ -197,6 +198,9 @@ export function VenueSelector({
       // Add the new venue to the list
       setVenues(prev => [...prev, newVenue]);
 
+      // Mark this venue as fetched
+      fetchedVenueIdsRef.current.add(newVenue.id);
+
       // Auto-select the newly created venue
       onSelectionChange([...selectedIds, newVenue.id]);
 
@@ -218,7 +222,31 @@ export function VenueSelector({
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, []); // Only fetch on mount
+
+  // When in wizard mode and selectedIds change (e.g., from draft restoration),
+  // ensure those venues are in the list
+  useEffect(() => {
+    if (wizardMode && selectedIds.length > 0) {
+      // Check if we need to fetch any venues we haven't fetched yet
+      const missingIds = selectedIds.filter(id => !fetchedVenueIdsRef.current.has(id));
+
+      if (missingIds.length > 0) {
+        // Fetch all venues and filter to the ones we need
+        api.get('/api/venues').then(async response => {
+          if (response.ok) {
+            const allVenues = await response.json();
+            const missingVenues = allVenues.filter((v: Venue) => missingIds.includes(v.id));
+            if (missingVenues.length > 0) {
+              setVenues(prev => [...prev, ...missingVenues]);
+              // Mark these IDs as fetched
+              missingVenues.forEach((v: Venue) => fetchedVenueIdsRef.current.add(v.id));
+            }
+          }
+        });
+      }
+    }
+  }, [selectedIds, wizardMode]);
 
   // Convert venues to MultiSelectItem format with venue type info
   const items: MultiSelectItem[] = venues.map(venue => ({

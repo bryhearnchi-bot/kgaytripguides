@@ -9,8 +9,8 @@ import type {
   Event,
   Talent,
   TalentCategory,
-  Settings
-} from "../shared/supabase-types";
+  Settings,
+} from '../shared/supabase-types';
 
 // ============ PROFILE STORAGE ============
 
@@ -25,11 +25,7 @@ export interface IProfileStorage {
 export class ProfileStorage implements IProfileStorage {
   async getProfile(id: string): Promise<Profile | null> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabaseAdmin.from('profiles').select('*').eq('id', id).single();
 
     if (error) return null;
     return data;
@@ -62,10 +58,7 @@ export class ProfileStorage implements IProfileStorage {
 
   async deleteProfile(id: string): Promise<void> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { error } = await supabaseAdmin
-      .from('profiles')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabaseAdmin.from('profiles').delete().eq('id', id);
 
     if (error) throw error;
   }
@@ -100,6 +93,24 @@ export class TripStorage implements ITripStorage {
   public transformTripData(dbTrip: any): Trip {
     if (!dbTrip) return dbTrip;
 
+    // Extract status from joined trip_status table or direct status field
+    let status = null;
+    if (dbTrip.trip_status?.status) {
+      // From joined data (e.g., { trip_status: { status: 'Draft' } })
+      status = dbTrip.trip_status.status.toLowerCase();
+    } else if (dbTrip.status) {
+      // Direct status field if exists
+      status = dbTrip.status.toLowerCase();
+    } else if (dbTrip.trip_status_id) {
+      // Map common status IDs if no join data (fallback)
+      const statusMap: { [key: number]: string } = {
+        1: 'published',
+        2: 'draft',
+        3: 'archived',
+      };
+      status = statusMap[dbTrip.trip_status_id] || null;
+    }
+
     return {
       id: dbTrip.id,
       name: dbTrip.name,
@@ -109,22 +120,25 @@ export class TripStorage implements ITripStorage {
       tripType: dbTrip.trip_type,
       startDate: dbTrip.start_date,
       endDate: dbTrip.end_date,
-      status: dbTrip.status,
+      status: status,
+      tripStatusId: dbTrip.trip_status_id,
       heroImageUrl: dbTrip.hero_image_url,
       description: dbTrip.description,
       highlights: dbTrip.highlights,
+      wizardState: dbTrip.wizard_state,
+      wizardCurrentPage: dbTrip.wizard_current_page,
+      resortId: dbTrip.resort_id,
+      shipId: dbTrip.ship_id,
+      charterCompanyId: dbTrip.charter_company_id,
+      tripTypeId: dbTrip.trip_type_id,
       createdAt: dbTrip.created_at,
-      updatedAt: dbTrip.updated_at
+      updatedAt: dbTrip.updated_at,
     } as any;
   }
 
   async getTripById(id: number): Promise<Trip | null> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data, error } = await supabaseAdmin
-      .from('trips')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabaseAdmin.from('trips').select('*').eq('id', id).single();
 
     if (error) return null;
     return this.transformTripData(data);
@@ -132,11 +146,7 @@ export class TripStorage implements ITripStorage {
 
   async getTripBySlug(slug: string): Promise<Trip | null> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data, error } = await supabaseAdmin
-      .from('trips')
-      .select('*')
-      .eq('slug', slug)
-      .single();
+    const { data, error } = await supabaseAdmin.from('trips').select('*').eq('slug', slug).single();
 
     if (error) return null;
     return this.transformTripData(data);
@@ -144,11 +154,7 @@ export class TripStorage implements ITripStorage {
 
   async createTrip(data: any): Promise<Trip> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: trip, error } = await supabaseAdmin
-      .from('trips')
-      .insert(data)
-      .select()
-      .single();
+    const { data: trip, error } = await supabaseAdmin.from('trips').insert(data).select().single();
 
     if (error) throw error;
     return this.transformTripData(trip);
@@ -169,10 +175,7 @@ export class TripStorage implements ITripStorage {
 
   async deleteTrip(id: number): Promise<void> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { error } = await supabaseAdmin
-      .from('trips')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabaseAdmin.from('trips').delete().eq('id', id);
 
     if (error) throw error;
   }
@@ -265,20 +268,14 @@ export class ItineraryStorage implements IItineraryStorage {
 
   async deleteItineraryStop(id: number): Promise<void> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { error } = await supabaseAdmin
-      .from('itinerary')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabaseAdmin.from('itinerary').delete().eq('id', id);
 
     if (error) throw error;
   }
 
   async bulkCreateItineraryStops(data: any[]): Promise<Itinerary[]> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: stops, error } = await supabaseAdmin
-      .from('itinerary')
-      .insert(data)
-      .select();
+    const { data: stops, error } = await supabaseAdmin.from('itinerary').insert(data).select();
 
     if (error) throw error;
     return stops || [];
@@ -367,20 +364,14 @@ export class EventStorage implements IEventStorage {
 
   async deleteEvent(id: number): Promise<void> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { error } = await supabaseAdmin
-      .from('events')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabaseAdmin.from('events').delete().eq('id', id);
 
     if (error) throw error;
   }
 
   async bulkCreateEvents(data: any[]): Promise<Event[]> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: events, error } = await supabaseAdmin
-      .from('events')
-      .insert(data)
-      .select();
+    const { data: events, error } = await supabaseAdmin.from('events').insert(data).select();
 
     if (error) throw error;
     return events || [];
@@ -428,11 +419,7 @@ export class TalentStorage implements ITalentStorage {
 
   async getTalentById(id: number): Promise<Talent | null> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { data, error } = await supabaseAdmin
-      .from('talent')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabaseAdmin.from('talent').select('*').eq('id', id).single();
 
     if (error) return null;
     return data;
@@ -465,10 +452,7 @@ export class TalentStorage implements ITalentStorage {
 
   async deleteTalent(id: number): Promise<void> {
     const supabaseAdmin = getSupabaseAdmin();
-    const { error } = await supabaseAdmin
-      .from('talent')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabaseAdmin.from('talent').delete().eq('id', id);
 
     if (error) throw error;
   }
@@ -542,7 +526,7 @@ export class SettingsStorage implements ISettingsStorage {
         category,
         key,
         ...data,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -557,7 +541,7 @@ export class SettingsStorage implements ISettingsStorage {
       .from('settings')
       .update({
         is_active: false,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('category', category)
       .eq('key', key)
@@ -576,7 +560,7 @@ export class SettingsStorage implements ISettingsStorage {
         .from('settings')
         .update({
           order_index: i,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('category', category)
         .eq('key', keys[i]);
@@ -639,7 +623,7 @@ export class TripInfoStorage implements ITripInfoStorage {
       description: item.description,
       highlights: item.highlights,
       orderIndex: item.order_index,
-      segment: item.segment
+      segment: item.segment,
     }));
 
     // Get events data with party themes
@@ -671,17 +655,19 @@ export class TripInfoStorage implements ITripInfoStorage {
       requiresReservation: false, // Add if available in schema
       talentIds: event.talent_ids,
       partyThemeId: event.party_theme_id,
-      partyTheme: event.party_themes ? {
-        id: event.party_themes.id,
-        name: event.party_themes.name,
-        shortDescription: event.party_themes.short_description,
-        longDescription: event.party_themes.long_description,
-        costumeIdeas: event.party_themes.costume_ideas,
-        amazonShoppingListUrl: event.party_themes.amazon_shopping_list_url,
-        imageUrl: event.party_themes.image_url
-      } : null,
+      partyTheme: event.party_themes
+        ? {
+            id: event.party_themes.id,
+            name: event.party_themes.name,
+            shortDescription: event.party_themes.short_description,
+            longDescription: event.party_themes.long_description,
+            costumeIdeas: event.party_themes.costume_ideas,
+            amazonShoppingListUrl: event.party_themes.amazon_shopping_list_url,
+            imageUrl: event.party_themes.image_url,
+          }
+        : null,
       createdAt: event.created_at,
-      updatedAt: event.updated_at
+      updatedAt: event.updated_at,
     }));
 
     // Get talent data
@@ -703,13 +689,14 @@ export class TripInfoStorage implements ITripInfoStorage {
       socialLinks: talent.social_links,
       website: talent.website,
       createdAt: talent.created_at,
-      updatedAt: talent.updated_at
+      updatedAt: talent.updated_at,
     }));
 
     // Get trip info sections via junction table
     const { data: tripInfoSectionsData, error: tripInfoError } = await supabaseAdmin
       .from('trip_section_assignments')
-      .select(`
+      .select(
+        `
         id,
         order_index,
         trip_info_sections (
@@ -720,7 +707,8 @@ export class TripInfoStorage implements ITripInfoStorage {
           updated_by,
           updated_at
         )
-      `)
+      `
+      )
       .eq('trip_id', tripData.id)
       .order('order_index', { ascending: true });
 
@@ -739,8 +727,8 @@ export class TripInfoStorage implements ITripInfoStorage {
       assignment: {
         id: assignment.id,
         tripId: tripData.id,
-        orderIndex: assignment.order_index
-      }
+        orderIndex: assignment.order_index,
+      },
     }));
 
     return {
@@ -748,7 +736,7 @@ export class TripInfoStorage implements ITripInfoStorage {
       itinerary: transformedItinerary,
       events: transformedEvents,
       talent: transformedTalent,
-      tripInfoSections: transformedTripInfoSections
+      tripInfoSections: transformedTripInfoSections,
     };
   }
 
@@ -759,7 +747,7 @@ export class TripInfoStorage implements ITripInfoStorage {
       .insert({
         trip_id: tripId,
         section_id: sectionId,
-        order_index: orderIndex
+        order_index: orderIndex,
       })
       .select()
       .single();
@@ -774,7 +762,7 @@ export class TripInfoStorage implements ITripInfoStorage {
       .from('trip_section_assignments')
       .update({
         order_index: orderIndex,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', assignmentId)
       .select()
@@ -798,7 +786,8 @@ export class TripInfoStorage implements ITripInfoStorage {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: sections, error } = await supabaseAdmin
       .from('trip_section_assignments')
-      .select(`
+      .select(
+        `
         id,
         order_index,
         trip_info_sections (
@@ -809,7 +798,8 @@ export class TripInfoStorage implements ITripInfoStorage {
           updated_by,
           updated_at
         )
-      `)
+      `
+      )
       .eq('trip_id', tripId)
       .order('order_index', { ascending: true });
 
@@ -820,8 +810,8 @@ export class TripInfoStorage implements ITripInfoStorage {
       assignment: {
         id: assignment.id,
         tripId: tripId,
-        orderIndex: assignment.order_index
-      }
+        orderIndex: assignment.order_index,
+      },
     }));
   }
 
@@ -897,10 +887,7 @@ export async function getPerformanceMetrics() {
 
   try {
     // Simple health check query
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .limit(1);
+    const { data, error } = await supabaseAdmin.from('profiles').select('id').limit(1);
 
     const duration = Date.now() - startTime;
 
@@ -909,18 +896,18 @@ export async function getPerformanceMetrics() {
         status: error ? 'error' : 'healthy',
         responseTime: duration,
         averageDuration: duration,
-        error: error?.message
+        error: error?.message,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error: unknown) {
     return {
       database: {
         status: 'error',
         responseTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }
@@ -934,7 +921,7 @@ export async function warmUpCaches() {
     await Promise.all([
       supabaseAdmin.from('trips').select('id').limit(5),
       supabaseAdmin.from('locations').select('id').limit(5),
-      supabaseAdmin.from('talent').select('id').limit(5)
+      supabaseAdmin.from('talent').select('id').limit(5),
     ]);
     return true;
   } catch (error: unknown) {
@@ -951,7 +938,7 @@ export const optimizedConnection = {
       total: 10,
       active: 2,
       idle: 8,
-      waiting: 0
+      waiting: 0,
     };
   },
 
@@ -960,9 +947,9 @@ export const optimizedConnection = {
     return {
       slowQueries: [], // Supabase doesn't expose query logs directly
       averageDuration: 50,
-      totalQueries: 100
+      totalQueries: 100,
     };
-  }
+  },
 };
 
 // ============ STORAGE INSTANCES ============
@@ -983,8 +970,12 @@ export const db = {
   execute: async (query: string) => {
     console.warn('Direct database execute called:', query);
     return { rows: [] };
-  }
+  },
 };
 
 // Re-export location storage (already Supabase-based)
-export { locationStorage, type Location, type NewLocation } from './storage/LocationStorage-Supabase';
+export {
+  locationStorage,
+  type Location,
+  type NewLocation,
+} from './storage/LocationStorage-Supabase';

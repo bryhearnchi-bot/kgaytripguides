@@ -50,6 +50,7 @@ export interface ItineraryEntry {
   dayNumber: number;
   date: string;
   locationId?: number;
+  locationTypeId?: number;
   locationName: string;
   arrivalTime: string;
   departureTime: string;
@@ -60,9 +61,12 @@ export interface ItineraryEntry {
 
 interface TripWizardState {
   currentPage: number;
+  draftId?: number | null;
   tripType: TripType;
   buildMethod: BuildMethod;
   tripData: Partial<TripData>;
+  resortId?: number | null;
+  shipId?: number | null;
   resortData: Partial<ResortData> | null;
   shipData: Partial<ShipData> | null;
   amenityIds: number[];
@@ -75,9 +79,12 @@ interface TripWizardState {
 interface TripWizardContextType {
   state: TripWizardState;
   setCurrentPage: (page: number) => void;
+  setDraftId: (id: number | null) => void;
   setTripType: (type: TripType) => void;
   setBuildMethod: (method: BuildMethod) => void;
   updateTripData: (data: Partial<TripData>) => void;
+  setResortId: (id: number | null) => void;
+  setShipId: (id: number | null) => void;
   updateResortData: (data: Partial<ResortData>) => void;
   updateShipData: (data: Partial<ShipData>) => void;
   setAmenityIds: (ids: number[]) => void;
@@ -90,12 +97,14 @@ interface TripWizardContextType {
   addItineraryEntry: (entry: ItineraryEntry) => void;
   addTempFile: (path: string) => void;
   clearWizard: () => void;
+  restoreFromDraft: (draftState: Partial<TripWizardState>) => void;
 }
 
 const TripWizardContext = createContext<TripWizardContextType | undefined>(undefined);
 
 const initialState: TripWizardState = {
   currentPage: 0,
+  draftId: null,
   tripType: null,
   buildMethod: null,
   tripData: {
@@ -123,6 +132,10 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, currentPage: page }));
   };
 
+  const setDraftId = (id: number | null) => {
+    setState(prev => ({ ...prev, draftId: id }));
+  };
+
   const setTripType = (type: TripType) => {
     setState(prev => ({ ...prev, tripType: type }));
   };
@@ -136,6 +149,14 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
       ...prev,
       tripData: { ...prev.tripData, ...data },
     }));
+  };
+
+  const setResortId = (id: number | null) => {
+    setState(prev => ({ ...prev, resortId: id }));
+  };
+
+  const setShipId = (id: number | null) => {
+    setState(prev => ({ ...prev, shipId: id }));
   };
 
   const updateResortData = (data: Partial<ResortData>) => {
@@ -208,15 +229,74 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
   };
 
   const clearWizard = () => {
-    setState(initialState);
+    // Reset to initial state - this creates a NEW object reference
+    // which ensures all components re-render with fresh data
+    setState({
+      currentPage: 0,
+      draftId: null,
+      tripType: null,
+      buildMethod: null,
+      tripData: {
+        name: '',
+        slug: '',
+        startDate: '',
+        endDate: '',
+        heroImageUrl: '',
+        description: '',
+        highlights: '',
+      },
+      resortId: null,
+      shipId: null,
+      resortData: null,
+      shipData: null,
+      amenityIds: [],
+      venueIds: [],
+      scheduleEntries: [],
+      itineraryEntries: [],
+      tempFiles: [],
+    });
+  };
+
+  const restoreFromDraft = (draftState: Partial<TripWizardState>) => {
+    // Restore complete state from draft in one operation
+    // This ensures all state is updated atomically
+    setState({
+      currentPage: draftState.currentPage ?? 0,
+      draftId: draftState.draftId ?? null,
+      tripType: draftState.tripType ?? null,
+      buildMethod: draftState.buildMethod ?? null,
+      tripData: {
+        name: draftState.tripData?.name ?? '',
+        slug: draftState.tripData?.slug ?? '',
+        startDate: draftState.tripData?.startDate ?? '',
+        endDate: draftState.tripData?.endDate ?? '',
+        heroImageUrl: draftState.tripData?.heroImageUrl ?? '',
+        description: draftState.tripData?.description ?? '',
+        highlights: draftState.tripData?.highlights ?? '',
+        charterCompanyId: draftState.tripData?.charterCompanyId,
+        tripTypeId: draftState.tripData?.tripTypeId,
+      },
+      resortId: draftState.resortId ?? null,
+      shipId: draftState.shipId ?? null,
+      resortData: draftState.resortData ?? null,
+      shipData: draftState.shipData ?? null,
+      amenityIds: draftState.amenityIds ?? [],
+      venueIds: draftState.venueIds ?? [],
+      scheduleEntries: draftState.scheduleEntries ?? [],
+      itineraryEntries: draftState.itineraryEntries ?? [],
+      tempFiles: draftState.tempFiles ?? [],
+    });
   };
 
   const value: TripWizardContextType = {
     state,
     setCurrentPage,
+    setDraftId,
     setTripType,
     setBuildMethod,
     updateTripData,
+    setResortId,
+    setShipId,
     updateResortData,
     updateShipData,
     setAmenityIds,
@@ -229,6 +309,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     addItineraryEntry,
     addTempFile,
     clearWizard,
+    restoreFromDraft,
   };
 
   return <TripWizardContext.Provider value={value}>{children}</TripWizardContext.Provider>;

@@ -5,6 +5,14 @@ import { differenceInDays, format } from 'date-fns';
 import { api } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { TripWizard } from '@/components/admin/TripWizard/TripWizard';
 import {
   Select,
@@ -13,13 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,8 +50,10 @@ import {
   Clock,
   Download,
   Edit,
+  ExternalLink,
   Eye,
   FileText,
+  Link,
   Loader2,
   MapPin,
   Plus,
@@ -72,7 +75,7 @@ interface Trip {
   endDate: string;
   shipName: string;
   cruiseLine?: string;
-  status: 'upcoming' | 'ongoing' | 'past' | 'archived';
+  status: 'upcoming' | 'ongoing' | 'past' | 'archived' | 'draft';
   heroImageUrl?: string;
   guestCount?: number;
   ports?: number;
@@ -83,15 +86,18 @@ interface Trip {
   totalRevenue?: number;
   createdAt: string;
   updatedAt: string;
+  wizardState?: any;
+  wizardCurrentPage?: number;
 }
 
-type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived';
+type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived' | 'draft';
 
 interface GroupedTrips {
   upcoming: Trip[];
   current: Trip[];
   past: Trip[];
   archived: Trip[];
+  draft: Trip[];
   active: Trip[];
 }
 
@@ -115,6 +121,10 @@ export default function TripsManagement() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [tripPendingDeletion, setTripPendingDeletion] = useState<Trip | null>(null);
+  const [draftToResume, setDraftToResume] = useState<Trip | null>(null);
+  const [slugEditModalOpen, setSlugEditModalOpen] = useState(false);
+  const [tripToEditSlug, setTripToEditSlug] = useState<Trip | null>(null);
+  const [newSlug, setNewSlug] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -125,11 +135,13 @@ export default function TripsManagement() {
   } = useQuery<Trip[]>({
     queryKey: ['admin-trips'],
     queryFn: async () => {
-      const response = await api.get('/api/trips');
+      const response = await api.get('/api/admin/trips');
       if (!response.ok) {
         throw new Error('Failed to fetch trips');
       }
-      return response.json();
+      const data = await response.json();
+      // Admin endpoint returns paginated data with { trips: [...], pagination: {...} }
+      return data.trips || data;
     },
   });
 
@@ -198,6 +210,40 @@ export default function TripsManagement() {
     },
   });
 
+  const updateSlug = useMutation({
+    mutationFn: async ({ tripId, slug }: { tripId: number; slug: string }) => {
+      if (!canCreateOrEditTrips) {
+        throw new Error('You do not have permission to edit trips.');
+      }
+
+      // Call the API to update the slug
+      const response = await api.patch(`/api/admin/trips/${tripId}/slug`, { slug });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+        throw new Error(error.error || error.message || 'Failed to update slug');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      toast({
+        title: 'URL slug updated',
+        description: 'The trip URL has been successfully updated.',
+      });
+      setSlugEditModalOpen(false);
+      setTripToEditSlug(null);
+      setNewSlug('');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to update slug',
+        description: error.message || 'An error occurred while updating the slug',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const exportTripData = useMutation({
     mutationFn: async (tripId: number) => {
       if (!canExportTrips) {
@@ -251,6 +297,7 @@ export default function TripsManagement() {
   const statusFilters = useMemo(
     () => [
       { value: 'all', label: 'All voyages', count: groupedTrips.active.length },
+      { value: 'draft', label: 'Drafts', count: groupedTrips.draft.length },
       { value: 'upcoming', label: 'Upcoming', count: groupedTrips.upcoming.length },
       { value: 'current', label: 'Sailing now', count: groupedTrips.current.length },
       { value: 'past', label: 'Completed', count: groupedTrips.past.length },
@@ -315,6 +362,8 @@ export default function TripsManagement() {
         return groupedTrips.past.length;
       case 'archived':
         return groupedTrips.archived.length;
+      case 'draft':
+        return groupedTrips.draft.length;
       case 'all':
       default:
         return groupedTrips.active.length;
@@ -590,36 +639,62 @@ export default function TripsManagement() {
               },
             ]}
             actions={[
-              ...(canCreateOrEditTrips
-                ? [
-                    {
-                      label: 'Edit Trip',
-                      icon: <Edit className="h-4 w-4" />,
-                      onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
-                    },
-                  ]
-                : []),
-              ...(canDeleteTrips
-                ? [
-                    {
-                      label: 'Delete Trip',
-                      icon: <Trash2 className="h-4 w-4" />,
-                      onClick: (trip: Trip) => {
-                        setTripPendingDeletion(trip);
-                        // Note: This will trigger the AlertDialog, but we need to handle it differently
-                        // For now, we'll use a simple confirm dialog
-                        if (
-                          confirm(
-                            `Are you sure you want to delete "${trip.name}"? This action cannot be undone.`
-                          )
-                        ) {
-                          deleteTrip.mutate(trip.id);
-                        }
-                      },
-                      variant: 'destructive' as const,
-                    },
-                  ]
-                : []),
+              // Resume Draft button (only for draft trips)
+              {
+                label: 'Resume Draft',
+                icon: <Edit className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  setDraftToResume(trip);
+                  setIsWizardOpen(true);
+                },
+                visible: (trip: Trip) => trip.status === 'draft' && canCreateOrEditTrips,
+              },
+              // Edit Trip button (for non-draft trips)
+              {
+                label: 'Edit Trip',
+                icon: <Edit className="h-4 w-4" />,
+                onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
+                visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
+              },
+              // Edit URL Slug (for live/completed trips)
+              {
+                label: 'Edit URL Slug',
+                icon: <Link className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  setTripToEditSlug(trip);
+                  setNewSlug(trip.slug);
+                  setSlugEditModalOpen(true);
+                },
+                visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
+              },
+              // Preview button (for all trips)
+              {
+                label: 'Preview',
+                icon: <ExternalLink className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  window.open(`/trip/${trip.slug}`, '_blank');
+                },
+                visible: () => true,
+              },
+              // Delete button (for all trips)
+              {
+                label: 'Delete',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  setTripPendingDeletion(trip);
+                  // Note: This will trigger the AlertDialog, but we need to handle it differently
+                  // For now, we'll use a simple confirm dialog
+                  if (
+                    confirm(
+                      `Are you sure you want to delete "${trip.name}"? This action cannot be undone.`
+                    )
+                  ) {
+                    deleteTrip.mutate(trip.id);
+                  }
+                },
+                variant: 'destructive' as const,
+                visible: () => canDeleteTrips,
+              },
             ]}
             keyField="id"
             isLoading={isLoading}
@@ -901,27 +976,90 @@ export default function TripsManagement() {
       {/* Trip Wizard Modal */}
       <TripWizard
         isOpen={isWizardOpen}
-        onOpenChange={setIsWizardOpen}
+        onOpenChange={open => {
+          setIsWizardOpen(open);
+          if (!open) {
+            setDraftToResume(null);
+          }
+        }}
+        draftTrip={draftToResume}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+          setDraftToResume(null);
           toast({
             title: 'Success',
-            description: 'Trip created successfully!',
+            description: draftToResume ? 'Draft resumed!' : 'Trip created successfully!',
           });
         }}
       />
+
+      {/* Slug Edit Modal */}
+      <Dialog open={slugEditModalOpen} onOpenChange={setSlugEditModalOpen}>
+        <DialogContent className="sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-white">Edit URL Slug</DialogTitle>
+            <DialogDescription className="text-sm text-white/60">
+              Change the URL path for this trip. This will update all links to the trip.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm text-white/80">Trip Name</label>
+              <p className="text-sm text-white/60">{tripToEditSlug?.name}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-white/80">URL Slug</label>
+              <Input
+                value={newSlug}
+                onChange={e => setNewSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                placeholder="enter-url-slug"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+              <p className="text-xs text-white/50">Preview: /trip/{newSlug || 'enter-url-slug'}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSlugEditModalOpen(false)}
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (tripToEditSlug && newSlug) {
+                  updateSlug.mutate({ tripId: tripToEditSlug.id, slug: newSlug });
+                }
+              }}
+              disabled={!newSlug || newSlug === tripToEditSlug?.slug}
+              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+            >
+              Update Slug
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function groupTrips(trips: Trip[]): GroupedTrips {
-  const now = new Date();
+  // Get today's date at midnight for fair comparison
+  const nowDate = new Date();
+  const today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), 0, 0, 0, 0);
   const upcoming: Trip[] = [];
   const current: Trip[] = [];
   const past: Trip[] = [];
   const archived: Trip[] = [];
+  const draft: Trip[] = [];
 
   trips.forEach(trip => {
+    if (trip.status === 'draft') {
+      draft.push(trip);
+      return;
+    }
+
     if (trip.status === 'archived') {
       archived.push(trip);
       return;
@@ -930,12 +1068,12 @@ function groupTrips(trips: Trip[]): GroupedTrips {
     const start = dateOnly(trip.startDate);
     const end = dateOnly(trip.endDate);
 
-    if (trip.status === 'ongoing' || (now >= start && now <= end)) {
+    if (trip.status === 'ongoing' || (today >= start && today <= end)) {
       current.push(trip);
       return;
     }
 
-    if (now < start) {
+    if (today < start) {
       upcoming.push(trip);
       return;
     }
@@ -948,7 +1086,8 @@ function groupTrips(trips: Trip[]): GroupedTrips {
     current,
     past,
     archived,
-    active: [...upcoming, ...current, ...past],
+    draft,
+    active: [...draft, ...upcoming, ...current, ...past],
   };
 }
 
@@ -973,6 +1112,9 @@ function filterTrips(
       break;
     case 'archived':
       source = groups.archived;
+      break;
+    case 'draft':
+      source = groups.draft;
       break;
     case 'all':
     default:
@@ -1021,24 +1163,31 @@ function getTripSortableStatus(trip: Trip): string {
 }
 
 function getTripStatusBadge(trip: Trip) {
+  if (trip.status === 'draft') {
+    return <StatusBadge status="draft" label="Draft" />;
+  }
+
   if (trip.status === 'archived') {
     return <StatusBadge status="archived" />;
   }
 
-  const now = new Date();
+  // Get today's date at midnight for fair comparison
+  const nowDate = new Date();
+  const today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), 0, 0, 0, 0);
   const start = dateOnly(trip.startDate);
   const end = dateOnly(trip.endDate);
 
-  if (now < start) {
-    const daysUntil = Math.max(0, differenceInDays(start, now));
-    const label = daysUntil === 0 ? 'Departs today' : `${daysUntil} days out`;
-    return <StatusBadge status="upcoming" label={label} />;
-  }
-
-  if (now >= start && now <= end) {
-    const daysRemaining = Math.max(0, differenceInDays(end, now));
+  // Check database status first for 'ongoing', then fall back to date calculation
+  if (trip.status === 'ongoing' || (today >= start && today <= end)) {
+    const daysRemaining = Math.max(0, differenceInDays(end, today));
     const label = daysRemaining === 0 ? 'Docking soon' : `${daysRemaining} days left`;
     return <StatusBadge status="current" label={label} />;
+  }
+
+  if (today < start) {
+    const daysUntil = Math.max(0, differenceInDays(start, today));
+    const label = daysUntil === 0 ? 'Departs today' : `${daysUntil} days out`;
+    return <StatusBadge status="upcoming" label={label} />;
   }
 
   return <StatusBadge status="past" label="Completed" />;

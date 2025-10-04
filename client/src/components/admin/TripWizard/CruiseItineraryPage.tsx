@@ -3,7 +3,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { TimePicker } from '@/components/ui/time-picker';
-import { LocationSearchBar } from '@/components/admin/LocationSearchBar';
+import { LocationSelector } from '@/components/admin/LocationSelector';
+import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,16 +16,42 @@ import {
 } from '@/components/ui/dialog';
 import { useTripWizard } from '@/contexts/TripWizardContext';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
-import type { LocationData } from '@/lib/location-service';
 import { Anchor, Plus } from 'lucide-react';
+import { api } from '@/lib/api-client';
+
+interface LocationType {
+  id: number;
+  type: string;
+}
 
 export function CruiseItineraryPage() {
   const { state, setItineraryEntries, updateItineraryEntry, addItineraryEntry } = useTripWizard();
-  const [locations, setLocations] = useState<(Partial<LocationData> | null)[]>([]);
   const [showAddDayModal, setShowAddDayModal] = useState(false);
   const [addDayType, setAddDayType] = useState<'before' | 'after' | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [locationTypes, setLocationTypes] = useState<LocationType[]>([]);
+  const [loadingLocationTypes, setLoadingLocationTypes] = useState(true);
   const entriesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch location types on mount
+  useEffect(() => {
+    const fetchLocationTypes = async () => {
+      try {
+        setLoadingLocationTypes(true);
+        const response = await api.get('/api/admin/lookup-tables/location-types');
+        if (response.ok) {
+          const data = await response.json();
+          setLocationTypes(data.items || []);
+        }
+      } catch (error) {
+        console.error('Error loading location types:', error);
+      } finally {
+        setLoadingLocationTypes(false);
+      }
+    };
+
+    fetchLocationTypes();
+  }, []);
 
   // Generate itinerary entries from trip dates if not already created
   useEffect(() => {
@@ -62,7 +89,6 @@ export function CruiseItineraryPage() {
       }
 
       setItineraryEntries(entries);
-      setLocations(new Array(entries.length).fill(null));
     }
   }, [
     state.tripData.startDate,
@@ -82,14 +108,11 @@ export function CruiseItineraryPage() {
     });
   };
 
-  const handleLocationChange = (index: number, locationData: Partial<LocationData>) => {
-    const newLocations = [...locations];
-    newLocations[index] = locationData;
-    setLocations(newLocations);
-
-    // Update itinerary entry with location name
-    const locationName = locationData.name || '';
-    updateItineraryEntry(index, { locationName, locationId: locationData.id });
+  const handleLocationChange = (index: number, locationId: number | null) => {
+    // Update itinerary entry with location ID
+    // Note: locationName will need to be fetched separately if needed for display
+    // For now, we just store the locationId
+    updateItineraryEntry(index, { locationId: locationId ?? undefined });
   };
 
   const handleImageUpload = (index: number, url: string) => {
@@ -245,20 +268,31 @@ export function CruiseItineraryPage() {
 
             {/* Fields */}
             <div className="space-y-2.5">
-              {/* Location */}
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-white/90">
-                  Port/Location <span className="text-cyan-400">*</span>
-                </Label>
-                <LocationSearchBar
-                  label=""
-                  value={locations[index] || undefined}
-                  onChange={locationData => handleLocationChange(index, locationData)}
-                  placeholder="Search for port or location..."
+              {/* Location and Type Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Location */}
+                <LocationSelector
+                  label="Port/Location"
+                  selectedId={entry.locationId ?? null}
+                  onSelectionChange={locationId => handleLocationChange(index, locationId)}
+                  placeholder="Select port or location..."
                   required
-                  className="space-y-0"
+                  wizardMode={true}
                 />
-                <p className="text-[10px] text-white/50 mt-0.5">Port of call or sea day location</p>
+
+                {/* Location Type */}
+                <SingleDropDownNew
+                  label="Location Type"
+                  placeholder="Select type"
+                  emptyMessage="No location types found."
+                  options={locationTypes.map(type => ({
+                    value: type.id.toString(),
+                    label: type.type,
+                  }))}
+                  value={entry.locationTypeId?.toString() || ''}
+                  onChange={value => updateItineraryEntry(index, { locationTypeId: Number(value) })}
+                  required
+                />
               </div>
 
               {/* Times Grid */}

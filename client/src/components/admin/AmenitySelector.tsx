@@ -90,6 +90,7 @@ export function AmenitySelector({
   const [loading, setLoading] = useState(!wizardMode); // Don't show loading in wizard mode
   const [error, setError] = useState<string | null>(null);
   const portalContainerRef = React.useRef<HTMLDivElement>(null);
+  const fetchedAmenityIdsRef = React.useRef<Set<number>>(new Set());
 
   // Create amenity modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -155,6 +156,9 @@ export function AmenitySelector({
       // Add the new amenity to the list
       setAmenities(prev => [...prev, newAmenity]);
 
+      // Mark this amenity as fetched
+      fetchedAmenityIdsRef.current.add(newAmenity.id);
+
       // Auto-select the newly created amenity
       onSelectionChange([...selectedIds, newAmenity.id]);
 
@@ -176,7 +180,31 @@ export function AmenitySelector({
 
   useEffect(() => {
     fetchAmenities();
-  }, []);
+  }, []); // Only fetch on mount
+
+  // When in wizard mode and selectedIds change (e.g., from draft restoration),
+  // ensure those amenities are in the list
+  useEffect(() => {
+    if (wizardMode && selectedIds.length > 0) {
+      // Check if we need to fetch any amenities we haven't fetched yet
+      const missingIds = selectedIds.filter(id => !fetchedAmenityIdsRef.current.has(id));
+
+      if (missingIds.length > 0) {
+        // Fetch all amenities and filter to the ones we need
+        api.get('/api/amenities').then(async response => {
+          if (response.ok) {
+            const allAmenities = await response.json();
+            const missingAmenities = allAmenities.filter((a: Amenity) => missingIds.includes(a.id));
+            if (missingAmenities.length > 0) {
+              setAmenities(prev => [...prev, ...missingAmenities]);
+              // Mark these IDs as fetched
+              missingAmenities.forEach((a: Amenity) => fetchedAmenityIdsRef.current.add(a.id));
+            }
+          }
+        });
+      }
+    }
+  }, [selectedIds, wizardMode]);
 
   // Convert amenities to MultiSelectItem format
   const items: MultiSelectItem[] = amenities.map(amenity => ({

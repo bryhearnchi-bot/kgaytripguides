@@ -19,38 +19,86 @@ The purpose of this feature is to enable users to add brand new trips into the d
 
 ### Database & Schema ✓
 
-- [ ] Create `resort_schedules` table with proper indexes
+- [x] Create `resort_schedules` table with proper indexes
+  - Migration: `supabase/migrations/20251002000000_add_draft_status_and_wizard_state.sql`
+  - Columns: id, trip_id, date, day_number, order_index, image_url, description, created_at, updated_at
+- [x] Add Draft status to trip_status table
+  - trip_status_id = 4 for Draft trips
+  - Allows saving incomplete wizard state
+- [x] Add wizard state columns to trips table
+  - wizard_state (JSONB) - stores complete wizard context for resumption
+  - wizard_current_page (INTEGER) - tracks current wizard page
+- [x] Fix resorts table schema
+  - Added location_id foreign key (references locations table)
+  - Renamed room_count → number_of_rooms
+- [x] Fix itinerary table column names to match schema
 - [ ] Remove unused columns from `trips` table (ship_name, cruise_line, status, pricing, includes_info)
-- [ ] Verify `trip_status_id` default is set to 1 (Upcoming)
-- [ ] Verify `resort_id` and `ship_id` foreign keys exist in trips table
-- [ ] Verify venue relationships are ONE-TO-ONE (unique constraints)
-- [ ] Verify amenity relationships are MANY-TO-MANY
-- [ ] Verify itineraries table has correct day_number/order_index logic
-- [ ] Ensure constraint: trips must have EITHER resort_id OR ship_id, never both
+- [x] Verify `trip_status_id` default is set to 1 (Upcoming)
+- [x] Verify `resort_id` and `ship_id` foreign keys exist in trips table
+- [x] Verify venue relationships are ONE-TO-ONE (unique constraints)
+- [x] Verify amenity relationships are MANY-TO-MANY
+- [x] Verify itineraries table has correct day_number/order_index logic
+- [x] Ensure constraint: trips must have EITHER resort_id OR ship_id, never both
 
 ### Backend API ✓
 
+**Trip Creation & Draft Management - COMPLETE:**
+
+- [x] POST /api/admin/trips endpoint - Create complete trip from wizard data
+  - Creates trip with all relationships (resort/ship, venues, amenities, schedule/itinerary)
+  - Handles both resort and cruise trip types
+  - Validates with tripWizardSchema (strict validation)
+  - File: `server/routes/trip-wizard.ts`
+- [x] POST /api/admin/trips/draft - Save wizard state as draft
+  - Saves partial wizard data to trips table with Draft status (trip_status_id = 4)
+  - Stores wizard context in wizard_state JSONB column
+  - Saves current page in wizard_current_page column
+  - Validates with tripDraftSchema (flexible validation, all fields optional)
+- [x] GET /api/admin/trips/drafts - List all user's draft trips
+  - Returns array of draft trips for current user
+- [x] GET /api/admin/trips/draft/:id - Get specific draft with full wizard state
+  - Returns draft trip with wizard_state and wizard_current_page
+  - Used to resume wizard from saved state
+- [x] DELETE /api/admin/trips/draft/:id - Delete a draft
+  - Removes draft trip from database
+- [x] Validation schemas with Zod
+  - tripWizardSchema: Strict validation for complete trips
+  - tripDraftSchema: Flexible validation for drafts (all fields optional)
+  - Refinement ensuring either resort OR ship data (never both)
+  - File: `server/schemas/trip-wizard-schemas.ts`
+- [x] Slug generation with uniqueness checking
+- [x] Create trip record with basic info
+- [x] Create resort OR ship record and link to trip
+- [x] Link venues (one-to-one) to resort/ship
+- [x] Link amenities (many-to-many) to resort/ship
+- [x] Create schedule (resort) OR itinerary (cruise) entries
+- [x] Error handling with proper cleanup and rollback
+- [x] Authentication/authorization on all endpoints
+
+**AI Integration (Future Phase):**
+
 - [ ] OpenAI service (URL extraction, PDF extraction, chat, image search)
 - [ ] Image service (download, upload to Supabase, cleanup)
-- [ ] Trip creation endpoints (all wizard steps)
-- [ ] Validation schemas with Zod
-- [ ] Auto-generate schedule/itinerary entries when dates are saved
-- [ ] Slug generation with uniqueness checking
-- [ ] Venue management (create and link to resort/ship)
-- [ ] Amenity management (find-or-create and link)
-- [ ] Error handling with proper cleanup
-- [ ] Authentication/authorization on all endpoints
+- [ ] POST /api/admin/trips/extract-url endpoint
+- [ ] POST /api/admin/trips/extract-pdf endpoint
+- [ ] POST /api/admin/trips/chat endpoint (streaming)
+- [ ] Image download and upload pipeline
+- [ ] Cleanup temp files on completion/error
 
 ### Frontend Components ✓
 
 - [x] **TripWizard main component** - `/client/src/components/admin/TripWizard/TripWizard.tsx` (COMPLETE)
   - Modal wrapper with custom styling
   - Page routing and navigation
+  - Progress indicator with percentage
+  - Save Draft functionality (POST /api/admin/trips/draft)
+  - Resume Draft functionality (restores wizard state from draftTrip prop)
   - Cleanup on unmount
 - [x] **TripWizardContext for state management** - `/client/src/contexts/TripWizardContext.tsx` (COMPLETE)
   - Manages wizard state (currentPage, tripType, buildMethod, tripData)
   - Provides state update functions
   - Tracks trip type for conditional page rendering
+  - Full state persistence for draft functionality
 - [x] **BuildMethodPage (Initial Screen)** - `/client/src/components/admin/TripWizard/BuildMethodPage.tsx` (COMPLETE)
   - Three build method options (URL/PDF/Manual)
   - Interactive selection cards with ocean theme
@@ -106,25 +154,52 @@ The purpose of this feature is to enable users to add brand new trips into the d
   - Displays day number and formatted date for each entry
   - Ocean theme styling following TRIP-WIZARD-STYLE-GUIDE.md
   - **FILE**: `/client/src/components/admin/TripWizard/CruiseItineraryPage.tsx`
-- [ ] CompletionPage (Page 5)
+- [x] **CompletionPage** (Page 5) - COMPLETE
+  - Review/confirmation page displaying all wizard sections vertically
+  - Each section has "Edit" button opening reusable modal
+  - Conditional rendering based on trip type (resort vs cruise)
+  - Accordion components for expanding schedule/itinerary days
+  - Shows first 5 days/ports with expandable details (images, descriptions, times)
+  - Approve & Save button with comprehensive validation
+  - Client-side save logic implemented (needs POST /api/admin/trips endpoint)
+  - Ocean theme styling with consistent spacing and layout
+  - **FILE**: `/client/src/components/admin/TripWizard/CompletionPage.tsx`
+- [x] **Edit Modals** (Reusable for Edit Trip feature) - COMPLETE
+  - EditBasicInfoModal - Edit trip name, dates, company, type, images, description
+  - EditResortDetailsModal - Edit resort information and location
+  - EditShipDetailsModal - Edit ship information and specifications
+  - EditVenuesAmenitiesModal - Edit venues and amenities (adapts for resort/cruise)
+  - EditResortScheduleModal - Edit full resort schedule with Add Day functionality
+  - EditCruiseItineraryModal - Edit full cruise itinerary with Add Day functionality
+  - All modals use local state, sync to context on save
+  - All modals use admin-form-modal styling (ocean theme)
+  - Located in: `/client/src/components/admin/TripWizard/modals/`
 - [ ] AIAssistantChat component (collapsible, persistent)
 - [x] **VenueSelector** - Multi-select with create modal, single-line display (name + venue type) (COMPLETE)
 - [x] **AmenitySelector** - Multi-select with create modal, single-line display (name only) (COMPLETE)
 - [x] **LocationSearchBar** - Photon API integration for location search (COMPLETE)
-- [ ] **LocationSelector** - Database location picker with create modal (PENDING)
+- [x] **LocationSelector** - Database location picker with create modal (COMPLETE)
   - Searches `locations` table in database (NOT Photon API)
   - "Add New Location" always shown at top of dropdown
   - Opens modal with LocationSearchBar + additional fields
   - Saves new location to database
   - Returns selected location
+  - Uses MultiSelectWithCreate pattern adapted for single-select
+  - Ocean theme styling with custom scrollbar
+  - **IMPLEMENTED**: Used in ResortDetailsPage and CruiseItineraryPage
   - **AI Note**: When AI integration is added, AI should be able to suggest and auto-fill location details in the create modal
 - [x] **ImageUpload component** - Using existing ImageUploadField component (COMPLETE)
 - [x] **Add Day Functionality** - Modal for adding pre/post-trip days with date validation (COMPLETE)
-- [ ] WizardNavigation (Next/Back/Save buttons)
+- [x] **WizardNavigation** - Navigation footer with Next/Back/Save Draft/Cancel buttons (COMPLETE)
+  - Back button (disabled on page 0)
+  - Save Draft button (shown on pages 1-4)
+  - Next button (shown on pages 1-4)
+  - Cancel button (always shown)
+  - Ocean theme styling with proper spacing
 
 ### UI/UX ✓
 
-- [ ] "Add New Trip" button on admin trips page
+- [x] "Add New Trip" button on admin trips page (COMPLETE)
 - [x] **Follow TRIP-WIZARD-STYLE-GUIDE.md** for ALL styling patterns (COMPLETE)
   - [x] Use ocean theme colors (cyan-400 accents, white/[0.04] backgrounds)
   - [x] Apply compact spacing system (space-y-2.5, gap-3)
@@ -134,7 +209,11 @@ The purpose of this feature is to enable users to add brand new trips into the d
 - [x] Follow AdminFormModal.tsx styling (ocean theme, frosted glass) (COMPLETE)
 - [x] All components use Shadcn/ui (COMPLETE)
 - [x] Loading states for async operations (COMPLETE - implemented in BasicInfoPage)
-- [ ] Progress indicator showing current wizard step
+- [x] Progress indicator showing current wizard step (COMPLETE - gradient progress bar)
+- [x] Draft status badge on admin trips page (COMPLETE - orange badge with FileEdit icon)
+- [x] Save Draft button in wizard navigation (COMPLETE - shown on pages 1-4)
+- [x] Resume Draft button for draft trips (COMPLETE - visible in actions menu)
+- [x] Draft filter in trips page status filters (COMPLETE)
 - [ ] Real-time field validation
 - [ ] Error messages and success confirmations
 - [x] Mobile responsive design (COMPLETE - two-column layout with lg: breakpoint)
@@ -396,7 +475,7 @@ newDayNumber = 100 + daysDiff - 1;
 
 ---
 
-### 📍 Location Selection System (PENDING IMPLEMENTATION)
+### 📍 Location Selection System (IMPLEMENTED)
 
 **Two Different Location Components:**
 
@@ -406,8 +485,8 @@ newDayNumber = 100 + daysDiff - 1;
    - No database storage of locations
    - Simple search and select
 
-2. **LocationSelector** (New - for Trip Wizard ONLY)
-   - Searches `locations` database table
+2. **LocationSelector** (✅ COMPLETE - for Trip Wizard ONLY)
+   - Searches `locations` table in database (NOT Photon API)
    - "Add New Location" option always at top
    - Opens modal to create new locations
    - Saves to database for reuse
@@ -425,6 +504,8 @@ newDayNumber = 100 + daysDiff - 1;
    - Shows matching locations from database
    - **"Add New Location" always appears at the top** of dropdown menu
    - Single-select (user picks one location)
+   - Uses MultiSelectWithCreate pattern adapted for single-select
+   - Custom scrollbar with ocean theme
 
 2. **Add New Location Modal:**
    - Triggered by clicking "Add New Location"
@@ -435,20 +516,20 @@ newDayNumber = 100 + daysDiff - 1;
    - User workflow:
      1. Click "Add New Location"
      2. Modal opens
-     3. Use LocationSearchBar to search Photon API
+     3. Use LocationSearchBar to search Photon API (auto-fills form)
      4. Fill in additional location details
      5. Click Save → Location added to `locations` table
      6. Modal closes → New location is auto-selected in LocationSelector
 
 3. **Where Used:**
-   - **ResortDetailsPage**: Resort location field
-   - **CruiseItineraryPage**: Port/location field for each itinerary entry
+   - **ResortDetailsPage**: Resort location field ✅
+   - **CruiseItineraryPage**: Port/location field for each itinerary entry ✅
 
 4. **Component Pattern:**
-   - Follows VenueSelector/AmenitySelector pattern
+   - Uses Popover + Command + CommandInput (same as MultiSelectWithCreate)
    - Ocean theme modal styling
-   - Wizard mode support
-   - Database integration
+   - Wizard mode support (doesn't prevent API calls like venues/amenities)
+   - Database integration with create/update
 
 **AI Integration (Future):**
 
@@ -462,13 +543,15 @@ newDayNumber = 100 + daysDiff - 1;
 
 - `name` - Location name
 - `city` - City name
-- `state` - State/province
-- `country` - Country
-- `latitude` - Geographic coordinate
-- `longitude` - Geographic coordinate
+- `state_province` - State/province
+- `country` - Country (required)
+- `country_code` - Country code
+- `description` - Location description
+- `location` - Formatted location string
+- `image_url` - Location image
 - Additional fields as needed
 
-**Implementation Priority:** Must be completed before Page 4 (Itinerary) is functional
+**Implementation Status:** ✅ Complete - Integrated in ResortDetailsPage and CruiseItineraryPage
 
 ---
 
@@ -906,6 +989,7 @@ Three options:
 - Save all trip data to database
 - Show success message
 - Provide link to view the live trip page
+- Option to save as draft for later completion
 
 **Actions on This Page:**
 
@@ -915,34 +999,52 @@ Three options:
    - Venues and amenities
    - Itinerary or schedule
    - All uploaded images
+   - **API Endpoint**: POST /api/admin/trips
 
-2. **Show success confirmation:**
+2. **Save as Draft (Optional):**
+   - Save incomplete wizard state to database
+   - Stores wizard context in trips.wizard_state (JSONB)
+   - Stores current page in trips.wizard_current_page
+   - Sets trip_status_id = 4 (Draft)
+   - **API Endpoint**: POST /api/admin/trips/draft
+   - **Resume Later**: GET /api/admin/trips/draft/:id to restore state
+
+3. **Show success confirmation:**
    - "Trip created successfully!"
    - Display trip name and dates
    - Show hero image preview
 
-3. **Provide link to live page:**
+4. **Provide link to live page:**
    - Button: "View Trip Page"
    - Links to public trip guide page: `/trip-guide/[slug]`
    - User can see exactly how the trip appears to customers
    - ⚠️ **Trip visibility**: Newly created trips with status "Upcoming" are immediately visible on the site
 
-4. **Additional actions:**
+5. **Additional actions:**
    - Button: "Edit Trip" - Opens edit modal if they need to make changes
    - Button: "Create Another Trip" - Resets wizard for new trip
    - Button: "Back to Dashboard" - Returns to admin dashboard
+   - Button: "Save Draft" - Save progress and resume later
 
 **Cleanup:**
 
 - ⚠️ Delete all temporary files from local storage
-- Clear wizard state/context
+- Clear wizard state/context (unless saving as draft)
 - Clear AI Assistant chat history
+
+**Draft Management:**
+
+- Drafts appear in admin trips page with "Draft" badge
+- Users can resume drafts from trips list
+- Drafts can be deleted via: DELETE /api/admin/trips/draft/:id
+- Wizard restores full state when resuming draft
 
 **UI/UX:**
 
 - Success celebration (animation or icon)
 - Clear call-to-action buttons
 - Link prominently displayed
+- Draft indicator and resume option
 
 ---
 
@@ -993,13 +1095,21 @@ Three options:
 
 ## Database Schema Changes Required
 
-### Schema Verification Needed
+### ✅ Schema Changes Complete
 
-**Verify the following relationships are correctly set up:**
+**Implemented in migration: `supabase/migrations/20251002000000_add_draft_status_and_wizard_state.sql`**
 
-- Venues: ONE-TO-ONE with resorts/ships (each venue belongs to only one property)
-- Amenities: MANY-TO-MANY with resorts/ships (amenities are reusable)
-- Check foreign key constraints match this logic
+- ✅ Added Draft status (ID: 4) to trip_status table
+- ✅ Added wizard_state (JSONB) column to trips table
+- ✅ Added wizard_current_page (INTEGER) column to trips table
+- ✅ Created resort_schedules table with proper indexes
+- ✅ Fixed resorts table:
+  - Added location_id foreign key
+  - Renamed room_count → number_of_rooms
+- ✅ Fixed itinerary table column names
+- ✅ Venues: ONE-TO-ONE with resorts/ships (each venue belongs to only one property)
+- ✅ Amenities: MANY-TO-MANY with resorts/ships (amenities are reusable)
+- ✅ Foreign key constraints verified
 
 ### Existing UI Components to Update
 
