@@ -214,6 +214,16 @@ The purpose of this feature is to enable users to add brand new trips into the d
 - [x] Save Draft button in wizard navigation (COMPLETE - shown on pages 1-4)
 - [x] Resume Draft button for draft trips (COMPLETE - visible in actions menu)
 - [x] Draft filter in trips page status filters (COMPLETE)
+- [x] **Trips Management Enhancements** (COMPLETE)
+  - [x] Draft trips visible in "All Voyages" tab
+  - [x] Auto-refresh trips list after saving in Trip Wizard
+  - [x] 3-dot dropdown menu for trip actions (replaces individual buttons)
+  - [x] Status-aware action visibility:
+    - Drafts: Resume Draft, Preview, Delete
+    - Published: Edit Trip, Edit URL Slug, Preview, Delete
+  - [x] Edit slug modal with validation
+  - [x] Dropdown styling matches TripWizard (white text, frosted glass hover)
+  - [x] Fixed current trip status detection (normalized date comparison)
 - [ ] Real-time field validation
 - [ ] Error messages and success confirmations
 - [x] Mobile responsive design (COMPLETE - two-column layout with lg: breakpoint)
