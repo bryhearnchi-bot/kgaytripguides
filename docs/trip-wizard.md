@@ -32,7 +32,9 @@ The purpose of this feature is to enable users to add brand new trips into the d
   - Added location_id foreign key (references locations table)
   - Renamed room_count → number_of_rooms
 - [x] Fix itinerary table column names to match schema
-- [ ] Remove unused columns from `trips` table (ship_name, cruise_line, status, pricing, includes_info)
+- [x] Remove unused columns from `trips` table (ship_name, cruise_line, status, pricing, includes_info)
+  - Migration: `supabase/migrations/20251005000000_remove_unused_trips_columns.sql`
+  - Updated admin_dashboard_stats view to use trip_status_id FK instead of status column
 - [x] Verify `trip_status_id` default is set to 1 (Upcoming)
 - [x] Verify `resort_id` and `ship_id` foreign keys exist in trips table
 - [x] Verify venue relationships are ONE-TO-ONE (unique constraints)
@@ -225,7 +227,12 @@ The purpose of this feature is to enable users to add brand new trips into the d
   - [x] Dropdown styling matches TripWizard (white text, frosted glass hover)
   - [x] Fixed current trip status detection (normalized date comparison)
 - [ ] Real-time field validation
-- [ ] Error messages and success confirmations
+- [x] **Error messages and success confirmations** (COMPLETE)
+  - Toast notifications for validation errors (replaces alerts)
+  - Detailed error messages for missing fields
+  - Success confirmations for trip creation
+  - Draft save/update notifications
+  - Navigation validation with user-friendly messages
 - [x] Mobile responsive design (COMPLETE - two-column layout with lg: breakpoint)
 - [ ] Keyboard navigation
 - [ ] ARIA labels for accessibility

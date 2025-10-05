@@ -13,6 +13,7 @@ import { CompletionPage } from './CompletionPage';
 import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api-client';
+import { useToast } from '@/hooks/use-toast';
 
 // Custom styles to remove the header border from trip wizard modal
 const tripWizardStyles = `
@@ -56,6 +57,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
     setItineraryEntries,
     restoreFromDraft,
   } = useTripWizard();
+  const { toast } = useToast();
 
   // Track if we've initialized for this session
   const initializedRef = React.useRef(false);
@@ -151,7 +153,12 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
       const message = state.draftId
         ? 'Draft updated successfully!'
         : 'Draft saved! You can return to finish this trip later.';
-      alert(message);
+
+      toast({
+        title: state.draftId ? 'Draft Updated' : 'Draft Saved',
+        description: message,
+      });
+
       onOpenChange(false);
 
       // Trigger success callback to refresh trips list
@@ -160,21 +167,36 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
       }
     } catch (error) {
       console.error('Error saving draft:', error);
-      alert('Failed to save draft. Please try again.');
+
+      toast({
+        title: 'Failed to Save Draft',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
   const handleNext = () => {
     // Validate current page before proceeding
     if (state.currentPage === 0 && !state.buildMethod) {
-      return; // Don't proceed if no build method selected
+      toast({
+        title: 'Please Select a Build Method',
+        description: 'Choose how you want to create your trip before continuing.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     if (state.currentPage === 1) {
       // Only require trip type to proceed (determines resort vs cruise flow)
       const { tripTypeId } = state.tripData;
       if (!tripTypeId) {
-        return; // Don't proceed if no trip type selected
+        toast({
+          title: 'Please Select Trip Type',
+          description: 'Choose whether this is a resort or cruise trip.',
+          variant: 'destructive',
+        });
+        return;
       }
     }
 
