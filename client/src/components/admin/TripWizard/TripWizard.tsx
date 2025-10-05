@@ -152,7 +152,12 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         setDraftId(savedDraft.id);
       }
 
-      // Close modal IMMEDIATELY with no other operations
+      // First blur any focused element to prevent aria-hidden conflict
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
+      // Close modal
       onOpenChange(false);
 
       // Schedule everything else to happen AFTER the modal is completely gone
