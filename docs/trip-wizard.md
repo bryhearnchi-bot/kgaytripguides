@@ -354,6 +354,45 @@ The purpose of this feature is to enable users to add brand new trips into the d
 - [x] Prevents "Blocked aria-hidden on an element" console error
 - [x] Page now remains responsive after saving drafts - no refresh required
 
+**Trip Guide Enhancements - Dynamic Tab Labels & Resort Support (COMPLETE - Oct 5, 2025):**
+
+- [x] **Dynamic tab labels based on trip type** (trip-guide.tsx:89-91, 209-211)
+  - First tab displays "Itinerary" for cruises, "Schedule" for resorts
+  - Trip type detection using `shipId` vs `resortId` fields
+  - Conditional rendering throughout component
+
+- [x] **Resort schedule data support** (storage.ts:702-722, 766)
+  - Added fetching of `resort_schedules` table data
+  - Transformed schedule data to camelCase format
+  - Added `scheduleEntries` to complete trip data response
+
+- [x] **Data transformation for UI consistency** (useTripData.ts:100-143)
+  - Resort schedules transformed to match itinerary format
+  - Enables reuse of existing ItineraryTab component
+  - Maps schedule fields: `port: "Day X"`, `arrive/depart: '—'`
+
+- [x] **Special day number display logic** (useTripData.ts:105-114)
+  - Negative day numbers: "Pre-Cruise" (cruises) / "Pre-Trip" (resorts)
+  - Days 100+: "Post-Cruise" (cruises) / "Post-Trip" (resorts)
+  - Regular days: "Day X" format
+  - Implemented `formatDayNumber()` helper function
+
+- [x] **Events tab renamed** (ScheduleTab.tsx:40-42, trip-guide.tsx:212-214)
+  - Changed "Schedule" tab to "Events"
+  - Updated header from "Daily Schedule" to "Events Schedule"
+  - Maintains consistency across cruise and resort trips
+
+- [x] **Trip approval functionality** (trip-guide.tsx:154-183, 234-257)
+  - Added Preview Mode banner for trips with status_id = 5
+  - "Approve & Publish" button to activate trips
+  - Toast notifications for success/error states
+  - Auto-refresh on approval
+
+- [x] **Updated TripData interface** (useTripData.ts:26-27, 45-53)
+  - Added `shipId` and `resortId` to trip object
+  - Added optional `scheduleEntries` array with proper typing
+  - Full TypeScript support for resort schedules
+
 ### ⚠️ Important Development Notes
 
 **DO NOT Add Page Headers in Wizard Pages**
