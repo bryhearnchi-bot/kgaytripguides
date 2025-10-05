@@ -644,8 +644,19 @@ export default function TripsManagement() {
                 label: 'Resume Draft',
                 icon: <Edit className="h-4 w-4" />,
                 onClick: (trip: Trip) => {
-                  setDraftToResume(trip);
-                  setIsWizardOpen(true);
+                  // First blur any focused element to prevent aria-hidden conflict
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+
+                  // Close any open dropdowns by clicking outside
+                  document.body.click();
+
+                  // Small delay to ensure dropdown is fully closed before opening modal
+                  setTimeout(() => {
+                    setDraftToResume(trip);
+                    setIsWizardOpen(true);
+                  }, 50);
                 },
                 visible: (trip: Trip) => trip.status === 'draft' && canCreateOrEditTrips,
               },
