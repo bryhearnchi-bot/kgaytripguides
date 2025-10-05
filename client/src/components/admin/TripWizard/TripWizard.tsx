@@ -156,20 +156,18 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         ? 'Draft updated successfully!'
         : 'Draft saved! You can return to finish this trip later.';
 
-      // Invalidate trips query to refresh the list BEFORE closing modal
-      await queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-
       toast({
         title: state.draftId ? 'Draft Updated' : 'Draft Saved',
         description: message,
       });
 
-      // Small delay to ensure refetch completes
-      await new Promise(resolve => setTimeout(resolve, 100));
-
+      // Close modal first
       onOpenChange(false);
 
-      // Trigger success callback to refresh trips list
+      // Then refetch in background (non-blocking)
+      queryClient.refetchQueries({ queryKey: ['admin-trips'] });
+
+      // Trigger success callback
       if (onSuccess) {
         onSuccess();
       }
