@@ -984,8 +984,12 @@ export default function TripsManagement() {
         }}
         draftTrip={draftToResume}
         onSuccess={() => {
-          // Reset draft state - query invalidation is handled by TripWizard
+          // Reset draft state
           setDraftToResume(null);
+          // Manually refetch trips after a delay to ensure modal is fully closed
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+          }, 500);
         }}
       />
 
