@@ -156,21 +156,24 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         ? 'Draft updated successfully!'
         : 'Draft saved! You can return to finish this trip later.';
 
+      // Close modal FIRST to prevent UI freeze
+      onOpenChange(false);
+
+      // Show toast after closing
       toast({
         title: state.draftId ? 'Draft Updated' : 'Draft Saved',
         description: message,
       });
 
-      // Close modal first
-      onOpenChange(false);
-
-      // Then refetch in background (non-blocking)
-      queryClient.refetchQueries({ queryKey: ['admin-trips'] });
-
-      // Trigger success callback
+      // Trigger success callback which will refetch
       if (onSuccess) {
         onSuccess();
       }
+
+      // Also manually refetch to ensure data is fresh
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      }, 50);
     } catch (error) {
       console.error('Error saving draft:', error);
 
