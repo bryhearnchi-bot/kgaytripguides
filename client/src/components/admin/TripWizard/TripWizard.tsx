@@ -152,26 +152,26 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         setDraftId(savedDraft.id);
       }
 
-      const message = state.draftId
-        ? 'Draft updated successfully!'
-        : 'Draft saved! You can return to finish this trip later.';
-
-      // Show toast immediately
-      toast({
-        title: state.draftId ? 'Draft Updated' : 'Draft Saved',
-        description: message,
-      });
-
-      // Close modal
+      // Close modal IMMEDIATELY with no other operations
       onOpenChange(false);
 
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Schedule everything else to happen AFTER the modal is completely gone
+      requestAnimationFrame(() => {
+        const message = state.draftId
+          ? 'Draft updated successfully!'
+          : 'Draft saved! You can return to finish this trip later.';
 
-      // Don't invalidate queries - let the table handle its own refresh
-      // This prevents blocking the UI thread
+        // Show toast
+        toast({
+          title: state.draftId ? 'Draft Updated' : 'Draft Saved',
+          description: message,
+        });
+
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+      });
     } catch (error) {
       console.error('Error saving draft:', error);
 

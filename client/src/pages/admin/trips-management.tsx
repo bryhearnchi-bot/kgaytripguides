@@ -984,12 +984,8 @@ export default function TripsManagement() {
         }}
         draftTrip={draftToResume}
         onSuccess={() => {
-          // Reset draft state
+          // Only reset draft state - no query operations
           setDraftToResume(null);
-          // Manually refetch trips after a delay to ensure modal is fully closed
-          setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-          }, 500);
         }}
       />
 
