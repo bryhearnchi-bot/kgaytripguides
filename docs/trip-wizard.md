@@ -338,12 +338,33 @@ The purpose of this feature is to enable users to add brand new trips into the d
 - [x] Fixed dropdown styling to match TripWizard (white text, frosted glass hover)
 - [x] Fixed date comparison for current trip status (normalized dates to midnight)
 - [x] Enhanced error messages with toast notifications (replaced alert() calls)
+- [x] **Set default sort order to 'status'** for trips management table (EnhancedTripsTable.tsx:76)
+  - Changed from sorting by 'name' to 'status' by default
+  - Ensures drafts and previews appear first in the table
+  - Fixes production issue where table wasn't defaulting to status sort
+- [x] **Landing page trip type badges** (landing.tsx:58-75)
+  - Added visual badges for Cruise vs Resort trips
+  - Cruise: Blue badge with Ship icon
+  - Resort: Cyan badge with Home icon
+  - Replaces generic status badges with trip type indicators
+- [x] **Landing page label updates** (landing.tsx:246, 297)
+  - Changed "Currently Sailing" to "Active Trips"
+  - More inclusive language for both cruise and resort trips
+  - Maintains consistent labeling across landing page sections
 
 **Database Cleanup (COMPLETE):**
 
 - [x] Removed unused columns from trips table (ship_name, cruise_line, status, pricing, includes_info)
 - [x] Updated admin_dashboard_stats view to use trip_status_id foreign key
 - [x] Migration: `20251005000000_remove_unused_trips_columns.sql`
+
+**Deployment & Branch Management (Oct 5, 2025):**
+
+- [x] Merged ui-redesign branch into main branch
+- [x] Pushed all changes to remote origin/main
+- [x] Both branches now synced at commit 805f26c
+- [x] All Trip Wizard features and UI enhancements deployed to production via main branch
+- [x] Default sort order fix live in production
 
 **Critical Bug Fix - UI Freeze After Saving Draft (RESOLVED):**
 
