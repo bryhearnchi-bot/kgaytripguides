@@ -14,6 +14,7 @@ import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Custom styles to remove the header border from trip wizard modal
 const tripWizardStyles = `
@@ -58,6 +59,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
     restoreFromDraft,
   } = useTripWizard();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Track if we've initialized for this session
   const initializedRef = React.useRef(false);
@@ -158,6 +160,9 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         title: state.draftId ? 'Draft Updated' : 'Draft Saved',
         description: message,
       });
+
+      // Invalidate trips query to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
 
       onOpenChange(false);
 
