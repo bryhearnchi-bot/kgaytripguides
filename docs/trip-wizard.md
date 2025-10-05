@@ -326,6 +326,34 @@ The purpose of this feature is to enable users to add brand new trips into the d
 - [x] Update CLAUDE.md with image storage rules (completed)
 - [ ] Implementation notes for future developers
 
+### ✅ Bug Fixes & Improvements (Oct 2025)
+
+**UI/UX Enhancements (COMPLETE):**
+
+- [x] Fixed draft trips not showing in "All Voyages" tab (groupTrips function)
+- [x] Added auto-refresh after saving trips (queryClient.invalidateQueries)
+- [x] Replaced individual action buttons with 3-dot dropdown menu
+- [x] Added status-specific dropdown options (Resume Draft, Edit Trip, Edit URL Slug, Preview, Delete)
+- [x] Implemented slug edit modal with validation
+- [x] Fixed dropdown styling to match TripWizard (white text, frosted glass hover)
+- [x] Fixed date comparison for current trip status (normalized dates to midnight)
+- [x] Enhanced error messages with toast notifications (replaced alert() calls)
+
+**Database Cleanup (COMPLETE):**
+
+- [x] Removed unused columns from trips table (ship_name, cruise_line, status, pricing, includes_info)
+- [x] Updated admin_dashboard_stats view to use trip_status_id foreign key
+- [x] Migration: `20251005000000_remove_unused_trips_columns.sql`
+
+**Critical Bug Fix - UI Freeze After Saving Draft (RESOLVED):**
+
+- [x] Identified root cause: aria-hidden accessibility conflict when dropdown menu retained focus
+- [x] Fixed by adding focus management in "Resume Draft" button onClick handler
+- [x] Solution: Blur active element and close dropdown before opening modal
+- [x] Added 50ms delay to ensure dropdown fully closes before modal opens
+- [x] Prevents "Blocked aria-hidden on an element" console error
+- [x] Page now remains responsive after saving drafts - no refresh required
+
 ### ⚠️ Important Development Notes
 
 **DO NOT Add Page Headers in Wizard Pages**
