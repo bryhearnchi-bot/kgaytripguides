@@ -122,6 +122,7 @@ export class TripStorage implements ITripStorage {
       endDate: dbTrip.end_date,
       status: status,
       tripStatusId: dbTrip.trip_status_id,
+      isActive: dbTrip.is_active,
       heroImageUrl: dbTrip.hero_image_url,
       description: dbTrip.description,
       highlights: dbTrip.highlights,
@@ -131,6 +132,9 @@ export class TripStorage implements ITripStorage {
       shipId: dbTrip.ship_id,
       charterCompanyId: dbTrip.charter_company_id,
       tripTypeId: dbTrip.trip_type_id,
+      eventsCount: dbTrip.events_count,
+      partiesCount: dbTrip.parties_count,
+      talentCount: dbTrip.talent_count,
       createdAt: dbTrip.created_at,
       updatedAt: dbTrip.updated_at,
     } as any;
@@ -185,6 +189,7 @@ export class TripStorage implements ITripStorage {
     const { data, error } = await supabaseAdmin
       .from('trips')
       .select('*')
+      .eq('is_active', true) // Only return active trips for public
       .order('start_date', { ascending: false });
 
     if (error) throw error;
@@ -198,6 +203,7 @@ export class TripStorage implements ITripStorage {
       .from('trips')
       .select('*')
       .gte('start_date', today)
+      .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
       .order('start_date', { ascending: true });
 
     if (error) throw error;
@@ -211,6 +217,7 @@ export class TripStorage implements ITripStorage {
       .from('trips')
       .select('*')
       .lt('end_date', today)
+      .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
       .order('start_date', { ascending: false });
 
     if (error) throw error;
@@ -692,6 +699,28 @@ export class TripInfoStorage implements ITripInfoStorage {
       updatedAt: talent.updated_at,
     }));
 
+    // Get resort schedule data (for resort trips)
+    const { data: scheduleData, error: scheduleError } = await supabaseAdmin
+      .from('resort_schedules')
+      .select('*')
+      .eq('trip_id', tripData.id)
+      .order('day_number', { ascending: true });
+
+    if (scheduleError) throw scheduleError;
+
+    // Transform schedule data to camelCase
+    const transformedSchedule = (scheduleData || []).map((schedule: any) => ({
+      id: schedule.id,
+      tripId: schedule.trip_id,
+      dayNumber: schedule.day_number,
+      date: schedule.date,
+      imageUrl: schedule.image_url,
+      description: schedule.description,
+      orderIndex: schedule.order_index,
+      createdAt: schedule.created_at,
+      updatedAt: schedule.updated_at,
+    }));
+
     // Get trip info sections via junction table
     const { data: tripInfoSectionsData, error: tripInfoError } = await supabaseAdmin
       .from('trip_section_assignments')
@@ -734,6 +763,7 @@ export class TripInfoStorage implements ITripInfoStorage {
     return {
       trip: transformedTrip,
       itinerary: transformedItinerary,
+      scheduleEntries: transformedSchedule,
       events: transformedEvents,
       talent: transformedTalent,
       tripInfoSections: transformedTripInfoSections,

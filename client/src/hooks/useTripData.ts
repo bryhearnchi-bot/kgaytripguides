@@ -23,6 +23,8 @@ export interface TripData {
     featured: boolean;
     shipName?: string;
     cruiseLine?: string;
+    shipId?: number | null;
+    resortId?: number | null;
   };
   itinerary: Array<{
     id: number;
@@ -39,6 +41,15 @@ export interface TripData {
     highlights?: any;
     orderIndex: number;
     segment?: string;
+  }>;
+  scheduleEntries?: Array<{
+    id: number;
+    tripId: number;
+    dayNumber: number;
+    date: string;
+    imageUrl?: string | null;
+    description?: string | null;
+    orderIndex: number;
   }>;
   events: Array<{
     id: number;
@@ -87,6 +98,21 @@ export interface TripData {
 // Transform database data to match the existing component format
 // v2.0: Phase 4 migration - using location fields instead of port fields
 export function transformTripData(data: TripData) {
+  // Determine trip type
+  const isCruise = !!data.trip.shipId;
+  const isResort = !!data.trip.resortId;
+
+  // Helper function to format day number based on trip type
+  const formatDayNumber = (dayNumber: number): string => {
+    if (dayNumber < 0) {
+      return isCruise ? 'Pre-Cruise' : 'Pre-Trip';
+    } else if (dayNumber >= 100) {
+      return isCruise ? 'Post-Cruise' : 'Post-Trip';
+    } else {
+      return `Day ${dayNumber}`;
+    }
+  };
+
   // Transform itinerary (defensive check)
   const itinerary = (data.itinerary || []).map(stop => ({
     key: stop.date.split('T')[0],
@@ -101,6 +127,19 @@ export function transformTripData(data: TripData) {
     description: (stop as any).location?.description || stop.description, // Use location.description if available
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
     portDetails: (stop as any).location, // Include full location details (renamed from port)
+  }));
+
+  // Transform schedule entries (for resort trips) to match itinerary format
+  const schedule = (data.scheduleEntries || []).map(entry => ({
+    key: entry.date,
+    date: formatDate(dateOnly(entry.date)),
+    rawDate: entry.date,
+    port: formatDayNumber(entry.dayNumber), // Format day number with special logic
+    arrive: '—',
+    depart: '—',
+    allAboard: undefined,
+    imageUrl: entry.imageUrl,
+    description: entry.description,
   }));
 
   // Group events by date (defensive check)
@@ -295,6 +334,7 @@ export function transformTripData(data: TripData) {
 
   return {
     ITINERARY: itinerary,
+    SCHEDULE: schedule,
     DAILY: daily,
     TALENT: talent,
     PARTY_THEMES: partyThemes,

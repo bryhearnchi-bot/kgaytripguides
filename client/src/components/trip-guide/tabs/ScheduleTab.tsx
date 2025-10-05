@@ -1,11 +1,11 @@
-import React, { memo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, ChevronDown, ChevronUp, MapPin } from "lucide-react";
-import { TimelineList } from "../shared/TimelineList";
-import { isDateInPast } from "../utils/dateHelpers";
+import React, { memo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CalendarDays, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { TimelineList } from '../shared/TimelineList';
+import { isDateInPast } from '../utils/dateHelpers';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime as globalFormatTime } from '@/lib/timeFormat';
-import type { Talent } from "@/data/trip-data";
+import type { Talent } from '@/data/trip-data';
 
 interface ScheduleTabProps {
   SCHEDULED_DAILY: any[];
@@ -28,7 +28,7 @@ export const ScheduleTab = memo(function ScheduleTab({
   onToggleDayCollapse,
   onCollapseAll,
   onTalentClick,
-  onPartyClick
+  onPartyClick,
 }: ScheduleTabProps) {
   const { timeFormat } = useTimeFormat();
 
@@ -37,7 +37,9 @@ export const ScheduleTab = memo(function ScheduleTab({
       <div className="flex items-center justify-between mb-4 -mt-2">
         <div className="flex items-center space-x-2">
           <CalendarDays className="w-5 h-5 text-white/80" />
-          <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Daily Schedule</h2>
+          <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
+            Events Schedule
+          </h2>
         </div>
         <div>
           <button
@@ -95,7 +97,8 @@ export const ScheduleTab = memo(function ScheduleTab({
                     <div className="flex items-center space-x-2">
                       {day.items.length > 0 && (
                         <span className="text-xs text-gray-500 hidden sm:inline">
-                          Departs: {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
+                          Departs:{' '}
+                          {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
                         </span>
                       )}
                       {isCollapsed ? (
@@ -111,7 +114,7 @@ export const ScheduleTab = memo(function ScheduleTab({
                   {!isCollapsed && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
+                      animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
                       className="border-t border-ocean-100/30"
