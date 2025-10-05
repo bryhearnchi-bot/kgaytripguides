@@ -27,7 +27,7 @@ export const itineraryEntrySchema = z.object({
 // Resort data
 export const resortDataSchema = z.object({
   name: z.string().min(1, 'Resort name is required'),
-  locationId: z.number(),
+  locationId: z.number().nullable().optional(),
   capacity: z.number().positive().optional(),
   numberOfRooms: z.number().positive().optional(),
   imageUrl: z.string().optional(),

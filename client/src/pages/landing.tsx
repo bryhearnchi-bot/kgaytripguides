@@ -1,18 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Grid3X3 } from "lucide-react";
-import { format, differenceInCalendarDays } from "date-fns";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
-import React from "react";
-import { dateOnly } from "@/lib/utils";
-import { getTripButtonText } from "@/lib/tripUtils";
-import { UniversalHero } from "@/components/UniversalHero";
-import { StandardizedTabContainer } from "@/components/StandardizedTabContainer";
-import { StandardizedContentLayout } from "@/components/StandardizedContentLayout";
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'wouter';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Grid3X3, Home } from 'lucide-react';
+import { format, differenceInCalendarDays } from 'date-fns';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from 'react';
+import React from 'react';
+import { dateOnly } from '@/lib/utils';
+import { getTripButtonText } from '@/lib/tripUtils';
+import { UniversalHero } from '@/components/UniversalHero';
+import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
+import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 
 interface Trip {
   id: number;
@@ -21,6 +21,7 @@ interface Trip {
   shipName: string;
   cruiseLine: string;
   tripType?: string;
+  tripTypeId?: number;
   startDate: string;
   endDate: string;
   status: string;
@@ -46,20 +47,32 @@ function TripCard({ trip }: { trip: Trip }) {
       >
         <div className="relative overflow-hidden cursor-pointer">
           <img
-            src={trip.heroImageUrl || "/images/ships/resilient-lady-hero.jpg"}
+            src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
             alt={trip.name}
             className="h-36 w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.src = "/images/ships/resilient-lady-hero.jpg";
+            onError={e => {
+              e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
             }}
           />
           <div className="absolute top-3 left-3">
-            <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 border-ocean-200 text-xs">
-              {trip.status === 'upcoming' && 'Upcoming'}
-              {trip.status === 'current' && 'Current'}
-              {trip.status === 'past' && 'Past'}
-            </Badge>
+            {trip.tripTypeId === 2 ? (
+              <Badge
+                variant="secondary"
+                className="bg-cyan-100 text-cyan-700 border-cyan-200 text-xs flex items-center gap-1"
+              >
+                <Home className="h-3 w-3" />
+                Resort
+              </Badge>
+            ) : trip.tripTypeId === 1 ? (
+              <Badge
+                variant="secondary"
+                className="bg-blue-100 text-blue-700 border-blue-200 text-xs flex items-center gap-1"
+              >
+                <Ship className="h-3 w-3" />
+                Cruise
+              </Badge>
+            ) : null}
           </div>
         </div>
       </Link>
@@ -68,22 +81,22 @@ function TripCard({ trip }: { trip: Trip }) {
         <CardTitle className="text-lg font-bold text-ocean-900 group-hover:text-ocean-700 transition-colors">
           {trip.name}
         </CardTitle>
-        <CardDescription className="text-ocean-600 text-sm">
-          {trip.description}
-        </CardDescription>
+        <CardDescription className="text-ocean-600 text-sm">{trip.description}</CardDescription>
       </CardHeader>
 
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <Ship className="h-3.5 w-3.5" />
-            <span>{trip.shipName} • {trip.cruiseLine}</span>
+            <span>
+              {trip.shipName} • {trip.cruiseLine}
+            </span>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-ocean-700">
             <CalendarDays className="h-3.5 w-3.5" />
             <span>
-              {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {duration} days
+              {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
             </span>
           </div>
 
@@ -132,17 +145,21 @@ function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'curren
 export default function LandingPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
 
-  const { data: trips, isLoading, error } = useQuery<Trip[]>({
-    queryKey: ["trips"],
+  const {
+    data: trips,
+    isLoading,
+    error,
+  } = useQuery<Trip[]>({
+    queryKey: ['trips'],
     queryFn: async () => {
-      const response = await fetch("/api/trips");
+      const response = await fetch('/api/trips');
       if (!response.ok) {
-        throw new Error("Failed to fetch trips");
+        throw new Error('Failed to fetch trips');
       }
       const data = await response.json();
       return data.map((trip: Trip) => ({
         ...trip,
-        status: getTripStatus(trip.startDate, trip.endDate)
+        status: getTripStatus(trip.startDate, trip.endDate),
       }));
     },
     staleTime: 5 * 60 * 1000,
@@ -188,15 +205,16 @@ export default function LandingPage() {
     );
   }
 
-  const filteredTrips = trips?.filter(trip =>
-    activeFilter === 'all' ? true : trip.status === activeFilter
-  ) || [];
+  const filteredTrips =
+    trips?.filter(trip => (activeFilter === 'all' ? true : trip.status === activeFilter)) || [];
 
-  const groupedTrips = trips ? {
-    current: trips.filter(trip => trip.status === 'current'),
-    upcoming: trips.filter(trip => trip.status === 'upcoming'),
-    past: trips.filter(trip => trip.status === 'past')
-  } : { current: [], upcoming: [], past: [] };
+  const groupedTrips = trips
+    ? {
+        current: trips.filter(trip => trip.status === 'current'),
+        upcoming: trips.filter(trip => trip.status === 'upcoming'),
+        past: trips.filter(trip => trip.status === 'past'),
+      }
+    : { current: [], upcoming: [], past: [] };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
@@ -206,14 +224,22 @@ export default function LandingPage() {
         subtitle="Your complete guide to unforgettable trip experiences"
         tabSection={
           <StandardizedTabContainer>
-            <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as 'all' | 'upcoming' | 'current' | 'past')}>
+            <Tabs
+              value={activeFilter}
+              onValueChange={value =>
+                setActiveFilter(value as 'all' | 'upcoming' | 'current' | 'past')
+              }
+            >
               <TabsList className={`grid w-full ${hasCurrent ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <TabsTrigger value="all" className="flex items-center gap-2">
                   <Grid3X3 className="w-4 h-4" />
                   <span className="hidden sm:inline">All</span>
                 </TabsTrigger>
                 {hasCurrent && (
-                  <TabsTrigger value="current" className="flex items-center gap-2 relative bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-400/30 shadow-lg">
+                  <TabsTrigger
+                    value="current"
+                    className="flex items-center gap-2 relative bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-400/30 shadow-lg"
+                  >
                     <Clock className="w-4 h-4 animate-pulse text-emerald-600" />
                     <span className="hidden sm:inline font-semibold text-emerald-700">Current</span>
                     <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
@@ -243,11 +269,11 @@ export default function LandingPage() {
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-6">
                       <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
-                      <h3 className="text-lg font-semibold text-white">Currently Sailing</h3>
+                      <h3 className="text-lg font-semibold text-white">Active Trips</h3>
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedTrips.current.map((trip) => (
+                      {groupedTrips.current.map(trip => (
                         <TripCard key={trip.id} trip={trip} />
                       ))}
                     </div>
@@ -262,7 +288,7 @@ export default function LandingPage() {
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedTrips.upcoming.map((trip) => (
+                      {groupedTrips.upcoming.map(trip => (
                         <TripCard key={trip.id} trip={trip} />
                       ))}
                     </div>
@@ -277,7 +303,7 @@ export default function LandingPage() {
                       <div className="flex-1 h-px bg-white/20 ml-3"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                      {groupedTrips.past.map((trip) => (
+                      {groupedTrips.past.map(trip => (
                         <TripCard key={trip.id} trip={trip} />
                       ))}
                     </div>
@@ -288,11 +314,13 @@ export default function LandingPage() {
               <div>
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    {activeFilter === 'current' && <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />}
+                    {activeFilter === 'current' && (
+                      <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
+                    )}
                     {activeFilter === 'upcoming' && <Calendar className="w-6 h-6 text-blue-400" />}
                     {activeFilter === 'past' && <History className="w-6 h-6 text-purple-400" />}
                     <h2 className="text-2xl font-semibold text-white capitalize">
-                      {activeFilter === 'current' ? 'Currently Sailing' : `${activeFilter} Adventures`}
+                      {activeFilter === 'current' ? 'Active Trips' : `${activeFilter} Adventures`}
                     </h2>
                   </div>
                   <p className="text-sm text-white/70">
@@ -303,7 +331,7 @@ export default function LandingPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                  {filteredTrips.map((trip) => (
+                  {filteredTrips.map(trip => (
                     <TripCard key={trip.id} trip={trip} />
                   ))}
                 </div>
@@ -319,8 +347,7 @@ export default function LandingPage() {
             <p className="text-white/70 mb-4">
               {activeFilter === 'all'
                 ? 'Check back soon for exciting new adventures!'
-                : `No ${activeFilter} trips are currently available.`
-              }
+                : `No ${activeFilter} trips are currently available.`}
             </p>
             {activeFilter !== 'all' && (
               <Button

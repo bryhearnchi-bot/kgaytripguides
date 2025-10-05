@@ -47,19 +47,24 @@ import {
   Archive,
   BarChart3,
   Calendar,
+  CheckCircle,
   Clock,
   Download,
   Edit,
   ExternalLink,
   Eye,
   FileText,
+  Home,
   Link,
   Loader2,
   MapPin,
+  Music,
+  PlayCircle,
   Plus,
   PlusSquare,
   Search,
   Ship,
+  StopCircle,
   Star,
   Trash2,
   TreePalm,
@@ -75,11 +80,13 @@ interface Trip {
   endDate: string;
   shipName: string;
   cruiseLine?: string;
-  status: 'upcoming' | 'ongoing' | 'past' | 'archived' | 'draft';
+  status: 'upcoming' | 'ongoing' | 'past' | 'archived' | 'draft' | 'preview';
+  tripTypeId?: number;
   heroImageUrl?: string;
   guestCount?: number;
   ports?: number;
   eventsCount?: number;
+  partiesCount?: number;
   talentCount?: number;
   feedbackCount?: number;
   averageRating?: number;
@@ -88,9 +95,11 @@ interface Trip {
   updatedAt: string;
   wizardState?: any;
   wizardCurrentPage?: number;
+  tripStatusId?: number;
+  isActive?: boolean;
 }
 
-type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived' | 'draft';
+type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived' | 'draft' | 'preview';
 
 interface GroupedTrips {
   upcoming: Trip[];
@@ -98,6 +107,7 @@ interface GroupedTrips {
   past: Trip[];
   archived: Trip[];
   draft: Trip[];
+  preview: Trip[];
   active: Trip[];
 }
 
@@ -244,6 +254,87 @@ export default function TripsManagement() {
     },
   });
 
+  const approveTrip = useMutation({
+    mutationFn: async (tripId: number) => {
+      if (!canCreateOrEditTrips) {
+        throw new Error('You do not have permission to approve trips.');
+      }
+      const response = await api.patch(`/api/admin/trips/${tripId}/approve`, {});
+      if (!response.ok) {
+        throw new Error('Failed to approve trip');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      toast({
+        title: 'Trip approved',
+        description: 'The trip is now live on the site.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Approval failed',
+        description: error.message || 'Failed to approve the trip',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const activateTrip = useMutation({
+    mutationFn: async (tripId: number) => {
+      if (!canCreateOrEditTrips) {
+        throw new Error('You do not have permission to activate trips.');
+      }
+      const response = await api.patch(`/api/admin/trips/${tripId}/activate`, {});
+      if (!response.ok) {
+        throw new Error('Failed to activate trip');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      toast({
+        title: 'Trip activated',
+        description: 'The trip is now visible on the site.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Activation failed',
+        description: error.message || 'Failed to activate the trip',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deactivateTrip = useMutation({
+    mutationFn: async (tripId: number) => {
+      if (!canCreateOrEditTrips) {
+        throw new Error('You do not have permission to deactivate trips.');
+      }
+      const response = await api.patch(`/api/admin/trips/${tripId}/deactivate`, {});
+      if (!response.ok) {
+        throw new Error('Failed to deactivate trip');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      toast({
+        title: 'Trip deactivated',
+        description: 'The trip is no longer visible on the site.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Deactivation failed',
+        description: error.message || 'Failed to deactivate the trip',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const exportTripData = useMutation({
     mutationFn: async (tripId: number) => {
       if (!canExportTrips) {
@@ -296,11 +387,12 @@ export default function TripsManagement() {
 
   const statusFilters = useMemo(
     () => [
-      { value: 'all', label: 'All voyages', count: groupedTrips.active.length },
+      { value: 'all', label: 'All trips', count: groupedTrips.active.length },
       { value: 'draft', label: 'Drafts', count: groupedTrips.draft.length },
+      { value: 'preview', label: 'Preview', count: groupedTrips.preview.length },
       { value: 'upcoming', label: 'Upcoming', count: groupedTrips.upcoming.length },
-      { value: 'current', label: 'Sailing now', count: groupedTrips.current.length },
-      { value: 'past', label: 'Completed', count: groupedTrips.past.length },
+      { value: 'current', label: 'Current', count: groupedTrips.current.length },
+      { value: 'past', label: 'Past', count: groupedTrips.past.length },
       { value: 'archived', label: 'Archived', count: groupedTrips.archived.length },
     ],
     [groupedTrips]
@@ -309,9 +401,9 @@ export default function TripsManagement() {
   const pageStats = useMemo(
     () => [
       {
-        label: 'Voyages',
+        label: 'Trips',
         value: groupedTrips.active.length,
-        helpText: 'Active across the fleet',
+        helpText: 'Active trips',
         icon: <Ship className="h-4 w-4" />,
       },
       {
@@ -321,7 +413,7 @@ export default function TripsManagement() {
         icon: <Clock className="h-4 w-4" />,
       },
       {
-        label: 'Sailing now',
+        label: 'Current',
         value: groupedTrips.current.length,
         helpText: groupedTrips.current.length ? 'In progress' : 'Awaiting departure',
         icon: <Activity className="h-4 w-4" />,
@@ -329,7 +421,7 @@ export default function TripsManagement() {
       {
         label: 'Archived',
         value: groupedTrips.archived.length,
-        helpText: 'Stored voyages',
+        helpText: 'Stored trips',
         icon: <Archive className="h-4 w-4" />,
       },
     ],
@@ -364,6 +456,8 @@ export default function TripsManagement() {
         return groupedTrips.archived.length;
       case 'draft':
         return groupedTrips.draft.length;
+      case 'preview':
+        return groupedTrips.preview.length;
       case 'all':
       default:
         return groupedTrips.active.length;
@@ -480,28 +574,6 @@ export default function TripsManagement() {
               </button>
             );
           })}
-          <Select value={yearFilter} onValueChange={setYearFilter}>
-            <SelectTrigger className="h-11 w-full rounded-full border-white/10 bg-white/10 text-left text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70 focus:ring-0 focus:ring-offset-0 md:w-48">
-              <SelectValue placeholder="All years" />
-            </SelectTrigger>
-            <SelectContent className="border-white/10 bg-[#10192f] text-white">
-              <SelectItem
-                value="all"
-                className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
-              >
-                All years
-              </SelectItem>
-              {availableYears.map(year => (
-                <SelectItem
-                  key={year}
-                  value={year.toString()}
-                  className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
-                >
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </section>
 
@@ -589,6 +661,30 @@ export default function TripsManagement() {
                 ),
               },
               {
+                key: 'tripTypeId',
+                label: 'Type',
+                priority: 'high',
+                sortable: true,
+                minWidth: 100,
+                render: (_value, trip) => (
+                  <div className="flex items-center gap-2">
+                    {trip.tripTypeId === 2 ? (
+                      <>
+                        <Home className="h-4 w-4 text-cyan-400" />
+                        <span className="text-xs font-medium text-white">Resort</span>
+                      </>
+                    ) : trip.tripTypeId === 1 ? (
+                      <>
+                        <Ship className="h-4 w-4 text-blue-400" />
+                        <span className="text-xs font-medium text-white">Cruise</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-white/50">Unknown</span>
+                    )}
+                  </div>
+                ),
+              },
+              {
                 key: 'status',
                 label: 'Status',
                 priority: 'medium',
@@ -601,23 +697,18 @@ export default function TripsManagement() {
                 label: 'Highlights',
                 priority: 'medium',
                 sortable: false,
-                minWidth: 200,
+                minWidth: 180,
                 render: (_value, trip) => (
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
                       <CategoryChip
-                        label={`${trip.guestCount?.toLocaleString() ?? 0} guests`}
-                        icon={<Users className="h-3 w-3" />}
-                        variant="neutral"
-                      />
-                      <CategoryChip
-                        label={`${trip.ports ?? 0} ports`}
-                        icon={<MapPin className="h-3 w-3" />}
-                        variant="neutral"
-                      />
-                      <CategoryChip
                         label={`${trip.eventsCount ?? 0} events`}
                         icon={<Calendar className="h-3 w-3" />}
+                        variant="neutral"
+                      />
+                      <CategoryChip
+                        label={`${trip.partiesCount ?? 0} parties`}
+                        icon={<Music className="h-3 w-3" />}
                         variant="neutral"
                       />
                       <CategoryChip
@@ -644,15 +735,10 @@ export default function TripsManagement() {
                 label: 'Resume Draft',
                 icon: <Edit className="h-4 w-4" />,
                 onClick: (trip: Trip) => {
-                  // First blur any focused element to prevent aria-hidden conflict
                   if (document.activeElement instanceof HTMLElement) {
                     document.activeElement.blur();
                   }
-
-                  // Close any open dropdowns by clicking outside
                   document.body.click();
-
-                  // Small delay to ensure dropdown is fully closed before opening modal
                   setTimeout(() => {
                     setDraftToResume(trip);
                     setIsWizardOpen(true);
@@ -667,25 +753,113 @@ export default function TripsManagement() {
                 onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
                 visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
               },
-              // Edit URL Slug (for live/completed trips)
-              {
-                label: 'Edit URL Slug',
-                icon: <Link className="h-4 w-4" />,
-                onClick: (trip: Trip) => {
-                  setTripToEditSlug(trip);
-                  setNewSlug(trip.slug);
-                  setSlugEditModalOpen(true);
-                },
-                visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
-              },
-              // Preview button (for all trips)
+              // Preview button (for draft and preview trips)
               {
                 label: 'Preview',
+                icon: <Eye className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  window.open(`/trip/${trip.slug}`, '_blank');
+                },
+                visible: (trip: Trip) =>
+                  trip.status === 'draft' || trip.tripStatusId === 5 || trip.status === 'preview',
+              },
+              // Approve & Publish button (only for preview trips)
+              {
+                label: 'Approve & Publish',
+                icon: <CheckCircle className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  if (
+                    confirm(
+                      `Are you sure you want to publish "${trip.name}"? This will make it live on the site.`
+                    )
+                  ) {
+                    approveTrip.mutate(trip.id);
+                  }
+                },
+                visible: (trip: Trip) =>
+                  (trip.tripStatusId === 5 || trip.status === 'preview') && canCreateOrEditTrips,
+              },
+              // View Live Page button (for active trips)
+              {
+                label: 'View Live Page',
                 icon: <ExternalLink className="h-4 w-4" />,
                 onClick: (trip: Trip) => {
                   window.open(`/trip/${trip.slug}`, '_blank');
                 },
-                visible: () => true,
+                visible: (trip: Trip) =>
+                  trip.isActive === true &&
+                  trip.status !== 'draft' &&
+                  trip.tripStatusId !== 5 &&
+                  trip.status !== 'preview',
+              },
+              // Deactivate button (for active trips)
+              {
+                label: 'Deactivate',
+                icon: <StopCircle className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  if (
+                    confirm(
+                      `Are you sure you want to deactivate "${trip.name}"? It will no longer appear on the site.`
+                    )
+                  ) {
+                    deactivateTrip.mutate(trip.id);
+                  }
+                },
+                visible: (trip: Trip) =>
+                  trip.isActive === true &&
+                  trip.status !== 'draft' &&
+                  trip.tripStatusId !== 5 &&
+                  trip.status !== 'preview' &&
+                  canCreateOrEditTrips,
+              },
+              // Activate button (for inactive trips)
+              {
+                label: 'Activate',
+                icon: <PlayCircle className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  if (
+                    confirm(
+                      `Are you sure you want to activate "${trip.name}"? It will appear on the site.`
+                    )
+                  ) {
+                    activateTrip.mutate(trip.id);
+                  }
+                },
+                visible: (trip: Trip) =>
+                  trip.isActive === false &&
+                  trip.status !== 'draft' &&
+                  trip.tripStatusId !== 5 &&
+                  trip.status !== 'preview' &&
+                  canCreateOrEditTrips,
+              },
+              // Edit URL Slug (for non-draft trips)
+              {
+                label: 'Edit URL Slug',
+                icon: <Link className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                  document.body.click();
+                  setTimeout(() => {
+                    setTripToEditSlug(trip);
+                    setNewSlug(trip.slug);
+                    setSlugEditModalOpen(true);
+                  }, 50);
+                },
+                visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
+              },
+              // Archive button (for past trips)
+              {
+                label: 'Archive',
+                icon: <Archive className="h-4 w-4" />,
+                onClick: (trip: Trip) => {
+                  if (confirm(`Are you sure you want to archive "${trip.name}"?`)) {
+                    archiveTrip.mutate(trip.id);
+                  }
+                },
+                visible: (trip: Trip) =>
+                  trip.status === 'past' && trip.status !== 'archived' && canArchiveTrips,
               },
               // Delete button (for all trips)
               {
@@ -693,8 +867,6 @@ export default function TripsManagement() {
                 icon: <Trash2 className="h-4 w-4" />,
                 onClick: (trip: Trip) => {
                   setTripPendingDeletion(trip);
-                  // Note: This will trigger the AlertDialog, but we need to handle it differently
-                  // For now, we'll use a simple confirm dialog
                   if (
                     confirm(
                       `Are you sure you want to delete "${trip.name}"? This action cannot be undone.`
@@ -995,7 +1167,8 @@ export default function TripsManagement() {
         }}
         draftTrip={draftToResume}
         onSuccess={() => {
-          // Only reset draft state - no query operations
+          // Invalidate query to refresh the trips table
+          queryClient.invalidateQueries(['admin-trips']);
           setDraftToResume(null);
         }}
       />
@@ -1060,10 +1233,17 @@ function groupTrips(trips: Trip[]): GroupedTrips {
   const past: Trip[] = [];
   const archived: Trip[] = [];
   const draft: Trip[] = [];
+  const preview: Trip[] = [];
 
   trips.forEach(trip => {
     if (trip.status === 'draft') {
       draft.push(trip);
+      return;
+    }
+
+    // Check for preview status (tripStatusId === 5)
+    if (trip.tripStatusId === 5 || trip.status === 'preview') {
+      preview.push(trip);
       return;
     }
 
@@ -1094,7 +1274,8 @@ function groupTrips(trips: Trip[]): GroupedTrips {
     past,
     archived,
     draft,
-    active: [...draft, ...upcoming, ...current, ...past],
+    preview,
+    active: [...draft, ...preview, ...upcoming, ...current, ...past],
   };
 }
 
@@ -1122,6 +1303,9 @@ function filterTrips(
       break;
     case 'draft':
       source = groups.draft;
+      break;
+    case 'preview':
+      source = groups.preview;
       break;
     case 'all':
     default:
@@ -1174,6 +1358,11 @@ function getTripStatusBadge(trip: Trip) {
     return <StatusBadge status="draft" label="Draft" />;
   }
 
+  // Check for preview status (tripStatusId === 5)
+  if (trip.tripStatusId === 5 || trip.status === 'preview') {
+    return <StatusBadge status="preview" label="Preview" />;
+  }
+
   if (trip.status === 'archived') {
     return <StatusBadge status="archived" />;
   }
@@ -1197,7 +1386,7 @@ function getTripStatusBadge(trip: Trip) {
     return <StatusBadge status="upcoming" label={label} />;
   }
 
-  return <StatusBadge status="past" label="Completed" />;
+  return <StatusBadge status="past" label="Past" />;
 }
 
 function renderRatingStars(rating?: number) {

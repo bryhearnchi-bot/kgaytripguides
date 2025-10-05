@@ -231,17 +231,39 @@ export function EnhancedTripsTable({
   const sortedData = sortData(data, (item: any, key: string) => {
     // Handle computed status column
     if (key === 'status') {
-      // Import the status computation function from the trips page
-      // For now, compute it inline
-      if (item.status === 'archived') {
-        return 'archived';
+      // Map status to numeric values for sorting: Draft → Preview → Current → Upcoming → Past → Archived
+      const statusPriority: Record<string, number> = {
+        draft: 1,
+        preview: 2,
+        current: 3,
+        upcoming: 4,
+        past: 5,
+        archived: 6,
+      };
+
+      // Check if it's a draft first
+      if (item.status === 'draft') {
+        return statusPriority.draft;
       }
+
+      // Check if it's preview (tripStatusId === 5)
+      if (item.tripStatusId === 5 || item.status === 'preview') {
+        return statusPriority.preview;
+      }
+
+      // Check if it's archived
+      if (item.status === 'archived') {
+        return statusPriority.archived;
+      }
+
+      // Compute status based on dates
       const now = new Date();
       const start = new Date(item.startDate);
       const end = new Date(item.endDate);
-      if (now < start) return 'upcoming';
-      if (now >= start && now <= end) return 'current';
-      return 'past';
+
+      if (now < start) return statusPriority.upcoming;
+      if (now >= start && now <= end) return statusPriority.current;
+      return statusPriority.past;
     }
     return item[key];
   });

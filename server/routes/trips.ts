@@ -217,7 +217,7 @@ export function registerTripRoutes(app: Express) {
       let query = supabaseAdmin
         .from('trips')
         .select('*, trip_status!inner(status)', { count: 'exact' })
-        .order('created_at', { ascending: false });
+        .order('start_date', { ascending: true }); // Order by start date (earliest first)
 
       // Apply filters
       if (search) {
@@ -242,8 +242,39 @@ export function registerTripRoutes(app: Express) {
         throw ApiError.internal('Failed to fetch trips');
       }
 
+      // Fetch counts for each trip
+      const tripsWithCounts = await Promise.all(
+        (results || []).map(async (trip: any) => {
+          // Get events count
+          const { count: eventsCount } = await supabaseAdmin
+            .from('events')
+            .select('*', { count: 'exact', head: true })
+            .eq('trip_id', trip.id);
+
+          // Get parties count (events where type = 'party')
+          const { count: partiesCount } = await supabaseAdmin
+            .from('events')
+            .select('*', { count: 'exact', head: true })
+            .eq('trip_id', trip.id)
+            .eq('type', 'party');
+
+          // Get talent count (distinct talent from trip_talent junction table)
+          const { count: talentCount } = await supabaseAdmin
+            .from('trip_talent')
+            .select('talent_id', { count: 'exact', head: true })
+            .eq('trip_id', trip.id);
+
+          return {
+            ...trip,
+            events_count: eventsCount || 0,
+            parties_count: partiesCount || 0,
+            talent_count: talentCount || 0,
+          };
+        })
+      );
+
       // Transform snake_case to camelCase for frontend
-      const transformedTrips = (results || []).map((trip: any) =>
+      const transformedTrips = tripsWithCounts.map((trip: any) =>
         tripStorage.transformTripData(trip)
       );
 
@@ -273,6 +304,119 @@ export function registerTripRoutes(app: Express) {
 
       const trip = await tripStorage.updateTrip(parseInt(id || '0'), { status });
       return res.json(trip);
+    })
+  );
+
+  // Approve trip (Preview → Active, sets is_active=true)
+  app.patch(
+    '/api/admin/trips/:id/approve',
+    requireContentEditor,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const tripId = parseInt(req.params.id || '0');
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get the active/upcoming status ID based on dates
+      const { data: trip } = await supabaseAdmin
+        .from('trips')
+        .select('start_date, end_date')
+        .eq('id', tripId)
+        .single();
+
+      if (!trip) {
+        throw ApiError.notFound('Trip not found');
+      }
+
+      // Determine correct status based on dates
+      const now = new Date();
+      const startDate = new Date(trip.start_date);
+      const endDate = new Date(trip.end_date);
+
+      let statusName = 'Upcoming';
+      if (now >= startDate && now <= endDate) {
+        statusName = 'Current';
+      } else if (now > endDate) {
+        statusName = 'Past';
+      }
+
+      const { data: statusData } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', statusName)
+        .single();
+
+      if (!statusData) {
+        throw ApiError.internalError('Status not found');
+      }
+
+      // Update trip to active status and set is_active=true
+      const { error } = await supabaseAdmin
+        .from('trips')
+        .update({
+          trip_status_id: statusData.id,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', tripId);
+
+      if (error) {
+        logger.error('Failed to approve trip', { tripId, error });
+        throw ApiError.internalError('Failed to approve trip');
+      }
+
+      logger.info('Trip approved', { tripId, status: statusName });
+      return res.json({ success: true, message: 'Trip approved and published' });
+    })
+  );
+
+  // Activate trip (sets is_active=true)
+  app.patch(
+    '/api/admin/trips/:id/activate',
+    requireContentEditor,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const tripId = parseInt(req.params.id || '0');
+      const supabaseAdmin = getSupabaseAdmin();
+
+      const { error } = await supabaseAdmin
+        .from('trips')
+        .update({
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', tripId);
+
+      if (error) {
+        logger.error('Failed to activate trip', { tripId, error });
+        throw ApiError.internalError('Failed to activate trip');
+      }
+
+      logger.info('Trip activated', { tripId });
+      return res.json({ success: true, message: 'Trip activated' });
+    })
+  );
+
+  // Deactivate trip (sets is_active=false)
+  app.patch(
+    '/api/admin/trips/:id/deactivate',
+    requireContentEditor,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const tripId = parseInt(req.params.id || '0');
+      const supabaseAdmin = getSupabaseAdmin();
+
+      const { error } = await supabaseAdmin
+        .from('trips')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', tripId);
+
+      if (error) {
+        logger.error('Failed to deactivate trip', { tripId, error });
+        throw ApiError.internalError('Failed to deactivate trip');
+      }
+
+      logger.info('Trip deactivated', { tripId });
+      return res.json({ success: true, message: 'Trip deactivated' });
     })
   );
 
@@ -436,23 +580,12 @@ export function registerTripRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const supabaseAdmin = getSupabaseAdmin();
 
-      // Get "Draft" status ID
-      const { data: draftStatus } = await supabaseAdmin
-        .from('trip_status')
-        .select('id')
-        .eq('status', 'Draft')
-        .single();
-
-      const draftStatusId = draftStatus?.id;
-
-      // Fetch all trips excluding drafts
-      let query = supabaseAdmin.from('trips').select('*').order('start_date', { ascending: false });
-
-      if (draftStatusId) {
-        query = query.neq('trip_status_id', draftStatusId);
-      }
-
-      const { data, error } = await query;
+      // Fetch all trips excluding drafts and previews (IDs 4 and 5)
+      const { data, error } = await supabaseAdmin
+        .from('trips')
+        .select('*')
+        .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
+        .order('start_date', { ascending: false });
 
       if (error) {
         logger.error('Error fetching trips:', error, {
@@ -474,27 +607,13 @@ export function registerTripRoutes(app: Express) {
       const supabaseAdmin = getSupabaseAdmin();
       const today = new Date().toISOString().split('T')[0];
 
-      // Get "Draft" status ID
-      const { data: draftStatus } = await supabaseAdmin
-        .from('trip_status')
-        .select('id')
-        .eq('status', 'Draft')
-        .single();
-
-      const draftStatusId = draftStatus?.id;
-
-      // Fetch upcoming trips excluding drafts
-      let query = supabaseAdmin
+      // Fetch upcoming trips excluding drafts and previews (IDs 4 and 5)
+      const { data, error } = await supabaseAdmin
         .from('trips')
         .select('*')
         .gte('start_date', today)
+        .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
         .order('start_date', { ascending: true });
-
-      if (draftStatusId) {
-        query = query.neq('trip_status_id', draftStatusId);
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         logger.error('Error fetching upcoming trips:', error, {
@@ -516,27 +635,13 @@ export function registerTripRoutes(app: Express) {
       const supabaseAdmin = getSupabaseAdmin();
       const today = new Date().toISOString().split('T')[0];
 
-      // Get "Draft" status ID
-      const { data: draftStatus } = await supabaseAdmin
-        .from('trip_status')
-        .select('id')
-        .eq('status', 'Draft')
-        .single();
-
-      const draftStatusId = draftStatus?.id;
-
-      // Fetch past trips excluding drafts
-      let query = supabaseAdmin
+      // Fetch past trips excluding drafts and previews (IDs 4 and 5)
+      const { data, error } = await supabaseAdmin
         .from('trips')
         .select('*')
         .lt('end_date', today)
+        .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
         .order('start_date', { ascending: false });
-
-      if (draftStatusId) {
-        query = query.neq('trip_status_id', draftStatusId);
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         logger.error('Error fetching past trips:', error, {

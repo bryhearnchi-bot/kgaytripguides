@@ -1,5 +1,14 @@
 import { ReactNode } from 'react';
-import { Activity, Archive, Clock, CheckCircle, Wrench, AlertCircle, FileEdit } from 'lucide-react';
+import {
+  Activity,
+  Archive,
+  Clock,
+  CheckCircle,
+  Wrench,
+  AlertCircle,
+  FileEdit,
+  Eye,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_CLASS =
@@ -28,9 +37,14 @@ const STATUS_MAP: Record<string, { className: string; label: string; icon: React
     icon: <Activity className="h-3.5 w-3.5" />,
   },
   past: {
-    className: 'border-white/20 bg-white/10 text-white/70',
-    label: 'Completed',
+    className: 'border-red-400/40 bg-red-400/15 text-red-300',
+    label: 'Past',
     icon: <Clock className="h-3.5 w-3.5" />,
+  },
+  preview: {
+    className: 'border-amber-400/40 bg-amber-400/15 text-amber-300',
+    label: 'Preview',
+    icon: <Eye className="h-3.5 w-3.5" />,
   },
   archived: {
     className: 'border-white/15 bg-white/5 text-white/60',

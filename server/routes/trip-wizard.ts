@@ -101,7 +101,18 @@ async function createCompleteTrip(supabase: any, tripData: TripWizardData, userI
       logger.info('Created new ship', { shipId });
     }
 
-    // 3. Create the main trip record WITH ship_id/resort_id already set
+    // 3. Get the Preview status ID
+    const { data: previewStatus } = await supabase
+      .from('trip_status')
+      .select('id')
+      .eq('status', 'Preview')
+      .single();
+
+    if (!previewStatus) {
+      throw new Error('Preview status not found');
+    }
+
+    // 4. Create the main trip record WITH ship_id/resort_id already set
     const { data: trip, error: tripError } = await supabase
       .from('trips')
       .insert({
@@ -116,7 +127,8 @@ async function createCompleteTrip(supabase: any, tripData: TripWizardData, userI
         highlights: tripData.highlights || null,
         ship_id: shipId,
         resort_id: resortId,
-        trip_status_id: 1, // Default to "Upcoming"
+        trip_status_id: previewStatus.id, // Set to Preview status
+        is_active: false, // Not live on site yet
         created_by: userId,
       })
       .select()
@@ -658,6 +670,73 @@ export function registerTripWizardRoutes(app: Express) {
       logger.info('Draft deleted', { draftId, userId });
 
       return res.status(204).send();
+    })
+  );
+
+  /**
+   * PATCH /api/admin/trips/:id/slug
+   * Update a trip's URL slug
+   */
+  app.patch(
+    '/api/admin/trips/:id/slug',
+    requireAuth,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const tripId = parseInt(req.params.id);
+      const { slug } = req.body;
+      const userId = req.user!.id;
+
+      if (isNaN(tripId)) {
+        throw new ApiError(400, 'Invalid trip ID');
+      }
+
+      if (!slug || typeof slug !== 'string') {
+        throw new ApiError(400, 'Slug is required');
+      }
+
+      // Validate slug format
+      const slugRegex = /^[a-z0-9-]+$/;
+      if (!slugRegex.test(slug)) {
+        throw new ApiError(400, 'Slug must contain only lowercase letters, numbers, and hyphens');
+      }
+
+      const supabase = getSupabaseAdmin();
+
+      // Check if slug is already in use by another trip
+      const { data: existingTrip } = await supabase
+        .from('trips')
+        .select('id')
+        .eq('slug', slug)
+        .neq('id', tripId)
+        .single();
+
+      if (existingTrip) {
+        throw new ApiError(400, 'This slug is already in use by another trip');
+      }
+
+      // Update the trip slug
+      const { data, error } = await supabase
+        .from('trips')
+        .update({ slug, updated_at: new Date().toISOString() })
+        .eq('id', tripId)
+        .select('id, slug')
+        .single();
+
+      if (error) {
+        logger.error('Failed to update trip slug', { tripId, error });
+        throw new ApiError(500, 'Failed to update slug');
+      }
+
+      if (!data) {
+        throw new ApiError(404, 'Trip not found');
+      }
+
+      logger.info('Trip slug updated', { tripId, newSlug: slug, userId });
+
+      return res.json({
+        id: data.id,
+        slug: data.slug,
+        message: 'Slug updated successfully',
+      });
     })
   );
 }

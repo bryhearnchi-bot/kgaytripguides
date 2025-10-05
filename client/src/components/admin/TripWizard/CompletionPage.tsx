@@ -18,7 +18,7 @@ import {
   LayoutDashboard,
   AlertCircle,
 } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   Accordion,
   AccordionContent,
@@ -186,8 +186,8 @@ export function CompletionPage() {
 
       // Show success toast
       toast({
-        title: 'Trip Created Successfully!',
-        description: `${state.tripData.name} has been created and is now live.`,
+        title: 'Trip Saved for Preview!',
+        description: `${state.tripData.name} has been saved and is ready to preview.`,
       });
 
       console.log('Trip created:', result);
@@ -224,9 +224,9 @@ export function CompletionPage() {
       <div className="flex items-center gap-3 p-4 rounded-lg bg-cyan-400/10 border border-cyan-400/30">
         <CheckCircle2 className="w-6 h-6 text-cyan-400" />
         <div>
-          <h3 className="text-sm font-semibold text-white">Ready to Save</h3>
+          <h3 className="text-sm font-semibold text-white">Ready to Preview</h3>
           <p className="text-xs text-white/70">
-            Review your trip details below and click "Approve & Save" to create the trip.
+            Review your trip details below and click "Review & Preview" to save for preview.
           </p>
         </div>
       </div>
@@ -576,7 +576,7 @@ export function CompletionPage() {
           disabled={saving}
           className="h-11 px-6 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {saving ? 'Saving...' : 'Approve & Save Trip'}
+          {saving ? 'Saving...' : 'Review & Preview'}
         </Button>
       </div>
 
@@ -602,8 +602,20 @@ export function CompletionPage() {
       )}
 
       {/* Success Modal */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+      <Dialog
+        open={showSuccessModal}
+        onOpenChange={open => {
+          setShowSuccessModal(open);
+          if (!open) {
+            window.location.href = '/admin/trips';
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-lg border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+          <DialogTitle className="sr-only">Trip Saved Successfully</DialogTitle>
+          <DialogDescription className="sr-only">
+            Your trip has been saved for preview
+          </DialogDescription>
           <div className="flex flex-col items-center text-center py-6 px-4">
             {/* Success Icon */}
             <div className="w-20 h-20 rounded-full bg-cyan-400/10 border-2 border-cyan-400/30 flex items-center justify-center mb-6">
@@ -611,25 +623,25 @@ export function CompletionPage() {
             </div>
 
             {/* Success Message */}
-            <h3 className="text-2xl font-bold text-white mb-2">Congratulations!</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Saved for Preview!</h3>
             <p className="text-base text-white/70 mb-2">
               Your trip <span className="text-cyan-400 font-semibold">"{state.tripData.name}"</span>{' '}
-              has been successfully created!
+              has been saved successfully!
             </p>
             <p className="text-sm text-white/50 mb-8">
-              It's now live on the site and ready to be viewed by travelers.
+              Preview your trip and approve it when you're ready to make it live.
             </p>
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3 w-full">
-              {/* Primary Action - View Trip Live */}
+              {/* Primary Action - Preview Trip */}
               <a
                 href={`/trip/${savedTripSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 h-11 px-6 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
               >
-                View Trip Live
+                Preview Trip
                 <ExternalLink className="w-4 h-4" />
               </a>
 
