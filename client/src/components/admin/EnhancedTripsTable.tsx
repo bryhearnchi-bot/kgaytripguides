@@ -73,7 +73,7 @@ export function EnhancedTripsTable({
   const { columnWidths, sortConfig, updateColumnWidth, handleSort, sortData } = useTableState(
     'trips_table',
     defaultColumnWidths,
-    'name' // Default sort by name column (first column after image)
+    'status' // Default sort by status column (drafts, previews, then chronological)
   );
 
   const [forceUpdate, setForceUpdate] = useState(0);
