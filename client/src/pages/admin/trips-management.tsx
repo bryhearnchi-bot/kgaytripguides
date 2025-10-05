@@ -984,12 +984,8 @@ export default function TripsManagement() {
         }}
         draftTrip={draftToResume}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+          // Reset draft state - query invalidation is handled by TripWizard
           setDraftToResume(null);
-          toast({
-            title: 'Success',
-            description: draftToResume ? 'Draft resumed!' : 'Trip created successfully!',
-          });
         }}
       />
 
