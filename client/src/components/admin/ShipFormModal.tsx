@@ -28,7 +28,7 @@ interface ShipFormModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   ship?: Ship | null;
-  onSuccess: () => void;
+  onSuccess: (savedShip?: any) => void;
 }
 
 interface FormData {
@@ -160,7 +160,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         api.put(`/api/ships/${shipId}/venues`, { venueIds }),
       ]);
 
-      onSuccess();
+      onSuccess(savedShip);
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving ship:', error);
@@ -175,7 +175,11 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title={isEditing ? 'Edit Ship' : 'Add New Ship'}
-      description={isEditing ? 'Update ship information and amenities' : 'Create a new ship with amenities and venues'}
+      description={
+        isEditing
+          ? 'Update ship information and amenities'
+          : 'Create a new ship with amenities and venues'
+      }
       icon={<ShipIcon className="h-5 w-5" />}
       onSubmit={handleSubmit}
       primaryAction={{
@@ -183,7 +187,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         type: 'submit',
         loading,
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
-        disabled: !formData.name.trim() || !formData.cruiseLine.trim()
+        disabled: !formData.name.trim() || !formData.cruiseLine.trim(),
       }}
       maxWidthClassName="max-w-4xl"
       contentClassName="py-4"
@@ -199,7 +203,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               <Input
                 placeholder="Enter ship name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 className="admin-form-modal h-8"
               />
             </div>
@@ -209,7 +213,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               <Input
                 placeholder="Enter cruise line"
                 value={formData.cruiseLine}
-                onChange={(e) => handleInputChange('cruiseLine', e.target.value)}
+                onChange={e => handleInputChange('cruiseLine', e.target.value)}
                 className="admin-form-modal h-8"
               />
             </div>
@@ -221,7 +225,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
                   type="number"
                   placeholder="3000"
                   value={formData.capacity}
-                  onChange={(e) => handleInputChange('capacity', e.target.value)}
+                  onChange={e => handleInputChange('capacity', e.target.value)}
                   className="admin-form-modal h-8"
                 />
               </div>
@@ -232,7 +236,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
                   type="number"
                   placeholder="12"
                   value={formData.decks}
-                  onChange={(e) => handleInputChange('decks', e.target.value)}
+                  onChange={e => handleInputChange('decks', e.target.value)}
                   className="admin-form-modal h-8"
                 />
               </div>
@@ -243,7 +247,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               <ImageUploadField
                 label="Ship Image"
                 value={formData.imageUrl}
-                onChange={(url) => handleInputChange('imageUrl', url || '')}
+                onChange={url => handleInputChange('imageUrl', url || '')}
                 imageType="ships"
                 placeholder="No ship image uploaded"
                 disabled={loading}
@@ -256,7 +260,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               <Input
                 placeholder="https://example.com/deck-plans.pdf"
                 value={formData.deckPlansUrl}
-                onChange={(e) => handleInputChange('deckPlansUrl', e.target.value)}
+                onChange={e => handleInputChange('deckPlansUrl', e.target.value)}
                 className="admin-form-modal h-8"
               />
             </div>
@@ -266,7 +270,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               <Textarea
                 placeholder="Enter ship description..."
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                onChange={e => handleInputChange('description', e.target.value)}
                 className="admin-form-modal"
                 rows={2}
               />

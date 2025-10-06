@@ -36,7 +36,7 @@ interface ResortFormModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   resort?: Resort | null;
-  onSuccess: () => void;
+  onSuccess: (savedResort?: any) => void;
 }
 
 interface FormData {
@@ -81,12 +81,14 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   useEffect(() => {
     if (resort && isOpen) {
       // Parse existing location if it's in old format
-      const locationData = resort.city ? {
-        city: resort.city,
-        state_province: resort.state_province || '',
-        country: resort.country || '',
-        country_code: resort.country_code || ''
-      } : locationService.parseLocationString(resort.location || '');
+      const locationData = resort.city
+        ? {
+            city: resort.city,
+            state_province: resort.state_province || '',
+            country: resort.country || '',
+            country_code: resort.country_code || '',
+          }
+        : locationService.parseLocationString(resort.location || '');
 
       setFormData({
         name: resort.name || '',
@@ -168,7 +170,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         location: locationService.formatLocation({
           city: formData.city,
           state: formData.state_province,
-          country: formData.country
+          country: formData.country,
         }),
         city: formData.city.trim() || null,
         state_province: formData.state_province.trim() || null,
@@ -205,7 +207,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         api.put(`/api/resorts/${resortId}/venues`, { venueIds }),
       ]);
 
-      onSuccess();
+      onSuccess(savedResort);
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving resort:', error);
@@ -220,7 +222,11 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title={isEditing ? 'Edit Resort' : 'Add New Resort'}
-      description={isEditing ? 'Update resort information and amenities' : 'Create a new resort with amenities and venues'}
+      description={
+        isEditing
+          ? 'Update resort information and amenities'
+          : 'Create a new resort with amenities and venues'
+      }
       icon={<Building className="h-5 w-5" />}
       onSubmit={handleSubmit}
       primaryAction={{
@@ -248,7 +254,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
               <Input
                 placeholder="Enter resort name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 className="admin-form-modal"
               />
             </div>
@@ -261,15 +267,15 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
                   city: formData.city,
                   state: formData.state_province,
                   country: formData.country,
-                  countryCode: formData.country_code
+                  countryCode: formData.country_code,
                 }}
-                onChange={(location) => {
+                onChange={location => {
                   setFormData({
                     ...formData,
                     city: location.city || '',
                     state_province: location.state || '',
                     country: location.country || '',
-                    country_code: location.countryCode || ''
+                    country_code: location.countryCode || '',
                   });
                 }}
                 required
@@ -283,7 +289,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
                   type="number"
                   placeholder="500"
                   value={formData.capacity}
-                  onChange={(e) => handleInputChange('capacity', e.target.value)}
+                  onChange={e => handleInputChange('capacity', e.target.value)}
                   className="admin-form-modal"
                 />
               </div>
@@ -294,7 +300,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
                   type="number"
                   placeholder="250"
                   value={formData.roomCount}
-                  onChange={(e) => handleInputChange('roomCount', e.target.value)}
+                  onChange={e => handleInputChange('roomCount', e.target.value)}
                   className="admin-form-modal"
                 />
               </div>
@@ -306,7 +312,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
                 <Input
                   placeholder="15:00"
                   value={formData.checkInTime}
-                  onChange={(e) => handleInputChange('checkInTime', e.target.value)}
+                  onChange={e => handleInputChange('checkInTime', e.target.value)}
                   className="admin-form-modal"
                 />
               </div>
@@ -316,7 +322,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
                 <Input
                   placeholder="11:00"
                   value={formData.checkOutTime}
-                  onChange={(e) => handleInputChange('checkOutTime', e.target.value)}
+                  onChange={e => handleInputChange('checkOutTime', e.target.value)}
                   className="admin-form-modal"
                 />
               </div>
@@ -327,7 +333,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
               <ImageUploadField
                 label="Resort Image"
                 value={formData.imageUrl}
-                onChange={(url) => handleInputChange('imageUrl', url || '')}
+                onChange={url => handleInputChange('imageUrl', url || '')}
                 imageType="resorts"
                 placeholder="No resort image uploaded"
                 disabled={loading}
@@ -340,7 +346,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
               <Input
                 placeholder="https://example.com/property-map.pdf"
                 value={formData.propertyMapUrl}
-                onChange={(e) => handleInputChange('propertyMapUrl', e.target.value)}
+                onChange={e => handleInputChange('propertyMapUrl', e.target.value)}
                 className="admin-form-modal"
               />
             </div>
@@ -350,7 +356,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
               <Textarea
                 placeholder="Enter resort description..."
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                onChange={e => handleInputChange('description', e.target.value)}
                 className="admin-form-modal"
                 rows={2}
               />

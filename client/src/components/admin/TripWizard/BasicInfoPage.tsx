@@ -131,6 +131,7 @@ export function BasicInfoPage() {
               value={state.tripData.tripTypeId?.toString() || ''}
               onChange={handleTripTypeChange}
               required
+              disabled={state.isEditMode}
             />
             {state.tripType && (
               <div className="flex items-center gap-1.5 px-2 py-1 bg-cyan-400/10 border border-cyan-400/20 rounded-lg">

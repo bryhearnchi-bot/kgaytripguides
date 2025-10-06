@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { TripWizard } from '@/components/admin/TripWizard/TripWizard';
+import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 import {
   Select,
   SelectContent,
@@ -97,6 +98,17 @@ interface Trip {
   wizardCurrentPage?: number;
   tripStatusId?: number;
   isActive?: boolean;
+  // Fields for EditTripModal
+  resortId?: number | null;
+  shipId?: number | null;
+  charterCompanyId?: number | null;
+  highlights?: string;
+  amenityIds?: number[];
+  venueIds?: number[];
+  itineraryEntries?: any[];
+  scheduleEntries?: any[];
+  shipData?: any;
+  resortData?: any;
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived' | 'draft' | 'preview';
@@ -135,6 +147,8 @@ export default function TripsManagement() {
   const [slugEditModalOpen, setSlugEditModalOpen] = useState(false);
   const [tripToEditSlug, setTripToEditSlug] = useState<Trip | null>(null);
   const [newSlug, setNewSlug] = useState('');
+  const [editTripModalOpen, setEditTripModalOpen] = useState(false);
+  const [tripToEdit, setTripToEdit] = useState<Trip | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -151,7 +165,20 @@ export default function TripsManagement() {
       }
       const data = await response.json();
       // Admin endpoint returns paginated data with { trips: [...], pagination: {...} }
-      return data.trips || data;
+      const trips = data.trips || data;
+
+      // CRITICAL DEBUG: Log what we received from API
+      console.log('🔍 trips-management - API response received:', {
+        tripCount: trips.length,
+        firstTripId: trips[0]?.id,
+        firstTripName: trips[0]?.name,
+        firstTripItineraryEntries: trips[0]?.itineraryEntries,
+        firstTripItineraryLength: trips[0]?.itineraryEntries?.length,
+        firstTripScheduleEntries: trips[0]?.scheduleEntries,
+        firstTripScheduleLength: trips[0]?.scheduleEntries?.length,
+      });
+
+      return trips;
     },
   });
 
@@ -750,7 +777,24 @@ export default function TripsManagement() {
               {
                 label: 'Edit Trip',
                 icon: <Edit className="h-4 w-4" />,
-                onClick: (trip: Trip) => navigate(`/admin/trips/${trip.id}`),
+                onClick: (trip: Trip) => {
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                  document.body.click();
+                  setTimeout(() => {
+                    console.log('🎯 Setting trip to edit:', {
+                      id: trip.id,
+                      name: trip.name,
+                      itineraryEntries: trip.itineraryEntries,
+                      itineraryCount: trip.itineraryEntries?.length,
+                      scheduleEntries: trip.scheduleEntries,
+                      scheduleCount: trip.scheduleEntries?.length,
+                    });
+                    setTripToEdit(trip);
+                    setEditTripModalOpen(true);
+                  }, 50);
+                },
                 visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
               },
               // Preview button (for draft and preview trips)
@@ -1220,6 +1264,19 @@ export default function TripsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Trip Modal */}
+      {tripToEdit && (
+        <EditTripModal
+          open={editTripModalOpen}
+          onOpenChange={setEditTripModalOpen}
+          trip={tripToEdit}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+            setTripToEdit(null);
+          }}
+        />
+      )}
     </div>
   );
 }

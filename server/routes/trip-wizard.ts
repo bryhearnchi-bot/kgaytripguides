@@ -275,6 +275,18 @@ export function registerTripWizardRoutes(app: Express) {
     '/api/admin/trips',
     requireContentEditor,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      // Check if this is an update (has id field) or create
+      const tripId = req.body.id;
+      const isUpdate = !!tripId;
+
+      // For updates, preprocess schedule entries to handle null imageUrl
+      if (isUpdate && req.body.scheduleEntries) {
+        req.body.scheduleEntries = req.body.scheduleEntries.map((entry: any) => ({
+          ...entry,
+          imageUrl: entry.imageUrl === null ? undefined : entry.imageUrl,
+        }));
+      }
+
       // Validate request body
       const validation = tripWizardSchema.safeParse(req.body);
 
@@ -286,11 +298,195 @@ export function registerTripWizardRoutes(app: Express) {
       const userId = req.user!.id;
       const draftId = req.body.draftId; // Extract draftId if provided
 
-      logger.info('Creating trip from wizard', { userId, tripName: tripData.name, draftId });
-
-      // Create trip with all relationships
       const supabase = getSupabaseAdmin();
-      const trip = await createCompleteTrip(supabase, tripData, userId);
+      let trip;
+
+      if (isUpdate) {
+        // UPDATE existing trip
+        logger.info('Updating trip from Edit Modal', { userId, tripName: tripData.name, tripId });
+
+        // Update the main trip record
+        const { data: updatedTrip, error: tripError } = await supabase
+          .from('trips')
+          .update({
+            name: tripData.name,
+            slug: tripData.slug,
+            charter_company_id: tripData.charterCompanyId,
+            trip_type_id: tripData.tripTypeId,
+            start_date: tripData.startDate,
+            end_date: tripData.endDate,
+            hero_image_url: tripData.heroImageUrl || null,
+            description: tripData.description || null,
+            highlights: tripData.highlights || null,
+            ship_id: tripData.shipId || null,
+            resort_id: tripData.resortId || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', tripId)
+          .select()
+          .single();
+
+        if (tripError) throw new Error(`Failed to update trip: ${tripError.message}`);
+        trip = updatedTrip;
+
+        // Update schedules/itineraries
+        if (tripData.resortId) {
+          // Delete existing schedules first
+          await supabase.from('resort_schedules').delete().eq('trip_id', tripId);
+
+          // Insert new schedules if provided
+          if (tripData.scheduleEntries && tripData.scheduleEntries.length > 0) {
+            const scheduleData = tripData.scheduleEntries.map(entry => ({
+              trip_id: tripId,
+              day_number: entry.dayNumber,
+              date: entry.date,
+              image_url: entry.imageUrl || null,
+              description: entry.description || null,
+              order_index: entry.dayNumber + 1,
+            }));
+
+            const { error: scheduleError } = await supabase
+              .from('resort_schedules')
+              .insert(scheduleData);
+
+            if (scheduleError)
+              throw new Error(`Failed to update schedule: ${scheduleError.message}`);
+          }
+        }
+
+        if (tripData.shipId) {
+          // Delete existing itinerary first
+          await supabase.from('itinerary').delete().eq('trip_id', tripId);
+
+          // Insert new itinerary if provided
+          if (tripData.itineraryEntries && tripData.itineraryEntries.length > 0) {
+            const itineraryData = tripData.itineraryEntries.map(entry => ({
+              trip_id: tripId,
+              day: entry.dayNumber,
+              date: entry.date,
+              location_id: entry.locationId || null,
+              location_name: entry.locationName || null,
+              arrival_time: entry.arrivalTime || null,
+              departure_time: entry.departureTime || null,
+              all_aboard_time: entry.allAboardTime || null,
+              description: entry.description || null,
+              location_image_url: entry.imageUrl || null,
+              location_type_id: entry.locationTypeId || 1,
+              order_index: entry.dayNumber + 1,
+            }));
+
+            const { error: itineraryError } = await supabase
+              .from('itinerary')
+              .insert(itineraryData);
+
+            if (itineraryError)
+              throw new Error(`Failed to update itinerary: ${itineraryError.message}`);
+          }
+        }
+
+        // Get the ship_id or resort_id for this trip
+        const { data: tripRecord } = await supabase
+          .from('trips')
+          .select('ship_id, resort_id')
+          .eq('id', tripId)
+          .single();
+
+        if (tripRecord?.ship_id) {
+          // Update ship amenities (delete and re-insert)
+          await supabase.from('ship_amenities').delete().eq('ship_id', tripRecord.ship_id);
+
+          if (tripData.amenityIds && tripData.amenityIds.length > 0) {
+            const amenityLinks = tripData.amenityIds.map(amenityId => ({
+              ship_id: tripRecord.ship_id,
+              amenity_id: amenityId,
+            }));
+
+            const { error: amenityError } = await supabase
+              .from('ship_amenities')
+              .insert(amenityLinks);
+
+            if (amenityError) {
+              logger.error('Failed to update ship amenities', {
+                tripId,
+                shipId: tripRecord.ship_id,
+                error: amenityError,
+              });
+              // Don't throw - trip was updated successfully
+            }
+          }
+
+          // Update ship venues (delete and re-insert)
+          await supabase.from('ship_venues').delete().eq('ship_id', tripRecord.ship_id);
+
+          if (tripData.venueIds && tripData.venueIds.length > 0) {
+            const venueLinks = tripData.venueIds.map(venueId => ({
+              ship_id: tripRecord.ship_id,
+              venue_id: venueId,
+            }));
+
+            const { error: venueError } = await supabase.from('ship_venues').insert(venueLinks);
+
+            if (venueError) {
+              logger.error('Failed to update ship venues', {
+                tripId,
+                shipId: tripRecord.ship_id,
+                error: venueError,
+              });
+              // Don't throw - trip was updated successfully
+            }
+          }
+        } else if (tripRecord?.resort_id) {
+          // Update resort amenities (delete and re-insert)
+          await supabase.from('resort_amenities').delete().eq('resort_id', tripRecord.resort_id);
+
+          if (tripData.amenityIds && tripData.amenityIds.length > 0) {
+            const amenityLinks = tripData.amenityIds.map(amenityId => ({
+              resort_id: tripRecord.resort_id,
+              amenity_id: amenityId,
+            }));
+
+            const { error: amenityError } = await supabase
+              .from('resort_amenities')
+              .insert(amenityLinks);
+
+            if (amenityError) {
+              logger.error('Failed to update resort amenities', {
+                tripId,
+                resortId: tripRecord.resort_id,
+                error: amenityError,
+              });
+              // Don't throw - trip was updated successfully
+            }
+          }
+
+          // Update resort venues (delete and re-insert)
+          await supabase.from('resort_venues').delete().eq('resort_id', tripRecord.resort_id);
+
+          if (tripData.venueIds && tripData.venueIds.length > 0) {
+            const venueLinks = tripData.venueIds.map(venueId => ({
+              resort_id: tripRecord.resort_id,
+              venue_id: venueId,
+            }));
+
+            const { error: venueError } = await supabase.from('resort_venues').insert(venueLinks);
+
+            if (venueError) {
+              logger.error('Failed to update resort venues', {
+                tripId,
+                resortId: tripRecord.resort_id,
+                error: venueError,
+              });
+              // Don't throw - trip was updated successfully
+            }
+          }
+        }
+
+        logger.info('Trip updated successfully', { tripId });
+      } else {
+        // CREATE new trip
+        logger.info('Creating trip from wizard', { userId, tripName: tripData.name, draftId });
+        trip = await createCompleteTrip(supabase, tripData, userId);
+      }
 
       // If this trip was created from a draft, delete the draft
       if (draftId) {

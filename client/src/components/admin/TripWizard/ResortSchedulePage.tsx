@@ -23,8 +23,19 @@ export function ResortSchedulePage() {
   const entriesContainerRef = useRef<HTMLDivElement>(null);
 
   // Generate schedule entries from trip dates if not already created
+  // IMPORTANT: Don't generate blank entries in edit mode - the data is coming from restoreFromDraft
   useEffect(() => {
-    if (state.scheduleEntries.length === 0 && state.tripData.startDate && state.tripData.endDate) {
+    // ONLY generate blank entries if:
+    // 1. No entries exist
+    // 2. We have dates
+    // 3. We're in CREATE mode (not edit mode)
+    // In edit mode, the data should come from the database via restoreFromDraft
+    if (
+      state.scheduleEntries.length === 0 &&
+      state.tripData.startDate &&
+      state.tripData.endDate &&
+      !state.isEditMode
+    ) {
       // Parse dates in local timezone to avoid UTC conversion issues
       const [startYear, startMonth, startDay] = state.tripData.startDate.split('-').map(Number);
       const [endYear, endMonth, endDay] = state.tripData.endDate.split('-').map(Number);

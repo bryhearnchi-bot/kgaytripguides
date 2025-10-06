@@ -264,11 +264,133 @@ export function registerTripRoutes(app: Express) {
             .select('talent_id', { count: 'exact', head: true })
             .eq('trip_id', trip.id);
 
+          // Get itinerary entries (for cruise trips)
+          const { data: rawItineraryData } = await supabaseAdmin
+            .from('itinerary')
+            .select('*')
+            .eq('trip_id', trip.id)
+            .order('day', { ascending: true });
+
+          // Transform itinerary data to camelCase
+          const itineraryData = (rawItineraryData || []).map((item: any) => ({
+            dayNumber: item.day,
+            date: item.date,
+            locationId: item.location_id,
+            locationName: item.location_name,
+            locationTypeId: item.location_type_id,
+            arrivalTime: item.arrival_time,
+            departureTime: item.departure_time,
+            allAboardTime: item.all_aboard_time,
+            imageUrl: item.location_image_url,
+            description: item.description,
+          }));
+
+          // Get schedule entries (for resort trips)
+          const { data: rawScheduleData } = await supabaseAdmin
+            .from('resort_schedules')
+            .select('*')
+            .eq('trip_id', trip.id)
+            .order('day_number', { ascending: true });
+
+          // Transform schedule data to camelCase
+          const scheduleData = (rawScheduleData || []).map((item: any) => ({
+            dayNumber: item.day_number,
+            date: item.date,
+            imageUrl: item.image_url,
+            description: item.description,
+          }));
+
+          // Get amenity IDs based on trip type
+          let amenitiesData = null;
+          let venuesData = null;
+
+          if (trip.ship_id) {
+            // For cruise trips, use ship_amenities and ship_venues
+            const { data: shipAmenities } = await supabaseAdmin
+              .from('ship_amenities')
+              .select('amenity_id')
+              .eq('ship_id', trip.ship_id);
+            amenitiesData = shipAmenities;
+
+            const { data: shipVenues } = await supabaseAdmin
+              .from('ship_venues')
+              .select('venue_id')
+              .eq('ship_id', trip.ship_id);
+            venuesData = shipVenues;
+          } else if (trip.resort_id) {
+            // For resort trips, use resort_amenities and resort_venues
+            const { data: resortAmenities } = await supabaseAdmin
+              .from('resort_amenities')
+              .select('amenity_id')
+              .eq('resort_id', trip.resort_id);
+            amenitiesData = resortAmenities;
+
+            const { data: resortVenues } = await supabaseAdmin
+              .from('resort_venues')
+              .select('venue_id')
+              .eq('resort_id', trip.resort_id);
+            venuesData = resortVenues;
+          }
+
+          // Get ship data if this is a cruise trip
+          let shipData = null;
+          if (trip.ship_id) {
+            const { data: rawShipData } = await supabaseAdmin
+              .from('ships')
+              .select('*')
+              .eq('id', trip.ship_id)
+              .single();
+
+            if (rawShipData) {
+              shipData = {
+                id: rawShipData.id,
+                name: rawShipData.name,
+                cruiseLine: rawShipData.cruise_line,
+                imageUrl: rawShipData.image_url,
+                description: rawShipData.description,
+                capacity: rawShipData.capacity,
+                decks: rawShipData.decks,
+                deckPlansUrl: rawShipData.deck_plans_url,
+              };
+            }
+          }
+
+          // Get resort data if this is a resort trip
+          let resortData = null;
+          if (trip.resort_id) {
+            const { data: rawResortData } = await supabaseAdmin
+              .from('resorts')
+              .select('*')
+              .eq('id', trip.resort_id)
+              .single();
+
+            if (rawResortData) {
+              resortData = {
+                id: rawResortData.id,
+                name: rawResortData.name,
+                location: rawResortData.location,
+                imageUrl: rawResortData.image_url,
+                description: rawResortData.description,
+                capacity: rawResortData.capacity,
+                numberOfRooms: rawResortData.room_count,
+                propertyMapUrl: rawResortData.property_map_url,
+                checkInTime: rawResortData.check_in_time,
+                checkOutTime: rawResortData.check_out_time,
+              };
+            }
+          }
+
           return {
             ...trip,
             events_count: eventsCount || 0,
             parties_count: partiesCount || 0,
             talent_count: talentCount || 0,
+            itinerary_entries: itineraryData || [],
+            schedule_entries: scheduleData || [],
+            amenity_ids: (amenitiesData || []).map((a: any) => a.amenity_id),
+            venue_ids: (venuesData || []).map((v: any) => v.venue_id),
+            ship_data: shipData,
+            resort_data: resortData,
           };
         })
       );

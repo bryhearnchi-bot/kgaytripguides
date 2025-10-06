@@ -135,6 +135,12 @@ export class TripStorage implements ITripStorage {
       eventsCount: dbTrip.events_count,
       partiesCount: dbTrip.parties_count,
       talentCount: dbTrip.talent_count,
+      itineraryEntries: dbTrip.itinerary_entries,
+      scheduleEntries: dbTrip.schedule_entries,
+      amenityIds: dbTrip.amenity_ids,
+      venueIds: dbTrip.venue_ids,
+      shipData: dbTrip.ship_data,
+      resortData: dbTrip.resort_data,
       createdAt: dbTrip.created_at,
       updatedAt: dbTrip.updated_at,
     } as any;
@@ -633,10 +639,31 @@ export class TripInfoStorage implements ITripInfoStorage {
       segment: item.segment,
     }));
 
-    // Get events data with party themes
+    // Get events data with party themes, venues, and event types
     const { data: eventsData, error: eventsError } = await supabaseAdmin
       .from('events')
-      .select('*, party_themes(*)')
+      .select(
+        `
+        *,
+        party_themes(*),
+        venues(
+          id,
+          name,
+          description,
+          venue_type_id,
+          venue_types(
+            id,
+            name
+          )
+        ),
+        event_types(
+          id,
+          name,
+          icon,
+          color
+        )
+      `
+      )
       .eq('trip_id', tripData.id)
       .order('date', { ascending: true })
       .order('time', { ascending: true });
@@ -650,8 +677,32 @@ export class TripInfoStorage implements ITripInfoStorage {
       date: event.date,
       time: event.time,
       title: event.title,
-      type: event.type,
-      venue: event.venue,
+      eventTypeId: event.event_type_id,
+      eventType: event.event_types
+        ? {
+            id: event.event_types.id,
+            name: event.event_types.name,
+            icon: event.event_types.icon,
+            color: event.event_types.color,
+          }
+        : null,
+      venueId: event.venue_id,
+      venue: event.venues
+        ? {
+            id: event.venues.id,
+            name: event.venues.name,
+            description: event.venues.description,
+            venueTypeId: event.venues.venue_type_id,
+            venueType: event.venues.venue_types
+              ? {
+                  id: event.venues.venue_types.id,
+                  name: event.venues.venue_types.name,
+                }
+              : null,
+          }
+        : null,
+      // Legacy venue text field (deprecated)
+      venueName: event.venue,
       deck: null, // Add if available in schema
       description: null, // Add if available in schema
       shortDescription: null, // Add if available in schema

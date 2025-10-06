@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const scheduleEntrySchema = z.object({
   dayNumber: z.number(),
   date: z.string(),
-  imageUrl: z.string().optional(),
+  imageUrl: z.string().nullable().optional(),
   description: z.string().optional(),
 });
 
