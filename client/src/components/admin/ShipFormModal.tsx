@@ -58,6 +58,9 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
   const [loading, setLoading] = useState(false);
   const [amenityIds, setAmenityIds] = useState<number[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [pendingVenues, setPendingVenues] = useState<
+    Array<{ name: string; venueTypeId: number; description?: string }>
+  >([]);
   const [showVenueModal, setShowVenueModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -113,6 +116,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       });
       setAmenityIds([]);
       setVenues([]);
+      setPendingVenues([]); // Clear pending venues for new ship
     }
   }, [ship, isOpen]);
 
@@ -160,6 +164,11 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleOpenVenueModal = () => {
+    // Always open the modal - we'll handle pending vs saved venues inside
+    setShowVenueModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,6 +247,20 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       }
 
       console.log('🚢 CLIENT: Amenities updated successfully');
+
+      // If we have pending venues (for new ships), save them now
+      if (!isEditing && pendingVenues.length > 0) {
+        console.log('🚢 CLIENT: Saving pending venues', { count: pendingVenues.length });
+        for (const venue of pendingVenues) {
+          try {
+            await api.post(`/api/admin/ships/${shipId}/venues`, venue);
+          } catch (venueError) {
+            console.error('🚢 CLIENT: Failed to save venue', { venue, error: venueError });
+            // Continue with other venues even if one fails
+          }
+        }
+        console.log('🚢 CLIENT: All pending venues saved');
+      }
 
       // CRITICAL FIX: Wait a tiny bit to ensure the amenities request fully completes
       // before triggering callbacks that might close the modal
@@ -386,31 +409,29 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
               <div className="flex items-center justify-between mb-0.5">
                 <label className="text-xs font-medium text-white/90">Ship Venues</label>
                 <div className="flex gap-1">
-                  {ship?.id && (
-                    <>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowVenueModal(true)}
-                        className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                      >
-                        <Plus className="w-2.5 h-2.5 mr-1" />
-                        Create
-                      </Button>
-                      {venues.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowVenueModal(true)}
-                          className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                        >
-                          <Edit2 className="w-2.5 h-2.5 mr-1" />
-                          Edit
-                        </Button>
-                      )}
-                    </>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleOpenVenueModal}
+                    disabled={loading}
+                    className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 disabled:opacity-50"
+                    title={!ship?.id ? 'Save ship first, then add venues' : 'Create new venue'}
+                  >
+                    <Plus className="w-2.5 h-2.5 mr-1" />
+                    Create
+                  </Button>
+                  {ship?.id && venues.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowVenueModal(true)}
+                      className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                    >
+                      <Edit2 className="w-2.5 h-2.5 mr-1" />
+                      Edit
+                    </Button>
                   )}
                 </div>
               </div>
@@ -465,10 +486,29 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
                 </Accordion>
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 text-white/40">
-                  <Anchor className="w-6 h-6 mb-1" />
-                  <p className="text-[10px]">
-                    {ship?.id ? 'No venues added' : 'Save ship first to add venues'}
-                  </p>
+                  <Anchor className="w-6 h-6 mb-2" />
+                  {ship?.id ? (
+                    <p className="text-[10px]">No venues added</p>
+                  ) : pendingVenues.length > 0 ? (
+                    <div className="text-center px-4">
+                      <p className="text-[11px] font-semibold text-cyan-400/80 mb-1">
+                        {pendingVenues.length} venue{pendingVenues.length !== 1 ? 's' : ''} ready to
+                        save
+                      </p>
+                      <p className="text-[9px] text-white/50">
+                        Venues will be created when you save the ship
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center px-4">
+                      <p className="text-[10px] font-medium text-white/60 mb-1">
+                        Click "Create" to add venues
+                      </p>
+                      <p className="text-[9px] text-white/40">
+                        Venues will appear here after you save the ship
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -477,25 +517,26 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       </div>
 
       {/* Venue Management Modal */}
-      {ship?.id && (
-        <VenueManagementModal
-          isOpen={showVenueModal}
-          onOpenChange={setShowVenueModal}
-          propertyId={ship.id}
-          propertyType="ship"
-          onSuccess={() => {
-            // Refetch venues to update the display
-            if (ship.id) {
-              api.get(`/api/admin/ships/${ship.id}/venues`).then(async response => {
-                if (response.ok) {
-                  const venuesData = await response.json();
-                  setVenues(venuesData);
-                }
-              });
-            }
-          }}
-        />
-      )}
+      <VenueManagementModal
+        isOpen={showVenueModal}
+        onOpenChange={setShowVenueModal}
+        propertyId={ship?.id || 0}
+        propertyType="ship"
+        pendingMode={!ship?.id}
+        initialPendingVenues={pendingVenues}
+        onPendingVenuesChange={setPendingVenues}
+        onSuccess={() => {
+          // Refetch venues to update the display (only for existing ships)
+          if (ship?.id) {
+            api.get(`/api/admin/ships/${ship.id}/venues`).then(async response => {
+              if (response.ok) {
+                const venuesData = await response.json();
+                setVenues(venuesData);
+              }
+            });
+          }
+        }}
+      />
     </AdminFormModal>
   );
 }

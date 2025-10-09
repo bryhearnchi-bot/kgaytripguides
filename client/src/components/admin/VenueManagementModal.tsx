@@ -31,6 +31,11 @@ interface VenueManagementModalProps {
   onOpenChange: (open: boolean) => void;
   propertyId: number;
   propertyType: 'resort' | 'ship'; // resort or ship
+  pendingMode?: boolean; // If true, work with pending venues in state instead of API
+  initialPendingVenues?: Array<{ name: string; venueTypeId: number; description?: string }>;
+  onPendingVenuesChange?: (
+    venues: Array<{ name: string; venueTypeId: number; description?: string }>
+  ) => void;
   onSuccess?: () => void;
 }
 
@@ -39,6 +44,9 @@ export function VenueManagementModal({
   onOpenChange,
   propertyId,
   propertyType,
+  pendingMode = false,
+  initialPendingVenues = [],
+  onPendingVenuesChange,
   onSuccess,
 }: VenueManagementModalProps) {
   const { toast } = useToast();
@@ -53,10 +61,22 @@ export function VenueManagementModal({
   // Fetch venues and venue types
   useEffect(() => {
     if (isOpen) {
-      fetchVenues();
+      if (pendingMode) {
+        // In pending mode, load from initialPendingVenues
+        const pendingVenuesWithIds = initialPendingVenues.map((v, idx) => ({
+          id: -(idx + 1), // Negative IDs for pending venues
+          name: v.name,
+          venueTypeId: v.venueTypeId,
+          description: v.description,
+        }));
+        setVenues(pendingVenuesWithIds);
+      } else {
+        // Normal mode, fetch from API
+        fetchVenues();
+      }
       fetchVenueTypes();
     }
-  }, [isOpen, propertyId]);
+  }, [isOpen, propertyId, pendingMode, initialPendingVenues]);
 
   const fetchVenues = async () => {
     setLoading(true);
@@ -115,6 +135,39 @@ export function VenueManagementModal({
       return;
     }
 
+    if (pendingMode) {
+      // Update pending venue in local state
+      const updatedVenues = venues.map(v =>
+        v.id === venueId
+          ? {
+              ...v,
+              name: editForm.name.trim(),
+              venueTypeId: parseInt(editForm.venueTypeId),
+              description: editForm.description.trim() || undefined,
+            }
+          : v
+      );
+      setVenues(updatedVenues);
+
+      // Notify parent component
+      if (onPendingVenuesChange) {
+        onPendingVenuesChange(
+          updatedVenues.map(v => ({
+            name: v.name,
+            venueTypeId: v.venueTypeId,
+            description: v.description,
+          }))
+        );
+      }
+
+      setEditingId(null);
+      toast({
+        title: 'Success',
+        description: 'Venue updated',
+      });
+      return;
+    }
+
     try {
       const response = await api.put(
         `/api/admin/${propertyType}s/${propertyId}/venues/${venueId}`,
@@ -167,6 +220,38 @@ export function VenueManagementModal({
       return;
     }
 
+    if (pendingMode) {
+      // Add to pending venues in local state
+      const newPendingVenue = {
+        id: -(venues.length + 1), // Negative ID for pending venue
+        name: newVenueForm.name.trim(),
+        venueTypeId: parseInt(newVenueForm.venueTypeId),
+        description: newVenueForm.description.trim() || undefined,
+      };
+
+      const updatedVenues = [...venues, newPendingVenue];
+      setVenues(updatedVenues);
+
+      // Notify parent component
+      if (onPendingVenuesChange) {
+        onPendingVenuesChange(
+          updatedVenues.map(v => ({
+            name: v.name,
+            venueTypeId: v.venueTypeId,
+            description: v.description,
+          }))
+        );
+      }
+
+      setIsAddingNew(false);
+      setNewVenueForm({ name: '', venueTypeId: '', description: '' });
+      toast({
+        title: 'Success',
+        description: 'Venue added (will be saved when you create the ship/resort)',
+      });
+      return;
+    }
+
     try {
       // Create the new venue directly on the ship/resort
       const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues`;
@@ -202,6 +287,29 @@ export function VenueManagementModal({
 
   const handleDelete = async (venueId: number, venueName: string) => {
     if (!confirm(`Are you sure you want to delete "${venueName}"?`)) {
+      return;
+    }
+
+    if (pendingMode) {
+      // Remove from pending venues in local state
+      const updatedVenues = venues.filter(v => v.id !== venueId);
+      setVenues(updatedVenues);
+
+      // Notify parent component
+      if (onPendingVenuesChange) {
+        onPendingVenuesChange(
+          updatedVenues.map(v => ({
+            name: v.name,
+            venueTypeId: v.venueTypeId,
+            description: v.description,
+          }))
+        );
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Venue removed',
+      });
       return;
     }
 

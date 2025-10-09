@@ -72,6 +72,9 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   const [loading, setLoading] = useState(false);
   const [amenityIds, setAmenityIds] = useState<number[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [pendingVenues, setPendingVenues] = useState<
+    Array<{ name: string; venueTypeId: number; description?: string }>
+  >([]);
   const [showVenueModal, setShowVenueModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -156,6 +159,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       });
       setAmenityIds([]);
       setVenues([]);
+      setPendingVenues([]); // Clear pending venues for new resort
     }
   }, [resortId, isOpen]);
 
@@ -180,6 +184,11 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleOpenVenueModal = () => {
+    // Always open the modal - we'll handle pending vs saved venues inside
+    setShowVenueModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,6 +239,20 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
       // Update resort amenities
       await api.put(`/api/resorts/${resortId}/amenities`, { amenityIds });
+
+      // If we have pending venues (for new resorts), save them now
+      if (!isEditing && pendingVenues.length > 0) {
+        console.log('🏨 CLIENT: Saving pending venues', { count: pendingVenues.length });
+        for (const venue of pendingVenues) {
+          try {
+            await api.post(`/api/admin/resorts/${resortId}/venues`, venue);
+          } catch (venueError) {
+            console.error('🏨 CLIENT: Failed to save venue', { venue, error: venueError });
+            // Continue with other venues even if one fails
+          }
+        }
+        console.log('🏨 CLIENT: All pending venues saved');
+      }
 
       onSuccess(savedResort);
       onOpenChange(false);
@@ -405,31 +428,29 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white/90">Resort Venues</h3>
               <div className="flex gap-2">
-                {resort?.id && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowVenueModal(true)}
-                      className="h-8 px-3 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Create Venue
-                    </Button>
-                    {venues.length > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowVenueModal(true)}
-                        className="h-8 px-3 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                      >
-                        <Edit2 className="w-3 h-3 mr-1" />
-                        Edit Venues
-                      </Button>
-                    )}
-                  </>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleOpenVenueModal}
+                  disabled={loading}
+                  className="h-8 px-3 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 disabled:opacity-50"
+                  title={!resort?.id ? 'Save resort first, then add venues' : 'Create new venue'}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Create Venue
+                </Button>
+                {resort?.id && venues.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowVenueModal(true)}
+                    className="h-8 px-3 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                  >
+                    <Edit2 className="w-3 h-3 mr-1" />
+                    Edit Venues
+                  </Button>
                 )}
               </div>
             </div>
@@ -484,10 +505,29 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
               </Accordion>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-white/40">
-                <Palmtree className="w-8 h-8 mb-2" />
-                <p className="text-xs">
-                  {resort?.id ? 'No venues added' : 'Save resort first to add venues'}
-                </p>
+                <Palmtree className="w-8 h-8 mb-3" />
+                {resort?.id ? (
+                  <p className="text-sm">No venues added</p>
+                ) : pendingVenues.length > 0 ? (
+                  <div className="text-center px-4">
+                    <p className="text-sm font-semibold text-cyan-400/80 mb-2">
+                      {pendingVenues.length} venue{pendingVenues.length !== 1 ? 's' : ''} ready to
+                      save
+                    </p>
+                    <p className="text-xs text-white/50">
+                      Venues will be created when you save the resort
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center px-4">
+                    <p className="text-sm font-medium text-white/60 mb-2">
+                      Click "Create Venue" to add venues
+                    </p>
+                    <p className="text-xs text-white/40">
+                      Venues will appear here after you save the resort
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -495,25 +535,26 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       </div>
 
       {/* Venue Management Modal */}
-      {resort?.id && (
-        <VenueManagementModal
-          isOpen={showVenueModal}
-          onOpenChange={setShowVenueModal}
-          propertyId={resort.id}
-          propertyType="resort"
-          onSuccess={() => {
-            // Refetch venues to update the display
-            if (resort.id) {
-              api.get(`/api/admin/resorts/${resort.id}/venues`).then(async response => {
-                if (response.ok) {
-                  const venuesData = await response.json();
-                  setVenues(venuesData);
-                }
-              });
-            }
-          }}
-        />
-      )}
+      <VenueManagementModal
+        isOpen={showVenueModal}
+        onOpenChange={setShowVenueModal}
+        propertyId={resort?.id || 0}
+        propertyType="resort"
+        pendingMode={!resort?.id}
+        initialPendingVenues={pendingVenues}
+        onPendingVenuesChange={setPendingVenues}
+        onSuccess={() => {
+          // Refetch venues to update the display (only for existing resorts)
+          if (resort?.id) {
+            api.get(`/api/admin/resorts/${resort.id}/venues`).then(async response => {
+              if (response.ok) {
+                const venuesData = await response.json();
+                setVenues(venuesData);
+              }
+            });
+          }
+        }}
+      />
     </AdminFormModal>
   );
 }
