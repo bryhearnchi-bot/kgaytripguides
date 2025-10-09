@@ -12,18 +12,39 @@
 
 - 🔥 **This application is for travel guides. All dates/times are already in the destination's local timezone.**
 - ✅ Store dates as entered: `"2025-10-12"` means October 12th at the destination
-- ✅ Store times as entered: `"14:00"` means 2:00 PM at the destination
+- ✅ Store times as entered: `"14:00"` means 2:00 PM at the destination (24-hour format)
 - ❌ NEVER convert to UTC or any other timezone
-- ❌ NEVER use `new Date("2025-10-12")` - this causes UTC midnight conversion
-- ✅ Parse dates in local timezone: `const [y, m, d] = date.split('-').map(Number); new Date(y, m - 1, d);`
-- ✅ Format dates without timezone: `const date = \`\${year}-\${month}-\${day}\`;`
+- ❌ NEVER use `new Date("2025-10-12")` or `new Date(dateStr)` with ISO strings
+- ❌ NEVER use `.toISOString()` for date formatting - returns UTC
+- ✅ Parse dates: `const [y, m, d] = date.split('-').map(Number); new Date(y, m - 1, d);`
+- ✅ Format dates: Use `getFullYear()`, `getMonth()`, `getDate()` on locally-created dates
+- ✅ Backend: Use `getUTCFullYear()`, `getUTCMonth()`, `getUTCDate()` when extracting from DB timestamps
 - 🔥 **Users care about the time AT THE DESTINATION, not their home timezone**
 
 **Why this matters:**
 
-- Trip on Oct 12-18 should display as Oct 12-18, not Oct 11-17 or Oct 13-19
-- Cruise departure at 14:00 means 2:00 PM ship time, regardless of user's location
+- Trip on Oct 12-18 must display as Oct 12-18, not Oct 11-17 or Oct 13-19
+- Cruise departure at 14:00 means 2:00 PM ship time, regardless of user's browser timezone
+- Event on "2025-10-15" stays on Oct 15, never shifted by timezone
 - No timezone math = no off-by-one date bugs
+
+**Correct Patterns (see TripWizardContext for reference):**
+
+```typescript
+// ✅ CORRECT - Parse YYYY-MM-DD string
+const [y, m, d] = dateStr.split('-').map(Number);
+const date = new Date(y, m - 1, d);
+
+// ✅ CORRECT - Format Date to YYYY-MM-DD
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+return `${year}-${month}-${day}`;
+
+// ❌ WRONG
+new Date('2025-10-12'); // UTC midnight conversion
+date.toISOString().split('T')[0]; // UTC conversion
+```
 
 ### 2. Database Rules (MANDATORY)
 

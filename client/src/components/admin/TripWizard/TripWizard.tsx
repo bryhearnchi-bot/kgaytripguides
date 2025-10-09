@@ -5,8 +5,6 @@ import { BuildMethodPage } from './BuildMethodPage';
 import { BasicInfoPage } from './BasicInfoPage';
 import { ResortDetailsPage } from './ResortDetailsPage';
 import { ShipDetailsPage } from './ShipDetailsPage';
-import { ResortVenuesAmenitiesPage } from './ResortVenuesAmenitiesPage';
-import { ShipVenuesAmenitiesPage } from './ShipVenuesAmenitiesPage';
 import { ResortSchedulePage } from './ResortSchedulePage';
 import { CruiseItineraryPage } from './CruiseItineraryPage';
 import { CompletionPage } from './CompletionPage';
@@ -52,8 +50,6 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
     setShipId,
     updateResortData,
     updateShipData,
-    setAmenityIds,
-    setVenueIds,
     setScheduleEntries,
     setItineraryEntries,
     restoreFromDraft,
@@ -271,19 +267,6 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
           );
         }
       case 3:
-        // Conditional rendering for venues and amenities
-        if (state.tripType === 'resort') {
-          return <ResortVenuesAmenitiesPage />;
-        } else if (state.tripType === 'cruise') {
-          return <ShipVenuesAmenitiesPage />;
-        } else {
-          return (
-            <div className="text-white/60 text-center py-8">
-              Please select a trip type on the previous page.
-            </div>
-          );
-        }
-      case 4:
         // Conditional rendering for schedule/itinerary
         if (state.tripType === 'resort') {
           return <ResortSchedulePage />;
@@ -296,7 +279,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
             </div>
           );
         }
-      case 5:
+      case 4:
         return <CompletionPage />;
       default:
         return <div className="text-white/60 text-center py-8">Page under construction</div>;
@@ -318,19 +301,12 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         return 'Property Details';
       case 3:
         if (state.tripType === 'resort') {
-          return 'Resort Venues & Amenities';
-        } else if (state.tripType === 'cruise') {
-          return 'Ship Venues & Amenities';
-        }
-        return 'Venues & Amenities';
-      case 4:
-        if (state.tripType === 'resort') {
           return 'Resort Schedule';
         } else if (state.tripType === 'cruise') {
           return 'Cruise Itinerary';
         }
         return 'Schedule & Itinerary';
-      case 5:
+      case 4:
         return 'Review & Approve';
       default:
         return 'Create New Trip';
@@ -345,33 +321,26 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         return 'Enter the essential details for your new trip';
       case 2:
         if (state.tripType === 'resort') {
-          return 'Provide resort information and amenities';
+          return 'Select a resort or create a new one (includes venues & amenities)';
         } else if (state.tripType === 'cruise') {
-          return 'Provide ship specifications and details';
+          return 'Select a ship or create a new one (includes venues & amenities)';
         }
         return 'Enter property details';
       case 3:
-        if (state.tripType === 'resort') {
-          return 'Select venues and amenities available at the resort';
-        } else if (state.tripType === 'cruise') {
-          return 'Select venues and amenities available on the ship';
-        }
-        return 'Select venues and amenities';
-      case 4:
         if (state.tripType === 'resort') {
           return 'Add daily schedule with images and descriptions';
         } else if (state.tripType === 'cruise') {
           return 'Add port-by-port itinerary with times and locations';
         }
         return 'Build your schedule or itinerary';
-      case 5:
+      case 4:
         return 'Review all trip details and save';
       default:
         return '';
     }
   };
 
-  const totalPages = 6; // Initial selection, basic info, resort/ship details, venues/amenities, schedule/itinerary, completion
+  const totalPages = 5; // Build method, basic info, resort/ship details, schedule/itinerary, completion
   const progress = ((state.currentPage + 1) / totalPages) * 100;
 
   return (
@@ -384,7 +353,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         description={getPageDescription()}
         icon={<Sparkles className="h-5 w-5 text-cyan-400" />}
         maxWidthClassName="trip-wizard-modal max-w-4xl"
-        contentClassName="trip-wizard-body pb-6"
+        contentClassName="trip-wizard-body pb-6 overflow-visible"
       >
         {/* Progress Bar */}
         <div className="mb-7 trip-wizard-progress">

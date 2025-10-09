@@ -14,14 +14,14 @@ export const scheduleEntrySchema = z.object({
 export const itineraryEntrySchema = z.object({
   dayNumber: z.number(),
   date: z.string(),
-  locationId: z.number().optional(),
+  locationId: z.number().nullable().optional(),
   locationName: z.string().optional(),
   arrivalTime: z.string().optional(),
   departureTime: z.string().optional(),
   allAboardTime: z.string().optional(),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
-  locationTypeId: z.number().optional(),
+  locationTypeId: z.number().nullable().optional(),
 });
 
 // Resort data

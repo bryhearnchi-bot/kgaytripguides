@@ -2,13 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { AdminFormModal } from './AdminFormModal';
 import { AmenitySelector } from './AmenitySelector';
-import { VenueSelector } from './VenueSelector';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from './ImageUploadField';
-import { Building } from 'lucide-react';
+import { Building, Edit2, Plus, Palmtree, ChevronDown } from 'lucide-react';
 import { LocationSearchBar } from './LocationSearchBar';
+import { VenueManagementModal } from './VenueManagementModal';
+import { Button } from '@/components/ui/button';
 import { locationService, type LocationData } from '@/lib/location-service';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface Resort {
   id?: number;
@@ -29,7 +36,13 @@ interface Resort {
 
 interface ResortWithRelations extends Resort {
   amenityIds: number[];
-  venueIds: number[];
+}
+
+interface Venue {
+  id: number;
+  name: string;
+  venueTypeName?: string;
+  description?: string;
 }
 
 interface ResortFormModalProps {
@@ -58,7 +71,8 @@ interface FormData {
 export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: ResortFormModalProps) {
   const [loading, setLoading] = useState(false);
   const [amenityIds, setAmenityIds] = useState<number[]>([]);
-  const [venueIds, setVenueIds] = useState<number[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [showVenueModal, setShowVenueModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     location: '',
@@ -128,7 +142,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         checkOutTime: '',
       });
       setAmenityIds([]);
-      setVenueIds([]);
+      setVenues([]);
     }
   }, [resort, isOpen]);
 
@@ -136,7 +150,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
     try {
       const [amenitiesResponse, venuesResponse] = await Promise.all([
         api.get(`/api/resorts/${resortId}/amenities`),
-        api.get(`/api/resorts/${resortId}/venues`),
+        api.get(`/api/admin/resorts/${resortId}/venues`),
       ]);
 
       if (amenitiesResponse.ok && venuesResponse.ok) {
@@ -144,7 +158,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         const venuesData = await venuesResponse.json();
 
         setAmenityIds(amenitiesData.map((a: any) => a.id));
-        setVenueIds(venuesData.map((v: any) => v.id));
+        setVenues(venuesData);
       }
     } catch (error) {
       console.error('Error loading resort relations:', error);
@@ -201,11 +215,8 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       const savedResort = await resortResponse.json();
       const resortId = savedResort.id;
 
-      // Update resort relationships
-      await Promise.all([
-        api.put(`/api/resorts/${resortId}/amenities`, { amenityIds }),
-        api.put(`/api/resorts/${resortId}/venues`, { venueIds }),
-      ]);
+      // Update resort amenities
+      await api.put(`/api/resorts/${resortId}/amenities`, { amenityIds });
 
       onSuccess(savedResort);
       onOpenChange(false);
@@ -234,7 +245,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         type: 'submit',
         loading,
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
-        disabled: !formData.name.trim() || !formData.country.trim(),
       }}
       secondaryAction={{
         label: 'Cancel',
@@ -366,6 +376,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
         {/* Right Column - Amenities & Venues */}
         <div className="space-y-4">
+          {/* Resort Amenities - now on top */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-white/90">Resort Amenities</h3>
             <AmenitySelector
@@ -376,17 +387,120 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
             />
           </div>
 
+          {/* Resort Venues - now on bottom with accordions */}
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white/90">Resort Venues</h3>
-            <VenueSelector
-              selectedIds={venueIds}
-              onSelectionChange={setVenueIds}
-              disabled={loading}
-              className="w-full"
-            />
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white/90">Resort Venues</h3>
+              <div className="flex gap-2">
+                {resort?.id && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowVenueModal(true)}
+                      className="h-8 px-3 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Create Venue
+                    </Button>
+                    {venues.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowVenueModal(true)}
+                        className="h-8 px-3 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                      >
+                        <Edit2 className="w-3 h-3 mr-1" />
+                        Edit Venues
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Venue List Display - No container, grouped by type */}
+            {venues.length > 0 ? (
+              <Accordion type="multiple" className="w-full space-y-2">
+                {Object.entries(
+                  venues.reduce(
+                    (acc, venue) => {
+                      const type = venue.venueTypeName || 'Other';
+                      if (!acc[type]) acc[type] = [];
+                      acc[type].push(venue);
+                      return acc;
+                    },
+                    {} as Record<string, typeof venues>
+                  )
+                ).map(([type, venuesInType]) => (
+                  <AccordionItem
+                    key={type}
+                    value={type}
+                    className="border border-white/10 rounded-lg bg-white/[0.02]"
+                  >
+                    <AccordionTrigger className="px-3 py-2 hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Palmtree className="w-4 h-4 text-cyan-400" />
+                        <span className="text-sm font-medium text-white">{type}</span>
+                        <span className="text-xs text-white/50">({venuesInType.length})</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3 pb-2">
+                      <div className="space-y-2">
+                        {venuesInType.map(venue => (
+                          <div
+                            key={venue.id}
+                            className="flex items-start gap-2 p-2 bg-white/[0.02] rounded border border-white/5"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm text-white font-medium">{venue.name}</div>
+                              {venue.description && (
+                                <div className="text-xs text-white/50 mt-0.5 line-clamp-2">
+                                  {venue.description}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-white/40">
+                <Palmtree className="w-8 h-8 mb-2" />
+                <p className="text-xs">
+                  {resort?.id ? 'No venues added' : 'Save resort first to add venues'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Venue Management Modal */}
+      {resort?.id && (
+        <VenueManagementModal
+          isOpen={showVenueModal}
+          onOpenChange={setShowVenueModal}
+          propertyId={resort.id}
+          propertyType="resort"
+          onSuccess={() => {
+            // Refetch venues to update the display
+            if (resort.id) {
+              api.get(`/api/admin/resorts/${resort.id}/venues`).then(async response => {
+                if (response.ok) {
+                  const venuesData = await response.json();
+                  setVenues(venuesData);
+                }
+              });
+            }
+          }}
+        />
+      )}
     </AdminFormModal>
   );
 }

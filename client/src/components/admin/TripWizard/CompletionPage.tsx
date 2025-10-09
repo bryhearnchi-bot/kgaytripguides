@@ -350,40 +350,6 @@ export function CompletionPage() {
         </div>
       )}
 
-      {/* Venues & Amenities Section */}
-      <div className="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-cyan-400" />
-            <h4 className="text-sm font-semibold text-white">Venues & Amenities</h4>
-          </div>
-          <Button
-            type="button"
-            onClick={() => setShowVenuesModal(true)}
-            className="h-8 px-3 bg-white/[0.04] border border-white/10 rounded-lg text-white/70 text-xs hover:bg-white/[0.06] hover:text-white transition-all"
-          >
-            <Edit2 className="w-3 h-3 mr-1.5" />
-            Edit
-          </Button>
-        </div>
-        <div className="space-y-2">
-          <div>
-            <p className="text-[10px] text-white/50">Venues</p>
-            <p className="text-sm text-white/90">
-              {state.venueIds.length > 0 ? `${state.venueIds.length} selected` : 'None selected'}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] text-white/50">Amenities</p>
-            <p className="text-sm text-white/90">
-              {state.amenityIds.length > 0
-                ? `${state.amenityIds.length} selected`
-                : 'None selected'}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Schedule/Itinerary Section */}
       {state.tripType === 'resort' && state.scheduleEntries.length > 0 && (
         <div className="p-4 rounded-lg border border-white/10 bg-white/[0.02]">

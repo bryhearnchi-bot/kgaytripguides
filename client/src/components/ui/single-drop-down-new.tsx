@@ -83,6 +83,10 @@ export function SingleDropDownNew({
           onOpenAutoFocus={e => e.preventDefault()}
         >
           <Command className="bg-transparent pointer-events-auto">
+            <CommandInput
+              placeholder="Search..."
+              className="h-9 border-b border-white/10 bg-transparent text-white placeholder:text-white/40"
+            />
             <CommandList className="max-h-[300px] overflow-y-auto pointer-events-auto">
               <CommandEmpty className="py-6 text-center text-sm text-white/50">
                 {emptyMessage}

@@ -4,10 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BasicInfoPage } from '../TripWizard/BasicInfoPage';
 import { ResortDetailsPage } from '../TripWizard/ResortDetailsPage';
 import { ShipDetailsPage } from '../TripWizard/ShipDetailsPage';
-import { ResortVenuesAmenitiesPage } from '../TripWizard/ResortVenuesAmenitiesPage';
-import { ShipVenuesAmenitiesPage } from '../TripWizard/ShipVenuesAmenitiesPage';
 import { ResortSchedulePage } from '../TripWizard/ResortSchedulePage';
 import { CruiseItineraryPage } from '../TripWizard/CruiseItineraryPage';
+import { EventsTabPage } from '../TripWizard/EventsTabPage';
+import { TalentTabPage } from '../TripWizard/TalentTabPage';
 import { TripWizardProvider, useTripWizard } from '@/contexts/TripWizardContext';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
@@ -35,8 +35,6 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
     setShipId,
     updateResortData,
     updateShipData,
-    setAmenityIds,
-    setVenueIds,
     setScheduleEntries,
     setItineraryEntries,
     restoreFromDraft,
@@ -98,8 +96,8 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         shipId: trip.shipId || null,
         resortData: trip.resortData || null,
         shipData: trip.shipData || null,
-        amenityIds: trip.amenityIds || [],
-        venueIds: trip.venueIds || [],
+        // NOTE: amenityIds and venueIds are NOT included
+        // They are managed separately by ShipFormModal/ResortFormModal
         scheduleEntries: trip.scheduleEntries || [],
         itineraryEntries: trip.itineraryEntries || [],
         isEditMode: true, // Set edit mode flag
@@ -159,9 +157,9 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         description: state.tripData.description || undefined,
         highlights: state.tripData.highlights || undefined,
 
-        // Venue and amenity IDs (always include, even if empty)
-        venueIds: state.venueIds || [],
-        amenityIds: state.amenityIds || [],
+        // NOTE: Amenities and venues are NOT included here
+        // They are managed separately via ShipFormModal/ResortFormModal
+        // which use PUT /api/ships/:id/amenities and PUT /api/resorts/:id/amenities
       };
 
       // Add resort or ship ID (NOT resortData/shipData)
@@ -261,16 +259,22 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
               {tripData.tripTypeId === 1 ? 'Ship' : 'Resort'}
             </TabsTrigger>
             <TabsTrigger
-              value="venues-amenities"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              Venues & Amenities
-            </TabsTrigger>
-            <TabsTrigger
               value="schedule"
               className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
             >
               {tripData.tripTypeId === 1 ? 'Itinerary' : 'Schedule'}
+            </TabsTrigger>
+            <TabsTrigger
+              value="events"
+              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
+            >
+              Events
+            </TabsTrigger>
+            <TabsTrigger
+              value="talent"
+              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
+            >
+              Talent
             </TabsTrigger>
           </TabsList>
 
@@ -283,16 +287,16 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
             {tripData.tripTypeId === 1 ? <ShipDetailsPage /> : <ResortDetailsPage />}
           </TabsContent>
 
-          <TabsContent value="venues-amenities" className="mt-0">
-            {tripData.tripTypeId === 1 ? (
-              <ShipVenuesAmenitiesPage />
-            ) : (
-              <ResortVenuesAmenitiesPage />
-            )}
-          </TabsContent>
-
           <TabsContent value="schedule" className="mt-0">
             {tripData.tripTypeId === 1 ? <CruiseItineraryPage /> : <ResortSchedulePage />}
+          </TabsContent>
+
+          <TabsContent value="events" className="mt-0">
+            <EventsTabPage />
+          </TabsContent>
+
+          <TabsContent value="talent" className="mt-0">
+            <TalentTabPage />
           </TabsContent>
         </Tabs>
       )}

@@ -676,7 +676,6 @@ export function registerLocationRoutes(app: Express) {
       const transformedResults = results.map((amenity: any) => ({
         id: amenity.id,
         name: amenity.name,
-        description: amenity.description,
         createdAt: amenity.created_at,
         updatedAt: amenity.updated_at,
       }));
@@ -716,7 +715,6 @@ export function registerLocationRoutes(app: Express) {
       const transformedAmenity = {
         id: amenity.id,
         name: amenity.name,
-        description: amenity.description,
         createdAt: amenity.created_at,
         updatedAt: amenity.updated_at,
       };
@@ -748,7 +746,6 @@ export function registerLocationRoutes(app: Express) {
       // Prepare amenity data with proper field names for database
       const amenityData = {
         name: req.body.name,
-        description: req.body.description || null,
       };
 
       // Use Supabase Admin client to bypass RLS
@@ -771,7 +768,6 @@ export function registerLocationRoutes(app: Express) {
       const transformedAmenity = {
         id: amenity.id,
         name: amenity.name,
-        description: amenity.description,
         createdAt: amenity.created_at,
         updatedAt: amenity.updated_at,
       };
@@ -798,7 +794,6 @@ export function registerLocationRoutes(app: Express) {
       // Build update data dynamically
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
-      if (req.body.description !== undefined) updateData.description = req.body.description;
 
       // Always update the updated_at timestamp
       updateData.updated_at = new Date().toISOString();
@@ -827,7 +822,6 @@ export function registerLocationRoutes(app: Express) {
       const transformedAmenity = {
         id: amenity.id,
         name: amenity.name,
-        description: amenity.description,
         createdAt: amenity.created_at,
         updatedAt: amenity.updated_at,
       };
@@ -1589,7 +1583,6 @@ export function registerLocationRoutes(app: Express) {
         amenities!inner(
           id,
           name,
-          description,
           created_at,
           updated_at
         )
@@ -1610,7 +1603,6 @@ export function registerLocationRoutes(app: Express) {
         results?.map((item: any) => ({
           id: item.amenities.id,
           name: item.amenities.name,
-          description: item.amenities.description,
           createdAt: item.amenities.created_at,
           updatedAt: item.amenities.updated_at,
         })) || [];
@@ -1672,105 +1664,7 @@ export function registerLocationRoutes(app: Express) {
     })
   );
 
-  // Get ship's venues
-  app.get(
-    '/api/ships/:id/venues',
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const shipId = Number(req.params.id);
-
-      // Use Supabase Admin client
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: results, error } = await supabaseAdmin
-        .from('ship_venues')
-        .select(
-          `
-        venues!inner(
-          id,
-          name,
-          venue_type_id,
-          description,
-          created_at,
-          updated_at,
-          venue_types!inner(name)
-        )
-      `
-        )
-        .eq('ship_id', shipId);
-
-      if (error) {
-        logger.error('Error fetching ship venues:', error, {
-          method: req.method,
-          path: req.path,
-        });
-        throw ApiError.internal('Failed to fetch ship venues');
-      }
-
-      // Transform results to flat structure with camelCase
-      const transformedResults =
-        results?.map((item: any) => ({
-          id: item.venues.id,
-          name: item.venues.name,
-          venueTypeId: item.venues.venue_type_id,
-          venueTypeName: item.venues.venue_types?.name,
-          description: item.venues.description,
-          createdAt: item.venues.created_at,
-          updatedAt: item.venues.updated_at,
-        })) || [];
-
-      return res.json(transformedResults);
-    })
-  );
-
-  // Update ship's venues
-  app.put(
-    '/api/ships/:id/venues',
-    requireContentEditor,
-    auditLogger('admin.ship.venues.update'),
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      // Check if Supabase admin is available
-      if (!isSupabaseAdminAvailable()) {
-        throw ApiError.serviceUnavailable(
-          'Admin service not configured',
-          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
-        );
-      }
-
-      const shipId = Number(req.params.id);
-      const { venueIds = [] } = req.body;
-
-      if (!Array.isArray(venueIds)) {
-        throw ApiError.badRequest('venueIds must be an array');
-      }
-
-      const supabaseAdmin = getSupabaseAdmin();
-
-      // First, remove all existing venues for this ship
-      const { error: deleteError } = await supabaseAdmin
-        .from('ship_venues')
-        .delete()
-        .eq('ship_id', shipId);
-
-      if (deleteError) {
-        handleSupabaseError(deleteError, 'remove ship venues');
-      }
-
-      // Then, add the new venues
-      if (venueIds.length > 0) {
-        const insertData = venueIds.map((venueId: number) => ({
-          ship_id: shipId,
-          venue_id: venueId,
-        }));
-
-        const { error: insertError } = await supabaseAdmin.from('ship_venues').insert(insertData);
-
-        if (insertError) {
-          handleSupabaseError(insertError, 'add ship venues');
-        }
-      }
-
-      return res.json({ message: 'Ship venues updated successfully' });
-    })
-  );
+  // Ship venues are now managed via /api/admin/ships/:shipId/venues in admin/venues.ts
 
   // ============ RESORTS RELATIONSHIP ENDPOINTS ============
 
@@ -1789,7 +1683,6 @@ export function registerLocationRoutes(app: Express) {
         amenities!inner(
           id,
           name,
-          description,
           created_at,
           updated_at
         )
@@ -1810,7 +1703,6 @@ export function registerLocationRoutes(app: Express) {
         results?.map((item: any) => ({
           id: item.amenities.id,
           name: item.amenities.name,
-          description: item.amenities.description,
           createdAt: item.amenities.created_at,
           updatedAt: item.amenities.updated_at,
         })) || [];
@@ -1872,103 +1764,5 @@ export function registerLocationRoutes(app: Express) {
     })
   );
 
-  // Get resort's venues
-  app.get(
-    '/api/resorts/:id/venues',
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const resortId = Number(req.params.id);
-
-      // Use Supabase Admin client
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: results, error } = await supabaseAdmin
-        .from('resort_venues')
-        .select(
-          `
-        venues!inner(
-          id,
-          name,
-          venue_type_id,
-          description,
-          created_at,
-          updated_at,
-          venue_types!inner(name)
-        )
-      `
-        )
-        .eq('resort_id', resortId);
-
-      if (error) {
-        logger.error('Error fetching resort venues:', error, {
-          method: req.method,
-          path: req.path,
-        });
-        throw ApiError.internal('Failed to fetch resort venues');
-      }
-
-      // Transform results to flat structure with camelCase
-      const transformedResults =
-        results?.map((item: any) => ({
-          id: item.venues.id,
-          name: item.venues.name,
-          venueTypeId: item.venues.venue_type_id,
-          venueTypeName: item.venues.venue_types?.name,
-          description: item.venues.description,
-          createdAt: item.venues.created_at,
-          updatedAt: item.venues.updated_at,
-        })) || [];
-
-      return res.json(transformedResults);
-    })
-  );
-
-  // Update resort's venues
-  app.put(
-    '/api/resorts/:id/venues',
-    requireContentEditor,
-    auditLogger('admin.resort.venues.update'),
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      // Check if Supabase admin is available
-      if (!isSupabaseAdminAvailable()) {
-        throw ApiError.serviceUnavailable(
-          'Admin service not configured',
-          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
-        );
-      }
-
-      const resortId = Number(req.params.id);
-      const { venueIds = [] } = req.body;
-
-      if (!Array.isArray(venueIds)) {
-        throw ApiError.badRequest('venueIds must be an array');
-      }
-
-      const supabaseAdmin = getSupabaseAdmin();
-
-      // First, remove all existing venues for this resort
-      const { error: deleteError } = await supabaseAdmin
-        .from('resort_venues')
-        .delete()
-        .eq('resort_id', resortId);
-
-      if (deleteError) {
-        handleSupabaseError(deleteError, 'remove resort venues');
-      }
-
-      // Then, add the new venues
-      if (venueIds.length > 0) {
-        const insertData = venueIds.map((venueId: number) => ({
-          resort_id: resortId,
-          venue_id: venueId,
-        }));
-
-        const { error: insertError } = await supabaseAdmin.from('resort_venues').insert(insertData);
-
-        if (insertError) {
-          handleSupabaseError(insertError, 'add resort venues');
-        }
-      }
-
-      return res.json({ message: 'Resort venues updated successfully' });
-    })
-  );
+  // Resort venues are now managed via /api/admin/resorts/:resortId/venues in admin/venues.ts
 }

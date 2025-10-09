@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTripWizard } from '@/contexts/TripWizardContext';
+import type { ScheduleEntry, ItineraryEntry } from '@/contexts/TripWizardContext';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
 import { DatePicker } from '@/components/ui/date-picker';
+import { ConfirmDeleteDaysDialog } from './ConfirmDeleteDaysDialog';
 import { api } from '@/lib/api-client';
 import { Ship, Calendar, Building2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface CharterCompany {
   id: number;
@@ -19,14 +22,171 @@ interface TripType {
 }
 
 export function BasicInfoPage() {
-  const { state, updateTripData, setTripType } = useTripWizard();
+  const {
+    state,
+    updateTripData,
+    setTripType,
+    syncScheduleWithDates,
+    syncItineraryWithDates,
+    syncEventsWithDates,
+  } = useTripWizard();
   const [charterCompanies, setCharterCompanies] = useState<CharterCompany[]>([]);
   const [tripTypes, setTripTypes] = useState<TripType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Date change tracking
+  const previousDatesRef = useRef<{ start: string; end: string } | null>(null);
+  const isSyncingRef = useRef(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [pendingDateChange, setPendingDateChange] = useState<{ start: string; end: string } | null>(
+    null
+  );
+  const [entriesToDelete, setEntriesToDelete] = useState<(ScheduleEntry | ItineraryEntry)[]>([]);
+
   useEffect(() => {
     loadLookupData();
   }, []);
+
+  // Watch for date changes and sync schedule/itinerary
+  useEffect(() => {
+    // Skip if already syncing
+    if (isSyncingRef.current) return;
+
+    const currentStart = state.tripData.startDate;
+    const currentEnd = state.tripData.endDate;
+
+    // Skip if either date is missing
+    if (!currentStart || !currentEnd) {
+      return;
+    }
+
+    // First time seeing dates - just save them
+    if (!previousDatesRef.current) {
+      previousDatesRef.current = { start: currentStart, end: currentEnd };
+      return;
+    }
+
+    // Check if dates have changed
+    const datesChanged =
+      currentStart !== previousDatesRef.current.start ||
+      currentEnd !== previousDatesRef.current.end;
+
+    if (!datesChanged) return;
+
+    // Dates changed - sync schedule/itinerary
+    const performSync = () => {
+      isSyncingRef.current = true;
+
+      const oldStart = previousDatesRef.current!.start;
+      const oldEnd = previousDatesRef.current!.end;
+
+      // Sync based on trip type
+      let syncResult;
+      if (state.tripType === 'resort') {
+        // Only sync if there are schedule entries
+        if (state.scheduleEntries.length > 0) {
+          syncResult = syncScheduleWithDates(oldStart, oldEnd, currentStart, currentEnd);
+        }
+      } else if (state.tripType === 'cruise') {
+        // Only sync if there are itinerary entries
+        if (state.itineraryEntries.length > 0) {
+          syncResult = syncItineraryWithDates(oldStart, oldEnd, currentStart, currentEnd);
+        }
+      }
+
+      // Handle sync result
+      if (syncResult && !syncResult.success && syncResult.entriesToDelete) {
+        // User needs to confirm deletion
+        setPendingDateChange({ start: currentStart, end: currentEnd });
+        setEntriesToDelete(syncResult.entriesToDelete);
+        setShowDeleteDialog(true);
+
+        // Revert dates temporarily (will be re-applied if user confirms)
+        updateTripData({ startDate: oldStart, endDate: oldEnd });
+      } else {
+        // Sync successful or no entries to sync
+        previousDatesRef.current = { start: currentStart, end: currentEnd };
+
+        // ALSO SYNC EVENTS - events shift with dates automatically
+        if (state.events && state.events.length > 0) {
+          syncEventsWithDates(oldStart, oldEnd, currentStart, currentEnd);
+        }
+
+        // Show toast notification if entries were synced
+        if (syncResult && (state.scheduleEntries.length > 0 || state.itineraryEntries.length > 0)) {
+          const pageName = state.tripType === 'resort' ? 'Schedule' : 'Itinerary';
+          toast({
+            title: 'Trip dates updated',
+            description: `Please review the ${pageName} page and Events tab to verify all entries.`,
+            duration: 5000,
+          });
+        }
+      }
+
+      isSyncingRef.current = false;
+    };
+
+    performSync();
+  }, [
+    state.tripData.startDate,
+    state.tripData.endDate,
+    state.tripType,
+    state.scheduleEntries.length,
+    state.itineraryEntries.length,
+    state.events?.length,
+    syncScheduleWithDates,
+    syncItineraryWithDates,
+    syncEventsWithDates,
+    updateTripData,
+  ]);
+
+  const handleConfirmDelete = () => {
+    if (!pendingDateChange || !previousDatesRef.current) return;
+
+    isSyncingRef.current = true;
+
+    // Apply the pending date change
+    const { start: newStart, end: newEnd } = pendingDateChange;
+    const { start: oldStart, end: oldEnd } = previousDatesRef.current;
+
+    // Force sync (this will delete the entries)
+    if (state.tripType === 'resort') {
+      syncScheduleWithDates(oldStart, oldEnd, newStart, newEnd);
+    } else if (state.tripType === 'cruise') {
+      syncItineraryWithDates(oldStart, oldEnd, newStart, newEnd);
+    }
+
+    // ALSO SYNC EVENTS
+    if (state.events && state.events.length > 0) {
+      syncEventsWithDates(oldStart, oldEnd, newStart, newEnd);
+    }
+
+    // Update dates
+    updateTripData({ startDate: newStart, endDate: newEnd });
+    previousDatesRef.current = { start: newStart, end: newEnd };
+
+    // Show toast
+    const pageName = state.tripType === 'resort' ? 'Schedule' : 'Itinerary';
+    toast({
+      title: 'Trip dates updated',
+      description: `Days deleted. Please review the ${pageName} page and Events tab to verify remaining entries.`,
+      duration: 5000,
+    });
+
+    // Close dialog
+    setShowDeleteDialog(false);
+    setPendingDateChange(null);
+    setEntriesToDelete([]);
+
+    isSyncingRef.current = false;
+  };
+
+  const handleCancelDelete = () => {
+    // User cancelled - dates have already been reverted
+    setShowDeleteDialog(false);
+    setPendingDateChange(null);
+    setEntriesToDelete([]);
+  };
 
   const loadLookupData = async () => {
     try {
@@ -258,6 +418,16 @@ export function BasicInfoPage() {
           to "Upcoming" status and will be visible on the site immediately after creation.
         </p>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDeleteDaysDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        entriesToDelete={entriesToDelete}
+        tripType={state.tripType || 'resort'}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 }

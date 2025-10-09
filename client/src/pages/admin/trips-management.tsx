@@ -109,6 +109,8 @@ interface Trip {
   scheduleEntries?: any[];
   shipData?: any;
   resortData?: any;
+  events?: any[];
+  tripTalent?: any[];
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'current' | 'past' | 'archived' | 'draft' | 'preview';
@@ -777,12 +779,33 @@ export default function TripsManagement() {
               {
                 label: 'Edit Trip',
                 icon: <Edit className="h-4 w-4" />,
-                onClick: (trip: Trip) => {
+                onClick: async (trip: Trip) => {
                   if (document.activeElement instanceof HTMLElement) {
                     document.activeElement.blur();
                   }
                   document.body.click();
-                  setTimeout(() => {
+
+                  // Fetch events and talent for this trip
+                  try {
+                    const [eventsResponse, talentResponse] = await Promise.all([
+                      api.get(`/api/admin/trips/${trip.id}/events`),
+                      api.get(`/api/admin/trips/${trip.id}/talent`),
+                    ]);
+
+                    const events = await eventsResponse.json();
+                    const tripTalent = await talentResponse.json();
+
+                    console.log('🔥 API Responses:', {
+                      eventsResponse: { status: eventsResponse.status, ok: eventsResponse.ok },
+                      talentResponse: { status: talentResponse.status, ok: talentResponse.ok },
+                      events,
+                      eventsType: typeof events,
+                      eventsIsArray: Array.isArray(events),
+                      tripTalent,
+                      tripTalentType: typeof tripTalent,
+                      tripTalentIsArray: Array.isArray(tripTalent),
+                    });
+
                     console.log('🎯 Setting trip to edit:', {
                       id: trip.id,
                       name: trip.name,
@@ -790,10 +813,24 @@ export default function TripsManagement() {
                       itineraryCount: trip.itineraryEntries?.length,
                       scheduleEntries: trip.scheduleEntries,
                       scheduleCount: trip.scheduleEntries?.length,
+                      eventsCount: events?.length,
+                      talentCount: tripTalent?.length,
                     });
-                    setTripToEdit(trip);
+
+                    setTripToEdit({
+                      ...trip,
+                      events,
+                      tripTalent,
+                    });
                     setEditTripModalOpen(true);
-                  }, 50);
+                  } catch (error) {
+                    console.error('Error fetching trip data:', error);
+                    toast({
+                      title: 'Error',
+                      description: 'Failed to load trip data',
+                      variant: 'destructive',
+                    });
+                  }
                 },
                 visible: (trip: Trip) => trip.status !== 'draft' && canCreateOrEditTrips,
               },

@@ -85,6 +85,7 @@ interface Resort {
 interface ResortSelectorProps {
   selectedId?: number | null;
   onSelectionChange: (resortId: number | null, resortData?: Resort) => void;
+  onCreateNew?: () => void;
   disabled?: boolean;
   className?: string;
   label?: string;
@@ -107,6 +108,7 @@ interface CreateResortFormData {
 export function ResortSelector({
   selectedId,
   onSelectionChange,
+  onCreateNew,
   disabled = false,
   className,
   label = 'Resort',
@@ -222,8 +224,13 @@ export function ResortSelector({
   };
 
   const handleCreateNew = () => {
-    setShowCreateModal(true);
     setIsPopoverOpen(false);
+    if (onCreateNew) {
+      onCreateNew();
+    } else {
+      // Fallback to built-in modal if no callback provided
+      setShowCreateModal(true);
+    }
   };
 
   const selectResort = (resort: Resort) => {

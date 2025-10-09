@@ -77,6 +77,7 @@ interface Ship {
 interface ShipSelectorProps {
   selectedId?: number | null;
   onSelectionChange: (shipId: number | null, shipData?: Ship) => void;
+  onCreateNew?: () => void;
   disabled?: boolean;
   className?: string;
   label?: string;
@@ -97,6 +98,7 @@ interface CreateShipFormData {
 export function ShipSelector({
   selectedId,
   onSelectionChange,
+  onCreateNew,
   disabled = false,
   className,
   label = 'Ship',
@@ -204,8 +206,13 @@ export function ShipSelector({
   };
 
   const handleCreateNew = () => {
-    setShowCreateModal(true);
     setIsPopoverOpen(false);
+    if (onCreateNew) {
+      onCreateNew();
+    } else {
+      // Fallback to built-in modal if no callback provided
+      setShowCreateModal(true);
+    }
   };
 
   const selectShip = (ship: Ship) => {

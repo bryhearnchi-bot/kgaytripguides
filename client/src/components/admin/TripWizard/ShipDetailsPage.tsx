@@ -1,9 +1,4 @@
-import { Ship } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { ShipSelector } from '@/components/admin/ShipSelector';
 import { ShipPreview } from './ShipPreview';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
@@ -17,7 +12,9 @@ export function ShipDetailsPage() {
   const queryClient = useQueryClient();
   const [selectedShipId, setSelectedShipId] = useState<number | null>(state.shipId || null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoadingShip, setIsLoadingShip] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const shipData = state.shipData || {};
   const isEditMode = state.isEditMode;
@@ -75,6 +72,12 @@ export function ShipDetailsPage() {
   }, [selectedShipId, shipData.name, isLoadingShip, updateShipData]);
 
   const handleShipSelection = (shipId: number | null, selectedShip?: any) => {
+    // If shipId is null, user wants to create a new ship
+    if (shipId === null) {
+      setShowCreateModal(true);
+      return;
+    }
+
     setSelectedShipId(shipId);
     setShipId(shipId);
 
@@ -91,11 +94,7 @@ export function ShipDetailsPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | number | null) => {
-    updateShipData({ [field]: value });
-  };
-
-  // Determine whether to show preview or input fields
+  // Determine whether to show preview
   const showPreview = selectedShipId && shipData?.name;
 
   return (
@@ -105,6 +104,7 @@ export function ShipDetailsPage() {
         label="Select Ship"
         selectedId={selectedShipId}
         onSelectionChange={handleShipSelection}
+        onCreateNew={() => setShowCreateModal(true)}
         placeholder="Select an existing ship or add new"
         required
       />
@@ -116,106 +116,40 @@ export function ShipDetailsPage() {
         </div>
       )}
 
-      {/* Show preview or input fields */}
-      {!isLoadingShip && (
-        <>
-          {showPreview ? (
-            <ShipPreview shipData={shipData} onEdit={() => setShowEditModal(true)} />
-          ) : (
-            // Show input fields for new ship
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {/* Left Column */}
-              <div className="space-y-2.5">
-                {/* Capacity and Decks Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Capacity</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={shipData.capacity || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'capacity',
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                    />
-                    <p className="text-[10px] text-white/50 mt-0.5">Max passengers</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Decks</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={shipData.decks || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'decks',
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                    />
-                    <p className="text-[10px] text-white/50 mt-0.5">Number of decks</p>
-                  </div>
-                </div>
-
-                {/* Deck Plans URL */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Deck Plans URL</Label>
-                  <Input
-                    placeholder="https://example.com/deck-plans"
-                    value={shipData.deckPlansUrl || ''}
-                    onChange={e => handleInputChange('deckPlansUrl', e.target.value)}
-                    className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Link to ship's deck plans (e.g., from cruisemapper.com)
-                  </p>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-2.5">
-                {/* Ship Image */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Ship Image</Label>
-                  <ImageUploadField
-                    label="Ship Image"
-                    value={shipData.imageUrl || ''}
-                    onChange={url => handleInputChange('imageUrl', url)}
-                    imageType="ships"
-                    placeholder="No ship image uploaded"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    High-quality image of the cruise ship
-                  </p>
-                </div>
-
-                {/* Description */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Description <span className="text-cyan-400">*</span>
-                  </Label>
-                  <Textarea
-                    placeholder="Enter ship description..."
-                    value={shipData.description || ''}
-                    onChange={e => handleInputChange('description', e.target.value)}
-                    rows={3}
-                    className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Describe the ship's features, amenities, and unique characteristics
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+      {/* Show preview */}
+      {!isLoadingShip && showPreview && (
+        <ShipPreview
+          key={refreshKey}
+          shipData={shipData}
+          shipId={selectedShipId}
+          onEdit={() => setShowEditModal(true)}
+        />
       )}
+
+      {/* Ship Create Modal */}
+      <ShipFormModal
+        isOpen={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        ship={null}
+        onSuccess={newShip => {
+          // Auto-select the newly created ship
+          if (newShip && newShip.id) {
+            setSelectedShipId(newShip.id);
+            setShipId(newShip.id);
+            updateShipData({
+              name: newShip.name || '',
+              cruiseLine: newShip.cruiseLine || '',
+              capacity: newShip.capacity,
+              decks: newShip.decks,
+              imageUrl: newShip.imageUrl || '',
+              description: newShip.description || '',
+              deckPlansUrl: newShip.deckPlansUrl || '',
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ['ships'] });
+          setShowCreateModal(false);
+        }}
+      />
 
       {/* Ship Edit Modal */}
       <ShipFormModal
@@ -239,6 +173,7 @@ export function ShipDetailsPage() {
             });
           }
           queryClient.invalidateQueries({ queryKey: ['ships'] });
+          setRefreshKey(prev => prev + 1); // Force ShipPreview to refresh
           setShowEditModal(false);
         }}
       />

@@ -119,6 +119,7 @@ development_db_backup.sql
 # Railway deployment (current platform)
 modelcontextprotocol/
 .claude/
+.codex/
 
 # MCP configuration scripts (contain sensitive API keys)
 fix-mcp-config.js

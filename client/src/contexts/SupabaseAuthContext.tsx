@@ -1,16 +1,14 @@
-import { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { useSupabaseAuth as useSupabaseAuthHook } from '../hooks/useSupabaseAuth';
 
-const SupabaseAuthContext = createContext<ReturnType<typeof useSupabaseAuthHook> | undefined>(undefined);
+const SupabaseAuthContext = createContext<ReturnType<typeof useSupabaseAuthHook> | undefined>(
+  undefined
+);
 
 export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const auth = useSupabaseAuthHook();
 
-  return (
-    <SupabaseAuthContext.Provider value={auth}>
-      {children}
-    </SupabaseAuthContext.Provider>
-  );
+  return <SupabaseAuthContext.Provider value={auth}>{children}</SupabaseAuthContext.Provider>;
 }
 
 export function useSupabaseAuthContext() {

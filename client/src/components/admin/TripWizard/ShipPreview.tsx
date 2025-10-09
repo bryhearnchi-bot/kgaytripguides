@@ -1,12 +1,82 @@
-import { Ship, Users, Layers, Map, Edit2, ExternalLink } from 'lucide-react';
+import { Ship, Users, Layers, Map, Edit2, ExternalLink, Anchor, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/api-client';
 
 interface ShipPreviewProps {
   shipData: any;
+  shipId?: number | null;
   onEdit?: () => void;
 }
 
-export function ShipPreview({ shipData, onEdit }: ShipPreviewProps) {
+interface Venue {
+  id: number;
+  name: string;
+  venueTypeName?: string;
+}
+
+interface Amenity {
+  id: number;
+  name: string;
+}
+
+export function ShipPreview({ shipData, shipId, onEdit }: ShipPreviewProps) {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch venues and amenities when ship ID is available
+  useEffect(() => {
+    const fetchShipRelations = async () => {
+      // Use shipId prop if provided, otherwise try shipData.id
+      const id = shipId ?? shipData?.id;
+      console.log(
+        '[ShipPreview] Fetching relations - shipId:',
+        shipId,
+        'shipData.id:',
+        shipData?.id,
+        'resolved id:',
+        id
+      );
+      if (!id) {
+        console.log('[ShipPreview] No ID available, clearing data');
+        setVenues([]);
+        setAmenities([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        console.log('[ShipPreview] Fetching from API for ship ID:', id);
+        const [venuesResponse, amenitiesResponse] = await Promise.all([
+          api.get(`/api/ships/${id}/venues`),
+          api.get(`/api/ships/${id}/amenities`),
+        ]);
+
+        console.log('[ShipPreview] Venues response:', venuesResponse.ok);
+        console.log('[ShipPreview] Amenities response:', amenitiesResponse.ok);
+
+        if (venuesResponse.ok) {
+          const venuesData = await venuesResponse.json();
+          console.log('[ShipPreview] Venues data:', venuesData);
+          setVenues(venuesData);
+        }
+
+        if (amenitiesResponse.ok) {
+          const amenitiesData = await amenitiesResponse.json();
+          console.log('[ShipPreview] Amenities data:', amenitiesData);
+          setAmenities(amenitiesData);
+        }
+      } catch (error) {
+        console.error('Error fetching ship relations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShipRelations();
+  }, [shipId, shipData?.id]);
+
   if (!shipData || !shipData.name) {
     return (
       <div className="p-4 bg-white/[0.02] border border-white/10 rounded-lg">
@@ -110,6 +180,55 @@ export function ShipPreview({ shipData, onEdit }: ShipPreviewProps) {
           <div className="mt-3 pt-3 border-t border-white/10">
             <p className="text-[10px] text-white/50 uppercase tracking-wider mb-1">Description</p>
             <p className="text-xs text-white/80 leading-relaxed">{shipData.description}</p>
+          </div>
+        )}
+
+        {/* Venues and Amenities - Full Width Below */}
+        {(venues.length > 0 || amenities.length > 0) && (
+          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-2 gap-4">
+            {/* Venues */}
+            {venues.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1 mb-2">
+                  <Anchor className="w-3 h-3 text-cyan-400" />
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">
+                    Venues ({venues.length})
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {venues.map(venue => (
+                    <span
+                      key={venue.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-cyan-400/10 border border-cyan-400/20 text-xs text-cyan-300"
+                    >
+                      {venue.name} {venue.venueTypeName && `- ${venue.venueTypeName}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Amenities */}
+            {amenities.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1 mb-2">
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">
+                    Amenities ({amenities.length})
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {amenities.map(amenity => (
+                    <span
+                      key={amenity.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-cyan-400/10 border border-cyan-400/20 text-xs text-cyan-300"
+                    >
+                      {amenity.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

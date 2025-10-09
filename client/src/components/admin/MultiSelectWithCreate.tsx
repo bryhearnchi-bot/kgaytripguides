@@ -129,7 +129,7 @@ export function MultiSelectWithCreate({
 
   // Get selected items - using testItems instead of items
   const selectedItems = React.useMemo(
-    () => items.filter(item => selectedIds.includes(item.id)),
+    () => items.filter(item => selectedIds.some(id => String(id) === String(item.id))),
     [items, selectedIds]
   );
 
@@ -160,11 +160,14 @@ export function MultiSelectWithCreate({
 
   const toggleOption = (optionValue: string) => {
     if (disabled) return;
-    const itemId = items.find(item => String(item.id) === optionValue)?.id;
-    if (!itemId) return;
+    const item = items.find(item => String(item.id) === optionValue);
+    if (!item) return;
 
-    const newSelectedIds = selectedIds.includes(itemId)
-      ? selectedIds.filter(id => id !== itemId)
+    const itemId = item.id;
+    const isSelected = selectedIds.some(id => String(id) === String(itemId));
+
+    const newSelectedIds = isSelected
+      ? selectedIds.filter(id => String(id) !== String(itemId))
       : [...selectedIds, itemId];
     onSelectionChange(newSelectedIds);
   };
@@ -212,7 +215,7 @@ export function MultiSelectWithCreate({
 
   const handleRemove = (e: React.MouseEvent, itemId: number | string) => {
     e.stopPropagation();
-    onSelectionChange(selectedIds.filter(id => id !== itemId));
+    onSelectionChange(selectedIds.filter(id => String(id) !== String(itemId)));
   };
 
   React.useEffect(() => {
@@ -224,7 +227,7 @@ export function MultiSelectWithCreate({
   return (
     <div className={cn('w-full', className)}>
       <style>{scrollbarStyles}</style>
-      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={false}>
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             onClick={handleTogglePopover}
@@ -261,8 +264,14 @@ export function MultiSelectWithCreate({
                     >
                       <span className="truncate max-w-[100px]">{item.name}</span>
                       <XCircle
-                        className="h-3 w-3 cursor-pointer hover:text-cyan-300"
-                        onClick={e => handleRemove(e, item.id)}
+                        className="h-3 w-3 cursor-pointer hover:text-cyan-300 flex-shrink-0"
+                        onMouseDown={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!disabled) {
+                            handleRemove(e, item.id);
+                          }
+                        }}
                       />
                     </Badge>
                   ))}
@@ -305,19 +314,21 @@ export function MultiSelectWithCreate({
           className={cn(
             'w-[--radix-popover-trigger-width] p-0',
             'bg-[#0a1628]',
-            'border border-white/10 rounded-[10px] shadow-xl'
+            'border border-white/10 rounded-[10px] shadow-xl',
+            'pointer-events-auto'
           )}
           align="start"
           sideOffset={4}
         >
-          <Command className="bg-transparent">
+          <Command className="bg-transparent pointer-events-auto">
             <CommandInput
               placeholder={searchPlaceholder}
               onKeyDown={handleInputKeyDown}
               value={searchValue}
               onValueChange={setSearchValue}
+              className="h-9 border-b border-white/10 bg-transparent text-white placeholder:text-white/40"
             />
-            <CommandList className="max-h-[200px] overflow-y-auto custom-scrollbar">
+            <CommandList className="max-h-[200px] overflow-y-auto custom-scrollbar pointer-events-auto">
               <CommandEmpty className="text-white/40 py-4">No results found.</CommandEmpty>
 
               {onCreate && (
@@ -348,7 +359,9 @@ export function MultiSelectWithCreate({
                 <CommandGroup>
                   {filteredOptions.map(option => {
                     const item = items.find(i => String(i.id) === option.value);
-                    const isSelected = item && selectedIds.includes(item.id);
+                    const isSelected = item
+                      ? selectedIds.some(id => String(id) === String(item.id))
+                      : false;
                     return (
                       <CommandItem
                         key={option.value}
@@ -421,8 +434,14 @@ export function MultiSelectWithCreate({
             >
               <span>{item.name}</span>
               <XCircle
-                className="h-3 w-3 cursor-pointer hover:text-cyan-300"
-                onClick={() => onSelectionChange(selectedIds.filter(id => id !== item.id))}
+                className="h-3 w-3 cursor-pointer hover:text-cyan-300 flex-shrink-0"
+                onMouseDown={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!disabled) {
+                    onSelectionChange(selectedIds.filter(id => String(id) !== String(item.id)));
+                  }
+                }}
               />
             </Badge>
           ))}

@@ -169,7 +169,11 @@ export function AdminFormModal({
             'admin-form-modal',
             'w-[calc(100%-1rem)] sm:w-full',
             maxWidthClassName,
-            'max-h-[85vh] !flex !flex-col overflow-hidden min-h-0',
+            'max-h-[85vh] !flex !flex-col min-h-0',
+            // Allow overflow-visible for trip wizard dropdowns, but default to overflow-hidden
+            maxWidthClassName.includes('trip-wizard-modal')
+              ? 'overflow-visible'
+              : 'overflow-hidden',
             // Clean design without gradients
             'bg-gradient-to-b from-[#10192f] to-[#0f1629]',
             'border border-white/10',

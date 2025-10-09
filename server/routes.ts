@@ -18,6 +18,13 @@ import { registerPerformanceRoutes } from './routes/performance';
 import { registerPartyThemeRoutes } from './routes/party-themes';
 import { registerTripInfoSectionRoutes } from './routes/trip-info-sections';
 import { registerAdminSequenceRoutes } from './routes/admin-sequences';
+import { registerEventRoutes } from './routes/admin/events';
+import { registerEventTypeRoutes } from './routes/admin/event-types';
+import { registerPartyThemeRoutes as registerAdminPartyThemeRoutes } from './routes/admin/party-themes';
+import { registerTalentRoutes } from './routes/admin/talent';
+import { registerTripTalentRoutes } from './routes/admin/trip-talent';
+import { registerVenueRoutes } from './routes/admin/venues';
+import talentCategoriesRouter from './routes/talent-categories';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ MIDDLEWARE SETUP ============
@@ -152,6 +159,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register admin database sequence management routes
   registerAdminSequenceRoutes(app);
+
+  // Register Events and Talent management routes
+  registerEventRoutes(app);
+  registerEventTypeRoutes(app);
+  registerAdminPartyThemeRoutes(app); // Admin-specific party theme routes
+  registerTalentRoutes(app);
+  app.use('/api/admin/talent-categories', talentCategoriesRouter);
+  registerTripTalentRoutes(app);
+  registerVenueRoutes(app);
 
   // ============ ERROR HANDLING ============
 

@@ -9,7 +9,6 @@ import { AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { OceanInput } from '@/components/ui/ocean-input';
-import { OceanTextarea } from '@/components/ui/ocean-textarea';
 
 // Trip Wizard style guide for modal inputs
 const modalFieldStyles = `
@@ -59,7 +58,6 @@ const modalFieldStyles = `
 interface Amenity {
   id: number;
   name: string;
-  description?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -75,7 +73,6 @@ interface AmenitySelectorProps {
 
 interface CreateAmenityFormData {
   name: string;
-  description: string;
 }
 
 export function AmenitySelector({
@@ -97,7 +94,6 @@ export function AmenitySelector({
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState<CreateAmenityFormData>({
     name: '',
-    description: '',
   });
 
   const fetchAmenities = async () => {
@@ -130,7 +126,6 @@ export function AmenitySelector({
     // Open the modal with the name pre-filled
     setCreateForm({
       name: name.trim(),
-      description: '',
     });
     setShowCreateModal(true);
   };
@@ -144,7 +139,6 @@ export function AmenitySelector({
       setCreating(true);
       const response = await api.post('/api/amenities', {
         name: createForm.name.trim(),
-        description: createForm.description.trim() || null,
       });
 
       if (!response.ok) {
@@ -163,7 +157,7 @@ export function AmenitySelector({
       onSelectionChange([...selectedIds, newAmenity.id]);
 
       // Reset form and close modal
-      setCreateForm({ name: '', description: '' });
+      setCreateForm({ name: '' });
       setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating amenity:', error);
@@ -174,7 +168,7 @@ export function AmenitySelector({
   };
 
   const cancelCreateAmenity = () => {
-    setCreateForm({ name: '', description: '' });
+    setCreateForm({ name: '' });
     setShowCreateModal(false);
   };
 
@@ -210,7 +204,6 @@ export function AmenitySelector({
   const items: MultiSelectItem[] = amenities.map(amenity => ({
     id: amenity.id,
     name: amenity.name,
-    description: amenity.description,
   }));
 
   // Custom render function for amenity items
@@ -279,16 +272,6 @@ export function AmenitySelector({
                 value={createForm.name}
                 onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
                 disabled={creating}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-white/90">Description (Optional)</label>
-              <OceanTextarea
-                placeholder="Enter amenity description"
-                value={createForm.description}
-                onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
-                disabled={creating}
-                rows={3}
               />
             </div>
           </div>

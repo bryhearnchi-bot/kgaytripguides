@@ -1,12 +1,92 @@
-import { Building2, Users, Bed, MapPin, Clock, Edit2, ExternalLink } from 'lucide-react';
+import {
+  Building2,
+  Users,
+  Bed,
+  MapPin,
+  Clock,
+  Edit2,
+  ExternalLink,
+  Palmtree,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/api-client';
 
 interface ResortPreviewProps {
   resortData: any;
+  resortId?: number | null;
   onEdit?: () => void;
 }
 
-export function ResortPreview({ resortData, onEdit }: ResortPreviewProps) {
+interface Venue {
+  id: number;
+  name: string;
+  venueTypeName?: string;
+}
+
+interface Amenity {
+  id: number;
+  name: string;
+}
+
+export function ResortPreview({ resortData, resortId, onEdit }: ResortPreviewProps) {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch venues and amenities when resort ID is available
+  useEffect(() => {
+    const fetchResortRelations = async () => {
+      // Use resortId prop if provided, otherwise try resortData.id
+      const id = resortId ?? resortData?.id;
+      console.log(
+        '[ResortPreview] Fetching relations - resortId:',
+        resortId,
+        'resortData.id:',
+        resortData?.id,
+        'resolved id:',
+        id
+      );
+      if (!id) {
+        console.log('[ResortPreview] No ID available, clearing data');
+        setVenues([]);
+        setAmenities([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        console.log('[ResortPreview] Fetching from API for resort ID:', id);
+        const [venuesResponse, amenitiesResponse] = await Promise.all([
+          api.get(`/api/resorts/${id}/venues`),
+          api.get(`/api/resorts/${id}/amenities`),
+        ]);
+
+        console.log('[ResortPreview] Venues response:', venuesResponse.ok);
+        console.log('[ResortPreview] Amenities response:', amenitiesResponse.ok);
+
+        if (venuesResponse.ok) {
+          const venuesData = await venuesResponse.json();
+          console.log('[ResortPreview] Venues data:', venuesData);
+          setVenues(venuesData);
+        }
+
+        if (amenitiesResponse.ok) {
+          const amenitiesData = await amenitiesResponse.json();
+          console.log('[ResortPreview] Amenities data:', amenitiesData);
+          setAmenities(amenitiesData);
+        }
+      } catch (error) {
+        console.error('Error fetching resort relations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResortRelations();
+  }, [resortId, resortData?.id]);
+
   if (!resortData || !resortData.name) {
     return (
       <div className="p-4 bg-white/[0.02] border border-white/10 rounded-lg">
@@ -138,6 +218,55 @@ export function ResortPreview({ resortData, onEdit }: ResortPreviewProps) {
           <div className="mt-3 pt-3 border-t border-white/10">
             <p className="text-[10px] text-white/50 uppercase tracking-wider mb-1">Description</p>
             <p className="text-xs text-white/80 leading-relaxed">{resortData.description}</p>
+          </div>
+        )}
+
+        {/* Venues and Amenities - Full Width Below */}
+        {(venues.length > 0 || amenities.length > 0) && (
+          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-2 gap-4">
+            {/* Venues */}
+            {venues.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1 mb-2">
+                  <Palmtree className="w-3 h-3 text-cyan-400" />
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">
+                    Venues ({venues.length})
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {venues.map(venue => (
+                    <span
+                      key={venue.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-cyan-400/10 border border-cyan-400/20 text-xs text-cyan-300"
+                    >
+                      {venue.name} {venue.venueTypeName && `- ${venue.venueTypeName}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Amenities */}
+            {amenities.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1 mb-2">
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">
+                    Amenities ({amenities.length})
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {amenities.map(amenity => (
+                    <span
+                      key={amenity.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-cyan-400/10 border border-cyan-400/20 text-xs text-cyan-300"
+                    >
+                      {amenity.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
