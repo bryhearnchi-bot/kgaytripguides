@@ -291,6 +291,10 @@ export function registerTripWizardRoutes(app: Express) {
       const validation = tripWizardSchema.safeParse(req.body);
 
       if (!validation.success) {
+        logger.error('Trip wizard validation failed', {
+          errors: validation.error.errors,
+          body: JSON.stringify(req.body, null, 2),
+        });
         throw new ApiError(400, 'Validation failed', { details: validation.error.errors });
       }
 
@@ -384,102 +388,13 @@ export function registerTripWizardRoutes(app: Express) {
           }
         }
 
-        // Get the ship_id or resort_id for this trip
-        const { data: tripRecord } = await supabase
-          .from('trips')
-          .select('ship_id, resort_id')
-          .eq('id', tripId)
-          .single();
-
-        if (tripRecord?.ship_id) {
-          // Update ship amenities (delete and re-insert)
-          await supabase.from('ship_amenities').delete().eq('ship_id', tripRecord.ship_id);
-
-          if (tripData.amenityIds && tripData.amenityIds.length > 0) {
-            const amenityLinks = tripData.amenityIds.map(amenityId => ({
-              ship_id: tripRecord.ship_id,
-              amenity_id: amenityId,
-            }));
-
-            const { error: amenityError } = await supabase
-              .from('ship_amenities')
-              .insert(amenityLinks);
-
-            if (amenityError) {
-              logger.error('Failed to update ship amenities', {
-                tripId,
-                shipId: tripRecord.ship_id,
-                error: amenityError,
-              });
-              // Don't throw - trip was updated successfully
-            }
-          }
-
-          // Update ship venues (delete and re-insert)
-          await supabase.from('ship_venues').delete().eq('ship_id', tripRecord.ship_id);
-
-          if (tripData.venueIds && tripData.venueIds.length > 0) {
-            const venueLinks = tripData.venueIds.map(venueId => ({
-              ship_id: tripRecord.ship_id,
-              venue_id: venueId,
-            }));
-
-            const { error: venueError } = await supabase.from('ship_venues').insert(venueLinks);
-
-            if (venueError) {
-              logger.error('Failed to update ship venues', {
-                tripId,
-                shipId: tripRecord.ship_id,
-                error: venueError,
-              });
-              // Don't throw - trip was updated successfully
-            }
-          }
-        } else if (tripRecord?.resort_id) {
-          // Update resort amenities (delete and re-insert)
-          await supabase.from('resort_amenities').delete().eq('resort_id', tripRecord.resort_id);
-
-          if (tripData.amenityIds && tripData.amenityIds.length > 0) {
-            const amenityLinks = tripData.amenityIds.map(amenityId => ({
-              resort_id: tripRecord.resort_id,
-              amenity_id: amenityId,
-            }));
-
-            const { error: amenityError } = await supabase
-              .from('resort_amenities')
-              .insert(amenityLinks);
-
-            if (amenityError) {
-              logger.error('Failed to update resort amenities', {
-                tripId,
-                resortId: tripRecord.resort_id,
-                error: amenityError,
-              });
-              // Don't throw - trip was updated successfully
-            }
-          }
-
-          // Update resort venues (delete and re-insert)
-          await supabase.from('resort_venues').delete().eq('resort_id', tripRecord.resort_id);
-
-          if (tripData.venueIds && tripData.venueIds.length > 0) {
-            const venueLinks = tripData.venueIds.map(venueId => ({
-              resort_id: tripRecord.resort_id,
-              venue_id: venueId,
-            }));
-
-            const { error: venueError } = await supabase.from('resort_venues').insert(venueLinks);
-
-            if (venueError) {
-              logger.error('Failed to update resort venues', {
-                tripId,
-                resortId: tripRecord.resort_id,
-                error: venueError,
-              });
-              // Don't throw - trip was updated successfully
-            }
-          }
-        }
+        // NOTE: We do NOT update amenities or venues here!
+        // Amenities and venues are managed separately via:
+        //   - PUT /api/ships/:id/amenities (from ShipFormModal)
+        //   - PUT /api/resorts/:id/amenities (from ResortFormModal)
+        //   - Ship venues and resort venues are managed via VenueManagementModal
+        // This prevents accidental deletion of amenities/venues when editing a trip
+        logger.info('Trip update complete - amenities/venues managed separately', { tripId });
 
         logger.info('Trip updated successfully', { tripId });
       } else {

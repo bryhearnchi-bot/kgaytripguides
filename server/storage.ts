@@ -640,13 +640,24 @@ export class TripInfoStorage implements ITripInfoStorage {
     }));
 
     // Get events data with party themes, venues, and event types
+    // Note: Events can have either ship_venue_id OR resort_venue_id depending on trip type
     const { data: eventsData, error: eventsError } = await supabaseAdmin
       .from('events')
       .select(
         `
         *,
         party_themes(*),
-        venues(
+        ship_venues(
+          id,
+          name,
+          description,
+          venue_type_id,
+          venue_types(
+            id,
+            name
+          )
+        ),
+        resort_venues(
           id,
           name,
           description,
@@ -671,62 +682,70 @@ export class TripInfoStorage implements ITripInfoStorage {
     if (eventsError) throw eventsError;
 
     // Transform events data to camelCase
-    const transformedEvents = (eventsData || []).map((event: any) => ({
-      id: event.id,
-      tripId: event.trip_id,
-      date: event.date,
-      time: event.time,
-      title: event.title,
-      eventTypeId: event.event_type_id,
-      eventType: event.event_types
-        ? {
-            id: event.event_types.id,
-            name: event.event_types.name,
-            icon: event.event_types.icon,
-            color: event.event_types.color,
-          }
-        : null,
-      venueId: event.venue_id,
-      venue: event.venues
-        ? {
-            id: event.venues.id,
-            name: event.venues.name,
-            description: event.venues.description,
-            venueTypeId: event.venues.venue_type_id,
-            venueType: event.venues.venue_types
-              ? {
-                  id: event.venues.venue_types.id,
-                  name: event.venues.venue_types.name,
-                }
-              : null,
-          }
-        : null,
-      // Legacy venue text field (deprecated)
-      venueName: event.venue,
-      deck: null, // Add if available in schema
-      description: null, // Add if available in schema
-      shortDescription: null, // Add if available in schema
-      imageUrl: null, // Add if available in schema
-      themeDescription: null, // Add if available in schema
-      dressCode: null, // Add if available in schema
-      capacity: null, // Add if available in schema
-      requiresReservation: false, // Add if available in schema
-      talentIds: event.talent_ids,
-      partyThemeId: event.party_theme_id,
-      partyTheme: event.party_themes
-        ? {
-            id: event.party_themes.id,
-            name: event.party_themes.name,
-            shortDescription: event.party_themes.short_description,
-            longDescription: event.party_themes.long_description,
-            costumeIdeas: event.party_themes.costume_ideas,
-            amazonShoppingListUrl: event.party_themes.amazon_shopping_list_url,
-            imageUrl: event.party_themes.image_url,
-          }
-        : null,
-      createdAt: event.created_at,
-      updatedAt: event.updated_at,
-    }));
+    const transformedEvents = (eventsData || []).map((event: any) => {
+      // Handle venue data - event can have either ship_venues or resort_venues
+      const venueData = event.ship_venues || event.resort_venues;
+      const venueId = event.ship_venue_id || event.resort_venue_id;
+
+      return {
+        id: event.id,
+        tripId: event.trip_id,
+        date: event.date,
+        time: event.time,
+        title: event.title,
+        eventTypeId: event.event_type_id,
+        eventType: event.event_types
+          ? {
+              id: event.event_types.id,
+              name: event.event_types.name,
+              icon: event.event_types.icon,
+              color: event.event_types.color,
+            }
+          : null,
+        venueId: venueId,
+        shipVenueId: event.ship_venue_id,
+        resortVenueId: event.resort_venue_id,
+        venue: venueData
+          ? {
+              id: venueData.id,
+              name: venueData.name,
+              description: venueData.description,
+              venueTypeId: venueData.venue_type_id,
+              venueType: venueData.venue_types
+                ? {
+                    id: venueData.venue_types.id,
+                    name: venueData.venue_types.name,
+                  }
+                : null,
+            }
+          : null,
+        // Legacy venue text field (deprecated)
+        venueName: event.venue,
+        deck: null, // Add if available in schema
+        description: event.description,
+        shortDescription: null, // Add if available in schema
+        imageUrl: event.image_url,
+        themeDescription: null, // Add if available in schema
+        dressCode: null, // Add if available in schema
+        capacity: null, // Add if available in schema
+        requiresReservation: false, // Add if available in schema
+        talentIds: event.talent_ids,
+        partyThemeId: event.party_theme_id,
+        partyTheme: event.party_themes
+          ? {
+              id: event.party_themes.id,
+              name: event.party_themes.name,
+              shortDescription: event.party_themes.short_description,
+              longDescription: event.party_themes.long_description,
+              costumeIdeas: event.party_themes.costume_ideas,
+              amazonShoppingListUrl: event.party_themes.amazon_shopping_list_url,
+              imageUrl: event.party_themes.image_url,
+            }
+          : null,
+        createdAt: event.created_at,
+        updatedAt: event.updated_at,
+      };
+    });
 
     // Get talent data
     const { data: talentData, error: talentError } = await supabaseAdmin

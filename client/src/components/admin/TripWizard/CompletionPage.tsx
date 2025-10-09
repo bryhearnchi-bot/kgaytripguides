@@ -167,12 +167,26 @@ export function CompletionPage() {
           : {}),
       };
 
+      // Log the payload for debugging
+      console.log('🚀 Sending trip payload:', JSON.stringify(tripPayload, null, 2));
+
       // Use api client which handles authentication
       const response = await api.post('/api/admin/trips', tripPayload);
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: 'Failed to save trip' }));
-        throw new Error(error.message || 'Failed to save trip');
+        console.error('❌ Server error response:', JSON.stringify(error, null, 2));
+
+        // If validation error, show detailed message
+        if (error.details && Array.isArray(error.details)) {
+          const validationErrors = error.details
+            .map((e: any) => `${e.path?.join('.') || 'Field'}: ${e.message}`)
+            .join(', ');
+          console.error('📋 Validation errors:', validationErrors);
+          throw new Error(`Validation failed: ${validationErrors}`);
+        }
+
+        throw new Error(error.message || error.error || 'Failed to save trip');
       }
 
       const result = await response.json();

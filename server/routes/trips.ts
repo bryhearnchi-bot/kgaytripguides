@@ -1055,45 +1055,87 @@ export function registerTripRoutes(app: Express) {
 
   // ============ TRIP INFO SECTIONS ============
 
-  // Get complete trip info with all sections (public - excludes drafts)
+  // Get complete trip info with all sections (public - excludes drafts, allows preview)
   app.get(
     '/api/trips/:slug/complete',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { slug } = req.params;
-      if (!slug) {
-        throw ApiError.badRequest('Trip slug is required');
+      try {
+        const { slug } = req.params;
+        logger.info('Fetching trip by slug', { slug });
+
+        if (!slug) {
+          throw ApiError.badRequest('Trip slug is required');
+        }
+
+        const supabaseAdmin = getSupabaseAdmin();
+
+        // Get "Draft" status ID (ID 4) - we ONLY exclude Drafts, not Preview (ID 5)
+        const { data: draftStatus, error: draftStatusError } = await supabaseAdmin
+          .from('trip_status')
+          .select('id')
+          .eq('status', 'Draft')
+          .single();
+
+        if (draftStatusError) {
+          logger.error('Failed to get draft status', { error: draftStatusError });
+        }
+
+        const draftStatusId = draftStatus?.id;
+        logger.info('Draft status ID', { draftStatusId });
+
+        // First check if trip exists and is not a draft
+        // NOTE: Preview trips (ID 5) are allowed - they're visible via preview link
+        let tripQuery = supabaseAdmin.from('trips').select('trip_status_id').eq('slug', slug);
+
+        if (draftStatusId) {
+          tripQuery = tripQuery.neq('trip_status_id', draftStatusId);
+        }
+
+        const { data: tripCheck, error: tripCheckError } = await tripQuery.single();
+
+        if (tripCheckError) {
+          logger.info('Trip query error', {
+            slug,
+            error: tripCheckError,
+            code: tripCheckError.code,
+          });
+        }
+
+        if (tripCheckError || !tripCheck) {
+          logger.info('Trip not found or is draft', { slug, error: tripCheckError });
+          throw ApiError.notFound('Trip not found');
+        }
+
+        logger.info('Trip status check passed', { slug, tripStatusId: tripCheck.trip_status_id });
+
+        // If not a draft, fetch complete info
+        try {
+          const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
+          if (!tripData) {
+            logger.error('Trip data not found in tripInfoStorage', { slug });
+            throw ApiError.notFound('Trip not found');
+          }
+
+          logger.info('Trip data fetched successfully', { slug, tripId: tripData.trip?.id });
+          return res.json(tripData);
+        } catch (storageError) {
+          logger.error('Error in tripInfoStorage.getCompleteInfo', {
+            slug,
+            error: storageError,
+            message: storageError instanceof Error ? storageError.message : String(storageError),
+            stack: storageError instanceof Error ? storageError.stack : undefined,
+          });
+          throw storageError;
+        }
+      } catch (error) {
+        logger.error('Error in /api/trips/:slug/complete', {
+          slug: req.params.slug,
+          error,
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error;
       }
-
-      const supabaseAdmin = getSupabaseAdmin();
-
-      // Get "Draft" status ID
-      const { data: draftStatus } = await supabaseAdmin
-        .from('trip_status')
-        .select('id')
-        .eq('status', 'Draft')
-        .single();
-
-      const draftStatusId = draftStatus?.id;
-
-      // First check if trip exists and is not a draft
-      let tripQuery = supabaseAdmin.from('trips').select('trip_status_id').eq('slug', slug);
-
-      if (draftStatusId) {
-        tripQuery = tripQuery.neq('trip_status_id', draftStatusId);
-      }
-
-      const { data: tripCheck } = await tripQuery.single();
-
-      if (!tripCheck) {
-        throw ApiError.notFound('Trip not found');
-      }
-
-      // If not a draft, fetch complete info
-      const tripData = await tripInfoStorage.getCompleteInfo(slug, 'trips');
-      if (!tripData) {
-        throw ApiError.notFound('Trip not found');
-      }
-      return res.json(tripData);
     })
   );
 

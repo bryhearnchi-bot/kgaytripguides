@@ -1628,6 +1628,22 @@ export function registerLocationRoutes(app: Express) {
       const shipId = Number(req.params.id);
       const { amenityIds = [] } = req.body;
 
+      // DEBUG LOGGING WITH STACK TRACE
+      logger.info('🚢🚢🚢 UPDATE SHIP AMENITIES REQUEST - WHO CALLED THIS???', {
+        shipId,
+        amenityIds,
+        amenityIdsType: typeof amenityIds,
+        amenityIdsIsArray: Array.isArray(amenityIds),
+        amenityIdsLength: Array.isArray(amenityIds) ? amenityIds.length : 0,
+        requestBody: req.body,
+        userAgent: req.get('user-agent'),
+        referer: req.get('referer'),
+        callStack: new Error().stack,
+      });
+
+      // CRITICAL: Log EXACTLY what we're about to delete and insert
+      logger.info('🚢 ABOUT TO DELETE ALL AMENITIES FOR SHIP', { shipId });
+
       if (!Array.isArray(amenityIds)) {
         throw ApiError.badRequest('amenityIds must be an array');
       }
@@ -1635,14 +1651,17 @@ export function registerLocationRoutes(app: Express) {
       const supabaseAdmin = getSupabaseAdmin();
 
       // First, remove all existing amenities for this ship
+      logger.info('🚢 DELETING ship_amenities WHERE ship_id =', { shipId });
       const { error: deleteError } = await supabaseAdmin
         .from('ship_amenities')
         .delete()
         .eq('ship_id', shipId);
 
       if (deleteError) {
+        logger.error('🚢 DELETE FAILED', { deleteError });
         handleSupabaseError(deleteError, 'remove ship amenities');
       }
+      logger.info('🚢 DELETE COMPLETE');
 
       // Then, add the new amenities
       if (amenityIds.length > 0) {
@@ -1651,15 +1670,21 @@ export function registerLocationRoutes(app: Express) {
           amenity_id: amenityId,
         }));
 
+        logger.info('🚢 INSERTING ship_amenities', { insertData });
         const { error: insertError } = await supabaseAdmin
           .from('ship_amenities')
           .insert(insertData);
 
         if (insertError) {
+          logger.error('🚢 INSERT FAILED', { insertError });
           handleSupabaseError(insertError, 'add ship amenities');
         }
+        logger.info('🚢 INSERT COMPLETE - amenities should now be in database');
+      } else {
+        logger.warn('🚢 NO AMENITIES TO INSERT - amenityIds array is empty!');
       }
 
+      logger.info('🚢 RETURNING SUCCESS RESPONSE');
       return res.json({ message: 'Ship amenities updated successfully' });
     })
   );

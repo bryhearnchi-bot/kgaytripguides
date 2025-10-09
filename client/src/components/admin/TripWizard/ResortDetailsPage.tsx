@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ResortSelector } from '@/components/admin/ResortSelector';
 import { ResortPreview } from './ResortPreview';
 import { ResortFormModal } from '@/components/admin/ResortFormModal';
@@ -120,6 +120,32 @@ export function ResortDetailsPage() {
   // Determine whether to show preview
   const showPreview = selectedResortId && resortData?.name;
 
+  // Memoize resort object to prevent unnecessary re-renders
+  // This ensures the resort prop only changes when the actual data changes
+  const memoizedResort = useMemo(() => {
+    if (!selectedResortId) return null;
+    return {
+      id: selectedResortId,
+      ...resortData,
+    };
+  }, [
+    selectedResortId,
+    resortData.name,
+    resortData.location,
+    resortData.city,
+    resortData.state_province,
+    resortData.country,
+    resortData.country_code,
+    resortData.locationId,
+    resortData.capacity,
+    resortData.numberOfRooms,
+    resortData.imageUrl,
+    resortData.description,
+    resortData.propertyMapUrl,
+    resortData.checkInTime,
+    resortData.checkOutTime,
+  ]);
+
   return (
     <div className="space-y-2.5">
       {/* Resort Selector - Always show */}
@@ -181,10 +207,7 @@ export function ResortDetailsPage() {
       <ResortFormModal
         isOpen={showEditModal}
         onOpenChange={setShowEditModal}
-        resort={{
-          id: selectedResortId!,
-          ...resortData,
-        }}
+        resort={memoizedResort}
         onSuccess={updatedResort => {
           // Update local state with the new resort data
           if (updatedResort) {

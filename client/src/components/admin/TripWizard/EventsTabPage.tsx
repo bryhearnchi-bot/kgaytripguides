@@ -55,6 +55,15 @@ export function EventsTabPage() {
   const scheduleEntries = state.scheduleEntries || [];
   const itineraryEntries = state.itineraryEntries || [];
 
+  console.log('🎉 EventsTabPage - Rendering:', {
+    tripId: state.tripData.id,
+    tripType,
+    eventsCount: events.length,
+    events,
+    talentCount: tripTalent.length,
+    isEditMode: state.isEditMode,
+  });
+
   const handleCreateEvent = () => {
     setEditingEvent(undefined);
     setShowEventModal(true);

@@ -92,8 +92,19 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   const isEditing = !!resort;
 
   // Load resort data when editing
+  // CRITICAL: Only run when modal opens OR when resort.id changes
+  // This prevents clearing data when VenueModal closes and parent re-renders
+  const resortId = resort?.id;
   useEffect(() => {
-    if (resort && isOpen) {
+    // CRITICAL: Only run when modal is actually open
+    // This prevents the form from resetting when the modal is closed
+    if (!isOpen) {
+      return;
+    }
+
+    if (resort) {
+      console.log('🏨 Loading resort into form:', { id: resort.id, name: resort.name });
+
       // Parse existing location if it's in old format
       const locationData = resort.city
         ? {
@@ -122,9 +133,11 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
       // Load resort's amenities and venues
       if (resort.id) {
+        console.log('🏨 Loading resort relations for resortId:', resort.id);
         loadResortRelations(resort.id);
       }
-    } else if (!resort) {
+    } else {
+      console.log('🏨 No resort provided, resetting form');
       // Reset form for new resort
       setFormData({
         name: '',
@@ -144,7 +157,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       setAmenityIds([]);
       setVenues([]);
     }
-  }, [resort, isOpen]);
+  }, [resortId, isOpen]);
 
   const loadResortRelations = async (resortId: number) => {
     try {

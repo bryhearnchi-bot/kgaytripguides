@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ShipSelector } from '@/components/admin/ShipSelector';
 import { ShipPreview } from './ShipPreview';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
@@ -97,6 +97,25 @@ export function ShipDetailsPage() {
   // Determine whether to show preview
   const showPreview = selectedShipId && shipData?.name;
 
+  // Memoize ship object to prevent unnecessary re-renders
+  // This ensures the ship prop only changes when the actual data changes
+  const memoizedShip = useMemo(() => {
+    if (!selectedShipId) return null;
+    return {
+      id: selectedShipId,
+      ...shipData,
+    };
+  }, [
+    selectedShipId,
+    shipData.name,
+    shipData.cruiseLine,
+    shipData.capacity,
+    shipData.decks,
+    shipData.imageUrl,
+    shipData.description,
+    shipData.deckPlansUrl,
+  ]);
+
   return (
     <div className="space-y-2.5">
       {/* Ship Selector - Always show */}
@@ -155,10 +174,7 @@ export function ShipDetailsPage() {
       <ShipFormModal
         isOpen={showEditModal}
         onOpenChange={setShowEditModal}
-        ship={{
-          id: selectedShipId!,
-          ...shipData,
-        }}
+        ship={memoizedShip}
         onSuccess={updatedShip => {
           // Update local state with the new ship data
           if (updatedShip) {

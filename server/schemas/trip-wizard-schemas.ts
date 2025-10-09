@@ -15,12 +15,12 @@ export const itineraryEntrySchema = z.object({
   dayNumber: z.number(),
   date: z.string(),
   locationId: z.number().nullable().optional(),
-  locationName: z.string().optional(),
-  arrivalTime: z.string().optional(),
-  departureTime: z.string().optional(),
-  allAboardTime: z.string().optional(),
-  description: z.string().optional(),
-  imageUrl: z.string().optional(),
+  locationName: z.string().nullable().optional(),
+  arrivalTime: z.string().nullable().optional(),
+  departureTime: z.string().nullable().optional(),
+  allAboardTime: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
   locationTypeId: z.number().nullable().optional(),
 });
 
@@ -28,24 +28,24 @@ export const itineraryEntrySchema = z.object({
 export const resortDataSchema = z.object({
   name: z.string().min(1, 'Resort name is required'),
   locationId: z.number().nullable().optional(),
-  capacity: z.number().positive().optional(),
-  numberOfRooms: z.number().positive().optional(),
-  imageUrl: z.string().optional(),
-  description: z.string().optional(),
-  propertyMapUrl: z.string().optional(),
-  checkInTime: z.string().optional(),
-  checkOutTime: z.string().optional(),
+  capacity: z.number().positive().optional().nullable(),
+  numberOfRooms: z.number().positive().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  propertyMapUrl: z.string().optional().nullable(),
+  checkInTime: z.string().optional().nullable(),
+  checkOutTime: z.string().optional().nullable(),
 });
 
 // Ship data
 export const shipDataSchema = z.object({
   name: z.string().min(1, 'Ship name is required'),
-  cruiseLine: z.string().optional(),
-  capacity: z.number().positive().optional(),
-  decks: z.number().positive().optional(),
-  imageUrl: z.string().optional(),
-  description: z.string().optional(),
-  deckPlansUrl: z.string().optional(),
+  cruiseLine: z.string().optional().nullable(),
+  capacity: z.number().positive().optional().nullable(),
+  decks: z.number().positive().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  deckPlansUrl: z.string().optional().nullable(),
 });
 
 // Complete trip wizard data

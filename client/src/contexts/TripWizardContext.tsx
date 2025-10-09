@@ -4,6 +4,7 @@ export type BuildMethod = 'url' | 'pdf' | 'manual' | null;
 export type TripType = 'resort' | 'cruise' | null;
 
 interface TripData {
+  id?: number; // Trip ID (for editing existing trips)
   charterCompanyId?: number;
   tripTypeId?: number;
   name: string;
@@ -73,6 +74,8 @@ interface TripWizardState {
   venueIds: number[];
   scheduleEntries: ScheduleEntry[];
   itineraryEntries: ItineraryEntry[];
+  events?: any[]; // Trip events
+  tripTalent?: any[]; // Trip talent
   tempFiles: string[];
   isEditMode?: boolean;
 }
@@ -96,6 +99,11 @@ interface TripWizardContextType {
   setItineraryEntries: (entries: ItineraryEntry[]) => void;
   updateItineraryEntry: (index: number, data: Partial<ItineraryEntry>) => void;
   addItineraryEntry: (entry: ItineraryEntry) => void;
+  addEvent: (event: any) => Promise<void>;
+  updateEvent: (eventId: number, event: any) => Promise<void>;
+  deleteEvent: (eventId: number) => Promise<void>;
+  setTripTalent: (talent: any[]) => void;
+  removeTalentFromTrip: (talentId: number) => Promise<void>;
   addTempFile: (path: string) => void;
   clearWizard: () => void;
   restoreFromDraft: (draftState: Partial<TripWizardState>) => void;
@@ -123,6 +131,8 @@ const initialState: TripWizardState = {
   venueIds: [],
   scheduleEntries: [],
   itineraryEntries: [],
+  events: [],
+  tripTalent: [],
   tempFiles: [],
   isEditMode: false, // Default to false for new trips
 };
@@ -230,6 +240,76 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  // Event management methods
+  const addEvent = async (event: any) => {
+    const tripId = state.tripData.id;
+    if (!tripId) throw new Error('No trip ID available');
+
+    const response = await fetch(`/api/trips/${tripId}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    });
+
+    if (!response.ok) throw new Error('Failed to add event');
+
+    const newEvent = await response.json();
+    setState(prev => ({
+      ...prev,
+      events: [...(prev.events || []), newEvent],
+    }));
+  };
+
+  const updateEvent = async (eventId: number, event: any) => {
+    const tripId = state.tripData.id;
+    if (!tripId) throw new Error('No trip ID available');
+
+    const response = await fetch(`/api/trips/${tripId}/events/${eventId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    });
+
+    if (!response.ok) throw new Error('Failed to update event');
+
+    const updatedEvent = await response.json();
+    setState(prev => ({
+      ...prev,
+      events: (prev.events || []).map(e => (e.id === eventId ? updatedEvent : e)),
+    }));
+  };
+
+  const deleteEvent = async (eventId: number) => {
+    const tripId = state.tripData.id;
+    if (!tripId) throw new Error('No trip ID available');
+
+    const response = await fetch(`/api/trips/${tripId}/events/${eventId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) throw new Error('Failed to delete event');
+
+    setState(prev => ({
+      ...prev,
+      events: (prev.events || []).filter(e => e.id !== eventId),
+    }));
+  };
+
+  // Talent management methods
+  const setTripTalent = (talent: any[]) => {
+    setState(prev => ({
+      ...prev,
+      tripTalent: talent,
+    }));
+  };
+
+  const removeTalentFromTrip = async (talentId: number) => {
+    setState(prev => ({
+      ...prev,
+      tripTalent: (prev.tripTalent || []).filter(t => t.id !== talentId),
+    }));
+  };
+
   const clearWizard = () => {
     // Reset to initial state - this creates a NEW object reference
     // which ensures all components re-render with fresh data
@@ -255,6 +335,8 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
       venueIds: [],
       scheduleEntries: [],
       itineraryEntries: [],
+      events: [],
+      tripTalent: [],
       tempFiles: [],
     });
   };
@@ -276,6 +358,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
       tripType: draftState.tripType ?? null,
       buildMethod: draftState.buildMethod ?? null,
       tripData: {
+        id: draftState.tripData?.id, // CRITICAL: Include trip ID for Events/Talent
         name: draftState.tripData?.name ?? '',
         slug: draftState.tripData?.slug ?? '',
         startDate: draftState.tripData?.startDate ?? '',
@@ -294,6 +377,8 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
       venueIds: draftState.venueIds ?? [],
       scheduleEntries: draftState.scheduleEntries ?? [],
       itineraryEntries: draftState.itineraryEntries ?? [],
+      events: draftState.events ?? [], // CRITICAL: Include events
+      tripTalent: draftState.tripTalent ?? [], // CRITICAL: Include talent
       tempFiles: draftState.tempFiles ?? [],
       isEditMode: draftState.isEditMode ?? false, // CRITICAL: Preserve edit mode flag
     };
@@ -328,6 +413,11 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     setItineraryEntries,
     updateItineraryEntry,
     addItineraryEntry,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    setTripTalent,
+    removeTalentFromTrip,
     addTempFile,
     clearWizard,
     restoreFromDraft,

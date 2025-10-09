@@ -59,7 +59,7 @@ export function ResortPreview({ resortData, resortId, onEdit }: ResortPreviewPro
       try {
         console.log('[ResortPreview] Fetching from API for resort ID:', id);
         const [venuesResponse, amenitiesResponse] = await Promise.all([
-          api.get(`/api/resorts/${id}/venues`),
+          api.get(`/api/admin/resorts/${id}/venues`),
           api.get(`/api/resorts/${id}/amenities`),
         ]);
 

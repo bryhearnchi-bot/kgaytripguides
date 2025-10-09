@@ -80,6 +80,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         tripType,
         buildMethod: 'manual' as const, // For editing, we're in manual mode
         tripData: {
+          id: trip.id, // CRITICAL: Include trip ID for Events/Talent tabs
           charterCompanyId: trip.charterCompanyId,
           tripTypeId: trip.tripTypeId,
           name: trip.name,
@@ -100,6 +101,8 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         // They are managed separately by ShipFormModal/ResortFormModal
         scheduleEntries: trip.scheduleEntries || [],
         itineraryEntries: trip.itineraryEntries || [],
+        events: trip.events || [], // Load existing events
+        tripTalent: trip.tripTalent || [], // Load existing talent
         isEditMode: true, // Set edit mode flag
       };
 
@@ -137,16 +140,11 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
   // Get the current state from context for saving
   const { state } = useTripWizard();
 
-  const handleSave = async () => {
+  const handleSaveTrip = async () => {
     try {
-      console.log('Saving trip with state:', state);
-
-      // Prepare the payload to match trip wizard schema exactly
-      const tripPayload: any = {
-        // Trip ID for update
+      // Build trip update payload - ONLY trip data, NO amenities or venues
+      const updatePayload = {
         id: trip.id,
-
-        // Basic trip data
         name: state.tripData.name,
         slug: state.tripData.slug,
         charterCompanyId: state.tripData.charterCompanyId,
@@ -156,48 +154,57 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         heroImageUrl: state.tripData.heroImageUrl || undefined,
         description: state.tripData.description || undefined,
         highlights: state.tripData.highlights || undefined,
-
-        // NOTE: Amenities and venues are NOT included here
-        // They are managed separately via ShipFormModal/ResortFormModal
-        // which use PUT /api/ships/:id/amenities and PUT /api/resorts/:id/amenities
       };
 
-      // Add resort or ship ID (NOT resortData/shipData)
+      // Add location-specific data
       if (state.tripType === 'resort' && state.resortId) {
-        tripPayload.resortId = state.resortId;
-        tripPayload.scheduleEntries = state.scheduleEntries || [];
+        updatePayload.resortId = state.resortId;
+        updatePayload.scheduleEntries = state.scheduleEntries || [];
       } else if (state.tripType === 'cruise' && state.shipId) {
-        tripPayload.shipId = state.shipId;
-        tripPayload.itineraryEntries = state.itineraryEntries || [];
+        updatePayload.shipId = state.shipId;
+        updatePayload.itineraryEntries = state.itineraryEntries || [];
       }
 
-      console.log('Trip payload to send:', tripPayload);
-
-      // Use POST to update the trip (same endpoint as trip wizard, which handles both create and update)
-      const response = await api.post(`/api/admin/trips`, tripPayload);
+      // Save trip data
+      console.log(
+        '🚀 EditTripModal - Sending update payload:',
+        JSON.stringify(updatePayload, null, 2)
+      );
+      const response = await api.post('/api/admin/trips', updatePayload);
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Failed to save trip' }));
-        throw new Error(error.message || 'Failed to save trip');
+        const errorData = await response.json().catch(() => ({ message: 'Failed to update trip' }));
+        console.error('❌ EditTripModal - Server error:', JSON.stringify(errorData, null, 2));
+
+        // If validation error, show detailed message
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const validationErrors = errorData.details
+            .map((e: any) => `${e.path?.join('.') || 'Field'}: ${e.message}`)
+            .join(', ');
+          console.error('📋 EditTripModal - Validation errors:', validationErrors);
+          throw new Error(`Validation failed: ${validationErrors}`);
+        }
+
+        throw new Error(errorData.message || errorData.error || 'Failed to update trip');
       }
 
+      // Show success message
       toast({
         title: 'Trip Updated',
-        description: 'Trip has been successfully updated.',
+        description: 'Your changes have been saved.',
       });
-
-      // Call onSuccess callback
-      if (onSuccess) {
-        onSuccess();
-      }
 
       // Close modal
       onOpenChange(false);
+
+      // Refresh trip list after modal closes
+      if (onSuccess) {
+        setTimeout(() => onSuccess(), 250);
+      }
     } catch (error) {
-      console.error('Error saving trip:', error);
       toast({
-        title: 'Failed to Save',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: 'Error',
+        description: 'Failed to save trip changes.',
         variant: 'destructive',
       });
     }
@@ -215,7 +222,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
       contentClassName="pb-6"
       primaryAction={{
         label: 'Save Changes',
-        onClick: handleSave,
+        onClick: handleSaveTrip,
         loading: false,
         loadingLabel: 'Saving...',
       }}

@@ -261,5 +261,27 @@ export function toApiError(error: unknown): ApiError {
     return ApiError.internal(error);
   }
 
-  return ApiError.internal('An unknown error occurred');
+  // Log unknown error type for debugging
+  console.error('⚠️ Unknown error type caught in toApiError:', {
+    errorType: typeof error,
+    errorValue: error,
+    errorConstructor: error?.constructor?.name,
+    errorString: String(error),
+    errorJSON: error ? JSON.stringify(error, null, 2) : null,
+  });
+
+  // Try to extract any useful information from the unknown error
+  let errorMessage = 'An unknown error occurred';
+  if (error && typeof error === 'object') {
+    const errorObj = error as any;
+    if ('message' in errorObj) {
+      errorMessage = `Unknown error: ${errorObj.message}`;
+    } else if ('error' in errorObj) {
+      errorMessage = `Unknown error: ${errorObj.error}`;
+    } else if ('statusText' in errorObj) {
+      errorMessage = `Unknown error: ${errorObj.statusText}`;
+    }
+  }
+
+  return ApiError.internal(errorMessage);
 }

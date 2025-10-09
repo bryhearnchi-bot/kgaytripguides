@@ -49,7 +49,7 @@ export function ShipPreview({ shipData, shipId, onEdit }: ShipPreviewProps) {
       try {
         console.log('[ShipPreview] Fetching from API for ship ID:', id);
         const [venuesResponse, amenitiesResponse] = await Promise.all([
-          api.get(`/api/ships/${id}/venues`),
+          api.get(`/api/admin/ships/${id}/venues`),
           api.get(`/api/ships/${id}/amenities`),
         ]);
 
