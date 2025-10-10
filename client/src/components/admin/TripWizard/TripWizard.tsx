@@ -79,12 +79,63 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
       initializedRef.current = true;
 
       if (draftTrip && draftTrip.wizardState) {
-        // Restore draft using atomic update
-        const wizardState = {
-          ...draftTrip.wizardState,
-          draftId: draftTrip.id, // Ensure draft ID is set
+        // Async function to fetch ship/resort data and restore draft
+        const restoreDraftWithData = async () => {
+          const wizardState = { ...draftTrip.wizardState };
+
+          // Fetch ship data if shipId exists
+          if (wizardState.shipId && wizardState.tripType === 'cruise') {
+            try {
+              const response = await api.get(`/api/ships/${wizardState.shipId}`);
+              if (response.ok) {
+                const ship = await response.json();
+                wizardState.shipData = {
+                  name: ship.name || '',
+                  cruiseLineId: ship.cruiseLineId,
+                  cruiseLineName: ship.cruiseLineName || '', // This comes from the JOIN
+                  capacity: ship.capacity,
+                  decks: ship.decks,
+                  imageUrl: ship.imageUrl || '',
+                  description: ship.description || '',
+                  deckPlansUrl: ship.deckPlansUrl || '',
+                };
+              }
+            } catch (error) {
+              console.error('Failed to fetch ship details for draft:', error);
+            }
+          }
+
+          // Fetch resort data if resortId exists
+          if (wizardState.resortId && wizardState.tripType === 'resort') {
+            try {
+              const response = await api.get(`/api/resorts/${wizardState.resortId}`);
+              if (response.ok) {
+                const resort = await response.json();
+                wizardState.resortData = {
+                  name: resort.name || '',
+                  locationId: resort.locationId,
+                  capacity: resort.capacity,
+                  numberOfRooms: resort.numberOfRooms,
+                  imageUrl: resort.imageUrl || '',
+                  description: resort.description || '',
+                  propertyMapUrl: resort.propertyMapUrl || '',
+                  checkInTime: resort.checkInTime || '',
+                  checkOutTime: resort.checkOutTime || '',
+                };
+              }
+            } catch (error) {
+              console.error('Failed to fetch resort details for draft:', error);
+            }
+          }
+
+          // Ensure draft ID is set
+          wizardState.draftId = draftTrip.id;
+
+          // Restore draft with complete data
+          restoreFromDraft(wizardState);
         };
-        restoreFromDraft(wizardState);
+
+        restoreDraftWithData();
       } else if (!draftTrip) {
         // No draft - clear wizard for new trip
         clearWizard();

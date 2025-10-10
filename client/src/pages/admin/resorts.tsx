@@ -7,18 +7,31 @@ import { EnhancedResortsTable } from '@/components/admin/EnhancedResortsTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ResortFormModal } from '@/components/admin/ResortFormModal';
 import { api } from '@/lib/api-client';
-import { Building, Plus, PlusSquare, Edit2, Trash2, Search, Users, MapPin, Hotel } from 'lucide-react';
+import {
+  Building,
+  Plus,
+  PlusSquare,
+  Edit2,
+  Trash2,
+  Search,
+  Users,
+  MapPin,
+  Hotel,
+} from 'lucide-react';
 
 interface Resort {
   id?: number;
   name: string;
+  resortCompanyId?: number;
   location: string;
+  locationId?: number;
   city?: string;
-  state_province?: string;
+  stateProvince?: string;
   country?: string;
-  country_code?: string;
+  countryCode?: string;
   capacity?: number;
-  roomCount?: number;
+  numberOfRooms?: number;
+  roomCount?: number; // Deprecated alias
   imageUrl?: string;
   propertyMapUrl?: string;
   checkInTime?: string;
@@ -48,7 +61,7 @@ export default function ResortsManagement() {
       const response = await api.get('/api/resorts');
       if (!response.ok) throw new Error('Failed to fetch resorts');
       return response.json();
-    }
+    },
   });
 
   // Delete resort mutation
@@ -75,7 +88,7 @@ export default function ResortsManagement() {
           : 'Failed to delete resort',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const handleEdit = (resort: Resort) => {
@@ -97,10 +110,12 @@ export default function ResortsManagement() {
 
   const filteredResorts = resorts.filter(resort => {
     const searchLower = searchTerm.toLowerCase();
-    return resort.name.toLowerCase().includes(searchLower) ||
-           resort.location.toLowerCase().includes(searchLower) ||
-           (resort.city?.toLowerCase().includes(searchLower)) ||
-           (resort.country?.toLowerCase().includes(searchLower));
+    return (
+      resort.name.toLowerCase().includes(searchLower) ||
+      resort.location.toLowerCase().includes(searchLower) ||
+      resort.city?.toLowerCase().includes(searchLower) ||
+      resort.country?.toLowerCase().includes(searchLower)
+    );
   });
 
   return (
@@ -119,7 +134,7 @@ export default function ResortsManagement() {
             <Input
               placeholder="Search resorts by name or location"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -148,7 +163,11 @@ export default function ResortsManagement() {
         {filteredResorts.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <Building className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No resorts match your search.' : 'Get started by adding your first resort.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No resorts match your search.'
+                : 'Get started by adding your first resort.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -207,9 +226,7 @@ export default function ResortsManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 150,
-                render: (value) => (
-                  <span className="text-xs text-white/80">{value || 'N/A'}</span>
-                ),
+                render: value => <span className="text-xs text-white/80">{value || 'N/A'}</span>,
               },
               {
                 key: 'description',
@@ -217,10 +234,8 @@ export default function ResortsManagement() {
                 priority: 'medium',
                 sortable: false,
                 minWidth: 200,
-                render: (value) => (
-                  <span className="text-white/70 line-clamp-2">
-                    {value || 'No description'}
-                  </span>
+                render: value => (
+                  <span className="text-white/70 line-clamp-2">{value || 'No description'}</span>
                 ),
               },
               {
@@ -253,7 +268,7 @@ export default function ResortsManagement() {
                 key: 'tripCount',
                 label: 'Usage',
                 priority: 'medium',
-                render: (value) => (
+                render: value => (
                   <span className="text-xs text-white/60">
                     {value || 0} trip{(value || 0) === 1 ? '' : 's'}
                   </span>
@@ -269,13 +284,17 @@ export default function ResortsManagement() {
               {
                 label: 'Delete Resort',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (resort) => handleDelete(resort.id!),
+                onClick: resort => handleDelete(resort.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No resorts match your search.' : 'Get started by adding your first resort.'}
+            emptyMessage={
+              searchTerm
+                ? 'No resorts match your search.'
+                : 'Get started by adding your first resort.'
+            }
           />
         )}
 

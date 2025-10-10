@@ -8,8 +8,15 @@ import {
   Users,
   PartyPopper,
   ChevronDown,
+  MoreVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EventFormModal } from './EventFormModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
 import { toast } from '@/hooks/use-toast';
@@ -267,9 +274,9 @@ export function EventsTabPage() {
                     return (
                       <div
                         key={event.id || index}
-                        className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:bg-white/[0.04] hover:border-cyan-400/40 transition-all"
+                        className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:bg-white/[0.04] hover:border-cyan-400/40 transition-all relative"
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-3 pr-10">
                           {/* Event Thumbnail */}
                           {eventImage && (
                             <div className="flex-shrink-0">
@@ -282,13 +289,16 @@ export function EventsTabPage() {
                             </div>
                           )}
 
-                          {/* Event Details */}
-                          <div className="flex-1 min-w-0">
-                            {/* Event Type Badge */}
-                            {event.eventTypeName && (
-                              <div className="flex items-center gap-2 mb-1.5">
+                          {/* Event Details - Compact 3-line layout */}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            {/* Line 1: Title + Type Badge */}
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-semibold text-white truncate">
+                                {event.title}
+                              </h3>
+                              {event.eventTypeName && (
                                 <div
-                                  className="px-2 py-0.5 rounded text-[10px] font-semibold"
+                                  className="px-2 py-0.5 rounded text-[10px] font-semibold flex-shrink-0"
                                   style={{
                                     backgroundColor: event.eventTypeColor
                                       ? `${event.eventTypeColor}20`
@@ -299,77 +309,65 @@ export function EventsTabPage() {
                                 >
                                   {event.eventTypeName}
                                 </div>
-                              </div>
-                            )}
-
-                            {/* Event Title & Time */}
-                            <h3 className="text-sm font-semibold text-white mb-1">{event.title}</h3>
-                            <div className="text-xs text-white/60 mb-1.5">
-                              {formatTime(event.time)}
+                              )}
                             </div>
 
-                            {/* Venue */}
-                            {event.venueName && (
-                              <div className="flex items-center gap-1.5 text-xs text-white/60 mb-1.5">
-                                <MapPin className="w-3 h-3" />
-                                <span>{event.venueName}</span>
-                              </div>
-                            )}
+                            {/* Line 2: Time */}
+                            <div className="text-xs text-white/60">{formatTime(event.time)}</div>
 
-                            {/* Talent */}
-                            {event.talentNames && event.talentNames.length > 0 && (
-                              <div className="flex items-start gap-1.5 text-xs text-white/60 mb-1.5">
-                                <Users className="w-3 h-3 mt-0.5" />
-                                <div className="flex flex-wrap gap-1">
-                                  {event.talentNames.map((name, i) => (
-                                    <span
-                                      key={i}
-                                      className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px]"
-                                    >
-                                      {name}
-                                    </span>
-                                  ))}
+                            {/* Line 3: Artist + Location */}
+                            <div className="flex items-center gap-3 text-xs text-white/60">
+                              {/* Artist */}
+                              {event.talentNames && event.talentNames.length > 0 && (
+                                <div className="flex items-center gap-1.5">
+                                  <Users className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{event.talentNames.join(', ')}</span>
                                 </div>
-                              </div>
-                            )}
+                              )}
 
-                            {/* Party Theme */}
-                            {event.partyThemeName && (
-                              <div className="flex items-center gap-1.5 text-xs text-white/60 mb-1.5">
-                                <PartyPopper className="w-3 h-3" />
-                                <span className="px-1.5 py-0.5 bg-pink-500/20 text-pink-400 border border-pink-400/30 rounded text-[10px] font-medium">
-                                  {event.partyThemeName}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Description */}
-                            {event.description && (
-                              <p className="text-xs text-white/50 line-clamp-2">
-                                {event.description}
-                              </p>
-                            )}
+                              {/* Location */}
+                              {event.venueName && (
+                                <div className="flex items-center gap-1.5">
+                                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{event.venueName}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
+                        </div>
 
-                          {/* Actions */}
-                          <div className="flex flex-col gap-1.5">
-                            <Button
-                              onClick={() => handleEditEvent(event)}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0 bg-white/4 border-white/10 hover:bg-white/10 hover:border-cyan-400/40 text-white/70 hover:text-cyan-400"
+                        {/* Three-dot Menu - Positioned absolutely to the right */}
+                        <div className="absolute right-3 top-3">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                              >
+                                <MoreVertical className="w-3.5 h-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="bg-[#1a1a1a] border-white/10"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              onClick={() => event.id && handleDeleteEvent(event.id)}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0 bg-white/4 border-white/10 hover:bg-red-500/20 hover:border-red-400/40 text-white/70 hover:text-red-400"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
+                              <DropdownMenuItem
+                                onClick={() => handleEditEvent(event)}
+                                className="text-white/70 hover:text-cyan-400 hover:bg-white/5 cursor-pointer"
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => event.id && handleDeleteEvent(event.id)}
+                                className="text-white/70 hover:text-red-400 hover:bg-white/5 cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     );

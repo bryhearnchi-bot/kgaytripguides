@@ -50,7 +50,7 @@ function formatZodError(error: ZodError): any {
     error: 'Validation failed',
     message: 'Please check the following fields and try again',
     errors: formattedErrors,
-    errorCount: error.errors.length
+    errorCount: error.errors.length,
   };
 }
 
@@ -58,12 +58,17 @@ function formatZodError(error: ZodError): any {
 export function validateBody<T>(schema: ZodSchema<T>) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log('🔵 validateBody - Received body:', req.body);
       const validationResult = schema.safeParse(req.body);
 
       if (!validationResult.success) {
-        return res.status(400).json(formatZodError(validationResult.error));
+        console.error('❌ validateBody - Validation failed:', validationResult.error.errors);
+        const formatted = formatZodError(validationResult.error);
+        console.error('❌ validateBody - Formatted error:', formatted);
+        return res.status(400).json(formatted);
       }
 
+      console.log('✅ validateBody - Validation passed:', validationResult.data);
       // Replace req.body with validated and transformed data
       req.body = validationResult.data;
       return next();
@@ -71,7 +76,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       console.error('Validation middleware error:', error);
       return res.status(500).json({
         error: 'Internal validation error',
-        message: 'An unexpected error occurred during validation'
+        message: 'An unexpected error occurred during validation',
       });
     }
   };
@@ -95,7 +100,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       console.error('Query validation middleware error:', error);
       return res.status(500).json({
         error: 'Internal validation error',
-        message: 'An unexpected error occurred during query validation'
+        message: 'An unexpected error occurred during query validation',
       });
     }
   };
@@ -119,7 +124,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       console.error('Parameter validation middleware error:', error);
       return res.status(500).json({
         error: 'Internal validation error',
-        message: 'An unexpected error occurred during parameter validation'
+        message: 'An unexpected error occurred during parameter validation',
       });
     }
   };
@@ -131,7 +136,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
 export function validateRequest<TBody = any, TQuery = any, TParams = any>({
   body,
   query,
-  params
+  params,
 }: {
   body?: ZodSchema<TBody>;
   query?: ZodSchema<TQuery>;
@@ -179,7 +184,7 @@ export function validateRequest<TBody = any, TQuery = any, TParams = any>({
         return res.status(400).json({
           error: 'Validation failed',
           message: 'Multiple validation errors occurred',
-          errors
+          errors,
         });
       }
 
@@ -188,7 +193,7 @@ export function validateRequest<TBody = any, TQuery = any, TParams = any>({
       console.error('Request validation middleware error:', error);
       return res.status(500).json({
         error: 'Internal validation error',
-        message: 'An unexpected error occurred during request validation'
+        message: 'An unexpected error occurred during request validation',
       });
     }
   };
@@ -210,29 +215,33 @@ export const createSettingSchema = z.object({
   value: z.string().optional(),
   metadata: z.record(z.any()).optional(),
   orderIndex: z.number().int().optional().default(0),
-  isActive: z.boolean().optional().default(true)
+  isActive: z.boolean().optional().default(true),
 });
 
-export const updateSettingSchema = createSettingSchema.partial().omit({ category: true, key: true });
+export const updateSettingSchema = createSettingSchema
+  .partial()
+  .omit({ category: true, key: true });
 
 // Global search schema
 export const globalSearchSchema = z.object({
   query: z.string().min(1, 'Search query is required'),
   types: z.array(z.enum(['trips', 'events', 'talent', 'ports', 'ships'])).optional(),
-  limit: z.number().int().positive().max(100).optional().default(20)
+  limit: z.number().int().positive().max(100).optional().default(20),
 });
 
 // Admin dashboard stats schema
 export const dashboardStatsSchema = z.object({
-  dateRange: z.object({
-    start: z.string().datetime().optional(),
-    end: z.string().datetime().optional()
-  }).optional(),
-  metrics: z.array(z.enum(['trips', 'events', 'talent', 'users', 'revenue'])).optional()
+  dateRange: z
+    .object({
+      start: z.string().datetime().optional(),
+      end: z.string().datetime().optional(),
+    })
+    .optional(),
+  metrics: z.array(z.enum(['trips', 'events', 'talent', 'users', 'revenue'])).optional(),
 });
 
 // System health schema
 export const systemHealthSchema = z.object({
   includeDetails: z.boolean().optional().default(false),
-  checkServices: z.array(z.enum(['database', 'storage', 'cache', 'external'])).optional()
+  checkServices: z.array(z.enum(['database', 'storage', 'cache', 'external'])).optional(),
 });

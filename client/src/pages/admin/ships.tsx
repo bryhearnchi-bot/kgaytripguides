@@ -7,12 +7,23 @@ import { EnhancedShipsTable } from '@/components/admin/EnhancedShipsTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
 import { api } from '@/lib/api-client';
-import { Ship, Plus, PlusSquare, Edit2, Trash2, Search, Users, Calendar, Anchor } from 'lucide-react';
+import {
+  Ship,
+  Plus,
+  PlusSquare,
+  Edit2,
+  Trash2,
+  Search,
+  Users,
+  Calendar,
+  Anchor,
+} from 'lucide-react';
 
 interface Ship {
   id?: number;
   name: string;
-  cruiseLine: string;
+  cruiseLineName?: string;
+  cruiseLineId?: number;
   capacity?: number;
   decks?: number;
   imageUrl?: string;
@@ -42,7 +53,7 @@ export default function ShipsManagement() {
       const response = await api.get('/api/ships');
       if (!response.ok) throw new Error('Failed to fetch ships');
       return response.json();
-    }
+    },
   });
 
   // Delete ship mutation
@@ -69,7 +80,7 @@ export default function ShipsManagement() {
           : 'Failed to delete ship',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const handleEdit = (ship: Ship) => {
@@ -89,9 +100,10 @@ export default function ShipsManagement() {
     setEditingShip(null);
   };
 
-  const filteredShips = ships.filter(ship =>
-    ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ship.cruiseLine.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredShips = ships.filter(
+    ship =>
+      ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ship.cruiseLineName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -103,14 +115,16 @@ export default function ShipsManagement() {
               <Ship className="h-6 w-6" />
               Cruise Ships
             </h1>
-            <p className="text-sm text-white/60">Manage your fleet information and specifications</p>
+            <p className="text-sm text-white/60">
+              Manage your fleet information and specifications
+            </p>
           </div>
           <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
               placeholder="Search ships by name or cruise line"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -139,7 +153,11 @@ export default function ShipsManagement() {
         {filteredShips.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <Ship className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No ships match your search.' : 'Get started by adding your first ship.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No ships match your search.'
+                : 'Get started by adding your first ship.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -188,19 +206,15 @@ export default function ShipsManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: (value) => (
-                  <p className="font-bold text-xs text-white">{value}</p>
-                ),
+                render: value => <p className="font-bold text-xs text-white">{value}</p>,
               },
               {
-                key: 'cruiseLine',
+                key: 'cruiseLineName',
                 label: 'Cruise Line',
                 priority: 'high',
                 sortable: true,
                 minWidth: 150,
-                render: (value) => (
-                  <span className="text-white/80">{value}</span>
-                ),
+                render: value => <span className="text-white/80">{value}</span>,
               },
               {
                 key: 'description',
@@ -208,10 +222,8 @@ export default function ShipsManagement() {
                 priority: 'medium',
                 sortable: false,
                 minWidth: 200,
-                render: (value) => (
-                  <span className="text-white/70 line-clamp-2">
-                    {value || 'No description'}
-                  </span>
+                render: value => (
+                  <span className="text-white/70 line-clamp-2">{value || 'No description'}</span>
                 ),
               },
               {
@@ -220,7 +232,7 @@ export default function ShipsManagement() {
                 priority: 'medium',
                 sortable: true,
                 minWidth: 100,
-                render: (value) => (
+                render: value => (
                   <span className="text-white/80">
                     {value ? `${value.toLocaleString()} guests` : 'N/A'}
                   </span>
@@ -232,7 +244,7 @@ export default function ShipsManagement() {
                 priority: 'medium',
                 sortable: true,
                 minWidth: 80,
-                render: (value) => (
+                render: value => (
                   <span className="text-white/80">
                     {value || 0} cruise{(value || 0) === 1 ? '' : 's'}
                   </span>
@@ -248,13 +260,15 @@ export default function ShipsManagement() {
               {
                 label: 'Delete Ship',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (ship) => handleDelete(ship.id!),
+                onClick: ship => handleDelete(ship.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No ships match your search.' : 'Get started by adding your first ship.'}
+            emptyMessage={
+              searchTerm ? 'No ships match your search.' : 'Get started by adding your first ship.'
+            }
           />
         )}
 

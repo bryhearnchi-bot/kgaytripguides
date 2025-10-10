@@ -337,7 +337,15 @@ export function registerTripRoutes(app: Express) {
           if (trip.ship_id) {
             const { data: rawShipData } = await supabaseAdmin
               .from('ships')
-              .select('*')
+              .select(
+                `
+                *,
+                cruise_lines (
+                  id,
+                  name
+                )
+              `
+              )
               .eq('id', trip.ship_id)
               .single();
 
@@ -345,7 +353,8 @@ export function registerTripRoutes(app: Express) {
               shipData = {
                 id: rawShipData.id,
                 name: rawShipData.name,
-                cruiseLine: rawShipData.cruise_line,
+                cruiseLineId: rawShipData.cruise_line_id,
+                cruiseLineName: rawShipData.cruise_lines?.name || '',
                 imageUrl: rawShipData.image_url,
                 description: rawShipData.description,
                 capacity: rawShipData.capacity,

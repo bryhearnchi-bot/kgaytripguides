@@ -361,7 +361,13 @@ export function registerLocationRoutes(app: Express) {
 
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
-      let query = supabaseAdmin.from('ships').select('*');
+      let query = supabaseAdmin.from('ships').select(`
+        *,
+        cruise_lines (
+          id,
+          name
+        )
+      `);
 
       // Apply filters
       if (search) {
@@ -397,7 +403,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedResults = results.map((ship: any) => ({
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLineName: ship.cruise_lines?.name || '',
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -419,7 +426,15 @@ export function registerLocationRoutes(app: Express) {
       const supabaseAdmin = getSupabaseAdmin();
       const { data: ship, error } = await supabaseAdmin
         .from('ships')
-        .select('*')
+        .select(
+          `
+          *,
+          cruise_lines (
+            id,
+            name
+          )
+        `
+        )
         .eq('id', Number(req.params.id))
         .single();
 
@@ -442,7 +457,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedShip = {
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLineName: ship.cruise_lines?.name || '',
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -471,15 +487,16 @@ export function registerLocationRoutes(app: Express) {
       }
 
       // Validate required fields (accept both camelCase and snake_case)
-      const cruiseLine = req.body.cruiseLine || req.body.cruise_line;
-      if (!req.body.name || !cruiseLine) {
-        throw ApiError.badRequest('Name and cruise line are required fields');
+      const cruiseLineId = req.body.cruiseLineId || req.body.cruise_line_id;
+
+      if (!req.body.name || !cruiseLineId) {
+        throw ApiError.badRequest('Name and cruise line ID are required fields');
       }
 
       // Prepare ship data with proper field names for database
       const shipData = {
         name: req.body.name,
-        cruise_line: cruiseLine, // Always use snake_case for database
+        cruise_line_id: cruiseLineId, // Always use snake_case for database
         capacity: req.body.capacity || null,
         decks: req.body.decks || null,
         image_url: req.body.imageUrl || req.body.image_url || null,
@@ -492,7 +509,15 @@ export function registerLocationRoutes(app: Express) {
       const { data: ship, error } = await supabaseAdmin
         .from('ships')
         .insert(shipData)
-        .select()
+        .select(
+          `
+          *,
+          cruise_lines (
+            id,
+            name
+          )
+        `
+        )
         .single();
 
       if (error) {
@@ -507,7 +532,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedShip = {
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLineName: ship.cruise_lines?.name || '',
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -543,8 +569,8 @@ export function registerLocationRoutes(app: Express) {
 
       // Convert camelCase to snake_case for database fields - ONLY fields that exist in DB
       if (req.body.name !== undefined) updateData.name = req.body.name;
-      if (req.body.cruiseLine !== undefined || req.body.cruise_line !== undefined) {
-        updateData.cruise_line = req.body.cruiseLine || req.body.cruise_line;
+      if (req.body.cruiseLineId !== undefined || req.body.cruise_line_id !== undefined) {
+        updateData.cruise_line_id = req.body.cruiseLineId || req.body.cruise_line_id;
       }
       if (req.body.capacity !== undefined) updateData.capacity = req.body.capacity;
       if (req.body.decks !== undefined) updateData.decks = req.body.decks;
@@ -562,7 +588,15 @@ export function registerLocationRoutes(app: Express) {
         .from('ships')
         .update(updateData)
         .eq('id', Number(req.params.id))
-        .select()
+        .select(
+          `
+          *,
+          cruise_lines (
+            id,
+            name
+          )
+        `
+        )
         .single();
 
       if (error) {
@@ -580,7 +614,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedShip = {
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLineName: ship.cruise_lines?.name || '',
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -1522,8 +1557,13 @@ export function registerLocationRoutes(app: Express) {
         id: resort.id,
         name: resort.name,
         location: resort.location,
+        locationId: resort.location_id,
+        city: resort.city,
+        stateProvince: resort.state_province,
+        country: resort.country,
+        countryCode: resort.country_code,
         capacity: resort.capacity,
-        roomCount: resort.room_count,
+        numberOfRooms: resort.number_of_rooms,
         imageUrl: resort.image_url,
         description: resort.description,
         propertyMapUrl: resort.property_map_url,

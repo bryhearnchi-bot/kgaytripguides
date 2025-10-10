@@ -55,7 +55,7 @@ export default function LocationsManagement() {
       const response = await api.get('/api/locations');
       if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
-    }
+    },
   });
 
   // Create location mutation
@@ -80,7 +80,7 @@ export default function LocationsManagement() {
         description: 'Failed to create location',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update location mutation
@@ -106,7 +106,7 @@ export default function LocationsManagement() {
         description: 'Failed to update location',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Delete location mutation
@@ -128,7 +128,7 @@ export default function LocationsManagement() {
         description: 'Failed to delete location',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const handleEdit = (location: Location) => {
@@ -153,13 +153,21 @@ export default function LocationsManagement() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', location: '', country: '', city: '', state_province: '', country_code: '' });
+    setFormData({
+      name: '',
+      location: '',
+      country: '',
+      city: '',
+      state_province: '',
+      country_code: '',
+    });
   };
 
-  const filteredLocations = locations.filter(location =>
-    location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.country.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLocations = locations.filter(
+    location =>
+      location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      location.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      location.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -178,7 +186,7 @@ export default function LocationsManagement() {
             <Input
               placeholder="Search locations..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
@@ -208,7 +216,11 @@ export default function LocationsManagement() {
         {filteredLocations.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
             <MapPin className="h-10 w-10 text-white/30" />
-            <p className="text-sm">{searchTerm ? 'No locations match your search.' : 'Get started by adding your first location.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'No locations match your search.'
+                : 'Get started by adding your first location.'}
+            </p>
             {!searchTerm && (
               <Button
                 onClick={() => {
@@ -258,9 +270,7 @@ export default function LocationsManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: (value) => (
-                  <p className="font-bold text-xs text-white">{value}</p>
-                ),
+                render: value => <p className="font-bold text-xs text-white">{value}</p>,
               },
               {
                 key: 'location',
@@ -269,7 +279,9 @@ export default function LocationsManagement() {
                 sortable: true,
                 minWidth: 200,
                 render: (value, location) => (
-                  <span className="text-xs text-white/80">{value || location.country || 'No location'}</span>
+                  <span className="text-xs text-white/80">
+                    {value || location.country || 'No location'}
+                  </span>
                 ),
               },
               {
@@ -278,10 +290,8 @@ export default function LocationsManagement() {
                 priority: 'medium',
                 sortable: false,
                 minWidth: 250,
-                render: (value) => (
-                  <span className="text-white/70 line-clamp-2">
-                    {value || 'No description'}
-                  </span>
+                render: value => (
+                  <span className="text-white/70 line-clamp-2">{value || 'No description'}</span>
                 ),
               },
             ]}
@@ -294,13 +304,17 @@ export default function LocationsManagement() {
               {
                 label: 'Delete Location',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: (location) => handleDelete(location.id!),
+                onClick: location => handleDelete(location.id!),
                 variant: 'destructive',
               },
             ]}
             keyField="id"
             isLoading={isLoading}
-            emptyMessage={searchTerm ? 'No locations match your search.' : 'Get started by adding your first location.'}
+            emptyMessage={
+              searchTerm
+                ? 'No locations match your search.'
+                : 'Get started by adding your first location.'
+            }
           />
         )}
 
@@ -318,76 +332,88 @@ export default function LocationsManagement() {
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingLocation ? 'Edit Location' : 'Add New Location'}
+        icon={<MapPin className="h-5 w-5" />}
         description={editingLocation ? 'Update location details' : 'Create a new destination'}
+        onSubmit={handleSubmit}
+        primaryAction={{
+          label: editingLocation ? 'Save Changes' : 'Create Location',
+          loading: editingLocation
+            ? updateLocationMutation.isPending
+            : createLocationMutation.isPending,
+          loadingLabel: editingLocation ? 'Saving...' : 'Creating...',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => handleModalOpenChange(false),
+        }}
+        contentClassName="grid gap-4"
+        maxWidthClassName="max-w-2xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Location Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              className="bg-white/5 border-white/10 text-white"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-white/80">
+            Location Name *
+          </Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            required
+            className="bg-white/5 border-white/10 text-white"
+          />
+        </div>
 
-          <div>
-            <LocationSearchBar
-              label="Location"
-              placeholder="Search for city, state, or country..."
-              value={{
-                city: formData.city || '',
-                state: formData.state_province || '',
-                country: formData.country || '',
-                countryCode: formData.country_code || ''
-              }}
-              onChange={(location) => {
-                setFormData({
-                  ...formData,
-                  location: location.formatted || '',
-                  city: location.city || '',
-                  state_province: location.state || '',
-                  country: location.country || '',
-                  country_code: location.countryCode || ''
-                });
-              }}
-              required
-            />
-          </div>
+        <div className="space-y-2">
+          <LocationSearchBar
+            label="Location"
+            placeholder="Search for city, state, or country..."
+            value={{
+              city: formData.city || '',
+              state: formData.state_province || '',
+              country: formData.country || '',
+              countryCode: formData.country_code || '',
+            }}
+            onChange={location => {
+              setFormData({
+                ...formData,
+                location: location.formatted || '',
+                city: location.city || '',
+                state_province: location.state || '',
+                country: location.country || '',
+                country_code: location.countryCode || '',
+              });
+            }}
+            required
+          />
+        </div>
 
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="bg-white/5 border-white/10 text-white"
-              rows={3}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="description" className="text-white/80">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            value={formData.description || ''}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
+            className="bg-white/5 border-white/10 text-white"
+            rows={3}
+          />
+        </div>
 
-          <div>
-            <Label htmlFor="imageUrl">Location Image</Label>
-            <ImageUploadField
-              label="Location Image"
-              value={formData.imageUrl || ''}
-              onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
-              imageType="locations"
-              placeholder="No location image uploaded"
-              disabled={editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => handleModalOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
-              {editingLocation ? 'Update' : 'Create'} Location
-            </Button>
-          </div>
-        </form>
+        <div className="space-y-2">
+          <Label htmlFor="imageUrl" className="text-white/80">
+            Location Image
+          </Label>
+          <ImageUploadField
+            label="Location Image"
+            value={formData.imageUrl || ''}
+            onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
+            imageType="locations"
+            placeholder="No location image uploaded"
+            disabled={
+              editingLocation ? updateLocationMutation.isPending : createLocationMutation.isPending
+            }
+          />
+        </div>
       </AdminFormModal>
     </div>
   );

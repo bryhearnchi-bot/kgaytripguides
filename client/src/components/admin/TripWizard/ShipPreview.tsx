@@ -25,6 +25,8 @@ export function ShipPreview({ shipData, shipId, onEdit }: ShipPreviewProps) {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(false);
 
+  console.log('🚢 ShipPreview render - shipData:', JSON.stringify(shipData, null, 2));
+
   // Fetch venues and amenities when ship ID is available
   useEffect(() => {
     const fetchShipRelations = async () => {
@@ -127,8 +129,8 @@ export function ShipPreview({ shipData, shipId, onEdit }: ShipPreviewProps) {
             <div>
               <p className="text-[10px] text-white/50 uppercase tracking-wider mb-1">Ship Name</p>
               <p className="text-sm text-white font-medium">{shipData.name}</p>
-              {shipData.cruiseLine && (
-                <p className="text-xs text-white/70 mt-0.5">{shipData.cruiseLine}</p>
+              {shipData.cruiseLineName && (
+                <p className="text-xs text-white/70 mt-0.5">{shipData.cruiseLineName}</p>
               )}
             </div>
 

@@ -262,6 +262,39 @@ export default function UsersManagement() {
     },
   });
 
+  // Toggle user status mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const response = await api.patch(`/api/admin/users/${id}/status`, {
+        is_active: isActive,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user status');
+      }
+      return response.json();
+    },
+    onSuccess: result => {
+      if (result.user) {
+        updateUserOptimistically(result.user.id, result.user);
+      }
+      invalidateUsers();
+      toast({
+        title: 'Success',
+        description: result.user.is_active
+          ? 'User activated successfully'
+          : 'User deactivated successfully',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update user status',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       username: '',
@@ -361,6 +394,20 @@ export default function UsersManagement() {
     }
     if (confirm('Are you sure you want to delete this user?')) {
       deleteUserMutation.mutate(id);
+    }
+  };
+
+  const handleToggleStatus = (user: UserData) => {
+    const action = user.is_active ? 'deactivate' : 'activate';
+    const confirmMessage = user.is_active
+      ? 'Are you sure you want to deactivate this user? They will not be able to log in.'
+      : 'Are you sure you want to activate this user?';
+
+    if (confirm(confirmMessage)) {
+      toggleStatusMutation.mutate({
+        id: user.id,
+        isActive: !user.is_active,
+      });
     }
   };
 
@@ -553,24 +600,6 @@ export default function UsersManagement() {
                 render: value => <span className="text-xs text-white/80">{value}</span>,
               },
               {
-                key: 'location_text',
-                label: 'Location',
-                priority: 'medium',
-                sortable: true,
-                minWidth: 150,
-                render: (_value, user) => {
-                  const locationText = user.locationText || user.location_text;
-                  const fallbackLocation = user.location
-                    ? [user.location.city, user.location.state, user.location.country]
-                        .filter(Boolean)
-                        .join(', ')
-                    : '';
-                  const displayLocation = locationText || fallbackLocation || '-';
-
-                  return <span className="text-xs text-white/70">{displayLocation}</span>;
-                },
-              },
-              {
                 key: 'role',
                 label: 'Role',
                 priority: 'high',
@@ -595,7 +624,7 @@ export default function UsersManagement() {
                       <UserCheck className="h-3.5 w-3.5" /> Active
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[#fb7185]/15 px-3 py-1 text-xs font-medium text-[#fb7185]">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#fbbf24]/15 px-3 py-1 text-xs font-medium text-[#fbbf24]">
                       <UserX className="h-3.5 w-3.5" /> Inactive
                     </span>
                   ),
@@ -609,10 +638,26 @@ export default function UsersManagement() {
                 disabled: () => !canManageUsers,
               },
               {
+                label: 'Deactivate User',
+                icon: <UserX className="h-4 w-4" />,
+                onClick: handleToggleStatus,
+                variant: 'warning' as const,
+                disabled: () => !canManageUsers,
+                hidden: user => !user.is_active,
+              },
+              {
+                label: 'Activate User',
+                icon: <UserCheck className="h-4 w-4" />,
+                onClick: handleToggleStatus,
+                variant: 'success' as const,
+                disabled: () => !canManageUsers,
+                hidden: user => user.is_active,
+              },
+              {
                 label: 'Delete User',
                 icon: <Trash2 className="h-4 w-4" />,
                 onClick: user => handleDelete(user.id),
-                variant: 'destructive',
+                variant: 'destructive' as const,
                 disabled: () => !canDeleteUsers,
               },
             ]}

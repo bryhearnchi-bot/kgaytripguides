@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { AdminFormModal } from './AdminFormModal';
 import { AmenitySelector } from './AmenitySelector';
+import { CruiseLineSelector } from './CruiseLineSelector';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from './ImageUploadField';
@@ -18,7 +19,8 @@ import {
 interface Ship {
   id?: number;
   name: string;
-  cruiseLine: string;
+  cruiseLine?: string; // Deprecated - kept for backward compatibility
+  cruiseLineId?: number | null;
   capacity?: number;
   decks?: number;
   imageUrl?: string;
@@ -46,7 +48,7 @@ interface ShipFormModalProps {
 
 interface FormData {
   name: string;
-  cruiseLine: string;
+  cruiseLineId: number | null;
   capacity: string;
   decks: string;
   imageUrl: string;
@@ -64,7 +66,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
   const [showVenueModal, setShowVenueModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    cruiseLine: '',
+    cruiseLineId: null,
     capacity: '',
     decks: '',
     imageUrl: '',
@@ -83,11 +85,16 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
     }
 
     console.log('🔍 useEffect triggered - ship:', ship, 'isOpen:', isOpen);
+    console.log('🔍 FULL SHIP OBJECT:', JSON.stringify(ship, null, 2));
     if (ship) {
-      console.log('🔍 Loading ship into form:', { id: ship.id, name: ship.name });
+      console.log('🔍 Loading ship into form:', {
+        id: ship.id,
+        name: ship.name,
+        cruiseLineId: ship.cruiseLineId,
+      });
       setFormData({
         name: ship.name || '',
-        cruiseLine: ship.cruiseLine || '',
+        cruiseLineId: ship.cruiseLineId || null,
         capacity: ship.capacity?.toString() || '',
         decks: ship.decks?.toString() || '',
         imageUrl: ship.imageUrl || '',
@@ -107,7 +114,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       // Reset form for new ship
       setFormData({
         name: '',
-        cruiseLine: '',
+        cruiseLineId: null,
         capacity: '',
         decks: '',
         imageUrl: '',
@@ -180,8 +187,8 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
     });
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.cruiseLine.trim()) {
-      console.log('🚢 CLIENT: Form validation failed - name or cruiseLine missing');
+    if (!formData.name.trim() || !formData.cruiseLineId) {
+      console.log('🚢 CLIENT: Form validation failed - name or cruiseLineId missing');
       return;
     }
 
@@ -193,7 +200,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       // Prepare ship data
       const shipData = {
         name: formData.name.trim(),
-        cruiseLine: formData.cruiseLine.trim(),
+        cruiseLineId: formData.cruiseLineId,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         decks: formData.decks ? parseInt(formData.decks) : null,
         imageUrl: formData.imageUrl.trim() || null,
@@ -201,7 +208,14 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         description: formData.description.trim() || null,
       };
 
-      console.log('🚢 CLIENT: About to save ship data', { isEditing, shipId: ship?.id, shipData });
+      console.log('🚢 CLIENT: About to save ship data', {
+        isEditing,
+        shipId: ship?.id,
+        shipData,
+        cruiseLineIdType: typeof formData.cruiseLineId,
+        cruiseLineIdValue: formData.cruiseLineId,
+        stringifiedData: JSON.stringify(shipData),
+      });
 
       let shipResponse;
       if (isEditing && ship) {
@@ -296,7 +310,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         type: 'submit',
         loading,
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
-        disabled: !formData.name.trim() || !formData.cruiseLine.trim(),
+        disabled: !formData.name.trim() || !formData.cruiseLineId,
       }}
       maxWidthClassName="max-w-4xl"
       contentClassName="py-4"
@@ -318,12 +332,13 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
             </div>
 
             <div className="space-y-0.5">
-              <label className="text-xs font-medium text-white/90">Cruise Line *</label>
-              <Input
-                placeholder="Enter cruise line"
-                value={formData.cruiseLine}
-                onChange={e => handleInputChange('cruiseLine', e.target.value)}
-                className="admin-form-modal h-8"
+              <CruiseLineSelector
+                selectedId={formData.cruiseLineId}
+                onSelectionChange={id => setFormData(prev => ({ ...prev, cruiseLineId: id }))}
+                disabled={loading}
+                label="Cruise Line"
+                placeholder="Select a cruise line or add new"
+                required={true}
               />
             </div>
 

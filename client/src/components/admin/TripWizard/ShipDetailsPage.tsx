@@ -24,7 +24,7 @@ export function ShipDetailsPage() {
     if (!state.shipData) {
       updateShipData({
         name: '',
-        cruiseLine: '',
+        cruiseLineId: undefined,
         capacity: undefined,
         decks: undefined,
         imageUrl: '',
@@ -46,14 +46,14 @@ export function ShipDetailsPage() {
     if (selectedShipId && !shipData.name && !isLoadingShip) {
       setIsLoadingShip(true);
       api
-        .get('/api/ships')
+        .get(`/api/ships/${selectedShipId}`)
         .then(response => response.json())
-        .then(ships => {
-          const ship = ships.find((s: any) => s.id === selectedShipId);
+        .then(ship => {
           if (ship) {
             updateShipData({
               name: ship.name || '',
-              cruiseLine: ship.cruiseLine || '',
+              cruiseLineId: ship.cruiseLineId,
+              cruiseLineName: ship.cruiseLineName || '',
               capacity: ship.capacity,
               decks: ship.decks,
               imageUrl: ship.imageUrl || '',
@@ -84,7 +84,8 @@ export function ShipDetailsPage() {
     if (selectedShip) {
       updateShipData({
         name: selectedShip.name || '',
-        cruiseLine: selectedShip.cruiseLine || '',
+        cruiseLineId: selectedShip.cruiseLineId,
+        cruiseLineName: selectedShip.cruiseLineName || '',
         capacity: selectedShip.capacity,
         decks: selectedShip.decks,
         imageUrl: selectedShip.imageUrl || '',
@@ -108,7 +109,8 @@ export function ShipDetailsPage() {
   }, [
     selectedShipId,
     shipData.name,
-    shipData.cruiseLine,
+    shipData.cruiseLineId,
+    shipData.cruiseLineName,
     shipData.capacity,
     shipData.decks,
     shipData.imageUrl,
@@ -157,7 +159,8 @@ export function ShipDetailsPage() {
             setShipId(newShip.id);
             updateShipData({
               name: newShip.name || '',
-              cruiseLine: newShip.cruiseLine || '',
+              cruiseLineId: newShip.cruiseLineId,
+              cruiseLineName: newShip.cruiseLineName || '',
               capacity: newShip.capacity,
               decks: newShip.decks,
               imageUrl: newShip.imageUrl || '',
@@ -180,7 +183,8 @@ export function ShipDetailsPage() {
           if (updatedShip) {
             updateShipData({
               name: updatedShip.name || '',
-              cruiseLine: updatedShip.cruiseLine || '',
+              cruiseLineId: updatedShip.cruiseLineId,
+              cruiseLineName: updatedShip.cruiseLineName || '',
               capacity: updatedShip.capacity,
               decks: updatedShip.decks,
               imageUrl: updatedShip.imageUrl || '',

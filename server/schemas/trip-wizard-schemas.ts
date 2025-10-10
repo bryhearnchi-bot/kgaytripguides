@@ -7,7 +7,7 @@ export const scheduleEntrySchema = z.object({
   dayNumber: z.number(),
   date: z.string(),
   imageUrl: z.string().nullable().optional(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
 });
 
 // Itinerary entry for cruise trips

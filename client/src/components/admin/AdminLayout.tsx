@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Mail,
-  TreePalm
+  TreePalm,
+  HelpCircle,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -35,12 +36,17 @@ const managementNav: NavItem[] = [
   { label: 'Locations', path: '/admin/locations', icon: <MapPin className="h-4 w-4" /> },
   { label: 'Artists', path: '/admin/artists', icon: <Users className="h-4 w-4" /> },
   { label: 'Party Themes', path: '/admin/themes', icon: <Palette className="h-4 w-4" /> },
-  { label: 'Trip Info Sections', path: '/admin/trip-info-sections', icon: <FileText className="h-4 w-4" /> },
+  {
+    label: 'Trip Info Sections',
+    path: '/admin/trip-info-sections',
+    icon: <FileText className="h-4 w-4" />,
+  },
+  { label: 'FAQs', path: '/admin/faqs', icon: <HelpCircle className="h-4 w-4" /> },
 ];
 
 const adminNav: NavItem[] = [
   { label: 'Users', path: '/admin/users', icon: <Users className="h-4 w-4" /> },
-  { label: 'Invitations', path: '/admin/invitations', icon: <Mail className="h-4 w-4" /> },
+  // { label: 'Invitations', path: '/admin/invitations', icon: <Mail className="h-4 w-4" /> }, // Hidden for now
   { label: 'Lookup Tables', path: '/admin/lookup-tables', icon: <Search className="h-4 w-4" /> },
   { label: 'Profile', path: '/admin/profile', icon: <Shield className="h-4 w-4" /> },
 ];
@@ -49,7 +55,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
 
   const isActive = (path: string) => {
     if (path === '/admin') return location === '/admin';
@@ -63,7 +68,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       '/notifications': '/admin/trips',
       '/help': '/docs',
       '/admin-dashboard': '/admin/trips',
-      '/admin': '/admin/trips'
+      '/admin': '/admin/trips',
     };
 
     const target = routeMap[path] || path;
@@ -76,7 +81,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       const detail = (event as CustomEvent<{ action?: 'toggle' | 'open' | 'close' }>).detail;
       if (!detail) return;
       if (detail.action === 'toggle') {
-        setMobileOpen((prev) => !prev);
+        setMobileOpen(prev => !prev);
       } else if (detail.action === 'open') {
         setMobileOpen(true);
       } else if (detail.action === 'close') {
@@ -111,14 +116,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
     if (typeof mediaQuery.addEventListener === 'function') {
       mediaQuery.addEventListener('change', handleChange as (event: MediaQueryListEvent) => void);
-      return () => mediaQuery.removeEventListener('change', handleChange as (event: MediaQueryListEvent) => void);
+      return () =>
+        mediaQuery.removeEventListener(
+          'change',
+          handleChange as (event: MediaQueryListEvent) => void
+        );
     }
 
     mediaQuery.addListener(handleChange as (event: MediaQueryListEvent) => void);
     return () => mediaQuery.removeListener(handleChange as (event: MediaQueryListEvent) => void);
   }, []);
 
-  const renderNavButton = (item: NavItem, options?: { collapsed?: boolean; variant?: 'desktop' | 'mobile' }) => {
+  const renderNavButton = (
+    item: NavItem,
+    options?: { collapsed?: boolean; variant?: 'desktop' | 'mobile' }
+  ) => {
     const collapsed = options?.collapsed ?? sidebarCollapsed;
     const variant = options?.variant ?? 'desktop';
     const isActiveNav = isActive(item.path);
@@ -142,7 +154,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         title={collapsed && variant === 'desktop' ? item.label : undefined}
       >
         {item.icon}
-        {variant === 'desktop' ? (!collapsed && <span>{item.label}</span>) : <span>{item.label}</span>}
+        {variant === 'desktop' ? (
+          !collapsed && <span>{item.label}</span>
+        ) : (
+          <span>{item.label}</span>
+        )}
       </button>
     );
   };
@@ -163,7 +179,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }`}
       >
         <div className={sidebarCollapsed ? 'px-2' : 'px-4'}>
-          <div className={`mb-5 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <div
+            className={`mb-5 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}
+          >
             {!sidebarCollapsed && (
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-white/60" />
@@ -175,19 +193,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 transition-colors"
               aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+              {sidebarCollapsed ? (
+                <ChevronRight className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronLeft className="h-3.5 w-3.5" />
+              )}
             </button>
           </div>
         </div>
 
-        <div className={`space-y-5 ${sidebarCollapsed ? 'px-2' : 'px-4'} overflow-y-auto`}
-             aria-label="Admin navigation">
-          {navSections.map((section) => (
+        <div
+          className={`space-y-5 ${sidebarCollapsed ? 'px-2' : 'px-4'} overflow-y-auto`}
+          aria-label="Admin navigation"
+        >
+          {navSections.map(section => (
             <div key={section.title}>
-              <p className={`text-xs uppercase tracking-[0.3em] text-white/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}>
+              <p
+                className={`text-xs uppercase tracking-[0.3em] text-white/40 mb-2 ${sidebarCollapsed ? 'hidden' : 'block'}`}
+              >
                 {section.title}
               </p>
-              <div className="space-y-2">{section.items.map((item) => renderNavButton(item))}</div>
+              <div className="space-y-2">{section.items.map(item => renderNavButton(item))}</div>
             </div>
           ))}
         </div>
@@ -201,11 +227,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             style={{ top: BANNER_OFFSET }}
           >
             <div className="max-h-[calc(100vh-80px)] space-y-5 overflow-y-auto">
-              {navSections.map((section) => (
+              {navSections.map(section => (
                 <div key={section.title}>
-                  <p className="mb-3 text-[11px] uppercase tracking-[0.3em] text-white/40">{section.title}</p>
+                  <p className="mb-3 text-[11px] uppercase tracking-[0.3em] text-white/40">
+                    {section.title}
+                  </p>
                   <div className="space-y-2">
-                    {section.items.map((item) => renderNavButton(item, { variant: 'mobile', collapsed: false }))}
+                    {section.items.map(item =>
+                      renderNavButton(item, { variant: 'mobile', collapsed: false })
+                    )}
                   </div>
                 </div>
               ))}

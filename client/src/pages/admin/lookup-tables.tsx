@@ -6,44 +6,50 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import {
-  Search,
-  PlusSquare,
-  Edit,
-} from 'lucide-react';
+import { Search, PlusSquare, Edit } from 'lucide-react';
 
 // Table configuration matching backend
 const TABLES = {
   'venue-types': {
     displayName: 'Venue Types',
     nameField: 'name',
-    apiField: 'name'
+    apiField: 'name',
   },
   'trip-types': {
     displayName: 'Trip Types',
     nameField: 'trip_type',
-    apiField: 'trip_type'
+    apiField: 'trip_type',
   },
   'trip-status': {
     displayName: 'Trip Status',
     nameField: 'status',
-    apiField: 'status'
+    apiField: 'status',
   },
   'talent-categories': {
     displayName: 'Talent Categories',
     nameField: 'category',
-    apiField: 'category'
+    apiField: 'category',
   },
   'location-types': {
     displayName: 'Location Types',
     nameField: 'type',
-    apiField: 'type'
+    apiField: 'type',
   },
   'charter-companies': {
     displayName: 'Charter Companies',
     nameField: 'name',
-    apiField: 'name'
-  }
+    apiField: 'name',
+  },
+  'cruise-lines': {
+    displayName: 'Cruise Lines',
+    nameField: 'name',
+    apiField: 'name',
+  },
+  'resort-companies': {
+    displayName: 'Resort Companies',
+    nameField: 'name',
+    apiField: 'name',
+  },
 } as const;
 
 type TableKey = keyof typeof TABLES;
@@ -71,19 +77,19 @@ export default function AdminLookupTables() {
     queryKey: ['lookup-tables-counts'],
     queryFn: async () => {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
       const response = await fetch('/api/admin/lookup-tables/counts', {
         headers,
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch counts');
       return response.json();
     },
-    enabled: !!session?.access_token
+    enabled: !!session?.access_token,
   });
 
   // Fetch items for active table
@@ -91,26 +97,26 @@ export default function AdminLookupTables() {
     queryKey: ['lookup-tables', activeTable],
     queryFn: async () => {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
       const response = await fetch(`/api/admin/lookup-tables/${activeTable}`, {
         headers,
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch items');
       return response.json();
     },
-    enabled: !!session?.access_token
+    enabled: !!session?.access_token,
   });
 
   // Create item mutation
   const createItemMutation = useMutation({
     mutationFn: async (data: TableFormData) => {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -119,7 +125,7 @@ export default function AdminLookupTables() {
         method: 'POST',
         headers,
         credentials: 'include',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -143,14 +149,14 @@ export default function AdminLookupTables() {
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update item mutation
   const updateItemMutation = useMutation({
     mutationFn: async (data: TableFormData) => {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -159,7 +165,7 @@ export default function AdminLookupTables() {
         method: 'PUT',
         headers,
         credentials: 'include',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -183,7 +189,7 @@ export default function AdminLookupTables() {
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const resetForm = () => {
@@ -211,7 +217,7 @@ export default function AdminLookupTables() {
     setEditingItem(item);
     const config = TABLES[activeTable];
     setFormData({
-      [config.apiField]: item[config.nameField]
+      [config.apiField]: item[config.nameField],
     });
     setShowAddModal(true);
   };
@@ -235,7 +241,9 @@ export default function AdminLookupTables() {
               <Search className="h-6 w-6" />
               Lookup Tables
             </h1>
-            <p className="text-sm text-white/60">Manage dropdown options and lookup data used throughout the application.</p>
+            <p className="text-sm text-white/60">
+              Manage dropdown options and lookup data used throughout the application.
+            </p>
           </div>
         </div>
       </section>
@@ -259,9 +267,11 @@ export default function AdminLookupTables() {
                 }`}
               >
                 {config.displayName}
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                  isActive ? 'bg-white/20' : 'bg-slate-600'
-                }`}>
+                <span
+                  className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                    isActive ? 'bg-white/20' : 'bg-slate-600'
+                  }`}
+                >
                   {count}
                 </span>
               </button>
@@ -347,18 +357,22 @@ export default function AdminLookupTables() {
       <AdminFormModal
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
-        title={editingItem ? `Edit ${currentConfig.displayName.slice(0, -1)}` : `Add New ${currentConfig.displayName.slice(0, -1)}`}
+        title={
+          editingItem
+            ? `Edit ${currentConfig.displayName.slice(0, -1)}`
+            : `Add New ${currentConfig.displayName.slice(0, -1)}`
+        }
         icon={<Search className="h-5 w-5" />}
         description={`Enter the ${currentConfig.displayName.slice(0, -1).toLowerCase()} information below`}
         onSubmit={handleSubmit}
         primaryAction={{
           label: editingItem ? 'Save Changes' : `Create ${currentConfig.displayName.slice(0, -1)}`,
           loading: editingItem ? updateItemMutation.isPending : createItemMutation.isPending,
-          loadingLabel: editingItem ? 'Saving...' : 'Creating...'
+          loadingLabel: editingItem ? 'Saving...' : 'Creating...',
         }}
         secondaryAction={{
           label: 'Cancel',
-          onClick: () => handleModalOpenChange(false)
+          onClick: () => handleModalOpenChange(false),
         }}
       >
         <div>
@@ -366,7 +380,7 @@ export default function AdminLookupTables() {
           <Input
             id="name"
             value={formData[currentConfig.apiField] || ''}
-            onChange={(e) => setFormData({ ...formData, [currentConfig.apiField]: e.target.value })}
+            onChange={e => setFormData({ ...formData, [currentConfig.apiField]: e.target.value })}
             placeholder={`Enter ${currentConfig.displayName.slice(0, -1).toLowerCase()} name`}
             required
           />
