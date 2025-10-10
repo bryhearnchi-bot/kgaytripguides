@@ -74,6 +74,14 @@ const charterCompanySchema = z.object({
   name: z.string().min(1).max(100).trim(),
 });
 
+const cruiseLineSchema = z.object({
+  name: z.string().min(1).max(100).trim(),
+});
+
+const resortCompanySchema = z.object({
+  name: z.string().min(1).max(100).trim(),
+});
+
 // Table configuration
 const TABLES = {
   'venue-types': {
@@ -111,6 +119,18 @@ const TABLES = {
     schema: charterCompanySchema,
     nameField: 'name',
     displayName: 'Charter Companies',
+  },
+  'cruise-lines': {
+    table: 'cruise_lines',
+    schema: cruiseLineSchema,
+    nameField: 'name',
+    displayName: 'Cruise Lines',
+  },
+  'resort-companies': {
+    table: 'resort_companies',
+    schema: resortCompanySchema,
+    nameField: 'name',
+    displayName: 'Resort Companies',
   },
 };
 

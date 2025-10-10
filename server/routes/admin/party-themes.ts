@@ -20,14 +20,11 @@ function transformPartyThemeData(theme: any): any {
   return {
     id: theme.id,
     name: theme.name,
-    description: theme.description,
-    heroImageUrl: theme.hero_image_url,
-    thumbnailImageUrl: theme.thumbnail_image_url,
-    icon: theme.icon,
-    color: theme.color,
-    isActive: theme.is_active,
-    displayOrder: theme.display_order,
-    tags: theme.tags,
+    shortDescription: theme.short_description,
+    longDescription: theme.long_description,
+    costumeIdeas: theme.costume_ideas,
+    imageUrl: theme.image_url,
+    amazonShoppingListUrl: theme.amazon_shopping_list_url,
     createdAt: theme.created_at,
     updatedAt: theme.updated_at,
   };
@@ -36,14 +33,11 @@ function transformPartyThemeData(theme: any): any {
 // Validation schemas
 const createPartyThemeSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().optional(),
-  heroImageUrl: z.string().url().optional(),
-  thumbnailImageUrl: z.string().url().optional(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-  isActive: z.boolean().optional().default(true),
-  displayOrder: z.number().int().optional(),
-  tags: z.array(z.string()).optional(),
+  shortDescription: z.string().optional(),
+  longDescription: z.string().optional(),
+  costumeIdeas: z.string().optional(),
+  imageUrl: z.string().url().optional(),
+  amazonShoppingListUrl: z.string().url().optional(),
 });
 
 const updatePartyThemeSchema = createPartyThemeSchema.partial();
@@ -56,15 +50,11 @@ export function registerPartyThemeRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
         const supabaseAdmin = await getSupabaseAdmin();
-        const includeInactive = req.query.includeInactive === 'true';
 
-        let query = supabaseAdmin.from('party_themes').select('*');
-
-        if (!includeInactive) {
-          query = query.eq('is_active', true);
-        }
-
-        const { data: partyThemes, error } = await query.order('display_order').order('name');
+        const { data: partyThemes, error } = await supabaseAdmin
+          .from('party_themes')
+          .select('*')
+          .order('name');
 
         if (error) {
           logger.error('Error fetching party themes', { error });
@@ -101,14 +91,11 @@ export function registerPartyThemeRoutes(app: Express) {
           .from('party_themes')
           .insert({
             name: data.name,
-            description: data.description || null,
-            hero_image_url: data.heroImageUrl || null,
-            thumbnail_image_url: data.thumbnailImageUrl || null,
-            icon: data.icon || null,
-            color: data.color || null,
-            is_active: data.isActive ?? true,
-            display_order: data.displayOrder || null,
-            tags: data.tags || null,
+            short_description: data.shortDescription || null,
+            long_description: data.longDescription || null,
+            costume_ideas: data.costumeIdeas || null,
+            image_url: data.imageUrl || null,
+            amazon_shopping_list_url: data.amazonShoppingListUrl || null,
           })
           .select()
           .single();
@@ -159,15 +146,13 @@ export function registerPartyThemeRoutes(app: Express) {
         };
 
         if (data.name !== undefined) updateData.name = data.name;
-        if (data.description !== undefined) updateData.description = data.description;
-        if (data.heroImageUrl !== undefined) updateData.hero_image_url = data.heroImageUrl;
-        if (data.thumbnailImageUrl !== undefined)
-          updateData.thumbnail_image_url = data.thumbnailImageUrl;
-        if (data.icon !== undefined) updateData.icon = data.icon;
-        if (data.color !== undefined) updateData.color = data.color;
-        if (data.isActive !== undefined) updateData.is_active = data.isActive;
-        if (data.displayOrder !== undefined) updateData.display_order = data.displayOrder;
-        if (data.tags !== undefined) updateData.tags = data.tags;
+        if (data.shortDescription !== undefined)
+          updateData.short_description = data.shortDescription;
+        if (data.longDescription !== undefined) updateData.long_description = data.longDescription;
+        if (data.costumeIdeas !== undefined) updateData.costume_ideas = data.costumeIdeas;
+        if (data.imageUrl !== undefined) updateData.image_url = data.imageUrl;
+        if (data.amazonShoppingListUrl !== undefined)
+          updateData.amazon_shopping_list_url = data.amazonShoppingListUrl;
 
         if (Object.keys(updateData).length === 1) {
           // Only updated_at

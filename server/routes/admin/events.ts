@@ -281,6 +281,22 @@ export function registerEventRoutes(app: Express) {
         const dateTimestamp = dateObj.toISOString();
         console.log('✓ Date converted to timestamp:', dateTimestamp);
 
+        // If no image URL provided and this is a party with a theme, fetch the party theme's image
+        let eventImageUrl = data.imageUrl || null;
+        if (!eventImageUrl && data.partyThemeId) {
+          console.log('✓ No event image provided, fetching party theme image...');
+          const { data: partyTheme, error: themeError } = await supabaseAdmin
+            .from('party_themes')
+            .select('image_url')
+            .eq('id', data.partyThemeId)
+            .single();
+
+          if (!themeError && partyTheme?.image_url) {
+            eventImageUrl = partyTheme.image_url;
+            console.log('✓ Using party theme image as fallback:', eventImageUrl);
+          }
+        }
+
         console.log('✓ Inserting event into database...');
         const { data: newEvent, error } = await supabaseAdmin
           .from('events')
@@ -294,7 +310,7 @@ export function registerEventRoutes(app: Express) {
             resort_venue_id: data.resortVenueId || null,
             talent_ids: data.talentIds && data.talentIds.length > 0 ? data.talentIds : null,
             party_theme_id: data.partyThemeId || null,
-            image_url: data.imageUrl || null,
+            image_url: eventImageUrl,
             description: data.description || null,
           })
           .select(
@@ -492,7 +508,29 @@ export function registerEventRoutes(app: Express) {
         if (data.talentIds !== undefined)
           updateData.talent_ids =
             data.talentIds && data.talentIds.length > 0 ? data.talentIds : null;
-        if (data.imageUrl !== undefined) updateData.image_url = data.imageUrl;
+
+        // Handle image URL with party theme fallback
+        if (data.imageUrl !== undefined) {
+          let eventImageUrl = data.imageUrl || null;
+
+          // If no image URL provided and this is a party with a theme, fetch the party theme's image
+          if (!eventImageUrl && data.partyThemeId) {
+            console.log('✓ No event image provided, fetching party theme image...');
+            const { data: partyTheme, error: themeError } = await supabaseAdmin
+              .from('party_themes')
+              .select('image_url')
+              .eq('id', data.partyThemeId)
+              .single();
+
+            if (!themeError && partyTheme?.image_url) {
+              eventImageUrl = partyTheme.image_url;
+              console.log('✓ Using party theme image as fallback:', eventImageUrl);
+            }
+          }
+
+          updateData.image_url = eventImageUrl;
+        }
+
         if (data.description !== undefined) updateData.description = data.description;
 
         const { data: updatedEvent, error } = await supabaseAdmin

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { api } from '@/lib/api-client';
 
 export type BuildMethod = 'url' | 'pdf' | 'manual' | null;
 export type TripType = 'resort' | 'cruise' | null;
@@ -245,13 +246,12 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     const tripId = state.tripData.id;
     if (!tripId) throw new Error('No trip ID available');
 
-    const response = await fetch(`/api/trips/${tripId}/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    });
+    const response = await api.post(`/api/admin/trips/${tripId}/events`, event);
 
-    if (!response.ok) throw new Error('Failed to add event');
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to add event: ${response.status} ${errorText}`);
+    }
 
     const newEvent = await response.json();
     setState(prev => ({
@@ -264,11 +264,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     const tripId = state.tripData.id;
     if (!tripId) throw new Error('No trip ID available');
 
-    const response = await fetch(`/api/trips/${tripId}/events/${eventId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    });
+    const response = await api.put(`/api/admin/events/${eventId}`, event);
 
     if (!response.ok) throw new Error('Failed to update event');
 
@@ -283,9 +279,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     const tripId = state.tripData.id;
     if (!tripId) throw new Error('No trip ID available');
 
-    const response = await fetch(`/api/trips/${tripId}/events/${eventId}`, {
-      method: 'DELETE',
-    });
+    const response = await api.delete(`/api/admin/events/${eventId}`);
 
     if (!response.ok) throw new Error('Failed to delete event');
 

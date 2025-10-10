@@ -397,7 +397,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedResults = results.map((ship: any) => ({
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLine: ship.cruise_line, // Deprecated - kept for backward compatibility
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -442,7 +443,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedShip = {
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLine: ship.cruise_line, // Deprecated - kept for backward compatibility
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -471,15 +473,25 @@ export function registerLocationRoutes(app: Express) {
       }
 
       // Validate required fields (accept both camelCase and snake_case)
-      const cruiseLine = req.body.cruiseLine || req.body.cruise_line;
-      if (!req.body.name || !cruiseLine) {
-        throw ApiError.badRequest('Name and cruise line are required fields');
+      const cruiseLineId = req.body.cruiseLineId || req.body.cruise_line_id;
+
+      if (!req.body.name || !cruiseLineId) {
+        throw ApiError.badRequest('Name and cruise line ID are required fields');
       }
+
+      // Look up cruise line name for backward compatibility
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: cruiseLine } = await supabaseAdmin
+        .from('cruise_lines')
+        .select('name')
+        .eq('id', cruiseLineId)
+        .single();
 
       // Prepare ship data with proper field names for database
       const shipData = {
         name: req.body.name,
-        cruise_line: cruiseLine, // Always use snake_case for database
+        cruise_line_id: cruiseLineId, // Always use snake_case for database
+        cruise_line: cruiseLine?.name || '', // Keep legacy field populated for backward compatibility
         capacity: req.body.capacity || null,
         decks: req.body.decks || null,
         image_url: req.body.imageUrl || req.body.image_url || null,
@@ -487,8 +499,7 @@ export function registerLocationRoutes(app: Express) {
         description: req.body.description || null,
       };
 
-      // Use Supabase Admin client to bypass RLS
-      const supabaseAdmin = getSupabaseAdmin();
+      // Use Supabase Admin client to bypass RLS (already initialized above)
       const { data: ship, error } = await supabaseAdmin
         .from('ships')
         .insert(shipData)
@@ -507,7 +518,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedShip = {
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLine: ship.cruise_line, // Deprecated - kept for backward compatibility
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -543,8 +555,19 @@ export function registerLocationRoutes(app: Express) {
 
       // Convert camelCase to snake_case for database fields - ONLY fields that exist in DB
       if (req.body.name !== undefined) updateData.name = req.body.name;
-      if (req.body.cruiseLine !== undefined || req.body.cruise_line !== undefined) {
-        updateData.cruise_line = req.body.cruiseLine || req.body.cruise_line;
+      if (req.body.cruiseLineId !== undefined || req.body.cruise_line_id !== undefined) {
+        const cruiseLineId = req.body.cruiseLineId || req.body.cruise_line_id;
+        updateData.cruise_line_id = cruiseLineId;
+
+        // Also update the legacy cruise_line field for backward compatibility
+        if (cruiseLineId) {
+          const { data: cruiseLine } = await supabaseAdmin
+            .from('cruise_lines')
+            .select('name')
+            .eq('id', cruiseLineId)
+            .single();
+          updateData.cruise_line = cruiseLine?.name || '';
+        }
       }
       if (req.body.capacity !== undefined) updateData.capacity = req.body.capacity;
       if (req.body.decks !== undefined) updateData.decks = req.body.decks;
@@ -580,7 +603,8 @@ export function registerLocationRoutes(app: Express) {
       const transformedShip = {
         id: ship.id,
         name: ship.name,
-        cruiseLine: ship.cruise_line,
+        cruiseLine: ship.cruise_line, // Deprecated - kept for backward compatibility
+        cruiseLineId: ship.cruise_line_id,
         capacity: ship.capacity,
         decks: ship.decks,
         imageUrl: ship.image_url,
@@ -1274,6 +1298,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedResults = results.map((resort: any) => ({
         id: resort.id,
         name: resort.name,
+        resortCompanyId: resort.resort_company_id,
         location: resort.location,
         locationId: resort.location_id,
         city: resort.city,
@@ -1326,6 +1351,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedResort = {
         id: resort.id,
         name: resort.name,
+        resortCompanyId: resort.resort_company_id,
         location: resort.location,
         locationId: resort.location_id,
         city: resort.city,
@@ -1388,6 +1414,7 @@ export function registerLocationRoutes(app: Express) {
       // Prepare resort data with proper field names for database
       const resortData = {
         name: req.body.name,
+        resort_company_id: req.body.resortCompanyId || req.body.resort_company_id || null,
         location_id: finalLocationId || null,
         location: locationData?.location || req.body.location || null,
         city: locationData?.city || req.body.city || null,
@@ -1425,6 +1452,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedResort = {
         id: resort.id,
         name: resort.name,
+        resortCompanyId: resort.resort_company_id,
         location: resort.location,
         locationId: resort.location_id,
         city: resort.city,
@@ -1464,6 +1492,9 @@ export function registerLocationRoutes(app: Express) {
       // Build update data dynamically
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.resortCompanyId !== undefined || req.body.resort_company_id !== undefined) {
+        updateData.resort_company_id = req.body.resortCompanyId || req.body.resort_company_id;
+      }
       if (req.body.location !== undefined) updateData.location = req.body.location;
       if (req.body.city !== undefined) updateData.city = req.body.city || null;
       if (req.body.state_province !== undefined)
@@ -1521,9 +1552,15 @@ export function registerLocationRoutes(app: Express) {
       const transformedResort = {
         id: resort.id,
         name: resort.name,
+        resortCompanyId: resort.resort_company_id,
         location: resort.location,
+        locationId: resort.location_id,
+        city: resort.city,
+        stateProvince: resort.state_province,
+        country: resort.country,
+        countryCode: resort.country_code,
         capacity: resort.capacity,
-        roomCount: resort.room_count,
+        numberOfRooms: resort.number_of_rooms,
         imageUrl: resort.image_url,
         description: resort.description,
         propertyMapUrl: resort.property_map_url,
