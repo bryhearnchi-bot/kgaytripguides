@@ -47,6 +47,7 @@ export function EventsTabPage() {
   const { state, setTripTalent, addEvent, updateEvent, deleteEvent } = useTripWizard();
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined);
+  const [openAccordionDate, setOpenAccordionDate] = useState<string | undefined>(undefined);
 
   // Ensure events is always an array
   const events = Array.isArray(state.events) ? state.events : [];
@@ -118,6 +119,8 @@ export function EventsTabPage() {
         });
       } else {
         await addEvent(event);
+        // When adding a new event, auto-open the accordion for that date
+        setOpenAccordionDate(event.date);
         toast({
           title: 'Success',
           description: 'Event created successfully',
@@ -235,7 +238,8 @@ export function EventsTabPage() {
         <Accordion
           type="single"
           collapsible
-          defaultValue={Object.keys(groupedEvents)[0]}
+          value={openAccordionDate}
+          onValueChange={setOpenAccordionDate}
           className="space-y-2.5"
         >
           {Object.entries(groupedEvents).map(([date, dayEvents]) => (

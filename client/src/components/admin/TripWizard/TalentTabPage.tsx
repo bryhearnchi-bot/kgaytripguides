@@ -18,6 +18,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface TalentWithEvents {
@@ -67,6 +73,7 @@ export function TalentTabPage() {
   const [removingTalentId, setRemovingTalentId] = useState<number | null>(null);
   const [talentToRemove, setTalentToRemove] = useState<TalentWithEvents | null>(null);
   const [selectedTalentId, setSelectedTalentId] = useState<number | null>(null);
+  const [openAccordionCategory, setOpenAccordionCategory] = useState<string | undefined>(undefined);
   const [formData, setFormData] = useState<TalentFormData>({
     name: '',
     talentCategoryId: 0,
@@ -245,6 +252,12 @@ export function TalentTabPage() {
       // Fetch updated talent list to refresh UI
       await fetchTripTalent();
 
+      // Auto-open accordion for the newly added talent's category
+      const addedTalent = tripTalent.find(t => t.id === talentId);
+      if (addedTalent?.talentCategoryName) {
+        setOpenAccordionCategory(addedTalent.talentCategoryName);
+      }
+
       toast({
         title: 'Success',
         description: 'Talent added to trip',
@@ -324,6 +337,27 @@ export function TalentTabPage() {
     });
   };
 
+  // Group talent by category
+  const groupTalentByCategory = (talent: TalentWithEvents[]) => {
+    const grouped: { [category: string]: TalentWithEvents[] } = {};
+    talent.forEach(t => {
+      const category = t.talentCategoryName || 'Uncategorized';
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(t);
+    });
+
+    // Sort each category's talent alphabetically by name
+    Object.keys(grouped).forEach(category => {
+      grouped[category].sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    return grouped;
+  };
+
+  const groupedTalent = groupTalentByCategory(talentWithEvents);
+
   return (
     <div className="space-y-2.5">
       {/* Add Talent Button */}
@@ -346,86 +380,115 @@ export function TalentTabPage() {
           <p className="text-xs text-white/50">Click "Add Talent" to add performers to this trip</p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {talentWithEvents.map(talent => (
-            <div
-              key={talent.id}
-              className="p-4 rounded-[10px] bg-white/[0.02] border-2 border-white/10 hover:bg-white/[0.04] hover:border-cyan-400/40 transition-all"
+        <Accordion
+          type="single"
+          collapsible
+          value={openAccordionCategory}
+          onValueChange={setOpenAccordionCategory}
+          className="space-y-2.5"
+        >
+          {Object.entries(groupedTalent).map(([category, categoryTalent]) => (
+            <AccordionItem
+              key={category}
+              value={category}
+              className="border-2 border-white/10 rounded-[10px] bg-white/[0.02] overflow-hidden"
             >
-              <div className="flex items-start gap-4">
-                {/* Thumbnail */}
-                <div className="flex-shrink-0">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
-                    {talent.profileImageUrl ? (
-                      <img
-                        src={talent.profileImageUrl}
-                        alt={talent.name}
-                        className="h-full w-full rounded-xl object-cover"
-                      />
-                    ) : (
-                      <Users className="h-7 w-7 text-white/70" />
-                    )}
+              <AccordionTrigger className="px-4 py-3 hover:bg-white/[0.04] hover:no-underline">
+                <div className="flex items-center gap-3 text-left">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  <div>
+                    <div className="text-sm font-semibold text-white">{category}</div>
+                    <div className="text-[10px] text-white/50">
+                      {categoryTalent.length} artist{categoryTalent.length !== 1 ? 's' : ''}
+                    </div>
                   </div>
                 </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Talent Name & Category */}
-                  <h3 className="text-sm font-semibold text-white mb-1">{talent.name}</h3>
-                  {talent.talentCategoryName && (
-                    <p className="text-xs text-white/60 mb-2">{talent.talentCategoryName}</p>
-                  )}
-
-                  {/* Known For */}
-                  {talent.knownFor && (
-                    <p className="text-xs text-white/50 mb-2 line-clamp-1">{talent.knownFor}</p>
-                  )}
-
-                  {/* Assignment Status */}
-                  {talent.isUnassigned ? (
-                    <div className="mt-2">
-                      <span className="px-2 py-1 text-[10px] bg-orange-500/20 text-orange-400 border border-orange-400/30 rounded font-medium">
-                        Not assigned to events yet
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-[10px] font-semibold text-white/70 uppercase tracking-wide">
-                        Performing At:
-                      </p>
-                      <div className="space-y-0.5">
-                        {talent.assignedEvents.map(event => (
-                          <div
-                            key={event.id}
-                            className="flex items-center gap-2 text-[11px] text-white/60"
-                          >
-                            <Calendar className="w-3 h-3" />
-                            <span>
-                              {event.title} - {formatDate(event.date)}
-                            </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 pt-0">
+                <div className="space-y-2.5">
+                  {categoryTalent.map(talent => (
+                    <div
+                      key={talent.id}
+                      className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:bg-white/[0.04] hover:border-cyan-400/40 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Thumbnail */}
+                        <div className="flex-shrink-0">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                            {talent.profileImageUrl ? (
+                              <img
+                                src={talent.profileImageUrl}
+                                alt={talent.name}
+                                className="h-full w-full rounded-xl object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <User className="h-7 w-7 text-white/70" />
+                            )}
                           </div>
-                        ))}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Talent Name */}
+                          <h3 className="text-sm font-semibold text-white mb-1">{talent.name}</h3>
+
+                          {/* Known For */}
+                          {talent.knownFor && (
+                            <p className="text-xs text-white/50 mb-2 line-clamp-1">
+                              {talent.knownFor}
+                            </p>
+                          )}
+
+                          {/* Assignment Status */}
+                          {talent.isUnassigned ? (
+                            <div className="mt-2">
+                              <span className="px-2 py-1 text-[10px] bg-orange-500/20 text-orange-400 border border-orange-400/30 rounded font-medium">
+                                Not assigned to events yet
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mt-2 space-y-1">
+                              <p className="text-[10px] font-semibold text-white/70 uppercase tracking-wide">
+                                Performing At:
+                              </p>
+                              <div className="space-y-0.5">
+                                {talent.assignedEvents.map(event => (
+                                  <div
+                                    key={event.id}
+                                    className="flex items-center gap-2 text-[11px] text-white/60"
+                                  >
+                                    <Calendar className="w-3 h-3" />
+                                    <span>
+                                      {event.title} - {formatDate(event.date)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleRemoveTalent(talent)}
+                            variant="outline"
+                            size="sm"
+                            disabled={removingTalentId === talent.id}
+                            className="h-8 w-8 p-0 bg-white/4 border-white/10 hover:bg-red-500/20 hover:border-red-400/40 text-white/70 hover:text-red-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleRemoveTalent(talent)}
-                    variant="outline"
-                    size="sm"
-                    disabled={removingTalentId === talent.id}
-                    className="h-8 w-8 p-0 bg-white/4 border-white/10 hover:bg-red-500/20 hover:border-red-400/40 text-white/70 hover:text-red-400"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       )}
 
       {/* Info Notice */}
