@@ -85,8 +85,13 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
     }
 
     console.log('🔍 useEffect triggered - ship:', ship, 'isOpen:', isOpen);
+    console.log('🔍 FULL SHIP OBJECT:', JSON.stringify(ship, null, 2));
     if (ship) {
-      console.log('🔍 Loading ship into form:', { id: ship.id, name: ship.name });
+      console.log('🔍 Loading ship into form:', {
+        id: ship.id,
+        name: ship.name,
+        cruiseLineId: ship.cruiseLineId,
+      });
       setFormData({
         name: ship.name || '',
         cruiseLineId: ship.cruiseLineId || null,

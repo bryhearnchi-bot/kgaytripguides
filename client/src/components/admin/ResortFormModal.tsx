@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { AdminFormModal } from './AdminFormModal';
 import { AmenitySelector } from './AmenitySelector';
-import { ResortCompanySelector } from './ResortCompanySelector';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from './ImageUploadField';
@@ -26,7 +25,6 @@ interface Resort {
   state_province?: string;
   country?: string;
   country_code?: string;
-  resortCompanyId?: number | null;
   capacity?: number;
   roomCount?: number;
   imageUrl?: string;
@@ -61,7 +59,6 @@ interface FormData {
   state_province: string;
   country: string;
   country_code: string;
-  resortCompanyId: number | null;
   capacity: string;
   roomCount: string;
   imageUrl: string;
@@ -86,7 +83,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
     state_province: '',
     country: '',
     country_code: '',
-    resortCompanyId: null,
     capacity: '',
     roomCount: '',
     imageUrl: '',
@@ -129,7 +125,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         state_province: 'state_province' in locationData ? locationData.state_province || '' : '',
         country: locationData.country || '',
         country_code: 'country_code' in locationData ? locationData.country_code || '' : '',
-        resortCompanyId: resort.resortCompanyId || null,
         capacity: resort.capacity?.toString() || '',
         roomCount: resort.roomCount?.toString() || '',
         imageUrl: resort.imageUrl || '',
@@ -154,7 +149,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         state_province: '',
         country: '',
         country_code: '',
-        resortCompanyId: null,
         capacity: '',
         roomCount: '',
         imageUrl: '',
@@ -218,7 +212,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         state_province: formData.state_province.trim() || null,
         country: formData.country.trim(),
         country_code: formData.country_code.trim() || null,
-        resortCompanyId: formData.resortCompanyId,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         roomCount: formData.roomCount ? parseInt(formData.roomCount) : null,
         imageUrl: formData.imageUrl.trim() || null,
@@ -332,17 +325,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
                   });
                 }}
                 required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <ResortCompanySelector
-                selectedId={formData.resortCompanyId}
-                onSelectionChange={id => setFormData(prev => ({ ...prev, resortCompanyId: id }))}
-                disabled={loading}
-                label="Resort Company"
-                placeholder="Select a resort company or add new"
-                required={false}
               />
             </div>
 

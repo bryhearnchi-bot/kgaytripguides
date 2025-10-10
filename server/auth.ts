@@ -118,6 +118,11 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
           .single();
 
         if (profile) {
+          // Check if user account is active
+          if (profile.is_active === false) {
+            throw ApiError.unauthorized('Your account has been deactivated. Contact the admin.');
+          }
+
           req.user = {
             id: user.id,
             username: user.email || '',

@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { User, Plus, Trash2, Calendar, AlertTriangle, Users } from 'lucide-react';
+import {
+  User,
+  Plus,
+  Trash2,
+  Calendar,
+  AlertTriangle,
+  Users,
+  MoreVertical,
+  Pencil,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +85,8 @@ export function TalentTabPage() {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTalent, setEditingTalent] = useState<TalentWithEvents | null>(null);
   const [removingTalentId, setRemovingTalentId] = useState<number | null>(null);
   const [talentToRemove, setTalentToRemove] = useState<TalentWithEvents | null>(null);
   const [selectedTalentId, setSelectedTalentId] = useState<number | null>(null);
@@ -130,6 +147,36 @@ export function TalentTabPage() {
       toast({
         title: 'Error',
         description: 'Failed to create artist',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update artist mutation
+  const updateArtistMutation = useMutation({
+    mutationFn: async (data: TalentFormData & { id: number }) => {
+      console.log('🎨 Updating artist:', data);
+      const response = await api.put(`/api/talent/${data.id}`, data);
+      if (!response.ok) throw new Error('Failed to update artist');
+      return response.json();
+    },
+    onSuccess: async () => {
+      console.log('✅ Artist updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['talent'] });
+      await fetchTripTalent();
+      setShowEditModal(false);
+      setEditingTalent(null);
+      resetForm();
+      toast({
+        title: 'Success',
+        description: 'Artist updated successfully',
+      });
+    },
+    onError: error => {
+      console.error('❌ Failed to update artist:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update artist',
         variant: 'destructive',
       });
     },
@@ -232,7 +279,25 @@ export function TalentTabPage() {
       return;
     }
 
-    createArtistMutation.mutate(formData);
+    if (editingTalent) {
+      updateArtistMutation.mutate({ ...formData, id: editingTalent.id });
+    } else {
+      createArtistMutation.mutate(formData);
+    }
+  };
+
+  const handleEditTalent = (talent: TalentWithEvents) => {
+    setEditingTalent(talent);
+    setFormData({
+      name: talent.name,
+      talentCategoryId: talent.talentCategoryId,
+      bio: talent.bio,
+      knownFor: talent.knownFor,
+      profileImageUrl: talent.profileImageUrl,
+      socialLinks: talent.socialLinks,
+      website: talent.website,
+    });
+    setShowEditModal(true);
   };
 
   const handleAddTalent = async (talentId: number) => {
@@ -411,7 +476,7 @@ export function TalentTabPage() {
                       key={talent.id}
                       className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:bg-white/[0.04] hover:border-cyan-400/40 transition-all"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 pr-10 relative">
                         {/* Thumbnail */}
                         <div className="flex-shrink-0">
                           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
@@ -469,17 +534,39 @@ export function TalentTabPage() {
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleRemoveTalent(talent)}
-                            variant="outline"
-                            size="sm"
-                            disabled={removingTalentId === talent.id}
-                            className="h-8 w-8 p-0 bg-white/4 border-white/10 hover:bg-red-500/20 hover:border-red-400/40 text-white/70 hover:text-red-400"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                        {/* Three-dot Menu - Positioned absolutely to the right */}
+                        <div className="absolute right-3 top-3">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                              >
+                                <MoreVertical className="w-3.5 h-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="bg-[#1a1a1a] border-white/10"
+                            >
+                              <DropdownMenuItem
+                                onClick={() => handleEditTalent(talent)}
+                                className="text-white/70 hover:text-cyan-400 hover:bg-white/5 cursor-pointer"
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRemoveTalent(talent)}
+                                disabled={removingTalentId === talent.id}
+                                className="text-white/70 hover:text-red-400 hover:bg-white/5 cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
@@ -650,6 +737,119 @@ export function TalentTabPage() {
           />
         </div>
       </AdminFormModal>
+
+      {/* Edit Artist Modal */}
+      {showEditModal && (
+        <AdminFormModal
+          isOpen={showEditModal}
+          onOpenChange={setShowEditModal}
+          title="Edit Artist"
+          icon={<Pencil className="h-5 w-5" />}
+          description="Update artist information"
+          onSubmit={handleSubmit}
+          primaryAction={{
+            label: 'Update Artist',
+            loading: updateArtistMutation.isPending,
+            loadingLabel: 'Updating...',
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: () => {
+              setShowEditModal(false);
+              setEditingTalent(null);
+              resetForm();
+            },
+          }}
+          maxWidthClassName="max-w-3xl"
+          contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
+        >
+          {/* Basic Information */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Artist Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="Enter artist name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Category *</Label>
+            <SingleSelectWithCreate
+              options={talentCategories.map(cat => ({ id: cat.id, name: cat.category }))}
+              value={formData.talentCategoryId}
+              onValueChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
+              onCreateNew={createCategoryMutation.mutateAsync}
+              placeholder="Select talent category..."
+              searchPlaceholder="Search categories..."
+              createLabel="Create new category"
+            />
+          </div>
+
+          {/* Biography - spans full width */}
+          <div className="lg:col-span-2 space-y-2">
+            <Label htmlFor="bio">Biography</Label>
+            <Textarea
+              id="bio"
+              value={formData.bio || ''}
+              onChange={e => setFormData({ ...formData, bio: e.target.value })}
+              rows={4}
+              placeholder="Artist biography and background..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="knownFor">Known For</Label>
+            <Input
+              id="knownFor"
+              value={formData.knownFor || ''}
+              onChange={e => setFormData({ ...formData, knownFor: e.target.value })}
+              placeholder="e.g., RuPaul's Drag Race, Comedy Central"
+            />
+          </div>
+
+          {/* Social Links - use remaining space */}
+          <div className="space-y-2">
+            <Label htmlFor="instagram">Instagram URL</Label>
+            <Input
+              id="instagram"
+              value={formData.socialLinks?.instagram || ''}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  socialLinks: { ...formData.socialLinks, instagram: e.target.value },
+                })
+              }
+              placeholder="https://instagram.com/..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={formData.website || ''}
+              onChange={e => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
+
+          {/* Profile Image - spans full width */}
+          <div className="lg:col-span-2 space-y-2">
+            <Label htmlFor="profileImage">Profile Image</Label>
+            <ImageUploadField
+              label="Profile Image"
+              value={formData.profileImageUrl || ''}
+              onChange={url => setFormData({ ...formData, profileImageUrl: url || '' })}
+              imageType="talent"
+              placeholder="No profile image uploaded"
+              disabled={updateArtistMutation.isPending}
+            />
+          </div>
+        </AdminFormModal>
+      )}
 
       {/* Remove Talent Warning Modal */}
       {talentToRemove && (

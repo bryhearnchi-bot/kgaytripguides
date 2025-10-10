@@ -22,7 +22,7 @@ import {
 interface Ship {
   id?: number;
   name: string;
-  cruiseLine?: string; // Deprecated - kept for backward compatibility
+  cruiseLineName?: string;
   cruiseLineId?: number;
   capacity?: number;
   decks?: number;
@@ -103,7 +103,7 @@ export default function ShipsManagement() {
   const filteredShips = ships.filter(
     ship =>
       ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ship.cruiseLine?.toLowerCase().includes(searchTerm.toLowerCase())
+      ship.cruiseLineName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -209,7 +209,7 @@ export default function ShipsManagement() {
                 render: value => <p className="font-bold text-xs text-white">{value}</p>,
               },
               {
-                key: 'cruiseLine',
+                key: 'cruiseLineName',
                 label: 'Cruise Line',
                 priority: 'high',
                 sortable: true,

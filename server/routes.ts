@@ -17,6 +17,7 @@ import { registerPublicRoutes } from './routes/public';
 import { registerPerformanceRoutes } from './routes/performance';
 import { registerPartyThemeRoutes } from './routes/party-themes';
 import { registerTripInfoSectionRoutes } from './routes/trip-info-sections';
+import { registerFaqRoutes } from './routes/faqs';
 import { registerAdminSequenceRoutes } from './routes/admin-sequences';
 import { registerEventRoutes } from './routes/admin/events';
 import { registerEventTypeRoutes } from './routes/admin/event-types';
@@ -134,6 +135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register trip info section routes
   registerTripInfoSectionRoutes(app);
+
+  // Register FAQ routes
+  registerFaqRoutes(app);
 
   // Register performance monitoring routes
   registerPerformanceRoutes(app);

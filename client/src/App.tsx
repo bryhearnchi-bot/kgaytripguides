@@ -28,6 +28,7 @@ const ResortsManagement = lazy(() => import('@/pages/admin/resorts'));
 const ArtistsManagement = lazy(() => import('@/pages/admin/artists'));
 const ThemesManagement = lazy(() => import('@/pages/admin/themes'));
 const TripInfoSectionsManagement = lazy(() => import('@/pages/admin/trip-info-sections'));
+const FAQsManagement = lazy(() => import('@/pages/admin/faqs'));
 const UsersManagement = lazy(() => import('@/pages/admin/users'));
 const AdminLookupTables = lazy(() => import('@/pages/admin/lookup-tables'));
 const AdminProfile = lazy(() => import('@/pages/admin/profile'));
@@ -119,6 +120,16 @@ function Router() {
             <ProtectedRoute>
               <AdminLayout>
                 <TripInfoSectionsManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/faqs"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <FAQsManagement />
               </AdminLayout>
             </ProtectedRoute>
           )}

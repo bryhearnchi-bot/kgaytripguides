@@ -31,7 +31,8 @@ interface ResortData {
 
 interface ShipData {
   name: string;
-  cruiseLine: string;
+  cruiseLineId?: number;
+  cruiseLineName?: string; // Display name from cruise_lines table
   capacity?: number;
   decks?: number;
   imageUrl: string;

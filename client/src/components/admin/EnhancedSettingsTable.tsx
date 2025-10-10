@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronRight, MoreVertical, ChevronUp, ChevronsUpDown } from 'lucide-react';
@@ -38,10 +45,12 @@ export function EnhancedSettingsTable({
   isLoading = false,
   emptyMessage = 'No data available',
   className = '',
-  mobileBreakpoint = 768
+  mobileBreakpoint = 768,
 }: EnhancedSettingsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint
+  );
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const resizeStartPos = useRef<number>(0);
   const resizeStartWidth = useRef<number>(0);
@@ -49,14 +58,17 @@ export function EnhancedSettingsTable({
   const nextColumnKey = useRef<string>('');
 
   // Default column widths - stable object reference
-  const defaultColumnWidths = useMemo(() => ({
-    'image': 80,
-    'label': 200,
-    'key': 150,
-    'category': 150,
-    'value': 200,
-    'isActive': 120,
-  }), []);
+  const defaultColumnWidths = useMemo(
+    () => ({
+      image: 80,
+      label: 200,
+      key: 150,
+      category: 150,
+      value: 200,
+      isActive: 120,
+    }),
+    []
+  );
 
   const { columnWidths, sortConfig, updateColumnWidth, handleSort, sortData } = useTableState(
     'settings_table',
@@ -74,22 +86,31 @@ export function EnhancedSettingsTable({
   }, [mobileBreakpoint]);
 
   // Handle column resizing
-  const handleMouseDown = useCallback((columnKey: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMouseDown = useCallback(
+    (columnKey: string, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    // Find the next column
-    const currentIndex = columns.findIndex(col => col.key === columnKey);
-    const nextColumn = currentIndex < columns.length - 1 ? columns[currentIndex + 1] : null;
+      // Find the next column
+      const currentIndex = columns.findIndex(col => col.key === columnKey);
+      const nextColumn = currentIndex < columns.length - 1 ? columns[currentIndex + 1] : null;
 
-    if (!nextColumn) return; // Can't resize the last column
+      if (!nextColumn) return; // Can't resize the last column
 
-    setIsResizing(columnKey);
-    resizeStartPos.current = e.clientX;
-    resizeStartWidth.current = (columnWidths as Record<string, number>)[columnKey] || (defaultColumnWidths as Record<string, number>)[columnKey] || 150;
-    nextColumnStartWidth.current = (columnWidths as Record<string, number>)[nextColumn.key] || (defaultColumnWidths as Record<string, number>)[nextColumn.key] || 150;
-    nextColumnKey.current = nextColumn.key;
-  }, [columnWidths, defaultColumnWidths, columns]);
+      setIsResizing(columnKey);
+      resizeStartPos.current = e.clientX;
+      resizeStartWidth.current =
+        (columnWidths as Record<string, number>)[columnKey] ||
+        (defaultColumnWidths as Record<string, number>)[columnKey] ||
+        150;
+      nextColumnStartWidth.current =
+        (columnWidths as Record<string, number>)[nextColumn.key] ||
+        (defaultColumnWidths as Record<string, number>)[nextColumn.key] ||
+        150;
+      nextColumnKey.current = nextColumn.key;
+    },
+    [columnWidths, defaultColumnWidths, columns]
+  );
 
   useEffect(() => {
     if (!isResizing) return;
@@ -114,7 +135,7 @@ export function EnhancedSettingsTable({
         // Update both columns in a batch
         const updatedWidths = {
           [isResizing]: currentColumnNewWidth,
-          [nextColumnKey.current]: nextColumnNewWidth
+          [nextColumnKey.current]: nextColumnNewWidth,
         };
 
         // Update both at once to prevent intermediate states
@@ -164,7 +185,11 @@ export function EnhancedSettingsTable({
   const lowPriorityColumns = columns.filter(col => col.priority === 'low');
 
   const mobileVisibleColumns = highPriorityColumns.slice(0, 2);
-  const hiddenColumns = [...mediumPriorityColumns, ...lowPriorityColumns, ...highPriorityColumns.slice(2)];
+  const hiddenColumns = [
+    ...mediumPriorityColumns,
+    ...lowPriorityColumns,
+    ...highPriorityColumns.slice(2),
+  ];
 
   const renderCellValue = (column: TableColumn, row: any) => {
     const value = row[column.key];
@@ -178,9 +203,11 @@ export function EnhancedSettingsTable({
     if (!sortConfig || sortConfig.key !== columnKey) {
       return <ChevronsUpDown className="h-3 w-3 text-white/30" />;
     }
-    return sortConfig.direction === 'asc'
-      ? <ChevronUp className="h-3 w-3 text-white/70" />
-      : <ChevronDown className="h-3 w-3 text-white/70" />;
+    return sortConfig.direction === 'asc' ? (
+      <ChevronUp className="h-3 w-3 text-white/70" />
+    ) : (
+      <ChevronDown className="h-3 w-3 text-white/70" />
+    );
   };
 
   if (isLoading) {
@@ -218,17 +245,20 @@ export function EnhancedSettingsTable({
   if (isMobile) {
     return (
       <div className={`space-y-3 ${className}`}>
-        {sortedData.map((row) => {
+        {sortedData.map(row => {
           const rowKey = row[keyField];
           const isExpanded = expandedRows.has(rowKey);
 
           return (
-            <Card key={rowKey} className="border border-white/10 bg-[#10192f]/80 backdrop-blur overflow-hidden">
+            <Card
+              key={rowKey}
+              className="border border-white/10 bg-[#10192f]/80 backdrop-blur overflow-hidden"
+            >
               <CardContent className="p-0">
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0 space-y-2">
-                      {mobileVisibleColumns.map((column) => (
+                      {mobileVisibleColumns.map(column => (
                         <div key={column.key} className="flex justify-between items-start gap-2">
                           <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
                             {column.label}:
@@ -258,7 +288,7 @@ export function EnhancedSettingsTable({
                       )}
 
                       {actions.length > 0 && (
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
@@ -272,10 +302,15 @@ export function EnhancedSettingsTable({
                             {actions.map((action, index) => (
                               <DropdownMenuItem
                                 key={index}
-                                onClick={() => action.onClick(row)}
+                                onSelect={e => {
+                                  e.preventDefault();
+                                  action.onClick(row);
+                                }}
                                 disabled={action.disabled?.(row)}
                                 className={`text-white hover:bg-white/10 ${
-                                  action.variant === 'destructive' ? 'text-red-400 hover:text-red-300' : ''
+                                  action.variant === 'destructive'
+                                    ? 'text-red-400 hover:text-red-300'
+                                    : ''
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -293,7 +328,7 @@ export function EnhancedSettingsTable({
 
                 {isExpanded && hiddenColumns.length > 0 && (
                   <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
-                    {hiddenColumns.map((column) => (
+                    {hiddenColumns.map(column => (
                       <div key={column.key} className="flex justify-between items-start gap-2">
                         <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
                           {column.label}:
@@ -317,98 +352,122 @@ export function EnhancedSettingsTable({
   return (
     <div className={`w-full ${className}`}>
       <div className="overflow-x-auto">
-        <Table className="text-xs text-white/80" style={{ tableLayout: 'auto', width: 'auto', minWidth: '100%' }}>
-        <TableHeader className="bg-white/5">
-          <TableRow className="border-white/10">
-            {columns.map((column, index) => (
-              <TableHead
-                key={column.key}
-                className={`text-white/60 relative group ${
-                  index < columns.length - 1 || actions.length > 0 ? 'border-r border-white/10' : ''
-                } ${
-                  column.priority === 'low' ? 'hidden lg:table-cell' :
-                  column.priority === 'medium' ? 'hidden md:table-cell' :
-                  ''
-                } ${column.className || ''}`}
-                style={{
-                  width: column.key === 'image' ? '80px' :
-                         column.resizable === false ? `${column.width || 150}px` :
-                         `${columnWidths[column.key] || defaultColumnWidths[column.key as keyof typeof defaultColumnWidths] || 150}px`
-                }}
-              >
-                <div
-                  className="flex items-center gap-2 cursor-pointer select-none"
-                  onClick={() => column.sortable !== false && handleSort(column.key)}
-                >
-                  <span>{column.label}</span>
-                  {column.sortable !== false && getSortIcon(column.key)}
-                </div>
-
-                {/* Resize handle - skip for non-resizable columns */}
-                {index < columns.length - 1 && column.resizable !== false && (
-                  <div
-                    className="absolute right-0 top-0 h-full w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-white/20 transition-opacity -mr-1"
-                    onMouseDown={(e) => handleMouseDown(column.key, e)}
-                    style={{
-                      background: isResizing === column.key ? 'rgba(255,255,255,0.4)' : 'transparent',
-                      opacity: isResizing === column.key ? 1 : undefined
-                    }}
-                  />
-                )}
-              </TableHead>
-            ))}
-            {actions.length > 0 && (
-              <TableHead className="text-center text-white/60" style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}>Actions</TableHead>
-            )}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedData.map((row) => (
-            <TableRow key={row[keyField]} className="border-white/10 hover:bg-white/5">
-              {columns.map((column) => (
-                <TableCell
+        <Table
+          className="text-xs text-white/80"
+          style={{ tableLayout: 'auto', width: 'auto', minWidth: '100%' }}
+        >
+          <TableHeader className="bg-white/5">
+            <TableRow className="border-white/10">
+              {columns.map((column, index) => (
+                <TableHead
                   key={column.key}
-                  className={`py-4 ${
-                    column.priority === 'low' ? 'hidden lg:table-cell' :
-                    column.priority === 'medium' ? 'hidden md:table-cell' :
-                    ''
+                  className={`text-white/60 relative group ${
+                    index < columns.length - 1 || actions.length > 0
+                      ? 'border-r border-white/10'
+                      : ''
+                  } ${
+                    column.priority === 'low'
+                      ? 'hidden lg:table-cell'
+                      : column.priority === 'medium'
+                        ? 'hidden md:table-cell'
+                        : ''
                   } ${column.className || ''}`}
                   style={{
-                    width: column.key === 'image' ? '80px' :
-                           column.resizable === false ? `${column.width || 150}px` :
-                           `${columnWidths[column.key] || defaultColumnWidths[column.key as keyof typeof defaultColumnWidths] || 150}px`
+                    width:
+                      column.key === 'image'
+                        ? '80px'
+                        : column.resizable === false
+                          ? `${column.width || 150}px`
+                          : `${columnWidths[column.key] || defaultColumnWidths[column.key as keyof typeof defaultColumnWidths] || 150}px`,
                   }}
                 >
-                  {renderCellValue(column, row)}
-                </TableCell>
+                  <div
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                    onClick={() => column.sortable !== false && handleSort(column.key)}
+                  >
+                    <span>{column.label}</span>
+                    {column.sortable !== false && getSortIcon(column.key)}
+                  </div>
+
+                  {/* Resize handle - skip for non-resizable columns */}
+                  {index < columns.length - 1 && column.resizable !== false && (
+                    <div
+                      className="absolute right-0 top-0 h-full w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-white/20 transition-opacity -mr-1"
+                      onMouseDown={e => handleMouseDown(column.key, e)}
+                      style={{
+                        background:
+                          isResizing === column.key ? 'rgba(255,255,255,0.4)' : 'transparent',
+                        opacity: isResizing === column.key ? 1 : undefined,
+                      }}
+                    />
+                  )}
+                </TableHead>
               ))}
               {actions.length > 0 && (
-                <TableCell className="py-4" style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}>
-                  <div className="flex items-center justify-center gap-1.5">
-                    {actions.map((action, index) => (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => action.onClick(row)}
-                        disabled={action.disabled?.(row)}
-                        className={`h-4 w-4 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 ${
-                          action.variant === 'destructive'
-                            ? 'border-[#fb7185]/30 bg-[#fb7185]/10 text-[#fb7185] hover:bg-[#fb7185]/20'
-                            : ''
-                        }`}
-                        title={action.label}
-                      >
-                        {action.icon}
-                      </Button>
-                    ))}
-                  </div>
-                </TableCell>
+                <TableHead
+                  className="text-center text-white/60"
+                  style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                >
+                  Actions
+                </TableHead>
               )}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {sortedData.map(row => (
+              <TableRow key={row[keyField]} className="border-white/10 hover:bg-white/5">
+                {columns.map(column => (
+                  <TableCell
+                    key={column.key}
+                    className={`py-4 ${
+                      column.priority === 'low'
+                        ? 'hidden lg:table-cell'
+                        : column.priority === 'medium'
+                          ? 'hidden md:table-cell'
+                          : ''
+                    } ${column.className || ''}`}
+                    style={{
+                      width:
+                        column.key === 'image'
+                          ? '80px'
+                          : column.resizable === false
+                            ? `${column.width || 150}px`
+                            : `${columnWidths[column.key] || defaultColumnWidths[column.key as keyof typeof defaultColumnWidths] || 150}px`,
+                    }}
+                  >
+                    {renderCellValue(column, row)}
+                  </TableCell>
+                ))}
+                {actions.length > 0 && (
+                  <TableCell
+                    className="py-4"
+                    style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      {actions.map((action, index) => (
+                        <Button
+                          key={index}
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => action.onClick(row)}
+                          disabled={action.disabled?.(row)}
+                          className={`h-4 w-4 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 ${
+                            action.variant === 'destructive'
+                              ? 'border-[#fb7185]/30 bg-[#fb7185]/10 text-[#fb7185] hover:bg-[#fb7185]/20'
+                              : ''
+                          }`}
+                          title={action.label}
+                        >
+                          {action.icon}
+                        </Button>
+                      ))}
+                    </div>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
