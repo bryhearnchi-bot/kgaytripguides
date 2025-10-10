@@ -124,8 +124,13 @@ export function registerEventRoutes(app: Express) {
         }
 
         // Fetch talent details (names and images) for events that have talent_ids
+        // Also apply image fallback logic for party themes
         const eventsWithTalent = await Promise.all(
           (events || []).map(async event => {
+            let talentNames: string[] = [];
+            let talentImages: (string | null)[] = [];
+
+            // Fetch talent data if talent IDs exist
             if (
               event.talent_ids &&
               Array.isArray(event.talent_ids) &&
@@ -141,17 +146,27 @@ export function registerEventRoutes(app: Express) {
                 const talentNameMap = new Map(talentData.map(t => [t.id, t.name]));
                 const talentImageMap = new Map(talentData.map(t => [t.id, t.profile_image_url]));
 
-                const talentNames = event.talent_ids
+                talentNames = event.talent_ids
                   .map((id: number) => talentNameMap.get(id))
                   .filter(Boolean);
-                const talentImages = event.talent_ids
+                talentImages = event.talent_ids
                   .map((id: number) => talentImageMap.get(id))
                   .filter(Boolean);
-
-                return { ...event, talentNames, talentImages };
               }
             }
-            return { ...event, talentNames: [], talentImages: [] };
+
+            // Apply image fallback: if no event image and it's a party with a theme, use theme image
+            let eventImageUrl = event.image_url;
+            if (!eventImageUrl && event.party_theme_id && event.party_themes?.image_url) {
+              eventImageUrl = event.party_themes.image_url;
+            }
+
+            return {
+              ...event,
+              image_url: eventImageUrl,
+              talentNames,
+              talentImages,
+            };
           })
         );
 
