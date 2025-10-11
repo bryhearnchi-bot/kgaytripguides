@@ -1,14 +1,14 @@
-import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
-import { useSupabaseAuthContext } from "@/contexts/SupabaseAuthContext";
-import KokonutProfileDropdown from "@/components/ui/kokonut-profile-dropdown";
+import { Link, useLocation } from 'wouter';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
 
 export default function NavigationBanner() {
   const { user, profile, signOut } = useSupabaseAuthContext();
   const [currentLocation, setLocation] = useLocation();
 
-  const isAdminRoute = currentLocation.startsWith("/admin");
+  const isAdminRoute = currentLocation.startsWith('/admin');
 
   const handleLogout = async () => {
     try {
@@ -21,14 +21,16 @@ export default function NavigationBanner() {
   };
 
   const toggleAdminNavigation = () => {
-    const event = new CustomEvent("admin-nav", {
-      detail: { action: "toggle" },
+    const event = new CustomEvent('admin-nav', {
+      detail: { action: 'toggle' },
     });
     window.dispatchEvent(event);
   };
 
   return (
-    <div className={`text-white fixed z-[60] w-full top-0 left-0 right-0 ${isAdminRoute ? 'bg-[#10192f]' : 'bg-ocean-900 shadow-lg'}`}>
+    <div
+      className={`text-white fixed z-[60] w-full top-0 left-0 right-0 ${isAdminRoute ? 'bg-[#10192f]' : 'bg-ocean-900 shadow-lg'}`}
+    >
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           {isAdminRoute && (
@@ -43,20 +45,16 @@ export default function NavigationBanner() {
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          <Link href="/">
-            <img
-              src="/logos/atlantis-logo.png"
-              alt="Atlantis Events"
-              className="h-5 sm:h-6 w-auto hover:opacity-80 transition-opacity cursor-pointer"
-            />
-          </Link>
-          <a href="https://kgaytravel.com/" target="_blank" rel="noopener noreferrer">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3">
             <img
               src="/logos/kgay-logo.jpg"
               alt="KGay Travel"
-              className="h-6 sm:h-8 w-auto hover:opacity-80 transition-opacity"
+              className="h-6 sm:h-8 w-auto hover:opacity-90 transition"
             />
-          </a>
+            <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-white sm:inline">
+              KGay Travel Guides
+            </span>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">

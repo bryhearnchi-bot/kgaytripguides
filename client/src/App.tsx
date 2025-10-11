@@ -20,6 +20,7 @@ const AuthCallback = lazy(() =>
 const AccountSetup = lazy(() => import('@/pages/auth/AccountSetup'));
 const NotFound = lazy(() => import('@/pages/not-found'));
 const ImageTest = lazy(() => import('@/pages/image-test'));
+const LandingMockupsPage = lazy(() => import('@/pages/landing-mockups'));
 
 // Admin pages - lazy loaded
 const ShipsManagement = lazy(() => import('@/pages/admin/ships'));
@@ -57,6 +58,7 @@ function Router() {
       <Switch>
         <Route path="/" component={LandingPage} />
         <Route path="/image-test" component={ImageTest} />
+        <Route path="/landing-mockups" component={LandingMockupsPage} />
         <Route path="/trip/:slug" component={TripPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/auth/callback" component={AuthCallback} />

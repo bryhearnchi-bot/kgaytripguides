@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Landing Redesign Option 3 - Dashboard Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ocean: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    .dashboard-gradient {
+      background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
+    }
+
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .sidebar-transition {
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .trip-row {
+      transition: all 0.2s ease;
+    }
+
+    .trip-row:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.01);
+    }
+
+    @media (max-width: 768px) {
+      .filter-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+      }
+
+      .filter-sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .sidebar-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-ocean-900 via-ocean-800 to-ocean-900 min-h-screen">
+
+  <!-- Top Banner -->
+  <header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/10">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-4">
+          <!-- Mobile Menu Toggle -->
+          <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 rounded-lg glass-panel flex items-center justify-center text-white hover:bg-white/10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center shadow-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-white font-bold text-lg tracking-tight">K-GAY Travel Guides</h1>
+              <p class="text-ocean-200 text-xs font-medium">Command Center</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search & Actions -->
+        <div class="flex items-center gap-3">
+          <div class="hidden md:block relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="Search trips..."
+                   class="w-64 pl-10 pr-4 py-2 rounded-lg glass-panel text-white text-sm placeholder-ocean-300 focus:outline-none focus:ring-2 focus:ring-ocean-400" />
+          </div>
+
+          <button class="px-5 py-2.5 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white rounded-lg text-sm font-semibold transition-all shadow-lg">
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar Overlay (Mobile) -->
+  <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Main Layout -->
+  <div class="pt-16 flex max-w-[1600px] mx-auto">
+
+    <!-- Filter Sidebar -->
+    <aside id="filterSidebar" class="filter-sidebar sidebar-transition w-80 glass-panel border-r border-white/10 p-6 space-y-6 lg:relative lg:translate-x-0">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-white">Filters</h2>
+        <button onclick="toggleSidebar()" class="lg:hidden w-8 h-8 rounded-lg glass-panel flex items-center justify-center text-white hover:bg-white/10">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <h3 class="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Status
+        </h3>
+        <div class="space-y-2">
+          <label class="flex items-center gap-3 p-3 rounded-lg glass-panel cursor-pointer hover:bg-white/10 transition-colors">
+            <input type="checkbox" checked class="w-4 h-4 rounded accent-ocean-500" />
+            <span class="text-white text-sm flex-1">All Trips</span>
+            <span class="text-ocean-200 text-xs font-medium">9</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg glass-panel cursor-pointer hover:bg-white/10 transition-colors">
+            <input type="checkbox" class="w-4 h-4 rounded accent-emerald-500" />
+            <div class="flex items-center gap-2 flex-1">
+              <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+              <span class="text-white text-sm">Sailing Now</span>
+            </div>
+            <span class="text-ocean-200 text-xs font-medium">2</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg glass-panel cursor-pointer hover:bg-white/10 transition-colors">
+            <input type="checkbox" class="w-4 h-4 rounded accent-blue-500" />
+            <span class="text-white text-sm flex-1">Upcoming</span>
+            <span class="text-ocean-200 text-xs font-medium">5</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg glass-panel cursor-pointer hover:bg-white/10 transition-colors">
+            <input type="checkbox" class="w-4 h-4 rounded accent-purple-500" />
+            <span class="text-white text-sm flex-1">Past</span>
+            <span class="text-ocean-200 text-xs font-medium">2</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Trip Type Filter -->
+      <div>
+        <h3 class="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          Trip Type
+        </h3>
+        <div class="space-y-2">
+          <label class="flex items-center gap-3 p-3 rounded-lg glass-panel cursor-pointer hover:bg-white/10 transition-colors">
+            <input type="checkbox" checked class="w-4 h-4 rounded accent-ocean-500" />
+            <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span class="text-white text-sm flex-1">Cruise</span>
+            <span class="text-ocean-200 text-xs font-medium">7</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg glass-panel cursor-pointer hover:bg-white/10 transition-colors">
+            <input type="checkbox" class="w-4 h-4 rounded accent-ocean-500" />
+            <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span class="text-white text-sm flex-1">Resort</span>
+            <span class="text-ocean-200 text-xs font-medium">2</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Duration Filter -->
+      <div>
+        <h3 class="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Duration (Days)
+        </h3>
+        <div class="px-3">
+          <div class="flex items-center justify-between text-ocean-200 text-sm mb-2">
+            <span>1 day</span>
+            <span>14+ days</span>
+          </div>
+          <input type="range" min="1" max="14" value="7" class="w-full accent-ocean-500" />
+          <div class="text-center text-white font-medium text-sm mt-2">Up to 7 days</div>
+        </div>
+      </div>
+
+      <!-- Destination Filter -->
+      <div>
+        <h3 class="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Destination
+        </h3>
+        <select class="w-full p-3 rounded-lg glass-panel text-white text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400">
+          <option>All Destinations</option>
+          <option>Mediterranean</option>
+          <option>Caribbean</option>
+          <option>Mexico</option>
+          <option>Pacific</option>
+        </select>
+      </div>
+
+      <!-- Clear Filters -->
+      <button class="w-full py-3 rounded-lg glass-panel text-ocean-200 hover:text-white hover:bg-white/10 font-medium text-sm transition-all">
+        Clear All Filters
+      </button>
+
+      <!-- Live Stats Panel -->
+      <div class="mt-8 p-4 rounded-xl glass-panel border border-ocean-500/30">
+        <h3 class="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Live Stats
+        </h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-ocean-200 text-xs">Active Trips</span>
+            <span class="text-white font-bold text-sm">2</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-ocean-200 text-xs">Total Trips</span>
+            <span class="text-white font-bold text-sm">9</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-ocean-200 text-xs">Featured Artists</span>
+            <span class="text-white font-bold text-sm">34</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+
+      <!-- Hero Section -->
+      <section class="dashboard-gradient rounded-3xl p-8 mb-8 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-ocean-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-ocean-600/10 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10">
+          <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-white text-sm mb-4">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Control your next adventure
+            </div>
+
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+              Browse, Filter, Discover
+            </h2>
+
+            <p class="text-xl text-ocean-100 mb-6 leading-relaxed">
+              Use our powerful dashboard to find your perfect LGBTQ+ cruise or resort experience. Filter by destination, duration, or vibe—your dream vacation is just a few clicks away.
+            </p>
+
+            <div class="flex flex-wrap gap-3">
+              <button class="px-6 py-3 bg-white text-ocean-900 hover:bg-ocean-50 font-bold rounded-xl transition-all shadow-lg">
+                Explore All Trips
+              </button>
+              <button class="px-6 py-3 glass-panel text-white hover:bg-white/15 font-semibold rounded-xl transition-all border border-white/30">
+                View Featured
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trip List Header -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h3 class="text-2xl font-bold text-white mb-1">All Sailings</h3>
+          <p class="text-ocean-200 text-sm">Showing 9 trips across all destinations</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button class="px-4 py-2 glass-panel text-white rounded-lg text-sm hover:bg-white/10 transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+            Sort
+          </button>
+          <button class="lg:hidden px-4 py-2 glass-panel text-white rounded-lg text-sm hover:bg-white/10 transition-all flex items-center gap-2" onclick="toggleSidebar()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Trip List -->
+      <div class="space-y-3">
+
+        <!-- Trip Row 1 - Sailing Now -->
+        <div class="trip-row rounded-xl glass-panel p-4 cursor-pointer border border-emerald-500/30">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <!-- Trip Image -->
+            <div class="lg:w-48 h-32 lg:h-auto rounded-lg overflow-hidden flex-shrink-0">
+              <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&q=80"
+                   alt="Greek Isles"
+                   class="w-full h-full object-cover"
+                   loading="lazy" />
+            </div>
+
+            <!-- Trip Details -->
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded-full border border-emerald-500/40 flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    Sailing Now
+                  </span>
+                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/40">
+                    Cruise
+                  </span>
+                  <span class="px-2 py-1 bg-white/10 text-white text-xs rounded-full">10 days</span>
+                </div>
+
+                <h4 class="text-xl font-bold text-white mb-2">Greek Isles Atlantis Cruise</h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-ocean-100">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Aug 21 - 31, 2025</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Resilient Lady</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Athens, Mykonos, Santorini</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex items-center lg:w-40">
+              <button class="w-full px-6 py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg text-sm">
+                View Guide →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Row 2 - Sailing Now -->
+        <div class="trip-row rounded-xl glass-panel p-4 cursor-pointer border border-emerald-500/30">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <div class="lg:w-48 h-32 lg:h-auto rounded-lg overflow-hidden flex-shrink-0">
+              <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80"
+                   alt="Drag Stars"
+                   class="w-full h-full object-cover"
+                   loading="lazy" />
+            </div>
+
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded-full border border-emerald-500/40 flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    Sailing Now
+                  </span>
+                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/40">
+                    Cruise
+                  </span>
+                  <span class="px-2 py-1 bg-white/10 text-white text-xs rounded-full">4 days</span>
+                </div>
+
+                <h4 class="text-xl font-bold text-white mb-2">Drag Stars at Sea 2025</h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-ocean-100">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Oct 15 - 19, 2025</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Celebrity Ascent</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Fort Lauderdale, Key West</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center lg:w-40">
+              <button class="w-full px-6 py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg text-sm">
+                View Guide →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Row 3 - Upcoming -->
+        <div class="trip-row rounded-xl glass-panel p-4 cursor-pointer border border-white/10">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <div class="lg:w-48 h-32 lg:h-auto rounded-lg overflow-hidden flex-shrink-0">
+              <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80"
+                   alt="New Cruise"
+                   class="w-full h-full object-cover"
+                   loading="lazy" />
+            </div>
+
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/40">
+                    Upcoming
+                  </span>
+                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/40">
+                    Cruise
+                  </span>
+                  <span class="px-2 py-1 bg-white/10 text-white text-xs rounded-full">1 day</span>
+                </div>
+
+                <h4 class="text-xl font-bold text-white mb-2">New Cruise Test</h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-ocean-100">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Oct 10 - 11, 2025</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-ocean-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Details Coming Soon</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center lg:w-40">
+              <button class="w-full px-6 py-3 bg-ocean-600/40 hover:bg-ocean-600/60 text-white font-semibold rounded-xl transition-all border border-ocean-500/30 text-sm">
+                View Guide →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- More Trip Rows... -->
+        <div class="text-center py-8">
+          <button class="px-8 py-3 glass-panel text-white font-semibold rounded-xl hover:bg-white/10 transition-all">
+            Load More Trips
+          </button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/10 glass-panel py-8 px-4 sm:px-6 lg:px-8 mt-16">
+    <div class="max-w-[1600px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+        <div>
+          <h3 class="text-white font-bold mb-3">K-GAY Travel Guides</h3>
+          <p class="text-ocean-200 text-sm">Your gateway to incredible LGBTQ+ travel experiences.</p>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold text-sm mb-3">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-ocean-200 hover:text-white text-sm transition-colors">About</a></li>
+            <li><a href="#" class="text-ocean-200 hover:text-white text-sm transition-colors">Contact</a></li>
+            <li><a href="#" class="text-ocean-200 hover:text-white text-sm transition-colors">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold text-sm mb-3">Follow Us</h4>
+          <div class="flex gap-3">
+            <a href="#" class="w-10 h-10 rounded-lg glass-panel hover:bg-white/10 flex items-center justify-center transition-colors">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-lg glass-panel hover:bg-white/10 flex items-center justify-center transition-colors">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+              </svg>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-lg glass-panel hover:bg-white/10 flex items-center justify-center transition-colors">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-white/10 pt-6 text-center">
+        <p class="text-ocean-200 text-sm">© 2025 K-GAY Travel Guides. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('filterSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>
