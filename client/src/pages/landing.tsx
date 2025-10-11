@@ -267,53 +267,61 @@ export default function LandingPage() {
 
         <StandardizedContentLayout>
           {/* Tab Bar - Glass Effect Style */}
-          <div id="trips" className="flex justify-end mb-8">
+          <div id="trips" className="flex justify-center sm:justify-end mb-8">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveFilter('all')}
-                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                   activeFilter === 'all'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
               >
-                <Grid3X3 className="w-4 h-4" />
-                All Sailings
+                <Grid3X3 className="w-4 h-4 flex-shrink-0" />
+                <span className={activeFilter === 'all' ? 'inline' : 'hidden sm:inline'}>
+                  All Sailings
+                </span>
               </button>
               {hasCurrent && (
                 <button
                   onClick={() => setActiveFilter('current')}
-                  className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                     activeFilter === 'current'
                       ? 'bg-white text-ocean-900'
                       : 'text-white/70 hover:text-white'
                   }`}
                 >
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                  Current
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"></span>
+                  <span className={activeFilter === 'current' ? 'inline' : 'hidden sm:inline'}>
+                    Current
+                  </span>
                 </button>
               )}
               <button
                 onClick={() => setActiveFilter('upcoming')}
-                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                   activeFilter === 'upcoming'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
               >
-                <Calendar className="w-4 h-4" />
-                Upcoming
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className={activeFilter === 'upcoming' ? 'inline' : 'hidden sm:inline'}>
+                  Upcoming
+                </span>
               </button>
               <button
                 onClick={() => setActiveFilter('past')}
-                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                   activeFilter === 'past'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
               >
-                <History className="w-4 h-4" />
-                Past
+                <History className="w-4 h-4 flex-shrink-0" />
+                <span className={activeFilter === 'past' ? 'inline' : 'hidden sm:inline'}>
+                  Past
+                </span>
               </button>
             </div>
           </div>
