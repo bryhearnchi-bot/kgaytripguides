@@ -612,10 +612,23 @@ export class TripInfoStorage implements ITripInfoStorage {
     const tripStorage = new TripStorage();
     const transformedTrip = tripStorage.transformTripData(tripData);
 
-    // Get itinerary data
+    // Get itinerary data with location highlights
     const { data: itineraryData, error: itineraryError } = await supabaseAdmin
       .from('itinerary')
-      .select('*')
+      .select(
+        `
+        *,
+        location:locations(
+          id,
+          name,
+          country,
+          image_url,
+          description,
+          top_attractions,
+          top_lgbt_venues
+        )
+      `
+      )
       .eq('trip_id', tripData.id)
       .order('day', { ascending: true });
 
@@ -628,7 +641,7 @@ export class TripInfoStorage implements ITripInfoStorage {
       date: item.date,
       day: item.day,
       portName: item.location_name,
-      country: null, // Add if available in schema
+      country: item.location?.country || null,
       arrivalTime: item.arrival_time,
       departureTime: item.departure_time,
       allAboardTime: item.all_aboard_time,
@@ -637,6 +650,17 @@ export class TripInfoStorage implements ITripInfoStorage {
       highlights: item.highlights,
       orderIndex: item.order_index,
       segment: item.segment,
+      location: item.location
+        ? {
+            id: item.location.id,
+            name: item.location.name,
+            country: item.location.country,
+            imageUrl: item.location.image_url,
+            description: item.location.description,
+            topAttractions: item.location.top_attractions,
+            topLgbtVenues: item.location.top_lgbt_venues,
+          }
+        : null,
     }));
 
     // Get events data with party themes, venues, and event types

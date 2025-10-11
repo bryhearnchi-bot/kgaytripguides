@@ -1,0 +1,263 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from 'react';
+
+interface HeroSectionProps {
+  tripName?: string;
+  tripDescription?: string;
+  tripType?: 'cruise' | 'resort' | null;
+}
+
+const HeroSection = ({
+  tripName = 'Your Next Adventure',
+  tripDescription = 'An exciting adventure awaits',
+  tripType = null,
+}: HeroSectionProps) => {
+  // Split trip name into words
+  const words = tripName.split(' ');
+  const firstWord = words[0];
+  const remainingWords = words.slice(1).join(' ');
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const images = [
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png',
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png',
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png',
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png',
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png',
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png',
+  ];
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const width = scrollRef.current.scrollWidth / 2;
+      setScrollWidth(width);
+    }
+  }, []);
+
+  // Rotate images on mobile
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % images.length);
+    }, 4000); // Change image every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
+  return (
+    <section className="flex flex-1 flex-col gap-8 overflow-x-hidden pt-4 sm:pt-8 lg:pt-12">
+      {/* Hero Content - Mobile */}
+      <div className="sm:hidden mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
+        <div className="bg-white/10 backdrop-blur-lg flex items-center gap-2.5 rounded-full border border-white/20 px-3 py-2">
+          <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50">
+            Interactive
+          </Badge>
+          <span className="text-white">KGay Travel Guides</span>
+        </div>
+
+        <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap">
+          <span>
+            <span className="relative">
+              {firstWord}
+              <svg
+                width="223"
+                height="12"
+                viewBox="0 0 223 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+              >
+                <path
+                  d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                  stroke="url(#paint0_linear_10365_68643)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient
+                    id="paint0_linear_10365_68643"
+                    x1="18.8541"
+                    y1="3.72033"
+                    x2="42.6487"
+                    y2="66.6308"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="var(--primary)" />
+                    <stop offset="1" stopColor="var(--primary-foreground)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>{' '}
+            {remainingWords}
+          </span>
+          {tripType && (
+            <Badge className="rounded-full bg-white/10 text-white border-white/20 text-xs mb-1">
+              {tripType.charAt(0).toUpperCase() + tripType.slice(1)}
+            </Badge>
+          )}
+        </h1>
+
+        {/* Single rotating image for mobile */}
+        <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
+          {images.map((img, index) => (
+            <img
+              key={img}
+              src={img}
+              alt={`Destination ${index + 1}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Hero Content - Desktop/Tablet */}
+      <div className="hidden sm:flex mx-auto max-w-3xl flex-col items-center gap-8 px-4 text-center sm:px-6 lg:px-8">
+        <div className="bg-white/10 backdrop-blur-lg flex items-center gap-2.5 rounded-full border border-white/20 px-3 py-2">
+          <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50">
+            Interactive
+          </Badge>
+          <span className="text-white">KGay Travel Guides</span>
+        </div>
+
+        <h1 className="text-2xl leading-[1.29167] font-bold text-balance sm:text-3xl lg:text-4xl text-white flex items-end justify-center gap-3 flex-wrap">
+          <span>
+            <span className="relative">
+              {firstWord}
+              <svg
+                width="223"
+                height="12"
+                viewBox="0 0 223 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+              >
+                <path
+                  d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                  stroke="url(#paint0_linear_10365_68643)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient
+                    id="paint0_linear_10365_68643"
+                    x1="18.8541"
+                    y1="3.72033"
+                    x2="42.6487"
+                    y2="66.6308"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="var(--primary)" />
+                    <stop offset="1" stopColor="var(--primary-foreground)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>{' '}
+            {remainingWords}
+          </span>
+          {tripType && (
+            <Badge className="rounded-full bg-white/10 text-white border-white/20 text-xs mb-1">
+              {tripType.charAt(0).toUpperCase() + tripType.slice(1)}
+            </Badge>
+          )}
+        </h1>
+
+        <p className="text-white">{tripDescription}</p>
+      </div>
+
+      {/* Scrolling Images - Desktop/Tablet only */}
+      <div className="relative w-full overflow-hidden hidden sm:block">
+        <div
+          ref={scrollRef}
+          className="flex items-end animate-scroll"
+          style={{ width: 'fit-content' }}
+        >
+          {/* First set of 6 images */}
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
+            alt="Athens, Greece"
+            className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
+            alt="Santorini, Greece"
+            className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
+            alt="Kuşadası, Turkey"
+            className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
+            alt="Istanbul, Turkey"
+            className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
+            alt="Iraklion, Crete"
+            className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
+            alt="Alexandria, Egypt"
+            className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          {/* Duplicate set for seamless loop */}
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
+            alt="Athens, Greece"
+            className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
+            alt="Santorini, Greece"
+            className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
+            alt="Kuşadası, Turkey"
+            className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
+            alt="Istanbul, Turkey"
+            className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
+            alt="Iraklion, Crete"
+            className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+          <img
+            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
+            alt="Alexandria, Egypt"
+            className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-${scrollWidth}px);
+          }
+        }
+
+        .animate-scroll {
+          animation: scroll 150s linear infinite;
+          display: flex;
+        }
+      `}</style>
+    </section>
+  );
+};
+
+export default HeroSection;

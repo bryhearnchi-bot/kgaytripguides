@@ -9,7 +9,6 @@ import { useState } from 'react';
 import React from 'react';
 import { dateOnly } from '@/lib/utils';
 import { getTripButtonText } from '@/lib/tripUtils';
-import { UniversalHero } from '@/components/UniversalHero';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 import { FeaturedTripCarousel } from '@/components/FeaturedTripCarousel';

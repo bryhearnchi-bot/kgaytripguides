@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
-import { UniversalHero } from '@/components/UniversalHero';
+import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 import { Map, CalendarDays, PartyPopper, Star, Info, Eye, CheckCircle } from 'lucide-react';
@@ -206,115 +206,162 @@ export default function TripGuide({ slug }: TripGuideProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400">
-      <UniversalHero
-        variant="trip"
-        tripImageUrl={tripData?.trip?.heroImageUrl || undefined}
-        title={tripData?.trip?.name || 'Trip Guide'}
-        subtitle=""
-        additionalInfo={
-          tripData?.trip?.startDate && tripData?.trip?.endDate
-            ? `${format(dateOnly(tripData.trip.startDate), 'MMMM d')} - ${format(dateOnly(tripData.trip.endDate), 'MMMM d, yyyy')}`
-            : ''
-        }
-        tabSection={
-          <StandardizedTabContainer>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="itinerary" className="flex items-center gap-2">
-                  <Map className="w-4 h-4" />
-                  <span className="hidden sm:inline">{isCruise ? 'Itinerary' : 'Schedule'}</span>
-                </TabsTrigger>
-                <TabsTrigger value="schedule" className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4" />
-                  <span className="hidden sm:inline">Events</span>
-                </TabsTrigger>
-                <TabsTrigger value="parties" className="flex items-center gap-2">
-                  <PartyPopper className="w-4 h-4" />
-                  <span className="hidden sm:inline">Parties</span>
-                </TabsTrigger>
-                <TabsTrigger value="talent" className="flex items-center gap-2">
-                  <Star className="w-4 h-4" />
-                  <span className="hidden sm:inline">Talent</span>
-                </TabsTrigger>
-                <TabsTrigger value="info" className="flex items-center gap-2">
-                  <Info className="w-4 h-4" />
-                  <span className="hidden sm:inline">Info</span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </StandardizedTabContainer>
-        }
+    <div className="min-h-screen w-full bg-black relative">
+      {/* Deep Ocean Glow Background */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background:
+            'radial-gradient(70% 55% at 50% 50%, #2a5d77 0%, #184058 18%, #0f2a43 34%, #0a1b30 50%, #071226 66%, #040d1c 80%, #020814 92%, #01040d 97%, #000309 100%), radial-gradient(160% 130% at 10% 10%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%), radial-gradient(160% 130% at 90% 90%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%)',
+        }}
       />
 
-      {/* Preview Mode Banner */}
-      {tripData?.trip?.tripStatusId === 5 && !tripData?.trip?.isActive && (
-        <div className="bg-amber-500/10 border-y border-amber-400/30 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-4 max-w-6xl">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <Eye className="w-5 h-5 text-amber-400" />
-                <div>
-                  <h3 className="text-sm font-semibold text-white">Preview Mode</h3>
-                  <p className="text-xs text-white/70">This trip is not live on the site yet.</p>
+      {/* Content Layer */}
+      <div className="relative z-10">
+        <HeroSection
+          tripName={tripData?.trip?.name}
+          tripDescription={tripData?.trip?.description}
+          tripType={isCruise ? 'cruise' : isResort ? 'resort' : null}
+        />
+
+        {/* Preview Mode Banner */}
+        {tripData?.trip?.tripStatusId === 5 && !tripData?.trip?.isActive && (
+          <div className="bg-amber-500/10 border-y border-amber-400/30 backdrop-blur-sm">
+            <div className="container mx-auto px-4 py-4 max-w-6xl">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <Eye className="w-5 h-5 text-amber-400" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">Preview Mode</h3>
+                    <p className="text-xs text-white/70">This trip is not live on the site yet.</p>
+                  </div>
                 </div>
+                <Button
+                  onClick={handleApproveTripClick}
+                  disabled={isApproving}
+                  className="h-10 px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {isApproving ? 'Approving...' : 'Approve & Publish'}
+                </Button>
               </div>
-              <Button
-                onClick={handleApproveTripClick}
-                disabled={isApproving}
-                className="h-10 px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {isApproving ? 'Approving...' : 'Approve & Publish'}
-              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <StandardizedContentLayout>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsContent value="schedule">
-            <ScheduleTab
-              SCHEDULED_DAILY={SCHEDULED_DAILY}
-              ITINERARY={ITINERARY as any}
-              TALENT={TALENT as any}
-              PARTY_THEMES={PARTY_THEMES}
-              collapsedDays={collapsedDays}
-              onToggleDayCollapse={toggleDayCollapse}
-              onCollapseAll={handleCollapseAll}
-              onTalentClick={handleTalentClick}
-              onPartyClick={handlePartyClick}
-            />
-          </TabsContent>
+        <StandardizedContentLayout>
+          {/* Tab Bar */}
+          <div className="flex justify-center mb-8 pt-4 sm:pt-12 lg:pt-16">
+            <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
+              <button
+                onClick={() => setActiveTab('itinerary')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeTab === 'itinerary'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Map className="w-4 h-4 flex-shrink-0" />
+                <span className={activeTab === 'itinerary' ? 'inline' : 'hidden sm:inline'}>
+                  {isCruise ? 'Itinerary' : 'Schedule'}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('schedule')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeTab === 'schedule'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                <span className={activeTab === 'schedule' ? 'inline' : 'hidden sm:inline'}>
+                  Events
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('parties')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeTab === 'parties'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <PartyPopper className="w-4 h-4 flex-shrink-0" />
+                <span className={activeTab === 'parties' ? 'inline' : 'hidden sm:inline'}>
+                  Parties
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('talent')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeTab === 'talent'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Star className="w-4 h-4 flex-shrink-0" />
+                <span className={activeTab === 'talent' ? 'inline' : 'hidden sm:inline'}>
+                  Talent
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('info')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeTab === 'info'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Info className="w-4 h-4 flex-shrink-0" />
+                <span className={activeTab === 'info' ? 'inline' : 'hidden sm:inline'}>Info</span>
+              </button>
+            </div>
+          </div>
 
-          <TabsContent value="itinerary">
-            {isCruise ? (
-              <ItineraryTab ITINERARY={ITINERARY as any} onViewEvents={handleViewEvents} />
-            ) : (
-              <ItineraryTab ITINERARY={SCHEDULE as any} onViewEvents={handleViewEvents} />
-            )}
-          </TabsContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsContent value="schedule">
+              <ScheduleTab
+                SCHEDULED_DAILY={SCHEDULED_DAILY}
+                ITINERARY={ITINERARY as any}
+                TALENT={TALENT as any}
+                PARTY_THEMES={PARTY_THEMES}
+                collapsedDays={collapsedDays}
+                onToggleDayCollapse={toggleDayCollapse}
+                onCollapseAll={handleCollapseAll}
+                onTalentClick={handleTalentClick}
+                onPartyClick={handlePartyClick}
+              />
+            </TabsContent>
 
-          <TabsContent value="talent">
-            <TalentTab TALENT={TALENT as any} onTalentClick={handleTalentClick} />
-          </TabsContent>
+            <TabsContent value="itinerary">
+              {isCruise ? (
+                <ItineraryTab ITINERARY={ITINERARY as any} onViewEvents={handleViewEvents} />
+              ) : (
+                <ItineraryTab ITINERARY={SCHEDULE as any} onViewEvents={handleViewEvents} />
+              )}
+            </TabsContent>
 
-          <TabsContent value="parties">
-            <PartiesTab
-              SCHEDULED_DAILY={SCHEDULED_DAILY}
-              ITINERARY={ITINERARY as any}
-              PARTY_THEMES={PARTY_THEMES as any}
-              timeFormat={timeFormat}
-              onPartyClick={handlePartyClick}
-            />
-          </TabsContent>
+            <TabsContent value="talent">
+              <TalentTab TALENT={TALENT as any} onTalentClick={handleTalentClick} />
+            </TabsContent>
 
-          <TabsContent value="info">
-            <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} />
-          </TabsContent>
-        </Tabs>
-      </StandardizedContentLayout>
+            <TabsContent value="parties">
+              <PartiesTab
+                SCHEDULED_DAILY={SCHEDULED_DAILY}
+                ITINERARY={ITINERARY as any}
+                PARTY_THEMES={PARTY_THEMES as any}
+                timeFormat={timeFormat}
+                onPartyClick={handlePartyClick}
+              />
+            </TabsContent>
+
+            <TabsContent value="info">
+              <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} />
+            </TabsContent>
+          </Tabs>
+        </StandardizedContentLayout>
+      </div>
 
       {/* Modals */}
       <TalentModal
@@ -344,26 +391,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
         onOpenChange={handlePartyModalClose}
         selectedParty={selectedParty}
       />
-
-      {/* Footer */}
-      <footer className="atlantis-gradient wave-pattern text-white py-6 mt-6">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <img
-              src="https://atlantisevents.com/wp-content/themes/atlantis/assets/images/logos/atlantis-logo.png"
-              alt="Atlantis Events"
-              className="h-8 w-auto mr-3 brightness-0 invert"
-              loading="lazy"
-            />
-            <div className="text-left">
-              <p className="text-sm text-white/80">All-Gay Vacations Since 1991</p>
-            </div>
-          </div>
-          <p className="text-sm text-white/80">
-            Your ultimate resource for cruise information and planning
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

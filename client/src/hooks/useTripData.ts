@@ -118,6 +118,7 @@ export function transformTripData(data: TripData) {
     key: stop.date.split('T')[0],
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
+    day: stop.day, // Day number for itinerary display
     port: (stop as any).location?.name || stop.portName, // Use location.name if available, fallback to portName
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
@@ -126,6 +127,9 @@ export function transformTripData(data: TripData) {
       (stop as any).location?.imageUrl || (stop as any).location?.image_url || stop.portImageUrl, // Use location.imageUrl if available
     description: (stop as any).location?.description || stop.description, // Use location.description if available
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
+    topAttractions: (stop as any).location?.topAttractions || [], // Location top attractions
+    topLgbtVenues: (stop as any).location?.topLgbtVenues || [], // Location LGBT venues
+    locationId: (stop as any).location?.id, // Location ID for reference
     portDetails: (stop as any).location, // Include full location details (renamed from port)
   }));
 

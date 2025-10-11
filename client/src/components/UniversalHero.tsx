@@ -19,25 +19,9 @@ export function UniversalHero({
 }: UniversalHeroProps) {
   return (
     <header className="relative overflow-hidden text-white fixed top-[12px] left-0 right-0 z-40 h-[250px]">
-      {/* Background Layer */}
+      {/* Background Layer - No image, let page background show through */}
       <div className="absolute inset-0 z-0">
-        {variant === 'landing' ? (
-          // No background for landing - let page background show through
-          <div className="w-full h-full"></div>
-        ) : // Trip image background for trip guide
-        tripImageUrl ? (
-          <img src={tripImageUrl} alt="Trip Hero" className="w-full h-full object-cover" />
-        ) : (
-          <img
-            src="/images/ships/resilient-lady-hero.jpg"
-            alt="Default Trip Ship"
-            className="w-full h-full object-cover"
-          />
-        )}
-        {/* Overlay - only for trip variant */}
-        {variant !== 'landing' && (
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20 z-10"></div>
-        )}
+        <div className="w-full h-full"></div>
       </div>
 
       {/* Content Layer */}

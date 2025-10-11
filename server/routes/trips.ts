@@ -272,18 +272,31 @@ export function registerTripRoutes(app: Express) {
             .order('day', { ascending: true });
 
           // Transform itinerary data to camelCase
-          const itineraryData = (rawItineraryData || []).map((item: any) => ({
-            dayNumber: item.day,
-            date: item.date,
-            locationId: item.location_id,
-            locationName: item.location_name,
-            locationTypeId: item.location_type_id,
-            arrivalTime: item.arrival_time,
-            departureTime: item.departure_time,
-            allAboardTime: item.all_aboard_time,
-            imageUrl: item.location_image_url,
-            description: item.description,
-          }));
+          const itineraryData = (rawItineraryData || []).map((item: any) => {
+            // Format timestamp to YYYY-MM-DD date string
+            // item.date is a timestamp like "2025-10-19 00:00:00"
+            let formattedDate = '';
+            if (item.date) {
+              const dateObj = new Date(item.date);
+              const year = dateObj.getUTCFullYear();
+              const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+              const day = String(dateObj.getUTCDate()).padStart(2, '0');
+              formattedDate = `${year}-${month}-${day}`;
+            }
+
+            return {
+              dayNumber: item.day,
+              date: formattedDate,
+              locationId: item.location_id,
+              locationName: item.location_name,
+              locationTypeId: item.location_type_id,
+              arrivalTime: item.arrival_time,
+              departureTime: item.departure_time,
+              allAboardTime: item.all_aboard_time,
+              imageUrl: item.location_image_url,
+              description: item.description,
+            };
+          });
 
           // Get schedule entries (for resort trips)
           const { data: rawScheduleData } = await supabaseAdmin
@@ -293,12 +306,24 @@ export function registerTripRoutes(app: Express) {
             .order('day_number', { ascending: true });
 
           // Transform schedule data to camelCase
-          const scheduleData = (rawScheduleData || []).map((item: any) => ({
-            dayNumber: item.day_number,
-            date: item.date,
-            imageUrl: item.image_url,
-            description: item.description,
-          }));
+          const scheduleData = (rawScheduleData || []).map((item: any) => {
+            // Format timestamp to YYYY-MM-DD date string
+            let formattedDate = '';
+            if (item.date) {
+              const dateObj = new Date(item.date);
+              const year = dateObj.getUTCFullYear();
+              const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+              const day = String(dateObj.getUTCDate()).padStart(2, '0');
+              formattedDate = `${year}-${month}-${day}`;
+            }
+
+            return {
+              dayNumber: item.day_number,
+              date: formattedDate,
+              imageUrl: item.image_url,
+              description: item.description,
+            };
+          });
 
           // Get amenity IDs based on trip type
           let amenitiesData = null;
