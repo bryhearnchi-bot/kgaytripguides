@@ -11,7 +11,8 @@
     box-sizing: border-box;
   }
 
-  html, body {
+  html,
+  body {
     margin: 0 !important;
     padding: 0 !important;
     height: 100%;
@@ -44,15 +45,15 @@ button[data-radix-popover-trigger],
 button[data-radix-popover-trigger]:focus,
 button[data-radix-popover-trigger]:focus-visible,
 button[data-radix-popover-trigger]:active,
-button[data-radix-popover-trigger][data-state="open"],
-button[data-radix-popover-trigger][data-state="closed"],
+button[data-radix-popover-trigger][data-state='open'],
+button[data-radix-popover-trigger][data-state='closed'],
 .kokonut-profile-button,
 .kokonut-profile-button *,
 .kokonut-profile-button:focus,
 .kokonut-profile-button:focus-visible,
 .kokonut-profile-button:active,
-.kokonut-profile-button[data-state="open"],
-.kokonut-profile-button[data-state="closed"],
+.kokonut-profile-button[data-state='open'],
+.kokonut-profile-button[data-state='closed'],
 button[data-radix-collection-item] {
   outline: none !important;
   border: none !important;
@@ -102,36 +103,46 @@ button.kokonut-profile-button::-moz-focus-inner {
   --destructive: hsl(356.3033, 90.5579%, 54.3137%);
   --destructive-foreground: hsl(0, 0%, 100%);
   --border: hsl(201.4286, 30.4348%, 90.9804%);
-  --input: hsl(200, 23.0769%, 97.4510%);
+  --input: hsl(200, 23.0769%, 97.451%);
   --ring: hsl(202.8169, 89.1213%, 53.1373%);
   --chart-1: hsl(203.8863, 88.2845%, 53.1373%);
   --chart-2: hsl(159.7826, 100%, 36.0784%);
-  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+  --chart-3: hsl(42.029, 92.8251%, 56.2745%);
   --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
-  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+  --chart-5: hsl(341.4894, 75.2%, 50.9804%);
   --sidebar: hsl(180, 6.6667%, 97.0588%);
   --sidebar-foreground: hsl(210, 25%, 7.8431%);
   --sidebar-primary: hsl(203.8863, 88.2845%, 53.1373%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
   --sidebar-accent: hsl(211.5789, 51.3514%, 92.7451%);
   --sidebar-accent-foreground: hsl(203.8863, 88.2845%, 53.1373%);
-  --sidebar-border: hsl(205.0000, 25.0000%, 90.5882%);
+  --sidebar-border: hsl(205, 25%, 90.5882%);
   --sidebar-ring: hsl(202.8169, 89.1213%, 53.1373%);
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: 1.3rem;
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 2px 4px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 4px 6px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 8px 10px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-sm:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-md:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 2px 4px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-lg:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 4px 6px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-xl:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 8px 10px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
-  
+
   /* Text truncation utilities */
 }
 
@@ -154,7 +165,7 @@ button.kokonut-profile-button::-moz-focus-inner {
   --atlantis-blue-700: hsl(208, 95%, 25%);
   --atlantis-blue-800: hsl(209, 96%, 18%);
   --atlantis-blue-900: hsl(210, 97%, 12%);
-  
+
   /* Ocean colors mapped to atlantis blue */
   --ocean-50: var(--atlantis-blue-50);
   --ocean-100: var(--atlantis-blue-100);
@@ -166,7 +177,7 @@ button.kokonut-profile-button::-moz-focus-inner {
   --ocean-700: var(--atlantis-blue-700);
   --ocean-800: var(--atlantis-blue-800);
   --ocean-900: var(--atlantis-blue-900);
-  
+
   --gold: hsl(45, 86%, 58%);
   --coral: hsl(14, 89%, 65%);
   --atlantis-teal: hsl(175, 60%, 45%);
@@ -177,47 +188,57 @@ button.kokonut-profile-button::-moz-focus-inner {
   --background: hsl(0, 0%, 0%);
   --foreground: hsl(200, 6.6667%, 91.1765%);
   --card: hsl(228, 9.8039%, 10%);
-  --card-foreground: hsl(0, 0%, 85.0980%);
+  --card-foreground: hsl(0, 0%, 85.098%);
   --popover: hsl(0, 0%, 0%);
   --popover-foreground: hsl(200, 6.6667%, 91.1765%);
-  --primary: hsl(203.7736, 87.6033%, 52.5490%);
+  --primary: hsl(203.7736, 87.6033%, 52.549%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(195.0000, 15.3846%, 94.9020%);
+  --secondary: hsl(195, 15.3846%, 94.902%);
   --secondary-foreground: hsl(210, 25%, 7.8431%);
   --muted: hsl(0, 0%, 9.4118%);
   --muted-foreground: hsl(210, 3.3898%, 46.2745%);
   --accent: hsl(205.7143, 70%, 7.8431%);
-  --accent-foreground: hsl(203.7736, 87.6033%, 52.5490%);
+  --accent-foreground: hsl(203.7736, 87.6033%, 52.549%);
   --destructive: hsl(356.3033, 90.5579%, 54.3137%);
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(210, 5.2632%, 14.9020%);
+  --border: hsl(210, 5.2632%, 14.902%);
   --input: hsl(207.6923, 27.6596%, 18.4314%);
   --ring: hsl(202.8169, 89.1213%, 53.1373%);
   --chart-1: hsl(203.8863, 88.2845%, 53.1373%);
   --chart-2: hsl(159.7826, 100%, 36.0784%);
-  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+  --chart-3: hsl(42.029, 92.8251%, 56.2745%);
   --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
-  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+  --chart-5: hsl(341.4894, 75.2%, 50.9804%);
   --sidebar: hsl(228, 9.8039%, 10%);
-  --sidebar-foreground: hsl(0, 0%, 85.0980%);
+  --sidebar-foreground: hsl(0, 0%, 85.098%);
   --sidebar-primary: hsl(202.8169, 89.1213%, 53.1373%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
   --sidebar-accent: hsl(205.7143, 70%, 7.8431%);
-  --sidebar-accent-foreground: hsl(203.7736, 87.6033%, 52.5490%);
+  --sidebar-accent-foreground: hsl(203.7736, 87.6033%, 52.549%);
   --sidebar-border: hsl(205.7143, 15.7895%, 26.0784%);
   --sidebar-ring: hsl(202.8169, 89.1213%, 53.1373%);
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: 1.3rem;
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 2px 4px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 4px 6px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00), 0px 8px 10px -1px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0.00);
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-sm:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 1px 2px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-md:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 2px 4px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-lg:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 4px 6px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-xl:
+    0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0),
+    0px 8px 10px -1px hsl(202.8169, 89.1213%, 53.1373%, 0);
+  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169, 89.1213%, 53.1373%, 0);
 }
 
 @layer base {
@@ -233,7 +254,12 @@ button.kokonut-profile-button::-moz-focus-inner {
 /* Custom Atlantis Events Theme Styles */
 .cruise-gradient {
   background: var(--atlantis-blue-700);
-  background-image: linear-gradient(135deg, var(--atlantis-blue-800) 0%, var(--atlantis-blue-600) 50%, var(--atlantis-blue-500) 100%);
+  background-image: linear-gradient(
+    135deg,
+    var(--atlantis-blue-800) 0%,
+    var(--atlantis-blue-600) 50%,
+    var(--atlantis-blue-500) 100%
+  );
   position: relative;
 }
 
@@ -275,18 +301,44 @@ button.kokonut-profile-button::-moz-focus-inner {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .animate-fade-in {
@@ -299,6 +351,10 @@ button.kokonut-profile-button::-moz-focus-inner {
 
 .animate-scale-in {
   animation: scaleIn 0.2s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
 /* Force scrollbars to always show in Command Lists - CRITICAL FOR MACOS */

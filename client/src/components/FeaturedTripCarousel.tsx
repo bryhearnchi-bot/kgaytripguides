@@ -154,12 +154,7 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
   const duration = differenceInCalendarDays(endDate, startDate);
 
   return (
-    <div className="mb-12">
-      <div className="flex items-center justify-center gap-3 mb-6">
-        <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
-        <h2 className="text-2xl font-bold text-white">Current Trips</h2>
-      </div>
-
+    <div>
       {/* Mobile: Show regular TripCard (below sm breakpoint - 640px) */}
       <div className="sm:hidden">
         <TripCard trip={currentTrip} />

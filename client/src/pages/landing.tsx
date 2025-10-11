@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Grid3X3, Home } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import React from 'react';
 import { dateOnly } from '@/lib/utils';
@@ -14,7 +13,6 @@ import { UniversalHero } from '@/components/UniversalHero';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 import { FeaturedTripCarousel } from '@/components/FeaturedTripCarousel';
-import { CreativeHero } from '@/components/CreativeHero';
 
 interface Trip {
   id: number;
@@ -218,6 +216,15 @@ export default function LandingPage() {
       }
     : { current: [], upcoming: [], past: [] };
 
+  // If no current trips, use the first upcoming trip as featured
+  const hasFeaturedTrip = groupedTrips.current.length > 0 || groupedTrips.upcoming.length > 0;
+  const featuredTrips =
+    groupedTrips.current.length > 0 ? groupedTrips.current : groupedTrips.upcoming.slice(0, 1);
+  const isFeaturedUpcoming = groupedTrips.current.length === 0 && groupedTrips.upcoming.length > 0;
+
+  // Remove the featured trip from upcoming list if it's being shown as featured
+  const upcomingTrips = isFeaturedUpcoming ? groupedTrips.upcoming.slice(1) : groupedTrips.upcoming;
+
   return (
     <div className="min-h-screen w-full bg-black relative">
       {/* Deep Ocean Glow Background */}
@@ -231,58 +238,203 @@ export default function LandingPage() {
 
       {/* Content Layer */}
       <div className="relative z-10">
-        <CreativeHero
-          title="Your Guide to an Unforgettable Experience"
-          subtitle="Interactive Travel Guides"
-          description="Immerse yourself in extraordinary LGBTQ+ travel experiences with world-class talent, breathtaking destinations, and a vibrant community that feels like home."
-        />
+        {/* Floating Hero Section */}
+        <section className="pt-16 pb-6 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-6 animate-float">
+              {/* Upcoming Trips Badge */}
+              {(groupedTrips.current?.length || 0) + (groupedTrips.upcoming?.length || 0) > 0 && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-lg text-white/90 text-sm mb-5 border border-white/20">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                  {(groupedTrips.current?.length || 0) + (groupedTrips.upcoming?.length || 0)}{' '}
+                  upcoming trips
+                </div>
+              )}
+
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
+                Your Guide to an
+                <br />
+                Unforgettable Experience
+              </h2>
+
+              <p className="text-lg text-ocean-100 max-w-2xl mx-auto">
+                Immerse yourself in extraordinary LGBTQ+ travel experiences with world-class talent,
+                breathtaking destinations, and a vibrant community that feels like home.
+              </p>
+            </div>
+          </div>
+        </section>
 
         <StandardizedContentLayout>
-          {/* Tab Bar */}
-          <div id="trips" className="flex justify-center mb-8">
-            <Tabs
-              value={activeFilter}
-              onValueChange={value =>
-                setActiveFilter(value as 'all' | 'upcoming' | 'current' | 'past')
-              }
-              className="w-full max-w-2xl"
-            >
-              <TabsList className={`grid w-full ${hasCurrent ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="all" className="flex items-center gap-2">
-                  <Grid3X3 className="w-4 h-4" />
-                  <span className="hidden sm:inline">All</span>
-                </TabsTrigger>
-                {hasCurrent && (
-                  <TabsTrigger
-                    value="current"
-                    className="flex items-center gap-2 relative bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-400/30 shadow-lg"
-                  >
-                    <Clock className="w-4 h-4 animate-pulse text-emerald-600" />
-                    <span className="hidden sm:inline font-semibold text-emerald-700">Current</span>
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full"></div>
-                  </TabsTrigger>
-                )}
-                <TabsTrigger value="upcoming" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span className="hidden sm:inline">Upcoming</span>
-                </TabsTrigger>
-                <TabsTrigger value="past" className="flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  <span className="hidden sm:inline">Past</span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          {/* Tab Bar - Glass Effect Style */}
+          <div id="trips" className="flex justify-end mb-8">
+            <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
+              <button
+                onClick={() => setActiveFilter('all')}
+                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeFilter === 'all'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Grid3X3 className="w-4 h-4" />
+                All Sailings
+              </button>
+              {hasCurrent && (
+                <button
+                  onClick={() => setActiveFilter('current')}
+                  className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                    activeFilter === 'current'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                  Current
+                </button>
+              )}
+              <button
+                onClick={() => setActiveFilter('upcoming')}
+                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeFilter === 'upcoming'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                Upcoming
+              </button>
+              <button
+                onClick={() => setActiveFilter('past')}
+                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  activeFilter === 'past'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <History className="w-4 h-4" />
+                Past
+              </button>
+            </div>
           </div>
           {filteredTrips.length > 0 ? (
             <section>
               {activeFilter === 'all' ? (
                 <div>
-                  {groupedTrips.current.length > 0 && (
-                    <FeaturedTripCarousel trips={groupedTrips.current} />
+                  {hasFeaturedTrip && (
+                    <div className="mb-8">
+                      {/* Featured Trip Header - Changes based on current vs upcoming */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <span
+                          className={`w-3 h-3 rounded-full ${isFeaturedUpcoming ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}
+                        ></span>
+                        <h3 className="text-2xl font-bold text-white">
+                          {isFeaturedUpcoming ? 'Next Trip' : 'Current Trips'}
+                        </h3>
+                        <div className="flex-1 h-px bg-white/20"></div>
+                      </div>
+
+                      {/* Featured Trip + Latest News Grid */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                        {/* Featured Trip Carousel - 2 columns wide */}
+                        <div className="lg:col-span-2">
+                          <FeaturedTripCarousel trips={featuredTrips} />
+                        </div>
+
+                        {/* Latest News Card - 1 column wide */}
+                        <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl flex flex-col h-full">
+                          <div className="p-6 flex-1 flex flex-col">
+                            <div className="flex items-center gap-2 mb-4">
+                              <Clock className="w-5 h-5 text-emerald-400 animate-pulse" />
+                              <h3 className="text-xl font-bold text-white">Latest News</h3>
+                            </div>
+
+                            <div className="space-y-4 flex-1">
+                              {/* News Item 1 - New Cruise Released (Clickable) */}
+                              <Link
+                                href="#"
+                                className="block pb-4 border-b border-white/10 transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer"
+                              >
+                                <p className="text-sm text-emerald-400 font-semibold mb-1 flex items-center gap-2">
+                                  New Cruise Released
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
+                                </p>
+                                <p className="text-sm text-ocean-200">
+                                  Exciting new destinations added for 2026 season!
+                                </p>
+                              </Link>
+
+                              {/* News Item 2 - Trip Guide Updated (Clickable) */}
+                              <Link
+                                href="#"
+                                className="block pb-4 border-b border-white/10 transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer"
+                              >
+                                <p className="text-sm text-blue-400 font-semibold mb-1 flex items-center gap-2">
+                                  Trip Guide Updated
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
+                                </p>
+                                <p className="text-sm text-ocean-200">
+                                  Greek Isles guide now includes new events and performers.
+                                </p>
+                              </Link>
+
+                              {/* News Item 3 - Trip Guide Live (Clickable) */}
+                              <Link
+                                href="#"
+                                className="block pb-4 transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer"
+                              >
+                                <p className="text-sm text-purple-400 font-semibold mb-1 flex items-center gap-2">
+                                  Trip Guide Live
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
+                                </p>
+                                <p className="text-sm text-ocean-200">
+                                  Drag Stars at Sea guide is now available with full details.
+                                </p>
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
-                  {groupedTrips.upcoming.length > 0 && (
+                  {upcomingTrips.length > 0 && (
                     <div className="mb-8">
                       <div className="flex items-center gap-2 mb-6">
                         <Calendar className="w-4 h-4 text-blue-400" />
@@ -290,7 +442,7 @@ export default function LandingPage() {
                         <div className="flex-1 h-px bg-white/20 ml-3"></div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                        {groupedTrips.upcoming.map(trip => (
+                        {upcomingTrips.map(trip => (
                           <TripCard key={trip.id} trip={trip} />
                         ))}
                       </div>

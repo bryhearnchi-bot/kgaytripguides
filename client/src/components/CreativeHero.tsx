@@ -4,9 +4,15 @@ interface CreativeHeroProps {
   title: string;
   subtitle: string;
   description: string;
+  upcomingTripsCount?: number;
 }
 
-export function CreativeHero({ title, subtitle, description }: CreativeHeroProps) {
+export function CreativeHero({
+  title,
+  subtitle,
+  description,
+  upcomingTripsCount,
+}: CreativeHeroProps) {
   // Three images that will rotate every 4 seconds
   const images = [
     'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/trips/drag_stars_ngd64u.jpg',
@@ -31,6 +37,14 @@ export function CreativeHero({ title, subtitle, description }: CreativeHeroProps
         <div className="grid items-center gap-8 lg:grid-cols-2">
           {/* Left Side - Content */}
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+            {/* Floating Stats Badge */}
+            {upcomingTripsCount !== undefined && upcomingTripsCount > 0 && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm mb-4 border border-white/20">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                Upcoming trips: {upcomingTripsCount}
+              </div>
+            )}
+
             <div className="inline-block mb-4">
               <span className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-ocean-200 text-sm font-medium border border-white/20">
                 {subtitle}
