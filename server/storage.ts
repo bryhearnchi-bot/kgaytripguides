@@ -251,7 +251,27 @@ export class ItineraryStorage implements IItineraryStorage {
       .order('day', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+
+    // Transform to camelCase for consistency with other endpoints
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      tripId: item.trip_id,
+      date: item.date,
+      day: item.day,
+      locationName: item.location_name,
+      portName: item.location_name, // Keep for backward compatibility
+      country: item.country,
+      arrivalTime: item.arrival_time,
+      departureTime: item.departure_time,
+      allAboardTime: item.all_aboard_time,
+      portImageUrl: item.location_image_url,
+      description: item.description,
+      highlights: item.highlights,
+      orderIndex: item.order_index,
+      segment: item.segment,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+    }));
   }
 
   async createItineraryStop(data: any): Promise<Itinerary> {
