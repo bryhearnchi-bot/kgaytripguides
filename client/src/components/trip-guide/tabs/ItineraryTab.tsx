@@ -13,8 +13,21 @@ export const ItineraryTab = memo(function ItineraryTab({
 }: ItineraryTabProps) {
   // Transform itinerary data to Job format for the component
   const jobsData: Job[] = ITINERARY.map(stop => {
-    // Check if this is a pre-trip or post-trip day
+    // Check if this is a pre-trip, post-trip, or embarkation day (Day 1)
     const isPreOrPostTrip = stop.day < 0 || stop.day >= 100;
+    const isEmbarkationDay = stop.day === 1;
+
+    // Build arrive/depart line
+    let arriveDepart = '';
+    if (!isPreOrPostTrip) {
+      if (isEmbarkationDay) {
+        // Embarkation day: only show depart
+        arriveDepart = `Depart: ${stop.depart}`;
+      } else {
+        // Regular days: show both arrive and depart
+        arriveDepart = `Arrive: ${stop.arrive} • Depart: ${stop.depart}`;
+      }
+    }
 
     return {
       company: stop.port,
@@ -35,9 +48,9 @@ export const ItineraryTab = memo(function ItineraryTab({
         />
       ),
       job_description: stop.description || 'Description coming soon',
-      salary: isPreOrPostTrip ? '' : `Arrive: ${stop.arrive}`,
-      location: `Depart: ${stop.depart}`,
-      remote: stop.allAboard ? `All Aboard: ${stop.allAboard}` : '',
+      salary: arriveDepart,
+      location: '', // Not used anymore, arrive/depart combined in salary
+      remote: stop.allAboard || '',
       job_time: stop.key,
       dayNumber: stop.day,
     };
@@ -50,10 +63,10 @@ export const ItineraryTab = memo(function ItineraryTab({
         <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Trip Itinerary</h2>
       </div>
       {ITINERARY.length === 0 ? (
-        <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
-          <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No itinerary available</h3>
-          <p className="text-gray-500">Itinerary information will be available soon.</p>
+        <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+          <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No itinerary available</h3>
+          <p className="text-white/70">Itinerary information will be available soon.</p>
         </div>
       ) : (
         <JobListingComponent jobs={jobsData} />

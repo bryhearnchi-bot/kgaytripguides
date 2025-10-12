@@ -5,28 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter, 
-  DialogDescription 
-} from '@/components/ui/dialog';
 import {
-  Plus,
-  Edit3,
-  Trash2,
-  Calendar,
-  MapPin,
-  Clock,
-  Save,
-  Search,
-  Anchor
-} from 'lucide-react';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Plus, Edit3, Trash2, Calendar, MapPin, Clock, Save, Search, Anchor } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
@@ -58,10 +54,7 @@ interface ItineraryTabProps {
   isEditing: boolean;
 }
 
-export default function ItineraryTab({ 
-  trip, 
-  isEditing
-}: ItineraryTabProps) {
+export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
   const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
   const { toast } = useToast();
@@ -88,7 +81,7 @@ export default function ItineraryTab({
         id: day.id,
         date: day.date ? (day.date.includes('T') ? day.date.split('T')[0] : day.date) : '',
         day: day.day,
-        portName: day.portName || '',
+        portName: day.locationName || day.portName || '', // Use locationName first, fallback to portName
         country: day.country || '',
         arrivalTime: day.arrivalTime || '',
         departureTime: day.departureTime || '',
@@ -123,10 +116,10 @@ export default function ItineraryTab({
       toast({ title: 'Success', description: 'Itinerary day added successfully' });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: 'Failed to add itinerary day. Please try again.',
-        variant: 'destructive' 
+        variant: 'destructive',
       });
     },
   });
@@ -152,10 +145,10 @@ export default function ItineraryTab({
       toast({ title: 'Success', description: 'Itinerary day updated successfully' });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: 'Failed to update itinerary day. Please try again.',
-        variant: 'destructive' 
+        variant: 'destructive',
       });
     },
   });
@@ -174,10 +167,10 @@ export default function ItineraryTab({
       toast({ title: 'Success', description: 'Itinerary day deleted successfully' });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: 'Failed to delete itinerary day. Please try again.',
-        variant: 'destructive' 
+        variant: 'destructive',
       });
     },
   });
@@ -214,13 +207,11 @@ export default function ItineraryTab({
   const getSegmentBadge = (segment: string) => {
     const variants = {
       pre: 'bg-blue-100 text-blue-800',
-      main: 'bg-green-100 text-green-800', 
-      post: 'bg-purple-100 text-purple-800'
+      main: 'bg-green-100 text-green-800',
+      post: 'bg-purple-100 text-purple-800',
     };
     return (
-      <Badge className={variants[segment as keyof typeof variants]}>
-        {segment.toUpperCase()}
-      </Badge>
+      <Badge className={variants[segment as keyof typeof variants]}>{segment.toUpperCase()}</Badge>
     );
   };
 
@@ -278,7 +269,7 @@ export default function ItineraryTab({
             <div className="space-y-4">
               {itineraryDays
                 .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map((day) => (
+                .map(day => (
                   <Card key={day.id || day.orderIndex} className="border-l-4 border-l-blue-500">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -316,11 +307,7 @@ export default function ItineraryTab({
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingDay(day)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => setEditingDay(day)}>
                             <Edit3 className="w-3 h-3" />
                           </Button>
                           <Button
@@ -342,17 +329,15 @@ export default function ItineraryTab({
       </Card>
 
       {/* Edit Day Dialog */}
-      <Dialog open={!!editingDay} onOpenChange={(open) => !open && setEditingDay(null)}>
+      <Dialog open={!!editingDay} onOpenChange={open => !open && setEditingDay(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
-            <DialogTitle>
-              {editingDay?.id ? 'Edit' : 'Add'} Itinerary Stop
-            </DialogTitle>
+            <DialogTitle>{editingDay?.id ? 'Edit' : 'Add'} Itinerary Stop</DialogTitle>
             <DialogDescription>
               Configure the details for this port stop or activity.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-4">
             {editingDay && (
               <ItineraryDayForm
@@ -393,7 +378,7 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
       ...prev,
       portName: location.name,
       country: location.country,
-      portImageUrl: location.imageUrl || ''
+      portImageUrl: location.imageUrl || '',
     }));
     setShowLocationSelector(false);
   };
@@ -401,145 +386,142 @@ function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
-          <Input
-            id="date"
-            type="date"
-            value={formData.date}
-            onChange={(e) => updateField('date', e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="day">Day Number</Label>
-          <Input
-            id="day"
-            type="number"
-            value={formData.day}
-            onChange={(e) => updateField('day', parseInt(e.target.value) || 0)}
-            min="0"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="portName">Location Name *</Label>
-          <div className="flex gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
             <Input
-              id="portName"
-              value={formData.portName}
-              onChange={(e) => updateField('portName', e.target.value)}
-              placeholder="e.g., Santorini, Greece"
-              required
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={e => updateField('date', e.target.value)}
             />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowLocationSelector(true)}
-              className="flex-shrink-0"
-            >
-              <Search className="w-4 h-4 mr-2" />
-              Browse Locations
-            </Button>
           </div>
-          <p className="text-xs text-gray-500">
-            Enter manually or browse from the location database
-          </p>
+
+          <div className="space-y-2">
+            <Label htmlFor="day">Day Number</Label>
+            <Input
+              id="day"
+              type="number"
+              value={formData.day}
+              onChange={e => updateField('day', parseInt(e.target.value) || 0)}
+              min="0"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="portName">Location Name *</Label>
+            <div className="flex gap-2">
+              <Input
+                id="portName"
+                value={formData.portName}
+                onChange={e => updateField('portName', e.target.value)}
+                placeholder="e.g., Santorini, Greece"
+                required
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowLocationSelector(true)}
+                className="flex-shrink-0"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Browse Locations
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Enter manually or browse from the location database
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Input
+              id="country"
+              value={formData.country || ''}
+              onChange={e => updateField('country', e.target.value)}
+              placeholder="e.g., Greece"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="arrivalTime">Arrival Time</Label>
+            <Input
+              id="arrivalTime"
+              value={formData.arrivalTime || ''}
+              onChange={e => updateField('arrivalTime', e.target.value)}
+              placeholder="e.g., 8:00 AM"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="departureTime">Departure Time</Label>
+            <Input
+              id="departureTime"
+              value={formData.departureTime || ''}
+              onChange={e => updateField('departureTime', e.target.value)}
+              placeholder="e.g., 6:00 PM"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="allAboardTime">All Aboard Time</Label>
+            <Input
+              id="allAboardTime"
+              value={formData.allAboardTime || ''}
+              onChange={e => updateField('allAboardTime', e.target.value)}
+              placeholder="e.g., 5:30 PM"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
-          <Input
-            id="country"
-            value={formData.country || ''}
-            onChange={(e) => updateField('country', e.target.value)}
-            placeholder="e.g., Greece"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="arrivalTime">Arrival Time</Label>
-          <Input
-            id="arrivalTime"
-            value={formData.arrivalTime || ''}
-            onChange={(e) => updateField('arrivalTime', e.target.value)}
-            placeholder="e.g., 8:00 AM"
-          />
+          <Label htmlFor="segment">Segment</Label>
+          <Select value={formData.segment} onValueChange={value => updateField('segment', value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pre">Pre-Trip</SelectItem>
+              <SelectItem value="main">Main Trip</SelectItem>
+              <SelectItem value="post">Post-Trip</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="departureTime">Departure Time</Label>
-          <Input
-            id="departureTime"
-            value={formData.departureTime || ''}
-            onChange={(e) => updateField('departureTime', e.target.value)}
-            placeholder="e.g., 6:00 PM"
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={formData.description || ''}
+            onChange={e => updateField('description', e.target.value)}
+            placeholder="Brief description of activities or highlights for this stop..."
+            rows={3}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="allAboardTime">All Aboard Time</Label>
-          <Input
-            id="allAboardTime"
-            value={formData.allAboardTime || ''}
-            onChange={(e) => updateField('allAboardTime', e.target.value)}
-            placeholder="e.g., 5:30 PM"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="segment">Segment</Label>
-        <Select 
-          value={formData.segment} 
-          onValueChange={(value) => updateField('segment', value)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pre">Pre-Trip</SelectItem>
-            <SelectItem value="main">Main Trip</SelectItem>
-            <SelectItem value="post">Post-Trip</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description || ''}
-          onChange={(e) => updateField('description', e.target.value)}
-          placeholder="Brief description of activities or highlights for this stop..."
-          rows={3}
+        <ImageUpload
+          imageType="itinerary"
+          currentImageUrl={formData.portImageUrl}
+          onImageChange={imageUrl => {
+            setFormData(prev => ({ ...prev, portImageUrl: imageUrl || '' }));
+          }}
+          label="Location Image"
         />
-      </div>
 
-      <ImageUpload
-        imageType="itinerary"
-        currentImageUrl={formData.portImageUrl}
-        onImageChange={(imageUrl) => {
-          setFormData(prev => ({ ...prev, portImageUrl: imageUrl || '' }));
-        }}
-        label="Location Image"
-      />
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          <Save className="w-4 h-4 mr-2" />
-          Save Stop
-        </Button>
-      </DialogFooter>
-    </form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            <Save className="w-4 h-4 mr-2" />
+            Save Stop
+          </Button>
+        </DialogFooter>
+      </form>
 
       {/* Location Selector Dialog */}
       <Dialog open={showLocationSelector} onOpenChange={setShowLocationSelector}>

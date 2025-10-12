@@ -195,15 +195,17 @@ export default function JobListingComponent({
                     >
                       {activeItem.salary}
                     </motion.p>
-                    <motion.div
-                      className="text-gray-500 flex flex-row gap-2 text-xs"
-                      layoutId={`workItemExtras-${activeItem.job_time}`}
-                    >
-                      {activeItem.remote === 'Yes' && ` ${activeItem.location} `}
-                      {activeItem.remote === 'No' && ` ${activeItem.location} `}
-                      {activeItem.remote === 'Hybrid' &&
-                        ` ${activeItem.remote} / ${activeItem.location} `}
-                    </motion.div>
+                    {/* All Aboard Time - Frosted Pink/Red Badge */}
+                    {activeItem.remote && (
+                      <motion.div
+                        className="flex flex-row gap-2 text-xs mt-2"
+                        layoutId={`workItemExtras-${activeItem.job_time}`}
+                      >
+                        <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-red-500/20 backdrop-blur-sm border border-pink-300/50 text-pink-700 text-xs font-semibold shadow-md">
+                          All Aboard: {activeItem.remote}
+                        </span>
+                      </motion.div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -283,18 +285,21 @@ export default function JobListingComponent({
                   {role.salary}
                 </motion.div>
 
-                <motion.div
-                  className="text-ocean-100 flex flex-row gap-2 text-sm"
-                  layoutId={
-                    activeItem?.job_time === role.job_time
-                      ? undefined
-                      : `workItemExtras-${role.job_time}`
-                  }
-                >
-                  {role.remote === 'Yes' && ` ${role.location} `}
-                  {role.remote === 'No' && ` ${role.location} `}
-                  {role.remote === 'Hybrid' && ` ${role.remote} / ${role.location} `}
-                </motion.div>
+                {/* All Aboard Time - Frosted Pink/Red Badge */}
+                {role.remote && (
+                  <motion.div
+                    className="flex flex-row gap-2 text-sm mt-1"
+                    layoutId={
+                      activeItem?.job_time === role.job_time
+                        ? undefined
+                        : `workItemExtras-${role.job_time}`
+                    }
+                  >
+                    <span className="px-3 py-1 rounded-full bg-gradient-to-r from-pink-500/20 to-red-500/20 backdrop-blur-sm border border-pink-300/30 text-pink-100 text-xs font-semibold shadow-md">
+                      All Aboard: {role.remote}
+                    </span>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           ))}
