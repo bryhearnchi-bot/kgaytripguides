@@ -274,7 +274,6 @@ export function registerTripRoutes(app: Express) {
           // Transform itinerary data to camelCase
           const itineraryData = (rawItineraryData || []).map((item: any) => {
             // Format timestamp to YYYY-MM-DD date string
-            // item.date is a timestamp like "2025-10-19 00:00:00"
             let formattedDate = '';
             if (item.date) {
               const dateObj = new Date(item.date);
@@ -284,11 +283,11 @@ export function registerTripRoutes(app: Express) {
               formattedDate = `${year}-${month}-${day}`;
             }
 
-            return {
+            const transformed = {
               dayNumber: item.day,
               date: formattedDate,
               locationId: item.location_id,
-              locationName: item.location_name,
+              locationName: item.location_name || '',
               locationTypeId: item.location_type_id,
               arrivalTime: item.arrival_time,
               departureTime: item.departure_time,
@@ -296,6 +295,8 @@ export function registerTripRoutes(app: Express) {
               imageUrl: item.location_image_url,
               description: item.description,
             };
+
+            return transformed;
           });
 
           // Get schedule entries (for resort trips)

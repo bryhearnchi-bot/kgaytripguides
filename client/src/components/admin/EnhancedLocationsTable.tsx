@@ -24,6 +24,7 @@ interface TableAction {
   onClick: (row: any) => void;
   variant?: 'default' | 'destructive';
   disabled?: (row: any) => boolean;
+  useDropdown?: boolean; // If false, render as individual icon buttons
 }
 
 interface EnhancedLocationsTableProps {
@@ -52,6 +53,7 @@ export function EnhancedLocationsTable({
     typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint
   );
   const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const resizeStartPos = useRef<number>(0);
   const resizeStartWidth = useRef<number>(0);
   const nextColumnStartWidth = useRef<number>(0);
@@ -287,39 +289,28 @@ export function EnhancedLocationsTable({
                       )}
 
                       {actions.length > 0 && (
-                        <DropdownMenu modal={false}>
-                          <DropdownMenuTrigger asChild>
+                        <div className="flex items-center gap-1">
+                          {actions.map((action, index) => (
                             <Button
+                              key={index}
                               variant="ghost"
                               size="icon-sm"
-                              className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+                              onClick={e => {
+                                e.stopPropagation();
+                                action.onClick(row);
+                              }}
+                              disabled={action.disabled?.(row)}
+                              className={`h-8 w-8 rounded-full border border-white/15 ${
+                                action.variant === 'destructive'
+                                  ? 'bg-red-400/10 text-red-400 hover:bg-red-400/20'
+                                  : 'bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400/20'
+                              }`}
+                              title={action.label}
                             >
-                              <MoreVertical className="h-4 w-4" />
+                              {action.icon}
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
-                            {actions.map((action, index) => (
-                              <DropdownMenuItem
-                                key={index}
-                                onSelect={e => {
-                                  e.preventDefault();
-                                  action.onClick(row);
-                                }}
-                                disabled={action.disabled?.(row)}
-                                className={`text-white hover:bg-white/10 ${
-                                  action.variant === 'destructive'
-                                    ? 'text-red-400 hover:text-red-300'
-                                    : ''
-                                }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {action.icon}
-                                  {action.label}
-                                </div>
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -405,7 +396,11 @@ export function EnhancedLocationsTable({
               {actions.length > 0 && (
                 <TableHead
                   className="text-center text-white/60"
-                  style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                  style={{
+                    width: actions.some(a => a.useDropdown === false) ? '80px' : '60px',
+                    minWidth: actions.some(a => a.useDropdown === false) ? '80px' : '60px',
+                    maxWidth: actions.some(a => a.useDropdown === false) ? '80px' : '60px',
+                  }}
                 >
                   Actions
                 </TableHead>
@@ -440,42 +435,80 @@ export function EnhancedLocationsTable({
                 {actions.length > 0 && (
                   <TableCell
                     className="py-4"
-                    style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                    style={{
+                      width: actions.some(a => a.useDropdown === false) ? '80px' : '60px',
+                      minWidth: actions.some(a => a.useDropdown === false) ? '80px' : '60px',
+                      maxWidth: actions.some(a => a.useDropdown === false) ? '80px' : '60px',
+                    }}
                   >
-                    <div className="flex items-center justify-center">
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
+                    <div className="flex items-center justify-center gap-1">
+                      {actions.some(a => a.useDropdown === false) ? (
+                        // Individual icon buttons mode (for nested modals)
+                        actions.map((action, index) => (
                           <Button
+                            key={index}
                             variant="ghost"
                             size="icon-sm"
-                            className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+                            onClick={e => {
+                              e.stopPropagation();
+                              action.onClick(row);
+                            }}
+                            disabled={action.disabled?.(row)}
+                            className={`h-7 w-7 p-0 ${
+                              action.variant === 'destructive'
+                                ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10'
+                                : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10'
+                            }`}
+                            title={action.label}
                           >
-                            <MoreVertical className="h-4 w-4" />
+                            {action.icon}
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
-                          {actions.map((action, index) => (
-                            <DropdownMenuItem
-                              key={index}
-                              onSelect={e => {
-                                e.preventDefault();
-                                action.onClick(row);
-                              }}
-                              disabled={action.disabled?.(row)}
-                              className={`text-white hover:bg-white/10 ${
-                                action.variant === 'destructive'
-                                  ? 'text-red-400 hover:text-red-300'
-                                  : ''
-                              }`}
+                        ))
+                      ) : (
+                        // Dropdown mode (default for main tables)
+                        <DropdownMenu
+                          open={openDropdown === row[keyField]}
+                          onOpenChange={open => {
+                            setOpenDropdown(open ? row[keyField] : null);
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="h-7 w-7 p-0 text-white/60 hover:text-white hover:bg-white/10"
                             >
-                              <div className="flex items-center gap-2">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-[#0a1628]/95 backdrop-blur border-white/10"
+                            onCloseAutoFocus={e => e.preventDefault()}
+                          >
+                            {actions.map((action, index) => (
+                              <DropdownMenuItem
+                                key={index}
+                                onSelect={() => {
+                                  // Close dropdown immediately
+                                  setOpenDropdown(null);
+                                  // Execute action
+                                  action.onClick(row);
+                                }}
+                                disabled={action.disabled?.(row)}
+                                className={`flex items-center gap-2 cursor-pointer ${
+                                  action.variant === 'destructive'
+                                    ? 'text-red-400 focus:text-red-300 focus:bg-red-400/10'
+                                    : 'text-cyan-400 focus:text-cyan-300 focus:bg-cyan-400/10'
+                                }`}
+                              >
                                 {action.icon}
-                                {action.label}
-                              </div>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                                <span>{action.label}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </TableCell>
                 )}

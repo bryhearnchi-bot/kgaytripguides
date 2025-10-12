@@ -11,6 +11,7 @@ import { TalentTabPage } from '../TripWizard/TalentTabPage';
 import { TripInfoTabPage } from '../TripWizard/TripInfoTabPage';
 import { FAQTabPage } from '../TripWizard/FAQTabPage';
 import { TripWizardProvider, useTripWizard } from '@/contexts/TripWizardContext';
+import { LocationsProvider } from '@/contexts/LocationsContext';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
@@ -166,8 +167,24 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
           shipData,
           // NOTE: amenityIds and venueIds are NOT included
           // They are managed separately by ShipFormModal/ResortFormModal
-          scheduleEntries: trip.scheduleEntries || [],
-          itineraryEntries: trip.itineraryEntries || [],
+          scheduleEntries: (trip.scheduleEntries || []).map((entry: any) => ({
+            dayNumber: entry.dayNumber || entry.day_number,
+            date: entry.date?.split('T')[0] || entry.date,
+            imageUrl: entry.imageUrl || entry.image_url || '',
+            description: entry.description || '',
+          })),
+          itineraryEntries: (trip.itineraryEntries || []).map((stop: any) => ({
+            dayNumber: stop.dayNumber || stop.day,
+            date: stop.date?.split('T')[0] || stop.date,
+            locationName: stop.locationName || stop.portName || stop.port_name || '',
+            locationId: stop.locationId || stop.location_id,
+            locationTypeId: stop.locationTypeId || stop.location_type_id,
+            arrivalTime: stop.arrivalTime || stop.arrival_time || '',
+            departureTime: stop.departureTime || stop.departure_time || '',
+            allAboardTime: stop.allAboardTime || stop.all_aboard_time || '',
+            description: stop.description || '',
+            imageUrl: stop.imageUrl || stop.portImageUrl || stop.port_image_url || '',
+          })),
           events: trip.events || [], // Load existing events
           tripTalent: trip.tripTalent || [], // Load existing talent
           isEditMode: true, // Set edit mode flag
@@ -404,15 +421,17 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
   );
 }
 
-// Main component that wraps with TripWizardProvider
+// Main component that wraps with TripWizardProvider and LocationsProvider
 export function EditTripModal(props: EditTripModalProps) {
   if (!props.open || !props.trip) {
     return null;
   }
 
   return (
-    <TripWizardProvider>
-      <EditTripModalContent {...props} />
-    </TripWizardProvider>
+    <LocationsProvider>
+      <TripWizardProvider>
+        <EditTripModalContent {...props} />
+      </TripWizardProvider>
+    </LocationsProvider>
   );
 }

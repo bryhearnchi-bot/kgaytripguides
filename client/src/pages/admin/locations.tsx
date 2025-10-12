@@ -12,6 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { LocationSearchBar } from '@/components/admin/LocationSearchBar';
 import { locationService, type LocationData } from '@/lib/location-service';
+import { LocationAttractionsPreview } from '@/components/admin/LocationAttractionsPreview';
+import { LocationLGBTVenuesPreview } from '@/components/admin/LocationLGBTVenuesPreview';
+import { LocationAttractionsModal } from '@/components/admin/LocationAttractionsModal';
+import { LocationLGBTVenuesModal } from '@/components/admin/LocationLGBTVenuesModal';
 
 interface Location {
   id?: number;
@@ -31,6 +35,8 @@ export default function LocationsManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [showAttractionsModal, setShowAttractionsModal] = useState(false);
+  const [showLGBTVenuesModal, setShowLGBTVenuesModal] = useState(false);
   const [formData, setFormData] = useState<Location>({
     name: '',
     location: '',
@@ -42,7 +48,8 @@ export default function LocationsManagement() {
 
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
-    if (!open) {
+    if (!open && !showAttractionsModal && !showLGBTVenuesModal) {
+      // Only clear state if we're not opening another modal
       setEditingLocation(null);
       resetForm();
     }
@@ -65,13 +72,17 @@ export default function LocationsManagement() {
       if (!response.ok) throw new Error('Failed to create location');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newLocation: Location) => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      setShowAddModal(false);
-      resetForm();
+
+      // Set the newly created location as editingLocation so attractions/venues sections appear
+      setEditingLocation(newLocation);
+      setFormData(newLocation);
+
+      // Keep modal open to allow adding attractions/venues
       toast({
         title: 'Success',
-        description: 'Location created successfully',
+        description: 'Location created! You can now add attractions and venues.',
       });
     },
     onError: () => {
@@ -299,12 +310,17 @@ export default function LocationsManagement() {
               {
                 label: 'Edit Location',
                 icon: <Edit2 className="h-4 w-4" />,
-                onClick: handleEdit,
+                onClick: location => {
+                  // Small delay to ensure dropdown closes first
+                  setTimeout(() => handleEdit(location), 50);
+                },
               },
               {
                 label: 'Delete Location',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: location => handleDelete(location.id!),
+                onClick: location => {
+                  setTimeout(() => handleDelete(location.id!), 50);
+                },
                 variant: 'destructive',
               },
             ]}
@@ -333,17 +349,29 @@ export default function LocationsManagement() {
         onOpenChange={handleModalOpenChange}
         title={editingLocation ? 'Edit Location' : 'Add New Location'}
         icon={<MapPin className="h-5 w-5" />}
-        description={editingLocation ? 'Update location details' : 'Create a new destination'}
+        description={
+          editingLocation?.id && !formData.id
+            ? 'Location details saved. Add attractions and venues below.'
+            : editingLocation
+              ? 'Update location details'
+              : 'Create a new destination'
+        }
         onSubmit={handleSubmit}
-        primaryAction={{
-          label: editingLocation ? 'Save Changes' : 'Create Location',
-          loading: editingLocation
-            ? updateLocationMutation.isPending
-            : createLocationMutation.isPending,
-          loadingLabel: editingLocation ? 'Saving...' : 'Creating...',
-        }}
+        primaryAction={
+          editingLocation?.id
+            ? {
+                label: 'Save Changes',
+                loading: updateLocationMutation.isPending,
+                loadingLabel: 'Saving...',
+              }
+            : {
+                label: 'Create Location',
+                loading: createLocationMutation.isPending,
+                loadingLabel: 'Creating...',
+              }
+        }
         secondaryAction={{
-          label: 'Cancel',
+          label: editingLocation?.id ? 'Done' : 'Cancel',
           onClick: () => handleModalOpenChange(false),
         }}
         contentClassName="grid gap-4"
@@ -414,7 +442,116 @@ export default function LocationsManagement() {
             }
           />
         </div>
+
+        {/* Attractions & LGBT Venues Preview - always show, but disable if location not saved */}
+        <>
+          <div className="h-px bg-white/10 my-4" />
+
+          {/* Attractions Preview */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-white/90">Attractions</Label>
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowAddModal(false);
+                  // Small delay to allow modal to close properly
+                  setTimeout(() => setShowAttractionsModal(true), 100);
+                }}
+                variant="ghost"
+                size="sm"
+                disabled={!editingLocation?.id}
+                className="h-7 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Edit2 className="w-3 h-3 mr-1" />
+                Edit
+              </Button>
+            </div>
+            {editingLocation?.id ? (
+              <LocationAttractionsPreview locationId={editingLocation.id} />
+            ) : (
+              <div className="p-4 border border-white/10 rounded-lg bg-white/5 text-center">
+                <p className="text-sm text-white/50">Save location first to add attractions</p>
+              </div>
+            )}
+          </div>
+
+          {/* LGBT Venues Preview */}
+          <div className="space-y-2 mt-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-white/90">LGBT-Friendly Venues</Label>
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowAddModal(false);
+                  // Small delay to allow modal to close properly
+                  setTimeout(() => setShowLGBTVenuesModal(true), 100);
+                }}
+                variant="ghost"
+                size="sm"
+                disabled={!editingLocation?.id}
+                className="h-7 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Edit2 className="w-3 h-3 mr-1" />
+                Edit
+              </Button>
+            </div>
+            {editingLocation?.id ? (
+              <LocationLGBTVenuesPreview locationId={editingLocation.id} />
+            ) : (
+              <div className="p-4 border border-white/10 rounded-lg bg-white/5 text-center">
+                <p className="text-sm text-white/50">
+                  Save location first to add LGBT-friendly venues
+                </p>
+              </div>
+            )}
+          </div>
+        </>
       </AdminFormModal>
+
+      {/* Attractions Modal */}
+      {editingLocation && editingLocation.id && (
+        <LocationAttractionsModal
+          isOpen={showAttractionsModal}
+          onOpenChange={open => {
+            setShowAttractionsModal(open);
+            if (!open) {
+              // Clear editing state when closing
+              setEditingLocation(null);
+              resetForm();
+            }
+          }}
+          locationId={editingLocation.id}
+          locationName={editingLocation.name}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ['location-attractions', editingLocation.id],
+            });
+          }}
+        />
+      )}
+
+      {/* LGBT Venues Modal */}
+      {editingLocation && editingLocation.id && (
+        <LocationLGBTVenuesModal
+          isOpen={showLGBTVenuesModal}
+          onOpenChange={open => {
+            setShowLGBTVenuesModal(open);
+            if (!open) {
+              // Clear editing state when closing
+              setEditingLocation(null);
+              resetForm();
+            }
+          }}
+          locationId={editingLocation.id}
+          locationName={editingLocation.name}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ['location-lgbt-venues', editingLocation.id],
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

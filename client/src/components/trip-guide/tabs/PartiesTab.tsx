@@ -1,9 +1,9 @@
-import React, { memo, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
-import { PartyPopper, MapPin, Calendar } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import type { DailyEvent, DailySchedule, ItineraryStop, PartyTheme } from "@/data/trip-data";
+import React, { memo, useCallback, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { PartyPopper, MapPin, Calendar } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import type { DailyEvent, DailySchedule, ItineraryStop, PartyTheme } from '@/data/trip-data';
 import { formatTime as globalFormatTime } from '@/lib/timeFormat';
 import { getPartyIcon } from '../utils/iconHelpers';
 
@@ -20,11 +20,14 @@ export const PartiesTab = memo(function PartiesTab({
   ITINERARY,
   PARTY_THEMES,
   timeFormat,
-  onPartyClick
+  onPartyClick,
 }: PartiesTabProps) {
-  const handlePartyClick = useCallback((party: DailyEvent) => {
-    onPartyClick(party);
-  }, [onPartyClick]);
+  const handlePartyClick = useCallback(
+    (party: DailyEvent) => {
+      onPartyClick(party);
+    },
+    [onPartyClick]
+  );
 
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
@@ -38,16 +41,17 @@ export const PartiesTab = memo(function PartiesTab({
         key: day.key,
         date: itineraryStop?.date || day.key,
         port: itineraryStop?.port,
-        events: partyEvents
+        events: partyEvents,
       };
     }).filter(day => day.events.length > 0);
   }, [SCHEDULED_DAILY, ITINERARY]);
 
-  const getPartyTheme = useCallback((eventTitle: string): PartyTheme | undefined => {
-    return PARTY_THEMES.find(theme =>
-      eventTitle.toLowerCase().includes(theme.key.toLowerCase())
-    );
-  }, [PARTY_THEMES]);
+  const getPartyTheme = useCallback(
+    (eventTitle: string): PartyTheme | undefined => {
+      return PARTY_THEMES.find(theme => eventTitle.toLowerCase().includes(theme.key.toLowerCase()));
+    },
+    [PARTY_THEMES]
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
@@ -57,10 +61,10 @@ export const PartiesTab = memo(function PartiesTab({
       </div>
 
       {partyEventsByDate.length === 0 ? (
-        <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
-          <PartyPopper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No parties scheduled</h3>
-          <p className="text-gray-500">Party information will be available soon.</p>
+        <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+          <PartyPopper className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No parties scheduled</h3>
+          <p className="text-white/70">Party information will be available soon.</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -103,7 +107,7 @@ export const PartiesTab = memo(function PartiesTab({
                         key={`${event.title}-${event.time}-${eventIndex}`}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, delay: (dayIndex * 0.03) + (eventIndex * 0.02) }}
+                        transition={{ duration: 0.25, delay: dayIndex * 0.03 + eventIndex * 0.02 }}
                       >
                         <Card
                           className="p-4 bg-white hover:shadow-lg transition-all duration-300 border border-gray-200 cursor-pointer group"
@@ -113,7 +117,9 @@ export const PartiesTab = memo(function PartiesTab({
                             {/* Party Icon */}
                             <div className="flex-shrink-0">
                               <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-ocean-200 bg-gradient-to-br from-coral to-pink-500 shadow-md group-hover:scale-110 transition-transform">
-                                {React.cloneElement(getPartyIcon(event.title), { className: "w-6 h-6 text-white" })}
+                                {React.cloneElement(getPartyIcon(event.title), {
+                                  className: 'w-6 h-6 text-white',
+                                })}
                               </div>
                             </div>
 
@@ -139,7 +145,10 @@ export const PartiesTab = memo(function PartiesTab({
                               )}
 
                               {event.type === 'after' && (
-                                <Badge variant="outline" className="mt-2 text-xs border-coral text-coral">
+                                <Badge
+                                  variant="outline"
+                                  className="mt-2 text-xs border-coral text-coral"
+                                >
                                   After Party
                                 </Badge>
                               )}

@@ -308,12 +308,71 @@ export function registerLocationRoutes(app: Express) {
         );
       }
 
+      const locationId = Number(req.params.id);
+
       // Use Supabase Admin client to bypass RLS
       const supabaseAdmin = getSupabaseAdmin();
-      const { error } = await supabaseAdmin
+
+      // First check if location exists
+      const { data: location, error: fetchError } = await supabaseAdmin
         .from('locations')
-        .delete()
-        .eq('id', Number(req.params.id));
+        .select('id, name')
+        .eq('id', locationId)
+        .single();
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          throw ApiError.notFound('Location not found');
+        }
+        logger.error('Error fetching location for deletion:', fetchError, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch location');
+      }
+
+      // Check if location is being used by any resorts
+      const { data: resorts, error: resortsError } = await supabaseAdmin
+        .from('resorts')
+        .select('id, name')
+        .eq('location_id', locationId);
+
+      if (resortsError) {
+        logger.error('Error checking resort references:', resortsError, {
+          method: req.method,
+          path: req.path,
+        });
+      }
+
+      // Check if location is being used by any itinerary entries
+      const { data: itineraryEntries, error: itineraryError } = await supabaseAdmin
+        .from('itinerary')
+        .select('id, trip_id')
+        .eq('location_id', locationId);
+
+      if (itineraryError) {
+        logger.error('Error checking itinerary references:', itineraryError, {
+          method: req.method,
+          path: req.path,
+        });
+      }
+
+      // If location is being used, return an error with details
+      if (resorts && resorts.length > 0) {
+        const resortNames = resorts.map(r => r.name).join(', ');
+        throw ApiError.badRequest(
+          `Cannot delete location "${location?.name}". It is being used by ${resorts.length} resort(s): ${resortNames}`
+        );
+      }
+
+      if (itineraryEntries && itineraryEntries.length > 0) {
+        throw ApiError.badRequest(
+          `Cannot delete location "${location?.name}". It is being used by ${itineraryEntries.length} trip itinerary entr${itineraryEntries.length === 1 ? 'y' : 'ies'}`
+        );
+      }
+
+      // Now safe to delete
+      const { error } = await supabaseAdmin.from('locations').delete().eq('id', locationId);
 
       if (error) {
         handleSupabaseError(error, 'delete location');
@@ -1830,4 +1889,359 @@ export function registerLocationRoutes(app: Express) {
   );
 
   // Resort venues are now managed via /api/admin/resorts/:resortId/venues in admin/venues.ts
+
+  // ============ LOCATION ATTRACTIONS ENDPOINTS ============
+
+  // List attractions for a location
+  app.get(
+    '/api/locations/:id/attractions',
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const locationId = Number(req.params.id);
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('location_attractions')
+        .select('*')
+        .eq('location_id', locationId)
+        .order('order_index');
+
+      if (error) {
+        logger.error('Error fetching location attractions:', error, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch location attractions');
+      }
+
+      const transformedResults = results.map((attr: any) => ({
+        id: attr.id,
+        locationId: attr.location_id,
+        name: attr.name,
+        description: attr.description,
+        category: attr.category,
+        imageUrl: attr.image_url,
+        websiteUrl: attr.website_url,
+        orderIndex: attr.order_index,
+        createdAt: attr.created_at,
+        updatedAt: attr.updated_at,
+      }));
+
+      return res.json(transformedResults);
+    })
+  );
+
+  // Create attraction for a location
+  app.post(
+    '/api/locations/:id/attractions',
+    requireContentEditor,
+    auditLogger('admin.location.attraction.create'),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      if (!isSupabaseAdminAvailable()) {
+        throw ApiError.serviceUnavailable(
+          'Admin service not configured',
+          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        );
+      }
+
+      const locationId = Number(req.params.id);
+      const attractionData = {
+        location_id: locationId,
+        name: req.body.name,
+        description: req.body.description || null,
+        category: req.body.category || null,
+        image_url: req.body.imageUrl || null,
+        website_url: req.body.websiteUrl || null,
+        order_index: req.body.orderIndex || 0,
+      };
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: attraction, error } = await supabaseAdmin
+        .from('location_attractions')
+        .insert(attractionData)
+        .select()
+        .single();
+
+      if (error) {
+        handleSupabaseError(error, 'create location attraction');
+      }
+
+      const transformed = {
+        id: attraction.id,
+        locationId: attraction.location_id,
+        name: attraction.name,
+        description: attraction.description,
+        category: attraction.category,
+        imageUrl: attraction.image_url,
+        websiteUrl: attraction.website_url,
+        orderIndex: attraction.order_index,
+        createdAt: attraction.created_at,
+        updatedAt: attraction.updated_at,
+      };
+
+      return res.json(transformed);
+    })
+  );
+
+  // Update attraction
+  app.put(
+    '/api/locations/:locationId/attractions/:id',
+    requireContentEditor,
+    auditLogger('admin.location.attraction.update'),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      if (!isSupabaseAdminAvailable()) {
+        throw ApiError.serviceUnavailable(
+          'Admin service not configured',
+          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        );
+      }
+
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.category !== undefined) updateData.category = req.body.category;
+      if (req.body.imageUrl !== undefined) updateData.image_url = req.body.imageUrl;
+      if (req.body.websiteUrl !== undefined) updateData.website_url = req.body.websiteUrl;
+      if (req.body.orderIndex !== undefined) updateData.order_index = req.body.orderIndex;
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: attraction, error } = await supabaseAdmin
+        .from('location_attractions')
+        .update(updateData)
+        .eq('id', Number(req.params.id))
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw ApiError.notFound('Attraction not found');
+        }
+        handleSupabaseError(error, 'update location attraction');
+      }
+
+      const transformed = {
+        id: attraction.id,
+        locationId: attraction.location_id,
+        name: attraction.name,
+        description: attraction.description,
+        category: attraction.category,
+        imageUrl: attraction.image_url,
+        websiteUrl: attraction.website_url,
+        orderIndex: attraction.order_index,
+        createdAt: attraction.created_at,
+        updatedAt: attraction.updated_at,
+      };
+
+      return res.json(transformed);
+    })
+  );
+
+  // Delete attraction
+  app.delete(
+    '/api/locations/:locationId/attractions/:id',
+    requireContentEditor,
+    auditLogger('admin.location.attraction.delete'),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      if (!isSupabaseAdminAvailable()) {
+        throw ApiError.serviceUnavailable(
+          'Admin service not configured',
+          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        );
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('location_attractions')
+        .delete()
+        .eq('id', Number(req.params.id));
+
+      if (error) {
+        handleSupabaseError(error, 'delete location attraction');
+      }
+
+      return res.json({ message: 'Attraction deleted' });
+    })
+  );
+
+  // ============ LOCATION LGBT VENUES ENDPOINTS ============
+
+  // List LGBT venues for a location
+  app.get(
+    '/api/locations/:id/lgbt-venues',
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const locationId = Number(req.params.id);
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: results, error } = await supabaseAdmin
+        .from('location_lgbt_venues')
+        .select('*')
+        .eq('location_id', locationId)
+        .order('order_index');
+
+      if (error) {
+        logger.error('Error fetching location LGBT venues:', error, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch location LGBT venues');
+      }
+
+      const transformedResults = results.map((venue: any) => ({
+        id: venue.id,
+        locationId: venue.location_id,
+        name: venue.name,
+        venueType: venue.venue_type,
+        description: venue.description,
+        address: venue.address,
+        imageUrl: venue.image_url,
+        websiteUrl: venue.website_url,
+        orderIndex: venue.order_index,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at,
+      }));
+
+      return res.json(transformedResults);
+    })
+  );
+
+  // Create LGBT venue for a location
+  app.post(
+    '/api/locations/:id/lgbt-venues',
+    requireContentEditor,
+    auditLogger('admin.location.lgbt_venue.create'),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      if (!isSupabaseAdminAvailable()) {
+        throw ApiError.serviceUnavailable(
+          'Admin service not configured',
+          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        );
+      }
+
+      const locationId = Number(req.params.id);
+      const venueData = {
+        location_id: locationId,
+        name: req.body.name,
+        venue_type: req.body.venueType || null,
+        description: req.body.description || null,
+        address: req.body.address || null,
+        image_url: req.body.imageUrl || null,
+        website_url: req.body.websiteUrl || null,
+        order_index: req.body.orderIndex || 0,
+      };
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: venue, error } = await supabaseAdmin
+        .from('location_lgbt_venues')
+        .insert(venueData)
+        .select()
+        .single();
+
+      if (error) {
+        handleSupabaseError(error, 'create location LGBT venue');
+      }
+
+      const transformed = {
+        id: venue.id,
+        locationId: venue.location_id,
+        name: venue.name,
+        venueType: venue.venue_type,
+        description: venue.description,
+        address: venue.address,
+        imageUrl: venue.image_url,
+        websiteUrl: venue.website_url,
+        orderIndex: venue.order_index,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at,
+      };
+
+      return res.json(transformed);
+    })
+  );
+
+  // Update LGBT venue
+  app.put(
+    '/api/locations/:locationId/lgbt-venues/:id',
+    requireContentEditor,
+    auditLogger('admin.location.lgbt_venue.update'),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      if (!isSupabaseAdminAvailable()) {
+        throw ApiError.serviceUnavailable(
+          'Admin service not configured',
+          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        );
+      }
+
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.venueType !== undefined) updateData.venue_type = req.body.venueType;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.address !== undefined) updateData.address = req.body.address;
+      if (req.body.imageUrl !== undefined) updateData.image_url = req.body.imageUrl;
+      if (req.body.websiteUrl !== undefined) updateData.website_url = req.body.websiteUrl;
+      if (req.body.orderIndex !== undefined) updateData.order_index = req.body.orderIndex;
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: venue, error } = await supabaseAdmin
+        .from('location_lgbt_venues')
+        .update(updateData)
+        .eq('id', Number(req.params.id))
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw ApiError.notFound('LGBT venue not found');
+        }
+        handleSupabaseError(error, 'update location LGBT venue');
+      }
+
+      const transformed = {
+        id: venue.id,
+        locationId: venue.location_id,
+        name: venue.name,
+        venueType: venue.venue_type,
+        description: venue.description,
+        address: venue.address,
+        imageUrl: venue.image_url,
+        websiteUrl: venue.website_url,
+        orderIndex: venue.order_index,
+        createdAt: venue.created_at,
+        updatedAt: venue.updated_at,
+      };
+
+      return res.json(transformed);
+    })
+  );
+
+  // Delete LGBT venue
+  app.delete(
+    '/api/locations/:locationId/lgbt-venues/:id',
+    requireContentEditor,
+    auditLogger('admin.location.lgbt_venue.delete'),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      if (!isSupabaseAdminAvailable()) {
+        throw ApiError.serviceUnavailable(
+          'Admin service not configured',
+          'Please configure SUPABASE_SERVICE_ROLE_KEY environment variable'
+        );
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from('location_lgbt_venues')
+        .delete()
+        .eq('id', Number(req.params.id));
+
+      if (error) {
+        handleSupabaseError(error, 'delete location LGBT venue');
+      }
+
+      return res.json({ message: 'LGBT venue deleted' });
+    })
+  );
 }

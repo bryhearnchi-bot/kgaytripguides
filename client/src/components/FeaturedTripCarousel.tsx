@@ -94,7 +94,7 @@ function TripCard({ trip }: { trip: Trip }) {
             <Ship className="w-4 h-4 flex-shrink-0" />
             <span>{trip.shipName || 'Ship Details Coming Soon'}</span>
           </div>
-          {trip.highlights && trip.highlights.length > 0 && (
+          {trip.highlights && Array.isArray(trip.highlights) && trip.highlights.length > 0 && (
             <div className="flex items-center gap-2 text-ocean-100 text-sm">
               <MapPin className="w-4 h-4 flex-shrink-0" />
               <span className="line-clamp-1">{trip.highlights[0]}</span>
@@ -237,7 +237,9 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="w-4 h-4 text-ocean-300" />
                   <span className="text-ocean-200 text-sm font-medium">
-                    {currentTrip.highlights && currentTrip.highlights.length > 0
+                    {currentTrip.highlights &&
+                    Array.isArray(currentTrip.highlights) &&
+                    currentTrip.highlights.length > 0
                       ? currentTrip.highlights[0]
                       : 'Multiple Destinations'}
                   </span>
@@ -283,18 +285,20 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                 </div>
 
                 {/* Highlights Tags */}
-                {currentTrip.highlights && currentTrip.highlights.length > 1 && (
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {currentTrip.highlights.slice(1, 4).map((highlight, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 bg-ocean-700/40 text-ocean-100 rounded-full text-xs font-medium border border-ocean-500/30"
-                      >
-                        {highlight}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {currentTrip.highlights &&
+                  Array.isArray(currentTrip.highlights) &&
+                  currentTrip.highlights.length > 1 && (
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {currentTrip.highlights.slice(1, 4).map((highlight, idx) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-ocean-700/40 text-ocean-100 rounded-full text-xs font-medium border border-ocean-500/30"
+                        >
+                          {highlight}
+                        </span>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               {/* CTA Button */}

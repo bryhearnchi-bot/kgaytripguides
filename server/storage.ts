@@ -632,7 +632,7 @@ export class TripInfoStorage implements ITripInfoStorage {
     const tripStorage = new TripStorage();
     const transformedTrip = tripStorage.transformTripData(tripData);
 
-    // Get itinerary data with location highlights
+    // Get itinerary data with location highlights, attractions, and LGBT venues
     const { data: itineraryData, error: itineraryError } = await supabaseAdmin
       .from('itinerary')
       .select(
@@ -652,37 +652,111 @@ export class TripInfoStorage implements ITripInfoStorage {
       .eq('trip_id', tripData.id)
       .order('day', { ascending: true });
 
+    // Fetch location attractions and LGBT venues for all locations in itinerary
+    const locationIds = (itineraryData || [])
+      .map((item: any) => item.location_id)
+      .filter((id: number | null) => id !== null);
+
+    const attractionsMap: Record<number, any[]> = {};
+    const venuesMap: Record<number, any[]> = {};
+
+    if (locationIds.length > 0) {
+      // Fetch attractions
+      const { data: attractionsData } = await supabaseAdmin
+        .from('location_attractions')
+        .select('*')
+        .in('location_id', locationIds)
+        .order('order_index', { ascending: true });
+
+      // Fetch LGBT venues
+      const { data: venuesData } = await supabaseAdmin
+        .from('location_lgbt_venues')
+        .select('*')
+        .in('location_id', locationIds)
+        .order('order_index', { ascending: true });
+
+      // Group by location_id
+      (attractionsData || []).forEach((attraction: any) => {
+        if (!attractionsMap[attraction.location_id]) {
+          attractionsMap[attraction.location_id] = [];
+        }
+        attractionsMap[attraction.location_id].push(attraction);
+      });
+
+      (venuesData || []).forEach((venue: any) => {
+        if (!venuesMap[venue.location_id]) {
+          venuesMap[venue.location_id] = [];
+        }
+        venuesMap[venue.location_id].push(venue);
+      });
+    }
+
     if (itineraryError) throw itineraryError;
 
     // Transform itinerary data to camelCase
-    const transformedItinerary = (itineraryData || []).map((item: any) => ({
-      id: item.id,
-      tripId: item.trip_id,
-      date: item.date,
-      day: item.day,
-      locationName: item.location_name,
-      portName: item.location_name, // Keep for backward compatibility
-      country: item.location?.country || null,
-      arrivalTime: item.arrival_time,
-      departureTime: item.departure_time,
-      allAboardTime: item.all_aboard_time,
-      portImageUrl: item.location_image_url,
-      description: item.description,
-      highlights: item.highlights,
-      orderIndex: item.order_index,
-      segment: item.segment,
-      location: item.location
-        ? {
-            id: item.location.id,
-            name: item.location.name,
-            country: item.location.country,
-            imageUrl: item.location.image_url,
-            description: item.location.description,
-            topAttractions: item.location.top_attractions,
-            topLgbtVenues: item.location.top_lgbt_venues,
-          }
-        : null,
-    }));
+    const transformedItinerary = (itineraryData || []).map((item: any) => {
+      // Get attractions and venues for this location
+      const locationAttractions = item.location_id ? attractionsMap[item.location_id] || [] : [];
+      const locationLgbtVenues = item.location_id ? venuesMap[item.location_id] || [] : [];
+
+      // Transform attractions to camelCase
+      const transformedAttractions = locationAttractions.map((attr: any) => ({
+        id: attr.id,
+        locationId: attr.location_id,
+        name: attr.name,
+        description: attr.description,
+        category: attr.category,
+        imageUrl: attr.image_url,
+        websiteUrl: attr.website_url,
+        orderIndex: attr.order_index,
+      }));
+
+      // Transform LGBT venues to camelCase
+      const transformedVenues = locationLgbtVenues.map((venue: any) => ({
+        id: venue.id,
+        locationId: venue.location_id,
+        name: venue.name,
+        venueType: venue.venue_type,
+        description: venue.description,
+        address: venue.address,
+        imageUrl: venue.image_url,
+        websiteUrl: venue.website_url,
+        orderIndex: venue.order_index,
+      }));
+
+      return {
+        id: item.id,
+        tripId: item.trip_id,
+        date: item.date,
+        day: item.day,
+        locationName: item.location_name,
+        portName: item.location_name, // Keep for backward compatibility
+        country: item.location?.country || null,
+        arrivalTime: item.arrival_time,
+        departureTime: item.departure_time,
+        allAboardTime: item.all_aboard_time,
+        portImageUrl: item.location_image_url,
+        description: item.description,
+        highlights: item.highlights,
+        orderIndex: item.order_index,
+        segment: item.segment,
+        locationId: item.location_id,
+        locationTypeId: item.location_type_id,
+        location: item.location
+          ? {
+              id: item.location.id,
+              name: item.location.name,
+              country: item.location.country,
+              imageUrl: item.location.image_url,
+              description: item.location.description,
+              topAttractions: item.location.top_attractions,
+              topLgbtVenues: item.location.top_lgbt_venues,
+              attractions: transformedAttractions,
+              lgbtVenues: transformedVenues,
+            }
+          : null,
+      };
+    });
 
     // Get events data with party themes, venues, and event types
     // Note: Events can have either ship_venue_id OR resort_venue_id depending on trip type

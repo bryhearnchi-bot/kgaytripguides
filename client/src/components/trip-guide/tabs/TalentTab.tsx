@@ -1,10 +1,10 @@
-import React, { memo, useCallback } from "react";
-import { motion } from "framer-motion";
-import { User, Instagram, Twitter, Globe, Youtube, Linkedin, ExternalLink } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import type { Talent } from "@/data/trip-data";
-import { useTalentByCategory } from "../hooks/useTalentByCategory";
+import React, { memo, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { User, Instagram, Twitter, Globe, Youtube, Linkedin, ExternalLink } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import type { Talent } from '@/data/trip-data';
+import { useTalentByCategory } from '../hooks/useTalentByCategory';
 
 interface TalentTabProps {
   TALENT: Talent[];
@@ -14,9 +14,12 @@ interface TalentTabProps {
 export const TalentTab = memo(function TalentTab({ TALENT, onTalentClick }: TalentTabProps) {
   const { talentByCategory, sortedCategories } = useTalentByCategory(TALENT);
 
-  const handleTalentClick = useCallback((name: string) => {
-    onTalentClick(name);
-  }, [onTalentClick]);
+  const handleTalentClick = useCallback(
+    (name: string) => {
+      onTalentClick(name);
+    },
+    [onTalentClick]
+  );
 
   const getSocialIcon = useCallback((platform: string) => {
     switch (platform) {
@@ -41,14 +44,16 @@ export const TalentTab = memo(function TalentTab({ TALENT, onTalentClick }: Tale
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center space-x-2 mb-2 -mt-2">
         <User className="w-5 h-5 text-white/80" />
-        <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Talent & Performers</h2>
+        <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
+          Talent & Performers
+        </h2>
       </div>
 
       {TALENT.length === 0 ? (
-        <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
-          <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No talent information available</h3>
-          <p className="text-gray-500">Talent roster will be available soon.</p>
+        <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+          <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No talent information available</h3>
+          <p className="text-white/70">Talent roster will be available soon.</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -75,7 +80,10 @@ export const TalentTab = memo(function TalentTab({ TALENT, onTalentClick }: Tale
                       key={talent.name}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: (categoryIndex * 0.05) + (talentIndex * 0.03) }}
+                      transition={{
+                        duration: 0.25,
+                        delay: categoryIndex * 0.05 + talentIndex * 0.03,
+                      }}
                     >
                       <Card
                         className="p-4 bg-white/90 hover:shadow-xl transition-all duration-300 border border-gray-200 cursor-pointer group"
@@ -89,8 +97,9 @@ export const TalentTab = memo(function TalentTab({ TALENT, onTalentClick }: Tale
                               alt={talent.name}
                               className="w-20 h-20 rounded-full object-cover border-2 border-ocean-200 group-hover:border-ocean-400 transition-colors shadow-md"
                               loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.src = 'https://via.placeholder.com/80?text=No+Image';
+                              onError={e => {
+                                e.currentTarget.src =
+                                  'https://via.placeholder.com/80?text=No+Image';
                               }}
                             />
                           </div>
@@ -101,7 +110,10 @@ export const TalentTab = memo(function TalentTab({ TALENT, onTalentClick }: Tale
                               {talent.name}
                             </h4>
                             <div className="mb-2">
-                              <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 text-xs">
+                              <Badge
+                                variant="secondary"
+                                className="bg-ocean-100 text-ocean-700 text-xs"
+                              >
                                 {talent.role}
                               </Badge>
                             </div>
@@ -120,7 +132,7 @@ export const TalentTab = memo(function TalentTab({ TALENT, onTalentClick }: Tale
                                       href={url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
+                                      onClick={e => e.stopPropagation()}
                                       className="text-ocean-600 hover:text-ocean-700 transition-colors"
                                       title={platform}
                                     >

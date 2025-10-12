@@ -163,7 +163,7 @@ export function AdminFormModal({
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange} modal={true}>
         <DialogContent
           className={cn(
             'admin-form-modal',

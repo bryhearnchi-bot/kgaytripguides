@@ -2,7 +2,41 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import type { SVGProps } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useOnClickOutside } from 'usehooks-ts';
-import { Circle } from 'lucide-react';
+import {
+  Circle,
+  MapPin,
+  Sparkles,
+  Instagram,
+  Twitter,
+  Facebook,
+  Youtube,
+  Globe,
+  Music,
+  X,
+} from 'lucide-react';
+
+export interface LocationAttraction {
+  id: number;
+  locationId: number;
+  name: string;
+  description?: string;
+  category?: string;
+  imageUrl?: string;
+  websiteUrl?: string;
+  orderIndex: number;
+}
+
+export interface LocationLgbtVenue {
+  id: number;
+  locationId: number;
+  name: string;
+  venueType?: string;
+  description?: string;
+  address?: string;
+  imageUrl?: string;
+  websiteUrl?: string;
+  orderIndex: number;
+}
 
 export interface Job {
   company: string;
@@ -14,12 +48,19 @@ export interface Job {
   remote: string;
   job_time: string;
   dayNumber?: number;
+  attractions?: LocationAttraction[];
+  lgbtVenues?: LocationLgbtVenue[];
+  events?: any[]; // Events for this day
+  talent?: any[]; // Talent list for the trip
 }
 
 export interface JobListingComponentProps {
   jobs: Job[];
   className?: string;
   onJobClick?: (job: Job) => void;
+  onViewEvents?: (dateKey: string, portName: string) => void;
+  scheduledDaily?: any[]; // Full SCHEDULED_DAILY data
+  talent?: any[]; // Full TALENT list
 }
 
 export const Resend = (props: SVGProps<SVGSVGElement>) => (
@@ -115,10 +156,32 @@ export default function JobListingComponent({
   jobs,
   className,
   onJobClick,
+  onViewEvents,
+  scheduledDaily,
+  talent,
 }: JobListingComponentProps) {
   const [activeItem, setActiveItem] = useState<Job | null>(null);
+  const [showEventsSlideUp, setShowEventsSlideUp] = useState(false);
+  const [showTalentDetail, setShowTalentDetail] = useState(false);
+  const [selectedTalent, setSelectedTalent] = useState<any>(null);
+  const [dayEvents, setDayEvents] = useState<any[]>([]);
   const ref = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-  useOnClickOutside(ref, () => setActiveItem(null));
+  const slideUpRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+
+  // Close itinerary card only if no other modals are open
+  useOnClickOutside(ref, () => {
+    if (!showEventsSlideUp && !showTalentDetail) {
+      setActiveItem(null);
+    }
+  });
+
+  // Close events panel only if talent detail is not showing
+  useOnClickOutside(slideUpRef, () => {
+    if (showEventsSlideUp && !showTalentDetail) {
+      setShowEventsSlideUp(false);
+      setDayEvents([]);
+    }
+  });
 
   // Format day number with Pre-Cruise/Post-Cruise labels
   const formatDayLabel = (dayNumber?: number): string => {
@@ -131,13 +194,22 @@ export default function JobListingComponent({
   useEffect(() => {
     function onKeyDown(event: { key: string }) {
       if (event.key === 'Escape') {
-        setActiveItem(null);
+        // Close modals in reverse order (innermost to outermost)
+        if (showTalentDetail) {
+          setShowTalentDetail(false);
+          setSelectedTalent(null);
+        } else if (showEventsSlideUp) {
+          setShowEventsSlideUp(false);
+          setDayEvents([]);
+        } else if (activeItem) {
+          setActiveItem(null);
+        }
       }
     }
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [showTalentDetail, showEventsSlideUp, activeItem]);
 
   return (
     <>
@@ -147,31 +219,63 @@ export default function JobListingComponent({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="pointer-events-none fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              // Only close if no modals are open
+              if (!showEventsSlideUp && !showTalentDetail) {
+                setActiveItem(null);
+              }
+            }}
           />
         )}
       </AnimatePresence>
       <AnimatePresence mode="wait">
         {activeItem && (
-          <div className="fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto">
+          <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto">
             <motion.div
-              className="bg-white/95 backdrop-blur-lg flex h-fit w-[90%] max-w-2xl flex-col items-start gap-4 overflow-hidden border border-white/30 p-6 shadow-2xl my-8"
+              className="pointer-events-auto bg-gradient-to-br from-slate-900/98 via-slate-800/98 to-slate-900/98 backdrop-blur-2xl flex h-fit w-[90%] max-w-2xl flex-col items-start gap-4 overflow-hidden border border-white/10 p-6 shadow-2xl my-8 relative"
               ref={ref}
               layoutId={`workItem-${activeItem.job_time}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ borderRadius: 12 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{
+                opacity: showEventsSlideUp ? 0 : 1,
+                scale: showEventsSlideUp ? 0.95 : 1,
+                y: showEventsSlideUp ? -100 : 0,
+              }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              style={{ borderRadius: 16 }}
+              onClick={e => e.stopPropagation()}
             >
+              {/* Close Button - Top Right */}
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setShowTalentDetail(false);
+                  setSelectedTalent(null);
+                  setShowEventsSlideUp(false);
+                  setDayEvents([]);
+                  setActiveItem(null);
+                }}
+                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all hover:scale-110"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+
               <div className="flex w-full items-center gap-4">
-                <motion.div layoutId={`workItemLogo-${activeItem.job_time}`}>
+                {/* Hide image on mobile phones (max-width: 640px), show on tablets and up */}
+                <motion.div
+                  layoutId={`workItemLogo-${activeItem.job_time}`}
+                  className="hidden sm:block"
+                >
                   {activeItem.logo}
                 </motion.div>
                 <div className="flex grow items-center justify-between">
                   <div className="flex w-full flex-col gap-0.5">
                     {/* Day Number and Date Row */}
                     <motion.div
-                      className="text-gray-500 text-sm font-medium flex items-center gap-2"
+                      className="text-ocean-200 text-sm font-medium flex items-center gap-2"
                       layoutId={`workItemDayDate-${activeItem.job_time}`}
                     >
                       <span>{formatDayLabel(activeItem.dayNumber)}</span>
@@ -184,24 +288,24 @@ export default function JobListingComponent({
                     </motion.div>
 
                     <motion.div
-                      className="text-gray-900 text-lg font-bold"
+                      className="text-white text-lg font-bold"
                       layoutId={`workItemCompany-${activeItem.job_time}`}
                     >
                       {activeItem.company}
                     </motion.div>
                     <motion.p
                       layoutId={`workItemTitle-${activeItem.job_time}`}
-                      className="text-gray-600 text-sm"
+                      className="text-ocean-100 text-sm"
                     >
                       {activeItem.salary}
                     </motion.p>
-                    {/* All Aboard Time - Frosted Pink/Red Badge */}
+                    {/* All Aboard Time - Pink/Red Badge */}
                     {activeItem.remote && (
                       <motion.div
                         className="flex flex-row gap-2 text-xs mt-2"
                         layoutId={`workItemExtras-${activeItem.job_time}`}
                       >
-                        <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-red-500/20 backdrop-blur-sm border border-pink-300/50 text-pink-700 text-xs font-semibold shadow-md">
+                        <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-red-500/20 backdrop-blur-sm border border-pink-300/30 text-pink-100 text-xs font-semibold shadow-md">
                           All Aboard: {activeItem.remote}
                         </span>
                       </motion.div>
@@ -209,15 +313,411 @@ export default function JobListingComponent({
                   </div>
                 </div>
               </div>
-              <motion.p
+              {/* Description */}
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.05 } }}
-                className="text-gray-700 text-sm leading-relaxed"
+                className="w-full"
               >
-                {activeItem.job_description}
-              </motion.p>
+                <p className="text-ocean-50 text-sm leading-relaxed mb-4">
+                  {activeItem.job_description}
+                </p>
+
+                {/* Location Attractions */}
+                {activeItem.attractions && activeItem.attractions.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin className="w-4 h-4 text-ocean-300" />
+                      <h3 className="text-white font-bold text-sm uppercase tracking-wide">
+                        Top Attractions
+                      </h3>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg">
+                      <div className="space-y-3">
+                        {activeItem.attractions.map((attraction, idx) => (
+                          <div
+                            key={attraction.id}
+                            className={idx !== 0 ? 'pt-3 border-t border-white/10' : ''}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-ocean-400/30 flex items-center justify-center mt-0.5">
+                                <span className="text-ocean-200 text-xs font-bold">{idx + 1}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-semibold text-xs leading-tight">
+                                  {attraction.name}
+                                </h4>
+                                {attraction.category && (
+                                  <span className="inline-block px-2 py-0.5 text-[10px] bg-ocean-500/30 text-ocean-100 rounded mt-1 font-medium">
+                                    {attraction.category}
+                                  </span>
+                                )}
+                                {attraction.description && (
+                                  <p className="text-ocean-100 text-[11px] mt-1.5 leading-snug">
+                                    {attraction.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* LGBT Venues */}
+                {activeItem.lgbtVenues && activeItem.lgbtVenues.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-base leading-none">🏳️‍🌈</span>
+                      <h3 className="text-white font-bold text-sm uppercase tracking-wide">
+                        LGBT+ Venues
+                      </h3>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-500/15 via-pink-500/15 to-purple-500/15 backdrop-blur-md rounded-xl p-4 border border-purple-400/30 shadow-lg">
+                      <div className="space-y-3">
+                        {activeItem.lgbtVenues.map((venue, idx) => (
+                          <div
+                            key={venue.id}
+                            className={idx !== 0 ? 'pt-3 border-t border-white/10' : ''}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-400/30 flex items-center justify-center mt-0.5">
+                                <Sparkles className="w-3 h-3 text-purple-200" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-semibold text-xs leading-tight">
+                                  {venue.name}
+                                </h4>
+                                {venue.venueType && (
+                                  <span className="inline-block px-2 py-0.5 text-[10px] bg-purple-500/30 text-purple-100 rounded mt-1 font-medium">
+                                    {venue.venueType}
+                                  </span>
+                                )}
+                                {venue.description && (
+                                  <p className="text-purple-50 text-[11px] mt-1.5 leading-snug">
+                                    {venue.description}
+                                  </p>
+                                )}
+                                {venue.address && (
+                                  <p className="text-purple-200 text-[10px] mt-1 opacity-80">
+                                    📍 {venue.address}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* View Events Button */}
+                {onViewEvents && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      // Find events for this day
+                      const events = scheduledDaily?.find(day => day.key === activeItem.job_time);
+                      setDayEvents(events?.items || []);
+                      setShowEventsSlideUp(true);
+                    }}
+                    className="w-full mt-4 px-4 py-2.5 bg-cyan-500/20 hover:bg-cyan-400/30 backdrop-blur-md border border-white/10 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    View Events for This Day
+                  </button>
+                )}
+              </motion.div>
             </motion.div>
+
+            {/* Slide-Up Events Card - Now independent, outside itinerary card */}
+            <AnimatePresence>
+              {showEventsSlideUp && activeItem && (
+                <>
+                  {/* Backdrop for events panel */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (!showTalentDetail) {
+                        setShowEventsSlideUp(false);
+                        setDayEvents([]);
+                      }
+                    }}
+                  />
+                  <motion.div
+                    ref={slideUpRef}
+                    initial={{ y: '100%', opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: '100%', opacity: 0 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-t border-white/20 rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto flex flex-col z-[60] pointer-events-auto"
+                    style={{ borderRadius: '16px 16px 0 0', touchAction: 'pan-y' }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Sticky Header */}
+                    <div className="sticky top-0 z-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-b border-white/20 p-6 pb-4 flex-shrink-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-white font-bold text-lg">
+                          Events for {activeItem.title}
+                        </h3>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            setShowEventsSlideUp(false);
+                            setDayEvents([]);
+                          }}
+                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all hover:scale-110"
+                          aria-label="Close Events"
+                        >
+                          <X className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Scrollable Events List */}
+                    <div className="p-6 pt-4">
+                      {dayEvents.length > 0 ? (
+                        <div className="space-y-3">
+                          {dayEvents.map((event, idx) => {
+                            console.log('Event data:', {
+                              title: event.title,
+                              venue: event.venue,
+                              hasVenue: !!event.venue,
+                            });
+                            return (
+                              <div
+                                key={idx}
+                                className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20"
+                              >
+                                <div className="flex flex-col gap-2">
+                                  {/* Time */}
+                                  <div className="text-ocean-200 text-sm font-medium">
+                                    {event.time}
+                                  </div>
+
+                                  {/* Event Title */}
+                                  <div className="text-white font-semibold text-base">
+                                    {event.title}
+                                  </div>
+
+                                  {/* Venue/Location */}
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-medium border border-cyan-400/30">
+                                      {event.venue || 'TBD'}
+                                    </span>
+                                  </div>
+
+                                  {/* Artists */}
+                                  {event.talent && event.talent.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {event.talent.map((t: any, tidx: number) => (
+                                        <button
+                                          key={tidx}
+                                          onClick={e => {
+                                            e.stopPropagation();
+                                            setSelectedTalent(t);
+                                            setShowTalentDetail(true);
+                                          }}
+                                          className="text-xs px-2.5 py-1 bg-purple-500/20 text-purple-200 rounded-full hover:bg-purple-500/30 transition-colors border border-purple-400/30 font-medium flex items-center gap-1 group"
+                                        >
+                                          <span>{t.name}</span>
+                                          <span className="text-purple-300 group-hover:translate-x-0.5 transition-transform text-[10px]">
+                                            →
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Description (if available) */}
+                                  {event.description && (
+                                    <p className="text-ocean-50 text-xs mt-1 pt-2 border-t border-white/10">
+                                      {event.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-ocean-200 text-center py-8">
+                          No events scheduled for this day
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Talent Detail Slide-In - slides over ENTIRE events card including header */}
+                    <AnimatePresence>
+                      {showTalentDetail && selectedTalent && (
+                        <motion.div
+                          initial={{ x: '100%' }}
+                          animate={{ x: 0 }}
+                          exit={{ x: '100%' }}
+                          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                          className="absolute inset-0 z-[70] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl overflow-y-auto"
+                          style={{ borderRadius: '16px 16px 0 0' }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <div className="p-6">
+                            <div className="text-white">
+                              {/* Circular Back Button */}
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setShowTalentDetail(false);
+                                  setSelectedTalent(null);
+                                }}
+                                className="w-10 h-10 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 flex items-center justify-center mb-4 transition-all hover:scale-110"
+                                aria-label="Back to Events"
+                              >
+                                <span className="text-purple-200 text-xl">←</span>
+                              </button>
+
+                              {/* Profile Image - Full Width at Top */}
+                              {selectedTalent.profileImageUrl && (
+                                <div className="w-full mb-6">
+                                  <img
+                                    src={selectedTalent.profileImageUrl}
+                                    alt={selectedTalent.name}
+                                    className="w-full h-64 object-cover rounded-xl border-2 border-purple-400/30 shadow-lg"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Artist Name */}
+                              <h2 className="text-2xl font-bold mb-2">{selectedTalent.name}</h2>
+
+                              {/* Known For */}
+                              {selectedTalent.knownFor && (
+                                <p className="text-purple-200 text-sm mb-4">
+                                  {selectedTalent.knownFor}
+                                </p>
+                              )}
+
+                              {/* Bio */}
+                              {selectedTalent.bio && (
+                                <div className="mb-6">
+                                  <p className="text-purple-50 text-sm leading-relaxed">
+                                    {selectedTalent.bio}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Performances */}
+                              <div className="mb-6">
+                                <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
+                                  Performances
+                                </h3>
+                                <div className="space-y-2">
+                                  {scheduledDaily?.map(day => {
+                                    const talentEvents = day.items.filter((event: any) =>
+                                      event.talent?.some((t: any) => t.id === selectedTalent.id)
+                                    );
+
+                                    if (talentEvents.length === 0) return null;
+
+                                    // Find the corresponding itinerary entry to get the formatted date
+                                    const itineraryEntry = jobs.find(
+                                      job => job.job_time === day.key
+                                    );
+                                    const dateDisplay = itineraryEntry?.title || day.key;
+
+                                    return (
+                                      <div key={day.key}>
+                                        {talentEvents.map((event: any, eventIdx: number) => (
+                                          <div
+                                            key={eventIdx}
+                                            className="bg-purple-500/10 backdrop-blur-md rounded-lg p-3 border border-purple-400/20"
+                                          >
+                                            <div className="flex flex-col gap-1">
+                                              {/* Date and Time on same line */}
+                                              <div className="flex items-center gap-2 text-sm">
+                                                <span className="text-purple-200 font-medium">
+                                                  {dateDisplay}
+                                                </span>
+                                                <Circle className="w-1.5 h-1.5 fill-current text-purple-400" />
+                                                <span className="text-white font-semibold">
+                                                  {event.time}
+                                                </span>
+                                              </div>
+                                              {/* Venue */}
+                                              {event.venue && (
+                                                <div className="text-purple-100 text-xs">
+                                                  {event.venue}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Social Links */}
+                              {selectedTalent.socialLinks &&
+                                Object.keys(selectedTalent.socialLinks).length > 0 && (
+                                  <div>
+                                    <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
+                                      Social Links
+                                    </h3>
+                                    <div className="flex flex-wrap gap-3">
+                                      {Object.entries(selectedTalent.socialLinks).map(
+                                        ([platform, url]: [string, any]) => {
+                                          const platformLower = platform.toLowerCase();
+                                          let Icon = Globe; // Default icon
+
+                                          if (platformLower.includes('instagram')) Icon = Instagram;
+                                          else if (
+                                            platformLower.includes('twitter') ||
+                                            platformLower.includes('x')
+                                          )
+                                            Icon = Twitter;
+                                          else if (platformLower.includes('facebook'))
+                                            Icon = Facebook;
+                                          else if (platformLower.includes('youtube'))
+                                            Icon = Youtube;
+                                          else if (
+                                            platformLower.includes('spotify') ||
+                                            platformLower.includes('music')
+                                          )
+                                            Icon = Music;
+
+                                          return (
+                                            <a
+                                              key={platform}
+                                              href={url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="p-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 rounded-lg border border-purple-400/30 transition-all hover:scale-110"
+                                              title={platform}
+                                            >
+                                              <Icon className="w-5 h-5" />
+                                            </a>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </AnimatePresence>

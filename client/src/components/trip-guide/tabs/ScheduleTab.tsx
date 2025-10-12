@@ -145,10 +145,10 @@ export const ScheduleTab = memo(function ScheduleTab({
       </div>
 
       {SCHEDULED_DAILY.length === 0 && (
-        <div className="bg-white/85 backdrop-blur-sm rounded-md p-6 shadow-sm text-center py-8 border border-white/30">
-          <CalendarDays className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
-          <p className="text-gray-500">No events are currently scheduled.</p>
+        <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+          <CalendarDays className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No events found</h3>
+          <p className="text-white/70">No events are currently scheduled.</p>
         </div>
       )}
     </div>

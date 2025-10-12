@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { AlertCircle, Check, ChevronDown, Plus, XIcon } from 'lucide-react';
+import { useLocations } from '@/contexts/LocationsContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { OceanInput } from '@/components/ui/ocean-input';
@@ -130,9 +131,10 @@ export function LocationSelector({
   placeholder = 'Select a location',
   required = false,
 }: LocationSelectorProps) {
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use shared locations context to avoid multiple API calls
+  const { locations: contextLocations, loading, error, refetch } = useLocations();
+  const [locations, setLocations] = useState<Location[]>(contextLocations);
+
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const portalContainerRef = React.useRef<HTMLDivElement>(null);
@@ -150,25 +152,10 @@ export function LocationSelector({
     location: '',
   });
 
-  const fetchLocations = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await api.get('/api/locations');
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch locations: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setLocations(data);
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch locations');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Update local locations when context locations change
+  useEffect(() => {
+    setLocations(contextLocations);
+  }, [contextLocations]);
 
   const handlePhotonLocationSelect = (locationData: Partial<LocationData>) => {
     // Auto-fill form from Photon API data
@@ -262,10 +249,6 @@ export function LocationSelector({
   };
 
   useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  useEffect(() => {
     if (!isPopoverOpen) {
       setSearchValue('');
     }
@@ -306,7 +289,7 @@ export function LocationSelector({
             <h3 className="text-sm font-medium text-red-800">Error loading locations</h3>
             <p className="mt-1 text-sm text-red-700">{error}</p>
             <button
-              onClick={fetchLocations}
+              onClick={refetch}
               className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
             >
               Try again

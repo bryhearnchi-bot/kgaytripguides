@@ -41,6 +41,8 @@ export interface TripData {
     highlights?: any;
     orderIndex: number;
     segment?: string;
+    locationId?: number | null;
+    locationTypeId?: number | null;
   }>;
   scheduleEntries?: Array<{
     id: number;
@@ -58,7 +60,16 @@ export interface TripData {
     time: string;
     title: string;
     type: string;
-    venue: string;
+    venue?: {
+      id: number;
+      name: string;
+      description?: string;
+      venueTypeId?: number;
+      venueType?: {
+        id: number;
+        name: string;
+      };
+    };
     deck?: string | null;
     description: string | null;
     shortDescription?: string | null;
@@ -119,17 +130,22 @@ export function transformTripData(data: TripData) {
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
     day: stop.day, // Day number for itinerary display
-    port: (stop as any).locationName || stop.portName || (stop as any).location?.name, // Use locationName first, fallback to portName, then location.name
+    port: stop.portName || (stop as any).locationName, // CRITICAL: Use portName (location_name from database) FIRST - this is the user-controlled text field
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
     imageUrl:
       (stop as any).location?.imageUrl || (stop as any).location?.image_url || stop.portImageUrl, // Use location.imageUrl if available
-    description: (stop as any).location?.description || stop.description, // Use location.description if available
+    // CRITICAL: Use itinerary description FIRST, then fallback to location description
+    description: stop.description || (stop as any).location?.description || null,
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
-    topAttractions: (stop as any).location?.topAttractions || [], // Location top attractions
-    topLgbtVenues: (stop as any).location?.topLgbtVenues || [], // Location LGBT venues
+    topAttractions: (stop as any).location?.topAttractions || [], // Location top attractions (JSONB field)
+    topLgbtVenues: (stop as any).location?.topLgbtVenues || [], // Location LGBT venues (JSONB field)
+    attractions: (stop as any).location?.attractions || [], // Location attractions from junction table
+    lgbtVenues: (stop as any).location?.lgbtVenues || [], // Location LGBT venues from junction table
     locationId: (stop as any).location?.id, // Location ID for reference
+    locationTypeId: stop.locationTypeId, // Location type ID for embarkation/disembarkation logic
+    segment: stop.segment, // Segment for determining cruise phase
     portDetails: (stop as any).location, // Include full location details (renamed from port)
   }));
 
@@ -165,7 +181,7 @@ export function transformTripData(data: TripData) {
       time: event.time,
       title: event.title,
       type: event.type,
-      venue: event.venue,
+      venue: (event as any).venue?.name || 'TBD', // Get venue name from joined ship_venues or resort_venues
       deck: event.deck,
       description: event.description || event.themeDescription,
       shortDescription: event.shortDescription,

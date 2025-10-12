@@ -77,20 +77,31 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   // Load existing itinerary data
   useEffect(() => {
     if (existingItinerary) {
-      const mappedDays = existingItinerary.map((day: any) => ({
-        id: day.id,
-        date: day.date ? (day.date.includes('T') ? day.date.split('T')[0] : day.date) : '',
-        day: day.day,
-        portName: day.locationName || day.portName || '', // Use locationName first, fallback to portName
-        country: day.country || '',
-        arrivalTime: day.arrivalTime || '',
-        departureTime: day.departureTime || '',
-        allAboardTime: day.allAboardTime || '',
-        portImageUrl: day.portImageUrl || '',
-        segment: day.segment || 'main',
-        description: day.description || '',
-        orderIndex: day.orderIndex || 0,
-      }));
+      console.log('🔍 Admin ItineraryTab - Raw API response:', existingItinerary);
+      const mappedDays = existingItinerary.map((day: any) => {
+        console.log('🔍 Mapping day:', {
+          id: day.id,
+          day: day.day,
+          locationName: day.locationName,
+          portName: day.portName,
+          willUse: day.locationName || day.portName || '',
+        });
+        return {
+          id: day.id,
+          date: day.date ? (day.date.includes('T') ? day.date.split('T')[0] : day.date) : '',
+          day: day.day,
+          portName: day.locationName || day.portName || '', // Use locationName first, fallback to portName
+          country: day.country || '',
+          arrivalTime: day.arrivalTime || '',
+          departureTime: day.departureTime || '',
+          allAboardTime: day.allAboardTime || '',
+          portImageUrl: day.portImageUrl || '',
+          segment: day.segment || 'main',
+          description: day.description || '',
+          orderIndex: day.orderIndex || 0,
+        };
+      });
+      console.log('🔍 Admin ItineraryTab - Mapped days:', mappedDays);
       setItineraryDays(mappedDays);
     }
   }, [existingItinerary]);

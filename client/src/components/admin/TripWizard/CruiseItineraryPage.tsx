@@ -138,11 +138,32 @@ export function CruiseItineraryPage() {
     });
   };
 
-  const handleLocationChange = (index: number, locationId: number | null) => {
-    // Update itinerary entry with location ID
-    // Note: locationName will need to be fetched separately if needed for display
-    // For now, we just store the locationId
-    updateItineraryEntry(index, { locationId: locationId ?? undefined });
+  const handleLocationChange = async (index: number, locationId: number | null) => {
+    // Update itinerary entry with location ID and fetch location name
+    if (locationId === null) {
+      updateItineraryEntry(index, { locationId: undefined, locationName: '' });
+      return;
+    }
+
+    // Fetch location name from API
+    try {
+      const response = await api.get(`/api/locations/${locationId}`);
+      if (response.ok) {
+        const location = await response.json();
+        // Update both locationId and locationName
+        updateItineraryEntry(index, {
+          locationId: locationId,
+          locationName: location.name || '',
+        });
+      } else {
+        // Fallback: just update locationId if fetch fails
+        updateItineraryEntry(index, { locationId: locationId });
+      }
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      // Fallback: just update locationId if fetch fails
+      updateItineraryEntry(index, { locationId: locationId });
+    }
   };
 
   const handleImageUpload = (index: number, url: string) => {
@@ -266,34 +287,58 @@ export function CruiseItineraryPage() {
     );
   }
 
-  // Sort entries by date for display
-  const sortedEntries = [...state.itineraryEntries].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  // Sort entries by day number for display (NOT date, to handle pre/post-trip days correctly)
+  const sortedEntries = [...state.itineraryEntries].sort((a, b) => a.dayNumber - b.dayNumber);
+
+  // DEBUG: Log what we're about to render
+  console.log(
+    '🎨 CruiseItineraryPage - About to render entries:',
+    sortedEntries.map(e => ({
+      dayNumber: e.dayNumber,
+      date: e.date,
+      locationId: e.locationId,
+      locationName: e.locationName,
+    }))
   );
 
   return (
     <div className="space-y-2.5" ref={entriesContainerRef}>
       {/* Itinerary Entries */}
       {sortedEntries.map(entry => {
+        // CRITICAL FIX: Find the actual index in the state array, not the sorted array
+        // This ensures we update the correct entry when user makes changes
         const index = state.itineraryEntries.findIndex(
           e => e.date === entry.date && e.dayNumber === entry.dayNumber
         );
+
+        console.log(
+          `🔍 Rendering entry - dayNumber: ${entry.dayNumber}, locationId: ${entry.locationId}, locationName: ${entry.locationName}, index: ${index}`
+        );
+
         return (
           <div
-            key={index}
+            key={`${entry.date}-${entry.dayNumber}`}
             className="p-3 rounded-lg border border-white/10 bg-white/[0.02] transition-all hover:border-white/20"
           >
             {/* Day Header */}
             <div className="flex items-center gap-2 mb-2.5">
               <Anchor className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-semibold text-cyan-400">
-                {entry.dayNumber < 1
-                  ? 'Pre-Trip'
-                  : entry.dayNumber >= 100
-                    ? 'Post-Trip'
-                    : `Day ${entry.dayNumber}`}
-              </span>
-              <span className="text-xs text-white/60">{formatDate(entry.date)}</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-cyan-400">
+                  {entry.dayNumber < 1
+                    ? 'Pre-Trip'
+                    : entry.dayNumber >= 100
+                      ? 'Post-Trip'
+                      : `Day ${entry.dayNumber}`}
+                </span>
+                {entry.locationName && (
+                  <>
+                    <span className="text-xs text-white/40">•</span>
+                    <span className="text-xs font-semibold text-white">{entry.locationName}</span>
+                  </>
+                )}
+                <span className="text-xs text-white/60">{formatDate(entry.date)}</span>
+              </div>
             </div>
 
             {/* Fields */}
@@ -331,7 +376,7 @@ export function CruiseItineraryPage() {
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-white/90">Arrival</Label>
                   <TimePicker
-                    value={entry.arrivalTime}
+                    value={entry.arrivalTime || ''}
                     onChange={value => handleTimeChange(index, 'arrivalTime', value)}
                     placeholder="HH:MM"
                     className="h-10"
@@ -343,7 +388,7 @@ export function CruiseItineraryPage() {
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-white/90">Departure</Label>
                   <TimePicker
-                    value={entry.departureTime}
+                    value={entry.departureTime || ''}
                     onChange={value => handleTimeChange(index, 'departureTime', value)}
                     placeholder="HH:MM"
                     className="h-10"
@@ -355,7 +400,7 @@ export function CruiseItineraryPage() {
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-white/90">All Aboard</Label>
                   <TimePicker
-                    value={entry.allAboardTime}
+                    value={entry.allAboardTime || ''}
                     onChange={value => handleTimeChange(index, 'allAboardTime', value)}
                     placeholder="HH:MM"
                     className="h-10"
@@ -373,8 +418,8 @@ export function CruiseItineraryPage() {
                   </Label>
                   <ImageUploadField
                     label=""
-                    value={entry.imageUrl}
-                    onChange={url => handleImageUpload(index, url)}
+                    value={entry.imageUrl || ''}
+                    onChange={url => handleImageUpload(index, url || '')}
                     bucketName="trip-images"
                     folder="itineraries"
                   />
@@ -388,7 +433,7 @@ export function CruiseItineraryPage() {
                   </Label>
                   <Textarea
                     placeholder="Enter port highlights or activities..."
-                    value={entry.description}
+                    value={entry.description || ''}
                     onChange={e => handleDescriptionChange(index, e.target.value)}
                     rows={3}
                     className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"

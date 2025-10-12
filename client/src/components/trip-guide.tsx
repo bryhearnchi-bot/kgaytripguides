@@ -4,7 +4,7 @@ import { dateOnly } from '@/lib/utils';
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
-import { Map, CalendarDays, PartyPopper, Star, Info, Eye, CheckCircle } from 'lucide-react';
+import { Map, CalendarDays, PartyPopper, Star, Info, Eye, CheckCircle, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import type { Talent } from '@/data/trip-data';
@@ -12,6 +12,8 @@ import { useTripData, transformTripData } from '@/hooks/useTripData';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api-client';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 
 // Import refactored components
 import { LoadingState, ErrorState } from './trip-guide/shared';
@@ -31,6 +33,7 @@ interface TripGuideProps {
 export default function TripGuide({ slug }: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
   const { toast } = useToast();
+  const { profile } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('itinerary');
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
@@ -42,6 +45,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
   const [isApproving, setIsApproving] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Use the trip data hook
   const { data: tripData, isLoading, error } = useTripData(slug);
@@ -98,6 +102,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const PARTY_THEMES = hasTalent ? data?.PARTY_THEMES || [] : [];
   const IMPORTANT_INFO = hasTalent ? data?.IMPORTANT_INFO || {} : {};
   const tripStatus = (data?.TRIP_INFO as any)?.status || 'upcoming';
+
+  // Check if user can edit trips (super_admin or content_manager)
+  const canEditTrip = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
 
   // Use the scheduled daily hook
   const SCHEDULED_DAILY = useScheduledDaily({ DAILY, tripStatus });
@@ -250,8 +257,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
         )}
 
         <StandardizedContentLayout>
-          {/* Tab Bar */}
-          <div className="flex justify-center mb-8 pt-4 sm:pt-12 lg:pt-16">
+          {/* Tab Bar with Edit Button */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 pt-4 sm:pt-12 lg:pt-16">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveTab('itinerary')}
@@ -317,6 +324,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 <span className={activeTab === 'info' ? 'inline' : 'hidden sm:inline'}>Info</span>
               </button>
             </div>
+
+            {/* Edit Trip Button - Only visible to super_admin and content_manager */}
+            {canEditTrip && tripData?.trip && (
+              <Button
+                onClick={() => setShowEditModal(true)}
+                className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/30 backdrop-blur-md rounded-full px-4 py-2 h-auto transition-all duration-200 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20 flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                <span className="font-semibold text-sm">Edit Trip</span>
+              </Button>
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -336,9 +354,19 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             <TabsContent value="itinerary">
               {isCruise ? (
-                <ItineraryTab ITINERARY={ITINERARY as any} onViewEvents={handleViewEvents} />
+                <ItineraryTab
+                  ITINERARY={ITINERARY as any}
+                  onViewEvents={handleViewEvents}
+                  scheduledDaily={SCHEDULED_DAILY}
+                  talent={TALENT as any}
+                />
               ) : (
-                <ItineraryTab ITINERARY={SCHEDULE as any} onViewEvents={handleViewEvents} />
+                <ItineraryTab
+                  ITINERARY={SCHEDULE as any}
+                  onViewEvents={handleViewEvents}
+                  scheduledDaily={SCHEDULED_DAILY}
+                  talent={TALENT as any}
+                />
               )}
             </TabsContent>
 
@@ -391,6 +419,25 @@ export default function TripGuide({ slug }: TripGuideProps) {
         onOpenChange={handlePartyModalClose}
         selectedParty={selectedParty}
       />
+
+      {/* Edit Trip Modal - Only for super_admin and content_manager */}
+      {canEditTrip && tripData?.trip && (
+        <EditTripModal
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          trip={{
+            ...tripData.trip,
+            itineraryEntries: tripData.itinerary,
+            scheduleEntries: tripData.scheduleEntries,
+            events: tripData.events,
+            tripTalent: tripData.talent,
+          }}
+          onSuccess={() => {
+            // Refresh the page to show updated data
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -10,7 +10,11 @@ import { StatusBadge } from './StatusBadge';
 import { AdminFormModal } from './AdminFormModal';
 import { ImageUploadField } from './ImageUploadField';
 import { api } from '@/lib/api-client';
-import { MapPin, Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
+import { MapPin, Plus, Edit2, Trash2, Search, Globe, List, Building2 } from 'lucide-react';
+import { LocationAttractionsModal } from './LocationAttractionsModal';
+import { LocationLGBTVenuesModal } from './LocationLGBTVenuesModal';
+import { LocationAttractionsPreview } from './LocationAttractionsPreview';
+import { LocationLGBTVenuesPreview } from './LocationLGBTVenuesPreview';
 
 interface Location {
   id?: number;
@@ -46,6 +50,8 @@ export default function LocationManagement({
     name: '',
     country: '',
   });
+  const [showAttractionsModal, setShowAttractionsModal] = useState(false);
+  const [showLGBTVenuesModal, setShowLGBTVenuesModal] = useState(false);
 
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
@@ -444,7 +450,76 @@ export default function LocationManagement({
             }
           />
         </div>
+
+        {/* Attractions & LGBT Venues Preview - only show for existing locations */}
+        {editingLocation && editingLocation.id && (
+          <div className="lg:col-span-2 space-y-3">
+            <div className="h-px bg-white/10 my-4" />
+
+            {/* Attractions Preview */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-white/90">Attractions</Label>
+                <Button
+                  type="button"
+                  onClick={() => setShowAttractionsModal(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                >
+                  <Edit2 className="w-3 h-3 mr-1" />
+                  Edit
+                </Button>
+              </div>
+              <LocationAttractionsPreview locationId={editingLocation.id} />
+            </div>
+
+            {/* LGBT Venues Preview */}
+            <div className="space-y-2 mt-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-white/90">LGBT-Friendly Venues</Label>
+                <Button
+                  type="button"
+                  onClick={() => setShowLGBTVenuesModal(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                >
+                  <Edit2 className="w-3 h-3 mr-1" />
+                  Edit
+                </Button>
+              </div>
+              <LocationLGBTVenuesPreview locationId={editingLocation.id} />
+            </div>
+          </div>
+        )}
       </AdminFormModal>
+
+      {/* Attractions Management Modal */}
+      {editingLocation && editingLocation.id && (
+        <LocationAttractionsModal
+          isOpen={showAttractionsModal}
+          onOpenChange={setShowAttractionsModal}
+          locationId={editingLocation.id}
+          locationName={editingLocation.name}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['locations'] });
+          }}
+        />
+      )}
+
+      {/* LGBT Venues Management Modal */}
+      {editingLocation && editingLocation.id && (
+        <LocationLGBTVenuesModal
+          isOpen={showLGBTVenuesModal}
+          onOpenChange={setShowLGBTVenuesModal}
+          locationId={editingLocation.id}
+          locationName={editingLocation.name}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['locations'] });
+          }}
+        />
+      )}
     </div>
   );
 }
