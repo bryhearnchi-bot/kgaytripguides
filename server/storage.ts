@@ -640,7 +640,8 @@ export class TripInfoStorage implements ITripInfoStorage {
       tripId: item.trip_id,
       date: item.date,
       day: item.day,
-      portName: item.location_name,
+      locationName: item.location_name,
+      portName: item.location_name, // Keep for backward compatibility
       country: item.location?.country || null,
       arrivalTime: item.arrival_time,
       departureTime: item.departure_time,
