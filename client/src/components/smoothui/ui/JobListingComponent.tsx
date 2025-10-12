@@ -433,32 +433,18 @@ export default function JobListingComponent({
               </motion.div>
             </motion.div>
 
-            {/* Slide-Up Events Card - Now independent, outside itinerary card */}
+            {/* Events Modal - Mobile: full-width from bottom, Desktop: centered */}
             <AnimatePresence>
               {showEventsSlideUp && activeItem && (
-                <>
-                  {/* Backdrop for events panel */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm"
-                    onClick={e => {
-                      e.stopPropagation();
-                      if (!showTalentDetail) {
-                        setShowEventsSlideUp(false);
-                        setDayEvents([]);
-                      }
-                    }}
-                  />
+                <div className="pointer-events-none fixed inset-0 z-[55] md:grid md:place-items-center md:p-4">
                   <motion.div
                     ref={slideUpRef}
                     initial={{ y: '100%', opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: '100%', opacity: 0 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                    className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-t border-white/20 rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto flex flex-col z-[60] pointer-events-auto"
-                    style={{ borderRadius: '16px 16px 0 0', touchAction: 'pan-y' }}
+                    className="pointer-events-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border border-white/20 shadow-2xl overflow-hidden flex flex-col z-[60] fixed bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh] md:relative md:rounded-2xl md:w-full md:max-w-3xl md:max-h-[85vh]"
+                    style={{ touchAction: 'pan-y' }}
                     onClick={e => e.stopPropagation()}
                   >
                     {/* Sticky Header */}
@@ -482,66 +468,93 @@ export default function JobListingComponent({
                     </div>
 
                     {/* Scrollable Events List */}
-                    <div className="p-6 pt-4">
+                    <div className="p-6 pt-4 overflow-y-auto flex-1">
                       {dayEvents.length > 0 ? (
                         <div className="space-y-3">
                           {dayEvents.map((event, idx) => {
-                            console.log('Event data:', {
-                              title: event.title,
-                              venue: event.venue,
-                              hasVenue: !!event.venue,
-                            });
+                            // Get event image or fallback to first artist's image
+                            const eventImage = event.imageUrl || event.talent?.[0]?.profileImageUrl;
+
                             return (
                               <div
                                 key={idx}
                                 className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20"
                               >
-                                <div className="flex flex-col gap-2">
-                                  {/* Time */}
-                                  <div className="text-ocean-200 text-sm font-medium">
-                                    {event.time}
-                                  </div>
-
-                                  {/* Event Title */}
-                                  <div className="text-white font-semibold text-base">
-                                    {event.title}
-                                  </div>
-
-                                  {/* Venue/Location */}
-                                  <div className="flex items-center gap-2">
-                                    <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-medium border border-cyan-400/30">
-                                      {event.venue || 'TBD'}
-                                    </span>
-                                  </div>
-
-                                  {/* Artists */}
-                                  {event.talent && event.talent.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {event.talent.map((t: any, tidx: number) => (
-                                        <button
-                                          key={tidx}
-                                          onClick={e => {
-                                            e.stopPropagation();
-                                            setSelectedTalent(t);
-                                            setShowTalentDetail(true);
-                                          }}
-                                          className="text-xs px-2.5 py-1 bg-purple-500/20 text-purple-200 rounded-full hover:bg-purple-500/30 transition-colors border border-purple-400/30 font-medium flex items-center gap-1 group"
-                                        >
-                                          <span>{t.name}</span>
-                                          <span className="text-purple-300 group-hover:translate-x-0.5 transition-transform text-[10px]">
-                                            →
-                                          </span>
-                                        </button>
-                                      ))}
+                                <div className="flex gap-4">
+                                  {/* Event/Artist Image - Larger Square */}
+                                  {eventImage && (
+                                    <div className="flex-shrink-0">
+                                      <img
+                                        src={eventImage}
+                                        alt={event.title}
+                                        className="w-24 h-24 object-cover rounded-lg border border-white/20 shadow-md"
+                                      />
                                     </div>
                                   )}
 
-                                  {/* Description (if available) */}
-                                  {event.description && (
-                                    <p className="text-ocean-50 text-xs mt-1 pt-2 border-t border-white/10">
-                                      {event.description}
-                                    </p>
-                                  )}
+                                  {/* Event Details */}
+                                  <div className="flex-1 flex flex-col gap-2.5 min-w-0">
+                                    {/* Desktop/Tablet: Time • Event Name on one line */}
+                                    <div className="hidden md:flex items-center gap-2">
+                                      <span className="text-ocean-200 text-sm font-semibold">
+                                        {event.time}
+                                      </span>
+                                      <Circle className="w-1.5 h-1.5 fill-current text-ocean-300" />
+                                      <span className="text-white font-bold text-base">
+                                        {event.title}
+                                      </span>
+                                    </div>
+
+                                    {/* Mobile: Time on separate line */}
+                                    <div className="md:hidden">
+                                      <span className="text-ocean-200 text-sm font-semibold">
+                                        {event.time}
+                                      </span>
+                                    </div>
+
+                                    {/* Mobile: Event Name on separate line */}
+                                    <div className="md:hidden">
+                                      <span className="text-white font-bold text-base">
+                                        {event.title}
+                                      </span>
+                                    </div>
+
+                                    {/* Venue/Location - separate line for both */}
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-medium border border-cyan-400/30">
+                                        {event.venue || 'TBD'}
+                                      </span>
+                                    </div>
+
+                                    {/* Artists - separate line for both */}
+                                    {event.talent && event.talent.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {event.talent.map((t: any, tidx: number) => (
+                                          <button
+                                            key={tidx}
+                                            onClick={e => {
+                                              e.stopPropagation();
+                                              setSelectedTalent(t);
+                                              setShowTalentDetail(true);
+                                            }}
+                                            className="text-xs px-2.5 py-1 bg-purple-500/20 text-purple-200 rounded-full hover:bg-purple-500/30 transition-colors border border-purple-400/30 font-medium flex items-center gap-1 group"
+                                          >
+                                            <span>{t.name}</span>
+                                            <span className="text-purple-300 group-hover:translate-x-0.5 transition-transform text-[10px]">
+                                              →
+                                            </span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Description (if available) */}
+                                    {event.description && (
+                                      <p className="text-ocean-50 text-xs mt-1 pt-2 border-t border-white/10">
+                                        {event.description}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             );
@@ -562,8 +575,7 @@ export default function JobListingComponent({
                           animate={{ x: 0 }}
                           exit={{ x: '100%' }}
                           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                          className="absolute inset-0 z-[70] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl overflow-y-auto"
-                          style={{ borderRadius: '16px 16px 0 0' }}
+                          className="absolute inset-0 z-[70] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl overflow-y-auto rounded-t-2xl md:rounded-2xl"
                           onClick={e => e.stopPropagation()}
                         >
                           <div className="p-6">
@@ -581,42 +593,48 @@ export default function JobListingComponent({
                                 <span className="text-purple-200 text-xl">←</span>
                               </button>
 
-                              {/* Profile Image - Full Width at Top */}
-                              {selectedTalent.profileImageUrl && (
-                                <div className="w-full mb-6">
-                                  <img
-                                    src={selectedTalent.profileImageUrl}
-                                    alt={selectedTalent.name}
-                                    className="w-full h-64 object-cover rounded-xl border-2 border-purple-400/30 shadow-lg"
-                                  />
+                              {/* Mobile: Full Width Image, Desktop: Wrapped Layout */}
+                              <div className="flex flex-col md:flex-row-reverse gap-6 mb-6">
+                                {/* Profile Image - Perfect Square */}
+                                {selectedTalent.profileImageUrl && (
+                                  <div className="w-full md:w-64 md:flex-shrink-0">
+                                    <img
+                                      src={selectedTalent.profileImageUrl}
+                                      alt={selectedTalent.name}
+                                      className="w-full aspect-square object-cover rounded-xl border-2 border-purple-400/30 shadow-lg"
+                                    />
+                                  </div>
+                                )}
+
+                                {/* Artist Info */}
+                                <div className="flex-1">
+                                  {/* Artist Name */}
+                                  <h2 className="text-2xl font-bold mb-2">{selectedTalent.name}</h2>
+
+                                  {/* Known For */}
+                                  {selectedTalent.knownFor && (
+                                    <p className="text-purple-200 text-sm mb-4">
+                                      {selectedTalent.knownFor}
+                                    </p>
+                                  )}
+
+                                  {/* Bio */}
+                                  {selectedTalent.bio && (
+                                    <div className="mb-6">
+                                      <p className="text-purple-50 text-sm leading-relaxed">
+                                        {selectedTalent.bio}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-
-                              {/* Artist Name */}
-                              <h2 className="text-2xl font-bold mb-2">{selectedTalent.name}</h2>
-
-                              {/* Known For */}
-                              {selectedTalent.knownFor && (
-                                <p className="text-purple-200 text-sm mb-4">
-                                  {selectedTalent.knownFor}
-                                </p>
-                              )}
-
-                              {/* Bio */}
-                              {selectedTalent.bio && (
-                                <div className="mb-6">
-                                  <p className="text-purple-50 text-sm leading-relaxed">
-                                    {selectedTalent.bio}
-                                  </p>
-                                </div>
-                              )}
+                              </div>
 
                               {/* Performances */}
                               <div className="mb-6">
-                                <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
+                                <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-4">
                                   Performances
                                 </h3>
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                   {scheduledDaily?.map(day => {
                                     const talentEvents = day.items.filter((event: any) =>
                                       event.talent?.some((t: any) => t.id === selectedTalent.id)
@@ -631,26 +649,26 @@ export default function JobListingComponent({
                                     const dateDisplay = itineraryEntry?.title || day.key;
 
                                     return (
-                                      <div key={day.key}>
+                                      <div key={day.key} className="space-y-3">
                                         {talentEvents.map((event: any, eventIdx: number) => (
                                           <div
                                             key={eventIdx}
-                                            className="bg-purple-500/10 backdrop-blur-md rounded-lg p-3 border border-purple-400/20"
+                                            className="bg-purple-500/10 backdrop-blur-md rounded-lg p-4 border border-purple-400/20"
                                           >
-                                            <div className="flex flex-col gap-1">
-                                              {/* Date and Time on same line */}
-                                              <div className="flex items-center gap-2 text-sm">
-                                                <span className="text-purple-200 font-medium">
+                                            <div className="flex flex-col gap-2">
+                                              {/* Line 1: Date • Time */}
+                                              <div className="flex items-center gap-2">
+                                                <span className="text-purple-200 font-medium text-sm">
                                                   {dateDisplay}
                                                 </span>
                                                 <Circle className="w-1.5 h-1.5 fill-current text-purple-400" />
-                                                <span className="text-white font-semibold">
+                                                <span className="text-white font-semibold text-sm">
                                                   {event.time}
                                                 </span>
                                               </div>
-                                              {/* Venue */}
+                                              {/* Line 2: Venue */}
                                               {event.venue && (
-                                                <div className="text-purple-100 text-xs">
+                                                <div className="text-purple-100 text-sm">
                                                   {event.venue}
                                                 </div>
                                               )}
@@ -715,7 +733,7 @@ export default function JobListingComponent({
                       )}
                     </AnimatePresence>
                   </motion.div>
-                </>
+                </div>
               )}
             </AnimatePresence>
           </div>
