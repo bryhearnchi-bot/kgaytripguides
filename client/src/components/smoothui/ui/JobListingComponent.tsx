@@ -620,12 +620,55 @@ export default function JobListingComponent({
 
                                   {/* Bio */}
                                   {selectedTalent.bio && (
-                                    <div className="mb-6">
+                                    <div className="mb-4">
                                       <p className="text-purple-50 text-sm leading-relaxed">
                                         {selectedTalent.bio}
                                       </p>
                                     </div>
                                   )}
+
+                                  {/* Social Links - Under Bio */}
+                                  {selectedTalent.socialLinks &&
+                                    Object.keys(selectedTalent.socialLinks).length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {Object.entries(selectedTalent.socialLinks).map(
+                                          ([platform, url]: [string, any]) => {
+                                            const platformLower = platform.toLowerCase();
+                                            let Icon = Globe; // Default icon
+
+                                            if (platformLower.includes('instagram'))
+                                              Icon = Instagram;
+                                            else if (
+                                              platformLower.includes('twitter') ||
+                                              platformLower.includes('x')
+                                            )
+                                              Icon = Twitter;
+                                            else if (platformLower.includes('facebook'))
+                                              Icon = Facebook;
+                                            else if (platformLower.includes('youtube'))
+                                              Icon = Youtube;
+                                            else if (
+                                              platformLower.includes('spotify') ||
+                                              platformLower.includes('music')
+                                            )
+                                              Icon = Music;
+
+                                            return (
+                                              <a
+                                                key={platform}
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 rounded-lg border border-purple-400/30 transition-all hover:scale-110"
+                                                title={platform}
+                                              >
+                                                <Icon className="w-4 h-4" />
+                                              </a>
+                                            );
+                                          }
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
                               </div>
 
@@ -680,53 +723,6 @@ export default function JobListingComponent({
                                   })}
                                 </div>
                               </div>
-
-                              {/* Social Links */}
-                              {selectedTalent.socialLinks &&
-                                Object.keys(selectedTalent.socialLinks).length > 0 && (
-                                  <div>
-                                    <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
-                                      Social Links
-                                    </h3>
-                                    <div className="flex flex-wrap gap-3">
-                                      {Object.entries(selectedTalent.socialLinks).map(
-                                        ([platform, url]: [string, any]) => {
-                                          const platformLower = platform.toLowerCase();
-                                          let Icon = Globe; // Default icon
-
-                                          if (platformLower.includes('instagram')) Icon = Instagram;
-                                          else if (
-                                            platformLower.includes('twitter') ||
-                                            platformLower.includes('x')
-                                          )
-                                            Icon = Twitter;
-                                          else if (platformLower.includes('facebook'))
-                                            Icon = Facebook;
-                                          else if (platformLower.includes('youtube'))
-                                            Icon = Youtube;
-                                          else if (
-                                            platformLower.includes('spotify') ||
-                                            platformLower.includes('music')
-                                          )
-                                            Icon = Music;
-
-                                          return (
-                                            <a
-                                              key={platform}
-                                              href={url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="p-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 rounded-lg border border-purple-400/30 transition-all hover:scale-110"
-                                              title={platform}
-                                            >
-                                              <Icon className="w-5 h-5" />
-                                            </a>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
                             </div>
                           </div>
                         </motion.div>
