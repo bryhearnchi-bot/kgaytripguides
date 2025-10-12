@@ -39,6 +39,37 @@ html {
   padding-top: 0 !important;
 }
 
+/* iOS Safari Bottom Bar Fix - Prevent white bar from showing */
+html {
+  /* Full viewport height accounting for mobile browser UI */
+  height: -webkit-fill-available;
+}
+
+body {
+  /* Extend content behind Safari UI */
+  padding-bottom: env(safe-area-inset-bottom);
+
+  /* Prevent bounce/overscroll that shows white */
+  overscroll-behavior-y: none;
+
+  /* Full viewport height accounting for mobile browser UI */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Add dark background pseudo-element to fill safe area on iOS */
+body::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-bottom, 0px);
+  background: hsl(210, 25%, 7.8431%); /* Match dark theme background */
+  z-index: 9999;
+  pointer-events: none;
+}
+
 /* DEFINITIVE SOLUTION: Remove blue outline from profile button and all focus states */
 /* Target the actual Radix PopoverTrigger element, not just the button */
 button[data-radix-popover-trigger],
