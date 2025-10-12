@@ -119,7 +119,7 @@ export function transformTripData(data: TripData) {
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
     day: stop.day, // Day number for itinerary display
-    port: (stop as any).location?.name || stop.portName, // Use location.name if available, fallback to portName
+    port: (stop as any).locationName || stop.portName || (stop as any).location?.name, // Use locationName first, fallback to portName, then location.name
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
