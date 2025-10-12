@@ -235,21 +235,24 @@ export default function TripGuide({ slug }: TripGuideProps) {
         {tripData?.trip?.tripStatusId === 5 && !tripData?.trip?.isActive && (
           <div className="bg-amber-500/10 border-y border-amber-400/30 backdrop-blur-sm">
             <div className="container mx-auto px-4 py-4 max-w-6xl">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="flex items-center gap-3">
-                  <Eye className="w-5 h-5 text-amber-400" />
+                  <Eye className="w-5 h-5 text-amber-400 flex-shrink-0" />
                   <div>
                     <h3 className="text-sm font-semibold text-white">Preview Mode</h3>
-                    <p className="text-xs text-white/70">This trip is not live on the site yet.</p>
+                    <p className="text-xs text-white/70">Not live yet</p>
                   </div>
                 </div>
                 <Button
                   onClick={handleApproveTripClick}
                   disabled={isApproving}
-                  className="h-10 px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40"
+                  className="h-10 px-4 sm:px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 w-full sm:w-auto"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  {isApproving ? 'Approving...' : 'Approve & Publish'}
+                  <span className="hidden sm:inline">
+                    {isApproving ? 'Approving...' : 'Approve & Publish'}
+                  </span>
+                  <span className="sm:hidden">{isApproving ? 'Approving...' : 'Approve'}</span>
                 </Button>
               </div>
             </div>
@@ -262,66 +265,63 @@ export default function TripGuide({ slug }: TripGuideProps) {
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveTab('itinerary')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'itinerary'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
+                aria-label={isCruise ? 'Itinerary' : 'Schedule'}
               >
                 <Map className="w-4 h-4 flex-shrink-0" />
-                <span className={activeTab === 'itinerary' ? 'inline' : 'hidden sm:inline'}>
-                  {isCruise ? 'Itinerary' : 'Schedule'}
-                </span>
+                <span className="hidden sm:inline">{isCruise ? 'Itinerary' : 'Schedule'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('schedule')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'schedule'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
+                aria-label="Events"
               >
                 <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                <span className={activeTab === 'schedule' ? 'inline' : 'hidden sm:inline'}>
-                  Events
-                </span>
+                <span className="hidden sm:inline">Events</span>
               </button>
               <button
                 onClick={() => setActiveTab('parties')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'parties'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
+                aria-label="Parties"
               >
                 <PartyPopper className="w-4 h-4 flex-shrink-0" />
-                <span className={activeTab === 'parties' ? 'inline' : 'hidden sm:inline'}>
-                  Parties
-                </span>
+                <span className="hidden sm:inline">Parties</span>
               </button>
               <button
                 onClick={() => setActiveTab('talent')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'talent'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
+                aria-label="Talent"
               >
                 <Star className="w-4 h-4 flex-shrink-0" />
-                <span className={activeTab === 'talent' ? 'inline' : 'hidden sm:inline'}>
-                  Talent
-                </span>
+                <span className="hidden sm:inline">Talent</span>
               </button>
               <button
                 onClick={() => setActiveTab('info')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'info'
                     ? 'bg-white text-ocean-900'
                     : 'text-white/70 hover:text-white'
                 }`}
+                aria-label="Info"
               >
                 <Info className="w-4 h-4 flex-shrink-0" />
-                <span className={activeTab === 'info' ? 'inline' : 'hidden sm:inline'}>Info</span>
+                <span className="hidden sm:inline">Info</span>
               </button>
             </div>
 

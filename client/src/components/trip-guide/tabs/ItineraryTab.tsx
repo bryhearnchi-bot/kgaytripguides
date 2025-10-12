@@ -85,7 +85,7 @@ export const ItineraryTab = memo(function ItineraryTab({
             'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'
           }
           alt={stop.port}
-          className="w-52 h-32 object-cover rounded"
+          className="w-32 h-20 sm:w-52 sm:h-32 object-cover rounded"
           loading="lazy"
           onError={e => {
             e.currentTarget.src =

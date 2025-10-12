@@ -231,9 +231,9 @@ export default function JobListingComponent({
       </AnimatePresence>
       <AnimatePresence mode="wait">
         {activeItem && (
-          <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto">
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto pt-20 sm:pt-4">
             <motion.div
-              className="pointer-events-auto bg-gradient-to-br from-slate-900/98 via-slate-800/98 to-slate-900/98 backdrop-blur-2xl flex h-fit w-[90%] max-w-2xl flex-col items-start gap-4 overflow-hidden border border-white/10 p-6 shadow-2xl my-8 relative"
+              className="pointer-events-auto bg-gradient-to-br from-slate-900/98 via-slate-800/98 to-slate-900/98 backdrop-blur-2xl flex h-fit w-full max-w-2xl flex-col items-start gap-4 overflow-hidden border border-white/10 p-4 sm:p-6 shadow-2xl my-4 sm:my-8 relative max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-8rem)] overflow-y-auto"
               ref={ref}
               layoutId={`workItem-${activeItem.job_time}`}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -326,35 +326,38 @@ export default function JobListingComponent({
 
                 {/* Location Attractions */}
                 {activeItem.attractions && activeItem.attractions.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <MapPin className="w-4 h-4 text-ocean-300" />
-                      <h3 className="text-white font-bold text-sm uppercase tracking-wide">
+                  <div className="mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-ocean-300" />
+                      <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-wide">
                         Top Attractions
                       </h3>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg">
-                      <div className="space-y-3">
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-lg">
+                      <div className="space-y-2 sm:space-y-3">
                         {activeItem.attractions.map((attraction, idx) => (
                           <div
                             key={attraction.id}
-                            className={idx !== 0 ? 'pt-3 border-t border-white/10' : ''}
+                            className={idx !== 0 ? 'pt-2 sm:pt-3 border-t border-white/10' : ''}
                           >
                             <div className="flex items-start gap-2">
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-ocean-400/30 flex items-center justify-center mt-0.5">
-                                <span className="text-ocean-200 text-xs font-bold">{idx + 1}</span>
+                              <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-ocean-400/30 flex items-center justify-center mt-0.5">
+                                <span className="text-ocean-200 text-[10px] sm:text-xs font-bold">
+                                  {idx + 1}
+                                </span>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-white font-semibold text-xs leading-tight">
+                                <h4 className="text-white font-semibold text-[11px] sm:text-xs leading-tight">
                                   {attraction.name}
                                 </h4>
                                 {attraction.category && (
-                                  <span className="inline-block px-2 py-0.5 text-[10px] bg-ocean-500/30 text-ocean-100 rounded mt-1 font-medium">
+                                  <span className="inline-block px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-ocean-500/30 text-ocean-100 rounded mt-1 font-medium">
                                     {attraction.category}
                                   </span>
                                 )}
+                                {/* Hide description on mobile to save space */}
                                 {attraction.description && (
-                                  <p className="text-ocean-100 text-[11px] mt-1.5 leading-snug">
+                                  <p className="hidden sm:block text-ocean-100 text-[11px] mt-1.5 leading-snug">
                                     {attraction.description}
                                   </p>
                                 )}
@@ -369,40 +372,41 @@ export default function JobListingComponent({
 
                 {/* LGBT Venues */}
                 {activeItem.lgbtVenues && activeItem.lgbtVenues.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-base leading-none">🏳️‍🌈</span>
-                      <h3 className="text-white font-bold text-sm uppercase tracking-wide">
+                  <div className="mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm sm:text-base leading-none">🏳️‍🌈</span>
+                      <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-wide">
                         LGBT+ Venues
                       </h3>
                     </div>
-                    <div className="bg-gradient-to-br from-purple-500/15 via-pink-500/15 to-purple-500/15 backdrop-blur-md rounded-xl p-4 border border-purple-400/30 shadow-lg">
-                      <div className="space-y-3">
+                    <div className="bg-gradient-to-br from-purple-500/15 via-pink-500/15 to-purple-500/15 backdrop-blur-md rounded-lg sm:rounded-xl p-3 sm:p-4 border border-purple-400/30 shadow-lg">
+                      <div className="space-y-2 sm:space-y-3">
                         {activeItem.lgbtVenues.map((venue, idx) => (
                           <div
                             key={venue.id}
-                            className={idx !== 0 ? 'pt-3 border-t border-white/10' : ''}
+                            className={idx !== 0 ? 'pt-2 sm:pt-3 border-t border-white/10' : ''}
                           >
                             <div className="flex items-start gap-2">
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-400/30 flex items-center justify-center mt-0.5">
-                                <Sparkles className="w-3 h-3 text-purple-200" />
+                              <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-400/30 flex items-center justify-center mt-0.5">
+                                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-200" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-white font-semibold text-xs leading-tight">
+                                <h4 className="text-white font-semibold text-[11px] sm:text-xs leading-tight">
                                   {venue.name}
                                 </h4>
                                 {venue.venueType && (
-                                  <span className="inline-block px-2 py-0.5 text-[10px] bg-purple-500/30 text-purple-100 rounded mt-1 font-medium">
+                                  <span className="inline-block px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-purple-500/30 text-purple-100 rounded mt-1 font-medium">
                                     {venue.venueType}
                                   </span>
                                 )}
+                                {/* Hide description and address on mobile to save space */}
                                 {venue.description && (
-                                  <p className="text-purple-50 text-[11px] mt-1.5 leading-snug">
+                                  <p className="hidden sm:block text-purple-50 text-[11px] mt-1.5 leading-snug">
                                     {venue.description}
                                   </p>
                                 )}
                                 {venue.address && (
-                                  <p className="text-purple-200 text-[10px] mt-1 opacity-80">
+                                  <p className="hidden sm:block text-purple-200 text-[10px] mt-1 opacity-80">
                                     📍 {venue.address}
                                   </p>
                                 )}
@@ -762,24 +766,24 @@ export default function JobListingComponent({
               <div className="flex w-full flex-col items-start justify-between gap-0.5">
                 {/* Day Number and Date Row */}
                 <motion.div
-                  className="text-ocean-100 text-sm font-medium flex items-center gap-2"
+                  className="text-ocean-100 text-xs sm:text-sm font-medium flex items-center gap-2"
                   layoutId={
                     activeItem?.job_time === role.job_time
                       ? undefined
                       : `workItemDayDate-${role.job_time}`
                   }
                 >
-                  <span>{formatDayLabel(role.dayNumber)}</span>
+                  <span className="whitespace-nowrap">{formatDayLabel(role.dayNumber)}</span>
                   {role.dayNumber !== undefined && (
                     <>
-                      <Circle className="w-1.5 h-1.5 fill-current" />
-                      <span>{role.title}</span>
+                      <Circle className="w-1.5 h-1.5 fill-current flex-shrink-0" />
+                      <span className="truncate">{role.title}</span>
                     </>
                   )}
                 </motion.div>
 
                 <motion.div
-                  className="text-white font-bold text-lg group-hover:text-ocean-200 transition-colors"
+                  className="text-white font-bold text-base sm:text-lg group-hover:text-ocean-200 transition-colors"
                   layoutId={
                     activeItem?.job_time === role.job_time
                       ? undefined
@@ -789,7 +793,7 @@ export default function JobListingComponent({
                   {role.company}
                 </motion.div>
                 <motion.div
-                  className="text-ocean-200 text-sm"
+                  className="text-ocean-200 text-xs sm:text-sm"
                   layoutId={
                     activeItem?.job_time === role.job_time
                       ? undefined

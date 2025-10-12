@@ -271,25 +271,25 @@ export function EnhancedLocationsTable({
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {hiddenColumns.length > 0 && (
                         <Button
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => toggleRowExpansion(rowKey)}
-                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+                          className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 active:bg-white/15"
                           title={isExpanded ? 'Collapse' : 'Expand'}
                         >
                           {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-5 w-5" />
                           ) : (
-                            <ChevronRight className="h-4 w-4" />
+                            <ChevronRight className="h-5 w-5" />
                           )}
                         </Button>
                       )}
 
                       {actions.length > 0 && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           {actions.map((action, index) => (
                             <Button
                               key={index}
@@ -300,10 +300,10 @@ export function EnhancedLocationsTable({
                                 action.onClick(row);
                               }}
                               disabled={action.disabled?.(row)}
-                              className={`h-8 w-8 rounded-full border border-white/15 ${
+                              className={`h-11 w-11 rounded-full border border-white/15 active:scale-95 transition-transform ${
                                 action.variant === 'destructive'
-                                  ? 'bg-red-400/10 text-red-400 hover:bg-red-400/20'
-                                  : 'bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400/20'
+                                  ? 'bg-red-400/10 text-red-400 hover:bg-red-400/20 active:bg-red-400/30'
+                                  : 'bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400/20 active:bg-cyan-400/30'
                               }`}
                               title={action.label}
                             >

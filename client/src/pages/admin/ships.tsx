@@ -108,24 +108,24 @@ export default function ShipsManagement() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <section className="rounded-2xl border border-white/10 bg-white/5 px-4 sm:px-6 py-4 sm:py-6 shadow-lg backdrop-blur">
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <Ship className="h-6 w-6" />
-              Cruise Ships
+            <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
+              <Ship className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+              <span>Cruise Ships</span>
             </h1>
-            <p className="text-sm text-white/60">
+            <p className="text-xs sm:text-sm text-white/60 mt-1">
               Manage your fleet information and specifications
             </p>
           </div>
           <div className="relative w-full md:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <Input
-              placeholder="Search ships by name or cruise line"
+              placeholder="Search ships..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
+              className="h-10 sm:h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
             />
           </div>
         </div>
