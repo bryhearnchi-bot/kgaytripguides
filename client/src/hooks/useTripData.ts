@@ -180,7 +180,7 @@ export function transformTripData(data: TripData) {
     dailyEvents[dateKey].push({
       time: event.time,
       title: event.title,
-      type: event.type,
+      type: (event as any).eventType?.name || event.type, // Use eventType.name from API
       venue: (event as any).venue?.name || 'TBD', // Get venue name from joined ship_venues or resort_venues
       deck: event.deck,
       description: event.description || event.themeDescription,

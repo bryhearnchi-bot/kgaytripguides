@@ -21,7 +21,7 @@ import { useLocalStorage } from './trip-guide/hooks/useLocalStorage';
 import { useScheduledDaily } from './trip-guide/hooks/useScheduledDaily';
 import { ScheduleTab } from './trip-guide/tabs/ScheduleTab';
 import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
-import { TalentTab } from './trip-guide/tabs/TalentTab';
+import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
 import { PartiesTab } from './trip-guide/tabs/PartiesTab';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
@@ -412,7 +412,11 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             <TabsContent value="talent">
-              <TalentTab TALENT={TALENT as any} onTalentClick={handleTalentClick} />
+              <TalentTab
+                TALENT={TALENT as any}
+                SCHEDULED_DAILY={SCHEDULED_DAILY}
+                onTalentClick={handleTalentClick}
+              />
             </TabsContent>
 
             <TabsContent value="parties">

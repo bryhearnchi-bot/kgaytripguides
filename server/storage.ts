@@ -868,27 +868,53 @@ export class TripInfoStorage implements ITripInfoStorage {
       };
     });
 
-    // Get talent data
+    // Get talent data (only for this trip via trip_talent junction table)
     const { data: talentData, error: talentError } = await supabaseAdmin
-      .from('talent')
-      .select('*, talent_categories(category)')
-      .order('name', { ascending: true });
+      .from('trip_talent')
+      .select(
+        `
+        talent:talent_id (
+          id,
+          name,
+          bio,
+          known_for,
+          profile_image_url,
+          social_links,
+          website,
+          created_at,
+          updated_at,
+          talent_categories (
+            category
+          )
+        )
+      `
+      )
+      .eq('trip_id', tripData.id)
+      .order('talent(name)', { ascending: true });
 
     if (talentError) throw talentError;
 
-    // Transform talent data to camelCase
-    const transformedTalent = (talentData || []).map((talent: any) => ({
-      id: talent.id,
-      name: talent.name,
-      category: talent.talent_categories?.category || 'Unknown',
-      bio: talent.bio,
-      knownFor: talent.known_for,
-      profileImageUrl: talent.profile_image_url,
-      socialLinks: talent.social_links,
-      website: talent.website,
-      createdAt: talent.created_at,
-      updatedAt: talent.updated_at,
-    }));
+    // Log for debugging
+    console.log(
+      `[TALENT QUERY] Trip ID: ${tripData.id}, Slug: ${slug}, Talent Count: ${talentData?.length || 0}`
+    );
+
+    // Transform talent data to camelCase (extract from junction table result)
+    const transformedTalent = (talentData || [])
+      .map((item: any) => item.talent) // Extract talent object from junction table
+      .filter((talent: any) => talent !== null) // Filter out any null values
+      .map((talent: any) => ({
+        id: talent.id,
+        name: talent.name,
+        category: talent.talent_categories?.category || 'Unknown',
+        bio: talent.bio,
+        knownFor: talent.known_for,
+        profileImageUrl: talent.profile_image_url,
+        socialLinks: talent.social_links,
+        website: talent.website,
+        createdAt: talent.created_at,
+        updatedAt: talent.updated_at,
+      }));
 
     // Get resort schedule data (for resort trips)
     const { data: scheduleData, error: scheduleError } = await supabaseAdmin
