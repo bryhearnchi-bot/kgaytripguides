@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { EnhancedTripInfoSectionsTable } from '@/components/admin/EnhancedTripInfoSectionsTable';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,10 @@ import {
   Globe,
   MapPin,
   Lock,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
 } from 'lucide-react';
 
 interface TripInfoSection {
@@ -53,6 +57,7 @@ export default function TripInfoSectionsManagement() {
     content: '',
     section_type: 'general',
   });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch all trip info sections (only general and always types)
   const { data: sections = [], isLoading } = useQuery<TripInfoSection[]>({
@@ -150,6 +155,43 @@ export default function TripInfoSectionsManagement() {
       content: '',
       section_type: 'general',
     });
+  };
+
+  // Rich text formatting functions
+  const wrapSelection = (before: string, after: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.content || '';
+    const selectedText = text.substring(start, end);
+
+    const newText = text.substring(0, start) + before + selectedText + after + text.substring(end);
+
+    setFormData({ ...formData, content: newText });
+
+    // Restore selection after state update
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
+
+  const insertText = (text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const content = formData.content || '';
+    const newText = content.substring(0, start) + text + content.substring(start);
+
+    setFormData({ ...formData, content: newText });
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + text.length, start + text.length);
+    }, 0);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -442,7 +484,7 @@ export default function TripInfoSectionsManagement() {
               setFormData({ ...formData, section_type: value })
             }
           >
-            <SelectTrigger className="border-white/10 bg-white/5 text-white">
+            <SelectTrigger className="w-full h-10 px-3 font-normal bg-white/[0.04] border border-white/10 rounded-[10px] text-white text-sm hover:bg-white/[0.06] hover:border-white/10 transition-all focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:border-cyan-400/60 focus-visible:bg-cyan-400/[0.03] focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -483,16 +525,64 @@ export default function TripInfoSectionsManagement() {
           <Label htmlFor="content" className="text-white/80">
             Content
           </Label>
+
+          {/* Formatting toolbar */}
+          <div className="flex items-center gap-1 p-2 border border-white/10 bg-white/5 rounded-t-md">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => wrapSelection('<strong>', '</strong>')}
+              className="h-8 px-2 text-white/70 hover:text-white hover:bg-white/10"
+              title="Bold"
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => wrapSelection('<em>', '</em>')}
+              className="h-8 px-2 text-white/70 hover:text-white hover:bg-white/10"
+              title="Italic"
+            >
+              <Italic className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-6 bg-white/10 mx-1" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => insertText('\n• ')}
+              className="h-8 px-2 text-white/70 hover:text-white hover:bg-white/10"
+              title="Bulleted list"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => insertText('\n1. ')}
+              className="h-8 px-2 text-white/70 hover:text-white hover:bg-white/10"
+              title="Numbered list"
+            >
+              <ListOrdered className="h-4 w-4" />
+            </Button>
+          </div>
+
           <Textarea
+            ref={textareaRef}
             id="content"
             value={formData.content || ''}
             onChange={e => setFormData({ ...formData, content: e.target.value })}
-            placeholder="Enter the section content..."
-            rows={6}
-            className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
+            placeholder="Enter the section content... Use the toolbar above for formatting."
+            rows={10}
+            className="border-white/10 border-t-0 bg-white/5 text-white placeholder:text-white/50 rounded-t-none font-mono text-sm"
           />
           <p className="text-xs text-white/40">
-            Use line breaks to separate different points or instructions.
+            Use <strong>&lt;strong&gt;</strong> for bold, <em>&lt;em&gt;</em> for italic, and bullet
+            points (•) or numbers for lists. HTML tags will be rendered on the trip info page.
           </p>
         </div>
       </AdminFormModal>

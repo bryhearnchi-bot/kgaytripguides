@@ -41,8 +41,8 @@ export function InfoSectionsBentoGrid({ tripId }: InfoSectionsBentoGridProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-64 bg-white/10" />
           ))}
@@ -88,27 +88,11 @@ export function InfoSectionsBentoGrid({ tripId }: InfoSectionsBentoGridProps) {
     return a.title.localeCompare(b.title);
   });
 
-  // Feature the first section (make it larger)
-  const featuredSection = sortedSections[0];
-  const regularSections = sortedSections.slice(1);
-
   return (
-    <div className="space-y-6">
-      {/* Featured section - full width */}
-      {featuredSection && (
-        <div className="mb-6">
-          <InfoSectionCard section={featuredSection} featured={true} />
-        </div>
-      )}
-
-      {/* Bento grid layout for remaining sections */}
-      {regularSections.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-          {regularSections.map(section => (
-            <InfoSectionCard key={section.id} section={section} />
-          ))}
-        </div>
-      )}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {sortedSections.map(section => (
+        <InfoSectionCard key={section.id} section={section} />
+      ))}
     </div>
   );
 }

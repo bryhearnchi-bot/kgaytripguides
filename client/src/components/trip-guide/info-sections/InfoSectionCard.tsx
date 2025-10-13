@@ -43,135 +43,63 @@ export const InfoSectionCard = memo<InfoSectionCardProps>(function InfoSectionCa
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const sectionIcon = useMemo(() => {
-    if (section.is_always) return <Sparkles className="h-4 w-4" />;
-    if (section.section_type === 'general') return <Info className="h-4 w-4" />;
-    return <MapPin className="h-4 w-4" />;
+    if (section.is_always) return <Sparkles className="h-5 w-5 text-white" />;
+    if (section.section_type === 'general') return <Info className="h-5 w-5 text-white" />;
+    return <MapPin className="h-5 w-5 text-white" />;
   }, [section.is_always, section.section_type]);
-
-  const sectionBadge = useMemo(() => {
-    if (section.is_always) {
-      return (
-        <Badge className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 border-purple-400/30">
-          <Sparkles className="h-3 w-3 mr-1" />
-          Always
-        </Badge>
-      );
-    }
-    if (section.section_type === 'general') {
-      return (
-        <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-200 border-blue-400/30">
-          <Info className="h-3 w-3 mr-1" />
-          General
-        </Badge>
-      );
-    }
-    return (
-      <Badge className="bg-gradient-to-r from-teal-500/20 to-emerald-500/20 text-teal-200 border-teal-400/30">
-        <MapPin className="h-3 w-3 mr-1" />
-        Trip Specific
-      </Badge>
-    );
-  }, [section.is_always, section.section_type]);
-
-  const truncatedContent = useMemo(
-    () => truncateContent(section.content, featured ? 300 : 150),
-    [section.content, featured]
-  );
 
   return (
     <>
       <Card
-        className={`
-          group relative overflow-hidden border border-white/10
-          bg-gradient-to-br from-[#0a1628]/90 via-[#0f1f3d]/90 to-[#1a2742]/90
-          backdrop-blur-md hover:border-white/20 transition-all duration-300
-          hover:shadow-xl hover:shadow-cyan-500/10 cursor-pointer
-          ${featured ? 'h-full min-h-[280px]' : 'h-full min-h-[220px]'}
-        `}
+        className="group relative overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300 cursor-pointer"
         onClick={() => setIsModalOpen(true)}
       >
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-        <CardContent className="relative p-6 flex flex-col h-full">
-          {/* Header with icon and badge */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
-                {sectionIcon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3
-                  className={`font-semibold text-white group-hover:text-cyan-300 transition-colors ${
-                    featured ? 'text-xl' : 'text-lg'
-                  } line-clamp-2`}
-                >
-                  {section.title}
-                </h3>
-              </div>
-            </div>
-            {sectionBadge}
+        {/* Header Bar with Ocean Gradient */}
+        <div className="bg-gradient-to-r from-ocean-600/80 to-ocean-400/80 backdrop-blur-sm p-3.5 border-b border-white/10">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">{sectionIcon}</div>
+            <h3 className="text-lg font-bold text-white tracking-wide">{section.title}</h3>
           </div>
-
-          {/* Content */}
-          {section.content && (
-            <p
-              className={`text-white/70 leading-relaxed flex-1 ${
-                featured ? 'text-base line-clamp-6' : 'text-sm line-clamp-4'
-              }`}
-            >
-              {truncatedContent}
-            </p>
-          )}
-
-          {/* Footer */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-            >
-              Read more →
-            </Button>
-            {section.updated_by && (
-              <span className="text-xs text-white/40">By {section.updated_by}</span>
-            )}
-          </div>
-        </CardContent>
-
-        {/* Hover glow effect */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-cyan-500/5 to-blue-500/0" />
         </div>
+
+        {/* Content Area with Frosted Glass Effect */}
+        <CardContent className="p-4 bg-gradient-to-br from-slate-900/20 via-slate-800/20 to-slate-900/20 backdrop-blur-sm">
+          {section.content ? (
+            <div
+              className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
+          ) : (
+            <p className="text-white/50 text-sm italic">No content available</p>
+          )}
+        </CardContent>
       </Card>
 
       {/* Modal for full content */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto bg-gradient-to-br from-[#0a1628] via-[#0f1f3d] to-[#1a2742] border-white/20">
+        <DialogContent className="max-w-3xl overflow-y-auto bg-white border-gray-200">
           <DialogHeader className="pt-8 md:pt-0">
             <div className="flex items-start gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 flex-shrink-0">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-ocean-500/10 to-ocean-600/10 border border-ocean-500/20 flex-shrink-0">
                 {sectionIcon}
               </div>
               <div className="flex-1 min-w-0">
-                <DialogTitle className="text-xl sm:text-2xl text-white">
+                <DialogTitle className="text-xl sm:text-2xl text-gray-900">
                   {section.title}
                 </DialogTitle>
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {sectionBadge}
-                  {section.updated_by && (
-                    <span className="text-xs sm:text-sm text-white/50">
-                      Updated by {section.updated_by}
-                    </span>
-                  )}
-                </div>
+                {section.updated_by && (
+                  <span className="text-xs sm:text-sm text-gray-500 mt-1 block">
+                    Updated by {section.updated_by}
+                  </span>
+                )}
               </div>
             </div>
           </DialogHeader>
           <DialogDescription asChild>
-            <div className="mt-4 text-white/80 text-base leading-relaxed whitespace-pre-wrap">
-              {section.content || 'No content available.'}
-            </div>
+            <div
+              className="mt-4 text-gray-700 text-base leading-relaxed whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: section.content || 'No content available.' }}
+            />
           </DialogDescription>
         </DialogContent>
       </Dialog>
