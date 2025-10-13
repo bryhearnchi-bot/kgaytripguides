@@ -86,11 +86,11 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
         {/* Right/Bottom: Content Details */}
         <div className="flex-1 p-4 sm:p-5 md:p-6 flex flex-col min-w-0 bg-black/20">
           <div className="flex-1 min-w-0 space-y-3">
-            {/* Description */}
-            {partyTheme?.desc && (
+            {/* Description - check multiple possible field names */}
+            {(partyTheme?.desc || partyTheme?.longDescription || partyTheme?.shortDescription) && (
               <div>
-                <p className="text-white/90 text-xs sm:text-sm leading-relaxed line-clamp-4">
-                  {partyTheme.desc}
+                <p className="text-white/90 text-xs leading-relaxed line-clamp-4">
+                  {partyTheme.desc || partyTheme.longDescription || partyTheme.shortDescription}
                 </p>
               </div>
             )}

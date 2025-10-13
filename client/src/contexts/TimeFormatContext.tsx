@@ -11,16 +11,8 @@ interface TimeFormatContextType {
 const TimeFormatContext = createContext<TimeFormatContextType | undefined>(undefined);
 
 export function TimeFormatProvider({ children }: { children: React.ReactNode }) {
-  // Initialize state from localStorage to prevent flash
-  const [timeFormat, setTimeFormatState] = useState<TimeFormat>(() => {
-    if (typeof window !== 'undefined') {
-      const savedFormat = localStorage.getItem('timeFormat') as TimeFormat;
-      if (savedFormat === '12h' || savedFormat === '24h') {
-        return savedFormat;
-      }
-    }
-    return '12h';
-  });
+  // ALWAYS use 24-hour format - database stores times in 24-hour format
+  const [timeFormat, setTimeFormatState] = useState<TimeFormat>('24h');
 
   // Save to localStorage when format changes
   const setTimeFormat = (format: TimeFormat) => {
@@ -34,11 +26,13 @@ export function TimeFormatProvider({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <TimeFormatContext.Provider value={{
-      timeFormat,
-      setTimeFormat,
-      toggleTimeFormat
-    }}>
+    <TimeFormatContext.Provider
+      value={{
+        timeFormat,
+        setTimeFormat,
+        toggleTimeFormat,
+      }}
+    >
       {children}
     </TimeFormatContext.Provider>
   );

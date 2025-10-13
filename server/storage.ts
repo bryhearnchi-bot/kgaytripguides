@@ -133,6 +133,8 @@ export class TripStorage implements ITripStorage {
       resortId: dbTrip.resort_id,
       shipId: dbTrip.ship_id,
       charterCompanyId: dbTrip.charter_company_id,
+      charterCompanyName: dbTrip.charter_company_name,
+      charterCompanyLogo: dbTrip.charter_company_logo,
       tripTypeId: dbTrip.trip_type_id,
       eventsCount: dbTrip.events_count,
       partiesCount: dbTrip.parties_count,
@@ -620,19 +622,34 @@ export class TripInfoStorage implements ITripInfoStorage {
   async getCompleteInfo(slug: string, type: string): Promise<any> {
     const supabaseAdmin = getSupabaseAdmin();
 
-    // Get trip data
+    // Get trip data with charter company info
     const { data: tripData, error: tripError } = await supabaseAdmin
       .from('trips')
-      .select('*')
+      .select(
+        `
+        *,
+        charter_companies (
+          name,
+          logo_url
+        )
+      `
+      )
       .eq('slug', slug)
       .single();
 
     if (tripError) throw tripError;
     if (!tripData) throw new Error('Trip not found');
 
+    // Flatten charter company data for transformTripData
+    const flattenedTripData = {
+      ...tripData,
+      charter_company_name: tripData.charter_companies?.name || null,
+      charter_company_logo: tripData.charter_companies?.logo_url || null,
+    };
+
     // Transform trip data to camelCase
     const tripStorage = new TripStorage();
-    const transformedTrip = tripStorage.transformTripData(tripData);
+    const transformedTrip = tripStorage.transformTripData(flattenedTripData);
 
     // Get itinerary data with location highlights, attractions, and LGBT venues
     const { data: itineraryData, error: itineraryError } = await supabaseAdmin

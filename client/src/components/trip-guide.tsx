@@ -107,7 +107,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const isResort = !!tripData?.trip?.resortId;
 
   // Show party themes, talent, and important info for cruises that have talent
-  const isGreekCruise = slug === 'greek-isles-2025';
+  const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
   const isDragStarsCruise = slug === 'drag-stars-at-sea-2025';
   const hasTalent = isGreekCruise || isDragStarsCruise;
   const TALENT = hasTalent ? data?.TALENT || [] : [];
@@ -300,6 +300,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
           tripName={tripData?.trip?.name}
           tripDescription={tripData?.trip?.description}
           tripType={isCruise ? 'cruise' : isResort ? 'resort' : null}
+          charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
+          charterCompanyName={tripData?.trip?.charterCompanyName}
         />
 
         {/* Preview Mode Banner */}

@@ -29,6 +29,8 @@ interface Trip {
   heroImageUrl: string | null;
   description: string | null;
   highlights: string[] | null;
+  charterCompanyName?: string;
+  charterCompanyLogo?: string;
 }
 
 function TripCard({ trip }: { trip: Trip }) {
@@ -69,18 +71,34 @@ function TripCard({ trip }: { trip: Trip }) {
               </span>
             ) : null}
           </div>
-          <div className="absolute top-3 right-3">
-            {trip.status === 'current' && (
-              <span className="px-3 py-1 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full animate-pulse">
+          {/* Charter Logo - Top Right with frosted glass background */}
+          {trip.charterCompanyLogo && (
+            <div className="absolute top-3 right-3">
+              <div className="bg-white/60 backdrop-blur-lg rounded-lg px-2 py-1 shadow-lg border border-white/30">
+                <img
+                  src={trip.charterCompanyLogo}
+                  alt={trip.charterCompanyName || 'Charter Company'}
+                  className="h-6 w-auto object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          )}
+          {/* Status Badge - moves to bottom right if logo exists */}
+          {trip.status === 'current' && (
+            <div className={`absolute ${trip.charterCompanyLogo ? 'bottom-3' : 'top-3'} right-3`}>
+              <span className="px-3 py-1 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full animate-pulse border border-white/30">
                 Sailing Now
               </span>
-            )}
-            {trip.status === 'upcoming' && duration <= 30 && (
-              <span className="px-3 py-1 bg-blue-400/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
+            </div>
+          )}
+          {trip.status === 'upcoming' && duration <= 30 && (
+            <div className={`absolute ${trip.charterCompanyLogo ? 'bottom-3' : 'top-3'} right-3`}>
+              <span className="px-3 py-1 bg-blue-400/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full border border-white/30">
                 {duration} days away
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </Link>
 
@@ -182,8 +200,8 @@ export default function LandingPage() {
         status: getTripStatus(trip.startDate, trip.endDate),
       }));
     },
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
   const hasCurrent = trips?.some(trip => trip.status === 'current') || false;

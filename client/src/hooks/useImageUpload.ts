@@ -20,6 +20,7 @@ export type ImageType =
   | 'events'
   | 'talent'
   | 'profiles'
+  | 'charters'
   | 'general';
 
 export function useImageUpload() {

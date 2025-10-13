@@ -1,9 +1,9 @@
-import multer from "multer";
-import { promises as fs } from "fs";
-import * as fsSync from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
-import { createClient } from "@supabase/supabase-js";
+import multer from 'multer';
+import { promises as fs } from 'fs';
+import * as fsSync from 'fs';
+import path from 'path';
+import { randomUUID } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 // Configure multer for temporary uploads
 const storage = multer.memoryStorage(); // Use memory storage
@@ -16,12 +16,15 @@ const fileFilter = (req: any, file: any, cb: any) => {
     'image/png',
     'image/webp',
     'image/gif',
-    'image/avif'
+    'image/avif',
   ];
 
   // Check MIME type
   if (!allowedMimeTypes.includes(file.mimetype)) {
-    cb(new Error('Invalid file type. Only JPEG, PNG, WebP, GIF, and AVIF images are allowed.'), false);
+    cb(
+      new Error('Invalid file type. Only JPEG, PNG, WebP, GIF, and AVIF images are allowed.'),
+      false
+    );
     return;
   }
 
@@ -29,7 +32,12 @@ const fileFilter = (req: any, file: any, cb: any) => {
   const ext = path.extname(file.originalname).toLowerCase();
   const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
   if (!allowedExtensions.includes(ext)) {
-    cb(new Error('Invalid file extension. Only .jpg, .jpeg, .png, .webp, .gif, and .avif are allowed.'), false);
+    cb(
+      new Error(
+        'Invalid file extension. Only .jpg, .jpeg, .png, .webp, .gif, and .avif are allowed.'
+      ),
+      false
+    );
     return;
   }
 
@@ -51,8 +59,8 @@ const baseUpload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit (reduced from 10MB for security)
     files: 1, // Only allow 1 file per request
     fields: 10, // Limit number of fields
-    fieldSize: 1024 * 1024 // 1MB max field size
-  }
+    fieldSize: 1024 * 1024, // 1MB max field size
+  },
 });
 
 // Export the upload middleware - we'll handle Supabase Storage in routes
@@ -80,7 +88,10 @@ async function scanFileForMalware(buffer: Buffer): Promise<boolean> {
 }
 
 // Upload image to Supabase Storage with security checks
-export async function uploadToSupabase(file: Express.Multer.File, imageType: string): Promise<string> {
+export async function uploadToSupabase(
+  file: Express.Multer.File,
+  imageType: string
+): Promise<string> {
   console.log('🚀 uploadToSupabase called with imageType:', imageType);
 
   // Perform malware scan
@@ -135,6 +146,9 @@ export async function uploadToSupabase(file: Express.Multer.File, imageType: str
     case 'locations':
       folderPath = 'locations';
       break;
+    case 'charters':
+      folderPath = 'charters';
+      break;
     case 'general':
       folderPath = 'general';
       break;
@@ -153,27 +167,29 @@ export async function uploadToSupabase(file: Express.Multer.File, imageType: str
   console.log('📄 File info:', { name: file.originalname, size: file.size, type: file.mimetype });
 
   // Upload to Supabase Storage
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(fullPath, file.buffer, {
-      contentType: file.mimetype,
-      upsert: false
-    });
+  const { data, error } = await supabase.storage.from(bucket).upload(fullPath, file.buffer, {
+    contentType: file.mimetype,
+    upsert: false,
+  });
 
   if (error) {
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 
   // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(fullPath);
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(bucket).getPublicUrl(fullPath);
 
   return publicUrl;
 }
 
 // Download image from URL and upload to Supabase Storage
-export async function downloadImageFromUrl(url: string, type: string, name: string): Promise<string> {
+export async function downloadImageFromUrl(
+  url: string,
+  type: string,
+  name: string
+): Promise<string> {
   try {
     // Validate URL
     if (!isValidImageUrl(url)) {
@@ -201,7 +217,7 @@ export async function downloadImageFromUrl(url: string, type: string, name: stri
       stream: null as any,
       destination: '',
       filename: '',
-      path: ''
+      path: '',
     };
 
     // Upload to Supabase Storage
@@ -261,9 +277,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
         const filePath = match[2];
 
         if (bucket && filePath) {
-          const { error } = await supabase.storage
-            .from(bucket)
-            .remove([filePath]);
+          const { error } = await supabase.storage.from(bucket).remove([filePath]);
 
           if (error) {
             // Deletion failed but don't throw
@@ -322,11 +336,13 @@ export function isValidImageUrl(url: string): boolean {
     const hostname = parsedUrl.hostname.toLowerCase();
 
     // Block localhost and private IPs
-    if (hostname === 'localhost' || 
-        hostname === '127.0.0.1' ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.') ||
-        hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./)) {
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./)
+    ) {
       return false;
     }
 
@@ -342,7 +358,17 @@ export function isValidImageUrl(url: string): boolean {
 }
 
 // File extensions that should be treated as binary
-const BINARY_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.mp4', '.mov', '.avi'];
+const BINARY_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.pdf',
+  '.mp4',
+  '.mov',
+  '.avi',
+];
 
 export function isBinaryFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();

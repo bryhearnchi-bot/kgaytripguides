@@ -737,7 +737,7 @@ export function registerTripRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const supabaseAdmin = getSupabaseAdmin();
 
-      // Fetch all trips with ship and resort data
+      // Fetch all trips with ship, resort, and charter company data
       const { data: rawTrips, error } = await supabaseAdmin
         .from('trips')
         .select(
@@ -752,6 +752,10 @@ export function registerTripRoutes(app: Express) {
           resorts (
             name,
             location
+          ),
+          charter_companies (
+            name,
+            logo_url
           )
         `
         )
@@ -766,7 +770,7 @@ export function registerTripRoutes(app: Express) {
         throw ApiError.internal('Failed to fetch trips');
       }
 
-      // Transform trips and flatten ship/resort data
+      // Transform trips and flatten ship/resort/charter data
       const transformedTrips = (rawTrips || []).map(trip => {
         const flattenedTrip = {
           ...trip,
@@ -774,6 +778,8 @@ export function registerTripRoutes(app: Express) {
           cruise_line: trip.ships?.cruise_lines?.name || null,
           resort_name: trip.resorts?.name || null,
           resort_location: trip.resorts?.location || null,
+          charter_company_name: trip.charter_companies?.name || null,
+          charter_company_logo: trip.charter_companies?.logo_url || null,
         };
         return tripStorage.transformTripData(flattenedTrip);
       });

@@ -6,12 +6,16 @@ interface HeroSectionProps {
   tripName?: string;
   tripDescription?: string;
   tripType?: 'cruise' | 'resort' | null;
+  charterCompanyLogo?: string | null;
+  charterCompanyName?: string | null;
 }
 
 const HeroSection = ({
   tripName = 'Your Next Adventure',
   tripDescription = 'An exciting adventure awaits',
   tripType = null,
+  charterCompanyLogo = null,
+  charterCompanyName = null,
 }: HeroSectionProps) => {
   // Split trip name into words
   const words = tripName.split(' ');
@@ -51,11 +55,23 @@ const HeroSection = ({
     <section className="flex flex-1 flex-col gap-8 overflow-x-hidden pt-4 sm:pt-8 lg:pt-12">
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
-        <div className="bg-white/10 backdrop-blur-lg flex items-center gap-2.5 rounded-full border border-white/20 px-3 py-2">
+        <div className="flex items-center gap-2.5 pt-3">
+          {/* Charter Logo - Left side */}
+          {charterCompanyLogo && (
+            <img
+              src={charterCompanyLogo}
+              alt={charterCompanyName || 'Charter Company'}
+              className="h-8 w-auto object-contain"
+              loading="lazy"
+            />
+          )}
           <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50">
-            Interactive
+            {tripType === 'cruise'
+              ? 'Interactive Cruise Guide'
+              : tripType === 'resort'
+                ? 'Interactive Resort Guide'
+                : 'Interactive Travel Guide'}
           </Badge>
-          <span className="text-white">KGay Travel Guides</span>
         </div>
 
         <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap">
@@ -93,11 +109,6 @@ const HeroSection = ({
             </span>{' '}
             {remainingWords}
           </span>
-          {tripType && (
-            <Badge className="rounded-full bg-white/10 text-white border-white/20 text-xs mb-1">
-              {tripType.charAt(0).toUpperCase() + tripType.slice(1)}
-            </Badge>
-          )}
         </h1>
 
         {/* Single rotating image for mobile */}
@@ -117,11 +128,23 @@ const HeroSection = ({
 
       {/* Hero Content - Desktop/Tablet */}
       <div className="hidden sm:flex mx-auto max-w-3xl flex-col items-center gap-8 px-4 text-center sm:px-6 lg:px-8">
-        <div className="bg-white/10 backdrop-blur-lg flex items-center gap-2.5 rounded-full border border-white/20 px-3 py-2">
+        <div className="flex items-center gap-2.5">
+          {/* Charter Logo - Left side */}
+          {charterCompanyLogo && (
+            <img
+              src={charterCompanyLogo}
+              alt={charterCompanyName || 'Charter Company'}
+              className="h-8 w-auto object-contain"
+              loading="lazy"
+            />
+          )}
           <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50">
-            Interactive
+            {tripType === 'cruise'
+              ? 'Interactive Cruise Guide'
+              : tripType === 'resort'
+                ? 'Interactive Resort Guide'
+                : 'Interactive Travel Guide'}
           </Badge>
-          <span className="text-white">KGay Travel Guides</span>
         </div>
 
         <h1 className="text-2xl leading-[1.29167] font-bold text-balance sm:text-3xl lg:text-4xl text-white flex items-end justify-center gap-3 flex-wrap">
@@ -159,11 +182,6 @@ const HeroSection = ({
             </span>{' '}
             {remainingWords}
           </span>
-          {tripType && (
-            <Badge className="rounded-full bg-white/10 text-white border-white/20 text-xs mb-1">
-              {tripType.charAt(0).toUpperCase() + tripType.slice(1)}
-            </Badge>
-          )}
         </h1>
 
         <p className="text-white">{tripDescription}</p>

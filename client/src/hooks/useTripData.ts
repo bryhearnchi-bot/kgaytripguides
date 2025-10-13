@@ -25,6 +25,8 @@ export interface TripData {
     cruiseLine?: string;
     shipId?: number | null;
     resortId?: number | null;
+    charterCompanyName?: string | null;
+    charterCompanyLogo?: string | null;
   };
   itinerary: Array<{
     id: number;
@@ -353,6 +355,7 @@ export function transformTripData(data: TripData) {
   };
 
   return {
+    trip: data.trip, // Include the original trip data
     ITINERARY: itinerary,
     SCHEDULE: schedule,
     DAILY: daily,
@@ -389,7 +392,7 @@ function formatDate(date: Date): string {
 }
 
 export function useTripData(slug: string = getTripSlug()) {
-  return useQuery<TripData>({
+  return useQuery({
     queryKey: ['trip', slug],
     queryFn: async () => {
       const response = await fetch(`/api/trips/${slug}/complete`);

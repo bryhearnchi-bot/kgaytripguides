@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { Search, PlusSquare, Edit } from 'lucide-react';
+import { Search, PlusSquare, Edit, Building2 } from 'lucide-react';
 
 // Table configuration matching backend
 const TABLES = {
@@ -216,9 +217,16 @@ export default function AdminLookupTables() {
   const handleEdit = (item: TableItem) => {
     setEditingItem(item);
     const config = TABLES[activeTable];
-    setFormData({
+    const data: TableFormData = {
       [config.apiField]: item[config.nameField],
-    });
+    };
+
+    // Include logo_url for charter companies
+    if (activeTable === 'charter-companies' && item.logo_url) {
+      data.logo_url = item.logo_url;
+    }
+
+    setFormData(data);
     setShowAddModal(true);
   };
 
@@ -299,6 +307,11 @@ export default function AdminLookupTables() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
+                {activeTable === 'charter-companies' && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider w-24">
+                    Logo
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
                   Name
                 </th>
@@ -310,19 +323,42 @@ export default function AdminLookupTables() {
             <tbody className="divide-y divide-white/10">
               {isLoading ? (
                 <tr>
-                  <td colSpan={2} className="px-6 py-8 text-center text-white/60">
+                  <td
+                    colSpan={activeTable === 'charter-companies' ? 3 : 2}
+                    className="px-6 py-8 text-center text-white/60"
+                  >
                     Loading...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="px-6 py-8 text-center text-white/60">
+                  <td
+                    colSpan={activeTable === 'charter-companies' ? 3 : 2}
+                    className="px-6 py-8 text-center text-white/60"
+                  >
                     No {currentConfig.displayName.toLowerCase()} found
                   </td>
                 </tr>
               ) : (
                 items.map((item: TableItem) => (
                   <tr key={item.id} className="hover:bg-white/5">
+                    {activeTable === 'charter-companies' && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center justify-start">
+                          <div className="h-12 w-12 rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-white/10 flex items-center justify-center">
+                            {item.logo_url ? (
+                              <img
+                                src={item.logo_url}
+                                alt={item[currentConfig.nameField]}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <Building2 className="h-5 w-5 text-white/30" />
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {item[currentConfig.nameField]}
                     </td>
@@ -375,15 +411,33 @@ export default function AdminLookupTables() {
           onClick: () => handleModalOpenChange(false),
         }}
       >
-        <div>
-          <Label htmlFor="name">Name *</Label>
-          <Input
-            id="name"
-            value={formData[currentConfig.apiField] || ''}
-            onChange={e => setFormData({ ...formData, [currentConfig.apiField]: e.target.value })}
-            placeholder={`Enter ${currentConfig.displayName.slice(0, -1).toLowerCase()} name`}
-            required
-          />
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              value={formData[currentConfig.apiField] || ''}
+              onChange={e => setFormData({ ...formData, [currentConfig.apiField]: e.target.value })}
+              placeholder={`Enter ${currentConfig.displayName.slice(0, -1).toLowerCase()} name`}
+              required
+            />
+          </div>
+
+          {/* Logo Upload for Charter Companies */}
+          {activeTable === 'charter-companies' && (
+            <div>
+              <Label htmlFor="logo">Company Logo</Label>
+              <ImageUploadField
+                label="Company Logo"
+                value={formData.logo_url || ''}
+                onChange={url => setFormData({ ...formData, logo_url: url || '' })}
+                imageType="charters"
+                placeholder="No logo uploaded"
+                disabled={editingItem ? updateItemMutation.isPending : createItemMutation.isPending}
+                className="mt-2"
+              />
+            </div>
+          )}
         </div>
       </AdminFormModal>
     </div>

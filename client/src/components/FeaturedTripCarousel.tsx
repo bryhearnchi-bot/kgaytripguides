@@ -22,6 +22,41 @@ interface Trip {
   heroImageUrl: string | null;
   description: string | null;
   highlights: string[] | null;
+  charterCompanyName?: string;
+  charterCompanyLogo?: string;
+}
+
+// Helper function to get trip status badge
+function getTripStatusBadge(startDate: Date, endDate: Date, status: string) {
+  const now = new Date();
+  const daysUntilStart = differenceInCalendarDays(startDate, now);
+  const daysUntilEnd = differenceInCalendarDays(endDate, now);
+
+  // Trip is currently happening
+  if (now >= startDate && now <= endDate) {
+    return {
+      text: 'Sailing Now',
+      className: 'bg-emerald-500/90 backdrop-blur-sm text-white animate-pulse',
+      show: true,
+    };
+  }
+
+  // Trip starts in the next 30 days
+  if (daysUntilStart > 0 && daysUntilStart <= 30) {
+    const dayText = daysUntilStart === 1 ? 'day' : 'days';
+    return {
+      text: `${daysUntilStart} ${dayText}`,
+      className: 'bg-blue-500/90 backdrop-blur-sm text-white',
+      show: true,
+    };
+  }
+
+  // Don't show badge for trips far in the future or past trips
+  return {
+    text: '',
+    className: '',
+    show: false,
+  };
 }
 
 interface FeaturedTripCarouselProps {
@@ -33,6 +68,7 @@ function TripCard({ trip }: { trip: Trip }) {
   const startDate = dateOnly(trip.startDate);
   const endDate = dateOnly(trip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);
+  const statusBadge = getTripStatusBadge(startDate, endDate, trip.status);
 
   return (
     <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
@@ -67,13 +103,40 @@ function TripCard({ trip }: { trip: Trip }) {
               </span>
             ) : null}
           </div>
-          <div className="absolute top-3 right-3">
-            {trip.status === 'current' && (
-              <span className="px-3 py-1 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full animate-pulse">
-                Sailing Now
-              </span>
-            )}
+          {/* Charter Logo - Top Right with frosted glass background */}
+          {trip.charterCompanyLogo && (
+            <div className="absolute top-3 right-3">
+              <div className="bg-white/60 backdrop-blur-lg rounded-lg px-2 py-1 shadow-lg border border-white/30">
+                <img
+                  src={trip.charterCompanyLogo}
+                  alt={trip.charterCompanyName || 'Charter Company'}
+                  className="h-6 w-auto object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          )}
+          <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+            <div>{/* Status badge moved here if no logo, otherwise it stays clear */}</div>
+            <div>
+              {statusBadge.show && !trip.charterCompanyLogo && (
+                <span
+                  className={`px-3 py-1 text-xs font-semibold rounded-full ${statusBadge.className} border border-white/30`}
+                >
+                  {statusBadge.text}
+                </span>
+              )}
+            </div>
           </div>
+          {statusBadge.show && trip.charterCompanyLogo && (
+            <div className="absolute bottom-3 right-3">
+              <span
+                className={`px-3 py-1 text-xs font-semibold rounded-full ${statusBadge.className} border border-white/30`}
+              >
+                {statusBadge.text}
+              </span>
+            </div>
+          )}
         </div>
       </Link>
 
@@ -173,6 +236,7 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
   const startDate = dateOnly(currentTrip.startDate);
   const endDate = dateOnly(currentTrip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);
+  const statusBadge = getTripStatusBadge(startDate, endDate, currentTrip.status);
 
   return (
     <div>
@@ -235,42 +299,41 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                 ) : null}
               </div>
 
-              {/* Sailing Now Badge */}
-              <div className="absolute top-4 right-4">
-                <span className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold rounded-full animate-pulse border border-white/30 flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  Sailing Now
-                </span>
-              </div>
-
-              {/* Duration Badge at Bottom */}
-              <div className="absolute bottom-4 left-4">
-                <span className="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-ocean-900 text-xs font-semibold rounded-full">
-                  {duration} Days
-                </span>
-              </div>
+              {/* Status Badge */}
+              {statusBadge.show && (
+                <div className="absolute top-4 right-4">
+                  <span
+                    className={`px-3 py-1.5 text-xs font-bold rounded-full ${statusBadge.className} border border-white/30 flex items-center gap-1.5`}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    {statusBadge.text}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Featured Content - Right Side */}
             <div className="p-6 flex flex-col justify-between">
               <div>
-                {/* Location */}
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="w-4 h-4 text-ocean-300" />
-                  <span className="text-ocean-200 text-sm font-medium">
-                    {currentTrip.tripTypeId === 2
-                      ? currentTrip.resortLocation || 'Resort Location'
-                      : currentTrip.cruiseLine || 'Multiple Destinations'}
-                  </span>
+                {/* Header with Charter Logo */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  {/* Trip Name */}
+                  <h3 className="text-2xl font-black text-white leading-tight flex-1">
+                    {currentTrip.name}
+                  </h3>
+                  {/* Charter Logo - 2x larger (h-12 instead of h-6) */}
+                  {currentTrip.charterCompanyLogo && (
+                    <img
+                      src={currentTrip.charterCompanyLogo}
+                      alt={currentTrip.charterCompanyName || 'Charter Company'}
+                      className="h-12 w-auto object-contain rounded shadow flex-shrink-0"
+                      loading="lazy"
+                    />
+                  )}
                 </div>
 
-                {/* Trip Name */}
-                <h3 className="text-2xl font-black text-white mb-3 leading-tight">
-                  {currentTrip.name}
-                </h3>
-
-                {/* Description */}
-                <p className="text-ocean-100 mb-5 leading-relaxed line-clamp-2">
+                {/* Description - smaller font, more lines */}
+                <p className="text-sm text-ocean-100 mb-5 leading-relaxed line-clamp-4">
                   {currentTrip.description || 'An exciting adventure awaits'}
                 </p>
 

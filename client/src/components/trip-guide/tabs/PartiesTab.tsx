@@ -87,7 +87,8 @@ export const PartiesTab = memo(function PartiesTab({
               {/* Party Cards Grid - 2 columns max like Talent cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {day.events.map((event, eventIndex) => {
-                  const theme = getPartyTheme(event.title);
+                  // Use the partyTheme already attached to the event from the database
+                  const theme = event.partyTheme || getPartyTheme(event.title);
 
                   return (
                     <PartyCard

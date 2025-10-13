@@ -40,31 +40,33 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
         </div>
 
         {/* Right: Content */}
-        <div className="flex-1 p-4 sm:p-5 md:p-6 flex flex-col justify-between min-w-0">
-          <div className="flex-1 min-w-0">
+        <div className="flex-1 p-4 sm:p-5 md:p-6 flex flex-col min-w-0 relative">
+          {/* More Info Button - Top Right */}
+          <button className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 rounded-md border border-cyan-400/30 transition-all duration-200 text-xs font-medium group/btn z-10">
+            <span>More Info</span>
+            <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+          </button>
+
+          <div className="flex-1 min-w-0 pr-20">
             {/* Artist Name */}
             <h3 className="text-white font-bold text-base sm:text-lg mb-1.5 sm:mb-2 group-hover:text-ocean-200 transition-colors truncate">
               {talent.name}
             </h3>
 
             {/* Talent Type Badge */}
-            <div className="mb-2 sm:mb-3">
+            <div className="mb-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-200 text-xs font-medium border border-purple-400/30">
                 {CategoryIcon && <CategoryIcon className="w-3 h-3" />}
                 {talent.cat}
               </span>
             </div>
 
-            {/* Known For */}
-            <p className="text-ocean-100 text-xs sm:text-sm line-clamp-2 mb-2">{talent.knownFor}</p>
-          </div>
-
-          {/* More Info Button */}
-          <div className="flex items-center justify-end mt-2">
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 rounded-md border border-cyan-400/30 transition-all duration-200 text-xs font-medium group/btn">
-              <span>More Info</span>
-              <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
-            </button>
+            {/* Bio - Small font underneath badge */}
+            {talent.bio && (
+              <p className="text-white/70 text-xs leading-relaxed line-clamp-3 mb-2">
+                {talent.bio}
+              </p>
+            )}
           </div>
         </div>
       </div>

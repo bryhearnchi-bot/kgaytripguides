@@ -72,6 +72,7 @@ const locationTypeSchema = z.object({
 
 const charterCompanySchema = z.object({
   name: z.string().min(1).max(100).trim(),
+  logo_url: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 const cruiseLineSchema = z.object({
