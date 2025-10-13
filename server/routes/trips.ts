@@ -737,10 +737,24 @@ export function registerTripRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const supabaseAdmin = getSupabaseAdmin();
 
-      // Fetch all trips excluding drafts and previews (IDs 4 and 5)
-      const { data, error } = await supabaseAdmin
+      // Fetch all trips with ship and resort data
+      const { data: rawTrips, error } = await supabaseAdmin
         .from('trips')
-        .select('*')
+        .select(
+          `
+          *,
+          ships (
+            name,
+            cruise_lines (
+              name
+            )
+          ),
+          resorts (
+            name,
+            location
+          )
+        `
+        )
         .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
         .order('start_date', { ascending: false });
 
@@ -752,7 +766,18 @@ export function registerTripRoutes(app: Express) {
         throw ApiError.internal('Failed to fetch trips');
       }
 
-      const transformedTrips = (data || []).map(trip => tripStorage.transformTripData(trip));
+      // Transform trips and flatten ship/resort data
+      const transformedTrips = (rawTrips || []).map(trip => {
+        const flattenedTrip = {
+          ...trip,
+          ship_name: trip.ships?.name || null,
+          cruise_line: trip.ships?.cruise_lines?.name || null,
+          resort_name: trip.resorts?.name || null,
+          resort_location: trip.resorts?.location || null,
+        };
+        return tripStorage.transformTripData(flattenedTrip);
+      });
+
       return res.json(transformedTrips);
     })
   );

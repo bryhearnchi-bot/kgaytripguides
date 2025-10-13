@@ -117,6 +117,8 @@ export class TripStorage implements ITripStorage {
       slug: dbTrip.slug,
       shipName: dbTrip.ship_name,
       cruiseLine: dbTrip.cruise_line,
+      resortName: dbTrip.resort_name,
+      resortLocation: dbTrip.resort_location,
       tripType: dbTrip.trip_type,
       startDate: dbTrip.start_date,
       endDate: dbTrip.end_date,

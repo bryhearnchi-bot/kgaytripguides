@@ -261,7 +261,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
         <StandardizedContentLayout>
           {/* Tab Bar with Edit Button */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 pt-4 sm:pt-12 lg:pt-16">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 pt-8 sm:pt-16 lg:pt-16">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveTab('itinerary')}

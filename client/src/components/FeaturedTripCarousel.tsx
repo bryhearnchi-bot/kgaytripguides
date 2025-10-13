@@ -12,6 +12,8 @@ interface Trip {
   slug: string;
   shipName: string;
   cruiseLine: string;
+  resortName?: string;
+  resortLocation?: string;
   tripType?: string;
   tripTypeId?: number;
   startDate: string;
@@ -90,15 +92,38 @@ function TripCard({ trip }: { trip: Trip }) {
               {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
             </span>
           </div>
-          <div className="flex items-center gap-2 text-ocean-100 text-sm">
-            <Ship className="w-4 h-4 flex-shrink-0" />
-            <span>{trip.shipName || 'Ship Details Coming Soon'}</span>
-          </div>
-          {trip.highlights && Array.isArray(trip.highlights) && trip.highlights.length > 0 && (
-            <div className="flex items-center gap-2 text-ocean-100 text-sm">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span className="line-clamp-1">{trip.highlights[0]}</span>
-            </div>
+          {trip.tripTypeId === 2 ? (
+            // Resort Trip
+            <>
+              {trip.resortName && (
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <Home className="w-4 h-4 flex-shrink-0" />
+                  <span>{trip.resortName}</span>
+                </div>
+              )}
+              {trip.resortLocation && (
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span>{trip.resortLocation}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            // Cruise Trip
+            <>
+              {trip.shipName && (
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <Ship className="w-4 h-4 flex-shrink-0" />
+                  <span>{trip.shipName}</span>
+                </div>
+              )}
+              {trip.cruiseLine && (
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span>{trip.cruiseLine}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -237,11 +262,9 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="w-4 h-4 text-ocean-300" />
                   <span className="text-ocean-200 text-sm font-medium">
-                    {currentTrip.highlights &&
-                    Array.isArray(currentTrip.highlights) &&
-                    currentTrip.highlights.length > 0
-                      ? currentTrip.highlights[0]
-                      : 'Multiple Destinations'}
+                    {currentTrip.tripTypeId === 2
+                      ? currentTrip.resortLocation || 'Resort Location'
+                      : currentTrip.cruiseLine || 'Multiple Destinations'}
                   </span>
                 </div>
 
@@ -269,34 +292,56 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 text-white">
-                    <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
-                      <Ship className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {currentTrip.shipName || 'Ship Details Coming Soon'}
-                      </div>
-                      {currentTrip.cruiseLine && (
-                        <div className="text-xs text-ocean-200">{currentTrip.cruiseLine}</div>
+                  {currentTrip.tripTypeId === 2
+                    ? // Resort Trip
+                      currentTrip.resortName && (
+                        <div className="flex items-center gap-3 text-white">
+                          <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
+                            <Home className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold">{currentTrip.resortName}</div>
+                            {currentTrip.resortLocation && (
+                              <div className="text-xs text-ocean-200">
+                                {currentTrip.resortLocation}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    : // Cruise Trip
+                      currentTrip.shipName && (
+                        <div className="flex items-center gap-3 text-white">
+                          <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
+                            <Ship className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold">{currentTrip.shipName}</div>
+                            {currentTrip.cruiseLine && (
+                              <div className="text-xs text-ocean-200">{currentTrip.cruiseLine}</div>
+                            )}
+                          </div>
+                        </div>
                       )}
-                    </div>
-                  </div>
                 </div>
 
                 {/* Highlights Tags */}
                 {currentTrip.highlights &&
-                  Array.isArray(currentTrip.highlights) &&
-                  currentTrip.highlights.length > 1 && (
+                  typeof currentTrip.highlights === 'string' &&
+                  currentTrip.highlights.trim() && (
                     <div className="flex flex-wrap gap-2 mb-5">
-                      {currentTrip.highlights.slice(1, 4).map((highlight, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-ocean-700/40 text-ocean-100 rounded-full text-xs font-medium border border-ocean-500/30"
-                        >
-                          {highlight}
-                        </span>
-                      ))}
+                      {currentTrip.highlights
+                        .split('\n')
+                        .filter(h => h.trim())
+                        .slice(0, 3)
+                        .map((highlight, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-ocean-700/40 text-ocean-100 rounded-full text-xs font-medium border border-ocean-500/30"
+                          >
+                            {highlight.trim()}
+                          </span>
+                        ))}
                     </div>
                   )}
               </div>
