@@ -2,7 +2,7 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { PartyPopper, MapPin, Calendar } from 'lucide-react';
 import type { DailyEvent, DailySchedule, ItineraryStop, PartyTheme } from '@/data/trip-data';
-import { PartyFlipCard } from '../shared/PartyFlipCard';
+import { PartyCard } from '../shared/PartyCard';
 
 interface PartiesTabProps {
   SCHEDULED_DAILY: DailySchedule[];
@@ -19,8 +19,8 @@ export const PartiesTab = memo(function PartiesTab({
   timeFormat,
   onPartyClick,
 }: PartiesTabProps) {
-  // Track which card is currently flipped (using event title + time as unique key)
-  const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
+  // Track which card is currently expanded (only one at a time)
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
@@ -75,51 +75,41 @@ export const PartiesTab = memo(function PartiesTab({
               transition={{ duration: 0.25, delay: dayIndex * 0.03 }}
               className="space-y-4"
             >
-              {/* Simple Date Header */}
-              <div className="flex items-center gap-3 pb-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-blue-300" />
-                  <h3 className="text-xl font-bold text-white">{day.date}</h3>
+              {/* Compact Date Header */}
+              <div className="flex items-center gap-3 pb-2 mb-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
+                  <Calendar className="w-3.5 h-3.5 text-purple-300" />
+                  <h3 className="text-sm font-bold text-white">{day.date}</h3>
                 </div>
                 {day.port && (
-                  <>
-                    <span className="text-white/40">•</span>
-                    <div className="flex items-center gap-2 text-white/70">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-base">{day.port}</span>
-                    </div>
-                  </>
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-blue-300" />
+                    <span className="text-sm text-white/70 font-medium">{day.port}</span>
+                  </div>
                 )}
               </div>
 
-              {/* Party Cards Grid - All events for the day */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Party Cards Grid - Compact and fun */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {day.events.map((event, eventIndex) => {
                   const theme = getPartyTheme(event.title);
-                  const cardId = `${event.title}-${event.time}`;
-                  const isFlipped = flippedCardId === cardId;
+                  const cardId = `${day.key}-${event.title}-${event.time}`;
+                  const isExpanded = expandedCardId === cardId;
 
                   return (
-                    <motion.div
+                    <PartyCard
                       key={`${event.title}-${event.time}-${eventIndex}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.25,
-                        delay: dayIndex * 0.03 + eventIndex * 0.05,
+                      event={event}
+                      partyTheme={theme}
+                      timeFormat={timeFormat}
+                      onClick={() => onPartyClick(event)}
+                      delay={dayIndex * 0.05 + eventIndex * 0.06}
+                      isExpanded={isExpanded}
+                      onToggleExpand={() => {
+                        // Toggle: if this card is expanded, collapse it; otherwise expand it (and collapse others)
+                        setExpandedCardId(isExpanded ? null : cardId);
                       }}
-                    >
-                      <PartyFlipCard
-                        event={event}
-                        partyTheme={theme}
-                        timeFormat={timeFormat}
-                        isFlipped={isFlipped}
-                        onFlip={() => {
-                          // Toggle flip: if this card is flipped, unflip it; otherwise flip it (and unflip others)
-                          setFlippedCardId(isFlipped ? null : cardId);
-                        }}
-                      />
-                    </motion.div>
+                    />
                   );
                 })}
               </div>

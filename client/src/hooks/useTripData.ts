@@ -224,7 +224,7 @@ export function transformTripData(data: TripData) {
             theme.short_description ||
             (theme.longDescription ? `${theme.longDescription.substring(0, 50)}...` : ''),
           costumeIdeas: theme.costumeIdeas || theme.costume_ideas,
-          shoppingList:
+          amazonShoppingListUrl:
             theme.amazonShoppingListUrl ||
             theme.amazon_shopping_list_url ||
             theme.shoppingList ||
