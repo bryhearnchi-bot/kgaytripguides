@@ -4,12 +4,30 @@ import { Info, Utensils, Music, Lightbulb, Ship, Clock, MapPin } from 'lucide-re
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { IMPORTANT_INFO } from '@/data/trip-data';
+import { InfoSectionsBentoGrid } from '../info-sections/InfoSectionsBentoGrid';
 
 interface InfoTabProps {
   IMPORTANT_INFO: typeof IMPORTANT_INFO;
+  tripId?: number;
 }
 
-export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO }: InfoTabProps) {
+export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTabProps) {
+  // If tripId is provided, use the new database-driven bento grid
+  if (tripId) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center space-x-2 mb-6 -mt-2">
+          <Info className="w-5 h-5 text-white/80" />
+          <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
+            Trip Information
+          </h2>
+        </div>
+        <InfoSectionsBentoGrid tripId={tripId} />
+      </div>
+    );
+  }
+
+  // Legacy fallback for hardcoded IMPORTANT_INFO
   // Early return if no data
   if (!IMPORTANT_INFO || Object.keys(IMPORTANT_INFO).length === 0) {
     return (

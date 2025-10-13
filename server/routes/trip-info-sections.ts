@@ -7,11 +7,11 @@ import { logger } from '../logging/logger';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiError } from '../utils/ApiError';
 
-// Validation schemas for new structure
+// Validation schemas for new structure (using underscores to match database)
 const createSectionSchema = z.object({
   title: z.string().min(1).max(255),
   content: z.string().optional().nullable(),
-  section_type: z.enum(['trip-specific', 'general', 'always']),
+  section_type: z.enum(['trip_specific', 'general', 'always']),
   updated_by: z.string().optional().nullable(),
 });
 
@@ -92,7 +92,36 @@ export function registerTripInfoSectionRoutes(app: Express) {
     })
   );
 
-  // Get sections for a specific trip (via assignments)
+  // Get ALL sections for a specific trip (comprehensive view)
+  // Returns: trip_specific + always + general (if assigned)
+  app.get(
+    '/api/trip-info-sections/trip/:tripId/all',
+    validateParams(z.object({ tripId: z.string().transform(Number) }) as any),
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const supabaseAdmin = getSupabaseAdmin();
+      const tripId = req.params.tripId as unknown as number;
+
+      // Query that gets:
+      // 1. All "always" sections (appear on every trip)
+      // 2. All sections assigned to this specific trip (trip_specific or general)
+      const { data: sections, error } = await supabaseAdmin.rpc('get_trip_sections_comprehensive', {
+        p_trip_id: tripId,
+      });
+
+      if (error) {
+        logger.error('Error fetching comprehensive trip sections:', error, {
+          method: req.method,
+          path: req.path,
+          tripId,
+        });
+        throw ApiError.internal('Failed to fetch trip sections');
+      }
+
+      return res.json(sections || []);
+    })
+  );
+
+  // Get sections for a specific trip (via assignments only - legacy)
   app.get(
     '/api/trip-info-sections/trip/:tripId',
     validateParams(z.object({ tripId: z.string().transform(Number) }) as any),

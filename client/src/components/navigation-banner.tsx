@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
+import { useState, useEffect } from 'react';
 
 export default function NavigationBanner() {
   const { user, profile, signOut } = useSupabaseAuthContext();
   const [currentLocation, setLocation] = useLocation();
+  const [showEditTrip, setShowEditTrip] = useState(false);
 
   const isAdminRoute = currentLocation.startsWith('/admin');
 
@@ -25,6 +27,23 @@ export default function NavigationBanner() {
       detail: { action: 'toggle' },
     });
     window.dispatchEvent(event);
+  };
+
+  // Listen for edit trip availability from TripGuide component
+  useEffect(() => {
+    const handleEditTripAvailable = (e: CustomEvent) => {
+      setShowEditTrip(e.detail.available);
+    };
+
+    window.addEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
+
+    return () => {
+      window.removeEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
+    };
+  }, []);
+
+  const handleEditTrip = () => {
+    window.dispatchEvent(new CustomEvent('request-edit-trip'));
   };
 
   return (
@@ -64,6 +83,8 @@ export default function NavigationBanner() {
               profile={profile}
               onLogout={handleLogout}
               onNavigate={setLocation}
+              onEditTrip={handleEditTrip}
+              showEditTrip={showEditTrip}
               className="touch-manipulation"
             />
           ) : (

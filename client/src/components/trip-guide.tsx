@@ -4,7 +4,7 @@ import { dateOnly } from '@/lib/utils';
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
-import { Map, CalendarDays, PartyPopper, Star, Info, Eye, CheckCircle, Edit } from 'lucide-react';
+import { Map, CalendarDays, PartyPopper, Star, Info, Eye, CheckCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import type { Talent } from '@/data/trip-data';
@@ -244,6 +244,28 @@ export default function TripGuide({ slug }: TripGuideProps) {
     }
   }, [tripData?.trip?.id, toast]);
 
+  // Expose edit trip handler globally for navigation banner
+  useEffect(() => {
+    if (canEditTrip && tripData?.trip) {
+      const handleEditTripEvent = () => {
+        setShowEditModal(true);
+      };
+
+      // Register the handler
+      window.addEventListener('request-edit-trip', handleEditTripEvent);
+
+      // Dispatch event to notify that edit trip is available
+      window.dispatchEvent(new CustomEvent('edit-trip-available', { detail: { available: true } }));
+
+      return () => {
+        window.removeEventListener('request-edit-trip', handleEditTripEvent);
+        window.dispatchEvent(
+          new CustomEvent('edit-trip-available', { detail: { available: false } })
+        );
+      };
+    }
+  }, [canEditTrip, tripData?.trip]);
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -300,8 +322,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
         )}
 
         <StandardizedContentLayout>
-          {/* Tab Bar with Edit Button */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 pt-8 sm:pt-16 lg:pt-16">
+          {/* Tab Bar */}
+          <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveTab('itinerary')}
@@ -314,6 +336,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
               >
                 <Map className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">{isCruise ? 'Itinerary' : 'Schedule'}</span>
+                {activeTab === 'itinerary' && (
+                  <span className="sm:hidden">{isCruise ? 'Itinerary' : 'Schedule'}</span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('schedule')}
@@ -326,6 +351,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
               >
                 <CalendarDays className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Events</span>
+                {activeTab === 'schedule' && <span className="sm:hidden">Events</span>}
               </button>
               <button
                 onClick={() => setActiveTab('parties')}
@@ -338,6 +364,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
               >
                 <PartyPopper className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Parties</span>
+                {activeTab === 'parties' && <span className="sm:hidden">Parties</span>}
               </button>
               <button
                 onClick={() => setActiveTab('talent')}
@@ -350,6 +377,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
               >
                 <Star className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Talent</span>
+                {activeTab === 'talent' && <span className="sm:hidden">Talent</span>}
               </button>
               <button
                 onClick={() => setActiveTab('info')}
@@ -362,19 +390,9 @@ export default function TripGuide({ slug }: TripGuideProps) {
               >
                 <Info className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Info</span>
+                {activeTab === 'info' && <span className="sm:hidden">Info</span>}
               </button>
             </div>
-
-            {/* Edit Trip Button - Only visible to super_admin and content_manager */}
-            {canEditTrip && tripData?.trip && (
-              <Button
-                onClick={() => setShowEditModal(true)}
-                className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/30 backdrop-blur-md rounded-full px-4 py-2 h-auto transition-all duration-200 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20 flex items-center gap-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span className="font-semibold text-sm">Edit Trip</span>
-              </Button>
-            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -430,7 +448,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
             </TabsContent>
 
             <TabsContent value="info">
-              <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} />
+              <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} tripId={tripData?.trip?.id} />
             </TabsContent>
           </Tabs>
         </StandardizedContentLayout>
