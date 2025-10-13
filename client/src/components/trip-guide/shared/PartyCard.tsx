@@ -28,20 +28,18 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
   const formattedTime = useMemo(() => formatTime(event.time, timeFormat), [event.time, timeFormat]);
 
   return (
-    <div className="group relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-all duration-300 hover:shadow-xl hover:border-white/30 h-full">
+    <div className="group relative bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-colors duration-200 h-full">
       {/* Desktop: Side-by-side, Mobile: Stacked - Fixed height to match all cards */}
       <div className="flex flex-col sm:flex-row h-full sm:h-[240px]">
         {/* Left/Top: Party Image with overlay info */}
         <div className="relative w-full sm:w-1/2 h-48 sm:h-full flex-shrink-0">
-          {/* Gradient overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b sm:bg-gradient-to-r from-transparent via-transparent to-black/40 sm:to-black/20 z-10" />
-
           {/* Party Image */}
           <img
             src={imageUrl}
             alt={event.title}
             className="w-full h-full object-cover"
-            loading="lazy"
+            loading="eager"
+            decoding="async"
             onError={e => {
               e.currentTarget.src =
                 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/parties/sea_dyhgwy.jpg';
@@ -49,25 +47,25 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
           />
 
           {/* Sparkle Icon - Top Right */}
-          <div className="absolute top-3 right-3 bg-pink-500/30 backdrop-blur-sm rounded-full p-1.5 border border-pink-400/50 z-20">
+          <div className="absolute top-3 right-3 bg-pink-500/40 rounded-full p-1.5 border border-pink-400/50 z-20">
             <Sparkles className="w-3.5 h-3.5 text-pink-200" />
           </div>
 
           {/* Party Info Overlay - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 z-20 bg-gradient-to-t from-black/80 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-3 z-20 bg-gradient-to-t from-black/90 to-transparent">
             {/* Party Name */}
-            <h3 className="text-white font-bold text-base sm:text-lg mb-2 drop-shadow-lg line-clamp-2">
+            <h3 className="text-white font-bold text-base sm:text-lg mb-2 line-clamp-2">
               {event.title}
             </h3>
 
             {/* Time and Location Badges - Side by Side */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/40 backdrop-blur-sm border border-blue-400/50">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/50 border border-blue-400/50">
                 <Clock className="w-2.5 h-2.5 text-white" />
                 <span className="text-white text-[10px] font-semibold">{formattedTime}</span>
               </div>
 
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/40 backdrop-blur-sm border border-cyan-400/50">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/50 border border-cyan-400/50">
                 <MapPin className="w-2.5 h-2.5 text-white" />
                 <span className="text-white text-[10px] font-medium truncate max-w-[120px]">
                   {event.venue}
