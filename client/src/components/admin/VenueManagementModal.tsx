@@ -88,7 +88,6 @@ export function VenueManagementModal({
         setVenues(data);
       }
     } catch (error) {
-      console.error('Error fetching venues:', error);
       toast({
         title: 'Error',
         description: 'Failed to load venues',
@@ -106,9 +105,7 @@ export function VenueManagementModal({
         const data = await response.json();
         setVenueTypes(data);
       }
-    } catch (error) {
-      console.error('Error fetching venue types:', error);
-    }
+    } catch (error) {}
   };
 
   const handleEdit = (venue: Venue) => {
@@ -191,7 +188,6 @@ export function VenueManagementModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error updating venue:', error);
       toast({
         title: 'Error',
         description: 'Failed to update venue',
@@ -276,7 +272,6 @@ export function VenueManagementModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error creating venue:', error);
       toast({
         title: 'Error',
         description: 'Failed to create venue',
@@ -330,7 +325,6 @@ export function VenueManagementModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error deleting venue:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete venue',

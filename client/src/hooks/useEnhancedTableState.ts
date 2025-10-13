@@ -57,18 +57,19 @@ export function useEnhancedTableState({
               columnOrder: parsed.columnOrder || columns.map(col => col.key),
             };
           }
-        } catch (error) {
-          console.warn('Failed to parse stored table state:', error);
-        }
+        } catch (error) {}
       }
     }
 
     // Default state
     return {
-      columnWidths: columns.reduce((acc, col) => {
-        acc[col.key] = col.defaultWidth || DEFAULT_COLUMN_WIDTH;
-        return acc;
-      }, {} as Record<string, number>),
+      columnWidths: columns.reduce(
+        (acc, col) => {
+          acc[col.key] = col.defaultWidth || DEFAULT_COLUMN_WIDTH;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
       sortConfig: null,
       columnOrder: columns.map(col => col.key),
     };
@@ -112,60 +113,69 @@ export function useEnhancedTableState({
   }, [data, tableState.sortConfig, enableSorting]);
 
   // Handle sorting
-  const handleSort = useCallback((columnKey: string) => {
-    if (!enableSorting) return;
+  const handleSort = useCallback(
+    (columnKey: string) => {
+      if (!enableSorting) return;
 
-    const column = columns.find(col => col.key === columnKey);
-    if (!column?.sortable) return;
+      const column = columns.find(col => col.key === columnKey);
+      if (!column?.sortable) return;
 
-    setTableState(prev => {
-      const currentSort = prev.sortConfig;
-      let newSortConfig: { key: string; direction: 'asc' | 'desc' } | null = null;
+      setTableState(prev => {
+        const currentSort = prev.sortConfig;
+        let newSortConfig: { key: string; direction: 'asc' | 'desc' } | null = null;
 
-      if (currentSort?.key === columnKey) {
-        // Toggle direction or clear sort
-        if (currentSort.direction === 'asc') {
-          newSortConfig = { key: columnKey, direction: 'desc' };
+        if (currentSort?.key === columnKey) {
+          // Toggle direction or clear sort
+          if (currentSort.direction === 'asc') {
+            newSortConfig = { key: columnKey, direction: 'desc' };
+          } else {
+            newSortConfig = null; // Clear sort on third click
+          }
         } else {
-          newSortConfig = null; // Clear sort on third click
+          // Sort ascending by default
+          newSortConfig = { key: columnKey, direction: 'asc' };
         }
-      } else {
-        // Sort ascending by default
-        newSortConfig = { key: columnKey, direction: 'asc' };
-      }
 
-      return { ...prev, sortConfig: newSortConfig };
-    });
-  }, [columns, enableSorting]);
+        return { ...prev, sortConfig: newSortConfig };
+      });
+    },
+    [columns, enableSorting]
+  );
 
   // Handle column resizing
-  const handleColumnResize = useCallback((columnKey: string, newWidth: number) => {
-    if (!enableResizing) return;
+  const handleColumnResize = useCallback(
+    (columnKey: string, newWidth: number) => {
+      if (!enableResizing) return;
 
-    const column = columns.find(col => col.key === columnKey);
-    if (!column?.resizable) return;
+      const column = columns.find(col => col.key === columnKey);
+      if (!column?.resizable) return;
 
-    // Apply constraints
-    const minWidth = column.minWidth || MIN_COLUMN_WIDTH;
-    const maxWidth = column.maxWidth || MAX_COLUMN_WIDTH;
-    const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+      // Apply constraints
+      const minWidth = column.minWidth || MIN_COLUMN_WIDTH;
+      const maxWidth = column.maxWidth || MAX_COLUMN_WIDTH;
+      const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
-    setTableState(prev => ({
-      ...prev,
-      columnWidths: {
-        ...prev.columnWidths,
-        [columnKey]: constrainedWidth,
-      },
-    }));
-  }, [columns, enableResizing]);
+      setTableState(prev => ({
+        ...prev,
+        columnWidths: {
+          ...prev.columnWidths,
+          [columnKey]: constrainedWidth,
+        },
+      }));
+    },
+    [columns, enableResizing]
+  );
 
   // Reset table state to defaults
   const resetTableState = useCallback(() => {
     const defaultState = {
-      columnWidths: columns.reduce((acc, col) => {
-        acc[col.key] = col.defaultWidth || DEFAULT_COLUMN_WIDTH;
-        return acc;
-      }, {} as Record<string, number>),
+      columnWidths: columns.reduce(
+        (acc, col) => {
+          acc[col.key] = col.defaultWidth || DEFAULT_COLUMN_WIDTH;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
       sortConfig: null,
       columnOrder: columns.map(col => col.key),
     };
@@ -173,17 +183,23 @@ export function useEnhancedTableState({
   }, [columns]);
 
   // Get column width
-  const getColumnWidth = useCallback((columnKey: string) => {
-    return tableState.columnWidths[columnKey] || DEFAULT_COLUMN_WIDTH;
-  }, [tableState.columnWidths]);
+  const getColumnWidth = useCallback(
+    (columnKey: string) => {
+      return tableState.columnWidths[columnKey] || DEFAULT_COLUMN_WIDTH;
+    },
+    [tableState.columnWidths]
+  );
 
   // Get sort state for a column
-  const getSortState = useCallback((columnKey: string) => {
-    if (tableState.sortConfig?.key === columnKey) {
-      return tableState.sortConfig.direction;
-    }
-    return null;
-  }, [tableState.sortConfig]);
+  const getSortState = useCallback(
+    (columnKey: string) => {
+      if (tableState.sortConfig?.key === columnKey) {
+        return tableState.sortConfig.direction;
+      }
+      return null;
+    },
+    [tableState.sortConfig]
+  );
 
   return {
     // State

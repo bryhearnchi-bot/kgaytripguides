@@ -25,7 +25,7 @@ export function LocationSearchBar({
   onChange,
   className,
   disabled = false,
-  required = false
+  required = false,
 }: LocationSearchBarProps) {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<LocationData[]>([]);
@@ -64,7 +64,7 @@ export function LocationSearchBar({
       );
 
       const searchPromise = locationService.searchLocations(query);
-      const results = await Promise.race([searchPromise, timeoutPromise]) as LocationData[];
+      const results = (await Promise.race([searchPromise, timeoutPromise])) as LocationData[];
 
       setSuggestions(results);
 
@@ -74,9 +74,7 @@ export function LocationSearchBar({
           inputRef.current.focus();
         }
       }, 0);
-
     } catch (error) {
-      console.error('Search error:', error);
       setSuggestions([]);
     } finally {
       setIsLoading(false);
@@ -128,7 +126,6 @@ export function LocationSearchBar({
     }, 0);
   };
 
-
   const handleClear = () => {
     setInputValue('');
     setSelectedLocation(null);
@@ -163,7 +160,7 @@ export function LocationSearchBar({
               id="location-search"
               placeholder={placeholder}
               value={inputValue}
-              onChange={(e) => handleInputChange(e.target.value)}
+              onChange={e => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => {
                 if (inputValue.length >= 2) {
@@ -199,8 +196,8 @@ export function LocationSearchBar({
           <PopoverContent
             className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#10192f]/95 border-white/10 backdrop-blur"
             align="start"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-            onCloseAutoFocus={(e) => e.preventDefault()}
+            onOpenAutoFocus={e => e.preventDefault()}
+            onCloseAutoFocus={e => e.preventDefault()}
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-[200px] overflow-y-auto custom-scrollbar">
@@ -213,9 +210,7 @@ export function LocationSearchBar({
                     >
                       <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
                       <div className="flex-1 overflow-hidden">
-                        <div className="text-sm font-medium truncate">
-                          {location.formatted}
-                        </div>
+                        <div className="text-sm font-medium truncate">{location.formatted}</div>
                         {location.city && (
                           <div className="text-xs text-white/60 truncate">
                             {location.countryCode}

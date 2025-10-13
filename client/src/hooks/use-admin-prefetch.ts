@@ -17,17 +17,16 @@ export function useAdminPrefetch() {
         queryKey,
         queryFn: async () => {
           const response = await fetch(endpoint, {
-            credentials: 'include'
+            credentials: 'include',
           });
           if (!response.ok) throw new Error(`Failed to fetch ${endpoint}`);
           return response.json();
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
-        gcTime: 10 * 60 * 1000,   // 10 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
       });
     } catch (error) {
       // Silently fail prefetch attempts to avoid disrupting UX
-      console.debug(`Prefetch failed for ${endpoint}:`, error);
     }
   };
 
@@ -47,25 +46,19 @@ export function useAdminPrefetch() {
       ];
 
       // Admin-only data
-      const adminQueries = [
-        { queryKey: ['users'], endpoint: '/api/admin/users' },
-      ];
+      const adminQueries = [{ queryKey: ['users'], endpoint: '/api/admin/users' }];
 
       // Prefetch management data for content managers and above
       if (profile.role && ['super_admin', 'content_manager'].includes(profile.role)) {
         await Promise.allSettled(
-          managementQueries.map(({ queryKey, endpoint }) =>
-            prefetchQuery(queryKey, endpoint)
-          )
+          managementQueries.map(({ queryKey, endpoint }) => prefetchQuery(queryKey, endpoint))
         );
       }
 
       // Prefetch admin data for super admins only
       if (profile.role && ['super_admin'].includes(profile.role)) {
         await Promise.allSettled(
-          adminQueries.map(({ queryKey, endpoint }) =>
-            prefetchQuery(queryKey, endpoint)
-          )
+          adminQueries.map(({ queryKey, endpoint }) => prefetchQuery(queryKey, endpoint))
         );
       }
 
@@ -78,7 +71,7 @@ export function useAdminPrefetch() {
   }, [profile, queryClient]);
 
   return {
-    isPrefetched: prefetchedRef.current
+    isPrefetched: prefetchedRef.current,
   };
 }
 
@@ -88,9 +81,9 @@ export function useAdminPrefetch() {
  */
 export function useAdminQueryOptions() {
   return {
-    staleTime: 5 * 60 * 1000,     // Data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000,       // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false,   // Don't refetch on focus
+    staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on focus
     refetchOnMount: 'always' as const, // Always check for updates on mount
     retry: (failureCount: number, error: Error) => {
       // Don't retry auth errors

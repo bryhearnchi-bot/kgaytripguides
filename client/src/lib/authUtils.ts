@@ -19,22 +19,24 @@ export enum AuthErrorType {
   TOKEN_EXPIRED = 'TOKEN_EXPIRED',
   INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
   NETWORK_ERROR = 'NETWORK_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
 }
 
 /**
  * Get authorization headers with fresh session token
  */
 export async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
   if (error) {
-    console.error('Error getting session:', error);
     throw new ApiError('Failed to get authentication session', AuthErrorType.NO_SESSION);
   }
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   };
 
   if (session?.access_token) {
@@ -60,14 +62,14 @@ export async function authenticatedFetch(
     // Merge headers
     const headers = {
       ...authHeaders,
-      ...options.headers
+      ...options.headers,
     };
 
     // Make request with authentication
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include'
+      credentials: 'include',
     });
 
     // Handle authentication errors
@@ -117,7 +119,7 @@ export async function authenticatedGet<T>(url: string): Promise<T> {
 export async function authenticatedPost<T>(url: string, data?: any): Promise<T> {
   const response = await authenticatedFetch(url, {
     method: 'POST',
-    body: data ? JSON.stringify(data) : undefined
+    body: data ? JSON.stringify(data) : undefined,
   });
 
   if (!response.ok) {
@@ -134,7 +136,7 @@ export async function authenticatedPost<T>(url: string, data?: any): Promise<T> 
 export async function authenticatedPut<T>(url: string, data?: any): Promise<T> {
   const response = await authenticatedFetch(url, {
     method: 'PUT',
-    body: data ? JSON.stringify(data) : undefined
+    body: data ? JSON.stringify(data) : undefined,
   });
 
   if (!response.ok) {
@@ -185,7 +187,9 @@ export class ApiError extends Error {
  * Check if user has admin role
  */
 export async function requireAdminRole(): Promise<void> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
     throw new ApiError('Authentication required', AuthErrorType.NO_SESSION);
@@ -211,15 +215,13 @@ export async function requireAdminRole(): Promise<void> {
  * Handle API errors consistently across components
  */
 export function handleApiError(error: unknown, toast: any): void {
-  console.error('API Error:', error);
-
   if (error instanceof ApiError) {
     switch (error.code) {
       case AuthErrorType.NO_SESSION:
         toast({
           title: 'Authentication Required',
           description: 'Please log in to continue.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         // Optionally redirect to login
         break;
@@ -229,7 +231,7 @@ export function handleApiError(error: unknown, toast: any): void {
         toast({
           title: 'Session Expired',
           description: 'Please log in again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         // Force logout
         supabase.auth.signOut();
@@ -238,8 +240,8 @@ export function handleApiError(error: unknown, toast: any): void {
       case AuthErrorType.INSUFFICIENT_PERMISSIONS:
         toast({
           title: 'Access Denied',
-          description: 'You don\'t have permission to perform this action.',
-          variant: 'destructive'
+          description: "You don't have permission to perform this action.",
+          variant: 'destructive',
         });
         break;
 
@@ -247,7 +249,7 @@ export function handleApiError(error: unknown, toast: any): void {
         toast({
           title: 'Connection Error',
           description: 'Please check your internet connection and try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         break;
 
@@ -255,14 +257,14 @@ export function handleApiError(error: unknown, toast: any): void {
         toast({
           title: 'Error',
           description: error.message || 'An unexpected error occurred.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
     }
   } else {
     toast({
       title: 'Error',
       description: 'An unexpected error occurred. Please try again.',
-      variant: 'destructive'
+      variant: 'destructive',
     });
   }
 }
@@ -284,11 +286,14 @@ export async function retryAuthenticatedRequest<T>(
       lastError = error instanceof Error ? error : new Error('Unknown error');
 
       // Don't retry authentication errors
-      if (error instanceof ApiError && [
-        AuthErrorType.NO_SESSION,
-        AuthErrorType.INVALID_TOKEN,
-        AuthErrorType.INSUFFICIENT_PERMISSIONS
-      ].includes(error.code as AuthErrorType)) {
+      if (
+        error instanceof ApiError &&
+        [
+          AuthErrorType.NO_SESSION,
+          AuthErrorType.INVALID_TOKEN,
+          AuthErrorType.INSUFFICIENT_PERMISSIONS,
+        ].includes(error.code as AuthErrorType)
+      ) {
         throw error;
       }
 

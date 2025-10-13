@@ -153,7 +153,6 @@ export function VenueDropdown({
       let endpoint: string;
       if (tripType === 'cruise') {
         if (!shipId) {
-          console.log('[VenueDropdown] No shipId provided for cruise trip');
           setVenues([]);
           setLoading(false);
           return;
@@ -161,7 +160,6 @@ export function VenueDropdown({
         endpoint = `/api/admin/ships/${shipId}/venues`;
       } else {
         if (!resortId) {
-          console.log('[VenueDropdown] No resortId provided for resort trip');
           setVenues([]);
           setLoading(false);
           return;
@@ -169,20 +167,16 @@ export function VenueDropdown({
         endpoint = `/api/admin/resorts/${resortId}/venues`;
       }
 
-      console.log('[VenueDropdown] Fetching venues from:', endpoint);
       const response = await api.get(endpoint);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[VenueDropdown] Error response:', errorText);
         throw new Error(`Failed to fetch venues: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('[VenueDropdown] Received data:', data);
       setVenues(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('[VenueDropdown] Error fetching venues:', error);
       setVenues([]);
       toast({
         title: 'Error',
@@ -201,7 +195,6 @@ export function VenueDropdown({
       // Ensure data is an array
       setVenueTypes(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching venue types:', error);
       setVenueTypes([]); // Set empty array on error
     }
   };
@@ -260,7 +253,6 @@ export function VenueDropdown({
       setShowCreateModal(false);
       setFormData({ name: '', venueTypeId: '', description: '' });
     } catch (error) {
-      console.error('Error creating venue:', error);
       toast({
         title: 'Error',
         description: 'Failed to create venue',

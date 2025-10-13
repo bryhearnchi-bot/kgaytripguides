@@ -64,7 +64,6 @@ export const logError = (error: unknown, context?: string) => {
   const isDevelopment = import.meta.env.DEV;
 
   if (isDevelopment) {
-    console.error(`Error${context ? ` in ${context}` : ''}:`, error);
   } else {
     // In production, you might want to send to an error tracking service
     // Example: Sentry.captureException(error, { tags: { context } });

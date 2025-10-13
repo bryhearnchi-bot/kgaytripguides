@@ -18,7 +18,7 @@ export function PullToRefresh({
   disabled = false,
   refreshingText = 'Refreshing...',
   pullText = 'Pull to refresh',
-  releaseText = 'Release to refresh'
+  releaseText = 'Release to refresh',
 }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,7 +59,6 @@ export function PullToRefresh({
       try {
         await onRefresh();
       } catch (error) {
-        console.error('Refresh error:', error);
       } finally {
         setIsRefreshing(false);
       }
@@ -104,7 +103,7 @@ export function PullToRefresh({
         style={{
           height: `${Math.max(pullDistance, isRefreshing ? 60 : 0)}px`,
           opacity: isRefreshing ? 1 : refreshOpacity,
-          transform: `translateY(-${isRefreshing ? 0 : Math.max(60 - pullDistance, 0)}px)`
+          transform: `translateY(-${isRefreshing ? 0 : Math.max(60 - pullDistance, 0)}px)`,
         }}
       >
         <RefreshCw
@@ -112,19 +111,17 @@ export function PullToRefresh({
             isRefreshing ? 'animate-spin' : ''
           }`}
           style={{
-            transform: isRefreshing ? 'none' : `rotate(${Math.min(pullDistance * 2, 180)}deg)`
+            transform: isRefreshing ? 'none' : `rotate(${Math.min(pullDistance * 2, 180)}deg)`,
           }}
         />
-        <div className="text-sm font-medium mt-2">
-          {getRefreshText()}
-        </div>
+        <div className="text-sm font-medium mt-2">{getRefreshText()}</div>
       </div>
 
       {/* Content */}
       <div
         className="transition-transform duration-200"
         style={{
-          transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`
+          transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`,
         }}
       >
         {children}

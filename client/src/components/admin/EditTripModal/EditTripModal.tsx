@@ -53,10 +53,6 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
     // Only populate once when modal first opens with trip data
     if (trip && open && !hasInitialized.current) {
       hasInitialized.current = true;
-      console.log('EditTripModal: Populating context with trip data');
-      console.log('Trip object received:', trip);
-      console.log('Itinerary entries:', trip.itineraryEntries);
-      console.log('Schedule entries:', trip.scheduleEntries);
 
       // Helper to format date to YYYY-MM-DD (DatePicker expects this format)
       const formatDate = (dateStr: string | null | undefined): string => {
@@ -81,9 +77,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
           if (response.ok) {
             return await response.json();
           }
-        } catch (error) {
-          console.error('Failed to fetch ship details:', error);
-        }
+        } catch (error) {}
         return null;
       };
 
@@ -94,9 +88,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
           if (response.ok) {
             return await response.json();
           }
-        } catch (error) {
-          console.error('Failed to fetch resort details:', error);
-        }
+        } catch (error) {}
         return null;
       };
 
@@ -191,22 +183,11 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         };
 
         // CRITICAL DEBUG: Log the data we're about to restore
-        console.log('🔍 EditTripModal - Restoring draft with data:', {
-          itineraryEntries: editState.itineraryEntries,
-          itineraryLength: editState.itineraryEntries?.length,
-          scheduleEntries: editState.scheduleEntries,
-          scheduleLength: editState.scheduleEntries?.length,
-          tripId: trip.id,
-          tripName: trip.name,
-          shipData: editState.shipData,
-          resortData: editState.resortData,
-        });
 
         // Use restoreFromDraft to populate all state at once
         restoreFromDraft(editState);
 
         // CRITICAL DEBUG: Verify state was set
-        console.log('✅ EditTripModal - Called restoreFromDraft');
       };
 
       // Execute async population
@@ -256,22 +237,16 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
       }
 
       // Save trip data
-      console.log(
-        '🚀 EditTripModal - Sending update payload:',
-        JSON.stringify(updatePayload, null, 2)
-      );
       const response = await api.post('/api/admin/trips', updatePayload);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to update trip' }));
-        console.error('❌ EditTripModal - Server error:', JSON.stringify(errorData, null, 2));
 
         // If validation error, show detailed message
         if (errorData.details && Array.isArray(errorData.details)) {
           const validationErrors = errorData.details
             .map((e: any) => `${e.path?.join('.') || 'Field'}: ${e.message}`)
             .join(', ');
-          console.error('📋 EditTripModal - Validation errors:', validationErrors);
           throw new Error(`Validation failed: ${validationErrors}`);
         }
 

@@ -40,16 +40,7 @@ export function ResortPreview({ resortData, resortId, onEdit }: ResortPreviewPro
     const fetchResortRelations = async () => {
       // Use resortId prop if provided, otherwise try resortData.id
       const id = resortId ?? resortData?.id;
-      console.log(
-        '[ResortPreview] Fetching relations - resortId:',
-        resortId,
-        'resortData.id:',
-        resortData?.id,
-        'resolved id:',
-        id
-      );
       if (!id) {
-        console.log('[ResortPreview] No ID available, clearing data');
         setVenues([]);
         setAmenities([]);
         return;
@@ -57,28 +48,21 @@ export function ResortPreview({ resortData, resortId, onEdit }: ResortPreviewPro
 
       setLoading(true);
       try {
-        console.log('[ResortPreview] Fetching from API for resort ID:', id);
         const [venuesResponse, amenitiesResponse] = await Promise.all([
           api.get(`/api/admin/resorts/${id}/venues`),
           api.get(`/api/resorts/${id}/amenities`),
         ]);
 
-        console.log('[ResortPreview] Venues response:', venuesResponse.ok);
-        console.log('[ResortPreview] Amenities response:', amenitiesResponse.ok);
-
         if (venuesResponse.ok) {
           const venuesData = await venuesResponse.json();
-          console.log('[ResortPreview] Venues data:', venuesData);
           setVenues(venuesData);
         }
 
         if (amenitiesResponse.ok) {
           const amenitiesData = await amenitiesResponse.json();
-          console.log('[ResortPreview] Amenities data:', amenitiesData);
           setAmenities(amenitiesData);
         }
       } catch (error) {
-        console.error('Error fetching resort relations:', error);
       } finally {
         setLoading(false);
       }

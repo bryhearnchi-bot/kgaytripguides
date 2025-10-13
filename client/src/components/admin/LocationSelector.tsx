@@ -211,7 +211,7 @@ export function LocationSelector({
       });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating location:', error);
+      // Error silently handled
     } finally {
       setCreating(false);
     }

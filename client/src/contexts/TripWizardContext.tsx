@@ -338,12 +338,6 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
 
   const restoreFromDraft = (draftState: Partial<TripWizardState>) => {
     // CRITICAL DEBUG: Log what we're receiving
-    console.log('🔍 TripWizardContext.restoreFromDraft - Received draftState:', {
-      itineraryEntries: draftState.itineraryEntries,
-      itineraryLength: draftState.itineraryEntries?.length,
-      scheduleEntries: draftState.scheduleEntries,
-      scheduleLength: draftState.scheduleEntries?.length,
-    });
 
     // Restore complete state from draft in one operation
     // This ensures all state is updated atomically
@@ -377,14 +371,6 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
       tempFiles: draftState.tempFiles ?? [],
       isEditMode: draftState.isEditMode ?? false, // CRITICAL: Preserve edit mode flag
     };
-
-    console.log('✅ TripWizardContext.restoreFromDraft - Setting state:', {
-      itineraryEntries: newState.itineraryEntries,
-      itineraryLength: newState.itineraryEntries?.length,
-      scheduleEntries: newState.scheduleEntries,
-      scheduleLength: newState.scheduleEntries?.length,
-      isEditMode: newState.isEditMode,
-    });
 
     setState(newState);
   };

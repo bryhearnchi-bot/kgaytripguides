@@ -19,10 +19,11 @@ export function SocialAuthButtons({ mode, onSuccess }: SocialAuthButtonsProps) {
       await signInWithProvider(provider);
       onSuccess?.();
     } catch (error: any) {
-      console.error(`${provider} auth error:`, error);
       toast({
         title: 'Authentication Failed',
-        description: error.message || `Unable to ${mode === 'sign_in' ? 'sign in' : 'sign up'} with ${provider}`,
+        description:
+          error.message ||
+          `Unable to ${mode === 'sign_in' ? 'sign in' : 'sign up'} with ${provider}`,
         variant: 'destructive',
       });
     } finally {

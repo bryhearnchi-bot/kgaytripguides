@@ -170,15 +170,6 @@ export default function TripsManagement() {
       const trips = data.trips || data;
 
       // CRITICAL DEBUG: Log what we received from API
-      console.log('🔍 trips-management - API response received:', {
-        tripCount: trips.length,
-        firstTripId: trips[0]?.id,
-        firstTripName: trips[0]?.name,
-        firstTripItineraryEntries: trips[0]?.itineraryEntries,
-        firstTripItineraryLength: trips[0]?.itineraryEntries?.length,
-        firstTripScheduleEntries: trips[0]?.scheduleEntries,
-        firstTripScheduleLength: trips[0]?.scheduleEntries?.length,
-      });
 
       return trips;
     },
@@ -795,28 +786,6 @@ export default function TripsManagement() {
                     const events = await eventsResponse.json();
                     const tripTalent = await talentResponse.json();
 
-                    console.log('🔥 API Responses:', {
-                      eventsResponse: { status: eventsResponse.status, ok: eventsResponse.ok },
-                      talentResponse: { status: talentResponse.status, ok: talentResponse.ok },
-                      events,
-                      eventsType: typeof events,
-                      eventsIsArray: Array.isArray(events),
-                      tripTalent,
-                      tripTalentType: typeof tripTalent,
-                      tripTalentIsArray: Array.isArray(tripTalent),
-                    });
-
-                    console.log('🎯 Setting trip to edit:', {
-                      id: trip.id,
-                      name: trip.name,
-                      itineraryEntries: trip.itineraryEntries,
-                      itineraryCount: trip.itineraryEntries?.length,
-                      scheduleEntries: trip.scheduleEntries,
-                      scheduleCount: trip.scheduleEntries?.length,
-                      eventsCount: events?.length,
-                      talentCount: tripTalent?.length,
-                    });
-
                     setTripToEdit({
                       ...trip,
                       events,
@@ -824,7 +793,6 @@ export default function TripsManagement() {
                     });
                     setEditTripModalOpen(true);
                   } catch (error) {
-                    console.error('Error fetching trip data:', error);
                     toast({
                       title: 'Error',
                       description: 'Failed to load trip data',

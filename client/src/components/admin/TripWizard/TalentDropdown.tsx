@@ -148,7 +148,6 @@ export function TalentDropdown({
       // Ensure data is an array
       setTalent(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching talent:', error);
       setTalent([]); // Set empty array on error
       toast({
         title: 'Error',
@@ -167,7 +166,6 @@ export function TalentDropdown({
       // Ensure data is an array
       setTalentCategories(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching talent categories:', error);
       setTalentCategories([]); // Set empty array on error
     }
   };
@@ -202,7 +200,6 @@ export function TalentDropdown({
       setShowCreateModal(false);
       setFormData({ name: '', talentCategoryId: '', bio: '' });
     } catch (error) {
-      console.error('Error creating talent:', error);
       toast({
         title: 'Error',
         description: 'Failed to create talent',

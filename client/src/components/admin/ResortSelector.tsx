@@ -150,7 +150,6 @@ export function ResortSelector({
       const data = await response.json();
       setResorts(data);
     } catch (error) {
-      console.error('Error fetching resorts:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch resorts');
     } finally {
       setLoading(false);
@@ -202,7 +201,6 @@ export function ResortSelector({
       });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating resort:', error);
     } finally {
       setCreating(false);
     }

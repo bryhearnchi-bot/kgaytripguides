@@ -119,7 +119,6 @@ export function CruiseLineSelector({
       const data = await response.json();
       setCruiseLines(data.items || []);
     } catch (error) {
-      console.error('Error fetching cruise lines:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch cruise lines');
     } finally {
       setLoading(false);
@@ -154,7 +153,6 @@ export function CruiseLineSelector({
       setCreateForm({ name: '' });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating cruise line:', error);
     } finally {
       setCreating(false);
     }

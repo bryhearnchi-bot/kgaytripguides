@@ -1,18 +1,10 @@
-import * as React from "react";
-import { useState } from "react";
-import {
-  CheckIcon,
-  ChevronDown,
-  Plus,
-} from "lucide-react";
+import * as React from 'react';
+import { useState } from 'react';
+import { CheckIcon, ChevronDown, Plus } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -21,9 +13,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // Add custom scrollbar styles
 const scrollbarStyles = `
@@ -66,9 +58,9 @@ export default function SingleSelectWithCreate({
   value,
   onValueChange,
   onCreateNew,
-  placeholder = "Select an option...",
-  searchPlaceholder = "Search options...",
-  createLabel = "Create new option",
+  placeholder = 'Select an option...',
+  searchPlaceholder = 'Search options...',
+  createLabel = 'Create new option',
   disabled = false,
   className,
   container,
@@ -77,7 +69,7 @@ export default function SingleSelectWithCreate({
 }: SingleSelectWithCreateProps) {
   const [open, setOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-  const [newItemName, setNewItemName] = useState("");
+  const [newItemName, setNewItemName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const selectedOption = options.find(option => option.id === value && value !== 0);
@@ -88,10 +80,9 @@ export default function SingleSelectWithCreate({
     setIsCreating(true);
     try {
       await onCreateNew(newItemName.trim());
-      setNewItemName("");
+      setNewItemName('');
       setShowCreate(false);
     } catch (error) {
-      console.error('Failed to create new option:', error);
     } finally {
       setIsCreating(false);
     }
@@ -103,7 +94,7 @@ export default function SingleSelectWithCreate({
   };
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={cn('grid gap-2', className)}>
       <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -112,14 +103,14 @@ export default function SingleSelectWithCreate({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "justify-between h-11 px-3.5",
-              "bg-white/[0.04] border-white/[0.08] border-[1.5px] rounded-[10px]",
-              "text-white text-sm font-normal",
-              "hover:bg-white/[0.06] hover:border-white/[0.12]",
-              "focus:outline-none focus:border-[#22d3ee]/60 focus:bg-[#22d3ee]/[0.03]",
-              "focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]",
-              "transition-all duration-200",
-              !selectedOption && "text-white/50"
+              'justify-between h-11 px-3.5',
+              'bg-white/[0.04] border-white/[0.08] border-[1.5px] rounded-[10px]',
+              'text-white text-sm font-normal',
+              'hover:bg-white/[0.06] hover:border-white/[0.12]',
+              'focus:outline-none focus:border-[#22d3ee]/60 focus:bg-[#22d3ee]/[0.03]',
+              'focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]',
+              'transition-all duration-200',
+              !selectedOption && 'text-white/50'
             )}
             disabled={disabled}
           >
@@ -129,8 +120,8 @@ export default function SingleSelectWithCreate({
         </PopoverTrigger>
         <PopoverContent
           className={cn(
-            "p-0 w-[var(--radix-popover-trigger-width)]",
-            "bg-[#0f172a] border-white/10 shadow-2xl"
+            'p-0 w-[var(--radix-popover-trigger-width)]',
+            'bg-[#0f172a] border-white/10 shadow-2xl'
           )}
           container={container}
         >
@@ -139,9 +130,9 @@ export default function SingleSelectWithCreate({
               <CommandInput
                 placeholder={searchPlaceholder}
                 className={cn(
-                  "h-11 px-3.5 border-0 border-b border-white/10",
-                  "bg-transparent text-white placeholder:text-white/40",
-                  "focus:ring-0 focus:border-[#22d3ee]/60"
+                  'h-11 px-3.5 border-0 border-b border-white/10',
+                  'bg-transparent text-white placeholder:text-white/40',
+                  'focus:ring-0 focus:border-[#22d3ee]/60'
                 )}
               />
             )}
@@ -150,30 +141,28 @@ export default function SingleSelectWithCreate({
                 No options found.
               </CommandEmpty>
               <CommandGroup>
-                {options.map((option) => (
+                {options.map(option => (
                   <CommandItem
                     key={option.id}
                     value={option.name}
                     onSelect={() => handleSelect(option.id)}
                     className={cn(
-                      "cursor-pointer px-3.5 py-2.5 text-white text-sm",
-                      "hover:bg-white/5 focus:bg-white/5",
-                      "data-[selected]:bg-transparent",
-                      "bg-transparent border-0"
+                      'cursor-pointer px-3.5 py-2.5 text-white text-sm',
+                      'hover:bg-white/5 focus:bg-white/5',
+                      'data-[selected]:bg-transparent',
+                      'bg-transparent border-0'
                     )}
                   >
                     <CheckIcon
                       className={cn(
-                        "mr-2 h-4 w-4 text-[#22d3ee]",
-                        value === option.id ? "opacity-100" : "opacity-0"
+                        'mr-2 h-4 w-4 text-[#22d3ee]',
+                        value === option.id ? 'opacity-100' : 'opacity-0'
                       )}
                     />
                     <div className="flex flex-col">
                       <span className="text-white">{option.name}</span>
                       {option.description && (
-                        <span className="text-sm text-white/50">
-                          {option.description}
-                        </span>
+                        <span className="text-sm text-white/50">{option.description}</span>
                       )}
                     </div>
                   </CommandItem>
@@ -188,9 +177,9 @@ export default function SingleSelectWithCreate({
                       <CommandItem
                         onSelect={() => setShowCreate(true)}
                         className={cn(
-                          "cursor-pointer px-3.5 py-2.5 text-[#22d3ee] text-sm",
-                          "hover:bg-white/5 focus:bg-white/5",
-                          "bg-transparent border-0"
+                          'cursor-pointer px-3.5 py-2.5 text-[#22d3ee] text-sm',
+                          'hover:bg-white/5 focus:bg-white/5',
+                          'bg-transparent border-0'
                         )}
                       >
                         <Plus className="mr-2 h-4 w-4" />
@@ -204,22 +193,22 @@ export default function SingleSelectWithCreate({
                         <Input
                           id="newItemName"
                           value={newItemName}
-                          onChange={(e) => setNewItemName(e.target.value)}
+                          onChange={e => setNewItemName(e.target.value)}
                           placeholder="Enter category name"
                           className={cn(
-                            "h-8 px-2.5 text-xs",
-                            "bg-white/[0.04] border-white/[0.08] border-[1.5px] rounded-[6px]",
-                            "text-white placeholder:text-white/40",
-                            "focus:outline-none focus:border-[#22d3ee]/60 focus:bg-[#22d3ee]/[0.03]",
-                            "focus:shadow-[0_0_0_2px_rgba(34,211,238,0.08)]"
+                            'h-8 px-2.5 text-xs',
+                            'bg-white/[0.04] border-white/[0.08] border-[1.5px] rounded-[6px]',
+                            'text-white placeholder:text-white/40',
+                            'focus:outline-none focus:border-[#22d3ee]/60 focus:bg-[#22d3ee]/[0.03]',
+                            'focus:shadow-[0_0_0_2px_rgba(34,211,238,0.08)]'
                           )}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
                               e.preventDefault();
                               handleCreateNew();
-                            } else if (e.key === "Escape") {
+                            } else if (e.key === 'Escape') {
                               setShowCreate(false);
-                              setNewItemName("");
+                              setNewItemName('');
                             }
                           }}
                         />
@@ -229,24 +218,24 @@ export default function SingleSelectWithCreate({
                             onClick={handleCreateNew}
                             disabled={!newItemName.trim() || isCreating}
                             className={cn(
-                              "h-6 text-xs px-3",
-                              "bg-[#22d3ee]/20 hover:bg-[#22d3ee]/30 text-[#22d3ee]",
-                              "border border-[#22d3ee]/30 hover:border-[#22d3ee]/50"
+                              'h-6 text-xs px-3',
+                              'bg-[#22d3ee]/20 hover:bg-[#22d3ee]/30 text-[#22d3ee]',
+                              'border border-[#22d3ee]/30 hover:border-[#22d3ee]/50'
                             )}
                           >
-                            {isCreating ? "Creating..." : "Create"}
+                            {isCreating ? 'Creating...' : 'Create'}
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
                               setShowCreate(false);
-                              setNewItemName("");
+                              setNewItemName('');
                             }}
                             className={cn(
-                              "h-6 text-xs px-3",
-                              "bg-white/[0.04] hover:bg-white/[0.08] text-white/70",
-                              "border border-white/10 hover:border-white/20"
+                              'h-6 text-xs px-3',
+                              'bg-white/[0.04] hover:bg-white/[0.08] text-white/70',
+                              'border border-white/10 hover:border-white/20'
                             )}
                           >
                             Cancel

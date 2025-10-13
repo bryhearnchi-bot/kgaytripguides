@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, LucideIcon } from 'lucide-react';
 import type { Talent } from '@/data/trip-data';
@@ -10,12 +10,12 @@ interface TalentCardProps {
   categoryIcon?: LucideIcon;
 }
 
-export const TalentCard: React.FC<TalentCardProps> = ({
+export const TalentCard = memo<TalentCardProps>(function TalentCard({
   talent,
   onClick,
   delay = 0,
   categoryIcon: CategoryIcon,
-}) => {
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -70,4 +70,4 @@ export const TalentCard: React.FC<TalentCardProps> = ({
       </div>
     </motion.div>
   );
-};
+});

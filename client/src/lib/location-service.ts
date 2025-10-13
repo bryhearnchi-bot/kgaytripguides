@@ -218,7 +218,6 @@ class LocationService {
 
       return results;
     } catch (error) {
-      console.error('Error searching locations:', error);
       return [];
     }
   }

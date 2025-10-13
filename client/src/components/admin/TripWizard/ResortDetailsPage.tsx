@@ -7,7 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
 export function ResortDetailsPage() {
-  console.log('ResortDetailsPage rendering - PREVIEW VERSION');
   const { state, setResortId, updateResortData } = useTripWizard();
   const queryClient = useQueryClient();
   const [selectedResortId, setSelectedResortId] = useState<number | null>(state.resortId || null);
@@ -79,9 +78,7 @@ export function ResortDetailsPage() {
             });
           }
         })
-        .catch(error => {
-          console.error('Error fetching resort:', error);
-        })
+        .catch(error => {})
         .finally(() => {
           setIsLoadingResort(false);
         });

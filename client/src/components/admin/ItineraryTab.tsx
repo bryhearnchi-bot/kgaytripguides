@@ -77,15 +77,7 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   // Load existing itinerary data
   useEffect(() => {
     if (existingItinerary) {
-      console.log('🔍 Admin ItineraryTab - Raw API response:', existingItinerary);
       const mappedDays = existingItinerary.map((day: any) => {
-        console.log('🔍 Mapping day:', {
-          id: day.id,
-          day: day.day,
-          locationName: day.locationName,
-          portName: day.portName,
-          willUse: day.locationName || day.portName || '',
-        });
         return {
           id: day.id,
           date: day.date ? (day.date.includes('T') ? day.date.split('T')[0] : day.date) : '',
@@ -101,7 +93,6 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
           orderIndex: day.orderIndex || 0,
         };
       });
-      console.log('🔍 Admin ItineraryTab - Mapped days:', mappedDays);
       setItineraryDays(mappedDays);
     }
   }, [existingItinerary]);

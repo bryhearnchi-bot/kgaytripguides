@@ -8,75 +8,84 @@ import { Badge } from '@/components/ui/badge';
 import { Ship, Calendar, MapPin, Users } from 'lucide-react';
 
 // Enhanced schema with more detailed validation
-const tripSchema = z.object({
-  name: z.string()
-    .min(3, 'Trip name must be at least 3 characters')
-    .max(100, 'Trip name must be less than 100 characters')
-    .regex(/^[a-zA-Z0-9\s\-'&]+$/, 'Trip name contains invalid characters'),
+const tripSchema = z
+  .object({
+    name: z
+      .string()
+      .min(3, 'Trip name must be at least 3 characters')
+      .max(100, 'Trip name must be less than 100 characters')
+      .regex(/^[a-zA-Z0-9\s\-'&]+$/, 'Trip name contains invalid characters'),
 
-  slug: z.string()
-    .min(3, 'Slug must be at least 3 characters')
-    .max(50, 'Slug must be less than 50 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+    slug: z
+      .string()
+      .min(3, 'Slug must be at least 3 characters')
+      .max(50, 'Slug must be less than 50 characters')
+      .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
 
-  shipName: z.string()
-    .min(2, 'Ship name must be at least 2 characters')
-    .max(100, 'Ship name must be less than 100 characters'),
+    shipName: z
+      .string()
+      .min(2, 'Ship name must be at least 2 characters')
+      .max(100, 'Ship name must be less than 100 characters'),
 
-  cruiseLine: z.string()
-    .min(2, 'Cruise line must be at least 2 characters')
-    .max(50, 'Cruise line must be less than 50 characters')
-    .optional(),
+    cruiseLine: z
+      .string()
+      .min(2, 'Cruise line must be at least 2 characters')
+      .max(50, 'Cruise line must be less than 50 characters')
+      .optional(),
 
-  tripType: z.enum(['cruise', 'hotel', 'flight', 'tour'], {
-    required_error: 'Please select a trip type',
-  }),
+    tripType: z.enum(['cruise', 'hotel', 'flight', 'tour'], {
+      required_error: 'Please select a trip type',
+    }),
 
-  startDate: z.string()
-    .min(1, 'Start date is required')
-    .refine((date) => {
-      const selectedDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return selectedDate >= today;
-    }, 'Start date cannot be in the past'),
+    startDate: z
+      .string()
+      .min(1, 'Start date is required')
+      .refine(date => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return selectedDate >= today;
+      }, 'Start date cannot be in the past'),
 
-  endDate: z.string()
-    .min(1, 'End date is required'),
+    endDate: z.string().min(1, 'End date is required'),
 
-  status: z.enum(['upcoming', 'ongoing', 'past'], {
-    required_error: 'Please select a status',
-  }),
+    status: z.enum(['upcoming', 'ongoing', 'past'], {
+      required_error: 'Please select a status',
+    }),
 
-  description: z.string()
-    .min(50, 'Description should be at least 50 characters for better SEO')
-    .max(2000, 'Description must be less than 2000 characters')
-    .optional(),
+    description: z
+      .string()
+      .min(50, 'Description should be at least 50 characters for better SEO')
+      .max(2000, 'Description must be less than 2000 characters')
+      .optional(),
 
-  heroImageUrl: z.string()
-    .url('Please enter a valid URL')
-    .optional()
-    .or(z.literal('')),
+    heroImageUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
 
-  capacity: z.number()
-    .int('Capacity must be a whole number')
-    .min(1, 'Capacity must be at least 1')
-    .max(10000, 'Capacity seems too high')
-    .optional(),
+    capacity: z
+      .number()
+      .int('Capacity must be a whole number')
+      .min(1, 'Capacity must be at least 1')
+      .max(10000, 'Capacity seems too high')
+      .optional(),
 
-  pricing: z.string()
-    .min(10, 'Pricing information should be detailed')
-    .max(1000, 'Pricing information is too long')
-    .optional(),
-}).refine((data) => {
-  if (data.startDate && data.endDate) {
-    return new Date(data.endDate) > new Date(data.startDate);
-  }
-  return true;
-}, {
-  message: "End date must be after start date",
-  path: ["endDate"],
-});
+    pricing: z
+      .string()
+      .min(10, 'Pricing information should be detailed')
+      .max(1000, 'Pricing information is too long')
+      .optional(),
+  })
+  .refine(
+    data => {
+      if (data.startDate && data.endDate) {
+        return new Date(data.endDate) > new Date(data.startDate);
+      }
+      return true;
+    },
+    {
+      message: 'End date must be after start date',
+      path: ['endDate'],
+    }
+  );
 
 type TripFormData = z.infer<typeof tripSchema>;
 
@@ -91,23 +100,27 @@ const validateSlugUniqueness = async (slug: string): Promise<ValidationResult[]>
   const existingSlugs = ['greek-isles-2024', 'caribbean-cruise', 'mediterranean-voyage'];
 
   if (existingSlugs.includes(slug.toLowerCase())) {
-    return [{
-      level: 'error',
-      message: 'This slug is already taken',
-      suggestion: `Try "${slug}-${new Date().getFullYear()}" or "${slug}-2"`
-    }];
+    return [
+      {
+        level: 'error',
+        message: 'This slug is already taken',
+        suggestion: `Try "${slug}-${new Date().getFullYear()}" or "${slug}-2"`,
+      },
+    ];
   }
 
-  return [{
-    level: 'success',
-    message: 'Slug is available'
-  }];
+  return [
+    {
+      level: 'success',
+      message: 'Slug is available',
+    },
+  ];
 };
 
 // Debounced version for better UX
 let slugValidationTimeout: NodeJS.Timeout;
 const debouncedSlugValidation = (slug: string): Promise<ValidationResult[]> => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     clearTimeout(slugValidationTimeout);
     slugValidationTimeout = setTimeout(async () => {
       const results = await validateSlugUniqueness(slug);
@@ -126,33 +139,32 @@ const validateTripName = (name: string): ValidationResult[] => {
     validations.push({
       level: 'warning',
       message: 'Trip name could be more descriptive for better SEO',
-      suggestion: 'Consider adding destination or year information'
+      suggestion: 'Consider adding destination or year information',
     });
   }
 
   // Check for brand keywords
   const brandKeywords = ['atlantis', 'gay', 'cruise', 'travel'];
-  const hasKeywords = brandKeywords.some(keyword =>
-    name.toLowerCase().includes(keyword)
-  );
+  const hasKeywords = brandKeywords.some(keyword => name.toLowerCase().includes(keyword));
 
   if (!hasKeywords) {
     validations.push({
       level: 'info',
       message: 'Consider including brand keywords for better discoverability',
-      suggestion: 'Include words like "Gay", "Cruise", or "Travel"'
+      suggestion: 'Include words like "Gay", "Cruise", or "Travel"',
     });
   }
 
   // Check for year information
   const currentYear = new Date().getFullYear();
-  const hasYear = name.includes(currentYear.toString()) || name.includes((currentYear + 1).toString());
+  const hasYear =
+    name.includes(currentYear.toString()) || name.includes((currentYear + 1).toString());
 
   if (!hasYear) {
     validations.push({
       level: 'info',
       message: 'Consider including the year in the trip name',
-      suggestion: `Add "${currentYear}" or "${currentYear + 1}" to the name`
+      suggestion: `Add "${currentYear}" or "${currentYear + 1}" to the name`,
     });
   }
 
@@ -306,15 +318,15 @@ export default function EnhancedTripForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
       toast({
-        title: isEditing ? "Trip updated" : "Trip created",
-        description: "Your changes have been saved successfully.",
+        title: isEditing ? 'Trip updated' : 'Trip created',
+        description: 'Your changes have been saved successfully.',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Save failed",
+        title: 'Save failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -331,14 +343,15 @@ export default function EnhancedTripForm({
     // Save draft to localStorage or API
     try {
       const draftKey = `trip-draft-${trip?.id || 'new'}`;
-      localStorage.setItem(draftKey, JSON.stringify({
-        ...data,
-        lastSaved: new Date().toISOString(),
-      }));
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          ...data,
+          lastSaved: new Date().toISOString(),
+        })
+      );
       setLastDraftSave(new Date());
-    } catch (error) {
-      console.error('Failed to save draft:', error);
-    }
+    } catch (error) {}
   };
 
   // Load draft from localStorage
@@ -351,9 +364,7 @@ export default function EnhancedTripForm({
         setLastDraftSave(new Date(draft.lastSaved));
         return draft;
       }
-    } catch (error) {
-      console.error('Failed to load draft:', error);
-    }
+    } catch (error) {}
     return {};
   };
 
@@ -377,8 +388,7 @@ export default function EnhancedTripForm({
           <CardDescription>
             {isEditing
               ? 'Update trip information with real-time validation and auto-save'
-              : 'Create a new trip with progressive validation and helpful suggestions'
-            }
+              : 'Create a new trip with progressive validation and helpful suggestions'}
           </CardDescription>
 
           {/* Trip Type Indicators */}

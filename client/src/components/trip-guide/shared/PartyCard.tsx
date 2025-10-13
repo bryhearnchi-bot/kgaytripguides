@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, Sparkles, Info, ShoppingBag } from 'lucide-react';
 import type { DailyEvent, PartyTheme } from '@/data/trip-data';
@@ -14,7 +14,7 @@ interface PartyCardProps {
   onToggleExpand: () => void;
 }
 
-export const PartyCard: React.FC<PartyCardProps> = ({
+export const PartyCard = memo<PartyCardProps>(function PartyCard({
   event,
   partyTheme,
   timeFormat,
@@ -22,11 +22,17 @@ export const PartyCard: React.FC<PartyCardProps> = ({
   delay = 0,
   isExpanded,
   onToggleExpand,
-}) => {
-  // Get the party theme image or fallback
-  const imageUrl =
-    partyTheme?.imageUrl ||
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/parties/default-party.jpg';
+}) {
+  // Memoize image URL computation
+  const imageUrl = useMemo(
+    () =>
+      partyTheme?.imageUrl ||
+      'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/parties/default-party.jpg',
+    [partyTheme?.imageUrl]
+  );
+
+  // Memoize formatted time
+  const formattedTime = useMemo(() => formatTime(event.time, timeFormat), [event.time, timeFormat]);
 
   return (
     <motion.div
@@ -62,21 +68,10 @@ export const PartyCard: React.FC<PartyCardProps> = ({
           {/* Animated gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-          {/* Sparkle icon with animation */}
-          <motion.div
-            className="absolute top-2 right-2 bg-pink-500/30 backdrop-blur-sm rounded-full p-1.5 border border-pink-400/50"
-            animate={{
-              rotate: [0, 10, -10, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          >
+          {/* Sparkle icon - static for performance */}
+          <div className="absolute top-2 right-2 bg-pink-500/30 backdrop-blur-sm rounded-full p-1.5 border border-pink-400/50">
             <Sparkles className="w-3 h-3 text-pink-300" />
-          </motion.div>
+          </div>
 
           {/* Party info at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -86,7 +81,7 @@ export const PartyCard: React.FC<PartyCardProps> = ({
             <div className="flex items-center gap-3 text-xs">
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/40 backdrop-blur-sm text-white font-semibold border border-blue-400/50">
                 <Clock className="w-3 h-3" />
-                <span>{formatTime(event.time, timeFormat)}</span>
+                <span>{formattedTime}</span>
               </div>
               <div className="inline-flex items-center gap-1 text-white/90">
                 <MapPin className="w-3 h-3" />
@@ -145,17 +140,13 @@ export const PartyCard: React.FC<PartyCardProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Expand indicator when collapsed */}
+        {/* Expand indicator when collapsed - static for performance */}
         {!isExpanded && partyTheme && (
-          <motion.div
-            className="absolute bottom-2 right-2 bg-white/20 backdrop-blur-sm rounded-full p-1 border border-white/30"
-            animate={{ y: [0, -2, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
+          <div className="absolute bottom-2 right-2 bg-white/20 backdrop-blur-sm rounded-full p-1 border border-white/30">
             <Info className="w-3 h-3 text-white" />
-          </motion.div>
+          </div>
         )}
       </motion.div>
     </motion.div>
   );
-};
+});

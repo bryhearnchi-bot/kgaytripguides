@@ -138,7 +138,6 @@ export function ShipSelector({
       const data = await response.json();
       setShips(data);
     } catch (error) {
-      console.error('Error fetching ships:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch ships');
     } finally {
       setLoading(false);
@@ -186,7 +185,6 @@ export function ShipSelector({
       });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating ship:', error);
     } finally {
       setCreating(false);
     }

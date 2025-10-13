@@ -114,7 +114,6 @@ export function EditBasicInfoModal({ open, onOpenChange }: EditBasicInfoModalPro
         setTripTypes(typesData.items || []);
       }
     } catch (error) {
-      console.error('Error loading lookup data:', error);
     } finally {
       setLoading(false);
     }

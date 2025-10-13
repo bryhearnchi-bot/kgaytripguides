@@ -12,28 +12,38 @@ import { useToast } from '@/hooks/use-toast';
 import { SocialAuthButtons } from './SocialAuthButtons';
 import { Eye, EyeOff } from 'lucide-react';
 
-const signUpSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
-  confirmPassword: z.string(),
-  name: z.string().min(2, 'Full name is required'),
-  phoneNumber: z.string()
-    .regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'Please enter a valid phone number'),
-  communicationPreference: z.enum(['email', 'sms', 'both']),
-  cruiseUpdates: z.boolean().default(true),
-  marketingEmails: z.boolean().default(false),
-  privacyPolicy: z.boolean().refine(val => val === true, {
-    message: 'You must accept the privacy policy to continue'
-  }),
-  termsOfService: z.boolean().refine(val => val === true, {
-    message: 'You must accept the terms of service to continue'
-  }),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signUpSchema = z
+  .object({
+    email: z.string().email('Please enter a valid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        'Password must contain uppercase, lowercase, and number'
+      ),
+    confirmPassword: z.string(),
+    name: z.string().min(2, 'Full name is required'),
+    phoneNumber: z
+      .string()
+      .regex(
+        /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+        'Please enter a valid phone number'
+      ),
+    communicationPreference: z.enum(['email', 'sms', 'both']),
+    cruiseUpdates: z.boolean().default(true),
+    marketingEmails: z.boolean().default(false),
+    privacyPolicy: z.boolean().refine(val => val === true, {
+      message: 'You must accept the privacy policy to continue',
+    }),
+    termsOfService: z.boolean().refine(val => val === true, {
+      message: 'You must accept the terms of service to continue',
+    }),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
@@ -67,7 +77,10 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
     setLoading(true);
     try {
       // Sign up the user with Supabase Auth
-      const fullName = { first: data.name.split(' ')[0] || '', last: data.name.split(' ').slice(1).join(' ') || '' };
+      const fullName = {
+        first: data.name.split(' ')[0] || '',
+        last: data.name.split(' ').slice(1).join(' ') || '',
+      };
       const result = await signUp(data.email, data.password, fullName);
 
       // Store additional user data in the database
@@ -75,7 +88,8 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
       const additionalData = {
         phone_number: data.phoneNumber,
         communication_preferences: {
-          email: data.communicationPreference === 'email' || data.communicationPreference === 'both',
+          email:
+            data.communicationPreference === 'email' || data.communicationPreference === 'both',
           sms: data.communicationPreference === 'sms' || data.communicationPreference === 'both',
         },
         trip_updates_opt_in: data.cruiseUpdates,
@@ -96,7 +110,6 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
 
       onSuccess?.();
     } catch (error: any) {
-      console.error('Sign up error:', error);
       toast({
         title: 'Sign up failed',
         description: error.message || 'An error occurred during sign up',
@@ -135,9 +148,7 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
             {...register('name')}
             className={errors.name ? 'border-red-500' : ''}
           />
-          {errors.name && (
-            <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>}
         </div>
 
         {/* Email */}
@@ -150,9 +161,7 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
             {...register('email')}
             className={errors.email ? 'border-red-500' : ''}
           />
-          {errors.email && (
-            <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
         </div>
 
         {/* Phone Number */}
@@ -193,7 +202,8 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
             <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
           )}
           <div className="mt-2 text-xs text-gray-600">
-            Password must contain at least 8 characters, including uppercase, lowercase, and numbers.
+            Password must contain at least 8 characters, including uppercase, lowercase, and
+            numbers.
           </div>
         </div>
 
@@ -217,19 +227,25 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
           <Label>Communication Preferences *</Label>
           <RadioGroup
             defaultValue="email"
-            onValueChange={(value) => setValue('communicationPreference', value as any)}
+            onValueChange={value => setValue('communicationPreference', value as any)}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="email" id="email-pref" />
-              <Label htmlFor="email-pref" className="font-normal">Email only</Label>
+              <Label htmlFor="email-pref" className="font-normal">
+                Email only
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="sms" id="sms-pref" />
-              <Label htmlFor="sms-pref" className="font-normal">Text messages only</Label>
+              <Label htmlFor="sms-pref" className="font-normal">
+                Text messages only
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="both" id="both-pref" />
-              <Label htmlFor="both-pref" className="font-normal">Both email and text</Label>
+              <Label htmlFor="both-pref" className="font-normal">
+                Both email and text
+              </Label>
             </div>
           </RadioGroup>
         </div>
@@ -240,7 +256,7 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
             <Checkbox
               id="cruiseUpdates"
               defaultChecked
-              onCheckedChange={(checked) => setValue('cruiseUpdates', checked as boolean)}
+              onCheckedChange={checked => setValue('cruiseUpdates', checked as boolean)}
             />
             <div className="grid gap-1.5 leading-none">
               <Label htmlFor="cruiseUpdates" className="text-sm font-normal">
@@ -252,7 +268,7 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
           <div className="flex items-start space-x-2">
             <Checkbox
               id="marketingEmails"
-              onCheckedChange={(checked) => setValue('marketingEmails', checked as boolean)}
+              onCheckedChange={checked => setValue('marketingEmails', checked as boolean)}
             />
             <div className="grid gap-1.5 leading-none">
               <Label htmlFor="marketingEmails" className="text-sm font-normal">
@@ -267,14 +283,15 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
           <div className="flex items-start space-x-2">
             <Checkbox
               id="privacyPolicy"
-              onCheckedChange={(checked) => setValue('privacyPolicy', checked as boolean)}
+              onCheckedChange={checked => setValue('privacyPolicy', checked as boolean)}
             />
             <div className="grid gap-1.5 leading-none">
               <Label htmlFor="privacyPolicy" className="text-sm font-normal">
                 I have read and agree to the{' '}
                 <a href="/privacy" target="_blank" className="text-blue-600 hover:underline">
                   Privacy Policy
-                </a>{' '}*
+                </a>{' '}
+                *
               </Label>
             </div>
           </div>
@@ -285,14 +302,15 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
           <div className="flex items-start space-x-2">
             <Checkbox
               id="termsOfService"
-              onCheckedChange={(checked) => setValue('termsOfService', checked as boolean)}
+              onCheckedChange={checked => setValue('termsOfService', checked as boolean)}
             />
             <div className="grid gap-1.5 leading-none">
               <Label htmlFor="termsOfService" className="text-sm font-normal">
                 I accept the{' '}
                 <a href="/terms" target="_blank" className="text-blue-600 hover:underline">
                   Terms of Service
-                </a>{' '}*
+                </a>{' '}
+                *
               </Label>
             </div>
           </div>
@@ -304,16 +322,13 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
         {/* Privacy Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
           <p className="text-xs text-blue-800">
-            We respect your privacy. Your data will never be sold to third parties or used for marketing without your explicit consent.
+            We respect your privacy. Your data will never be sold to third parties or used for
+            marketing without your explicit consent.
           </p>
         </div>
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={loading}
-        >
+        <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Creating Account...' : 'Create Account'}
         </Button>
 

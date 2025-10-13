@@ -233,7 +233,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
       // Refresh the page to show the updated status
       window.location.reload();
     } catch (error) {
-      console.error('Failed to approve trip:', error);
       toast({
         title: 'Failed to Approve',
         description: error instanceof Error ? error.message : 'An error occurred',

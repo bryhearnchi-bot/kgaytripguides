@@ -109,7 +109,7 @@ export const TalentModal = memo(function TalentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-white/20 text-white">
+      <DialogContent className="max-w-3xl overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-white/20 text-white">
         <DialogHeader>
           <DialogTitle className="sr-only">{selectedTalent.name}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -117,7 +117,7 @@ export const TalentModal = memo(function TalentModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 pt-8 md:pt-0">
           {/* Talent Info */}
           <div className="flex flex-col md:flex-row-reverse gap-6">
             {/* Profile Image - Perfect Square */}

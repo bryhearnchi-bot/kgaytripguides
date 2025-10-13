@@ -100,7 +100,6 @@ export function PartyThemeSelector({
       const data = await response.json();
       setThemes(data);
     } catch (error) {
-      console.error('Error fetching party themes:', error);
       toast({
         title: 'Error',
         description: 'Failed to load party themes',
@@ -151,7 +150,6 @@ export function PartyThemeSelector({
         amazonShoppingListUrl: '',
       });
     } catch (error) {
-      console.error('Error creating party theme:', error);
       toast({
         title: 'Error',
         description: 'Failed to create party theme',

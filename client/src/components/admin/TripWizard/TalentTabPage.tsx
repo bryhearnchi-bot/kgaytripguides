@@ -102,15 +102,6 @@ export function TalentTabPage() {
   const tripTalent = Array.isArray(state.tripTalent) ? state.tripTalent : [];
   const events = Array.isArray(state.events) ? state.events : [];
 
-  console.log('🎭 TalentTabPage - Rendering:', {
-    tripId: state.tripData.id,
-    tripType,
-    talentCount: tripTalent.length,
-    tripTalent,
-    eventsCount: events.length,
-    isEditMode: state.isEditMode,
-  });
-
   // Fetch talent categories
   const { data: talentCategories = [] } = useQuery<TalentCategory[]>({
     queryKey: ['talent-categories'],
@@ -124,13 +115,11 @@ export function TalentTabPage() {
   // Create artist mutation
   const createArtistMutation = useMutation({
     mutationFn: async (data: TalentFormData) => {
-      console.log('🎨 Creating new artist:', data);
       const response = await api.post('/api/talent', data);
       if (!response.ok) throw new Error('Failed to create artist');
       return response.json();
     },
     onSuccess: async newArtist => {
-      console.log('✅ Artist created successfully:', newArtist);
       queryClient.invalidateQueries({ queryKey: ['talent'] });
       // Add to trip
       await handleAddTalent(newArtist.id);
@@ -143,7 +132,6 @@ export function TalentTabPage() {
       });
     },
     onError: error => {
-      console.error('❌ Failed to create artist:', error);
       toast({
         title: 'Error',
         description: 'Failed to create artist',
@@ -155,13 +143,11 @@ export function TalentTabPage() {
   // Update artist mutation
   const updateArtistMutation = useMutation({
     mutationFn: async (data: TalentFormData & { id: number }) => {
-      console.log('🎨 Updating artist:', data);
       const response = await api.put(`/api/talent/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update artist');
       return response.json();
     },
     onSuccess: async () => {
-      console.log('✅ Artist updated successfully');
       queryClient.invalidateQueries({ queryKey: ['talent'] });
       await fetchTripTalent();
       setShowEditModal(false);
@@ -173,7 +159,6 @@ export function TalentTabPage() {
       });
     },
     onError: error => {
-      console.error('❌ Failed to update artist:', error);
       toast({
         title: 'Error',
         description: 'Failed to update artist',
@@ -185,13 +170,11 @@ export function TalentTabPage() {
   // Create talent category mutation
   const createCategoryMutation = useMutation({
     mutationFn: async (categoryName: string) => {
-      console.log('🏷️ Creating new talent category:', categoryName);
       const response = await api.post('/api/talent-categories', { category: categoryName });
       if (!response.ok) throw new Error('Failed to create talent category');
       return response.json();
     },
     onSuccess: newCategory => {
-      console.log('✅ Talent category created:', newCategory);
       queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
       setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
       toast({
@@ -200,7 +183,6 @@ export function TalentTabPage() {
       });
     },
     onError: error => {
-      console.error('❌ Failed to create talent category:', error);
       toast({
         title: 'Error',
         description: 'Failed to create talent category',
@@ -242,13 +224,10 @@ export function TalentTabPage() {
 
   const fetchTripTalent = async () => {
     try {
-      console.log('📥 Fetching trip talent for trip:', tripId);
       const response = await api.get(`/api/admin/trips/${tripId}/talent`);
       const data = await response.json();
-      console.log('✅ Fetched trip talent:', { count: data.length, talent: data });
       setTripTalent(data);
     } catch (error) {
-      console.error('❌ Error fetching trip talent:', error);
       toast({
         title: 'Error',
         description: 'Failed to load talent',
@@ -302,18 +281,15 @@ export function TalentTabPage() {
 
   const handleAddTalent = async (talentId: number) => {
     try {
-      console.log('➕ Adding talent to trip:', { tripId, talentId });
       const response = await api.post(`/api/admin/trips/${tripId}/talent`, {
         talentIds: [talentId],
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Failed to add talent:', errorData);
         throw new Error(errorData.message || 'Failed to add talent');
       }
 
-      console.log('✅ Talent added successfully, refreshing talent list');
       // Fetch updated talent list to refresh UI
       await fetchTripTalent();
 
@@ -331,7 +307,6 @@ export function TalentTabPage() {
       setSelectedTalentId(null);
       setShowAddModal(false);
     } catch (error) {
-      console.error('❌ Error adding talent:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to add talent to trip',
@@ -341,19 +316,10 @@ export function TalentTabPage() {
   };
 
   const handleRemoveTalent = (talent: TalentWithEvents) => {
-    console.log('🗑️ Removing talent from trip:', {
-      talentId: talent.id,
-      talentName: talent.name,
-      assignedEventsCount: talent.assignedEvents.length,
-      assignedEvents: talent.assignedEvents,
-    });
-
     if (talent.assignedEvents.length > 0) {
-      console.log('⚠️ Talent has assigned events, showing warning modal');
       // Show warning modal
       setTalentToRemove(talent);
     } else {
-      console.log('✓ No assigned events, proceeding with direct removal');
       // Direct removal
       confirmRemoveTalent(talent.id);
     }
@@ -361,7 +327,6 @@ export function TalentTabPage() {
 
   const confirmRemoveTalent = async (talentId: number) => {
     try {
-      console.log('🗑️ Confirming talent removal:', { tripId, talentId });
       setRemovingTalentId(talentId);
       const response = await api.delete(`/api/admin/trips/${tripId}/talent/${talentId}`);
 
@@ -369,7 +334,6 @@ export function TalentTabPage() {
         throw new Error('Failed to remove talent from trip');
       }
 
-      console.log('✅ Talent removed successfully, updating state');
       // Update local state
       await removeTalentFromTrip(talentId);
 
@@ -383,7 +347,6 @@ export function TalentTabPage() {
 
       setTalentToRemove(null);
     } catch (error) {
-      console.error('❌ Error removing talent:', error);
       toast({
         title: 'Error',
         description: 'Failed to remove talent from trip',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,16 +29,26 @@ interface InfoSectionCardProps {
   featured?: boolean;
 }
 
-export function InfoSectionCard({ section, featured = false }: InfoSectionCardProps) {
+// Move helper function outside component to avoid recreation
+const truncateContent = (text: string | null, maxLength: number = 150) => {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return `${text.substring(0, maxLength)}...`;
+};
+
+export const InfoSectionCard = memo<InfoSectionCardProps>(function InfoSectionCard({
+  section,
+  featured = false,
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const getSectionIcon = () => {
+  const sectionIcon = useMemo(() => {
     if (section.is_always) return <Sparkles className="h-4 w-4" />;
     if (section.section_type === 'general') return <Info className="h-4 w-4" />;
     return <MapPin className="h-4 w-4" />;
-  };
+  }, [section.is_always, section.section_type]);
 
-  const getSectionBadge = () => {
+  const sectionBadge = useMemo(() => {
     if (section.is_always) {
       return (
         <Badge className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 border-purple-400/30">
@@ -61,13 +71,12 @@ export function InfoSectionCard({ section, featured = false }: InfoSectionCardPr
         Trip Specific
       </Badge>
     );
-  };
+  }, [section.is_always, section.section_type]);
 
-  const truncateContent = (text: string | null, maxLength: number = 150) => {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return `${text.substring(0, maxLength)}...`;
-  };
+  const truncatedContent = useMemo(
+    () => truncateContent(section.content, featured ? 300 : 150),
+    [section.content, featured]
+  );
 
   return (
     <>
@@ -89,7 +98,7 @@ export function InfoSectionCard({ section, featured = false }: InfoSectionCardPr
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
-                {getSectionIcon()}
+                {sectionIcon}
               </div>
               <div className="flex-1 min-w-0">
                 <h3
@@ -101,7 +110,7 @@ export function InfoSectionCard({ section, featured = false }: InfoSectionCardPr
                 </h3>
               </div>
             </div>
-            {getSectionBadge()}
+            {sectionBadge}
           </div>
 
           {/* Content */}
@@ -111,7 +120,7 @@ export function InfoSectionCard({ section, featured = false }: InfoSectionCardPr
                 featured ? 'text-base line-clamp-6' : 'text-sm line-clamp-4'
               }`}
             >
-              {truncateContent(section.content, featured ? 300 : 150)}
+              {truncatedContent}
             </p>
           )}
 
@@ -138,18 +147,22 @@ export function InfoSectionCard({ section, featured = false }: InfoSectionCardPr
 
       {/* Modal for full content */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-[#0a1628] via-[#0f1f3d] to-[#1a2742] border-white/20">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl overflow-y-auto bg-gradient-to-br from-[#0a1628] via-[#0f1f3d] to-[#1a2742] border-white/20">
+          <DialogHeader className="pt-8 md:pt-0">
             <div className="flex items-start gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
-                {getSectionIcon()}
+              <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 flex-shrink-0">
+                {sectionIcon}
               </div>
               <div className="flex-1 min-w-0">
-                <DialogTitle className="text-2xl text-white">{section.title}</DialogTitle>
-                <div className="flex items-center gap-2 mt-2">
-                  {getSectionBadge()}
+                <DialogTitle className="text-xl sm:text-2xl text-white">
+                  {section.title}
+                </DialogTitle>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {sectionBadge}
                   {section.updated_by && (
-                    <span className="text-sm text-white/50">Updated by {section.updated_by}</span>
+                    <span className="text-xs sm:text-sm text-white/50">
+                      Updated by {section.updated_by}
+                    </span>
                   )}
                 </div>
               </div>
@@ -164,4 +177,4 @@ export function InfoSectionCard({ section, featured = false }: InfoSectionCardPr
       </Dialog>
     </>
   );
-}
+});

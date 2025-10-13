@@ -82,7 +82,6 @@ export function LocationLGBTVenuesModal({
         setVenues(data);
       }
     } catch (error) {
-      console.error('Error fetching LGBT venues:', error);
       toast({
         title: 'Error',
         description: 'Failed to load LGBT venues',
@@ -126,7 +125,6 @@ export function LocationLGBTVenuesModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error deleting LGBT venue:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete LGBT venue',
@@ -202,7 +200,6 @@ export function LocationLGBTVenuesModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error saving LGBT venue:', error);
       toast({
         title: 'Error',
         description: `Failed to ${editingId ? 'update' : 'create'} LGBT venue`,

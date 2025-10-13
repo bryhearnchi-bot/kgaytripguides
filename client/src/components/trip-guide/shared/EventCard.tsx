@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Circle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,12 +28,12 @@ export interface EventCardProps {
   className?: string;
 }
 
-export const EventCard: React.FC<EventCardProps> = ({
+export const EventCard = memo<EventCardProps>(function EventCard({
   event,
   onTalentClick,
   onPartyThemeClick,
   className = '',
-}) => {
+}) {
   const [showViewTypeModal, setShowViewTypeModal] = useState(false);
   const [showArtistSelectModal, setShowArtistSelectModal] = useState(false);
 
@@ -60,14 +60,19 @@ export const EventCard: React.FC<EventCardProps> = ({
     }
   }, [showViewTypeModal, showArtistSelectModal]);
 
-  // Get event image or fallback to first artist's image
-  const eventImage = event.imageUrl || event.talent?.[0]?.profileImageUrl;
+  // Memoize computed values
+  const eventImage = useMemo(
+    () => event.imageUrl || event.talent?.[0]?.profileImageUrl,
+    [event.imageUrl, event.talent]
+  );
 
-  const hasArtists = event.talent && event.talent.length > 0;
-  const hasPartyTheme = !!event.partyTheme;
-  const hasBoth = hasArtists && hasPartyTheme;
+  const hasArtists = useMemo(() => event.talent && event.talent.length > 0, [event.talent]);
 
-  const handleCardClick = () => {
+  const hasPartyTheme = useMemo(() => !!event.partyTheme, [event.partyTheme]);
+
+  const hasBoth = useMemo(() => hasArtists && hasPartyTheme, [hasArtists, hasPartyTheme]);
+
+  const handleCardClick = useCallback(() => {
     if (hasBoth) {
       // Show view type selection modal
       setShowViewTypeModal(true);
@@ -88,9 +93,17 @@ export const EventCard: React.FC<EventCardProps> = ({
         onPartyThemeClick(event.partyTheme);
       }
     }
-  };
+  }, [
+    hasBoth,
+    hasArtists,
+    hasPartyTheme,
+    event.talent,
+    event.partyTheme,
+    onTalentClick,
+    onPartyThemeClick,
+  ]);
 
-  const handleViewArtists = () => {
+  const handleViewArtists = useCallback(() => {
     setShowViewTypeModal(false);
     if (event.talent && event.talent.length === 1) {
       // Single artist - open directly
@@ -101,21 +114,24 @@ export const EventCard: React.FC<EventCardProps> = ({
       // Multiple artists - show selection
       setShowArtistSelectModal(true);
     }
-  };
+  }, [event.talent, onTalentClick]);
 
-  const handleViewPartyTheme = () => {
+  const handleViewPartyTheme = useCallback(() => {
     setShowViewTypeModal(false);
     if (event.partyTheme && onPartyThemeClick) {
       onPartyThemeClick(event.partyTheme);
     }
-  };
+  }, [event.partyTheme, onPartyThemeClick]);
 
-  const handleArtistSelect = (artistName: string) => {
-    setShowArtistSelectModal(false);
-    if (onTalentClick) {
-      onTalentClick(artistName);
-    }
-  };
+  const handleArtistSelect = useCallback(
+    (artistName: string) => {
+      setShowArtistSelectModal(false);
+      if (onTalentClick) {
+        onTalentClick(artistName);
+      }
+    },
+    [onTalentClick]
+  );
 
   return (
     <>
@@ -220,7 +236,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         createPortal(
           <AnimatePresence>
             <div
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
               onClick={() => setShowViewTypeModal(false)}
             >
               <motion.div
@@ -229,15 +245,18 @@ export const EventCard: React.FC<EventCardProps> = ({
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
                 onClick={e => e.stopPropagation()}
-                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl my-auto"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white">What would you like to view?</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">
+                    What would you like to view?
+                  </h3>
                   <button
                     onClick={() => setShowViewTypeModal(false)}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all"
+                    className="min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all flex-shrink-0 ml-2"
+                    aria-label="Close modal"
                   >
-                    <X className="w-4 h-4 text-white" />
+                    <X className="w-5 h-5 text-white" />
                   </button>
                 </div>
 
@@ -297,7 +316,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         createPortal(
           <AnimatePresence>
             <div
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
               onClick={() => setShowArtistSelectModal(false)}
             >
               <motion.div
@@ -306,19 +325,20 @@ export const EventCard: React.FC<EventCardProps> = ({
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
                 onClick={e => e.stopPropagation()}
-                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl my-auto"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white">Select an Artist</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Select an Artist</h3>
                   <button
                     onClick={() => setShowArtistSelectModal(false)}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all"
+                    className="min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all flex-shrink-0 ml-2"
+                    aria-label="Close modal"
                   >
-                    <X className="w-4 h-4 text-white" />
+                    <X className="w-5 h-5 text-white" />
                   </button>
                 </div>
 
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
                   {event.talent.map((artist, idx) => (
                     <button
                       key={idx}
@@ -350,4 +370,4 @@ export const EventCard: React.FC<EventCardProps> = ({
         )}
     </>
   );
-};
+});

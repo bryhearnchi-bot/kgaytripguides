@@ -196,7 +196,6 @@ export function FAQTabPage() {
       const data = await response.json();
       setFaqs(data);
     } catch (error) {
-      console.error('Error fetching FAQs:', error);
       toast({
         title: 'Error',
         description: 'Failed to load FAQs',
@@ -247,7 +246,6 @@ export function FAQTabPage() {
         description: 'FAQs reordered successfully',
       });
     } catch (error) {
-      console.error('Error reordering FAQs:', error);
       // Revert on error
       fetchFaqs();
       toast({
@@ -297,7 +295,6 @@ export function FAQTabPage() {
         description: 'FAQ removed from trip',
       });
     } catch (error) {
-      console.error('Error deleting FAQ:', error);
       toast({
         title: 'Error',
         description: 'Failed to remove FAQ',

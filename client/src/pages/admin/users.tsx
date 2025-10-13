@@ -207,8 +207,6 @@ export default function UsersManagement() {
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      console.log('🚀 updateUserMutation.mutationFn called with data:', data);
-      console.log('🚀 editingUser.id:', editingUser?.id);
       const response = await api.put(`/api/admin/users/${editingUser!.id}`, data);
       if (!response.ok) throw new Error('Failed to update user');
       return response.json();
@@ -333,9 +331,6 @@ export default function UsersManagement() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🔍 handleSubmit called');
-    console.log('🔍 editingUser:', editingUser?.id);
-    console.log('🔍 formData:', formData);
 
     // Validate password for new users
     if (!editingUser && (!formData.password || formData.password.length < 8)) {
@@ -344,10 +339,8 @@ export default function UsersManagement() {
     }
 
     if (editingUser) {
-      console.log('🔍 Calling updateUserMutation.mutate with:', { ...formData });
       updateUserMutation.mutate({ ...formData });
     } else {
-      console.log('🔍 Calling createUserMutation.mutate with:', formData);
       createUserMutation.mutate(formData);
     }
   };

@@ -130,7 +130,6 @@ export function VenueSelector({
         const venueTypesData = await venueTypesResponse.json();
         setVenueTypes(venueTypesData);
       } catch (error) {
-        console.error('Error fetching venue types:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch venue types');
       }
       return;
@@ -159,7 +158,6 @@ export function VenueSelector({
       setVenues(venuesData);
       setVenueTypes(venueTypesData);
     } catch (error) {
-      console.error('Error fetching data:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch data');
     } finally {
       setLoading(false);
@@ -208,7 +206,6 @@ export function VenueSelector({
       setCreateForm({ name: '', venueTypeId: '', description: '' });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating venue:', error);
       // You could show an error toast here
     } finally {
       setCreating(false);

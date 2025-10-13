@@ -149,7 +149,6 @@ export function TalentSelector({
       setTalent(talentArray);
       talentArray.forEach((t: Talent) => fetchedIdsRef.current.add(t.id));
     } catch (err) {
-      console.error('Error fetching all talent:', err);
       setTalent([]); // Set empty array on error
       setError('Failed to load talent');
     } finally {
@@ -171,9 +170,7 @@ export function TalentSelector({
         });
         return Array.from(existing.values());
       });
-    } catch (err) {
-      console.error('Error fetching selected talent:', err);
-    }
+    } catch (err) {}
   };
 
   const fetchTalentCategories = async () => {
@@ -183,7 +180,6 @@ export function TalentSelector({
       // Ensure data is an array
       setTalentCategories(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error fetching talent categories:', err);
       setTalentCategories([]); // Set empty array on error
     }
   };
@@ -248,7 +244,6 @@ export function TalentSelector({
         website: '',
       });
     } catch (err) {
-      console.error('Error creating talent:', err);
       toast({
         title: 'Error',
         description: 'Failed to create talent',

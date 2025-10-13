@@ -84,7 +84,9 @@ const ValidationIndicator: React.FC<{
     return (
       <div className="flex items-center gap-2 text-red-600">
         <AlertCircle className="w-4 h-4" />
-        <span className="text-sm">{errorCount} error{errorCount !== 1 ? 's' : ''}</span>
+        <span className="text-sm">
+          {errorCount} error{errorCount !== 1 ? 's' : ''}
+        </span>
       </div>
     );
   }
@@ -93,7 +95,9 @@ const ValidationIndicator: React.FC<{
     return (
       <div className="flex items-center gap-2 text-orange-600">
         <AlertTriangle className="w-4 h-4" />
-        <span className="text-sm">{warningCount} warning{warningCount !== 1 ? 's' : ''}</span>
+        <span className="text-sm">
+          {warningCount} warning{warningCount !== 1 ? 's' : ''}
+        </span>
       </div>
     );
   }
@@ -117,7 +121,7 @@ const FieldValidation: React.FC<{
   if (validations.length === 0) return null;
 
   return (
-    <div className={cn("space-y-1 mt-1", className)}>
+    <div className={cn('space-y-1 mt-1', className)}>
       {validations.map((validation, index) => {
         const IconComponent = {
           error: AlertCircle,
@@ -127,14 +131,14 @@ const FieldValidation: React.FC<{
         }[validation.level];
 
         const colorClass = {
-          error: "text-red-600",
-          warning: "text-orange-600",
-          info: "text-blue-600",
-          success: "text-green-600",
+          error: 'text-red-600',
+          warning: 'text-orange-600',
+          info: 'text-blue-600',
+          success: 'text-green-600',
         }[validation.level];
 
         return (
-          <div key={index} className={cn("flex items-start gap-2 text-sm", colorClass)}>
+          <div key={index} className={cn('flex items-start gap-2 text-sm', colorClass)}>
             <IconComponent className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p>{validation.message}</p>
@@ -175,7 +179,10 @@ export default function FormValidator<T extends FieldValues>({
     mode: 'onChange',
   });
 
-  const { watch, formState: { errors, isSubmitting, isValid } } = form;
+  const {
+    watch,
+    formState: { errors, isSubmitting, isValid },
+  } = form;
   const watchedValues = watch();
 
   // Calculate form completion progress
@@ -189,124 +196,126 @@ export default function FormValidator<T extends FieldValues>({
   }, [watchedValues, fields]);
 
   // Real-time field validation
-  const validateField = useCallback(async (fieldName: string, value: any) => {
-    const field = fields.find(f => f.name === fieldName);
-    if (!field) return;
+  const validateField = useCallback(
+    async (fieldName: string, value: any) => {
+      const field = fields.find(f => f.name === fieldName);
+      if (!field) return;
 
-    setIsValidating(prev => ({ ...prev, [fieldName]: true }));
+      setIsValidating(prev => ({ ...prev, [fieldName]: true }));
 
-    const validations: ValidationResult[] = [];
+      const validations: ValidationResult[] = [];
 
-    // Required field validation
-    if (field.required && (!value || String(value).trim().length === 0)) {
-      validations.push({
-        level: 'error',
-        message: `${field.label} is required`,
-        suggestion: `Please enter a ${field.label.toLowerCase()}`,
-      });
-    }
-
-    // Type-specific validations
-    if (value && String(value).trim().length > 0) {
-      // Length validations
-      if (field.validation?.minLength && String(value).length < field.validation.minLength) {
+      // Required field validation
+      if (field.required && (!value || String(value).trim().length === 0)) {
         validations.push({
           level: 'error',
-          message: `${field.label} must be at least ${field.validation.minLength} characters`,
-          suggestion: `Add ${field.validation.minLength - String(value).length} more characters`,
+          message: `${field.label} is required`,
+          suggestion: `Please enter a ${field.label.toLowerCase()}`,
         });
       }
 
-      if (field.validation?.maxLength && String(value).length > field.validation.maxLength) {
-        validations.push({
-          level: 'error',
-          message: `${field.label} must be no more than ${field.validation.maxLength} characters`,
-          suggestion: `Remove ${String(value).length - field.validation.maxLength} characters`,
-        });
-      }
-
-      // Pattern validation
-      if (field.validation?.pattern && !field.validation.pattern.test(String(value))) {
-        validations.push({
-          level: 'error',
-          message: `${field.label} format is invalid`,
-          suggestion: `Please check the format and try again`,
-        });
-      }
-
-      // Email validation
-      if (field.type === 'email') {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(String(value))) {
+      // Type-specific validations
+      if (value && String(value).trim().length > 0) {
+        // Length validations
+        if (field.validation?.minLength && String(value).length < field.validation.minLength) {
           validations.push({
             level: 'error',
-            message: 'Please enter a valid email address',
-            suggestion: 'Format: user@example.com',
+            message: `${field.label} must be at least ${field.validation.minLength} characters`,
+            suggestion: `Add ${field.validation.minLength - String(value).length} more characters`,
           });
         }
-      }
 
-      // URL validation
-      if (field.type === 'url') {
-        try {
-          new URL(String(value));
-          validations.push({
-            level: 'success',
-            message: 'Valid URL format',
-          });
-        } catch {
+        if (field.validation?.maxLength && String(value).length > field.validation.maxLength) {
           validations.push({
             level: 'error',
-            message: 'Please enter a valid URL',
-            suggestion: 'Format: https://example.com',
+            message: `${field.label} must be no more than ${field.validation.maxLength} characters`,
+            suggestion: `Remove ${String(value).length - field.validation.maxLength} characters`,
           });
         }
-      }
 
-      // Password strength (basic)
-      if (field.type === 'password') {
-        const password = String(value);
-        const hasUpper = /[A-Z]/.test(password);
-        const hasLower = /[a-z]/.test(password);
-        const hasNumber = /\d/.test(password);
-        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-        if (password.length >= 8 && hasUpper && hasLower && hasNumber && hasSpecial) {
-          validations.push({
-            level: 'success',
-            message: 'Strong password',
-          });
-        } else if (password.length >= 6) {
-          validations.push({
-            level: 'warning',
-            message: 'Password could be stronger',
-            suggestion: 'Use uppercase, lowercase, numbers, and special characters',
-          });
-        }
-      }
-
-      // Custom validation
-      if (field.validation?.custom) {
-        try {
-          const customResults = await field.validation.custom(value);
-          validations.push(...customResults);
-        } catch (error) {
-          console.error('Custom validation error:', error);
+        // Pattern validation
+        if (field.validation?.pattern && !field.validation.pattern.test(String(value))) {
           validations.push({
             level: 'error',
-            message: 'Validation error occurred',
-            suggestion: 'Please try again or contact support'
+            message: `${field.label} format is invalid`,
+            suggestion: `Please check the format and try again`,
           });
         }
+
+        // Email validation
+        if (field.type === 'email') {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(String(value))) {
+            validations.push({
+              level: 'error',
+              message: 'Please enter a valid email address',
+              suggestion: 'Format: user@example.com',
+            });
+          }
+        }
+
+        // URL validation
+        if (field.type === 'url') {
+          try {
+            new URL(String(value));
+            validations.push({
+              level: 'success',
+              message: 'Valid URL format',
+            });
+          } catch {
+            validations.push({
+              level: 'error',
+              message: 'Please enter a valid URL',
+              suggestion: 'Format: https://example.com',
+            });
+          }
+        }
+
+        // Password strength (basic)
+        if (field.type === 'password') {
+          const password = String(value);
+          const hasUpper = /[A-Z]/.test(password);
+          const hasLower = /[a-z]/.test(password);
+          const hasNumber = /\d/.test(password);
+          const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+          if (password.length >= 8 && hasUpper && hasLower && hasNumber && hasSpecial) {
+            validations.push({
+              level: 'success',
+              message: 'Strong password',
+            });
+          } else if (password.length >= 6) {
+            validations.push({
+              level: 'warning',
+              message: 'Password could be stronger',
+              suggestion: 'Use uppercase, lowercase, numbers, and special characters',
+            });
+          }
+        }
+
+        // Custom validation
+        if (field.validation?.custom) {
+          try {
+            const customResults = await field.validation.custom(value);
+            validations.push(...customResults);
+          } catch (error) {
+            validations.push({
+              level: 'error',
+              message: 'Validation error occurred',
+              suggestion: 'Please try again or contact support',
+            });
+          }
+        }
       }
-    }
 
-    // Simulate async validation delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+      // Simulate async validation delay
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-    setFieldValidations(prev => ({ ...prev, [fieldName]: validations }));
-    setIsValidating(prev => ({ ...prev, [fieldName]: false }));
-  }, [fields]);
+      setFieldValidations(prev => ({ ...prev, [fieldName]: validations }));
+      setIsValidating(prev => ({ ...prev, [fieldName]: false }));
+    },
+    [fields]
+  );
 
   // Watch for field changes and validate
   useEffect(() => {
@@ -329,13 +338,11 @@ export default function FormValidator<T extends FieldValues>({
         setLastAutoSave(new Date());
         setIsDirty(false);
         toast({
-          title: "Draft saved",
-          description: "Your changes have been automatically saved.",
+          title: 'Draft saved',
+          description: 'Your changes have been automatically saved.',
           duration: 2000,
         });
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-      }
+      } catch (error) {}
     }, autoSaveInterval);
 
     return () => clearTimeout(autoSaveTimer);
@@ -346,14 +353,14 @@ export default function FormValidator<T extends FieldValues>({
       await onSubmit(data);
       setIsDirty(false);
       toast({
-        title: "Form submitted successfully",
-        description: "Your data has been saved.",
+        title: 'Form submitted successfully',
+        description: 'Your data has been saved.',
       });
     } catch (error) {
       toast({
-        title: "Submission failed",
-        description: "Please check your inputs and try again.",
-        variant: "destructive",
+        title: 'Submission failed',
+        description: 'Please check your inputs and try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -366,14 +373,14 @@ export default function FormValidator<T extends FieldValues>({
       setLastAutoSave(new Date());
       setIsDirty(false);
       toast({
-        title: "Draft saved",
-        description: "Your changes have been saved as a draft.",
+        title: 'Draft saved',
+        description: 'Your changes have been saved as a draft.',
       });
     } catch (error) {
       toast({
-        title: "Save failed",
-        description: "Unable to save draft. Please try again.",
-        variant: "destructive",
+        title: 'Save failed',
+        description: 'Unable to save draft. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -411,23 +418,24 @@ export default function FormValidator<T extends FieldValues>({
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {fields.map((field) => {
+            {fields.map(field => {
               const fieldValidation = fieldValidations[field.name] || [];
-              const hasFieldErrors = fieldValidation.some(v => v.level === 'error') || errors[field.name as FieldPath<T>];
+              const hasFieldErrors =
+                fieldValidation.some(v => v.level === 'error') ||
+                errors[field.name as FieldPath<T>];
               const isFieldValidating = isValidating[field.name];
 
               return (
                 <div
                   key={field.name}
-                  className={cn(
-                    field.type === 'textarea' && "md:col-span-2",
-                    "space-y-2"
-                  )}
+                  className={cn(field.type === 'textarea' && 'md:col-span-2', 'space-y-2')}
                 >
                   <Label htmlFor={field.name} className="flex items-center gap-2">
                     {field.label}
                     {field.required && <span className="text-red-500">*</span>}
-                    {isFieldValidating && <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />}
+                    {isFieldValidating && (
+                      <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />
+                    )}
                   </Label>
 
                   {field.type === 'textarea' ? (
@@ -435,8 +443,8 @@ export default function FormValidator<T extends FieldValues>({
                       id={field.name}
                       placeholder={field.placeholder}
                       className={cn(
-                        hasFieldErrors && "border-red-500 focus:border-red-500",
-                        "min-h-[100px]"
+                        hasFieldErrors && 'border-red-500 focus:border-red-500',
+                        'min-h-[100px]'
                       )}
                       {...form.register(field.name as FieldPath<T>)}
                     />
@@ -445,9 +453,7 @@ export default function FormValidator<T extends FieldValues>({
                       id={field.name}
                       type={field.type}
                       placeholder={field.placeholder}
-                      className={cn(
-                        hasFieldErrors && "border-red-500 focus:border-red-500"
-                      )}
+                      className={cn(hasFieldErrors && 'border-red-500 focus:border-red-500')}
                       {...form.register(field.name as FieldPath<T>)}
                     />
                   )}
@@ -493,7 +499,11 @@ export default function FormValidator<T extends FieldValues>({
                   variant="outline"
                   onClick={() => setShowPreviewMode(!showPreviewMode)}
                 >
-                  {showPreviewMode ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
+                  {showPreviewMode ? (
+                    <EyeOff className="w-4 h-4 mr-1" />
+                  ) : (
+                    <Eye className="w-4 h-4 mr-1" />
+                  )}
                   {showPreviewMode ? 'Hide Preview' : 'Preview'}
                 </Button>
               )}
@@ -533,7 +543,7 @@ export default function FormValidator<T extends FieldValues>({
           <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
             <h4 className="font-medium text-gray-900 mb-3">Form Preview</h4>
             <div className="space-y-2 text-sm">
-              {fields.map((field) => {
+              {fields.map(field => {
                 const value = watchedValues[field.name as keyof T];
                 return (
                   <div key={field.name} className="flex">

@@ -119,7 +119,6 @@ export function ResortCompanySelector({
       const data = await response.json();
       setResortCompanies(data.items || []);
     } catch (error) {
-      console.error('Error fetching resort companies:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch resort companies');
     } finally {
       setLoading(false);
@@ -154,7 +153,6 @@ export function ResortCompanySelector({
       setCreateForm({ name: '' });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating resort company:', error);
     } finally {
       setCreating(false);
     }

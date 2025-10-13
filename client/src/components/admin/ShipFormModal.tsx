@@ -84,14 +84,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       return;
     }
 
-    console.log('🔍 useEffect triggered - ship:', ship, 'isOpen:', isOpen);
-    console.log('🔍 FULL SHIP OBJECT:', JSON.stringify(ship, null, 2));
     if (ship) {
-      console.log('🔍 Loading ship into form:', {
-        id: ship.id,
-        name: ship.name,
-        cruiseLineId: ship.cruiseLineId,
-      });
       setFormData({
         name: ship.name || '',
         cruiseLineId: ship.cruiseLineId || null,
@@ -104,13 +97,10 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
 
       // Load ship's amenities and venues
       if (ship.id) {
-        console.log('🔍 Ship has ID, loading relations for ship.id:', ship.id);
         loadShipRelations(ship.id);
       } else {
-        console.warn('⚠️ Ship object has no ID, cannot load relations');
       }
     } else {
-      console.log('🔍 No ship provided, resetting form');
       // Reset form for new ship
       setFormData({
         name: '',
@@ -129,9 +119,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
 
   const loadShipRelations = async (shipId: number) => {
     try {
-      console.log('🔍 LOADING ship relations for shipId:', shipId);
       if (!shipId) {
-        console.error('No ship ID provided for loading relations');
         return;
       }
 
@@ -140,33 +128,16 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         api.get(`/api/admin/ships/${shipId}/venues`),
       ]);
 
-      console.log('🔍 Got amenities response:', {
-        ok: amenitiesResponse.ok,
-        status: amenitiesResponse.status,
-      });
-      console.log('🔍 Got venues response:', {
-        ok: venuesResponse.ok,
-        status: venuesResponse.status,
-      });
-
       if (amenitiesResponse.ok && venuesResponse.ok) {
         const amenitiesData = await amenitiesResponse.json();
         const venuesData = await venuesResponse.json();
 
-        console.log('🔍 Loaded amenities data:', amenitiesData);
-        console.log('🔍 Loaded venues data:', venuesData);
-
         const amenityIdsToSet = amenitiesData.map((a: any) => a.id);
-        console.log('🔍 Setting amenityIds to:', amenityIdsToSet);
 
         setAmenityIds(amenityIdsToSet);
         setVenues(venuesData);
-
-        console.log('✅ Ship relations loaded successfully');
       }
-    } catch (error) {
-      console.error('Error loading ship relations:', error);
-    }
+    } catch (error) {}
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -179,20 +150,11 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('🚢 CLIENT: handleSubmit called', {
-      isEditing,
-      shipId: ship?.id,
-      amenityIds,
-      amenityIdsLength: amenityIds.length,
-    });
     e.preventDefault();
 
     if (!formData.name.trim() || !formData.cruiseLineId) {
-      console.log('🚢 CLIENT: Form validation failed - name or cruiseLineId missing');
       return;
     }
-
-    console.log('🚢 CLIENT: Form validation passed, starting save process');
 
     try {
       setLoading(true);
@@ -208,87 +170,50 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         description: formData.description.trim() || null,
       };
 
-      console.log('🚢 CLIENT: About to save ship data', {
-        isEditing,
-        shipId: ship?.id,
-        shipData,
-        cruiseLineIdType: typeof formData.cruiseLineId,
-        cruiseLineIdValue: formData.cruiseLineId,
-        stringifiedData: JSON.stringify(shipData),
-      });
-
       let shipResponse;
       if (isEditing && ship) {
         // Update existing ship
-        console.log(`🚢 CLIENT: Calling PUT /api/ships/${ship.id}`);
         shipResponse = await api.put(`/api/ships/${ship.id}`, shipData);
       } else {
         // Create new ship
-        console.log('🚢 CLIENT: Calling POST /api/ships');
         shipResponse = await api.post('/api/ships', shipData);
       }
 
-      console.log('🚢 CLIENT: Ship response received', {
-        ok: shipResponse.ok,
-        status: shipResponse.status,
-      });
-
       if (!shipResponse.ok) {
-        console.error('🚢 CLIENT: Ship save failed', { status: shipResponse.status });
         throw new Error(`Failed to ${isEditing ? 'update' : 'create'} ship`);
       }
 
       const savedShip = await shipResponse.json();
       const shipId = savedShip.id;
-      console.log('🚢 CLIENT: Ship saved successfully', { shipId, savedShip });
 
       // Update ship amenities
-      console.log('🚢 CLIENT: About to update amenities', {
-        shipId,
-        amenityIds,
-        amenityIdsLength: amenityIds.length,
-      });
       const amenitiesResponse = await api.put(`/api/ships/${shipId}/amenities`, { amenityIds });
-      console.log('🚢 CLIENT: Amenities response received', {
-        ok: amenitiesResponse.ok,
-        status: amenitiesResponse.status,
-      });
 
       if (!amenitiesResponse.ok) {
         const errorData = await amenitiesResponse.json().catch(() => ({}));
-        console.error('🚢 CLIENT: Failed to update amenities', errorData);
         throw new Error('Failed to update ship amenities');
       }
 
-      console.log('🚢 CLIENT: Amenities updated successfully');
-
       // If we have pending venues (for new ships), save them now
       if (!isEditing && pendingVenues.length > 0) {
-        console.log('🚢 CLIENT: Saving pending venues', { count: pendingVenues.length });
         for (const venue of pendingVenues) {
           try {
             await api.post(`/api/admin/ships/${shipId}/venues`, venue);
           } catch (venueError) {
-            console.error('🚢 CLIENT: Failed to save venue', { venue, error: venueError });
             // Continue with other venues even if one fails
           }
         }
-        console.log('🚢 CLIENT: All pending venues saved');
       }
 
       // CRITICAL FIX: Wait a tiny bit to ensure the amenities request fully completes
       // before triggering callbacks that might close the modal
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      console.log('🚢 CLIENT: Calling onSuccess callback');
       onSuccess(savedShip);
-      console.log('🚢 CLIENT: Closing modal');
       onOpenChange(false);
     } catch (error) {
-      console.error('🚢 CLIENT: Error in handleSubmit', error);
       // You could show an error toast here
     } finally {
-      console.log('🚢 CLIENT: Setting loading=false');
       setLoading(false);
     }
   };

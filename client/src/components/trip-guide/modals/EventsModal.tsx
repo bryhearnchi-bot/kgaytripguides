@@ -67,8 +67,8 @@ export const EventsModal = memo(function EventsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-white/20 text-white">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-white/20 text-white">
+        <DialogHeader className="pt-8 md:pt-0">
           <DialogTitle className="text-white">Events for {selectedItineraryStop?.port}</DialogTitle>
           <DialogDescription className="text-white/70">
             View scheduled events and activities for this port

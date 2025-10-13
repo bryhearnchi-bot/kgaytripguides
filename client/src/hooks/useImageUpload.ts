@@ -13,7 +13,14 @@ export interface ImageUploadResult {
   size: number;
 }
 
-export type ImageType = 'ships' | 'resorts' | 'locations' | 'events' | 'talent' | 'profiles' | 'general';
+export type ImageType =
+  | 'ships'
+  | 'resorts'
+  | 'locations'
+  | 'events'
+  | 'talent'
+  | 'profiles'
+  | 'general';
 
 export function useImageUpload() {
   const [state, setState] = useState<ImageUploadState>({
@@ -31,15 +38,19 @@ export function useImageUpload() {
   };
 
   const uploadFile = async (file: File, imageType: ImageType): Promise<ImageUploadResult> => {
-    console.log('uploadFile called with:', file.name, imageType);
     setState({ isUploading: true, error: null, progress: 0 });
 
     try {
       // Validate file
       const maxSize = 5 * 1024 * 1024; // 5MB
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
-
-      console.log('Validating file:', { size: file.size, type: file.type });
+      const allowedTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'image/avif',
+      ];
 
       if (file.size > maxSize) {
         throw new Error('File size must be less than 5MB');
@@ -55,8 +66,6 @@ export function useImageUpload() {
 
       setState(prev => ({ ...prev, progress: 25 }));
 
-      console.log('Uploading to:', `/api/images/upload/${imageType}`);
-
       // Upload to backend using api client for proper authentication
       const response = await apiClient(`/api/images/upload/${imageType}`, {
         method: 'POST',
@@ -65,16 +74,12 @@ export function useImageUpload() {
 
       setState(prev => ({ ...prev, progress: 75 }));
 
-      console.log('Upload response:', response.status, response.statusText);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Upload error response:', errorData);
         throw new Error(errorData.error || 'Failed to upload image');
       }
 
       const result = await response.json();
-      console.log('Upload result:', result);
 
       setState(prev => ({ ...prev, progress: 100 }));
 
@@ -87,14 +92,17 @@ export function useImageUpload() {
         size: result.size || file.size,
       };
     } catch (error) {
-      console.error('Upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
       setState({ isUploading: false, error: errorMessage, progress: 0 });
       throw error;
     }
   };
 
-  const uploadFromUrl = async (url: string, imageType: ImageType, name: string = 'image'): Promise<ImageUploadResult> => {
+  const uploadFromUrl = async (
+    url: string,
+    imageType: ImageType,
+    name: string = 'image'
+  ): Promise<ImageUploadResult> => {
     setState({ isUploading: true, error: null, progress: 0 });
 
     try {

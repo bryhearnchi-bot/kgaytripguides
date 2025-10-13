@@ -29,7 +29,7 @@ import {
   Calendar,
   CheckCircle,
   Eye,
-  Send
+  Send,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
@@ -62,7 +62,7 @@ export default function AdminProfile() {
       middle: '',
       suffix: '',
       preferred: '',
-      full: ''
+      full: '',
     },
     email: '',
     username: '',
@@ -77,8 +77,8 @@ export default function AdminProfile() {
       instagram: '',
       twitter: '',
       facebook: '',
-      telegram: ''
-    }
+      telegram: '',
+    },
   });
 
   const { toast } = useToast();
@@ -94,7 +94,7 @@ export default function AdminProfile() {
           middle: '',
           suffix: '',
           preferred: '',
-          full: ''
+          full: '',
         },
         email: profile.email || '',
         username: profile.username || '',
@@ -109,14 +109,18 @@ export default function AdminProfile() {
           instagram: (profile.socialLinks as ProfileSocialLinks)?.instagram || '',
           twitter: (profile.socialLinks as ProfileSocialLinks)?.twitter || '',
           facebook: (profile.socialLinks as ProfileSocialLinks)?.facebook || '',
-          telegram: (profile.socialLinks as ProfileSocialLinks)?.telegram || ''
-        }
+          telegram: (profile.socialLinks as ProfileSocialLinks)?.telegram || '',
+        },
       });
     }
   }, [profile]);
 
   // Handle avatar upload from our custom popup
-  const handleAvatarImageUploaded = async (result: { url: string; filename: string; size: number }) => {
+  const handleAvatarImageUploaded = async (result: {
+    url: string;
+    filename: string;
+    size: number;
+  }) => {
     setIsUploadingAvatar(true);
 
     try {
@@ -190,10 +194,9 @@ export default function AdminProfile() {
       country: formData.country,
       country_code: formData.countryCode,
 
-      social_links: formData.socialLinks
+      social_links: formData.socialLinks,
     };
 
-    console.log('🔍 Profile form data being sent:', apiData);
     updateProfile.mutate(apiData);
   };
 
@@ -206,7 +209,7 @@ export default function AdminProfile() {
           middle: '',
           suffix: '',
           preferred: '',
-          full: ''
+          full: '',
         },
         email: profile.email || '',
         username: profile.username || '',
@@ -220,8 +223,8 @@ export default function AdminProfile() {
         socialLinks: {
           instagram: profile.socialLinks?.instagram || '',
           twitter: profile.socialLinks?.twitter || '',
-          facebook: profile.socialLinks?.facebook || ''
-        }
+          facebook: profile.socialLinks?.facebook || '',
+        },
       });
     }
     setIsEditing(false);
@@ -235,9 +238,9 @@ export default function AdminProfile() {
     setFormData(prev => ({
       ...prev,
       [field]: {
-        ...prev[field] as any,
-        [subField]: value
-      }
+        ...(prev[field] as any),
+        [subField]: value,
+      },
     }));
   };
 
@@ -262,9 +265,7 @@ export default function AdminProfile() {
       <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">
-              Account Management
-            </p>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Account Management</p>
             <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
               <Shield className="h-6 w-6" />
               Profile
@@ -296,7 +297,7 @@ export default function AdminProfile() {
                 </div>
                 <button
                   className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white cursor-pointer transition-colors shadow-lg"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
                     setShowAvatarUploadPopup(true);
@@ -327,45 +328,82 @@ export default function AdminProfile() {
                   {profile.phoneNumber}
                 </div>
               )}
-              {(profile.location_text || profile.city || profile.state_province || profile.country || profile.location?.city || profile.location?.state || profile.location?.country) && (
+              {(profile.location_text ||
+                profile.city ||
+                profile.state_province ||
+                profile.country ||
+                profile.location?.city ||
+                profile.location?.state ||
+                profile.location?.country) && (
                 <div className="flex items-center gap-3 text-sm text-slate-300">
                   <MapPin className="w-4 h-4 text-blue-400" />
-                  {profile.location_text || [profile.city, profile.state_province, profile.country].filter(Boolean).join(', ') || [profile.location?.city, profile.location?.state, profile.location?.country].filter(Boolean).join(', ')}
+                  {profile.location_text ||
+                    [profile.city, profile.state_province, profile.country]
+                      .filter(Boolean)
+                      .join(', ') ||
+                    [profile.location?.city, profile.location?.state, profile.location?.country]
+                      .filter(Boolean)
+                      .join(', ')}
                 </div>
               )}
               <div className="flex items-center gap-3 text-sm text-slate-300">
                 <Calendar className="w-4 h-4 text-blue-400" />
-                Joined {profile.created_at ? format(dateOnly(profile.created_at), 'MMM yyyy') : 'Unknown'}
+                Joined{' '}
+                {profile.created_at ? format(dateOnly(profile.created_at), 'MMM yyyy') : 'Unknown'}
               </div>
             </div>
 
             {/* Social Links Display */}
-            {!isEditing && ((profile.socialLinks as ProfileSocialLinks)?.instagram || (profile.socialLinks as ProfileSocialLinks)?.twitter || (profile.socialLinks as ProfileSocialLinks)?.facebook || (profile.socialLinks as ProfileSocialLinks)?.telegram) && (
-              <div className="mt-4 pt-4 border-t border-slate-600/50">
-                <div className="flex justify-center gap-3">
-                  {(profile.socialLinks as ProfileSocialLinks).instagram && (
-                    <a href={`https://instagram.com/${(profile.socialLinks as ProfileSocialLinks).instagram!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-pink-400 transition-colors">
-                      <Instagram className="w-5 h-5" />
-                    </a>
-                  )}
-                  {(profile.socialLinks as ProfileSocialLinks).twitter && (
-                    <a href={`https://twitter.com/${(profile.socialLinks as ProfileSocialLinks).twitter!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-sky-400 transition-colors">
-                      <Twitter className="w-5 h-5" />
-                    </a>
-                  )}
-                  {(profile.socialLinks as ProfileSocialLinks).facebook && (
-                    <a href={(profile.socialLinks as ProfileSocialLinks).facebook} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
-                      <Facebook className="w-5 h-5" />
-                    </a>
-                  )}
-                  {(profile.socialLinks as ProfileSocialLinks).telegram && (
-                    <a href={`https://t.me/${(profile.socialLinks as ProfileSocialLinks).telegram!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
-                      <Send className="w-5 h-5" />
-                    </a>
-                  )}
+            {!isEditing &&
+              ((profile.socialLinks as ProfileSocialLinks)?.instagram ||
+                (profile.socialLinks as ProfileSocialLinks)?.twitter ||
+                (profile.socialLinks as ProfileSocialLinks)?.facebook ||
+                (profile.socialLinks as ProfileSocialLinks)?.telegram) && (
+                <div className="mt-4 pt-4 border-t border-slate-600/50">
+                  <div className="flex justify-center gap-3">
+                    {(profile.socialLinks as ProfileSocialLinks).instagram && (
+                      <a
+                        href={`https://instagram.com/${(profile.socialLinks as ProfileSocialLinks).instagram!.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-pink-400 transition-colors"
+                      >
+                        <Instagram className="w-5 h-5" />
+                      </a>
+                    )}
+                    {(profile.socialLinks as ProfileSocialLinks).twitter && (
+                      <a
+                        href={`https://twitter.com/${(profile.socialLinks as ProfileSocialLinks).twitter!.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-sky-400 transition-colors"
+                      >
+                        <Twitter className="w-5 h-5" />
+                      </a>
+                    )}
+                    {(profile.socialLinks as ProfileSocialLinks).facebook && (
+                      <a
+                        href={(profile.socialLinks as ProfileSocialLinks).facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-blue-400 transition-colors"
+                      >
+                        <Facebook className="w-5 h-5" />
+                      </a>
+                    )}
+                    {(profile.socialLinks as ProfileSocialLinks).telegram && (
+                      <a
+                        href={`https://t.me/${(profile.socialLinks as ProfileSocialLinks).telegram!.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-blue-400 transition-colors"
+                      >
+                        <Send className="w-5 h-5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
 
           {/* Quick Actions */}
@@ -420,41 +458,51 @@ export default function AdminProfile() {
               <div className="space-y-8">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">Basic Information</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                    Basic Information
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">First Name</Label>
+                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                        First Name
+                      </Label>
                       <Input
                         type="text"
                         value={formData.name.first}
-                        onChange={(e) => updateNestedFormData('name', 'first', e.target.value)}
+                        onChange={e => updateNestedFormData('name', 'first', e.target.value)}
                         className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">Last Name</Label>
+                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                        Last Name
+                      </Label>
                       <Input
                         type="text"
                         value={formData.name.last}
-                        onChange={(e) => updateNestedFormData('name', 'last', e.target.value)}
+                        onChange={e => updateNestedFormData('name', 'last', e.target.value)}
                         className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">Email Address</Label>
+                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                        Email Address
+                      </Label>
                       <Input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => updateFormData('email', e.target.value)}
+                        onChange={e => updateFormData('email', e.target.value)}
                         className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">Username</Label>
+                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                        Username
+                      </Label>
                       <Input
                         type="text"
                         value={formData.username}
-                        onChange={(e) => updateFormData('username', e.target.value)}
+                        onChange={e => updateFormData('username', e.target.value)}
                         placeholder="Choose a username"
                         className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -464,14 +512,16 @@ export default function AdminProfile() {
 
                 {/* Location & Contact */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">Location & Contact</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                    Location & Contact
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium text-slate-300 block mb-2">Phone</Label>
                       <Input
                         type="tel"
                         value={formData.phoneNumber}
-                        onChange={(e) => updateFormData('phoneNumber', e.target.value)}
+                        onChange={e => updateFormData('phoneNumber', e.target.value)}
                         className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -483,16 +533,16 @@ export default function AdminProfile() {
                           city: formData.city || '',
                           state: formData.stateProvince || '',
                           country: formData.country || '',
-                          countryCode: formData.countryCode || ''
+                          countryCode: formData.countryCode || '',
                         }}
-                        onChange={(location) => {
+                        onChange={location => {
                           setFormData(prev => ({
                             ...prev,
                             locationText: location.formatted || '',
                             city: location.city || '',
                             stateProvince: location.state || '',
                             country: location.country || '',
-                            countryCode: location.countryCode || ''
+                            countryCode: location.countryCode || '',
                           }));
                         }}
                       />
@@ -502,7 +552,9 @@ export default function AdminProfile() {
 
                 {/* Social Links */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">Social Media</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                    Social Media
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label className="text-sm font-medium text-slate-300 block mb-2 flex items-center gap-2">
@@ -510,11 +562,15 @@ export default function AdminProfile() {
                         Instagram
                       </Label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">@</span>
+                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">
+                          @
+                        </span>
                         <Input
                           type="text"
                           value={formData.socialLinks.instagram}
-                          onChange={(e) => updateNestedFormData('socialLinks', 'instagram', e.target.value)}
+                          onChange={e =>
+                            updateNestedFormData('socialLinks', 'instagram', e.target.value)
+                          }
                           placeholder="username"
                           className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500 rounded-l-none"
                         />
@@ -526,11 +582,15 @@ export default function AdminProfile() {
                         Twitter/X
                       </Label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">@</span>
+                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">
+                          @
+                        </span>
                         <Input
                           type="text"
                           value={formData.socialLinks.twitter}
-                          onChange={(e) => updateNestedFormData('socialLinks', 'twitter', e.target.value)}
+                          onChange={e =>
+                            updateNestedFormData('socialLinks', 'twitter', e.target.value)
+                          }
                           placeholder="username"
                           className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500 rounded-l-none"
                         />
@@ -544,7 +604,9 @@ export default function AdminProfile() {
                       <Input
                         type="text"
                         value={formData.socialLinks.facebook}
-                        onChange={(e) => updateNestedFormData('socialLinks', 'facebook', e.target.value)}
+                        onChange={e =>
+                          updateNestedFormData('socialLinks', 'facebook', e.target.value)
+                        }
                         placeholder="facebook.com/username"
                         className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -555,11 +617,15 @@ export default function AdminProfile() {
                         Telegram
                       </Label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">@</span>
+                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">
+                          @
+                        </span>
                         <Input
                           type="text"
                           value={formData.socialLinks.telegram}
-                          onChange={(e) => updateNestedFormData('socialLinks', 'telegram', e.target.value)}
+                          onChange={e =>
+                            updateNestedFormData('socialLinks', 'telegram', e.target.value)
+                          }
                           placeholder="username"
                           className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500 rounded-l-none"
                         />
@@ -570,13 +636,15 @@ export default function AdminProfile() {
 
                 {/* Bio */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">About You</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                    About You
+                  </h3>
                   <div>
                     <Label className="text-sm font-medium text-slate-300 block mb-2">Bio</Label>
                     <Textarea
                       rows={4}
                       value={formData.bio}
-                      onChange={(e) => updateFormData('bio', e.target.value)}
+                      onChange={e => updateFormData('bio', e.target.value)}
                       placeholder="Tell us about yourself..."
                       className="bg-slate-800/50 border-slate-600 text-white resize-none focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -586,7 +654,9 @@ export default function AdminProfile() {
             ) : (
               // View Mode - Only Bio
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">About You</h3>
+                <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                  About You
+                </h3>
                 <div className="text-white leading-relaxed">
                   {profile.bio || (
                     <span className="text-slate-400 italic">

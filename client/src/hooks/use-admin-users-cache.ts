@@ -51,7 +51,10 @@ function getUsersQueryKey(query: AdminUsersQuery): string[] {
 }
 
 // Fetch function
-async function fetchAdminUsers(query: AdminUsersQuery, authHeaders?: Record<string, string>): Promise<UsersResponse> {
+async function fetchAdminUsers(
+  query: AdminUsersQuery,
+  authHeaders?: Record<string, string>
+): Promise<UsersResponse> {
   const params = new URLSearchParams();
 
   if (query.search) params.append('search', query.search);
@@ -101,7 +104,7 @@ export function useAdminUsersCache() {
         ? { Authorization: `Bearer ${session.access_token}` }
         : undefined;
 
-      const prefetchPromises = COMMON_QUERIES.map((query) => {
+      const prefetchPromises = COMMON_QUERIES.map(query => {
         const queryKey = getUsersQueryKey(query);
 
         // Only prefetch if not already cached
@@ -116,9 +119,7 @@ export function useAdminUsersCache() {
         return Promise.resolve();
       });
 
-      Promise.all(prefetchPromises).catch((error) => {
-        console.warn('Failed to prefetch admin users data:', error);
-      });
+      Promise.all(prefetchPromises).catch(error => {});
     }, 500); // 500ms delay to ensure auth is ready
 
     return () => clearTimeout(timeoutId);
@@ -163,11 +164,8 @@ export function useAdminUsersCache() {
       });
 
       if (!response.ok) {
-        console.warn('Failed to warm cache:', response.statusText);
       }
-    } catch (error) {
-      console.warn('Failed to warm cache:', error);
-    }
+    } catch (error) {}
   }, []);
 
   // Clear cache
@@ -200,7 +198,7 @@ export function useAdminUsers(query: AdminUsersQuery) {
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     // Keep previous data while fetching new data to prevent flickering
-    placeholderData: (previousData) => previousData,
+    placeholderData: previousData => previousData,
   });
 
   // Prefetch adjacent pages when data loads successfully
@@ -230,9 +228,7 @@ export function useAdminUserMutations() {
 
           return {
             ...oldData,
-            users: oldData.users.map((user) =>
-              user.id === userId ? { ...user, ...updates } : user
-            ),
+            users: oldData.users.map(user => (user.id === userId ? { ...user, ...updates } : user)),
           };
         }
       );
@@ -270,7 +266,7 @@ export function useAdminUserMutations() {
 
           return {
             ...oldData,
-            users: oldData.users.filter((user) => user.id !== userId),
+            users: oldData.users.filter(user => user.id !== userId),
             pagination: {
               ...oldData.pagination,
               total: oldData.pagination.total - 1,

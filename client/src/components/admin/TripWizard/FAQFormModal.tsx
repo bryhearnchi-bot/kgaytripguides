@@ -77,7 +77,6 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
 
       onSave();
     } catch (error) {
-      console.error('Error saving FAQ:', error);
       toast({
         title: 'Error',
         description: 'Failed to save FAQ',

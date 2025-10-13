@@ -7,7 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
 export function ShipDetailsPage() {
-  console.log('ShipDetailsPage rendering - PREVIEW VERSION');
   const { state, setShipId, updateShipData } = useTripWizard();
   const queryClient = useQueryClient();
   const [selectedShipId, setSelectedShipId] = useState<number | null>(state.shipId || null);
@@ -62,9 +61,7 @@ export function ShipDetailsPage() {
             });
           }
         })
-        .catch(error => {
-          console.error('Error fetching ship:', error);
-        })
+        .catch(error => {})
         .finally(() => {
           setIsLoadingShip(false);
         });

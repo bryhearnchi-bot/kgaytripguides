@@ -17,7 +17,7 @@ export function ImageUploadPopup({
   onClose,
   onImageUploaded,
   imageType,
-  title = 'Upload Image'
+  title = 'Upload Image',
 }: ImageUploadPopupProps) {
   const [urlInput, setUrlInput] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
@@ -26,7 +26,6 @@ export function ImageUploadPopup({
   const { isUploading, error, progress, uploadFile, uploadFromUrl, resetState } = useImageUpload();
 
   const handleClose = () => {
-    console.log('Popup handleClose called, isUploading:', isUploading);
     if (isUploading) return; // Prevent closing during upload
     setUrlInput('');
     setShowUrlInput(false);
@@ -39,33 +38,22 @@ export function ImageUploadPopup({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleFileChange triggered');
     const file = e.target.files?.[0];
-    console.log('File selected:', file?.name, file?.size, file?.type);
 
     if (!file) {
-      console.log('No file selected, returning');
       return;
     }
 
-    console.log('File is valid, preventing popup close during upload');
-
     try {
-      console.log('Starting upload for file:', file.name);
       const result = await uploadFile(file, imageType);
-      console.log('Upload successful, result:', result);
-      console.log('Calling onImageUploaded with result');
       onImageUploaded(result);
-      console.log('Upload complete, closing popup');
       handleClose();
     } catch (error) {
       // Error is already handled in the hook
-      console.error('Upload failed with error:', error);
       // Don't close popup on error so user can see the error message
     }
 
     // Reset file input
-    console.log('Resetting file input');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -80,7 +68,6 @@ export function ImageUploadPopup({
       handleClose();
     } catch (error) {
       // Error is already handled in the hook
-      console.error('URL upload failed:', error);
     }
   };
 
@@ -97,16 +84,13 @@ export function ImageUploadPopup({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={handleClose}
-      />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-md mx-4">
         <div
           className="bg-slate-900/95 border border-white/10 rounded-2xl p-6 backdrop-blur-sm shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -120,8 +104,7 @@ export function ImageUploadPopup({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={(e) => {
-                  console.log('Close button clicked');
+                onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   handleClose();
@@ -160,8 +143,7 @@ export function ImageUploadPopup({
           <div className="space-y-4">
             {/* Option 1: Upload from Device */}
             <button
-              onClick={(e) => {
-                console.log('Device upload button clicked');
+              onClick={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleFileSelect();
@@ -183,8 +165,7 @@ export function ImageUploadPopup({
             {/* Option 2: Upload from URL */}
             <div>
               <button
-                onClick={(e) => {
-                  console.log('URL upload button clicked');
+                onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   toggleUrlInput();
@@ -211,10 +192,10 @@ export function ImageUploadPopup({
                       type="url"
                       placeholder="https://example.com/image.jpg"
                       value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
+                      onChange={e => setUrlInput(e.target.value)}
                       disabled={isUploading}
                       className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40"
-                      onKeyDown={(e) => {
+                      onKeyDown={e => {
                         if (e.key === 'Enter') {
                           handleUrlUpload();
                         }

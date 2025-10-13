@@ -44,7 +44,7 @@ export function CruiseItineraryPage() {
           setLocationTypes(data.items || []);
         }
       } catch (error) {
-        console.error('Error loading location types:', error);
+        // Error silently handled
       } finally {
         setLoadingLocationTypes(false);
       }
@@ -56,18 +56,6 @@ export function CruiseItineraryPage() {
   // Generate itinerary entries from trip dates if not already created
   // IMPORTANT: Don't generate blank entries in edit mode - the data is coming from restoreFromDraft
   useEffect(() => {
-    console.log('🔍 CruiseItineraryPage - useEffect triggered:', {
-      itineraryLength: state.itineraryEntries.length,
-      startDate: state.tripData.startDate,
-      endDate: state.tripData.endDate,
-      isEditMode: state.isEditMode,
-      willGenerate:
-        state.itineraryEntries.length === 0 &&
-        state.tripData.startDate &&
-        state.tripData.endDate &&
-        !state.isEditMode,
-    });
-
     // ONLY generate blank entries if:
     // 1. No entries exist
     // 2. We have dates
@@ -79,8 +67,6 @@ export function CruiseItineraryPage() {
       state.tripData.endDate &&
       !state.isEditMode
     ) {
-      console.log('📝 CruiseItineraryPage - Generating blank entries for NEW trip creation');
-
       // Parse dates in local timezone to avoid UTC conversion issues
       const [startYear, startMonth, startDay] = state.tripData.startDate.split('-').map(Number);
       const [endYear, endMonth, endDay] = state.tripData.endDate.split('-').map(Number);
@@ -113,12 +99,7 @@ export function CruiseItineraryPage() {
         dayNumber++;
       }
 
-      console.log('📝 CruiseItineraryPage - Setting blank entries:', entries.length);
       setItineraryEntries(entries);
-    } else {
-      console.log(
-        '✅ CruiseItineraryPage - Skipping generation, entries already exist or dates missing'
-      );
     }
   }, [
     state.tripData.startDate,
@@ -160,7 +141,6 @@ export function CruiseItineraryPage() {
         updateItineraryEntry(index, { locationId: locationId });
       }
     } catch (error) {
-      console.error('Error fetching location:', error);
       // Fallback: just update locationId if fetch fails
       updateItineraryEntry(index, { locationId: locationId });
     }
@@ -290,17 +270,6 @@ export function CruiseItineraryPage() {
   // Sort entries by day number for display (NOT date, to handle pre/post-trip days correctly)
   const sortedEntries = [...state.itineraryEntries].sort((a, b) => a.dayNumber - b.dayNumber);
 
-  // DEBUG: Log what we're about to render
-  console.log(
-    '🎨 CruiseItineraryPage - About to render entries:',
-    sortedEntries.map(e => ({
-      dayNumber: e.dayNumber,
-      date: e.date,
-      locationId: e.locationId,
-      locationName: e.locationName,
-    }))
-  );
-
   return (
     <div className="space-y-2.5" ref={entriesContainerRef}>
       {/* Itinerary Entries */}
@@ -309,10 +278,6 @@ export function CruiseItineraryPage() {
         // This ensures we update the correct entry when user makes changes
         const index = state.itineraryEntries.findIndex(
           e => e.date === entry.date && e.dayNumber === entry.dayNumber
-        );
-
-        console.log(
-          `🔍 Rendering entry - dayNumber: ${entry.dayNumber}, locationId: ${entry.locationId}, locationName: ${entry.locationName}, index: ${index}`
         );
 
         return (

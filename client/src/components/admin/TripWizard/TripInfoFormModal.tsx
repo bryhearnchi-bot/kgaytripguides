@@ -52,15 +52,11 @@ export function TripInfoFormModal({
     setLoading(true);
 
     try {
-      console.log('🔵 TripInfoFormModal - Submitting form data:', formData);
-
       if (editingSection) {
         // Update existing section
-        console.log('🔵 TripInfoFormModal - Updating section:', editingSection.id);
         const response = await api.put(`/api/trip-info-sections/${editingSection.id}`, formData);
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('❌ TripInfoFormModal - Update failed:', errorData);
           throw new Error('Failed to update section');
         }
 
@@ -70,20 +66,12 @@ export function TripInfoFormModal({
         });
       } else {
         // Create new section
-        console.log('🔵 TripInfoFormModal - Creating new section');
         const createResponse = await api.post('/api/trip-info-sections', formData);
         if (!createResponse.ok) {
           const errorData = await createResponse.json().catch(() => ({}));
-          console.error('❌ TripInfoFormModal - Create failed with status:', createResponse.status);
-          console.error(
-            '❌ TripInfoFormModal - Error details:',
-            JSON.stringify(errorData, null, 2)
-          );
-          console.error('❌ TripInfoFormModal - Errors object:', errorData.errors);
           throw new Error('Failed to create section');
         }
         const newSection = await createResponse.json();
-        console.log('✅ TripInfoFormModal - Section created:', newSection);
 
         // Assign to trip
         const assignResponse = await api.post('/api/trip-section-assignments', {
@@ -101,7 +89,6 @@ export function TripInfoFormModal({
 
       onSave();
     } catch (error) {
-      console.error('Error saving trip info section:', error);
       toast({
         title: 'Error',
         description: 'Failed to save trip info section',

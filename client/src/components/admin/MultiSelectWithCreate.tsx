@@ -207,7 +207,6 @@ export function MultiSelectWithCreate({
       await onCreate(searchValue.trim());
       setSearchValue('');
     } catch (error) {
-      console.error('Error creating item:', error);
     } finally {
       setCreating(false);
     }

@@ -106,8 +106,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
     }
 
     if (resort) {
-      console.log('🏨 Loading resort into form:', { id: resort.id, name: resort.name });
-
       // Parse existing location if it's in old format
       const locationData = resort.city
         ? {
@@ -136,11 +134,9 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
       // Load resort's amenities and venues
       if (resort.id) {
-        console.log('🏨 Loading resort relations for resortId:', resort.id);
         loadResortRelations(resort.id);
       }
     } else {
-      console.log('🏨 No resort provided, resetting form');
       // Reset form for new resort
       setFormData({
         name: '',
@@ -177,9 +173,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         setAmenityIds(amenitiesData.map((a: any) => a.id));
         setVenues(venuesData);
       }
-    } catch (error) {
-      console.error('Error loading resort relations:', error);
-    }
+    } catch (error) {}
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -242,22 +236,18 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
       // If we have pending venues (for new resorts), save them now
       if (!isEditing && pendingVenues.length > 0) {
-        console.log('🏨 CLIENT: Saving pending venues', { count: pendingVenues.length });
         for (const venue of pendingVenues) {
           try {
             await api.post(`/api/admin/resorts/${resortId}/venues`, venue);
           } catch (venueError) {
-            console.error('🏨 CLIENT: Failed to save venue', { venue, error: venueError });
             // Continue with other venues even if one fails
           }
         }
-        console.log('🏨 CLIENT: All pending venues saved');
       }
 
       onSuccess(savedResort);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving resort:', error);
       // You could show an error toast here
     } finally {
       setLoading(false);

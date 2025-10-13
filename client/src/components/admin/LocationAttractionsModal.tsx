@@ -77,7 +77,6 @@ export function LocationAttractionsModal({
         setAttractions(data);
       }
     } catch (error) {
-      console.error('Error fetching attractions:', error);
       toast({
         title: 'Error',
         description: 'Failed to load attractions',
@@ -89,7 +88,6 @@ export function LocationAttractionsModal({
   };
 
   const handleEdit = (attraction: Attraction) => {
-    console.log('🟣 ATTRACTIONS handleEdit called with:', attraction);
     setEditingId(attraction.id);
     setFormData({
       name: attraction.name,
@@ -99,7 +97,6 @@ export function LocationAttractionsModal({
       websiteUrl: attraction.websiteUrl || '',
     });
     setIsAddingNew(false);
-    console.log('🟣 ATTRACTIONS editingId set to:', attraction.id);
   };
 
   const handleDelete = async (attraction: Attraction) => {
@@ -124,7 +121,6 @@ export function LocationAttractionsModal({
       fetchAttractions();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error deleting attraction:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete attraction',
@@ -197,7 +193,6 @@ export function LocationAttractionsModal({
       fetchAttractions();
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error saving attraction:', error);
       toast({
         title: 'Error',
         description: `Failed to ${editingId ? 'update' : 'create'} attraction`,

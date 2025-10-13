@@ -174,7 +174,6 @@ export function EventFormModal({
       const data = await response.json();
       setEventTypes(data);
     } catch (error) {
-      console.error('Error fetching event types:', error);
       toast({
         title: 'Error',
         description: 'Failed to load event types',
@@ -204,7 +203,6 @@ export function EventFormModal({
           variant: 'destructive',
         });
       } else {
-        console.error('Error saving event:', error);
         toast({
           title: 'Error',
           description: 'Failed to save event',

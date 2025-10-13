@@ -63,15 +63,6 @@ export function EventsTabPage() {
   const scheduleEntries = state.scheduleEntries || [];
   const itineraryEntries = state.itineraryEntries || [];
 
-  console.log('🎉 EventsTabPage - Rendering:', {
-    tripId: state.tripData.id,
-    tripType,
-    eventsCount: events.length,
-    events,
-    talentCount: tripTalent.length,
-    isEditMode: state.isEditMode,
-  });
-
   const handleCreateEvent = () => {
     setEditingEvent(undefined);
     setShowEventModal(true);
@@ -97,7 +88,6 @@ export function EventsTabPage() {
           const talentData = await response.json();
           setTripTalent(talentData);
         } catch (error) {
-          console.error('Error refreshing trip talent:', error);
           // Non-fatal - don't show error to user
         }
       }
@@ -107,7 +97,6 @@ export function EventsTabPage() {
         description: 'Event deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting event:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete event',
@@ -134,7 +123,6 @@ export function EventsTabPage() {
         });
       }
     } catch (error) {
-      console.error('Error saving event:', error);
       throw error;
     }
   };

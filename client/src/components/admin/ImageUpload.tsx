@@ -14,12 +14,12 @@ interface ImageUploadProps {
   label?: string;
 }
 
-export function ImageUpload({ 
-  imageType, 
-  currentImageUrl, 
-  onImageChange, 
+export function ImageUpload({
+  imageType,
+  currentImageUrl,
+  onImageChange,
   disabled = false,
-  label = 'Image'
+  label = 'Image',
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -33,9 +33,9 @@ export function ImageUpload({
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Error",
-        description: "Please select an image file",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please select an image file',
+        variant: 'destructive',
       });
       return;
     }
@@ -43,15 +43,15 @@ export function ImageUpload({
     // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
       toast({
-        title: "Error", 
-        description: "File size must be less than 10MB",
-        variant: "destructive"
+        title: 'Error',
+        description: 'File size must be less than 10MB',
+        variant: 'destructive',
       });
       return;
     }
 
     setIsUploading(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('image', file);
@@ -60,7 +60,7 @@ export function ImageUpload({
       const response = await fetch(`/api/images/upload/${imageType}`, {
         method: 'POST',
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -71,20 +71,19 @@ export function ImageUpload({
       const result = await response.json();
       onImageChange(result.imageUrl);
       toast({
-        title: "Success",
-        description: "Image uploaded successfully"
+        title: 'Success',
+        description: 'Image uploaded successfully',
       });
-      
+
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Upload error:', error);
       toast({
-        title: "Error",
+        title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to upload image',
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
@@ -94,15 +93,15 @@ export function ImageUpload({
   const handleUrlDownload = async () => {
     if (!urlInput.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a valid URL",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please enter a valid URL',
+        variant: 'destructive',
       });
       return;
     }
 
     setIsDownloading(true);
-    
+
     try {
       const response = await fetch('/api/images/download-from-url', {
         method: 'POST',
@@ -112,9 +111,9 @@ export function ImageUpload({
         body: JSON.stringify({
           url: urlInput.trim(),
           imageType,
-          name: `${imageType}-image`
+          name: `${imageType}-image`,
         }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -125,16 +124,15 @@ export function ImageUpload({
       const result = await response.json();
       onImageChange(result.imageUrl);
       toast({
-        title: "Success",
-        description: "Image downloaded and saved successfully"
+        title: 'Success',
+        description: 'Image downloaded and saved successfully',
       });
       setUrlInput('');
     } catch (error) {
-      console.error('Download error:', error);
       toast({
-        title: "Error",
+        title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to download image',
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setIsDownloading(false);
@@ -151,27 +149,25 @@ export function ImageUpload({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imageUrl: currentImageUrl
+          imageUrl: currentImageUrl,
         }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        console.warn('Failed to delete image file from server');
         // Continue anyway - the image reference will be removed
       }
 
       onImageChange(null);
       toast({
-        title: "Success",
-        description: "Image removed successfully"
+        title: 'Success',
+        description: 'Image removed successfully',
       });
     } catch (error) {
-      console.error('Remove error:', error);
       toast({
-        title: "Error",
-        description: "Failed to remove image",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to remove image',
+        variant: 'destructive',
       });
     }
   };
@@ -190,7 +186,7 @@ export function ImageUpload({
                 src={currentImageUrl}
                 alt={`Current ${imageType} image`}
                 className="w-full h-32 object-cover rounded-md border"
-                onError={(e) => {
+                onError={e => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                 }}
@@ -245,7 +241,7 @@ export function ImageUpload({
               type="url"
               placeholder="https://example.com/image.jpg"
               value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
+              onChange={e => setUrlInput(e.target.value)}
               disabled={disabled || isDownloading}
               className="flex-1"
             />

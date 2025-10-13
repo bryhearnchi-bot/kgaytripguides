@@ -26,26 +26,24 @@ export class MobileErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      retryCount: 0
+      retryCount: 0,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Mobile Error Boundary caught an error:', error, errorInfo);
-
     // Trigger error haptic feedback
     haptics.error();
 
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Call optional error handler
@@ -67,10 +65,8 @@ export class MobileErrorBoundary extends Component<Props, State> {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         url: window.location.href,
-        retryCount: this.state.retryCount
+        retryCount: this.state.retryCount,
       };
-
-      console.error('Error logged:', errorData);
 
       // Store in localStorage for offline debugging
       const storedErrors = JSON.parse(localStorage.getItem('mobile-errors') || '[]');
@@ -82,9 +78,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
       }
 
       localStorage.setItem('mobile-errors', JSON.stringify(storedErrors));
-    } catch (logError) {
-      console.error('Failed to log error:', logError);
-    }
+    } catch (logError) {}
   };
 
   private handleRetry = () => {
@@ -94,7 +88,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      retryCount: prevState.retryCount + 1
+      retryCount: prevState.retryCount + 1,
     }));
   };
 
@@ -110,7 +104,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
       error: this.state.error?.message,
       stack: this.state.error?.stack,
       component: this.state.errorInfo?.componentStack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     // Create mailto link for error reporting
@@ -129,8 +123,9 @@ export class MobileErrorBoundary extends Component<Props, State> {
       }
 
       const canRetry = this.state.retryCount < this.maxRetries;
-      const isNetworkError = this.state.error?.message?.includes('fetch') ||
-                            this.state.error?.message?.includes('network');
+      const isNetworkError =
+        this.state.error?.message?.includes('fetch') ||
+        this.state.error?.message?.includes('network');
 
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
@@ -149,8 +144,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
                 <p className="mobile-body text-gray-600">
                   {isNetworkError
                     ? 'Please check your internet connection and try again.'
-                    : 'We\'re sorry, but something unexpected happened. Please try again.'
-                  }
+                    : "We're sorry, but something unexpected happened. Please try again."}
                 </p>
               </div>
 
@@ -169,10 +163,7 @@ export class MobileErrorBoundary extends Component<Props, State> {
               {/* Action Buttons */}
               <div className="space-y-3">
                 {canRetry && (
-                  <Button
-                    onClick={this.handleRetry}
-                    className="mobile-button-primary w-full"
-                  >
+                  <Button onClick={this.handleRetry} className="mobile-button-primary w-full">
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Try Again
                     {this.state.retryCount > 0 && ` (${this.state.retryCount}/${this.maxRetries})`}
@@ -202,7 +193,8 @@ export class MobileErrorBoundary extends Component<Props, State> {
               {!canRetry && (
                 <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
                   <p className="mobile-caption text-yellow-800">
-                    Maximum retry attempts reached. Please refresh the page or contact support if the problem persists.
+                    Maximum retry attempts reached. Please refresh the page or contact support if
+                    the problem persists.
                   </p>
                 </div>
               )}
@@ -228,12 +220,12 @@ export class MobileErrorBoundary extends Component<Props, State> {
 // Hook version for functional components
 export function useMobileErrorHandler() {
   const handleError = (error: Error, errorInfo?: ErrorInfo) => {
-    console.error('Error handled by hook:', error);
     haptics.error();
 
     // Show user-friendly error message
     const toast = document.createElement('div');
-    toast.className = 'fixed top-4 left-4 right-4 bg-red-600 text-white p-3 rounded-lg shadow-lg z-50 text-center';
+    toast.className =
+      'fixed top-4 left-4 right-4 bg-red-600 text-white p-3 rounded-lg shadow-lg z-50 text-center';
     toast.textContent = 'Something went wrong. Please try again.';
     document.body.appendChild(toast);
 

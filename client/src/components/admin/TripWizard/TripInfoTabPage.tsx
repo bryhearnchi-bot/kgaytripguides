@@ -196,7 +196,6 @@ export function TripInfoTabPage() {
       const data = await response.json();
       setSections(data);
     } catch (error) {
-      console.error('Error fetching trip info sections:', error);
       toast({
         title: 'Error',
         description: 'Failed to load trip info sections',
@@ -247,7 +246,6 @@ export function TripInfoTabPage() {
         description: 'Sections reordered successfully',
       });
     } catch (error) {
-      console.error('Error reordering sections:', error);
       // Revert on error
       fetchSections();
       toast({
@@ -297,7 +295,6 @@ export function TripInfoTabPage() {
         description: 'Section removed from trip',
       });
     } catch (error) {
-      console.error('Error deleting section:', error);
       toast({
         title: 'Error',
         description: 'Failed to remove section',

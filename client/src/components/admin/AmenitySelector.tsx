@@ -115,7 +115,6 @@ export function AmenitySelector({
       const data = await response.json();
       setAmenities(data);
     } catch (error) {
-      console.error('Error fetching amenities:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch amenities');
     } finally {
       setLoading(false);
@@ -160,7 +159,6 @@ export function AmenitySelector({
       setCreateForm({ name: '' });
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating amenity:', error);
       // You could show an error toast here
     } finally {
       setCreating(false);

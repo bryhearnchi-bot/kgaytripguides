@@ -58,7 +58,9 @@ export function useSupabaseAuth() {
     // Get initial session
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!mounted) return;
 
         setSession(session);
@@ -71,13 +73,11 @@ export function useSupabaseAuth() {
         // Fetch profile asynchronously without blocking initial load
         if (session?.user) {
           fetchProfile(session.user.id).catch(error => {
-            console.error('Failed to fetch profile during init:', error);
             // Profile fetch failure doesn't affect authentication state
           });
         }
       } catch (error) {
         // Log error without sensitive details
-        console.error('Error initializing auth');
         if (mounted) {
           initialLoadCompleteRef.current = true;
           setLoading(false);
@@ -86,7 +86,9 @@ export function useSupabaseAuth() {
     };
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
       // Skip the initial session event to avoid race condition
@@ -106,7 +108,6 @@ export function useSupabaseAuth() {
       // Fetch profile asynchronously without blocking loading state
       if (session?.user) {
         fetchProfile(session.user.id).catch(error => {
-          console.error('Failed to fetch profile in auth state change:', error);
           // Profile fetch failure doesn't affect authentication state
         });
       } else {
@@ -133,30 +134,27 @@ export function useSupabaseAuth() {
 
   const fetchProfile = async (userId: string, forceRefresh = false) => {
     try {
-      console.log('📡 Fetching profile for user:', userId, 'Force refresh:', forceRefresh);
-
       // Get the current session for authentication
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
 
       // Use our API instead of Supabase direct to ensure consistency
       const response = await fetch('/api/admin/profile', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${currentSession?.access_token}`,
+          Authorization: `Bearer ${currentSession?.access_token}`,
           'Content-Type': 'application/json',
         },
-        cache: forceRefresh ? 'no-store' : 'default'
+        cache: forceRefresh ? 'no-store' : 'default',
       });
 
       if (!response.ok) {
-        console.error('Error fetching profile from API:', response.status, response.statusText);
         setProfile(null);
         return;
       }
 
       const data = await response.json();
-
-      console.log('🔍 Profile API response data:', data);
 
       // The API already returns properly formatted data, so we can use it directly
       if (data) {
@@ -166,7 +164,7 @@ export function useSupabaseAuth() {
           name: data.name || {
             full: '',
             first: '',
-            last: ''
+            last: '',
           },
           username: data.username || '',
           avatarUrl: data.profile_image_url || data.avatarUrl || '',
@@ -186,14 +184,11 @@ export function useSupabaseAuth() {
           updated_at: data.updatedAt,
         };
 
-
-        console.log('🔍 Mapped profile data:', mappedProfile);
         setProfile(mappedProfile);
       } else {
         setProfile(null);
       }
     } catch (error) {
-      console.error('Error in fetchProfile:', error);
       setProfile(null);
     }
   };
@@ -262,14 +257,12 @@ export function useSupabaseAuth() {
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error('Logout error:', error);
       }
 
       // Navigate to home page without reload
       // The auth state change listener will handle the UI update
       navigate('/');
     } catch (error) {
-      console.error('Sign out failed:', error);
       // Clear storage even on error
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sb-')) {
@@ -304,14 +297,10 @@ export function useSupabaseAuth() {
 
   const refreshProfile = async () => {
     if (user?.id) {
-      console.log('🔄 Manually refreshing profile with force refresh...');
-      console.log('👤 Current user ID:', user.id);
       // Clear profile first to force a fresh fetch
       setProfile(null);
       await fetchProfile(user.id, true);
-      console.log('✅ Profile refresh completed');
     } else {
-      console.log('❌ No user ID for profile refresh');
     }
   };
 

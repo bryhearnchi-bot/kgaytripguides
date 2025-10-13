@@ -100,9 +100,6 @@ export function StandardAdminTable({
         imageCol.minWidth !== FIXED_COLUMN_SPECS.image.minWidth ||
         imageCol.maxWidth !== FIXED_COLUMN_SPECS.image.maxWidth
       ) {
-        console.warn(
-          `StandardAdminTable: Image column does not match standard specs. Expected width: ${FIXED_COLUMN_SPECS.image.width}, minWidth: ${FIXED_COLUMN_SPECS.image.minWidth}, maxWidth: ${FIXED_COLUMN_SPECS.image.maxWidth}`
-        );
       }
     }
   }, [columns]);

@@ -11,7 +11,6 @@ export function usePersistentSidebar(defaultValue: boolean = false) {
       const saved = localStorage.getItem('sidebarCollapsed');
       return saved !== null ? JSON.parse(saved) : defaultValue;
     } catch (error) {
-      console.warn('Failed to read sidebar state from localStorage:', error);
       return defaultValue;
     }
   });
@@ -28,9 +27,7 @@ export function usePersistentSidebar(defaultValue: boolean = false) {
   useEffect(() => {
     try {
       localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
-    } catch (error) {
-      console.warn('Failed to save sidebar state to localStorage:', error);
-    }
+    } catch (error) {}
   }, [collapsed]);
 
   const toggle = () => {
@@ -41,6 +38,6 @@ export function usePersistentSidebar(defaultValue: boolean = false) {
     collapsed,
     setCollapsed,
     toggle,
-    isMounted
+    isMounted,
   };
 }

@@ -18,7 +18,7 @@ export default function NavigationBanner() {
       // The signOut function already navigates to '/'
       // No need to call setLocation here
     } catch (error) {
-      console.error('Logout failed:', error);
+      // Error handling performed by signOut function
     }
   };
 

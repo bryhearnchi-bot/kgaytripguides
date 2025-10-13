@@ -21,18 +21,12 @@ export async function apiClient(url: string, options: FetchOptions = {}): Promis
   const { requireAuth = true, headers = {}, ...restOptions } = options;
 
   // Get the current session from Supabase
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   // Debug logging for profile update debugging
   if (url.includes('/profile')) {
-    console.log('API Client Debug:', {
-      url,
-      method: restOptions.method,
-      hasSession: !!session,
-      hasToken: !!session?.access_token,
-      tokenLength: session?.access_token?.length || 0,
-      requireAuth
-    });
   }
 
   // Build headers

@@ -25,23 +25,12 @@ export function ShipPreview({ shipData, shipId, onEdit }: ShipPreviewProps) {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(false);
 
-  console.log('🚢 ShipPreview render - shipData:', JSON.stringify(shipData, null, 2));
-
   // Fetch venues and amenities when ship ID is available
   useEffect(() => {
     const fetchShipRelations = async () => {
       // Use shipId prop if provided, otherwise try shipData.id
       const id = shipId ?? shipData?.id;
-      console.log(
-        '[ShipPreview] Fetching relations - shipId:',
-        shipId,
-        'shipData.id:',
-        shipData?.id,
-        'resolved id:',
-        id
-      );
       if (!id) {
-        console.log('[ShipPreview] No ID available, clearing data');
         setVenues([]);
         setAmenities([]);
         return;
@@ -49,28 +38,21 @@ export function ShipPreview({ shipData, shipId, onEdit }: ShipPreviewProps) {
 
       setLoading(true);
       try {
-        console.log('[ShipPreview] Fetching from API for ship ID:', id);
         const [venuesResponse, amenitiesResponse] = await Promise.all([
           api.get(`/api/admin/ships/${id}/venues`),
           api.get(`/api/ships/${id}/amenities`),
         ]);
 
-        console.log('[ShipPreview] Venues response:', venuesResponse.ok);
-        console.log('[ShipPreview] Amenities response:', amenitiesResponse.ok);
-
         if (venuesResponse.ok) {
           const venuesData = await venuesResponse.json();
-          console.log('[ShipPreview] Venues data:', venuesData);
           setVenues(venuesData);
         }
 
         if (amenitiesResponse.ok) {
           const amenitiesData = await amenitiesResponse.json();
-          console.log('[ShipPreview] Amenities data:', amenitiesData);
           setAmenities(amenitiesData);
         }
       } catch (error) {
-        console.error('Error fetching ship relations:', error);
       } finally {
         setLoading(false);
       }

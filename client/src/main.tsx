@@ -1,7 +1,7 @@
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import ErrorBoundary from "./components/ErrorBoundary";
-import "./index.css";
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
+import './index.css';
 
 // Register Service Worker for PWA functionality
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
-        updateViaCache: 'none'
+        updateViaCache: 'none',
       });
 
       // Check for updates
@@ -43,16 +43,13 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         document.body.classList.add('offline');
         showToast('You are now offline. Some features may be limited.', 'warning');
       });
-
-    } catch (error) {
-      console.error('SW registration failed: ', error);
-    }
+    } catch (error) {}
   });
 }
 
 // PWA Install Prompt
 let deferredPrompt: any;
-window.addEventListener('beforeinstallprompt', (e) => {
+window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
   showInstallPrompt();
@@ -61,7 +58,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
 // Show custom update notification
 function showUpdateNotification(onUpdate: () => void) {
   const notification = document.createElement('div');
-  notification.className = 'fixed top-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 flex justify-between items-center';
+  notification.className =
+    'fixed top-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 flex justify-between items-center';
 
   // Create message container
   const messageContainer = document.createElement('div');
@@ -97,7 +95,8 @@ function showInstallPrompt() {
   if (!deferredPrompt) return;
 
   const prompt = document.createElement('div');
-  prompt.className = 'fixed bottom-4 left-4 right-4 bg-white border border-gray-200 p-4 rounded-lg shadow-lg z-50';
+  prompt.className =
+    'fixed bottom-4 left-4 right-4 bg-white border border-gray-200 p-4 rounded-lg shadow-lg z-50';
 
   // Create container
   const container = document.createElement('div');
@@ -162,7 +161,8 @@ function showInstallPrompt() {
 // Toast notification utility
 function showToast(message: string, type: 'success' | 'warning' | 'error' = 'success') {
   const toast = document.createElement('div');
-  const bgColor = type === 'success' ? 'bg-green-600' : type === 'warning' ? 'bg-yellow-600' : 'bg-red-600';
+  const bgColor =
+    type === 'success' ? 'bg-green-600' : type === 'warning' ? 'bg-yellow-600' : 'bg-red-600';
   toast.className = `fixed top-4 left-4 right-4 ${bgColor} text-white p-3 rounded-lg shadow-lg z-50 text-center`;
   toast.textContent = message;
 
@@ -170,7 +170,7 @@ function showToast(message: string, type: 'success' | 'warning' | 'error' = 'suc
   setTimeout(() => toast.remove(), 3000);
 }
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <App />
   </ErrorBoundary>

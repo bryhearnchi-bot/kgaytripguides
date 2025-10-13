@@ -85,7 +85,6 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
           setLocationTypes(data.items || []);
         }
       } catch (error) {
-        console.error('Error loading location types:', error);
       } finally {
         setLoadingLocationTypes(false);
       }

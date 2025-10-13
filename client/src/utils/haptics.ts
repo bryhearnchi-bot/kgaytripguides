@@ -31,7 +31,7 @@ export const HapticPatterns: Record<string, HapticPattern> = {
   WARNING: { pattern: [150, 100, 50] },
 
   // Notification pattern
-  NOTIFICATION: { pattern: [50, 100, 50, 100, 50] }
+  NOTIFICATION: { pattern: [50, 100, 50, 100, 50] },
 };
 
 class HapticManager {
@@ -95,9 +95,7 @@ class HapticManager {
         // Use simple duration
         navigator.vibrate(pattern.duration);
       }
-    } catch (error) {
-      console.warn('Haptic feedback failed:', error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -223,7 +221,7 @@ export function useHaptics() {
     pullToRefresh: () => haptics.pullToRefresh(),
     setEnabled: (enabled: boolean) => haptics.setEnabled(enabled),
     isEnabled: () => haptics.getEnabled(),
-    isSupported: () => haptics.getSupported()
+    isSupported: () => haptics.getSupported(),
   };
 }
 

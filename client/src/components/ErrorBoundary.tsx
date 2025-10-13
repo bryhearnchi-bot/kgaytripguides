@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
@@ -32,21 +32,19 @@ export class ErrorBoundary extends Component<Props, State> {
     // Update state so the next render will show the fallback UI
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error details to console in development
     if (import.meta.env.DEV) {
-      console.error('ErrorBoundary caught an error:', error);
-      console.error('Error info:', errorInfo);
     }
 
     // Store error info for display
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // In production, you might want to send this to an error reporting service
@@ -57,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
   };
 
@@ -85,9 +83,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {/* Error Message */}
             <div className="text-center space-y-3">
-              <h1 className="text-3xl font-bold text-gray-900">
-                Oops! Something went wrong
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900">Oops! Something went wrong</h1>
               <p className="text-lg text-gray-600">
                 We encountered an unexpected error. Don't worry, our team has been notified.
               </p>
@@ -115,11 +111,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                onClick={this.handleReset}
-                className="flex items-center gap-2"
-                size="lg"
-              >
+              <Button onClick={this.handleReset} className="flex items-center gap-2" size="lg">
                 <RefreshCw className="w-5 h-5" />
                 Try Again
               </Button>

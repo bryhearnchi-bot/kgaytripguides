@@ -47,15 +47,11 @@ export function ImageUploadField({
   };
 
   const handleImageUploaded = async (result: ImageUploadResult) => {
-    console.log('handleImageUploaded called with result:', result);
-    console.log('Updating image URL to:', result.url);
     onChange(result.url);
 
     // Auto-save to profile if enabled and this is a profile image
     if (autoSave && imageType === 'profiles' && user) {
       try {
-        console.log('Auto-saving profile image to database...');
-
         // Get authentication token
         const {
           data: { session },
@@ -82,8 +78,6 @@ export function ImageUploadField({
           throw new Error(error.error || 'Failed to save profile image');
         }
 
-        console.log('Profile image auto-saved successfully');
-
         // Refresh the profile data
         await refreshProfile();
 
@@ -92,7 +86,6 @@ export function ImageUploadField({
           description: 'Your profile photo has been saved.',
         });
       } catch (error: any) {
-        console.error('Auto-save profile image error:', error);
         toast({
           title: 'Save failed',
           description: error.message || 'Failed to save profile image',
@@ -101,7 +94,6 @@ export function ImageUploadField({
       }
     }
 
-    console.log('Closing upload popup');
     setShowUploadPopup(false);
   };
 
@@ -132,7 +124,6 @@ export function ImageUploadField({
         className="bg-white/3 border border-white/10 rounded-xl p-3"
         onClick={e => e.stopPropagation()}
         onSubmit={e => {
-          console.log('Form submit event captured and prevented');
           e.preventDefault();
           e.stopPropagation();
         }}
@@ -187,16 +178,11 @@ export function ImageUploadField({
                     <button
                       type="button"
                       onClick={e => {
-                        console.log('Change button onClick triggered');
-                        console.log('Event type:', e.type);
-                        console.log('Button type:', e.currentTarget.type);
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Opening popup (now using portal)');
                         setShowUploadPopup(true);
                       }}
                       onKeyDown={e => {
-                        console.log('Change button keyDown:', e.key);
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           e.stopPropagation();

@@ -43,7 +43,6 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
         description: 'Please check your email for instructions to reset your password.',
       });
     } catch (error: any) {
-      console.error('Password reset error:', error);
       toast({
         title: 'Password reset failed',
         description: error.message || 'Unable to send password reset email',
@@ -64,7 +63,8 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Check your email</h3>
           <p className="mt-2 text-sm text-gray-600">
-            We've sent you a password reset link. Please check your email and follow the instructions.
+            We've sent you a password reset link. Please check your email and follow the
+            instructions.
           </p>
         </div>
 
@@ -84,11 +84,7 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
           </Button>
 
           {onBack && (
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={onBack}
-            >
+            <Button variant="ghost" className="w-full" onClick={onBack}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to sign in
             </Button>
@@ -117,26 +113,15 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
             {...register('email')}
             className={errors.email ? 'border-red-500' : ''}
           />
-          {errors.email && (
-            <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={loading}
-        >
+        <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Sending...' : 'Send Reset Link'}
         </Button>
 
         {onBack && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={onBack}
-          >
+          <Button type="button" variant="ghost" className="w-full" onClick={onBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to sign in
           </Button>

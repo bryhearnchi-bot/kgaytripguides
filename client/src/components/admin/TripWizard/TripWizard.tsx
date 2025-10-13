@@ -100,9 +100,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
                   deckPlansUrl: ship.deckPlansUrl || '',
                 };
               }
-            } catch (error) {
-              console.error('Failed to fetch ship details for draft:', error);
-            }
+            } catch (error) {}
           }
 
           // Fetch resort data if resortId exists
@@ -123,9 +121,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
                   checkOutTime: resort.checkOutTime || '',
                 };
               }
-            } catch (error) {
-              console.error('Failed to fetch resort details for draft:', error);
-            }
+            } catch (error) {}
           }
 
           // Ensure draft ID is set
@@ -225,8 +221,6 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         }
       });
     } catch (error) {
-      console.error('Error saving draft:', error);
-
       toast({
         title: 'Failed to Save Draft',
         description: error instanceof Error ? error.message : 'Please try again.',

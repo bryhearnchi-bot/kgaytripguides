@@ -39,9 +39,7 @@ export function useTableState(
         const parsedState: TableState = JSON.parse(savedState);
         return { ...defaultColumnWidths, ...parsedState.columnWidths };
       }
-    } catch (error) {
-      console.warn('Failed to load table state:', error);
-    }
+    } catch (error) {}
     return defaultColumnWidths;
   });
 
@@ -55,9 +53,7 @@ export function useTableState(
           return parsedState.sortConfig;
         }
       }
-    } catch (error) {
-      console.warn('Failed to load table state:', error);
-    }
+    } catch (error) {}
     // If no saved sort and defaultSortColumn provided, use default
     return defaultSortColumn ? { key: defaultSortColumn, direction: 'asc' } : null;
   });
@@ -77,15 +73,13 @@ export function useTableState(
     };
     try {
       localStorage.setItem(storageKey, JSON.stringify(state));
-    } catch (error) {
-      console.warn('Failed to save table state:', error);
-    }
+    } catch (error) {}
   }, [storageKey, columnWidths, sortConfig, isInitialized]);
 
   const updateColumnWidth = useCallback((columnKey: string, width: number) => {
     setColumnWidths(prev => ({
       ...prev,
-      [columnKey]: width
+      [columnKey]: width,
     }));
   }, []);
 
@@ -101,56 +95,62 @@ export function useTableState(
     });
   }, []);
 
-  const sortData = useCallback((data: any[], computedValueExtractor?: (item: any, key: string) => any) => {
-    if (!sortConfig) return data;
+  const sortData = useCallback(
+    (data: any[], computedValueExtractor?: (item: any, key: string) => any) => {
+      if (!sortConfig) return data;
 
-    return [...data].sort((a, b) => {
-      let aValue = a[sortConfig.key];
-      let bValue = b[sortConfig.key];
+      return [...data].sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
 
-      // Use computed value extractor if provided
-      if (computedValueExtractor) {
-        aValue = computedValueExtractor(a, sortConfig.key);
-        bValue = computedValueExtractor(b, sortConfig.key);
-      }
+        // Use computed value extractor if provided
+        if (computedValueExtractor) {
+          aValue = computedValueExtractor(a, sortConfig.key);
+          bValue = computedValueExtractor(b, sortConfig.key);
+        }
 
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
 
-      // Handle different data types
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        const result = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
-        return sortConfig.direction === 'asc' ? result : -result;
-      }
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        const result = aValue - bValue;
-        return sortConfig.direction === 'asc' ? result : -result;
-      }
-
-      // Handle Date objects
-      if (aValue instanceof Date && bValue instanceof Date) {
-        const result = aValue.getTime() - bValue.getTime();
-        return sortConfig.direction === 'asc' ? result : -result;
-      }
-
-      // Handle date strings
-      if (typeof aValue === 'string' && typeof bValue === 'string' &&
-          (aValue.match(/^\d{4}-\d{2}-\d{2}/) || bValue.match(/^\d{4}-\d{2}-\d{2}/))) {
-        const dateA = new Date(aValue);
-        const dateB = new Date(bValue);
-        if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-          const result = dateA.getTime() - dateB.getTime();
+        // Handle different data types
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const result = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
           return sortConfig.direction === 'asc' ? result : -result;
         }
-      }
 
-      // Fallback to string comparison
-      const result = String(aValue).localeCompare(String(bValue));
-      return sortConfig.direction === 'asc' ? result : -result;
-    });
-  }, [sortConfig]);
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          const result = aValue - bValue;
+          return sortConfig.direction === 'asc' ? result : -result;
+        }
+
+        // Handle Date objects
+        if (aValue instanceof Date && bValue instanceof Date) {
+          const result = aValue.getTime() - bValue.getTime();
+          return sortConfig.direction === 'asc' ? result : -result;
+        }
+
+        // Handle date strings
+        if (
+          typeof aValue === 'string' &&
+          typeof bValue === 'string' &&
+          (aValue.match(/^\d{4}-\d{2}-\d{2}/) || bValue.match(/^\d{4}-\d{2}-\d{2}/))
+        ) {
+          const dateA = new Date(aValue);
+          const dateB = new Date(bValue);
+          if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+            const result = dateA.getTime() - dateB.getTime();
+            return sortConfig.direction === 'asc' ? result : -result;
+          }
+        }
+
+        // Fallback to string comparison
+        const result = String(aValue).localeCompare(String(bValue));
+        return sortConfig.direction === 'asc' ? result : -result;
+      });
+    },
+    [sortConfig]
+  );
 
   return {
     columnWidths,
