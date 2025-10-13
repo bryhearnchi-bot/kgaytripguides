@@ -61,7 +61,7 @@ const HeroSection = ({
             <img
               src={charterCompanyLogo}
               alt={charterCompanyName || 'Charter Company'}
-              className="h-8 w-auto object-contain"
+              className={`w-auto object-contain ${charterCompanyName?.toLowerCase().includes('drag') ? 'h-12' : 'h-8'}`}
               loading="lazy"
             />
           )}
@@ -134,7 +134,7 @@ const HeroSection = ({
             <img
               src={charterCompanyLogo}
               alt={charterCompanyName || 'Charter Company'}
-              className="h-8 w-auto object-contain"
+              className={`w-auto object-contain ${charterCompanyName?.toLowerCase().includes('drag') ? 'h-12' : 'h-8'}`}
               loading="lazy"
             />
           )}

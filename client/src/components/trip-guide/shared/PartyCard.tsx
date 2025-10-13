@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Clock, MapPin, Sparkles } from 'lucide-react';
 import type { DailyEvent, PartyTheme } from '@/data/trip-data';
 import { formatTime } from '@/lib/timeFormat';
@@ -29,12 +28,7 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
   const formattedTime = useMemo(() => formatTime(event.time, timeFormat), [event.time, timeFormat]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
-      className="group relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-all duration-300 hover:shadow-xl hover:border-white/30 h-full"
-    >
+    <div className="group relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-all duration-300 hover:shadow-xl hover:border-white/30 h-full">
       {/* Desktop: Side-by-side, Mobile: Stacked - Fixed height to match all cards */}
       <div className="flex flex-col sm:flex-row h-full sm:h-[240px]">
         {/* Left/Top: Party Image with overlay info */}
@@ -112,6 +106,6 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });

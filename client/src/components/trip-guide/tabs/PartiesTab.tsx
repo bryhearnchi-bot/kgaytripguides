@@ -1,5 +1,4 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { PartyPopper, MapPin, Calendar } from 'lucide-react';
 import type { DailySchedule, ItineraryStop, PartyTheme } from '@/data/trip-data';
 import { PartyCard } from '../shared/PartyCard';
@@ -62,14 +61,8 @@ export const PartiesTab = memo(function PartiesTab({
         </div>
       ) : (
         <div className="space-y-10">
-          {partyEventsByDate.map((day, dayIndex) => (
-            <motion.div
-              key={day.key}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: dayIndex * 0.03 }}
-              className="space-y-4"
-            >
+          {partyEventsByDate.map(day => (
+            <div key={day.key} className="space-y-4">
               {/* Compact Date Header */}
               <div className="flex items-center gap-3 pb-2 mb-1">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
@@ -96,12 +89,12 @@ export const PartiesTab = memo(function PartiesTab({
                       event={event}
                       partyTheme={theme}
                       timeFormat={timeFormat}
-                      delay={dayIndex * 0.05 + eventIndex * 0.06}
+                      delay={0}
                     />
                   );
                 })}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
