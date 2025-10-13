@@ -163,21 +163,26 @@ export default function JobListingComponent({
   const [activeItem, setActiveItem] = useState<Job | null>(null);
   const [showEventsSlideUp, setShowEventsSlideUp] = useState(false);
   const [showTalentDetail, setShowTalentDetail] = useState(false);
+  const [showPartyThemeDetail, setShowPartyThemeDetail] = useState(false);
   const [selectedTalent, setSelectedTalent] = useState<any>(null);
+  const [selectedPartyTheme, setSelectedPartyTheme] = useState<any>(null);
   const [dayEvents, setDayEvents] = useState<any[]>([]);
+  const [showViewTypeModal, setShowViewTypeModal] = useState(false);
+  const [showArtistSelectModal, setShowArtistSelectModal] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<any>(null);
   const ref = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const slideUpRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
 
   // Close itinerary card only if no other modals are open
   useOnClickOutside(ref, () => {
-    if (!showEventsSlideUp && !showTalentDetail) {
+    if (!showEventsSlideUp && !showTalentDetail && !showPartyThemeDetail) {
       setActiveItem(null);
     }
   });
 
-  // Close events panel only if talent detail is not showing
+  // Close events panel only if talent/party theme detail is not showing
   useOnClickOutside(slideUpRef, () => {
-    if (showEventsSlideUp && !showTalentDetail) {
+    if (showEventsSlideUp && !showTalentDetail && !showPartyThemeDetail) {
       setShowEventsSlideUp(false);
       setDayEvents([]);
     }
@@ -191,11 +196,75 @@ export default function JobListingComponent({
     return `Day ${dayNumber}`;
   };
 
+  // Handle event card click
+  const handleEventCardClick = (event: any) => {
+    const hasArtists = event.talent && event.talent.length > 0;
+    const hasPartyTheme = !!event.partyTheme;
+    const hasBoth = hasArtists && hasPartyTheme;
+
+    setCurrentEvent(event);
+
+    if (hasBoth) {
+      // Show view type selection modal
+      setShowViewTypeModal(true);
+    } else if (hasArtists && event.talent) {
+      // Only artists
+      if (event.talent.length === 1) {
+        // Single artist - open directly
+        setSelectedTalent(event.talent[0]);
+        setShowTalentDetail(true);
+      } else {
+        // Multiple artists - show selection
+        setShowArtistSelectModal(true);
+      }
+    } else if (hasPartyTheme && event.partyTheme) {
+      // Only party theme
+      setSelectedPartyTheme(event.partyTheme);
+      setShowPartyThemeDetail(true);
+    }
+  };
+
+  const handleViewArtists = () => {
+    setShowViewTypeModal(false);
+    if (currentEvent?.talent && currentEvent.talent.length === 1) {
+      // Single artist - open directly
+      setSelectedTalent(currentEvent.talent[0]);
+      setShowTalentDetail(true);
+    } else {
+      // Multiple artists - show selection
+      setShowArtistSelectModal(true);
+    }
+  };
+
+  const handleViewPartyTheme = () => {
+    setShowViewTypeModal(false);
+    if (currentEvent?.partyTheme) {
+      setSelectedPartyTheme(currentEvent.partyTheme);
+      setShowPartyThemeDetail(true);
+    }
+  };
+
+  const handleArtistSelect = (artist: any) => {
+    setShowArtistSelectModal(false);
+    setSelectedTalent(artist);
+    setShowTalentDetail(true);
+    setCurrentEvent(null);
+  };
+
   useEffect(() => {
     function onKeyDown(event: { key: string }) {
       if (event.key === 'Escape') {
         // Close modals in reverse order (innermost to outermost)
-        if (showTalentDetail) {
+        if (showArtistSelectModal) {
+          setShowArtistSelectModal(false);
+          setCurrentEvent(null);
+        } else if (showViewTypeModal) {
+          setShowViewTypeModal(false);
+          setCurrentEvent(null);
+        } else if (showPartyThemeDetail) {
+          setShowPartyThemeDetail(false);
+          setSelectedPartyTheme(null);
+        } else if (showTalentDetail) {
           setShowTalentDetail(false);
           setSelectedTalent(null);
         } else if (showEventsSlideUp) {
@@ -209,7 +278,14 @@ export default function JobListingComponent({
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [showTalentDetail, showEventsSlideUp, activeItem]);
+  }, [
+    showArtistSelectModal,
+    showViewTypeModal,
+    showPartyThemeDetail,
+    showTalentDetail,
+    showEventsSlideUp,
+    activeItem,
+  ]);
 
   return (
     <>
@@ -482,7 +558,8 @@ export default function JobListingComponent({
                             return (
                               <div
                                 key={idx}
-                                className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20"
+                                onClick={() => handleEventCardClick(event)}
+                                className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 cursor-pointer hover:bg-white/15 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
                               >
                                 <div className="flex gap-4">
                                   {/* Event/Artist Image - Larger Square */}
@@ -549,6 +626,25 @@ export default function JobListingComponent({
                                             </span>
                                           </button>
                                         ))}
+                                      </div>
+                                    )}
+
+                                    {/* Party Theme Badge - Below Artists */}
+                                    {event.partyTheme && (
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <button
+                                          onClick={e => {
+                                            e.stopPropagation();
+                                            setSelectedPartyTheme(event.partyTheme);
+                                            setShowPartyThemeDetail(true);
+                                          }}
+                                          className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs font-medium border border-blue-400/30 hover:bg-blue-500/30 transition-colors flex items-center gap-1 group"
+                                        >
+                                          <span>Party Theme: {event.partyTheme.name}</span>
+                                          <span className="text-blue-300 group-hover:translate-x-0.5 transition-transform text-[10px]">
+                                            →
+                                          </span>
+                                        </button>
                                       </div>
                                     )}
 
@@ -731,6 +827,230 @@ export default function JobListingComponent({
                           </div>
                         </motion.div>
                       )}
+                    </AnimatePresence>
+
+                    {/* Party Theme Detail Slide-In - slides over ENTIRE events card including header */}
+                    <AnimatePresence>
+                      {showPartyThemeDetail && selectedPartyTheme && (
+                        <motion.div
+                          initial={{ x: '100%' }}
+                          animate={{ x: 0 }}
+                          exit={{ x: '100%' }}
+                          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                          className="absolute inset-0 z-[70] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl overflow-y-auto rounded-t-2xl md:rounded-2xl"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <div className="p-6">
+                            <div className="text-white">
+                              {/* Circular Back Button */}
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setShowPartyThemeDetail(false);
+                                  setSelectedPartyTheme(null);
+                                }}
+                                className="w-10 h-10 rounded-full bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 flex items-center justify-center mb-4 transition-all hover:scale-110"
+                                aria-label="Back to Events"
+                              >
+                                <span className="text-blue-200 text-xl">←</span>
+                              </button>
+
+                              {/* Mobile: Full Width Image, Desktop: Wrapped Layout */}
+                              <div className="flex flex-col md:flex-row-reverse gap-6 mb-6">
+                                {/* Party Theme Image - Perfect Square */}
+                                {selectedPartyTheme.imageUrl && (
+                                  <div className="w-full md:w-64 md:flex-shrink-0">
+                                    <img
+                                      src={selectedPartyTheme.imageUrl}
+                                      alt={selectedPartyTheme.name}
+                                      className="w-full aspect-square object-cover rounded-xl border-2 border-blue-400/30 shadow-lg"
+                                    />
+                                  </div>
+                                )}
+
+                                {/* Party Theme Info */}
+                                <div className="flex-1">
+                                  {/* Party Theme Name */}
+                                  <h2 className="text-2xl font-bold mb-2">
+                                    {selectedPartyTheme.name}
+                                  </h2>
+
+                                  {/* Long Description */}
+                                  {selectedPartyTheme.longDescription && (
+                                    <div className="mb-4">
+                                      <p className="text-blue-50 text-sm leading-relaxed">
+                                        {selectedPartyTheme.longDescription}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {/* Costume Ideas */}
+                                  {selectedPartyTheme.costumeIdeas && (
+                                    <div className="mb-4">
+                                      <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
+                                        Costume Ideas
+                                      </h3>
+                                      <div className="bg-blue-500/10 backdrop-blur-md rounded-lg p-4 border border-blue-400/20">
+                                        <p className="text-blue-100 text-sm leading-relaxed">
+                                          {selectedPartyTheme.costumeIdeas}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* View Type Selection Modal (Artist vs Party Theme) */}
+                    <AnimatePresence>
+                      {showViewTypeModal && currentEvent && (
+                        <div
+                          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                          onClick={() => {
+                            setShowViewTypeModal(false);
+                            setCurrentEvent(null);
+                          }}
+                        >
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-xl font-bold text-white">
+                                What would you like to view?
+                              </h3>
+                              <button
+                                onClick={() => {
+                                  setShowViewTypeModal(false);
+                                  setCurrentEvent(null);
+                                }}
+                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all"
+                              >
+                                <X className="w-4 h-4 text-white" />
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              {/* Party Theme Option */}
+                              {currentEvent.partyTheme && (
+                                <button
+                                  onClick={handleViewPartyTheme}
+                                  className="w-full p-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-xl transition-all text-left group"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="text-xs text-blue-300 font-medium mb-1">
+                                        Party Theme
+                                      </p>
+                                      <p className="text-white font-bold">
+                                        {currentEvent.partyTheme.name}
+                                      </p>
+                                    </div>
+                                    <span className="text-blue-300 group-hover:translate-x-1 transition-transform text-xl">
+                                      →
+                                    </span>
+                                  </div>
+                                </button>
+                              )}
+
+                              {/* Artists Option */}
+                              {currentEvent.talent && currentEvent.talent.length > 0 && (
+                                <button
+                                  onClick={handleViewArtists}
+                                  className="w-full p-4 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 rounded-xl transition-all text-left group"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="text-xs text-purple-300 font-medium mb-1">
+                                        {currentEvent.talent.length === 1 ? 'Artist' : 'Artists'}
+                                      </p>
+                                      <p className="text-white font-bold">
+                                        {currentEvent.talent.length === 1
+                                          ? currentEvent.talent[0].name
+                                          : `${currentEvent.talent.length} Artists`}
+                                      </p>
+                                    </div>
+                                    <span className="text-purple-300 group-hover:translate-x-1 transition-transform text-xl">
+                                      →
+                                    </span>
+                                  </div>
+                                </button>
+                              )}
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Artist Selection Modal */}
+                    <AnimatePresence>
+                      {showArtistSelectModal &&
+                        currentEvent?.talent &&
+                        currentEvent.talent.length > 1 && (
+                          <div
+                            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                            onClick={() => {
+                              setShowArtistSelectModal(false);
+                              setCurrentEvent(null);
+                            }}
+                          >
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ duration: 0.2 }}
+                              onClick={e => e.stopPropagation()}
+                              className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold text-white">Select an Artist</h3>
+                                <button
+                                  onClick={() => {
+                                    setShowArtistSelectModal(false);
+                                    setCurrentEvent(null);
+                                  }}
+                                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all"
+                                >
+                                  <X className="w-4 h-4 text-white" />
+                                </button>
+                              </div>
+
+                              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                                {currentEvent.talent.map((artist: any, idx: number) => (
+                                  <button
+                                    key={idx}
+                                    onClick={() => handleArtistSelect(artist)}
+                                    className="w-full p-4 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 rounded-xl transition-all text-left group"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      {artist.profileImageUrl && (
+                                        <img
+                                          src={artist.profileImageUrl}
+                                          alt={artist.name}
+                                          className="w-12 h-12 rounded-lg object-cover border border-purple-400/30"
+                                        />
+                                      )}
+                                      <div className="flex-1">
+                                        <p className="text-white font-bold">{artist.name}</p>
+                                      </div>
+                                      <span className="text-purple-300 group-hover:translate-x-1 transition-transform text-xl">
+                                        →
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          </div>
+                        )}
                     </AnimatePresence>
                   </motion.div>
                 </div>

@@ -1,7 +1,7 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
-import { TimelineList } from '../shared/TimelineList';
+import { EventCard } from '../shared/EventCard';
 import { isDateInPast } from '../utils/dateHelpers';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime as globalFormatTime } from '@/lib/timeFormat';
@@ -17,6 +17,7 @@ interface ScheduleTabProps {
   onCollapseAll: () => void;
   onTalentClick: (name: string) => void;
   onPartyClick: (party: any) => void;
+  onPartyThemeClick?: (partyTheme: any) => void;
 }
 
 export const ScheduleTab = memo(function ScheduleTab({
@@ -29,6 +30,7 @@ export const ScheduleTab = memo(function ScheduleTab({
   onCollapseAll,
   onTalentClick,
   onPartyClick,
+  onPartyThemeClick,
 }: ScheduleTabProps) {
   const { timeFormat } = useTimeFormat();
 
@@ -75,36 +77,36 @@ export const ScheduleTab = memo(function ScheduleTab({
               transition={{ duration: 0.25, delay: dayIndex * 0.02 }}
               className={`${isPastDate ? 'opacity-75' : ''}`}
             >
-              <div className="bg-white/85 backdrop-blur-sm border border-white/30 rounded-md overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300">
                 <div
-                  className={`p-3 cursor-pointer transition-colors ${
-                    isCollapsed ? 'hover:bg-white' : 'bg-ocean-50/50'
+                  className={`p-4 cursor-pointer transition-all duration-200 ${
+                    isCollapsed ? 'hover:bg-white/15' : 'bg-white/5'
                   }`}
                   onClick={() => onToggleDayCollapse(day.key)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="bg-ocean-100 text-ocean-700 text-sm font-bold px-3 py-1 rounded-full">
+                      <div className="bg-ocean-500/30 text-ocean-100 text-sm font-bold px-4 py-1.5 rounded-full border border-ocean-400/30 backdrop-blur-sm">
                         {itineraryStop?.date || day.key}
                       </div>
                       {itineraryStop && (
-                        <div className="text-gray-600 text-sm">
-                          <MapPin className="w-4 h-4 inline mr-1" />
-                          {itineraryStop.port}
+                        <div className="text-white/80 text-sm flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{itineraryStop.port}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       {day.items.length > 0 && (
-                        <span className="text-xs text-gray-500 hidden sm:inline">
-                          Departs:{' '}
+                        <span className="text-xs text-white/50 hidden sm:inline">
+                          Last event:{' '}
                           {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
                         </span>
                       )}
                       {isCollapsed ? (
-                        <ChevronDown className="w-5 h-5 text-ocean-600 hover:text-ocean-700 transition-colors" />
+                        <ChevronDown className="w-5 h-5 text-ocean-300 hover:text-ocean-200 transition-colors" />
                       ) : (
-                        <ChevronUp className="w-5 h-5 text-ocean-600 hover:text-ocean-700 transition-colors" />
+                        <ChevronUp className="w-5 h-5 text-ocean-300 hover:text-ocean-200 transition-colors" />
                       )}
                     </div>
                   </div>
@@ -117,22 +119,24 @@ export const ScheduleTab = memo(function ScheduleTab({
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="border-t border-ocean-100/30"
+                      className="border-t border-white/10"
                     >
-                      <div className="px-4 pt-2 pb-3 bg-ocean-50/50">
+                      <div className="px-4 pt-4 pb-4 bg-gradient-to-br from-slate-900/40 via-slate-800/40 to-slate-900/40 backdrop-blur-sm">
                         {day.items.length === 0 ? (
-                          <p className="text-gray-500 text-center py-8">
+                          <p className="text-white/60 text-center py-8">
                             No scheduled events for this day
                           </p>
                         ) : (
-                          <TimelineList
-                            events={day.items}
-                            onTalentClick={onTalentClick}
-                            onPartyClick={onPartyClick}
-                            eventDate={itineraryStop?.date}
-                            TALENT={TALENT}
-                            PARTY_THEMES={PARTY_THEMES}
-                          />
+                          <div className="space-y-3">
+                            {day.items.map((event: any, idx: number) => (
+                              <EventCard
+                                key={idx}
+                                event={event}
+                                onTalentClick={onTalentClick}
+                                onPartyThemeClick={onPartyThemeClick}
+                              />
+                            ))}
+                          </div>
                         )}
                       </div>
                     </motion.div>

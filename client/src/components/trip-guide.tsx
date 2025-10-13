@@ -24,7 +24,7 @@ import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTab } from './trip-guide/tabs/TalentTab';
 import { PartiesTab } from './trip-guide/tabs/PartiesTab';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
-import { TalentModal, EventsModal, PartyModal } from './trip-guide/modals';
+import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
 
 interface TripGuideProps {
   slug?: string;
@@ -43,6 +43,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
+  const [showPartyThemeModal, setShowPartyThemeModal] = useState(false);
+  const [selectedPartyTheme, setSelectedPartyTheme] = useState<any>(null);
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
   const [isApproving, setIsApproving] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -109,6 +111,28 @@ export default function TripGuide({ slug }: TripGuideProps) {
   // Use the scheduled daily hook
   const SCHEDULED_DAILY = useScheduledDaily({ DAILY, tripStatus });
 
+  // Initialize collapsed days to show only current/upcoming day
+  useEffect(() => {
+    if (SCHEDULED_DAILY.length === 0 || collapsedDays.length > 0) return;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find the current or next upcoming day
+    let targetDayIndex = SCHEDULED_DAILY.findIndex(day => day.key >= today);
+
+    // If all days are in the past, show the first day
+    if (targetDayIndex === -1) {
+      targetDayIndex = 0;
+    }
+
+    // Collapse all days except the target day
+    const daysToCollapse = SCHEDULED_DAILY.map(day => day.key).filter(
+      (_, index) => index !== targetDayIndex
+    );
+
+    setCollapsedDays(daysToCollapse);
+  }, [SCHEDULED_DAILY, collapsedDays.length, setCollapsedDays]);
+
   // Event handlers with useCallback
   const toggleDayCollapse = useCallback(
     (dateKey: string) => {
@@ -151,6 +175,11 @@ export default function TripGuide({ slug }: TripGuideProps) {
     setShowPartyModal(true);
   }, []);
 
+  const handlePartyThemeClick = useCallback((partyTheme: any) => {
+    setSelectedPartyTheme(partyTheme);
+    setShowPartyThemeModal(true);
+  }, []);
+
   const handleTalentModalClose = useCallback(
     (open: boolean) => {
       setShowTalentModal(open);
@@ -165,6 +194,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const handlePartyModalClose = useCallback(
     (open: boolean) => {
       setShowPartyModal(open);
+      if (!open && cameFromEventsModal) {
+        setShowEventsModal(true);
+        setCameFromEventsModal(false);
+      }
+    },
+    [cameFromEventsModal]
+  );
+
+  const handlePartyThemeModalClose = useCallback(
+    (open: boolean) => {
+      setShowPartyThemeModal(open);
       if (!open && cameFromEventsModal) {
         setShowEventsModal(true);
         setCameFromEventsModal(false);
@@ -349,6 +389,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 onCollapseAll={handleCollapseAll}
                 onTalentClick={handleTalentClick}
                 onPartyClick={handlePartyClick}
+                onPartyThemeClick={handlePartyThemeClick}
               />
             </TabsContent>
 
@@ -411,6 +452,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
         TALENT={TALENT as any}
         onTalentClick={handleTalentClick}
         onPartyClick={handlePartyClick}
+        onPartyThemeClick={handlePartyThemeClick}
         setCameFromEventsModal={setCameFromEventsModal}
       />
 
@@ -418,6 +460,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
         open={showPartyModal}
         onOpenChange={handlePartyModalClose}
         selectedParty={selectedParty}
+      />
+
+      <PartyThemeModal
+        open={showPartyThemeModal}
+        onOpenChange={handlePartyThemeModalClose}
+        selectedPartyTheme={selectedPartyTheme}
       />
 
       {/* Edit Trip Modal - Only for super_admin and content_manager */}

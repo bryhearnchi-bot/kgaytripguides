@@ -78,12 +78,9 @@ function TripCard({ trip }: { trip: Trip }) {
       </Link>
 
       <div className="p-5 flex-1 flex flex-col">
-        <h4 className="text-xl font-bold text-white mb-2 group-hover:text-ocean-200 transition-colors">
+        <h4 className="text-xl font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors">
           {trip.name}
         </h4>
-        <p className="text-ocean-200 text-sm mb-4 line-clamp-2">
-          {trip.description || 'An exciting adventure awaits'}
-        </p>
 
         <div className="space-y-2 mb-4 flex-1">
           <div className="flex items-center gap-2 text-ocean-100 text-sm">
@@ -112,15 +109,14 @@ function TripCard({ trip }: { trip: Trip }) {
             // Cruise Trip
             <>
               {trip.shipName && (
-                <div className="flex items-center gap-2 text-ocean-100 text-sm">
-                  <Ship className="w-4 h-4 flex-shrink-0" />
-                  <span>{trip.shipName}</span>
-                </div>
-              )}
-              {trip.cruiseLine && (
-                <div className="flex items-center gap-2 text-ocean-100 text-sm">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
-                  <span>{trip.cruiseLine}</span>
+                <div className="text-ocean-100 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Ship className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">{trip.shipName}</span>
+                  </div>
+                  {trip.cruiseLine && (
+                    <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
+                  )}
                 </div>
               )}
             </>

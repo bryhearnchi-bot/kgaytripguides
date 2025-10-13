@@ -19,6 +19,8 @@ interface Trip {
   slug: string;
   shipName: string;
   cruiseLine: string;
+  resortName?: string;
+  resortLocation?: string;
   tripType?: string;
   tripTypeId?: number;
   startDate: string;
@@ -83,12 +85,9 @@ function TripCard({ trip }: { trip: Trip }) {
       </Link>
 
       <div className="p-5 flex-1 flex flex-col">
-        <h4 className="text-xl font-bold text-white mb-2 group-hover:text-ocean-200 transition-colors">
+        <h4 className="text-xl font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors">
           {trip.name}
         </h4>
-        <p className="text-ocean-200 text-sm mb-4 line-clamp-2">
-          {trip.description || 'An exciting adventure awaits'}
-        </p>
 
         <div className="space-y-2 mb-4 flex-1">
           <div className="flex items-center gap-2 text-ocean-100 text-sm">
@@ -97,15 +96,37 @@ function TripCard({ trip }: { trip: Trip }) {
               {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
             </span>
           </div>
-          <div className="flex items-center gap-2 text-ocean-100 text-sm">
-            <Ship className="w-4 h-4 flex-shrink-0" />
-            <span>{trip.shipName || 'Ship Details Coming Soon'}</span>
-          </div>
-          {trip.highlights && trip.highlights.length > 0 && (
-            <div className="flex items-center gap-2 text-ocean-100 text-sm">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span className="line-clamp-1">{trip.highlights[0]}</span>
-            </div>
+          {trip.tripTypeId === 2 ? (
+            // Resort Trip
+            <>
+              {trip.resortName && (
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <Home className="w-4 h-4 flex-shrink-0" />
+                  <span>{trip.resortName}</span>
+                </div>
+              )}
+              {trip.resortLocation && (
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span>{trip.resortLocation}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            // Cruise Trip
+            <>
+              {trip.shipName && (
+                <div className="text-ocean-100 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Ship className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">{trip.shipName}</span>
+                  </div>
+                  {trip.cruiseLine && (
+                    <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
 
