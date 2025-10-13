@@ -4,7 +4,16 @@ import { dateOnly } from '@/lib/utils';
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
-import { Map, CalendarDays, PartyPopper, Star, Info, Eye, CheckCircle } from 'lucide-react';
+import {
+  Map,
+  CalendarDays,
+  PartyPopper,
+  Star,
+  Info,
+  Eye,
+  CheckCircle,
+  HelpCircle,
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import type { Talent } from '@/data/trip-data';
@@ -24,6 +33,7 @@ import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
 import { PartiesTab } from './trip-guide/tabs/PartiesTab';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
+import { FAQTab } from './trip-guide/tabs/FAQTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
 
 interface TripGuideProps {
@@ -391,6 +401,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 <span className="hidden sm:inline">Info</span>
                 {activeTab === 'info' && <span className="sm:hidden">Info</span>}
               </button>
+              <button
+                onClick={() => setActiveTab('faq')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                  activeTab === 'faq' ? 'bg-white text-ocean-900' : 'text-white/70 hover:text-white'
+                }`}
+                aria-label="FAQ"
+              >
+                <HelpCircle className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">FAQ</span>
+                {activeTab === 'faq' && <span className="sm:hidden">FAQ</span>}
+              </button>
             </div>
           </div>
 
@@ -448,6 +469,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
             <TabsContent value="info">
               <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} tripId={tripData?.trip?.id} />
+            </TabsContent>
+
+            <TabsContent value="faq">
+              {tripData?.trip?.id && <FAQTab tripId={tripData.trip.id} />}
             </TabsContent>
           </Tabs>
         </StandardizedContentLayout>

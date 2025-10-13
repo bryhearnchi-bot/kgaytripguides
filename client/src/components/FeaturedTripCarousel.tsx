@@ -320,26 +320,6 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                         </div>
                       )}
                 </div>
-
-                {/* Highlights Tags */}
-                {currentTrip.highlights &&
-                  typeof currentTrip.highlights === 'string' &&
-                  currentTrip.highlights.trim() && (
-                    <div className="flex flex-wrap gap-2 mb-5">
-                      {currentTrip.highlights
-                        .split('\n')
-                        .filter(h => h.trim())
-                        .slice(0, 3)
-                        .map((highlight, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-ocean-700/40 text-ocean-100 rounded-full text-xs font-medium border border-ocean-500/30"
-                          >
-                            {highlight.trim()}
-                          </span>
-                        ))}
-                    </div>
-                  )}
               </div>
 
               {/* CTA Button */}

@@ -1,7 +1,7 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { PartyPopper, MapPin, Calendar } from 'lucide-react';
-import type { DailyEvent, DailySchedule, ItineraryStop, PartyTheme } from '@/data/trip-data';
+import type { DailySchedule, ItineraryStop, PartyTheme } from '@/data/trip-data';
 import { PartyCard } from '../shared/PartyCard';
 
 interface PartiesTabProps {
@@ -9,7 +9,6 @@ interface PartiesTabProps {
   ITINERARY: ItineraryStop[];
   PARTY_THEMES: PartyTheme[];
   timeFormat: '12h' | '24h';
-  onPartyClick: (party: DailyEvent) => void;
 }
 
 export const PartiesTab = memo(function PartiesTab({
@@ -17,11 +16,7 @@ export const PartiesTab = memo(function PartiesTab({
   ITINERARY,
   PARTY_THEMES,
   timeFormat,
-  onPartyClick,
 }: PartiesTabProps) {
-  // Track which card is currently expanded (only one at a time)
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
-
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
     return SCHEDULED_DAILY.map(day => {
@@ -89,12 +84,10 @@ export const PartiesTab = memo(function PartiesTab({
                 )}
               </div>
 
-              {/* Party Cards Grid - Compact and fun */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Party Cards Grid - 2 columns max like Talent cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {day.events.map((event, eventIndex) => {
                   const theme = getPartyTheme(event.title);
-                  const cardId = `${day.key}-${event.title}-${event.time}`;
-                  const isExpanded = expandedCardId === cardId;
 
                   return (
                     <PartyCard
@@ -102,13 +95,7 @@ export const PartiesTab = memo(function PartiesTab({
                       event={event}
                       partyTheme={theme}
                       timeFormat={timeFormat}
-                      onClick={() => onPartyClick(event)}
                       delay={dayIndex * 0.05 + eventIndex * 0.06}
-                      isExpanded={isExpanded}
-                      onToggleExpand={() => {
-                        // Toggle: if this card is expanded, collapse it; otherwise expand it (and collapse others)
-                        setExpandedCardId(isExpanded ? null : cardId);
-                      }}
                     />
                   );
                 })}
