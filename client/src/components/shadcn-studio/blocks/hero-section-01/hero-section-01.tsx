@@ -161,7 +161,7 @@ const HeroSection = ({
         </h1>
 
         {/* Mobile carousel/image display */}
-        <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
+        <div className="relative w-full max-w-sm aspect-square overflow-hidden rounded-lg">
           {isDragstarCruise
             ? /* Single rotating image for Drag Cruise - Mobile */
               dragstarImages.map((img, index) => (
