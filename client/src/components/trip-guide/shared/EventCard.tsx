@@ -36,10 +36,11 @@ export const EventCard = memo<EventCardProps>(function EventCard({
 }) {
   const [showViewTypeModal, setShowViewTypeModal] = useState(false);
   const [showArtistSelectModal, setShowArtistSelectModal] = useState(false);
+  const [showEventDescriptionModal, setShowEventDescriptionModal] = useState(false);
 
   // Lock body scroll when modals are open
   useEffect(() => {
-    if (showViewTypeModal || showArtistSelectModal) {
+    if (showViewTypeModal || showArtistSelectModal || showEventDescriptionModal) {
       // Store current scroll position
       const scrollY = window.scrollY;
 
@@ -58,7 +59,7 @@ export const EventCard = memo<EventCardProps>(function EventCard({
         window.scrollTo(0, scrollY);
       };
     }
-  }, [showViewTypeModal, showArtistSelectModal]);
+  }, [showViewTypeModal, showArtistSelectModal, showEventDescriptionModal]);
 
   // Memoize computed values
   const eventImage = useMemo(
@@ -92,6 +93,9 @@ export const EventCard = memo<EventCardProps>(function EventCard({
       if (onPartyThemeClick) {
         onPartyThemeClick(event.partyTheme);
       }
+    } else {
+      // No artist or party theme - show event description modal
+      setShowEventDescriptionModal(true);
     }
   }, [
     hasBoth,
@@ -219,13 +223,6 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                   </span>
                 </button>
               </div>
-            )}
-
-            {/* Description (if available) */}
-            {event.description && (
-              <p className="text-ocean-50 text-xs mt-1 pt-2 border-t border-white/10">
-                {event.description}
-              </p>
             )}
           </div>
         </div>
@@ -362,6 +359,82 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                       </div>
                     </button>
                   ))}
+                </div>
+              </motion.div>
+            </div>
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* Event Description Modal (for events without artist or party theme) */}
+      {showEventDescriptionModal &&
+        createPortal(
+          <AnimatePresence>
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
+              onClick={() => setShowEventDescriptionModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl my-auto"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="sr-only">{event.title}</h3>
+                  <button
+                    onClick={() => setShowEventDescriptionModal(false)}
+                    className="min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all flex-shrink-0 ml-auto"
+                    aria-label="Close modal"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Event Info */}
+                  <div className="flex flex-col md:flex-row-reverse gap-6">
+                    {/* Event Image - Perfect Square */}
+                    {eventImage && (
+                      <div className="w-full md:w-64 md:flex-shrink-0">
+                        <img
+                          src={eventImage}
+                          alt={event.title}
+                          className="w-full aspect-square object-cover rounded-xl border-2 border-cyan-400/30 shadow-lg"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    {/* Event Details */}
+                    <div className="flex-1">
+                      {/* Event Name */}
+                      <h2 className="text-2xl font-bold mb-4 text-white">{event.title}</h2>
+
+                      {/* Time and Venue */}
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        <span className="px-3 py-1.5 rounded-full bg-ocean-500/20 text-ocean-200 text-sm font-medium border border-ocean-400/30">
+                          {event.time}
+                        </span>
+                        {event.venue && (
+                          <span className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-200 text-sm font-medium border border-cyan-400/30">
+                            {event.venue}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      {event.description && (
+                        <div className="mb-6">
+                          <p className="text-blue-50 text-sm leading-relaxed">
+                            {event.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </div>

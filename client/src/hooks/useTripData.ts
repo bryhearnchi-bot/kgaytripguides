@@ -401,7 +401,7 @@ export function useTripData(slug: string = getTripSlug()) {
       }
       return response.json();
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Force immediate refetch for debugging
     refetchOnWindowFocus: false,
   });
 }

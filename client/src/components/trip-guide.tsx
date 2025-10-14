@@ -125,6 +125,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   // Show party themes, talent, and important info for cruises that have talent
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
   const isDragStarsCruise = slug === 'drag-stars-at-sea';
+  const isHalloweenCruise = slug === 'halloween-carribean-cruise';
   const hasTalent = isGreekCruise || isDragStarsCruise;
   const TALENT = hasTalent ? data?.TALENT || [] : [];
   const PARTY_THEMES = hasTalent ? data?.PARTY_THEMES || [] : [];
@@ -300,10 +301,16 @@ export default function TripGuide({ slug }: TripGuideProps) {
   }
 
   return (
-    <div
-      className={`min-h-screen w-full relative ${isDragStarsCruise ? 'bg-[#0a0a0a]' : 'bg-black'}`}
-    >
-      {isDragStarsCruise ? (
+    <div className="min-h-screen w-full relative bg-[#0f172a]">
+      {isGreekCruise ? (
+        /* Blue Radial Glow - Greek Isle Cruise Only */
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `radial-gradient(circle 600px at 50% 50%, rgba(59,130,246,0.3), transparent)`,
+          }}
+        />
+      ) : isDragStarsCruise ? (
         /* Cosmic Aurora - Dragstar Cruise Only */
         <div
           className="absolute inset-0 z-0"
@@ -313,6 +320,18 @@ export default function TripGuide({ slug }: TripGuideProps) {
               radial-gradient(ellipse at 80% 70%, rgba(139, 92, 246, 0.3) 0%, transparent 70%),
               radial-gradient(ellipse at 60% 20%, rgba(236, 72, 153, 0.25) 0%, transparent 50%),
               radial-gradient(ellipse at 40% 80%, rgba(34, 197, 94, 0.2) 0%, transparent 65%)
+            `,
+          }}
+        />
+      ) : isHalloweenCruise ? (
+        /* Ember Glow - Halloween Cruise Only */
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 50% 100%, rgba(255, 69, 0, 0.6) 0%, transparent 60%),
+              radial-gradient(circle at 50% 100%, rgba(255, 140, 0, 0.4) 0%, transparent 70%),
+              radial-gradient(circle at 50% 100%, rgba(255, 215, 0, 0.3) 0%, transparent 80%)
             `,
           }}
         />

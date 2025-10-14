@@ -164,6 +164,7 @@ export default function JobListingComponent({
   const [showEventsSlideUp, setShowEventsSlideUp] = useState(false);
   const [showTalentDetail, setShowTalentDetail] = useState(false);
   const [showPartyThemeDetail, setShowPartyThemeDetail] = useState(false);
+  const [showEventDescriptionModal, setShowEventDescriptionModal] = useState(false);
   const [selectedTalent, setSelectedTalent] = useState<any>(null);
   const [selectedPartyTheme, setSelectedPartyTheme] = useState<any>(null);
   const [dayEvents, setDayEvents] = useState<any[]>([]);
@@ -175,14 +176,24 @@ export default function JobListingComponent({
 
   // Close itinerary card only if no other modals are open
   useOnClickOutside(ref, () => {
-    if (!showEventsSlideUp && !showTalentDetail && !showPartyThemeDetail) {
+    if (
+      !showEventsSlideUp &&
+      !showTalentDetail &&
+      !showPartyThemeDetail &&
+      !showEventDescriptionModal
+    ) {
       setActiveItem(null);
     }
   });
 
-  // Close events panel only if talent/party theme detail is not showing
+  // Close events panel only if talent/party theme/event description detail is not showing
   useOnClickOutside(slideUpRef, () => {
-    if (showEventsSlideUp && !showTalentDetail && !showPartyThemeDetail) {
+    if (
+      showEventsSlideUp &&
+      !showTalentDetail &&
+      !showPartyThemeDetail &&
+      !showEventDescriptionModal
+    ) {
       setShowEventsSlideUp(false);
       setDayEvents([]);
     }
@@ -221,6 +232,9 @@ export default function JobListingComponent({
       // Only party theme
       setSelectedPartyTheme(event.partyTheme);
       setShowPartyThemeDetail(true);
+    } else {
+      // No artist or party theme - show event description modal
+      setShowEventDescriptionModal(true);
     }
   };
 
@@ -261,6 +275,9 @@ export default function JobListingComponent({
         } else if (showViewTypeModal) {
           setShowViewTypeModal(false);
           setCurrentEvent(null);
+        } else if (showEventDescriptionModal) {
+          setShowEventDescriptionModal(false);
+          setCurrentEvent(null);
         } else if (showPartyThemeDetail) {
           setShowPartyThemeDetail(false);
           setSelectedPartyTheme(null);
@@ -281,6 +298,7 @@ export default function JobListingComponent({
   }, [
     showArtistSelectModal,
     showViewTypeModal,
+    showEventDescriptionModal,
     showPartyThemeDetail,
     showTalentDetail,
     showEventsSlideUp,
@@ -400,7 +418,7 @@ export default function JobListingComponent({
                   {activeItem.job_description}
                 </p>
 
-                {/* Location Attractions */}
+                {/* Location Attractions - Top 3 Only */}
                 {activeItem.attractions && activeItem.attractions.length > 0 && (
                   <div className="mb-3 sm:mb-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -409,44 +427,18 @@ export default function JobListingComponent({
                         Top Attractions
                       </h3>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-lg">
-                      <div className="space-y-2 sm:space-y-3">
-                        {activeItem.attractions.map((attraction, idx) => (
-                          <div
-                            key={attraction.id}
-                            className={idx !== 0 ? 'pt-2 sm:pt-3 border-t border-white/10' : ''}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-ocean-400/30 flex items-center justify-center mt-0.5">
-                                <span className="text-ocean-200 text-[10px] sm:text-xs font-bold">
-                                  {idx + 1}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-white font-semibold text-[11px] sm:text-xs leading-tight">
-                                  {attraction.name}
-                                </h4>
-                                {attraction.category && (
-                                  <span className="inline-block px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-ocean-500/30 text-ocean-100 rounded mt-1 font-medium">
-                                    {attraction.category}
-                                  </span>
-                                )}
-                                {/* Hide description on mobile to save space */}
-                                {attraction.description && (
-                                  <p className="hidden sm:block text-ocean-100 text-[11px] mt-1.5 leading-snug">
-                                    {attraction.description}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <ul className="space-y-1.5 text-white/90 text-sm">
+                      {activeItem.attractions.slice(0, 3).map(attraction => (
+                        <li key={attraction.id} className="flex items-center gap-2">
+                          <span className="text-ocean-300 text-lg leading-none">•</span>
+                          <span>{attraction.name}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
 
-                {/* LGBT Venues */}
+                {/* LGBT Venues - Top 3 Only */}
                 {activeItem.lgbtVenues && activeItem.lgbtVenues.length > 0 && (
                   <div className="mb-3 sm:mb-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -455,43 +447,14 @@ export default function JobListingComponent({
                         LGBT+ Venues
                       </h3>
                     </div>
-                    <div className="bg-gradient-to-br from-purple-500/15 via-pink-500/15 to-purple-500/15 backdrop-blur-md rounded-lg sm:rounded-xl p-3 sm:p-4 border border-purple-400/30 shadow-lg">
-                      <div className="space-y-2 sm:space-y-3">
-                        {activeItem.lgbtVenues.map((venue, idx) => (
-                          <div
-                            key={venue.id}
-                            className={idx !== 0 ? 'pt-2 sm:pt-3 border-t border-white/10' : ''}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-400/30 flex items-center justify-center mt-0.5">
-                                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-200" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-white font-semibold text-[11px] sm:text-xs leading-tight">
-                                  {venue.name}
-                                </h4>
-                                {venue.venueType && (
-                                  <span className="inline-block px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-purple-500/30 text-purple-100 rounded mt-1 font-medium">
-                                    {venue.venueType}
-                                  </span>
-                                )}
-                                {/* Hide description and address on mobile to save space */}
-                                {venue.description && (
-                                  <p className="hidden sm:block text-purple-50 text-[11px] mt-1.5 leading-snug">
-                                    {venue.description}
-                                  </p>
-                                )}
-                                {venue.address && (
-                                  <p className="hidden sm:block text-purple-200 text-[10px] mt-1 opacity-80">
-                                    📍 {venue.address}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <ul className="space-y-1.5 text-white/90 text-sm">
+                      {activeItem.lgbtVenues.slice(0, 3).map(venue => (
+                        <li key={venue.id} className="flex items-center gap-2">
+                          <span className="text-purple-300 text-lg leading-none">•</span>
+                          <span>{venue.name}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
 
@@ -646,13 +609,6 @@ export default function JobListingComponent({
                                           </span>
                                         </button>
                                       </div>
-                                    )}
-
-                                    {/* Description (if available) */}
-                                    {event.description && (
-                                      <p className="text-ocean-50 text-xs mt-1 pt-2 border-t border-white/10">
-                                        {event.description}
-                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -1051,6 +1007,92 @@ export default function JobListingComponent({
                             </motion.div>
                           </div>
                         )}
+                    </AnimatePresence>
+
+                    {/* Event Description Modal (for events without artist or party theme) */}
+                    <AnimatePresence>
+                      {showEventDescriptionModal && currentEvent && (
+                        <div
+                          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
+                          onClick={() => {
+                            setShowEventDescriptionModal(false);
+                            setCurrentEvent(null);
+                          }}
+                        >
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl my-auto"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="sr-only">{currentEvent.title}</h3>
+                              <button
+                                onClick={() => {
+                                  setShowEventDescriptionModal(false);
+                                  setCurrentEvent(null);
+                                }}
+                                className="min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all flex-shrink-0 ml-auto"
+                                aria-label="Close modal"
+                              >
+                                <X className="w-5 h-5 text-white" />
+                              </button>
+                            </div>
+
+                            <div className="space-y-6">
+                              {/* Event Info */}
+                              <div className="flex flex-col md:flex-row-reverse gap-6">
+                                {/* Event Image - Perfect Square */}
+                                {(currentEvent.imageUrl ||
+                                  currentEvent.talent?.[0]?.profileImageUrl) && (
+                                  <div className="w-full md:w-64 md:flex-shrink-0">
+                                    <img
+                                      src={
+                                        currentEvent.imageUrl ||
+                                        currentEvent.talent[0].profileImageUrl
+                                      }
+                                      alt={currentEvent.title}
+                                      className="w-full aspect-square object-cover rounded-xl border-2 border-cyan-400/30 shadow-lg"
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                )}
+
+                                {/* Event Details */}
+                                <div className="flex-1">
+                                  {/* Event Name */}
+                                  <h2 className="text-2xl font-bold mb-4 text-white">
+                                    {currentEvent.title}
+                                  </h2>
+
+                                  {/* Time and Venue */}
+                                  <div className="mb-4 flex flex-wrap gap-2">
+                                    <span className="px-3 py-1.5 rounded-full bg-ocean-500/20 text-ocean-200 text-sm font-medium border border-ocean-400/30">
+                                      {currentEvent.time}
+                                    </span>
+                                    {currentEvent.venue && (
+                                      <span className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-200 text-sm font-medium border border-cyan-400/30">
+                                        {currentEvent.venue}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Description */}
+                                  {currentEvent.description && (
+                                    <div className="mb-6">
+                                      <p className="text-blue-50 text-sm leading-relaxed">
+                                        {currentEvent.description}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
                     </AnimatePresence>
                   </motion.div>
                 </div>

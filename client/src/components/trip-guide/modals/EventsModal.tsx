@@ -60,11 +60,6 @@ export const EventsModal = memo(function EventsModal({
     [onPartyThemeClick, setCameFromEventsModal, onOpenChange]
   );
 
-  // Get port description from itinerary (if available in extended type)
-  const portDescription = selectedItineraryStop
-    ? (ITINERARY.find(stop => stop.key === selectedItineraryStop.date) as any)?.description
-    : null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-white/20 text-white">
@@ -74,13 +69,6 @@ export const EventsModal = memo(function EventsModal({
             View scheduled events and activities for this port
           </DialogDescription>
         </DialogHeader>
-
-        {/* Port Description */}
-        {portDescription && (
-          <div className="border-b border-white/10 pb-4 mb-4">
-            <p className="text-white/80 text-sm leading-relaxed">{portDescription}</p>
-          </div>
-        )}
 
         <div className="space-y-3">
           {selectedDateEvents.length > 0 ? (

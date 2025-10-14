@@ -68,6 +68,17 @@ export const ScheduleTab = memo(function ScheduleTab({
           const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
           const isPastDate = isDateInPast(day.key);
 
+          // Format the date from YYYY-MM-DD to a readable format with day of week
+          const formatDateKey = (dateKey: string) => {
+            const [year, month, dayNum] = dateKey.split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(dayNum));
+            return date.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            });
+          };
+
           return (
             <div key={day.key} className={`${isPastDate ? 'opacity-75' : ''}`}>
               <div className="bg-white/10 border border-white/20 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200">
@@ -80,7 +91,7 @@ export const ScheduleTab = memo(function ScheduleTab({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="bg-ocean-500/30 text-ocean-100 text-sm font-bold px-4 py-1.5 rounded-full border border-ocean-400/30">
-                        {itineraryStop?.date || day.key}
+                        {itineraryStop?.date || formatDateKey(day.key)}
                       </div>
                       {itineraryStop && (
                         <div className="text-white/80 text-sm flex items-center gap-1.5">

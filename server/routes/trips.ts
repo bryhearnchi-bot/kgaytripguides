@@ -760,7 +760,7 @@ export function registerTripRoutes(app: Express) {
         `
         )
         .not('trip_status_id', 'in', '(4,5)') // Exclude Draft (ID 4) and Preview (ID 5)
-        .order('start_date', { ascending: false });
+        .order('start_date', { ascending: true }); // Order by earliest first for featured trip selection
 
       if (error) {
         logger.error('Error fetching trips:', error, {
