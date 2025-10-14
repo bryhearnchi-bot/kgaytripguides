@@ -9,8 +9,29 @@ export default function NavigationBanner() {
   const { user, profile, signOut } = useSupabaseAuthContext();
   const [currentLocation, setLocation] = useLocation();
   const [showEditTrip, setShowEditTrip] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const isAdminRoute = currentLocation.startsWith('/admin');
+
+  // Detect if app is running in standalone mode (installed as PWA)
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isStandaloneMode =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://');
+      setIsStandalone(isStandaloneMode);
+    };
+
+    checkStandalone();
+    // Listen for display mode changes
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    mediaQuery.addEventListener('change', checkStandalone);
+
+    return () => {
+      mediaQuery.removeEventListener('change', checkStandalone);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -64,16 +85,25 @@ export default function NavigationBanner() {
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3">
-            <img
-              src="/logos/kgay-logo.jpg"
-              alt="KGay Travel"
-              className="h-6 sm:h-8 w-auto hover:opacity-90 transition"
-            />
-            <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-white sm:inline">
-              KGay Travel Guides
-            </span>
-          </Link>
+          {isStandalone ? (
+            <div className="flex items-center gap-2 sm:gap-3 cursor-default">
+              <img src="/logos/kgay-logo.jpg" alt="KGay Travel" className="h-6 sm:h-8 w-auto" />
+              <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-white sm:inline">
+                KGay Travel Guides
+              </span>
+            </div>
+          ) : (
+            <Link href="/" className="flex items-center gap-2 sm:gap-3">
+              <img
+                src="/logos/kgay-logo.jpg"
+                alt="KGay Travel"
+                className="h-6 sm:h-8 w-auto hover:opacity-90 transition"
+              />
+              <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-white sm:inline">
+                KGay Travel Guides
+              </span>
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">

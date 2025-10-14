@@ -26,6 +26,7 @@ import { registerTalentRoutes } from './routes/admin/talent';
 import { registerTripTalentRoutes } from './routes/admin/trip-talent';
 import { registerVenueRoutes } from './routes/admin/venues';
 import talentCategoriesRouter from './routes/talent-categories';
+import { registerPWARoutes } from './routes/pwa';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ============ MIDDLEWARE SETUP ============
@@ -123,6 +124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register trip and cruise related routes
   registerTripRoutes(app);
   registerTripWizardRoutes(app);
+
+  // Register PWA routes (dynamic manifests and metadata)
+  registerPWARoutes(app);
 
   // Register media and talent related routes
   registerMediaRoutes(app);

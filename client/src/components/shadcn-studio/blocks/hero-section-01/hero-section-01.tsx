@@ -8,6 +8,7 @@ interface HeroSectionProps {
   tripType?: 'cruise' | 'resort' | null;
   charterCompanyLogo?: string | null;
   charterCompanyName?: string | null;
+  slug?: string;
 }
 
 const HeroSection = ({
@@ -16,6 +17,7 @@ const HeroSection = ({
   tripType = null,
   charterCompanyLogo = null,
   charterCompanyName = null,
+  slug = '',
 }: HeroSectionProps) => {
   // Split trip name into words
   const words = tripName.split(' ');
@@ -35,6 +37,52 @@ const HeroSection = ({
     'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png',
   ];
 
+  // Dragstar cruise artist images - all square with varying sizes
+  const dragstarImages = [
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/alyssa_ecvvvx.jpg',
+      name: 'Alyssa Edwards',
+      size: 16.2, // rem
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/bianca_jh9ojg.jpg',
+      name: 'Bianca del Rio',
+      size: 13.5,
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/bob_sl4ox8.jpg',
+      name: 'Bob the Drag Queen',
+      size: 18,
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/jackie_eheucy.jpg',
+      name: 'Jackie Cox',
+      size: 14.4,
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/plasma_g6ajyj.jpg',
+      name: 'Plasma',
+      size: 15.3,
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/sugar_vpd0ut.jpg',
+      name: 'Spice',
+      size: 12.6,
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/sugar_vpd0ut.jpg',
+      name: 'Sugar',
+      size: 17.1,
+    },
+    {
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/trinity_pxalyq.jpg',
+      name: 'Trinity the Tuck',
+      size: 15.8,
+    },
+  ];
+
+  const isDragstarCruise = slug === 'drag-stars-at-sea';
+
   useEffect(() => {
     if (scrollRef.current) {
       const width = scrollRef.current.scrollWidth / 2;
@@ -44,12 +92,13 @@ const HeroSection = ({
 
   // Rotate images on mobile
   useEffect(() => {
+    const imageCount = isDragstarCruise ? dragstarImages.length : images.length;
     const interval = setInterval(() => {
-      setCurrentImageIndex(prev => (prev + 1) % images.length);
+      setCurrentImageIndex(prev => (prev + 1) % imageCount);
     }, 4000); // Change image every 4 seconds
 
     return () => clearInterval(interval);
-  }, [images.length]);
+  }, [isDragstarCruise, images.length, dragstarImages.length]);
 
   return (
     <section className="flex flex-1 flex-col gap-8 overflow-x-hidden pt-4 sm:pt-8 lg:pt-12">
@@ -113,16 +162,29 @@ const HeroSection = ({
 
         {/* Single rotating image for mobile */}
         <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
-          {images.map((img, index) => (
-            <img
-              key={img}
-              src={img}
-              alt={`Destination ${index + 1}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          ))}
+          {isDragstarCruise
+            ? dragstarImages.map((img, index) => (
+                <img
+                  key={img.url}
+                  src={img.url}
+                  alt={img.name}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  loading="lazy"
+                />
+              ))
+            : images.map((img, index) => (
+                <img
+                  key={img}
+                  src={img}
+                  alt={`Destination ${index + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  loading="lazy"
+                />
+              ))}
         </div>
       </div>
 
@@ -194,68 +256,115 @@ const HeroSection = ({
           className="flex items-end animate-scroll"
           style={{ width: 'fit-content' }}
         >
-          {/* First set of 6 images */}
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
-            alt="Athens, Greece"
-            className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
-            alt="Santorini, Greece"
-            className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
-            alt="Kuşadası, Turkey"
-            className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
-            alt="Istanbul, Turkey"
-            className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
-            alt="Iraklion, Crete"
-            className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
-            alt="Alexandria, Egypt"
-            className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          {/* Duplicate set for seamless loop */}
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
-            alt="Athens, Greece"
-            className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
-            alt="Santorini, Greece"
-            className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
-            alt="Kuşadası, Turkey"
-            className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
-            alt="Istanbul, Turkey"
-            className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
-            alt="Iraklion, Crete"
-            className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
-          <img
-            src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
-            alt="Alexandria, Egypt"
-            className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-          />
+          {isDragstarCruise ? (
+            <>
+              {/* First set of 8 Dragstar artist images - all square but varying sizes */}
+              {dragstarImages.map(img => (
+                <img
+                  key={img.url}
+                  src={img.url}
+                  alt={img.name}
+                  className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                  style={{
+                    height: `${img.size}rem`,
+                    width: `${img.size}rem`,
+                  }}
+                  loading="lazy"
+                />
+              ))}
+              {/* Duplicate set for seamless loop */}
+              {dragstarImages.map(img => (
+                <img
+                  key={`${img.url}-duplicate`}
+                  src={img.url}
+                  alt={img.name}
+                  className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                  style={{
+                    height: `${img.size}rem`,
+                    width: `${img.size}rem`,
+                  }}
+                  loading="lazy"
+                />
+              ))}
+            </>
+          ) : (
+            <>
+              {/* First set of 6 images */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
+                alt="Athens, Greece"
+                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
+                alt="Santorini, Greece"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
+                alt="Kuşadası, Turkey"
+                className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
+                alt="Istanbul, Turkey"
+                className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
+                alt="Iraklion, Crete"
+                className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
+                alt="Alexandria, Egypt"
+                className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              {/* Duplicate set for seamless loop */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
+                alt="Athens, Greece"
+                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
+                alt="Santorini, Greece"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
+                alt="Kuşadası, Turkey"
+                className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
+                alt="Istanbul, Turkey"
+                className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
+                alt="Iraklion, Crete"
+                className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
+                alt="Alexandria, Egypt"
+                className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+            </>
+          )}
         </div>
       </div>
 

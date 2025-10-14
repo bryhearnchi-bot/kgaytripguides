@@ -1,20 +1,20 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { PartyPopper, MapPin, Calendar } from 'lucide-react';
-import type { DailySchedule, ItineraryStop, PartyTheme } from '@/data/trip-data';
+import type { DailySchedule, ItineraryStop } from '@/data/trip-data';
 import { PartyCard } from '../shared/PartyCard';
 
 interface PartiesTabProps {
   SCHEDULED_DAILY: DailySchedule[];
   ITINERARY: ItineraryStop[];
-  PARTY_THEMES: PartyTheme[];
   timeFormat: '12h' | '24h';
+  onPartyClick?: (party: any) => void;
 }
 
 export const PartiesTab = memo(function PartiesTab({
   SCHEDULED_DAILY,
   ITINERARY,
-  PARTY_THEMES,
   timeFormat,
+  onPartyClick,
 }: PartiesTabProps) {
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
@@ -23,9 +23,6 @@ export const PartiesTab = memo(function PartiesTab({
       const partyEvents = day.items.filter(
         event => event.type === 'party' || event.type === 'after'
       );
-
-      // Sort events by time
-      partyEvents.sort((a, b) => a.time.localeCompare(b.time));
 
       const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
 
@@ -38,13 +35,6 @@ export const PartiesTab = memo(function PartiesTab({
       };
     }).filter(day => day.totalEvents > 0);
   }, [SCHEDULED_DAILY, ITINERARY]);
-
-  const getPartyTheme = useCallback(
-    (eventTitle: string): PartyTheme | undefined => {
-      return PARTY_THEMES.find(theme => eventTitle.toLowerCase().includes(theme.key.toLowerCase()));
-    },
-    [PARTY_THEMES]
-  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -79,20 +69,15 @@ export const PartiesTab = memo(function PartiesTab({
 
               {/* Party Cards Grid - 2 columns max like Talent cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {day.events.map((event, eventIndex) => {
-                  // Use the partyTheme already attached to the event from the database
-                  const theme = event.partyTheme || getPartyTheme(event.title);
-
-                  return (
-                    <PartyCard
-                      key={`${event.title}-${event.time}-${eventIndex}`}
-                      event={event}
-                      partyTheme={theme}
-                      timeFormat={timeFormat}
-                      delay={0}
-                    />
-                  );
-                })}
+                {day.events.map((event, eventIndex) => (
+                  <PartyCard
+                    key={`${day.key}-${eventIndex}`}
+                    event={event}
+                    partyTheme={event.partyTheme}
+                    timeFormat={timeFormat}
+                    onPartyClick={onPartyClick}
+                  />
+                ))}
               </div>
             </div>
           ))}

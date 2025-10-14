@@ -60,12 +60,28 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [showEditModal, setShowEditModal] = useState(false);
 
   // Use the trip data hook
-  const { data: tripData, isLoading, error } = useTripData(slug);
+  const { data: tripData, isLoading, error, refetch } = useTripData(slug);
 
   const data = useMemo(() => {
     if (!tripData) return null;
     return transformTripData(tripData);
   }, [tripData]);
+
+  // Listen for PWA refresh events
+  useEffect(() => {
+    const handlePWARefresh = () => {
+      // Refetch trip data when app is opened from home screen
+      if (refetch) {
+        refetch();
+      }
+    };
+
+    window.addEventListener('pwa-refresh-data', handlePWARefresh);
+
+    return () => {
+      window.removeEventListener('pwa-refresh-data', handlePWARefresh);
+    };
+  }, [refetch]);
 
   // Robust scroll to top when component content is ready
   useEffect(() => {
@@ -108,7 +124,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Show party themes, talent, and important info for cruises that have talent
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
-  const isDragStarsCruise = slug === 'drag-stars-at-sea-2025';
+  const isDragStarsCruise = slug === 'drag-stars-at-sea';
   const hasTalent = isGreekCruise || isDragStarsCruise;
   const TALENT = hasTalent ? data?.TALENT || [] : [];
   const PARTY_THEMES = hasTalent ? data?.PARTY_THEMES || [] : [];
@@ -284,15 +300,32 @@ export default function TripGuide({ slug }: TripGuideProps) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black relative">
-      {/* Deep Ocean Glow Background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background:
-            'radial-gradient(70% 55% at 50% 50%, #2a5d77 0%, #184058 18%, #0f2a43 34%, #0a1b30 50%, #071226 66%, #040d1c 80%, #020814 92%, #01040d 97%, #000309 100%), radial-gradient(160% 130% at 10% 10%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%), radial-gradient(160% 130% at 90% 90%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%)',
-        }}
-      />
+    <div
+      className={`min-h-screen w-full relative ${isDragStarsCruise ? 'bg-[#0a0a0a]' : 'bg-black'}`}
+    >
+      {isDragStarsCruise ? (
+        /* Cosmic Aurora - Dragstar Cruise Only */
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse at 20% 30%, rgba(56, 189, 248, 0.4) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 70%, rgba(139, 92, 246, 0.3) 0%, transparent 70%),
+              radial-gradient(ellipse at 60% 20%, rgba(236, 72, 153, 0.25) 0%, transparent 50%),
+              radial-gradient(ellipse at 40% 80%, rgba(34, 197, 94, 0.2) 0%, transparent 65%)
+            `,
+          }}
+        />
+      ) : (
+        /* Deep Ocean Glow Background - Default */
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            background:
+              'radial-gradient(70% 55% at 50% 50%, #2a5d77 0%, #184058 18%, #0f2a43 34%, #0a1b30 50%, #071226 66%, #040d1c 80%, #020814 92%, #01040d 97%, #000309 100%), radial-gradient(160% 130% at 10% 10%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%), radial-gradient(160% 130% at 90% 90%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%)',
+          }}
+        />
+      )}
 
       {/* Content Layer */}
       <div className="relative z-10">
@@ -302,6 +335,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
           tripType={isCruise ? 'cruise' : isResort ? 'resort' : null}
           charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
           charterCompanyName={tripData?.trip?.charterCompanyName}
+          slug={slug}
         />
 
         {/* Preview Mode Banner */}
@@ -463,7 +497,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
               <PartiesTab
                 SCHEDULED_DAILY={SCHEDULED_DAILY}
                 ITINERARY={ITINERARY as any}
-                PARTY_THEMES={PARTY_THEMES as any}
                 timeFormat={timeFormat}
                 onPartyClick={handlePartyClick}
               />

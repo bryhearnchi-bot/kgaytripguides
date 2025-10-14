@@ -83,9 +83,15 @@ export const ScheduleTab = memo(function ScheduleTab({
                         {itineraryStop?.date || day.key}
                       </div>
                       {itineraryStop && (
-                        <div className="text-white/80 text-sm flex items-center gap-1">
+                        <div className="text-white/80 text-sm flex items-center gap-1.5">
                           <MapPin className="w-4 h-4" />
                           <span>{itineraryStop.port}</span>
+                        </div>
+                      )}
+                      {/* Event count badge */}
+                      {day.items.length > 0 && (
+                        <div className="bg-purple-500/30 text-purple-200 text-xs font-bold px-2 py-0.5 rounded-full border border-purple-400/40">
+                          {day.items.length} {day.items.length === 1 ? 'event' : 'events'}
                         </div>
                       )}
                     </div>

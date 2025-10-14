@@ -7,14 +7,14 @@ interface PartyCardProps {
   event: DailyEvent;
   partyTheme?: PartyTheme;
   timeFormat: '12h' | '24h';
-  delay?: number;
+  onPartyClick?: (party: any) => void;
 }
 
 export const PartyCard = memo<PartyCardProps>(function PartyCard({
   event,
   partyTheme,
   timeFormat,
-  delay = 0,
+  onPartyClick,
 }) {
   // Memoize image URL computation
   const imageUrl = useMemo(
@@ -27,8 +27,18 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
   // Memoize formatted time
   const formattedTime = useMemo(() => formatTime(event.time, timeFormat), [event.time, timeFormat]);
 
+  // Handle card click
+  const handleClick = () => {
+    if (onPartyClick) {
+      onPartyClick({ ...event, partyTheme });
+    }
+  };
+
   return (
-    <div className="group relative bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-colors duration-200 h-full">
+    <div
+      className="group relative bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-colors duration-200 h-full cursor-pointer"
+      onClick={handleClick}
+    >
       {/* Desktop: Side-by-side, Mobile: Stacked - Fixed height to match all cards */}
       <div className="flex flex-col sm:flex-row h-full sm:h-[240px]">
         {/* Left/Top: Party Image with overlay info */}
@@ -38,7 +48,7 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
             src={imageUrl}
             alt={event.title}
             className="w-full h-full object-cover"
-            loading="eager"
+            loading="lazy"
             decoding="async"
             onError={e => {
               e.currentTarget.src =
@@ -78,11 +88,11 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
         {/* Right/Bottom: Content Details */}
         <div className="flex-1 p-4 sm:p-5 md:p-6 flex flex-col min-w-0 bg-black/20">
           <div className="flex-1 min-w-0 space-y-3">
-            {/* Description - check multiple possible field names */}
-            {(partyTheme?.desc || partyTheme?.longDescription || partyTheme?.shortDescription) && (
+            {/* Description */}
+            {(partyTheme?.desc || partyTheme?.longDescription) && (
               <div>
                 <p className="text-white/90 text-xs leading-relaxed line-clamp-4">
-                  {partyTheme.desc || partyTheme.longDescription || partyTheme.shortDescription}
+                  {partyTheme.desc || partyTheme.longDescription}
                 </p>
               </div>
             )}
@@ -96,7 +106,7 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
                     Costume Ideas
                   </h4>
                 </div>
-                <p className="text-white/80 text-xs leading-relaxed line-clamp-4">
+                <p className="text-white/90 text-xs leading-relaxed line-clamp-4">
                   {partyTheme.costumeIdeas}
                 </p>
               </div>
