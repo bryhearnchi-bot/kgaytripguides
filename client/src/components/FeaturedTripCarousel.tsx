@@ -45,7 +45,7 @@ function getTripStatusBadge(startDate: Date, endDate: Date, status: string) {
   if (daysUntilStart > 0 && daysUntilStart <= 30) {
     const dayText = daysUntilStart === 1 ? 'day' : 'days';
     return {
-      text: `${daysUntilStart} ${dayText}`,
+      text: `${daysUntilStart} ${dayText} away`,
       className: 'bg-blue-500/90 backdrop-blur-sm text-white',
       show: true,
     };
@@ -303,9 +303,8 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
               {statusBadge.show && (
                 <div className="absolute top-4 right-4">
                   <span
-                    className={`px-3 py-1.5 text-xs font-bold rounded-full ${statusBadge.className} border border-white/30 flex items-center gap-1.5`}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-full ${statusBadge.className} border border-white/30`}
                   >
-                    <Clock className="h-3.5 w-3.5" />
                     {statusBadge.text}
                   </span>
                 </div>

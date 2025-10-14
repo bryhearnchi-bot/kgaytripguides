@@ -36,7 +36,10 @@ interface Trip {
 function TripCard({ trip }: { trip: Trip }) {
   const startDate = dateOnly(trip.startDate);
   const endDate = dateOnly(trip.endDate);
-  const duration = differenceInCalendarDays(endDate, startDate);
+  const tripDuration = differenceInCalendarDays(endDate, startDate);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const daysUntilStart = differenceInCalendarDays(startDate, now);
 
   return (
     <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
@@ -92,10 +95,10 @@ function TripCard({ trip }: { trip: Trip }) {
               </span>
             </div>
           )}
-          {trip.status === 'upcoming' && duration <= 30 && (
+          {trip.status === 'upcoming' && daysUntilStart > 0 && daysUntilStart <= 30 && (
             <div className={`absolute ${trip.charterCompanyLogo ? 'bottom-3' : 'top-3'} right-3`}>
               <span className="px-3 py-1 bg-blue-400/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full border border-white/30">
-                {duration} days away
+                {daysUntilStart} {daysUntilStart === 1 ? 'day' : 'days'} away
               </span>
             </div>
           )}
