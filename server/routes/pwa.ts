@@ -30,8 +30,6 @@ export function registerPWARoutes(app: Express): void {
           slug,
           description,
           hero_image_url,
-          theme_color,
-          background_color,
           charter_companies (
             name,
             logo_url
@@ -67,8 +65,8 @@ export function registerPWARoutes(app: Express): void {
         start_url: `/trip/${slug}`,
         scope: `/trip/${slug}`,
         display: 'standalone',
-        background_color: trip.background_color || '#1e40af',
-        theme_color: trip.theme_color || '#1e40af',
+        background_color: '#1e40af',
+        theme_color: '#1e40af',
         orientation: 'portrait-primary',
         lang: 'en',
         categories: ['travel', 'entertainment', 'lifestyle', 'lgbtq'],
