@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from 'express';
-import { db } from '../db';
+import { getSupabaseAdmin } from '../supabase-admin';
 import { logger } from '../logging/logger';
 
 /**
@@ -18,9 +18,10 @@ export function registerPWARoutes(app: Express): void {
   app.get('/api/trips/:slug/manifest.json', async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
+      const supabaseAdmin = getSupabaseAdmin();
 
       // Fetch trip data from database
-      const result = await db.query(
+      const { data: results, error } = await supabaseAdmin.from('trips').select(
         `
         SELECT
           t.id,
