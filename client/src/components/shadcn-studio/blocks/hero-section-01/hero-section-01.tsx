@@ -48,6 +48,18 @@ const HeroSection = ({
     'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/bimini.avif',
   ];
 
+  // Hong Kong to Singapore cruise images (from itinerary table)
+  const hongKongImages = [
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-cda156ea-cc8a-4e0c-bc46-c20fda1486f1.jpg', // Hong Kong
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-db73e1a1-1bd3-42b0-8d52-a8e069f194e0.jpg', // Halong Bay
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-7801fc25-0d2e-447e-ba5d-8eaadd494ade.jpg', // Chan May
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-37d542fa-acc3-467f-9308-17ea92cf9d81.jpg', // Phu My
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-b6595f31-90dc-4238-92f8-f7297d4af4ee.jpg', // Bangkok
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-40448315-a849-405f-bca3-4703c9a8f251.jpg', // Ko Samui
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-e7545ce4-aa9d-4f2c-9953-1d3c75fd07f3.jpg', // Singapore
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg', // Hanoi
+  ];
+
   // Dragstar cruise artist images - all square with varying sizes
   const dragstarImages = [
     {
@@ -95,9 +107,14 @@ const HeroSection = ({
   const isDragstarCruise = slug === 'drag-stars-at-sea';
   const isHalloweenCruise = slug === 'halloween-carribean-cruise';
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
+  const isHongKongCruise = slug === 'hong-kong-to-singapore-cruise-2025';
 
   // Select the appropriate image set
-  const images = isHalloweenCruise ? halloweenImages : greekImages;
+  const images = isHalloweenCruise
+    ? halloweenImages
+    : isHongKongCruise
+      ? hongKongImages
+      : greekImages;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -371,6 +388,107 @@ const HeroSection = ({
                 src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/bimini.avif"
                 alt="Bimini"
                 className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+            </>
+          ) : isHongKongCruise ? (
+            <>
+              {/* First set of 8 Hong Kong to Singapore images */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-cda156ea-cc8a-4e0c-bc46-c20fda1486f1.jpg"
+                alt="Hong Kong"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-db73e1a1-1bd3-42b0-8d52-a8e069f194e0.jpg"
+                alt="Halong Bay"
+                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-7801fc25-0d2e-447e-ba5d-8eaadd494ade.jpg"
+                alt="Chan May"
+                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-37d542fa-acc3-467f-9308-17ea92cf9d81.jpg"
+                alt="Phu My"
+                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-b6595f31-90dc-4238-92f8-f7297d4af4ee.jpg"
+                alt="Bangkok"
+                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-40448315-a849-405f-bca3-4703c9a8f251.jpg"
+                alt="Ko Samui"
+                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-e7545ce4-aa9d-4f2c-9953-1d3c75fd07f3.jpg"
+                alt="Singapore"
+                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg"
+                alt="Hanoi"
+                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              {/* Duplicate set for seamless loop */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-cda156ea-cc8a-4e0c-bc46-c20fda1486f1.jpg"
+                alt="Hong Kong"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-db73e1a1-1bd3-42b0-8d52-a8e069f194e0.jpg"
+                alt="Halong Bay"
+                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-7801fc25-0d2e-447e-ba5d-8eaadd494ade.jpg"
+                alt="Chan May"
+                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-37d542fa-acc3-467f-9308-17ea92cf9d81.jpg"
+                alt="Phu My"
+                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-b6595f31-90dc-4238-92f8-f7297d4af4ee.jpg"
+                alt="Bangkok"
+                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-40448315-a849-405f-bca3-4703c9a8f251.jpg"
+                alt="Ko Samui"
+                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-e7545ce4-aa9d-4f2c-9953-1d3c75fd07f3.jpg"
+                alt="Singapore"
+                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg"
+                alt="Hanoi"
+                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
                 loading="lazy"
               />
             </>
