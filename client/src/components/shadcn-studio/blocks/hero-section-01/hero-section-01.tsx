@@ -103,8 +103,8 @@ const HeroSection = ({
   return (
     <section className="flex flex-1 flex-col gap-8 overflow-x-hidden pt-4 sm:pt-8 lg:pt-12">
       {/* Hero Content - Mobile */}
-      <div className="sm:hidden mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
-        <div className="flex items-center gap-2.5 pt-3">
+      <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
+        <div className="flex items-center justify-center gap-2.5 pt-3 flex-wrap w-full">
           {/* Charter Logo - Left side */}
           {charterCompanyLogo && (
             <img
@@ -114,7 +114,7 @@ const HeroSection = ({
               loading="lazy"
             />
           )}
-          <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50">
+          <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-xs whitespace-nowrap">
             {tripType === 'cruise'
               ? 'Interactive Cruise Guide'
               : tripType === 'resort'
@@ -123,7 +123,7 @@ const HeroSection = ({
           </Badge>
         </div>
 
-        <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap">
+        <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap w-full px-2">
           <span>
             <span className="relative">
               {firstWord}
@@ -160,32 +160,57 @@ const HeroSection = ({
           </span>
         </h1>
 
-        {/* Single rotating image for mobile */}
-        <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
-          {isDragstarCruise
-            ? dragstarImages.map((img, index) => (
+        {/* Mobile carousel/image display */}
+        {isDragstarCruise ? (
+          /* Horizontal scrolling carousel for Drag Cruise - Mobile */
+          <div className="relative w-full overflow-hidden">
+            <div className="flex gap-3 animate-scroll-mobile" style={{ width: 'fit-content' }}>
+              {/* First set */}
+              {dragstarImages.map(img => (
                 <img
                   key={img.url}
                   src={img.url}
                   alt={img.name}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  loading="lazy"
-                />
-              ))
-            : images.map((img, index) => (
-                <img
-                  key={img}
-                  src={img}
-                  alt={`Destination ${index + 1}`}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                  }`}
+                  className="object-cover flex-shrink-0 rounded-lg"
+                  style={{
+                    height: '16rem',
+                    width: '16rem',
+                  }}
                   loading="lazy"
                 />
               ))}
-        </div>
+              {/* Duplicate set for seamless loop */}
+              {dragstarImages.map(img => (
+                <img
+                  key={`${img.url}-dup`}
+                  src={img.url}
+                  alt={img.name}
+                  className="object-cover flex-shrink-0 rounded-lg"
+                  style={{
+                    height: '16rem',
+                    width: '16rem',
+                  }}
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Single rotating image for other trips - Mobile */
+          <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
+            {images.map((img, index) => (
+              <img
+                key={img}
+                src={img}
+                alt={`Destination ${index + 1}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                  index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+                loading="lazy"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Hero Content - Desktop/Tablet */}
@@ -378,9 +403,33 @@ const HeroSection = ({
           }
         }
 
+        @keyframes scrollMobile {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+
         .animate-scroll {
-          animation: scroll 150s linear infinite;
+          animation: scroll 75s linear infinite;
           display: flex;
+        }
+
+        .animate-scroll-mobile {
+          animation: scrollMobile 75s linear infinite;
+          display: flex;
+        }
+
+        /* Hide scrollbar but keep scroll functionality */
+        .hide-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;  /* Chrome, Safari and Opera */
         }
       `}</style>
     </section>

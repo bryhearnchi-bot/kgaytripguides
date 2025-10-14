@@ -40,7 +40,7 @@ export function registerPWARoutes(app: Express): void {
         )
         .eq('slug', slug)
         .eq('is_active', true)
-        .in('trip_status_id', [3, 5])
+        .in('trip_status_id', [1, 2, 5]) // Upcoming, Current, or Preview
         .single();
 
       if (error || !data) {
@@ -174,7 +174,7 @@ export function registerPWARoutes(app: Express): void {
         )
         .eq('slug', slug)
         .eq('is_active', true)
-        .in('trip_status_id', [3, 5])
+        .in('trip_status_id', [1, 2, 5]) // Upcoming, Current, or Preview
         .single();
 
       if (error || !data) {
