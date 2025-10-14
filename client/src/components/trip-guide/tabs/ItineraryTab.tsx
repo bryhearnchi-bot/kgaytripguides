@@ -42,9 +42,10 @@ export const ItineraryTab = memo(function ItineraryTab({
       arriveDepart = '';
       allAboard = '';
     } else if (isEmbarkation) {
-      // Embarkation: add suffix and show only depart time
+      // Embarkation: add suffix and show only depart time and all aboard
       portName = `${stop.port} - Embarkation`;
       arriveDepart = stop.depart && stop.depart !== '—' ? `Depart: ${stop.depart}` : '';
+      allAboard = stop.allAboard || '';
     } else if (isDisembarkation) {
       // Disembarkation: add suffix and show only arrival time
       portName = `${stop.port} - Disembarkation`;
