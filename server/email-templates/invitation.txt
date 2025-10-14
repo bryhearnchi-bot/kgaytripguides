@@ -1,9 +1,9 @@
-Welcome to K-GAY Travel Guides
+Welcome to KGay Travel Guides
 ===============================
 
 Hello {{inviteeName}}!
 
-{{inviterName}} has invited you to join the K-GAY Travel Guides team as a {{role}}.
+{{inviterName}} has invited you to join the KGay Travel Guides team as a {{role}}.
 
 YOUR ROLE: {{role}}
 You'll have access to exclusive features and tools to help manage our travel guides and cruise experiences.
@@ -23,6 +23,6 @@ If you're having trouble with the link above, copy and paste the following URL i
 
 Need help? Contact us at support@kgay.com
 
-© 2025 K-GAY Travel Guides. All rights reserved.
+© 2025 KGay Travel Guides. All rights reserved.
 
 This email was sent to {{inviteeName}} because an invitation was created for this email address. If you received this email by mistake, you can safely ignore it.

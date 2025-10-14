@@ -1,6 +1,6 @@
 {
-  "name": "K-GAY Travel Guides",
-  "short_name": "K-GAY Guides",
+  "name": "KGay Travel Guides",
+  "short_name": "KGay Guides",
   "description": "Comprehensive LGBTQ+ travel guides for cruise adventures and destinations",
   "start_url": "/",
   "display": "standalone",
@@ -10,8 +10,7 @@
   "scope": "/",
   "lang": "en",
   "categories": ["travel", "entertainment", "lifestyle", "lgbtq"],
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"]
-  ,
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "icons": [
     {
       "src": "/images/icons/icon-72x72.png",
@@ -68,44 +67,52 @@
       "short_name": "Schedule",
       "description": "View today's events and activities",
       "url": "/?activeTab=schedule",
-      "icons": [{
-        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNOCAydjNoOFYyaDE1djRIOXY0aDlWOUg4aDcuNUwxNSA3VjRIMTBWMkg4WiIgZmlsbD0iIzNiODJmNiIvPgo8cGF0aCBkPSJNNiA5aDEydjEwSDZ6IiBmaWxsPSIjM2I4MmY2IiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4K",
-        "sizes": "192x192",
-        "type": "image/svg+xml"
-      }]
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNOCAydjNoOFYyaDE1djRIOXY0aDlWOUg4aDcuNUwxNSA3VjRIMTBWMkg4WiIgZmlsbD0iIzNiODJmNiIvPgo8cGF0aCBkPSJNNiA5aDEydjEwSDZ6IiBmaWxsPSIjM2I4MmY2IiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4K",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
     },
     {
       "name": "Trip Itinerary",
       "short_name": "Itinerary",
       "description": "View complete trip itinerary and ports",
       "url": "/?activeTab=itinerary",
-      "icons": [{
-        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMmMzLjg2IDAgNyAzLjE0IDcgN2MwIDUuMjUtNyAxMy03IDEzUzUgMTQuMjUgNSA5YzAtMy44NiAzLjE0LTcgNy03eiIgZmlsbD0iIzNiODJmNiIvPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjkiIHI9IjIuNSIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
-        "sizes": "192x192",
-        "type": "image/svg+xml"
-      }]
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMmMzLjg2IDAgNyAzLjE0IDcgN2MwIDUuMjUtNyAxMy03IDEzUzUgMTQuMjUgNSA5YzAtMy44NiAzLjE0LTcgNy03eiIgZmlsbD0iIzNiODJmNiIvPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjkiIHI9IjIuNSIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
     },
     {
       "name": "Talent & Artists",
       "short_name": "Talent",
       "description": "Browse performers and entertainers",
       "url": "/?activeTab=talent",
-      "icons": [{
-        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMmwtMy4wNSA2LjE4TDIgOS4yN2w1IDQuOTEtMS4xOSA3TDEyIDE3bDYuMTggMy4xOUwxNyAxNC4xOGw1LTQuOTEtNi45NS0xLjA5TDEyIDJ6IiBmaWxsPSIjZjU5ZTBiIi8+Cjwvc3ZnPgo=",
-        "sizes": "192x192",
-        "type": "image/svg+xml"
-      }]
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMmwtMy4wNSA2LjE4TDIgOS4yN2w1IDQuOTEtMS4xOSA3TDEyIDE3bDYuMTggMy4xOUwxNyAxNC4xOGw1LTQuOTEtNi45NS0xLjA5TDEyIDJ6IiBmaWxsPSIjZjU5ZTBiIi8+Cjwvc3ZnPgo=",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
     },
     {
       "name": "Party Themes",
       "short_name": "Parties",
       "description": "View party themes and dress codes",
       "url": "/?activeTab=parties",
-      "icons": [{
-        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMjJjNS41MjMgMCAxMC00LjQ3NyAxMC0xMFMxNy41MjMgMiAxMiAyczAgNC40NzcgMCAxMCA0LjQ3NyAxMCAxMCAxMHoiIGZpbGw9IiNlZjQ0NDQiLz4KPHN2ZyB4PSI2IiB5PSI2IiB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+CjxwYXRoIGQ9Ik0xNCAxMmwtMy00djJIMHYyaDExdjJsMy00eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cjwvc3ZnPgo=",
-        "sizes": "192x192",
-        "type": "image/svg+xml"
-      }]
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMjJjNS41MjMgMCAxMC00LjQ3NyAxMC0xMFMxNy41MjMgMiAxMiAyczAgNC40NzcgMCAxMCA0LjQ3NyAxMCAxMCAxMHoiIGZpbGw9IiNlZjQ0NDQiLz4KPHN2ZyB4PSI2IiB5PSI2IiB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+CjxwYXRoIGQ9Ik0xNCAxMmwtMy00djJIMHYyaDExdjJsMy00eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cjwvc3ZnPgo=",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
     }
   ],
   "related_applications": [],

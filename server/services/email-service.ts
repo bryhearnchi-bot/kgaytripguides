@@ -6,7 +6,7 @@
  * - HTML email templates with responsive design
  * - Error handling and retry logic
  * - Environment-based configuration
- * - Professional branding for K-GAY Travel Guides
+ * - Professional branding for KGay Travel Guides
  */
 
 import { Resend } from 'resend';
@@ -32,7 +32,7 @@ function getEmailConfig() {
 
   return {
     fromEmail,
-    fromName: 'K-GAY Travel Guides',
+    fromName: 'KGay Travel Guides',
     replyTo,
     baseUrl,
   };
@@ -84,7 +84,7 @@ export async function sendInvitationEmail(
       from: `${EMAIL_CONFIG.fromName} <${EMAIL_CONFIG.fromEmail}>`,
       to: recipientEmail,
       replyTo: EMAIL_CONFIG.replyTo,
-      subject: `You're invited to join K-GAY Travel Guides`,
+      subject: `You're invited to join KGay Travel Guides`,
       html: htmlContent,
       text: textContent,
       tags: [
@@ -145,7 +145,7 @@ function createInvitationEmailTemplate({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation to K-GAY Travel Guides</title>
+  <title>Invitation to KGay Travel Guides</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -256,7 +256,7 @@ function createInvitationEmailTemplate({
   <div class="email-container">
     <div class="email-content">
       <div class="header">
-        <div class="logo">🏳️‍🌈 K-GAY Travel Guides</div>
+        <div class="logo">🏳️‍🌈 KGay Travel Guides</div>
         <div class="tagline">Your Gateway to Extraordinary LGBTQ+ Travel Experiences</div>
       </div>
 
@@ -266,7 +266,7 @@ function createInvitationEmailTemplate({
         </div>
 
         <p>
-          <strong>${inviterName}</strong> has invited you to join <strong>K-GAY Travel Guides</strong>
+          <strong>${inviterName}</strong> has invited you to join <strong>KGay Travel Guides</strong>
           as a <span class="role-badge">${roleDisplay}</span>
         </p>
 
@@ -292,14 +292,14 @@ function createInvitationEmailTemplate({
 
         <p>
           If you have any questions, feel free to reply to this email or contact our support team.
-          We're excited to welcome you to the K-GAY Travel Guides family!
+          We're excited to welcome you to the KGay Travel Guides family!
         </p>
       </div>
 
       <div class="footer">
         <p>
           Best regards,<br>
-          The K-GAY Travel Guides Team
+          The KGay Travel Guides Team
         </p>
         <p style="font-size: 12px; color: #999;">
           If you didn't expect this invitation, you can safely ignore this email.
@@ -338,11 +338,11 @@ function createInvitationEmailText({
   const roleDisplay = roleDisplayNames[role] || role;
 
   return `
-🏳️‍🌈 K-GAY Travel Guides - Invitation
+🏳️‍🌈 KGay Travel Guides - Invitation
 
 Hello there!
 
-${inviterName} has invited you to join K-GAY Travel Guides as a ${roleDisplay}.
+${inviterName} has invited you to join KGay Travel Guides as a ${roleDisplay}.
 
 What's Next?
 Click the link below to accept your invitation and create your account:
@@ -353,10 +353,10 @@ You'll get access to our amazing platform where you can discover incredible LGBT
 
 ⏰ Important: This invitation expires in ${expiresIn}. Don't wait too long to join the adventure!
 
-If you have any questions, feel free to reply to this email or contact our support team. We're excited to welcome you to the K-GAY Travel Guides family!
+If you have any questions, feel free to reply to this email or contact our support team. We're excited to welcome you to the KGay Travel Guides family!
 
 Best regards,
-The K-GAY Travel Guides Team
+The KGay Travel Guides Team
 
 ---
 If you didn't expect this invitation, you can safely ignore this email.
@@ -385,12 +385,12 @@ export async function sendPasswordResetEmail(
       from: `${EMAIL_CONFIG.fromName} <${EMAIL_CONFIG.fromEmail}>`,
       to: recipientEmail,
       replyTo: EMAIL_CONFIG.replyTo,
-      subject: 'Reset your K-GAY Travel Guides password',
+      subject: 'Reset your KGay Travel Guides password',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Password Reset Request</h2>
           <p>Hi ${userName},</p>
-          <p>You requested to reset your password for K-GAY Travel Guides.</p>
+          <p>You requested to reset your password for KGay Travel Guides.</p>
           <p><a href="${resetUrl}" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Reset Password</a></p>
           <p>This link expires in 1 hour.</p>
           <p>If you didn't request this, please ignore this email.</p>

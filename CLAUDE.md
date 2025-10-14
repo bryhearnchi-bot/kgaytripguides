@@ -1,4 +1,4 @@
-# K-GAY Travel Guides - Critical Development Rules
+# KGay Travel Guides - Critical Development Rules
 
 **All Claude Code agents MUST follow these rules. Breaking these rules breaks the application.**
 

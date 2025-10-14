@@ -26,7 +26,7 @@ export function useTripMetadata(slug: string | undefined, tripName?: string) {
 
     // Update document title
     if (tripName) {
-      document.title = `${tripName} | K-GAY Travel Guides`;
+      document.title = `${tripName} | KGay Travel Guides`;
     }
 
     // Fetch trip metadata from API

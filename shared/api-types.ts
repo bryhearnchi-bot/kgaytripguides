@@ -1,6 +1,6 @@
 /**
  * Generated TypeScript types from OpenAPI specification
- * K-GAY Travel Guides API v1.0.0
+ * KGay Travel Guides API v1.0.0
  *
  * This file contains TypeScript interfaces and types for all API endpoints.
  * It should be regenerated whenever the OpenAPI specification changes.
@@ -500,7 +500,9 @@ export interface ApiOperations {
   createEvent: (tripId: number, data: CreateEventRequest) => Promise<Event>;
   updateEvent: (id: number, data: UpdateEventRequest) => Promise<Event>;
   deleteEvent: (id: number) => Promise<void>;
-  bulkCreateUpdateEvents: (data: BulkEventsRequest) => Promise<{ success: boolean; events: Event[] }>;
+  bulkCreateUpdateEvents: (
+    data: BulkEventsRequest
+  ) => Promise<{ success: boolean; events: Event[] }>;
 
   // Search operations
   globalSearch: (params: SearchParams) => Promise<SearchResult>;

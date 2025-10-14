@@ -15,7 +15,7 @@ import { openApiSpec } from './spec';
 // Generate swagger specification
 export const swaggerSpec = swaggerJSDoc({
   definition: openApiSpec,
-  apis: []
+  apis: [],
 });
 
 // Custom CSS for Swagger UI
@@ -26,11 +26,11 @@ const customCss = `
 // Swagger UI options
 const swaggerUiOptions = {
   customCss,
-  customSiteTitle: 'K-GAY Travel API Documentation',
+  customSiteTitle: 'KGay Travel API Documentation',
   swaggerOptions: {
     persistAuthorization: true,
-    displayRequestDuration: true
-  }
+    displayRequestDuration: true,
+  },
 };
 
 /**
@@ -38,11 +38,7 @@ const swaggerUiOptions = {
  */
 export function setupOpenAPI(app: Express): void {
   // Swagger UI
-  app.use(
-    '/api/docs',
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, swaggerUiOptions)
-  );
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
   // OpenAPI spec as JSON
   app.get('/api/openapi.json', (_req, res) => {

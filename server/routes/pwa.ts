@@ -211,7 +211,7 @@ export function registerPWARoutes(app: Express): void {
         image: trip.hero_image_url || '/images/default-trip-hero.jpg',
         url: `/trip/${slug}`,
         type: 'website',
-        siteName: 'K-GAY Travel Guides',
+        siteName: 'KGay Travel Guides',
         // Twitter card specific
         twitterCard: 'summary_large_image',
         twitterTitle: trip.name,

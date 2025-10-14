@@ -107,7 +107,7 @@ export default function NavigationBanner() {
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">
-          {user && profile ? (
+          {user && profile && (
             <KokonutProfileDropdown
               user={user}
               profile={profile}
@@ -117,14 +117,6 @@ export default function NavigationBanner() {
               showEditTrip={showEditTrip}
               className="touch-manipulation"
             />
-          ) : (
-            <div className="flex items-center space-x-2">
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-                  Login
-                </Button>
-              </Link>
-            </div>
           )}
         </div>
       </div>

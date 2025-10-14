@@ -10,14 +10,14 @@
 export const openApiSpec = {
   openapi: '3.0.0',
   info: {
-    title: 'K-GAY Travel Guides API',
+    title: 'KGay Travel Guides API',
     version: '1.0.0',
-    description: 'API for K-GAY Travel Guides application'
+    description: 'API for KGay Travel Guides application',
   },
   servers: [
     {
       url: '/api',
-      description: 'API server'
-    }
-  ]
+      description: 'API server',
+    },
+  ],
 };

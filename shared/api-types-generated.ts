@@ -1,6 +1,6 @@
 /**
  * Generated TypeScript types from OpenAPI specification
- * K-GAY Travel Guides API v1.0.0
+ * KGay Travel Guides API v1.0.0
  *
  * Generated on: 2025-09-20T20:48:38.793Z
  *
@@ -58,11 +58,11 @@ export interface Talent {
   bio?: string;
   profileImageUrl?: string;
   socialMedia?: {
-  instagram?: string;
-  twitter?: string;
-  tiktok?: string;
-  youtube?: string;
-};
+    instagram?: string;
+    twitter?: string;
+    tiktok?: string;
+    youtube?: string;
+  };
   featured?: boolean;
   isActive?: boolean;
   metadata?: Record<string, any>;
@@ -77,9 +77,9 @@ export interface Location {
   description?: string;
   imageUrl?: string;
   coordinates?: {
-  latitude?: number;
-  longitude?: number;
-};
+    latitude?: number;
+    longitude?: number;
+  };
   timezone?: string;
   metadata?: Record<string, any>;
   createdAt?: string;
@@ -113,11 +113,11 @@ export interface ErrorResponse {
 export interface PaginationResponse {
   data?: any[];
   pagination?: {
-  total?: number;
-  page?: number;
-  limit?: number;
-  totalPages?: number;
-};
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  };
 }
 
 // Utility types
@@ -148,209 +148,208 @@ export const API_OPERATIONS = {
   apiHealthCheck: {
     method: 'GET' as const,
     path: '/api',
-    summary: 'API health check'
+    summary: 'API health check',
   },
   getApiVersions: {
     method: 'GET' as const,
     path: '/api/versions',
-    summary: 'Get API versions'
+    summary: 'Get API versions',
   },
   getCsrfToken: {
     method: 'GET' as const,
     path: '/api/csrf-token',
-    summary: 'Get CSRF token'
+    summary: 'Get CSRF token',
   },
   globalSearch: {
     method: 'GET' as const,
     path: '/api/search',
-    summary: 'Global search'
+    summary: 'Global search',
   },
   listTalent: {
     method: 'GET' as const,
     path: '/api/talent',
-    summary: 'List talent'
+    summary: 'List talent',
   },
   getTalentById: {
     method: 'GET' as const,
     path: '/api/talent/{id}',
-    summary: 'Get talent by ID'
+    summary: 'Get talent by ID',
   },
   listLocations: {
     method: 'GET' as const,
     path: '/api/locations',
-    summary: 'List locations'
+    summary: 'List locations',
   },
   getLocationById: {
     method: 'GET' as const,
     path: '/api/locations/{id}',
-    summary: 'Get location by ID'
+    summary: 'Get location by ID',
   },
   getMetrics: {
     method: 'GET' as const,
     path: '/api/metrics',
-    summary: 'Get performance metrics'
+    summary: 'Get performance metrics',
   },
   trackAnalyticsEvent: {
     method: 'POST' as const,
     path: '/api/analytics/track',
-    summary: 'Track analytics event'
+    summary: 'Track analytics event',
   },
   healthCheck: {
     method: 'GET' as const,
     path: '/healthz',
-    summary: 'Health check'
+    summary: 'Health check',
   },
   healthCheckHead: {
     method: 'HEAD' as const,
     path: '/healthz',
-    summary: 'Health check (HEAD)'
+    summary: 'Health check (HEAD)',
   },
   listTrips: {
     method: 'GET' as const,
     path: '/api/trips',
-    summary: 'List all trips'
+    summary: 'List all trips',
   },
   createTrip: {
     method: 'POST' as const,
     path: '/api/trips',
-    summary: 'Create a new trip'
+    summary: 'Create a new trip',
   },
   getUpcomingTrips: {
     method: 'GET' as const,
     path: '/api/trips/upcoming',
-    summary: 'Get upcoming trips'
+    summary: 'Get upcoming trips',
   },
   getPastTrips: {
     method: 'GET' as const,
     path: '/api/trips/past',
-    summary: 'Get past trips'
+    summary: 'Get past trips',
   },
   getTripById: {
     method: 'GET' as const,
     path: '/api/trips/id/{id}',
-    summary: 'Get trip by ID'
+    summary: 'Get trip by ID',
   },
   getTripBySlug: {
     method: 'GET' as const,
     path: '/api/trips/{slug}',
-    summary: 'Get trip by slug'
+    summary: 'Get trip by slug',
   },
   getCompleteTripInfo: {
     method: 'GET' as const,
     path: '/api/trips/{slug}/complete',
-    summary: 'Get complete trip information'
+    summary: 'Get complete trip information',
   },
   updateTrip: {
     method: 'PUT' as const,
     path: '/api/trips/{id}',
-    summary: 'Update trip'
+    summary: 'Update trip',
   },
   deleteTrip: {
     method: 'DELETE' as const,
     path: '/api/trips/{id}',
-    summary: 'Delete trip'
+    summary: 'Delete trip',
   },
   duplicateTrip: {
     method: 'POST' as const,
     path: '/api/trips/{id}/duplicate',
-    summary: 'Duplicate trip'
+    summary: 'Duplicate trip',
   },
   getTripItinerary: {
     method: 'GET' as const,
     path: '/api/trips/{tripId}/itinerary',
-    summary: 'Get trip itinerary'
+    summary: 'Get trip itinerary',
   },
   listEvents: {
     method: 'GET' as const,
     path: '/api/events',
-    summary: 'List events with filtering'
+    summary: 'List events with filtering',
   },
   getEventStats: {
     method: 'GET' as const,
     path: '/api/events/stats',
-    summary: 'Get event statistics'
+    summary: 'Get event statistics',
   },
   bulkCreateUpdateEvents: {
     method: 'POST' as const,
     path: '/api/events/bulk',
-    summary: 'Bulk create/update events'
+    summary: 'Bulk create/update events',
   },
   updateEvent: {
     method: 'PUT' as const,
     path: '/api/events/{id}',
-    summary: 'Update event'
+    summary: 'Update event',
   },
   deleteEvent: {
     method: 'DELETE' as const,
     path: '/api/events/{id}',
-    summary: 'Delete event'
+    summary: 'Delete event',
   },
   getTripEvents: {
     method: 'GET' as const,
     path: '/api/trips/{tripId}/events',
-    summary: 'Get events for a trip'
+    summary: 'Get events for a trip',
   },
   createTripEvent: {
     method: 'POST' as const,
     path: '/api/trips/{tripId}/events',
-    summary: 'Create event for trip'
+    summary: 'Create event for trip',
   },
   getTripEventsByDate: {
     method: 'GET' as const,
     path: '/api/trips/{tripId}/events/date/{date}',
-    summary: 'Get events by date'
+    summary: 'Get events by date',
   },
   getTripEventsByType: {
     method: 'GET' as const,
     path: '/api/trips/{tripId}/events/type/{type}',
-    summary: 'Get events by type'
+    summary: 'Get events by type',
   },
   getAdminTrips: {
     method: 'GET' as const,
     path: '/api/admin/trips',
-    summary: 'Get admin trip list'
+    summary: 'Get admin trip list',
   },
   updateTripStatus: {
     method: 'PATCH' as const,
     path: '/api/admin/trips/{id}/status',
-    summary: 'Update trip status'
+    summary: 'Update trip status',
   },
   getTripStats: {
     method: 'GET' as const,
     path: '/api/admin/trips/stats',
-    summary: 'Get trip statistics'
+    summary: 'Get trip statistics',
   },
   getDashboardStats: {
     method: 'POST' as const,
     path: '/api/admin/dashboard/stats',
-    summary: 'Get dashboard statistics'
+    summary: 'Get dashboard statistics',
   },
   getSystemHealth: {
     method: 'GET' as const,
     path: '/api/admin/system/health',
-    summary: 'System health check'
+    summary: 'System health check',
   },
   listAdminProfiles: {
     method: 'GET' as const,
     path: '/api/admin/profiles',
-    summary: 'List admin profiles'
+    summary: 'List admin profiles',
   },
   createAdminProfile: {
     method: 'POST' as const,
     path: '/api/admin/profiles',
-    summary: 'Create admin profile'
+    summary: 'Create admin profile',
   },
   updateAdminProfile: {
     method: 'PUT' as const,
     path: '/api/admin/profiles/{id}',
-    summary: 'Update admin profile'
+    summary: 'Update admin profile',
   },
   deleteAdminProfile: {
     method: 'DELETE' as const,
     path: '/api/admin/profiles/{id}',
-    summary: 'Delete admin profile'
-  }
+    summary: 'Delete admin profile',
+  },
 } as const;
 
 export type ApiOperation = keyof typeof API_OPERATIONS;
-
