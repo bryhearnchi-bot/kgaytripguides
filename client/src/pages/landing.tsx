@@ -114,7 +114,7 @@ function TripCard({ trip }: { trip: Trip }) {
           <div className="flex items-center gap-2 text-ocean-100 text-sm">
             <CalendarDays className="w-4 h-4 flex-shrink-0" />
             <span>
-              {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
+              {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {tripDuration} days
             </span>
           </div>
           {trip.tripTypeId === 2 ? (
