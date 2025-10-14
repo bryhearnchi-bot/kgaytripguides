@@ -161,56 +161,33 @@ const HeroSection = ({
         </h1>
 
         {/* Mobile carousel/image display */}
-        {isDragstarCruise ? (
-          /* Horizontal scrolling carousel for Drag Cruise - Mobile */
-          <div className="relative w-full overflow-hidden">
-            <div className="flex gap-3 animate-scroll-mobile" style={{ width: 'fit-content' }}>
-              {/* First set */}
-              {dragstarImages.map(img => (
+        <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
+          {isDragstarCruise
+            ? /* Single rotating image for Drag Cruise - Mobile */
+              dragstarImages.map((img, index) => (
                 <img
                   key={img.url}
                   src={img.url}
                   alt={img.name}
-                  className="object-cover flex-shrink-0 rounded-lg"
-                  style={{
-                    height: '16rem',
-                    width: '16rem',
-                  }}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
                   loading="lazy"
                 />
-              ))}
-              {/* Duplicate set for seamless loop */}
-              {dragstarImages.map(img => (
+              ))
+            : /* Single rotating image for other trips - Mobile */
+              images.map((img, index) => (
                 <img
-                  key={`${img.url}-dup`}
-                  src={img.url}
-                  alt={img.name}
-                  className="object-cover flex-shrink-0 rounded-lg"
-                  style={{
-                    height: '16rem',
-                    width: '16rem',
-                  }}
+                  key={img}
+                  src={img}
+                  alt={`Destination ${index + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
                   loading="lazy"
                 />
               ))}
-            </div>
-          </div>
-        ) : (
-          /* Single rotating image for other trips - Mobile */
-          <div className="relative w-full max-w-md h-64 overflow-hidden rounded-lg">
-            {images.map((img, index) => (
-              <img
-                key={img}
-                src={img}
-                alt={`Destination ${index + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                  index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                }`}
-                loading="lazy"
-              />
-            ))}
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Hero Content - Desktop/Tablet */}
