@@ -52,10 +52,10 @@ export function registerPWARoutes(app: Express): void {
         charter_company_logo: (data as any).charter_companies?.logo_url || null,
       };
 
-      // Determine icon set based on trip
-      // For DragStars cruise, use dragstars icons; otherwise use default kgay icons
-      const isDragStars = slug === 'drag-stars-at-sea';
-      const iconPrefix = isDragStars ? 'dragstars' : 'icon';
+      // All trips use the KGay logo for PWA icons
+      // Social sharing (Open Graph) uses trip-specific hero images
+      // This ensures consistent branding for app installations while allowing
+      // trip-specific images when sharing links on social media
 
       // Generate trip-specific manifest
       const manifest = {
@@ -73,49 +73,49 @@ export function registerPWARoutes(app: Express): void {
         display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
         icons: [
           {
-            src: `/images/icons/${iconPrefix}-72x72.png`,
+            src: `/images/icons/icon-72x72.png`,
             sizes: '72x72',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-96x96.png`,
+            src: `/images/icons/icon-96x96.png`,
             sizes: '96x96',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-128x128.png`,
+            src: `/images/icons/icon-128x128.png`,
             sizes: '128x128',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-144x144.png`,
+            src: `/images/icons/icon-144x144.png`,
             sizes: '144x144',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-152x152.png`,
+            src: `/images/icons/icon-152x152.png`,
             sizes: '152x152',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-192x192.png`,
+            src: `/images/icons/icon-192x192.png`,
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-384x384.png`,
+            src: `/images/icons/icon-384x384.png`,
             sizes: '384x384',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: `/images/icons/${iconPrefix}-512x512.png`,
+            src: `/images/icons/icon-512x512.png`,
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
