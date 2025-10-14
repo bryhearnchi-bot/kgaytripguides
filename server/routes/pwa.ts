@@ -21,33 +21,38 @@ export function registerPWARoutes(app: Express): void {
       const supabaseAdmin = getSupabaseAdmin();
 
       // Fetch trip data from database
-      const { data: results, error } = await supabaseAdmin.from('trips').select(
+      const { data, error } = await supabaseAdmin
+        .from('trips')
+        .select(
+          `
+          id,
+          name,
+          slug,
+          description,
+          hero_image_url,
+          theme_color,
+          background_color,
+          charter_companies (
+            name,
+            logo_url
+          )
         `
-        SELECT
-          t.id,
-          t.name,
-          t.slug,
-          t.description,
-          t.hero_image_url,
-          t.theme_color,
-          t.background_color,
-          cc.name as charter_company_name,
-          cc.logo_url as charter_company_logo
-        FROM trips t
-        LEFT JOIN charter_companies cc ON t.charter_company_id = cc.id
-        WHERE t.slug = $1
-          AND t.is_active = true
-          AND t.trip_status_id IN (3, 5)
-        LIMIT 1
-        `,
-        [slug]
-      );
+        )
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .in('trip_status_id', [3, 5])
+        .single();
 
-      if (result.rows.length === 0) {
+      if (error || !data) {
+        logger.error('Failed to fetch trip for manifest', { slug, error });
         return res.status(404).json({ error: 'Trip not found' });
       }
 
-      const trip = result.rows[0];
+      const trip = {
+        ...data,
+        charter_company_name: (data as any).charter_companies?.name || null,
+        charter_company_logo: (data as any).charter_companies?.logo_url || null,
+      };
 
       // Determine icon set based on trip
       // For DragStars cruise, use dragstars icons; otherwise use default kgay icons
@@ -148,34 +153,39 @@ export function registerPWARoutes(app: Express): void {
   app.get('/api/trips/:slug/metadata', async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
+      const supabaseAdmin = getSupabaseAdmin();
 
       // Fetch trip data with relevant social sharing info
-      const result = await db.query(
+      const { data, error } = await supabaseAdmin
+        .from('trips')
+        .select(
+          `
+          id,
+          name,
+          slug,
+          description,
+          hero_image_url,
+          start_date,
+          end_date,
+          charter_companies (
+            name
+          )
         `
-        SELECT
-          t.id,
-          t.name,
-          t.slug,
-          t.description,
-          t.hero_image_url,
-          t.start_date,
-          t.end_date,
-          cc.name as charter_company_name
-        FROM trips t
-        LEFT JOIN charter_companies cc ON t.charter_company_id = cc.id
-        WHERE t.slug = $1
-          AND t.is_active = true
-          AND t.trip_status_id IN (3, 5)
-        LIMIT 1
-        `,
-        [slug]
-      );
+        )
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .in('trip_status_id', [3, 5])
+        .single();
 
-      if (result.rows.length === 0) {
+      if (error || !data) {
+        logger.error('Failed to fetch trip metadata', { slug, error });
         return res.status(404).json({ error: 'Trip not found' });
       }
 
-      const trip = result.rows[0];
+      const trip = {
+        ...data,
+        charter_company_name: (data as any).charter_companies?.name || null,
+      };
 
       // Format dates for display
       let dateRange = '';
