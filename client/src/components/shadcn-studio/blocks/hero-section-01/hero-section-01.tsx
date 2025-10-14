@@ -418,7 +418,7 @@ const HeroSection = ({
         }
 
         .animate-scroll-mobile {
-          animation: scrollMobile 20s linear infinite;
+          animation: scrollMobile 10s linear infinite;
           display: flex;
         }
 
