@@ -66,7 +66,12 @@ export function useScheduledDaily({ DAILY, tripStatus = 'upcoming' }: UseSchedul
 
     // For current cruise, filter out past events
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    // Use local date instead of converting to UTC with toISOString()
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`;
+
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
