@@ -1,17 +1,135 @@
-import express, { type Express } from "express";
-import fs from "fs";
-import path from "path";
-import { createServer as createViteServer, createLogger } from "vite";
-import { type Server } from "http";
-import viteConfig from "../vite.config";
-import { nanoid } from "nanoid";
-import { logger } from "./logging/logger";
+import express, { type Express } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { createServer as createViteServer, createLogger } from 'vite';
+import { type Server } from 'http';
+import viteConfig from '../vite.config';
+import { nanoid } from 'nanoid';
+import { logger } from './logging/logger';
+import { getSupabaseAdmin } from './supabase-admin';
 
 const viteLogger = createLogger();
 
-export function log(message: string, source = "express") {
+export function log(message: string, source = 'express') {
   // Use the new structured logger
   logger.info(message, { source });
+}
+
+/**
+ * Injects trip-specific meta tags into the HTML template for iOS sharing and PWA support
+ * This ensures that when users share or add to home screen, they get trip-specific info
+ */
+async function injectTripMetaTags(template: string, url: string): Promise<string> {
+  // Check if this is a trip page
+  const tripMatch = url.match(/^\/trip\/([^/?#]+)/);
+  if (!tripMatch) {
+    return template; // Not a trip page, return unchanged
+  }
+
+  const slug = tripMatch[1];
+
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Fetch trip data from database
+    const { data, error } = await supabaseAdmin
+      .from('trips')
+      .select(
+        `
+        id,
+        name,
+        slug,
+        description,
+        hero_image_url,
+        start_date,
+        end_date,
+        charter_companies (
+          name
+        )
+      `
+      )
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .in('trip_status_id', [1, 2, 5]) // Upcoming, Current, or Preview
+      .single();
+
+    if (error || !data) {
+      logger.warn('Failed to fetch trip for meta tag injection', { slug, error });
+      return template; // Return unchanged if trip not found
+    }
+
+    const trip = {
+      ...data,
+      charter_company_name: (data as any).charter_companies?.name || null,
+    };
+
+    // Format dates for display
+    let dateRange = '';
+    if (trip.start_date && trip.end_date) {
+      const startDate = new Date(trip.start_date);
+      const endDate = new Date(trip.end_date);
+      const startMonth = startDate.toLocaleString('en-US', { month: 'short' });
+      const endMonth = endDate.toLocaleString('en-US', { month: 'short' });
+      const startDay = startDate.getUTCDate();
+      const endDay = endDate.getUTCDate();
+      const year = startDate.getUTCFullYear();
+
+      if (startMonth === endMonth) {
+        dateRange = `${startMonth} ${startDay}-${endDay}, ${year}`;
+      } else {
+        dateRange = `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+      }
+    }
+
+    const tripUrl = `/trip/${slug}`;
+    const description =
+      trip.description || `Join us for ${trip.name}${dateRange ? ` • ${dateRange}` : ''}`;
+    const imageUrl = trip.hero_image_url || '/images/default-trip-hero.jpg';
+    const shortName = trip.name.length > 12 ? trip.name.substring(0, 12) : trip.name;
+
+    // Build meta tags to inject
+    const metaTags = `
+    <!-- Trip-specific meta tags (server-injected for iOS sharing) -->
+    <title>${trip.name} | KGay Travel Guides</title>
+    <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
+
+    <!-- iOS PWA meta tags -->
+    <meta name="apple-mobile-web-app-start-url" content="${tripUrl}" />
+    <meta name="apple-mobile-web-app-title" content="${shortName}" />
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="${trip.name}" />
+    <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:url" content="${tripUrl}" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:title" content="${trip.name}" />
+    <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:image" content="${imageUrl}" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="${tripUrl}" />
+
+    <!-- Trip-specific manifest -->
+    <link rel="manifest" href="/api/trips/${slug}/manifest.json" />
+    `;
+
+    // Inject before closing </head> tag
+    // Remove the default manifest link first to avoid conflicts
+    template = template.replace(
+      /<link rel="manifest" href="\/manifest\.json" \/>/,
+      '<!-- Default manifest replaced with trip-specific manifest -->'
+    );
+
+    // Inject trip meta tags
+    template = template.replace('</head>', `${metaTags}\n  </head>`);
+
+    return template;
+  } catch (error) {
+    logger.error('Error injecting trip meta tags', error);
+    return template; // Return unchanged on error
+  }
 }
 
 export async function setupVite(app: Express, server: Server) {
@@ -32,7 +150,7 @@ export async function setupVite(app: Express, server: Server) {
       },
     },
     server: serverOptions,
-    appType: "custom",
+    appType: 'custom',
   });
 
   // Wrap Vite middleware to never process /api paths
@@ -41,8 +159,8 @@ export async function setupVite(app: Express, server: Server) {
     if (p === '/api' || p.startsWith('/api/')) return next();
     return vite.middlewares(req, res, next);
   });
-  
-  app.use("*", async (req, res, next) => {
+
+  app.use('*', async (req, res, next) => {
     const url = req.originalUrl;
 
     // Skip API routes - let them be handled by the API route handlers
@@ -51,21 +169,17 @@ export async function setupVite(app: Express, server: Server) {
     }
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const clientTemplate = path.resolve(import.meta.dirname, '..', 'client', 'index.html');
 
       // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
+      let template = await fs.promises.readFile(clientTemplate, 'utf-8');
+      template = template.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`);
+
+      // Inject trip-specific meta tags for iOS sharing and PWA support
+      template = await injectTripMetaTags(template, url);
+
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -75,13 +189,14 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   // In production, look for build files in the correct location
-  const distPath = process.env.NODE_ENV === 'production'
-    ? path.resolve(import.meta.dirname, "..", "dist", "public")
-    : path.resolve(import.meta.dirname, "public");
+  const distPath =
+    process.env.NODE_ENV === 'production'
+      ? path.resolve(import.meta.dirname, '..', 'dist', 'public')
+      : path.resolve(import.meta.dirname, 'public');
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
 
@@ -100,7 +215,14 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // Inject trip-specific meta tags for iOS sharing and PWA support
+  app.use('*', async (req, res) => {
+    const indexPath = path.resolve(distPath, 'index.html');
+    let template = await fs.promises.readFile(indexPath, 'utf-8');
+
+    // Inject trip-specific meta tags if this is a trip page
+    template = await injectTripMetaTags(template, req.originalUrl);
+
+    res.status(200).set({ 'Content-Type': 'text/html' }).send(template);
   });
 }

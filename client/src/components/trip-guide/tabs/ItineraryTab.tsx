@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Map } from 'lucide-react';
 import JobListingComponent, { type Job } from '@/components/smoothui/ui/JobListingComponent';
 
@@ -7,6 +7,7 @@ interface ItineraryTabProps {
   onViewEvents: (dateKey: string, portName: string) => void;
   scheduledDaily?: any[];
   talent?: any[];
+  tripStatus?: string;
 }
 
 export const ItineraryTab = memo(function ItineraryTab({
@@ -14,9 +15,25 @@ export const ItineraryTab = memo(function ItineraryTab({
   onViewEvents,
   scheduledDaily,
   talent,
+  tripStatus = 'upcoming',
 }: ItineraryTabProps) {
+  // Filter itinerary based on trip status
+  const filteredItinerary = useMemo(() => {
+    if (tripStatus !== 'current') {
+      // For upcoming or past trips, show all days
+      return ITINERARY;
+    }
+
+    // For current trips, filter to show only today and future days
+    const today = new Date().toISOString().split('T')[0];
+    return ITINERARY.filter(stop => {
+      const stopDate = stop.key || stop.date?.split('T')[0];
+      return stopDate >= today;
+    });
+  }, [ITINERARY, tripStatus]);
+
   // Transform itinerary data to Job format for the component
-  const jobsData: Job[] = ITINERARY.map((stop, index) => {
+  const jobsData: Job[] = filteredItinerary.map((stop, index) => {
     // Determine location type based on locationTypeId
     // Location type IDs from database:
     // 1=Embarkation, 2=Disembarkation, 3=Port, 4=Day at Sea
@@ -113,7 +130,7 @@ export const ItineraryTab = memo(function ItineraryTab({
         <Map className="w-5 h-5 text-white/80" />
         <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Trip Itinerary</h2>
       </div>
-      {ITINERARY.length === 0 ? (
+      {filteredItinerary.length === 0 ? (
         <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
           <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No itinerary available</h3>

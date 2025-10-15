@@ -9,6 +9,8 @@ interface HeroSectionProps {
   charterCompanyLogo?: string | null;
   charterCompanyName?: string | null;
   slug?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 const HeroSection = ({
@@ -18,11 +20,44 @@ const HeroSection = ({
   charterCompanyLogo = null,
   charterCompanyName = null,
   slug = '',
+  startDate,
+  endDate,
 }: HeroSectionProps) => {
   // Split trip name into words
   const words = tripName.split(' ');
   const firstWord = words[0];
   const remainingWords = words.slice(1).join(' ');
+
+  // Format trip dates
+  const formatTripDates = () => {
+    if (!startDate || !endDate) return null;
+
+    // Parse dates (YYYY-MM-DD format)
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
+
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    };
+    const startFormatted = start.toLocaleDateString('en-US', formatOptions);
+    const endFormatted = end.toLocaleDateString('en-US', formatOptions);
+
+    // If same month and year, show "Month Day - Day, Year"
+    if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+      const monthYear = start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${endDay}, ${start.getFullYear()}`;
+    }
+
+    // Otherwise show full dates
+    return `${startFormatted} - ${endFormatted}`;
+  };
+
+  const tripDates = formatTripDates();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollWidth, setScrollWidth] = useState(0);
@@ -195,6 +230,9 @@ const HeroSection = ({
           {isHalloweenCruise && <span className="text-3xl">🎃</span>}
         </h1>
 
+        {/* Trip Dates - Mobile */}
+        {tripDates && <p className="text-white/60 text-xs font-medium -mt-4">{tripDates}</p>}
+
         {/* Mobile carousel/image display */}
         <div className="relative w-full max-w-xs aspect-square overflow-hidden rounded-lg">
           {isDragstarCruise
@@ -284,6 +322,9 @@ const HeroSection = ({
           </span>
           {isHalloweenCruise && <span className="text-4xl sm:text-5xl lg:text-6xl">🎃</span>}
         </h1>
+
+        {/* Trip Dates - Desktop/Tablet */}
+        {tripDates && <p className="text-white/60 text-sm font-medium -mt-6">{tripDates}</p>}
 
         <p className="text-white">{tripDescription}</p>
       </div>

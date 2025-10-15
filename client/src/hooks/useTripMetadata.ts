@@ -44,6 +44,9 @@ export function useTripMetadata(slug: string | undefined, tripName?: string) {
         updateMetaTag('og:type', metadata.type);
         updateMetaTag('og:site_name', metadata.siteName);
 
+        // Update canonical URL
+        updateCanonicalLink(metadata.url);
+
         // Update Twitter Card meta tags
         updateMetaTag('twitter:card', metadata.twitterCard);
         updateMetaTag('twitter:title', metadata.twitterTitle);
@@ -52,6 +55,9 @@ export function useTripMetadata(slug: string | undefined, tripName?: string) {
 
         // Update general meta description
         updateMetaTag('description', metadata.description, 'name');
+
+        // Update iOS-specific meta tags for proper PWA behavior
+        updateAppleMetaTags(slug, metadata.title);
 
         // Inject trip-specific manifest link
         injectManifestLink(slug);
@@ -133,4 +139,45 @@ function restoreDefaultManifest() {
     defaultManifest.removeAttribute('data-disabled');
     (defaultManifest as HTMLLinkElement).rel = 'manifest';
   }
+
+  // Remove iOS-specific meta tags
+  const appleStartUrl = document.querySelector('meta[name="apple-mobile-web-app-start-url"]');
+  if (appleStartUrl) {
+    appleStartUrl.remove();
+  }
+
+  // Restore default apple-mobile-web-app-title
+  updateMetaTag('apple-mobile-web-app-title', 'KGay Guides', 'name');
+}
+
+/**
+ * Updates iOS-specific meta tags for proper Add to Home Screen behavior
+ */
+function updateAppleMetaTags(slug: string, tripName: string) {
+  // Set the start URL for iOS Add to Home Screen
+  // This tells iOS where to open when the PWA is launched from the home screen
+  const startUrl = `/trip/${slug}`;
+  updateMetaTag('apple-mobile-web-app-start-url', startUrl, 'name');
+
+  // Update the app title for iOS
+  const shortName = tripName.length > 12 ? tripName.substring(0, 12) : tripName;
+  updateMetaTag('apple-mobile-web-app-title', shortName, 'name');
+
+  // Ensure apple-mobile-web-app-capable is set
+  updateMetaTag('apple-mobile-web-app-capable', 'yes', 'name');
+}
+
+/**
+ * Updates or creates a canonical link tag
+ */
+function updateCanonicalLink(url: string) {
+  let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+
+  if (!canonicalLink) {
+    canonicalLink = document.createElement('link');
+    canonicalLink.rel = 'canonical';
+    document.head.appendChild(canonicalLink);
+  }
+
+  canonicalLink.href = getAbsoluteUrl(url);
 }

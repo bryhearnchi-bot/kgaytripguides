@@ -27,18 +27,8 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
   // Memoize formatted time
   const formattedTime = useMemo(() => formatTime(event.time, timeFormat), [event.time, timeFormat]);
 
-  // Handle card click
-  const handleClick = () => {
-    if (onPartyClick) {
-      onPartyClick({ ...event, partyTheme });
-    }
-  };
-
   return (
-    <div
-      className="group relative bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-colors duration-200 h-full cursor-pointer"
-      onClick={handleClick}
-    >
+    <div className="group relative bg-white/10 border border-white/20 rounded-xl overflow-hidden transition-colors duration-200 h-full">
       {/* Desktop: Side-by-side, Mobile: Stacked - Fixed height to match all cards */}
       <div className="flex flex-col sm:flex-row h-full sm:h-[240px]">
         {/* Left/Top: Party Image with overlay info */}

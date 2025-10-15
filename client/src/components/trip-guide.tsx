@@ -58,6 +58,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [collapsedDays, setCollapsedDays] = useLocalStorage<string[]>('collapsedDays', []);
   const [isApproving, setIsApproving] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [hasInitializedCollapsedDays, setHasInitializedCollapsedDays] = useState(false);
 
   // Use the trip data hook
   const { data: tripData, isLoading, error, refetch } = useTripData(slug);
@@ -130,7 +131,20 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const TALENT = hasTalent ? data?.TALENT || [] : [];
   const PARTY_THEMES = hasTalent ? data?.PARTY_THEMES || [] : [];
   const IMPORTANT_INFO = hasTalent ? data?.IMPORTANT_INFO || {} : {};
-  const tripStatus = (data?.TRIP_INFO as any)?.status || 'upcoming';
+
+  // Calculate trip status based on start and end dates
+  const tripStatus = useMemo(() => {
+    if (!tripData?.trip?.startDate || !tripData?.trip?.endDate) return 'upcoming';
+
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const startDate = tripData.trip.startDate.split('T')[0];
+    const endDate = tripData.trip.endDate.split('T')[0];
+
+    if (today < startDate) return 'upcoming';
+    if (today > endDate) return 'past';
+    return 'current';
+  }, [tripData?.trip?.startDate, tripData?.trip?.endDate]);
 
   // Check if user can edit trips (super_admin or content_manager)
   const canEditTrip = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
@@ -138,43 +152,68 @@ export default function TripGuide({ slug }: TripGuideProps) {
   // Use the scheduled daily hook
   const SCHEDULED_DAILY = useScheduledDaily({ DAILY, tripStatus });
 
-  // Initialize collapsed days to show only current/upcoming day
+  // Initialize collapsed days to show only current day for active trips
+  // This effect should only run ONCE when data is first loaded
   useEffect(() => {
-    if (SCHEDULED_DAILY.length === 0 || collapsedDays.length > 0) return;
+    // Only initialize if:
+    // 1. We have data (SCHEDULED_DAILY.length > 0)
+    // 2. We haven't initialized yet (hasInitializedCollapsedDays is false)
+    if (SCHEDULED_DAILY.length === 0 || hasInitializedCollapsedDays) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    // For active trips, show the current day expanded
+    // For upcoming/past trips, collapse all days
+    if (tripStatus === 'active') {
+      const today = new Date().toISOString().split('T')[0];
 
-    // Find the current or next upcoming day
-    let targetDayIndex = SCHEDULED_DAILY.findIndex(day => day.key >= today);
+      // Find the current or next upcoming day
+      const targetDayIndex = SCHEDULED_DAILY.findIndex(day => day.key >= today);
 
-    // If all days are in the past, show the first day
-    if (targetDayIndex === -1) {
-      targetDayIndex = 0;
+      // If all days are in the past, collapse all
+      if (targetDayIndex === -1) {
+        setCollapsedDays(SCHEDULED_DAILY.map(day => day.key));
+      } else {
+        // Collapse all days except the current day
+        const daysToCollapse = SCHEDULED_DAILY.map(day => day.key).filter(
+          (_, index) => index !== targetDayIndex
+        );
+        setCollapsedDays(daysToCollapse);
+      }
+    } else {
+      // For upcoming or past trips, collapse all days
+      setCollapsedDays(SCHEDULED_DAILY.map(day => day.key));
     }
 
-    // Collapse all days except the target day
-    const daysToCollapse = SCHEDULED_DAILY.map(day => day.key).filter(
-      (_, index) => index !== targetDayIndex
-    );
-
-    setCollapsedDays(daysToCollapse);
-  }, [SCHEDULED_DAILY, collapsedDays.length, setCollapsedDays]);
+    setHasInitializedCollapsedDays(true);
+  }, [SCHEDULED_DAILY, hasInitializedCollapsedDays, tripStatus, setCollapsedDays]);
 
   // Event handlers with useCallback
   const toggleDayCollapse = useCallback(
     (dateKey: string) => {
-      const newCollapsedDays = collapsedDays.includes(dateKey)
-        ? collapsedDays.filter((d: string) => d !== dateKey)
-        : [...collapsedDays, dateKey];
-      setCollapsedDays(newCollapsedDays);
+      setCollapsedDays(currentCollapsedDays => {
+        if (currentCollapsedDays.includes(dateKey)) {
+          // Expand this day - remove from collapsed list
+          return currentCollapsedDays.filter((d: string) => d !== dateKey);
+        } else {
+          // Collapse this day - add to collapsed list
+          return [...currentCollapsedDays, dateKey];
+        }
+      });
     },
-    [collapsedDays, setCollapsedDays]
+    [setCollapsedDays]
   );
 
   const handleCollapseAll = useCallback(() => {
-    const allCollapsed = SCHEDULED_DAILY.length === collapsedDays.length;
-    setCollapsedDays(allCollapsed ? [] : SCHEDULED_DAILY.map(day => day.key));
-  }, [SCHEDULED_DAILY, collapsedDays, setCollapsedDays]);
+    setCollapsedDays(currentCollapsedDays => {
+      const allCollapsed = SCHEDULED_DAILY.length === currentCollapsedDays.length;
+      if (allCollapsed) {
+        // Expand all - empty array means all expanded
+        return [];
+      } else {
+        // Collapse all - add all day keys
+        return SCHEDULED_DAILY.map(day => day.key);
+      }
+    });
+  }, [SCHEDULED_DAILY, setCollapsedDays]);
 
   const handleTalentClick = useCallback(
     (name: string) => {
@@ -355,6 +394,8 @@ export default function TripGuide({ slug }: TripGuideProps) {
           charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
           charterCompanyName={tripData?.trip?.charterCompanyName}
           slug={slug}
+          startDate={tripData?.trip?.startDate}
+          endDate={tripData?.trip?.endDate}
         />
 
         {/* Preview Mode Banner */}
@@ -493,6 +534,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                   onViewEvents={handleViewEvents}
                   scheduledDaily={SCHEDULED_DAILY}
                   talent={TALENT as any}
+                  tripStatus={tripStatus}
                 />
               ) : (
                 <ItineraryTab
@@ -500,6 +542,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                   onViewEvents={handleViewEvents}
                   scheduledDaily={SCHEDULED_DAILY}
                   talent={TALENT as any}
+                  tripStatus={tripStatus}
                 />
               )}
             </TabsContent>
@@ -518,6 +561,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 ITINERARY={ITINERARY as any}
                 timeFormat={timeFormat}
                 onPartyClick={handlePartyClick}
+                tripStatus={tripStatus}
               />
             </TabsContent>
 

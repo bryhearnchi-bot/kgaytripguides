@@ -13,6 +13,7 @@ import {
   Globe,
   Music,
   X,
+  ChevronRight,
 } from 'lucide-react';
 
 export interface LocationAttraction {
@@ -1109,7 +1110,7 @@ export default function JobListingComponent({
                 activeItem?.job_time === role.job_time ? undefined : `workItem-${role.job_time}`
               }
               key={role.job_time}
-              className="group bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.01] flex w-full cursor-pointer flex-row items-center gap-4 py-3 pl-3 pr-5 min-h-[140px]"
+              className="group bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.01] flex w-full cursor-pointer flex-row items-center gap-4 py-3 pl-3 pr-3 min-h-[140px] relative"
               onClick={() => {
                 setActiveItem(role);
                 if (onJobClick) onJobClick(role);
@@ -1125,7 +1126,7 @@ export default function JobListingComponent({
               >
                 {role.logo}
               </motion.div>
-              <div className="flex w-full flex-col items-start justify-between gap-0.5">
+              <div className="flex w-full flex-col items-start justify-between gap-0.5 pr-10">
                 {/* Day Number and Date Row */}
                 <motion.div
                   className="text-ocean-100 text-xs sm:text-sm font-medium flex items-center gap-2"
@@ -1180,6 +1181,13 @@ export default function JobListingComponent({
                     </span>
                   </motion.div>
                 )}
+              </div>
+
+              {/* Frosted Glass Arrow Button - Right Side */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center group-hover:bg-white/20 group-hover:border-white/40 transition-all duration-300 shadow-lg">
+                  <ChevronRight className="w-5 h-5 text-white/80 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
+                </div>
               </div>
             </motion.div>
           ))}

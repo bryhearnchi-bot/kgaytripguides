@@ -8,6 +8,7 @@ interface PartiesTabProps {
   ITINERARY: ItineraryStop[];
   timeFormat: '12h' | '24h';
   onPartyClick?: (party: any) => void;
+  tripStatus?: string;
 }
 
 export const PartiesTab = memo(function PartiesTab({
@@ -15,26 +16,63 @@ export const PartiesTab = memo(function PartiesTab({
   ITINERARY,
   timeFormat,
   onPartyClick,
+  tripStatus = 'upcoming',
 }: PartiesTabProps) {
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
-    return SCHEDULED_DAILY.map(day => {
-      // Filter only party events (including 'after' type for after parties)
-      const partyEvents = day.items.filter(
-        event => event.type === 'party' || event.type === 'after'
-      );
+    // First, filter SCHEDULED_DAILY by date if it's a current trip
+    let filteredScheduledDaily = SCHEDULED_DAILY;
 
-      const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
+    if (tripStatus === 'current') {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
 
-      return {
-        key: day.key,
-        date: itineraryStop?.date || day.key,
-        port: itineraryStop?.port,
-        events: partyEvents,
-        totalEvents: partyEvents.length,
-      };
-    }).filter(day => day.totalEvents > 0);
-  }, [SCHEDULED_DAILY, ITINERARY]);
+      filteredScheduledDaily = SCHEDULED_DAILY.map(day => {
+        const dayDate = day.key;
+
+        // Future days - include all events
+        if (dayDate > today) {
+          return day;
+        }
+
+        // Past days - exclude completely
+        if (dayDate < today) {
+          return { ...day, items: [] };
+        }
+
+        // Today - filter events by time
+        const filteredItems = day.items.filter(event => {
+          const [eventHour, eventMinute] = event.time.split(':').map(Number);
+          const eventTotalMinutes = eventHour * 60 + eventMinute;
+          const currentTotalMinutes = currentHour * 60 + currentMinute;
+          return eventTotalMinutes > currentTotalMinutes;
+        });
+
+        return { ...day, items: filteredItems };
+      }).filter(day => day.items.length > 0);
+    }
+
+    return filteredScheduledDaily
+      .map(day => {
+        // Filter only party events (including 'after' type for after parties)
+        const partyEvents = day.items.filter(
+          event => event.type === 'party' || event.type === 'after'
+        );
+
+        const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
+
+        return {
+          key: day.key,
+          date: itineraryStop?.date || day.key,
+          port: itineraryStop?.port,
+          events: partyEvents,
+          totalEvents: partyEvents.length,
+        };
+      })
+      .filter(day => day.totalEvents > 0);
+  }, [SCHEDULED_DAILY, ITINERARY, tripStatus]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
