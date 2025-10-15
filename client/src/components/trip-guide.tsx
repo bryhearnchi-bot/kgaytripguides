@@ -137,13 +137,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
     if (!tripData?.trip?.startDate || !tripData?.trip?.endDate) return 'upcoming';
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    // Use local date instead of converting to UTC with toISOString()
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`;
+
     const startDate = tripData.trip.startDate.split('T')[0];
     const endDate = tripData.trip.endDate.split('T')[0];
 
-    if (today < startDate) return 'upcoming';
-    if (today > endDate) return 'past';
-    return 'current';
+    const status = today < startDate ? 'upcoming' : today > endDate ? 'past' : 'current';
+    return status;
   }, [tripData?.trip?.startDate, tripData?.trip?.endDate]);
 
   // Check if user can edit trips (super_admin or content_manager)
@@ -163,7 +167,11 @@ export default function TripGuide({ slug }: TripGuideProps) {
     // For active trips, show the current day expanded
     // For upcoming/past trips, collapse all days
     if (tripStatus === 'active') {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
 
       // Find the current or next upcoming day
       const targetDayIndex = SCHEDULED_DAILY.findIndex(day => day.key >= today);
