@@ -81,6 +81,7 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
       }
     }
 
+    // Use absolute URLs for iOS PWA support
     const tripUrl = `/trip/${slug}`;
     const description =
       trip.description || `Join us for ${trip.name}${dateRange ? ` • ${dateRange}` : ''}`;
@@ -93,9 +94,11 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     <title>${trip.name} | KGay Travel Guides</title>
     <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
 
-    <!-- iOS PWA meta tags -->
+    <!-- iOS PWA meta tags - CRITICAL: Must be absolute URLs -->
     <meta name="apple-mobile-web-app-start-url" content="${tripUrl}" />
     <meta name="apple-mobile-web-app-title" content="${shortName}" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <!-- Open Graph / Social Sharing -->
     <meta property="og:title" content="${trip.name}" />
@@ -110,20 +113,20 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
 
     <!-- Canonical URL -->
     <link rel="canonical" href="${tripUrl}" />
-
-    <!-- Trip-specific manifest -->
-    <link rel="manifest" href="/api/trips/${slug}/manifest.json" />
     `;
 
-    // Inject before closing </head> tag
-    // Remove the default manifest link first to avoid conflicts
-    template = template.replace(
-      /<link rel="manifest" href="\/manifest\.json" \/>/,
-      '<!-- Default manifest replaced with trip-specific manifest -->'
-    );
+    // CRITICAL: Remove the default manifest link to avoid conflicts
+    // iOS will use the first manifest it finds
+    template = template.replace(/<link rel="manifest" href="\/manifest\.json" \/>/g, '');
 
-    // Inject trip meta tags
-    template = template.replace('</head>', `${metaTags}\n  </head>`);
+    // CRITICAL: Also remove any manifest links that might have been added by client-side code
+    template = template.replace(/<link rel="manifest"[^>]*>/g, '');
+
+    // Now inject the trip-specific manifest as the ONLY manifest
+    const manifestLink = `<link rel="manifest" href="/api/trips/${slug}/manifest.json" />`;
+
+    // Inject trip meta tags and manifest before closing </head> tag
+    template = template.replace('</head>', `${metaTags}\n    ${manifestLink}\n  </head>`);
 
     return template;
   } catch (error) {

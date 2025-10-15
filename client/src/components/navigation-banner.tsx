@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
+import { AddToHomeScreen } from '@/components/AddToHomeScreen';
 import { useState, useEffect } from 'react';
 
 export default function NavigationBanner() {
@@ -107,6 +108,9 @@ export default function NavigationBanner() {
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Add to Home Screen button - shows for all users if not in standalone mode */}
+          <AddToHomeScreen />
+
           {user && profile && (
             <KokonutProfileDropdown
               user={user}

@@ -59,16 +59,17 @@ export function useTripMetadata(slug: string | undefined, tripName?: string) {
         // Update iOS-specific meta tags for proper PWA behavior
         updateAppleMetaTags(slug, metadata.title);
 
-        // Inject trip-specific manifest link
-        injectManifestLink(slug);
+        // Note: Manifest link is now injected server-side for better iOS compatibility
+        // Client-side injection was causing conflicts with iOS Add to Home Screen
       })
       .catch(error => {
         console.error('Failed to load trip metadata:', error);
       });
 
-    // Cleanup function to restore default manifest on unmount
+    // Note: Cleanup is minimal now since manifest is server-side
+    // When navigating away, the server will serve the appropriate manifest
     return () => {
-      restoreDefaultManifest();
+      // Optional: Could restore default meta tags here if needed
     };
   }, [slug, tripName]);
 }
