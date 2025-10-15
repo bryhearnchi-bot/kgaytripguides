@@ -24,7 +24,7 @@ export function useScheduledDaily({ DAILY, tripStatus = 'upcoming' }: UseSchedul
         }
         eventsByScheduledDate[scheduledDate].push({
           ...event,
-          originalDate: day.key // Keep track of original date for reference
+          originalDate: day.key, // Keep track of original date for reference
         });
       });
     });
@@ -55,7 +55,7 @@ export function useScheduledDaily({ DAILY, tripStatus = 'upcoming' }: UseSchedul
           };
 
           return getMinutesFromMidnight(timeA) - getMinutesFromMidnight(timeB);
-        })
+        }),
       }));
 
     // Filter events based on cruise status and timing
@@ -70,29 +70,32 @@ export function useScheduledDaily({ DAILY, tripStatus = 'upcoming' }: UseSchedul
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    return scheduledDaily.map(day => ({
-      ...day,
-      items: day.items.filter(event => {
-        const eventDate = event.dateKey || event.key || day.key;
+    return scheduledDaily
+      .map(day => ({
+        ...day,
+        items: day.items.filter(event => {
+          // Use the original date of the event for comparison (before 6am rule was applied)
+          const eventDate = event.originalDate || event.dateKey || event.key || day.key;
 
-        // Future dates are always included
-        if (today && eventDate > today) return true;
+          // Future dates are always included
+          if (today && eventDate > today) return true;
 
-        // Past dates are excluded
-        if (today && eventDate < today) return false;
+          // Past dates are excluded
+          if (today && eventDate < today) return false;
 
-        // For today, check the time
-        if (today && eventDate === today) {
-          const [eventHour, eventMinute] = event.time.split(':').map(Number);
-          const eventTotalMinutes = eventHour * 60 + eventMinute;
-          const currentTotalMinutes = currentHour * 60 + currentMinute;
+          // For today, check the time
+          if (today && eventDate === today) {
+            const [eventHour, eventMinute] = event.time.split(':').map(Number);
+            const eventTotalMinutes = eventHour * 60 + eventMinute;
+            const currentTotalMinutes = currentHour * 60 + currentMinute;
 
-          // Only show future events
-          return eventTotalMinutes > currentTotalMinutes;
-        }
+            // Only show future events
+            return eventTotalMinutes > currentTotalMinutes;
+          }
 
-        return true;
-      })
-    })).filter(day => day.items.length > 0); // Remove days with no events after filtering
+          return true;
+        }),
+      }))
+      .filter(day => day.items.length > 0); // Remove days with no events after filtering
   }, [DAILY, tripStatus]);
 }
