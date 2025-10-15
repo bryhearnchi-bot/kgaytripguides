@@ -33,8 +33,14 @@ const HeroSection = ({
     if (!startDate || !endDate) return null;
 
     // Parse dates (YYYY-MM-DD format)
-    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
-    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+    const startParts = startDate.split('-');
+    const startYear = Number(startParts[0] ?? 2025);
+    const startMonth = Number(startParts[1] ?? 1);
+    const startDay = Number(startParts[2] ?? 1);
+    const endParts = endDate.split('-');
+    const endYear = Number(endParts[0] ?? 2025);
+    const endMonth = Number(endParts[1] ?? 1);
+    const endDay = Number(endParts[2] ?? 1);
 
     const start = new Date(startYear, startMonth - 1, startDay);
     const end = new Date(endYear, endMonth - 1, endDay);

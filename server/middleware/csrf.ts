@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
+import { logger } from '../logging/logger';
 
 // CSRF Token Store (in production, use Redis or database)
 interface CSRFTokenStore {
@@ -24,7 +25,7 @@ class InMemoryCSRFStore implements CSRFTokenStore {
   async set(sessionId: string, token: string, ttl = 3600000): Promise<void> {
     this.store.set(sessionId, {
       token,
-      expires: Date.now() + ttl
+      expires: Date.now() + ttl,
     });
   }
 
@@ -64,7 +65,7 @@ const defaultConfig: Required<CSRFConfig> = {
   sessionKey: 'sessionId',
   httpOnly: false, // Allow JS access for AJAX requests
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict'
+  sameSite: 'strict',
 };
 
 // Generate cryptographically secure token
@@ -93,9 +94,7 @@ function getSessionId(req: Request, sessionKey: string): string {
 
   // Fall back to IP + User-Agent for anonymous sessions
   const userAgent = req.get('User-Agent') || 'unknown';
-  return crypto.createHash('sha256')
-    .update(`${req.ip}:${userAgent}`)
-    .digest('hex');
+  return crypto.createHash('sha256').update(`${req.ip}:${userAgent}`).digest('hex');
 }
 
 // CSRF Protection Middleware
@@ -129,7 +128,7 @@ export function csrfProtection(config: CSRFConfig = {}) {
       if (!providedToken) {
         return res.status(403).json({
           error: 'CSRF token missing',
-          message: 'CSRF token required for this request'
+          message: 'CSRF token required for this request',
         });
       }
 
@@ -138,17 +137,17 @@ export function csrfProtection(config: CSRFConfig = {}) {
       if (!storedTokenHash || !verifyToken(providedToken, storedTokenHash, finalConfig.secret)) {
         return res.status(403).json({
           error: 'CSRF token invalid',
-          message: 'Invalid or expired CSRF token'
+          message: 'Invalid or expired CSRF token',
         });
       }
 
       // Token is valid, continue
       next();
     } catch (error: unknown) {
-      console.error('CSRF protection error:', error);
+      logger.error('CSRF protection error', error);
       res.status(500).json({
         error: 'CSRF protection error',
-        message: 'Internal error during CSRF validation'
+        message: 'Internal error during CSRF validation',
       });
     }
   };
@@ -172,7 +171,7 @@ async function generateAndSetToken(
     httpOnly: config.httpOnly,
     secure: config.secure,
     sameSite: config.sameSite,
-    maxAge: 3600000 // 1 hour
+    maxAge: 3600000, // 1 hour
   });
 
   // Also provide token in response for programmatic access
@@ -194,7 +193,7 @@ export function csrfTokenGenerator(config: CSRFConfig = {}) {
       await generateAndSetToken(req, res, sessionId, finalConfig);
       next();
     } catch (error: unknown) {
-      console.error('CSRF token generation error:', error);
+      logger.error('CSRF token generation error', error);
       next();
     }
   };
@@ -214,7 +213,7 @@ export function csrfTokenEndpoint(config: CSRFConfig = {}) {
         res.json({
           csrfToken: existingToken,
           cookieName: finalConfig.cookieName,
-          headerName: finalConfig.tokenHeader
+          headerName: finalConfig.tokenHeader,
         });
       } else {
         // Generate new token
@@ -230,19 +229,19 @@ export function csrfTokenEndpoint(config: CSRFConfig = {}) {
           httpOnly: false, // Must be accessible to JS for double-submit
           secure: finalConfig.secure,
           sameSite: finalConfig.sameSite,
-          maxAge: 3600000
+          maxAge: 3600000,
         });
 
         res.json({
           csrfToken: token,
           cookieName: finalConfig.cookieName,
-          headerName: finalConfig.tokenHeader
+          headerName: finalConfig.tokenHeader,
         });
       }
     } catch (error: unknown) {
-      console.error('CSRF token endpoint error:', error);
+      logger.error('CSRF token endpoint error', error);
       res.status(500).json({
-        error: 'Failed to generate CSRF token'
+        error: 'Failed to generate CSRF token',
       });
     }
   };
@@ -263,7 +262,7 @@ export function doubleSubmitCsrf(config: Partial<CSRFConfig> = {}) {
         httpOnly: false, // Must be accessible to JS
         secure: finalConfig.secure,
         sameSite: finalConfig.sameSite,
-        maxAge: 3600000
+        maxAge: 3600000,
       });
       res.locals.csrfToken = token;
       return next();
@@ -276,14 +275,14 @@ export function doubleSubmitCsrf(config: Partial<CSRFConfig> = {}) {
     if (!cookieToken || !headerToken) {
       return res.status(403).json({
         error: 'CSRF token missing',
-        message: 'CSRF token required in both cookie and header/body'
+        message: 'CSRF token required in both cookie and header/body',
       });
     }
 
     if (!crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken))) {
       return res.status(403).json({
         error: 'CSRF token mismatch',
-        message: 'Cookie and header/body CSRF tokens do not match'
+        message: 'Cookie and header/body CSRF tokens do not match',
       });
     }
 

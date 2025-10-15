@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { ApiError } from '../utils/ApiError';
 import { rateLimitErrorHandler } from './errorHandler';
+import { logger } from '../logging/logger';
 
 // In-memory store for development (should be replaced with Redis in production)
 interface RateLimitEntry {
@@ -28,43 +29,43 @@ export const rateLimitConfigs = {
   general: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 1000,
-    message: 'Too many requests from this IP, please try again later.'
+    message: 'Too many requests from this IP, please try again later.',
   },
 
   // Strict rate limiting for auth endpoints
   auth: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 5,
-    message: 'Too many authentication attempts, please try again later.'
+    message: 'Too many authentication attempts, please try again later.',
   },
 
   // Image upload rate limiting
   upload: {
     windowMs: 60 * 60 * 1000, // 1 hour
     maxRequests: 50,
-    message: 'Too many upload requests, please try again later.'
+    message: 'Too many upload requests, please try again later.',
   },
 
   // Search rate limiting
   search: {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 30,
-    message: 'Too many search requests, please slow down.'
+    message: 'Too many search requests, please slow down.',
   },
 
   // Admin operations rate limiting
   admin: {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 100,
-    message: 'Too many admin requests, please slow down.'
+    message: 'Too many admin requests, please slow down.',
   },
 
   // Bulk operations rate limiting
   bulk: {
     windowMs: 5 * 60 * 1000, // 5 minutes
     maxRequests: 10,
-    message: 'Too many bulk operations, please try again later.'
-  }
+    message: 'Too many bulk operations, please try again later.',
+  },
 } as const;
 
 // Redis interface (for future implementation)
@@ -84,7 +85,10 @@ class RateLimiter {
     this.isRedis = !!redisStore;
   }
 
-  async checkRateLimit(key: string, config: RateLimitConfig): Promise<{
+  async checkRateLimit(
+    key: string,
+    config: RateLimitConfig
+  ): Promise<{
     allowed: boolean;
     count: number;
     resetTime: number;
@@ -122,7 +126,7 @@ class RateLimiter {
         allowed: true,
         count: 1,
         resetTime,
-        remainingRequests: config.maxRequests - 1
+        remainingRequests: config.maxRequests - 1,
       };
     }
 
@@ -137,7 +141,7 @@ class RateLimiter {
       allowed,
       count: entry.count,
       resetTime: entry.resetTime,
-      remainingRequests
+      remainingRequests,
     };
   }
 
@@ -156,10 +160,7 @@ class RateLimiter {
     const resetKey = `rate_limit:${key}:reset`;
 
     try {
-      const [countStr, resetStr] = await Promise.all([
-        store.get(countKey),
-        store.get(resetKey)
-      ]);
+      const [countStr, resetStr] = await Promise.all([store.get(countKey), store.get(resetKey)]);
 
       const count = countStr ? parseInt(countStr, 10) : 0;
       const resetTime = resetStr ? parseInt(resetStr, 10) : 0;
@@ -169,14 +170,14 @@ class RateLimiter {
         const newResetTime = now + config.windowMs;
         await Promise.all([
           store.setex(countKey, Math.ceil(config.windowMs / 1000), '1'),
-          store.setex(resetKey, Math.ceil(config.windowMs / 1000), newResetTime.toString())
+          store.setex(resetKey, Math.ceil(config.windowMs / 1000), newResetTime.toString()),
         ]);
 
         return {
           allowed: true,
           count: 1,
           resetTime: newResetTime,
-          remainingRequests: config.maxRequests - 1
+          remainingRequests: config.maxRequests - 1,
         };
       }
 
@@ -189,16 +190,16 @@ class RateLimiter {
         allowed,
         count: newCount,
         resetTime,
-        remainingRequests
+        remainingRequests,
       };
     } catch (error: unknown) {
-      console.error('Redis rate limit error:', error);
+      logger.error('Redis rate limit error', error);
       // Fallback to allowing the request if Redis fails
       return {
         allowed: true,
         count: 1,
         resetTime: now + config.windowMs,
-        remainingRequests: config.maxRequests - 1
+        remainingRequests: config.maxRequests - 1,
       };
     }
   }
@@ -217,14 +218,15 @@ initializeRateLimiter();
 
 // Rate limiting middleware factory
 export function createRateLimit(configName: keyof typeof rateLimitConfigs | RateLimitConfig) {
-  const config: RateLimitConfig = typeof configName === 'string' ? rateLimitConfigs[configName] : configName;
+  const config: RateLimitConfig =
+    typeof configName === 'string' ? rateLimitConfigs[configName] : configName;
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Generate key for rate limiting
-      const key = config.keyGenerator ?
-        config.keyGenerator(req) :
-        `${req.ip}:${req.method}:${req.route?.path || req.path}`;
+      const key = config.keyGenerator
+        ? config.keyGenerator(req)
+        : `${req.ip}:${req.method}:${req.route?.path || req.path}`;
 
       // Check rate limit
       const result = await rateLimiter.checkRateLimit(key, config);
@@ -235,7 +237,7 @@ export function createRateLimit(configName: keyof typeof rateLimitConfigs | Rate
           'X-RateLimit-Limit': config.maxRequests.toString(),
           'X-RateLimit-Remaining': result.remainingRequests.toString(),
           'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
-          'X-RateLimit-Used': result.count.toString()
+          'X-RateLimit-Used': result.count.toString(),
         });
       }
 
@@ -249,7 +251,7 @@ export function createRateLimit(configName: keyof typeof rateLimitConfigs | Rate
 
       next();
     } catch (error: unknown) {
-      console.error('Rate limiting error:', error);
+      logger.error('Rate limiting error', error);
       // Continue on error to avoid blocking requests
       next();
     }
@@ -268,34 +270,36 @@ export const bulkRateLimit = createRateLimit('bulk');
 export const ipRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   maxRequests: 500,
-  keyGenerator: (req) => req.ip || 'unknown',
-  message: 'Too many requests from this IP address'
+  keyGenerator: req => req.ip || 'unknown',
+  message: 'Too many requests from this IP address',
 });
 
 // User-based rate limiting for authenticated users
 export const userRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   maxRequests: 2000,
-  keyGenerator: (req) => {
+  keyGenerator: req => {
     const user = (req as any).user;
-    return user ? `user:${user.id}` : (req.ip || 'unknown');
+    return user ? `user:${user.id}` : req.ip || 'unknown';
   },
-  message: 'Too many requests from this user account'
+  message: 'Too many requests from this user account',
 });
 
 // Sliding window rate limiter for more precise control
-export function createSlidingWindowRateLimit(config: RateLimitConfig & {
-  precision?: number; // Number of sub-windows (default: 10)
-}) {
+export function createSlidingWindowRateLimit(
+  config: RateLimitConfig & {
+    precision?: number; // Number of sub-windows (default: 10)
+  }
+) {
   const precision = config.precision || 10;
   const subWindowMs = config.windowMs / precision;
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const now = Date.now();
-      const key = config.keyGenerator ?
-        config.keyGenerator(req) :
-        `${req.ip}:${req.method}:${req.route?.path || req.path}`;
+      const key = config.keyGenerator
+        ? config.keyGenerator(req)
+        : `${req.ip}:${req.method}:${req.route?.path || req.path}`;
 
       // Implementation would track requests across multiple sub-windows
       // For now, falls back to the regular rate limiter
@@ -306,7 +310,7 @@ export function createSlidingWindowRateLimit(config: RateLimitConfig & {
           'X-RateLimit-Limit': config.maxRequests.toString(),
           'X-RateLimit-Remaining': result.remainingRequests.toString(),
           'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
-          'X-RateLimit-Window': 'sliding'
+          'X-RateLimit-Window': 'sliding',
         });
       }
 
@@ -320,7 +324,7 @@ export function createSlidingWindowRateLimit(config: RateLimitConfig & {
 
       next();
     } catch (error: unknown) {
-      console.error('Sliding window rate limiting error:', error);
+      logger.error('Sliding window rate limiting error', error);
       next();
     }
   };

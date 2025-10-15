@@ -72,7 +72,10 @@ export function EditResortScheduleModal({ open, onOpenChange }: EditResortSchedu
 
   const formatDate = (dateString: string) => {
     // Parse in local timezone to avoid UTC conversion
-    const [year, month, day] = dateString.split('-').map(Number);
+    const parts = dateString.split('-');
+    const year = Number(parts[0] || 2025);
+    const month = Number(parts[1] || 1);
+    const day = Number(parts[2] || 1);
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -99,7 +102,10 @@ export function EditResortScheduleModal({ open, onOpenChange }: EditResortSchedu
 
   // Helper to parse date string in local timezone (not UTC)
   const parseDateString = (dateStr: string): Date => {
-    const [year, month, day] = dateStr.split('-').map(Number);
+    const parts = dateStr.split('-');
+    const year = Number(parts[0] || 2025);
+    const month = Number(parts[1] || 1);
+    const day = Number(parts[2] || 1);
     return new Date(year, month - 1, day);
   };
 
@@ -248,10 +254,9 @@ export function EditResortScheduleModal({ open, onOpenChange }: EditResortSchedu
                           </Label>
                           <ImageUploadField
                             label=""
-                            value={entry.imageUrl}
-                            onChange={url => handleImageUpload(index, url)}
-                            bucketName="trip-images"
-                            folder="schedules"
+                            value={entry.imageUrl || ''}
+                            onChange={url => handleImageUpload(index, url || '')}
+                            imageType="general"
                           />
                           <p className="text-[10px] text-white/50 mt-0.5">
                             Fun image for this day's activities

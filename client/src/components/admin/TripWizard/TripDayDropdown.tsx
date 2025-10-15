@@ -60,8 +60,11 @@ export function TripDayDropdown({
         }
 
         // Format date nicely (timezone-agnostic - no timezone conversions)
-        const datePart = entry.date.split('T')[0];
-        const [year, month, day] = datePart.split('-').map(Number);
+        const datePart = entry.date.split('T')[0] ?? entry.date;
+        const parts = datePart.split('-');
+        const year = Number(parts[0] ?? 2025);
+        const month = Number(parts[1] ?? 1);
+        const day = Number(parts[2] ?? 1);
         const date = new Date(year, month - 1, day);
         const formattedDate = date.toLocaleDateString('en-US', {
           month: 'short',

@@ -137,7 +137,8 @@ export function CompletionPage() {
                 ? {
                     shipData: {
                       name: state.shipData.name,
-                      cruiseLine: state.shipData.cruiseLine,
+                      cruiseLineId: state.shipData.cruiseLineId,
+                      cruiseLineName: state.shipData.cruiseLineName,
                       capacity: state.shipData.capacity,
                       decks: state.shipData.decks,
                       imageUrl: state.shipData.imageUrl,
@@ -216,7 +217,10 @@ export function CompletionPage() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
-    const [year, month, day] = dateString.split('-').map(Number);
+    const parts = dateString.split('-');
+    const year = Number(parts[0] ?? 2025);
+    const month = Number(parts[1] ?? 1);
+    const day = Number(parts[2] ?? 1);
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -346,7 +350,9 @@ export function CompletionPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[10px] text-white/50">Cruise Line</p>
-                <p className="text-sm text-white/90">{state.shipData.cruiseLine || 'Not set'}</p>
+                <p className="text-sm text-white/90">
+                  {state.shipData.cruiseLineName || 'Not set'}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] text-white/50">Capacity</p>

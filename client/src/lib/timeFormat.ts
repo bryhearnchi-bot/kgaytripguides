@@ -6,7 +6,7 @@ interface ParsedTime {
 }
 
 export function parseTime(timeStr: string): ParsedTime | null {
-  if (!timeStr || timeStr === "—" || /overnight/i.test(timeStr)) return null;
+  if (!timeStr || timeStr === '—' || /overnight/i.test(timeStr)) return null;
 
   // Handle 24h format (HH:mm)
   const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
@@ -37,14 +37,14 @@ export function formatTime(timeStr: string | undefined, format: TimeFormat): str
   if (!parsed) return timeStr;
 
   const { h, m } = parsed;
-  const mm = String(m).padStart(2, "0");
+  const mm = String(m).padStart(2, '0');
 
-  if (format === "24h") {
-    const hh = String(h).padStart(2, "0");
+  if (format === '24h') {
+    const hh = String(h).padStart(2, '0');
     return `${hh}:${mm}`;
   } else {
     const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    const period = h >= 12 ? "PM" : "AM";
+    const period = h >= 12 ? 'PM' : 'AM';
     return `${h12}:${mm} ${period}`;
   }
 }
@@ -59,27 +59,63 @@ export function formatAllAboard(departTime: string | undefined, format: TimeForm
   h = h - 1;
   if (h < 0) h = 23;
 
-  const mm = String(m).padStart(2, "0");
+  const mm = String(m).padStart(2, '0');
 
-  if (format === "24h") {
-    const hh = String(h).padStart(2, "0");
+  if (format === '24h') {
+    const hh = String(h).padStart(2, '0');
     return `${hh}:${mm}`;
   } else {
     const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    const period = h >= 12 ? "PM" : "AM";
+    const period = h >= 12 ? 'PM' : 'AM';
     return `${h12}:${mm} ${period}`;
   }
 }
 
-export function createTimeFromHoursMinutes(hours: number, minutes: number, format: TimeFormat): string {
-  const mm = String(minutes).padStart(2, "0");
+export function createTimeFromHoursMinutes(
+  hours: number,
+  minutes: number,
+  format: TimeFormat
+): string {
+  const mm = String(minutes).padStart(2, '0');
 
-  if (format === "24h") {
-    const hh = String(hours).padStart(2, "0");
+  if (format === '24h') {
+    const hh = String(hours).padStart(2, '0');
     return `${hh}:${mm}`;
   } else {
     const h12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    const period = hours >= 12 ? "PM" : "AM";
+    const period = hours >= 12 ? 'PM' : 'AM';
     return `${h12}:${mm} ${period}`;
   }
+}
+
+/**
+ * Parse a YYYY-MM-DD date string and return validated components
+ * Returns null if parsing fails
+ */
+export function parseDateString(
+  dateStr: string
+): { year: number; month: number; day: number } | null {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  // Validate all parts are valid numbers
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+
+  return { year, month, day };
+}
+
+/**
+ * Format a Date object to YYYY-MM-DD string
+ */
+export function formatDateToString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

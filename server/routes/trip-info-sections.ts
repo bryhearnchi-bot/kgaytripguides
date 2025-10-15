@@ -347,7 +347,7 @@ export function registerTripInfoSectionRoutes(app: Express) {
       const { assignments } = req.body;
 
       // Update all assignments in a transaction
-      const updatePromises = assignments.map(assignment =>
+      const updatePromises = assignments.map((assignment: { id: number; order_index: number }) =>
         supabaseAdmin
           .from('trip_section_assignments')
           .update({

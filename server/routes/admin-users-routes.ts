@@ -245,6 +245,11 @@ export function registerAdminUsersRoutes(app: Express) {
       const query = querySchema.parse(req.query);
 
       const client = getSupabaseAdmin();
+      if (!client) {
+        throw ApiError.serviceUnavailable(
+          'Database service is not configured. Please set up Supabase credentials.'
+        );
+      }
 
       // Direct query to profiles table
       const offset = (query.page - 1) * query.limit;
@@ -285,7 +290,7 @@ export function registerAdminUsersRoutes(app: Express) {
       }
 
       // Map database fields to frontend expected format
-      const mappedUsers = (usersList || []).map(user => ({
+      const mappedUsers = (usersList || []).map((user: any) => ({
         ...user,
         name: {
           first: user.name?.first || '',
@@ -421,7 +426,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
         const { data: createdProfile, error: createError } = await supabaseAdmin()
           .from('profiles')
-          .insert(profileData)
+          .insert(profileData as any)
           .select()
           .single();
 
@@ -479,7 +484,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
       logger.info('🔍 Updating profile with additional fields', { updateFields });
 
-      const { data: updatedUser, error: updateError } = await supabaseAdmin()
+      const { data: updatedUser, error: updateError } = await (supabaseAdmin() as any)
         .from('profiles')
         .update(updateFields)
         .eq('id', authUser.user.id)
@@ -526,9 +531,8 @@ export function registerAdminUsersRoutes(app: Express) {
         );
       }
 
-      const { data: existingUser, error: fetchError } = await supabaseAdmin()
-        .from('profiles')
-        .select('*')
+      const selectQuery = supabaseAdmin().from('profiles').select('*');
+      const { data: existingUser, error: fetchError } = await (selectQuery as any)
         .eq('id', userId)
         .single();
 
@@ -537,14 +541,14 @@ export function registerAdminUsersRoutes(app: Express) {
       }
 
       // Check for email conflicts using Supabase Admin
-      if (userData.email && userData.email !== existingUser.email) {
+      if (userData.email && userData.email !== (existingUser as any).email) {
         const { data: conflicts } = await supabaseAdmin()
           .from('profiles')
           .select('id')
           .eq('email', userData.email)
           .single();
 
-        if (conflicts && conflicts.id !== userId) {
+        if (conflicts && (conflicts as any).id !== userId) {
           throw ApiError.conflict('Email already taken by another user');
         }
       }
@@ -555,7 +559,7 @@ export function registerAdminUsersRoutes(app: Express) {
       }
 
       // If target is currently super_admin, only super_admin may modify
-      if (existingUser.role === 'super_admin' && req.user?.role !== 'super_admin') {
+      if ((existingUser as any).role === 'super_admin' && req.user?.role !== 'super_admin') {
         throw ApiError.forbidden('Only super admin can modify a super_admin account');
       }
 
@@ -566,8 +570,8 @@ export function registerAdminUsersRoutes(app: Express) {
         if (userData.password) updateData.password = userData.password;
 
         updateData.user_metadata = {
-          username: userData.username || existingUser.username,
-          role: userData.role || existingUser.role,
+          username: userData.username || (existingUser as any).username,
+          role: userData.role || (existingUser as any).role,
         };
 
         const { error: authError } = await supabaseAdmin().auth.admin.updateUserById(
@@ -628,7 +632,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
       logger.info('🔍 updateFields being sent to database:', updateFields);
 
-      const { data: updatedUser, error: updateError } = await supabaseAdmin()
+      const { data: updatedUser, error: updateError } = await (supabaseAdmin() as any)
         .from('profiles')
         .update(updateFields)
         .eq('id', userId)
@@ -665,9 +669,8 @@ export function registerAdminUsersRoutes(app: Express) {
         );
       }
 
-      const { data: existingUser, error: fetchError } = await supabaseAdmin()
-        .from('profiles')
-        .select('*')
+      const selectQuery = supabaseAdmin().from('profiles').select('*');
+      const { data: existingUser, error: fetchError } = await (selectQuery as any)
         .eq('id', userId)
         .single();
 
@@ -681,7 +684,7 @@ export function registerAdminUsersRoutes(app: Express) {
       }
 
       // Update user status using Supabase Admin
-      const { data: updatedUser, error: updateError } = await supabaseAdmin()
+      const { data: updatedUser, error: updateError } = await (supabaseAdmin() as any)
         .from('profiles')
         .update({
           is_active: is_active,
@@ -716,9 +719,8 @@ export function registerAdminUsersRoutes(app: Express) {
         );
       }
 
-      const { data: existingUser, error: fetchError } = await supabaseAdmin()
-        .from('profiles')
-        .select('*')
+      const selectQuery = supabaseAdmin().from('profiles').select('*');
+      const { data: existingUser, error: fetchError } = await (selectQuery as any)
         .eq('id', userId)
         .single();
 
@@ -778,34 +780,35 @@ export function registerAdminUsersRoutes(app: Express) {
         throw ApiError.notFound('Profile not found');
       }
 
+      const profileData = profile as any;
       logger.debug('🔍 Raw profile from database', {
-        city: profile.city,
-        state_province: profile.state_province,
-        country: profile.country,
-        country_code: profile.country_code,
-        location_text: profile.location_text,
+        city: profileData.city,
+        state_province: profileData.state_province,
+        country: profileData.country,
+        country_code: profileData.country_code,
+        location_text: profileData.location_text,
       });
 
       // Transform snake_case to camelCase for frontend
       const transformedProfile = {
-        id: profile.id,
-        email: profile.email,
-        name: profile.name,
-        username: profile.username,
-        avatarUrl: profile.avatar_url,
-        role: profile.role,
-        bio: profile.bio,
-        website: profile.website,
-        phoneNumber: profile.phone_number,
+        id: profileData.id,
+        email: profileData.email,
+        name: profileData.name,
+        username: profileData.username,
+        avatarUrl: profileData.avatar_url,
+        role: profileData.role,
+        bio: profileData.bio,
+        website: profileData.website,
+        phoneNumber: profileData.phone_number,
         // Individual location fields (no longer use JSONB location column)
-        locationText: profile.location_text,
-        city: profile.city,
-        stateProvince: profile.state_province,
-        country: profile.country,
-        countryCode: profile.country_code,
-        socialLinks: profile.social_links,
-        createdAt: profile.created_at,
-        updatedAt: profile.updated_at,
+        locationText: profileData.location_text,
+        city: profileData.city,
+        stateProvince: profileData.state_province,
+        country: profileData.country,
+        countryCode: profileData.country_code,
+        socialLinks: profileData.social_links,
+        createdAt: profileData.created_at,
+        updatedAt: profileData.updated_at,
       };
 
       return res.json(transformedProfile);
@@ -862,7 +865,7 @@ export function registerAdminUsersRoutes(app: Express) {
       logger.info('🔍 Profile updateFields being sent to database:', updateFields);
 
       // Update the profile in Supabase
-      const { data: updatedProfile, error } = await supabaseAdmin()
+      const { data: updatedProfile, error } = await (supabaseAdmin() as any)
         .from('profiles')
         .update(updateFields)
         .eq('id', userId)

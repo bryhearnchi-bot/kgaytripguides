@@ -150,6 +150,11 @@ export class ApiError extends Error {
     });
   }
 
+  // Alias for internal() - for backward compatibility
+  static internalError(message = 'Internal server error', originalError?: Error): ApiError {
+    return ApiError.internal(message, originalError);
+  }
+
   static databaseError(message = 'Database operation failed', originalError?: Error): ApiError {
     return new ApiError(500, message, {
       code: ErrorCode.DATABASE_ERROR,
@@ -261,13 +266,14 @@ export function toApiError(error: unknown): ApiError {
     return ApiError.internal(error);
   }
 
+  // Import logger dynamically to avoid circular dependencies
+  const { logger } = require('../logging/logger');
+
   // Log unknown error type for debugging
-  console.error('⚠️ Unknown error type caught in toApiError:', {
+  logger.warn('Unknown error type caught in toApiError', {
     errorType: typeof error,
-    errorValue: error,
     errorConstructor: error?.constructor?.name,
     errorString: String(error),
-    errorJSON: error ? JSON.stringify(error, null, 2) : null,
   });
 
   // Try to extract any useful information from the unknown error

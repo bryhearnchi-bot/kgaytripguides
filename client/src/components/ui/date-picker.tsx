@@ -31,8 +31,19 @@ export function DatePicker({
   const [open, setOpen] = useState(false);
 
   // Helper to parse date string in local timezone (not UTC)
-  const parseDateString = (dateStr: string): Date => {
-    const [year, month, day] = dateStr.split('-').map(Number);
+  const parseDateString = (dateStr: string): Date | undefined => {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return undefined;
+
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    // Validate all parts are valid numbers
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return undefined;
+    if (month < 1 || month > 12) return undefined;
+    if (day < 1 || day > 31) return undefined;
+
     return new Date(year, month - 1, day);
   };
 

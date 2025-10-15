@@ -101,7 +101,8 @@ export const tokenValidationSchema = z.object({
  */
 export function generateInvitationToken(expirationHours: number = 72): InvitationToken {
   // Input validation
-  if (expirationHours <= 0 || expirationHours > 168) { // Max 1 week
+  if (expirationHours <= 0 || expirationHours > 168) {
+    // Max 1 week
     throw new Error('Expiration hours must be between 1 and 168 (1 week)');
   }
 
@@ -199,7 +200,9 @@ export function validateTokenTiming(token: string, storedHash: string, salt: str
     return timingSafeEqual(providedBuffer, storedBuffer);
   } catch (error: unknown) {
     // Any error in validation should result in rejection
-    console.error('Token validation error:', error);
+    // Import logger dynamically to avoid circular dependencies
+    const { logger } = require('../logging/logger');
+    logger.error('Token validation error', error);
     return false;
   }
 }

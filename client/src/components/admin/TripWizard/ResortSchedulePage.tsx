@@ -232,8 +232,7 @@ export function ResortSchedulePage() {
                   label=""
                   value={entry.imageUrl}
                   onChange={url => handleImageUpload(index, url)}
-                  bucketName="trip-images"
-                  folder="schedules"
+                  imageType="general"
                 />
                 <p className="text-[10px] text-white/50 mt-0.5">
                   Fun image for this day's activities

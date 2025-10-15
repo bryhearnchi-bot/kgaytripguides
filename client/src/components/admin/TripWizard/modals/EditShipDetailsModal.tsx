@@ -51,7 +51,8 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
   // Local state for form
   const [formData, setFormData] = useState({
     name: state.shipData?.name || '',
-    cruiseLine: state.shipData?.cruiseLine || '',
+    cruiseLineId: state.shipData?.cruiseLineId,
+    cruiseLineName: state.shipData?.cruiseLineName || '',
     capacity: state.shipData?.capacity,
     decks: state.shipData?.decks,
     imageUrl: state.shipData?.imageUrl || '',
@@ -64,7 +65,8 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
       // Reset form data when modal opens
       setFormData({
         name: state.shipData?.name || '',
-        cruiseLine: state.shipData?.cruiseLine || '',
+        cruiseLineId: state.shipData?.cruiseLineId,
+        cruiseLineName: state.shipData?.cruiseLineName || '',
         capacity: state.shipData?.capacity,
         decks: state.shipData?.decks,
         imageUrl: state.shipData?.imageUrl || '',
@@ -117,8 +119,8 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
                   </Label>
                   <Input
                     placeholder="Enter cruise line"
-                    value={formData.cruiseLine}
-                    onChange={e => handleInputChange('cruiseLine', e.target.value)}
+                    value={formData.cruiseLineName}
+                    onChange={e => handleInputChange('cruiseLineName', e.target.value)}
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
                   />
                 </div>

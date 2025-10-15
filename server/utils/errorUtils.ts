@@ -5,6 +5,7 @@
 
 import { Response } from 'express';
 import { ApiError, ErrorCode } from './ApiError';
+import { logger } from '../logging/logger';
 
 /**
  * Try-catch wrapper for async operations with automatic error handling
@@ -16,7 +17,7 @@ export async function tryOperation<T>(
   try {
     return await operation();
   } catch (error: unknown) {
-    console.error(errorMessage || 'Operation failed:', error);
+    logger.error(errorMessage || 'Operation failed', error);
     return null;
   }
 }
@@ -49,16 +50,13 @@ export async function executeDbOperation<T>(
 /**
  * Validate required fields in request body
  */
-export function validateRequiredFields(
-  body: any,
-  requiredFields: string[]
-): void {
+export function validateRequiredFields(body: any, requiredFields: string[]): void {
   const missingFields = requiredFields.filter(field => !body[field]);
 
   if (missingFields.length > 0) {
     throw ApiError.validationError('Missing required fields', {
       missingFields,
-      requiredFields
+      requiredFields,
     });
   }
 }
@@ -160,11 +158,8 @@ export function buildPaginatedResponse<T>(
 /**
  * Handle external service errors
  */
-export function handleExternalServiceError(
-  serviceName: string,
-  error: any
-): ApiError {
-  console.error(`External service error (${serviceName}):`, error);
+export function handleExternalServiceError(serviceName: string, error: any): ApiError {
+  logger.error(`External service error (${serviceName})`, error);
 
   if (error.response?.status === 429) {
     return ApiError.rateLimitExceeded(`${serviceName} rate limit exceeded`);

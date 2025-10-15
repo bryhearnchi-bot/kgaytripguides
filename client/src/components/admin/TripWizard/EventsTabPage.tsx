@@ -137,8 +137,11 @@ export function EventsTabPage() {
   // Format date for display (timezone-agnostic - no timezone conversions)
   const formatDate = (dateStr: string) => {
     // Extract YYYY-MM-DD from string (may be "2025-10-12" or "2025-10-12T00:00:00")
-    const datePart = dateStr.split('T')[0];
-    const [year, month, day] = datePart.split('-').map(Number);
+    const datePart = dateStr.split('T')[0] ?? dateStr;
+    const parts = datePart.split('-');
+    const year = Number(parts[0] ?? 2025);
+    const month = Number(parts[1] ?? 1);
+    const day = Number(parts[2] ?? 1);
 
     // Create date in local timezone without any UTC conversion
     const date = new Date(year, month - 1, day);

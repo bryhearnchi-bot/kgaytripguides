@@ -14,11 +14,18 @@ function validateEnvironment() {
   const missing = requiredVars.filter(varName => !process.env[varName]);
 
   if (missing.length > 0) {
+    // Use console for startup errors before logger is initialized
+
     console.error('\x1b[31m❌ FATAL: Missing required environment variables:\x1b[0m');
+
     missing.forEach(varName => console.error(`   - ${varName}`));
+
     console.error('\n\x1b[33mℹ️  Create .env file from template:\x1b[0m');
+
     console.error('   cp .env.example .env');
+
     console.error('\n\x1b[33mℹ️  Then fill in your credentials from:\x1b[0m');
+
     console.error('   https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api\n');
     process.exit(1);
   }
@@ -34,6 +41,7 @@ function validateEnvironment() {
   // Validate SESSION_SECRET strength
   if (process.env.SESSION_SECRET!.length < 32) {
     console.error('\x1b[33m⚠️  WARNING: SESSION_SECRET should be at least 32 characters\x1b[0m');
+
     console.error('   Generate with: openssl rand -base64 32\n');
   }
 }

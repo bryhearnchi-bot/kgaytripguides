@@ -10,6 +10,7 @@
  */
 
 import { Resend } from 'resend';
+import { logger } from '../logging/logger';
 
 // Initialize Resend with API key from environment
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -94,7 +95,7 @@ export async function sendInvitationEmail(
     });
 
     if (result.error) {
-      console.error('Resend API error:', result.error);
+      logger.error('Resend API error', { error: result.error });
       return {
         success: false,
         error: result.error.message || 'Failed to send email',
@@ -106,7 +107,7 @@ export async function sendInvitationEmail(
       messageId: result.data?.id,
     };
   } catch (error: unknown) {
-    console.error('Error sending invitation email:', error);
+    logger.error('Error sending invitation email', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -401,7 +402,7 @@ export async function sendPasswordResetEmail(
     });
 
     if (result.error) {
-      console.error('Resend API error:', result.error);
+      logger.error('Resend API error', { error: result.error });
       return {
         success: false,
         error: result.error.message || 'Failed to send email',
@@ -413,7 +414,7 @@ export async function sendPasswordResetEmail(
       messageId: result.data?.id,
     };
   } catch (error: unknown) {
-    console.error('Error sending password reset email:', error);
+    logger.error('Error sending password reset email', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

@@ -187,30 +187,29 @@ export function registerEventRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { tripId } = req.params;
 
-      console.log('==================== CREATE EVENT REQUEST ====================');
-      console.log('Request body:', JSON.stringify(req.body, null, 2));
-      console.log('Trip ID:', tripId);
-      console.log('==============================================================');
+      logger.debug('Create event request received', {
+        body: req.body,
+        tripId,
+      });
 
       const validation = createEventSchema.safeParse(req.body);
 
       if (!validation.success) {
-        console.log('==================== VALIDATION FAILED ====================');
-        console.log('Validation errors:', JSON.stringify(validation.error.errors, null, 2));
-        console.log('===========================================================');
+        logger.warn('Event validation failed', {
+          errors: validation.error.errors,
+          tripId,
+        });
         throw ApiError.badRequest('Invalid event data', { errors: validation.error.errors });
       }
 
       const data = validation.data;
-      console.log('✓ Validation passed');
-      console.log('Validated data:', JSON.stringify(data, null, 2));
+      logger.debug('Event validation passed', { data, tripId });
 
       try {
-        console.log('✓ Getting Supabase admin client');
         const supabaseAdmin = await getSupabaseAdmin();
 
         // If talent IDs are provided, auto-add them to trip_talent if not already there
-        console.log('✓ Checking talent assignments...');
+        logger.debug('Checking talent assignments', { talentIds: data.talentIds });
         if (data.talentIds && data.talentIds.length > 0) {
           // First, verify the talent IDs actually exist in the talent table
           const { data: talentExists, error: talentExistsError } = await supabaseAdmin
@@ -219,18 +218,16 @@ export function registerEventRoutes(app: Express) {
             .in('id', data.talentIds);
 
           if (talentExistsError) {
-            console.log('✗ Error checking if talent exists:', talentExistsError);
             logger.error('Error checking talent existence', { error: talentExistsError, tripId });
             throw ApiError.internal('Failed to validate talent');
           }
 
           if (!talentExists || talentExists.length !== data.talentIds.length) {
-            console.log(
-              '✗ Some talent IDs do not exist. Expected:',
-              data.talentIds.length,
-              'Found:',
-              talentExists?.length
-            );
+            logger.warn('Some talent IDs do not exist', {
+              expected: data.talentIds.length,
+              found: talentExists?.length,
+              tripId,
+            });
             throw ApiError.badRequest('Some talent IDs do not exist');
           }
 
@@ -242,7 +239,6 @@ export function registerEventRoutes(app: Express) {
             .in('talent_id', data.talentIds);
 
           if (tripTalentError) {
-            console.log('✗ Error checking trip_talent:', tripTalentError);
             logger.error('Error checking trip_talent', { error: tripTalentError, tripId });
             throw ApiError.internal('Failed to check trip talent assignments');
           }
@@ -252,7 +248,7 @@ export function registerEventRoutes(app: Express) {
 
           // Auto-add missing talent to trip_talent
           if (missingTalentIds.length > 0) {
-            console.log('✓ Auto-adding talent to trip_talent:', missingTalentIds);
+            logger.info('Auto-adding talent to trip_talent', { missingTalentIds, tripId });
             const tripTalentInserts = missingTalentIds.map(talentId => ({
               trip_id: parseInt(tripId),
               talent_id: talentId,
@@ -263,21 +259,20 @@ export function registerEventRoutes(app: Express) {
               .insert(tripTalentInserts);
 
             if (insertError) {
-              console.log('✗ Error adding talent to trip_talent:', insertError);
               logger.error('Error adding talent to trip_talent', { error: insertError, tripId });
               throw ApiError.internal('Failed to add talent to trip');
             }
-            console.log('✓ Successfully added talent to trip_talent');
+            logger.debug('Successfully added talent to trip_talent', { tripId });
           } else {
-            console.log('✓ All talent already in trip_talent');
+            logger.debug('All talent already in trip_talent', { tripId });
           }
         } else {
-          console.log('✓ No talent IDs to validate');
+          logger.debug('No talent IDs to validate', { tripId });
         }
 
         // Create the event
         // Convert YYYY-MM-DD date string to timestamp (using midnight UTC to avoid timezone shifts)
-        console.log('✓ Converting date:', data.date, 'Type:', typeof data.date);
+        logger.debug('Converting date', { date: data.date, type: typeof data.date, tripId });
 
         if (!data.date || data.date === '') {
           throw ApiError.badRequest('Date is required');
@@ -285,21 +280,24 @@ export function registerEventRoutes(app: Express) {
 
         // Extract only YYYY-MM-DD part in case a timestamp was sent
         const datePart = data.date.split('T')[0];
-        console.log('✓ Extracted date part:', datePart);
+        logger.debug('Extracted date part', { datePart, tripId });
 
         const dateObj = new Date(`${datePart}T00:00:00Z`);
         if (isNaN(dateObj.getTime())) {
-          console.log('✗ Invalid date value:', datePart);
+          logger.warn('Invalid date value', { datePart, tripId });
           throw ApiError.badRequest(`Invalid date format: ${datePart}`);
         }
 
         const dateTimestamp = dateObj.toISOString();
-        console.log('✓ Date converted to timestamp:', dateTimestamp);
+        logger.debug('Date converted to timestamp', { dateTimestamp, tripId });
 
         // If no image URL provided and this is a party with a theme, fetch the party theme's image
         let eventImageUrl = data.imageUrl || null;
         if (!eventImageUrl && data.partyThemeId) {
-          console.log('✓ No event image provided, fetching party theme image...');
+          logger.debug('No event image provided, fetching party theme image', {
+            partyThemeId: data.partyThemeId,
+            tripId,
+          });
           const { data: partyTheme, error: themeError } = await supabaseAdmin
             .from('party_themes')
             .select('image_url')
@@ -308,11 +306,11 @@ export function registerEventRoutes(app: Express) {
 
           if (!themeError && partyTheme?.image_url) {
             eventImageUrl = partyTheme.image_url;
-            console.log('✓ Using party theme image as fallback:', eventImageUrl);
+            logger.debug('Using party theme image as fallback', { eventImageUrl, tripId });
           }
         }
 
-        console.log('✓ Inserting event into database...');
+        logger.debug('Inserting event into database', { tripId });
         const { data: newEvent, error } = await supabaseAdmin
           .from('events')
           .insert({
@@ -340,22 +338,13 @@ export function registerEventRoutes(app: Express) {
           .single();
 
         if (error) {
-          console.log('==================== SUPABASE ERROR ====================');
-          console.log('Error message:', error?.message);
-          console.log('Error details:', error?.details);
-          console.log('Error hint:', error?.hint);
-          console.log('Error code:', error?.code);
-          console.log('Full error:', JSON.stringify(error, null, 2));
-          console.log('Request data:', JSON.stringify(data, null, 2));
-          console.log('========================================================');
-
-          logger.error('Error creating event - Supabase error:', {
+          logger.error('Error creating event - Supabase error', {
             message: error?.message || 'Unknown error',
             details: error?.details || 'No details',
             hint: error?.hint || 'No hint',
             code: error?.code || 'No code',
             tripId,
-            requestData: JSON.stringify(data),
+            requestData: data,
           });
           throw ApiError.internal('Failed to create event');
         }
@@ -403,11 +392,6 @@ export function registerEventRoutes(app: Express) {
         return res.status(201).json(transformedEvent);
       } catch (error: any) {
         if (error.status) throw error;
-        console.log('==================== CAUGHT ERROR ====================');
-        console.log('Error message:', error?.message);
-        console.log('Error stack:', error?.stack);
-        console.log('Error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-        console.log('======================================================');
         logger.error('Error creating event', {
           message: error?.message,
           stack: error?.stack,
@@ -530,7 +514,10 @@ export function registerEventRoutes(app: Express) {
 
           // If no image URL provided and this is a party with a theme, fetch the party theme's image
           if (!eventImageUrl && data.partyThemeId) {
-            console.log('✓ No event image provided, fetching party theme image...');
+            logger.debug('No event image provided, fetching party theme image', {
+              partyThemeId: data.partyThemeId,
+              eventId: id,
+            });
             const { data: partyTheme, error: themeError } = await supabaseAdmin
               .from('party_themes')
               .select('image_url')
@@ -539,7 +526,7 @@ export function registerEventRoutes(app: Express) {
 
             if (!themeError && partyTheme?.image_url) {
               eventImageUrl = partyTheme.image_url;
-              console.log('✓ Using party theme image as fallback:', eventImageUrl);
+              logger.debug('Using party theme image as fallback', { eventImageUrl, eventId: id });
             }
           }
 
@@ -577,10 +564,11 @@ export function registerEventRoutes(app: Express) {
 
             // For each removed talent, check if they're in any other events on this trip
             if (removedTalentIds.length > 0) {
-              console.log(
-                '✓ Checking if removed talent should be cleaned up from trip_talent:',
-                removedTalentIds
-              );
+              logger.debug('Checking if removed talent should be cleaned up from trip_talent', {
+                removedTalentIds,
+                tripId,
+                eventId: id,
+              });
 
               for (const talentId of removedTalentIds) {
                 // Check if this talent is in any other event on this trip
@@ -595,7 +583,12 @@ export function registerEventRoutes(app: Express) {
                 );
 
                 if (checkError) {
-                  console.log('✗ Error checking other events for talent:', checkError);
+                  logger.warn('Error checking other events for talent', {
+                    error: checkError,
+                    talentId,
+                    tripId,
+                    eventId: id,
+                  });
                   // Fallback to simple query
                   const { data: fallbackEvents } = await supabaseAdmin
                     .from('events')
@@ -615,7 +608,11 @@ export function registerEventRoutes(app: Express) {
                       .eq('talent_id', talentId);
 
                     if (!deleteError) {
-                      console.log('✓ Successfully removed talent from trip_talent:', talentId);
+                      logger.debug('Successfully removed talent from trip_talent', {
+                        talentId,
+                        tripId,
+                        eventId: id,
+                      });
                     }
                   }
                   continue;
@@ -623,10 +620,11 @@ export function registerEventRoutes(app: Express) {
 
                 // If talent is not in any other events, remove from trip_talent
                 if (!otherEvents || otherEvents === 0) {
-                  console.log(
-                    '✓ Talent not in any other events, removing from trip_talent:',
-                    talentId
-                  );
+                  logger.debug('Talent not in any other events, removing from trip_talent', {
+                    talentId,
+                    tripId,
+                    eventId: id,
+                  });
                   const { error: deleteError } = await supabaseAdmin
                     .from('trip_talent')
                     .delete()
@@ -634,36 +632,51 @@ export function registerEventRoutes(app: Express) {
                     .eq('talent_id', talentId);
 
                   if (deleteError) {
-                    console.log('✗ Error removing talent from trip_talent:', deleteError);
+                    logger.warn('Error removing talent from trip_talent', {
+                      error: deleteError,
+                      talentId,
+                      tripId,
+                      eventId: id,
+                    });
                   } else {
-                    console.log('✓ Successfully removed talent from trip_talent:', talentId);
+                    logger.debug('Successfully removed talent from trip_talent', {
+                      talentId,
+                      tripId,
+                      eventId: id,
+                    });
                   }
                 } else {
-                  console.log('✓ Talent still in other events, keeping in trip_talent:', talentId);
+                  logger.debug('Talent still in other events, keeping in trip_talent', {
+                    talentId,
+                    tripId,
+                    eventId: id,
+                  });
                 }
               }
             }
           }
         } catch (cleanupError) {
           // Log cleanup errors but don't fail the update
-          console.log('✗ Error during talent cleanup (non-fatal):', cleanupError);
           logger.warn('Non-fatal error during talent cleanup', {
             error: cleanupError,
             eventId: id,
           });
         }
 
-        console.log('✓ Event update successful, now fetching talent data');
+        logger.debug('Event update successful, now fetching talent data', { eventId: id });
         let talentNames: string[] = [];
         let talentImages: (string | null)[] = [];
 
         const updatedTalentIds: number[] = Array.isArray(updatedEvent?.talent_ids)
           ? updatedEvent.talent_ids
           : [];
-        console.log('✓ Updated talent IDs:', updatedTalentIds);
+        logger.debug('Updated talent IDs', { updatedTalentIds, eventId: id });
 
         if (updatedTalentIds.length > 0) {
-          console.log('✓ Fetching talent data for', updatedTalentIds.length, 'talents');
+          logger.debug('Fetching talent data', {
+            count: updatedTalentIds.length,
+            eventId: id,
+          });
           const { data: talentData, error: talentFetchError } = await supabaseAdmin
             .from('talent')
             .select('id, name, profile_image_url')
@@ -674,9 +687,11 @@ export function registerEventRoutes(app: Express) {
               error: talentFetchError,
               eventId: id,
             });
-            console.log('✗ Error fetching talent:', talentFetchError);
           } else if (talentData) {
-            console.log('✓ Talent data fetched successfully:', talentData.length, 'talents');
+            logger.debug('Talent data fetched successfully', {
+              count: talentData.length,
+              eventId: id,
+            });
             const nameMap = new Map(talentData.map(t => [t.id, t.name]));
             const imageMap = new Map(talentData.map(t => [t.id, t.profile_image_url]));
 
@@ -748,10 +763,11 @@ export function registerEventRoutes(app: Express) {
         // Clean up trip_talent: remove talent that are no longer in any events on this trip
         if (talentIdsToCheck.length > 0 && tripId) {
           try {
-            console.log(
-              '✓ Checking if talent should be removed from trip_talent:',
-              talentIdsToCheck
-            );
+            logger.debug('Checking if talent should be removed from trip_talent', {
+              talentIdsToCheck,
+              tripId,
+              eventId: id,
+            });
 
             for (const talentId of talentIdsToCheck) {
               // Check if this talent is in any other events on this trip
@@ -761,7 +777,12 @@ export function registerEventRoutes(app: Express) {
                 .eq('trip_id', tripId);
 
               if (checkError) {
-                console.log('✗ Error checking other events:', checkError);
+                logger.warn('Error checking other events', {
+                  error: checkError,
+                  talentId,
+                  tripId,
+                  eventId: id,
+                });
                 continue; // Skip this talent if we can't check
               }
 
@@ -772,9 +793,11 @@ export function registerEventRoutes(app: Express) {
 
               // If talent is not in any other events, remove from trip_talent
               if (!talentInOtherEvents) {
-                console.log(
-                  `✓ Removing talent ${talentId} from trip_talent (no longer in any events)`
-                );
+                logger.debug('Removing talent from trip_talent (no longer in any events)', {
+                  talentId,
+                  tripId,
+                  eventId: id,
+                });
                 const { error: deleteError } = await supabaseAdmin
                   .from('trip_talent')
                   .delete()
@@ -782,15 +805,23 @@ export function registerEventRoutes(app: Express) {
                   .eq('talent_id', talentId);
 
                 if (deleteError) {
-                  console.log('✗ Error removing talent from trip_talent:', deleteError);
+                  logger.warn('Error removing talent from trip_talent', {
+                    error: deleteError,
+                    talentId,
+                    tripId,
+                    eventId: id,
+                  });
                 }
               } else {
-                console.log(`✓ Keeping talent ${talentId} in trip_talent (still in other events)`);
+                logger.debug('Keeping talent in trip_talent (still in other events)', {
+                  talentId,
+                  tripId,
+                  eventId: id,
+                });
               }
             }
           } catch (cleanupError) {
             // Log cleanup errors but don't fail the deletion
-            console.log('✗ Error during talent cleanup (non-fatal):', cleanupError);
             logger.warn('Non-fatal error during talent cleanup after event deletion', {
               error: cleanupError,
               eventId: id,

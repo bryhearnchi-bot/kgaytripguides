@@ -2,6 +2,7 @@
 // Complete storage implementation using Supabase Admin API
 
 import { getSupabaseAdmin } from './supabase-admin';
+import { logger } from './logging/logger';
 import type {
   Profile,
   Trip,
@@ -912,9 +913,11 @@ export class TripInfoStorage implements ITripInfoStorage {
     if (talentError) throw talentError;
 
     // Log for debugging
-    console.log(
-      `[TALENT QUERY] Trip ID: ${tripData.id}, Slug: ${slug}, Talent Count: ${talentData?.length || 0}`
-    );
+    logger.debug('Talent query completed', {
+      tripId: tripData.id,
+      slug,
+      talentCount: talentData?.length || 0,
+    });
 
     // Transform talent data to camelCase (extract from junction table result)
     const transformedTalent = (talentData || [])
@@ -1189,7 +1192,7 @@ export async function warmUpCaches() {
     ]);
     return true;
   } catch (error: unknown) {
-    console.error('Cache warmup failed:', error);
+    logger.error('Cache warmup failed', error);
     return false;
   }
 }
@@ -1232,7 +1235,7 @@ export const tripInfoStorage = new TripInfoStorage();
 export const db = {
   // Mock database interface for any remaining direct db calls
   execute: async (query: string) => {
-    console.warn('Direct database execute called:', query);
+    logger.warn('Direct database execute called', { query });
     return { rows: [] };
   },
 };

@@ -1,4 +1,4 @@
-import LogoSvg from '@/assets/svg/logo';
+import LogoSvg from '../../../../assets/svg/logo';
 
 // Util Imports
 import { cn } from '@/lib/utils';

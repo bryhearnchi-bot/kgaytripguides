@@ -54,7 +54,7 @@ function logError(error: ApiError, req: Request): void {
       message: error.message,
       code: error.code,
       statusCode: error.statusCode,
-    }
+    },
   };
 
   // Don't log sensitive information in production
@@ -124,7 +124,7 @@ function logError(error: ApiError, req: Request): void {
 function sendErrorResponse(error: ApiError, req: Request, res: Response): void {
   // Ensure we haven't already sent a response
   if (res.headersSent) {
-    console.error('Error occurred after response was sent:', error);
+    logger.error('Error occurred after response was sent', error);
     return;
   }
 
@@ -137,7 +137,7 @@ function sendErrorResponse(error: ApiError, req: Request, res: Response): void {
       code: error.code,
       statusCode: error.statusCode,
       timestamp: error.timestamp,
-    }
+    },
   };
 
   // Include additional details based on environment
@@ -207,7 +207,7 @@ export function notFoundHandler(req: Request, res: Response): void {
  */
 export function asyncHandler(fn: Function) {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch((error) => {
+    Promise.resolve(fn(req, res, next)).catch(error => {
       next(error);
     });
   };
@@ -217,7 +217,7 @@ export function asyncHandler(fn: Function) {
  * Validation error formatter for express-validator
  */
 export function formatValidationErrors(errors: any[]): ApiError {
-  const formattedErrors = errors.map((error) => ({
+  const formattedErrors = errors.map(error => ({
     field: error.path || error.param,
     message: error.msg,
     value: error.value,
@@ -263,7 +263,7 @@ export function rateLimitErrorHandler(req: Request, res: Response): void {
     details: {
       retryAfter: res.getHeader('Retry-After'),
       limit: res.getHeader('X-RateLimit-Limit'),
-    }
+    },
   });
   sendErrorResponse(error, req, res);
 }

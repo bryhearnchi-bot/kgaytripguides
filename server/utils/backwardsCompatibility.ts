@@ -5,6 +5,7 @@
 
 import type { Response } from 'express';
 import { ApiError } from './ApiError';
+import { logger } from '../logging/logger';
 
 /**
  * Send error response in the old format for backwards compatibility
@@ -20,7 +21,7 @@ export function sendLegacyError(res: Response, statusCode: number, message: stri
 export function apiErrorToLegacy(error: ApiError): { error: string; message?: string } {
   return {
     error: error.message,
-    message: error.message
+    message: error.message,
   };
 }
 
@@ -38,7 +39,7 @@ export function legacyErrorWrapper(handler: Function) {
         res.status(error.statusCode).json(apiErrorToLegacy(error));
       } else if (error instanceof Error) {
         // Generic error handling
-        console.error('Unhandled error in legacy wrapper:', error);
+        logger.error('Unhandled error in legacy wrapper', error);
         res.status(500).json({ error: 'Internal server error' });
       } else {
         next(error);
@@ -71,13 +72,9 @@ export function expectsNewErrorFormat(req: any): boolean {
 /**
  * Send error in appropriate format based on client
  */
-export function sendCompatibleError(
-  req: any,
-  res: Response,
-  error: ApiError | Error
-): void {
+export function sendCompatibleError(req: any, res: Response, error: ApiError | Error): void {
   if (res.headersSent) {
-    console.error('Cannot send error - headers already sent');
+    logger.error('Cannot send error - headers already sent');
     return;
   }
 
@@ -93,7 +90,7 @@ export function sendCompatibleError(
     // Generic error
     const statusCode = (error as any).statusCode || 500;
     res.status(statusCode).json({
-      error: error.message || 'An error occurred'
+      error: error.message || 'An error occurred',
     });
   }
 }

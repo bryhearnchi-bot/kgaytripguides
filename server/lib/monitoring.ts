@@ -37,9 +37,8 @@ class MetricsStore {
     const now = Date.now();
     const windowStart = timeWindow ? now - timeWindow : 0;
 
-    const filteredMetrics = this.metrics.filter(m =>
-      m.timestamp > windowStart &&
-      (!path || m.path === path)
+    const filteredMetrics = this.metrics.filter(
+      m => m.timestamp > windowStart && (!path || m.path === path)
     );
 
     if (filteredMetrics.length === 0) return 0;
@@ -48,7 +47,8 @@ class MetricsStore {
     return totalTime / filteredMetrics.length;
   }
 
-  getErrorRate(timeWindow: number = 3600000): number { // Default: 1 hour
+  getErrorRate(timeWindow: number = 3600000): number {
+    // Default: 1 hour
     const now = Date.now();
     const windowStart = now - timeWindow;
 
@@ -59,14 +59,16 @@ class MetricsStore {
     return (errorCount / recentMetrics.length) * 100;
   }
 
-  getTopEndpoints(limit: number = 10): Array<{path: string; count: number; avgResponseTime: number}> {
-    const endpointMap = new Map<string, {count: number; totalTime: number}>();
+  getTopEndpoints(
+    limit: number = 10
+  ): Array<{ path: string; count: number; avgResponseTime: number }> {
+    const endpointMap = new Map<string, { count: number; totalTime: number }>();
 
     this.metrics.forEach(m => {
-      const existing = endpointMap.get(m.path) || {count: 0, totalTime: 0};
+      const existing = endpointMap.get(m.path) || { count: 0, totalTime: 0 };
       endpointMap.set(m.path, {
         count: existing.count + 1,
-        totalTime: existing.totalTime + m.responseTime
+        totalTime: existing.totalTime + m.responseTime,
       });
     });
 
@@ -74,7 +76,7 @@ class MetricsStore {
       .map(([path, data]) => ({
         path,
         count: data.count,
-        avgResponseTime: data.totalTime / data.count
+        avgResponseTime: data.totalTime / data.count,
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, limit);
@@ -95,7 +97,7 @@ export const performanceMonitoring = (req: Request, res: Response, next: NextFun
   // Capture original end function
   const originalEnd = res.end;
 
-  res.end = function(chunk?: any, encoding?: any, cb?: any) {
+  res.end = function (chunk?: any, encoding?: any, cb?: any) {
     const endTime = Date.now();
     const responseTime = endTime - startTime;
     const endCpuUsage = process.cpuUsage(startCpuUsage);
@@ -111,21 +113,18 @@ export const performanceMonitoring = (req: Request, res: Response, next: NextFun
       ip: req.ip || req.connection.remoteAddress,
       userId: (req as any).userId, // If authentication is implemented
       memoryUsage: process.memoryUsage(),
-      cpuUsage: endCpuUsage
+      cpuUsage: endCpuUsage,
     };
 
     // Add error message for error responses
     if (res.statusCode >= 400) {
-      metric.errorMessage = res.getHeader('X-Error-Message') as string || 'Unknown error';
+      metric.errorMessage = (res.getHeader('X-Error-Message') as string) || 'Unknown error';
     }
 
     // Store metric
     metricsStore.add(metric);
 
-    // Log critical errors
-    if (res.statusCode >= 500) {
-      console.error(`[CRITICAL] ${req.method} ${req.path} - ${res.statusCode} - ${responseTime}ms`, metric);
-    }
+    // Critical errors are already logged by the error handler middleware
 
     // Call original end function
     return originalEnd.call(this, chunk, encoding, cb);
@@ -148,13 +147,13 @@ export const healthCheck = (req: Request, res: Response) => {
     memory: {
       used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
       total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
-      external: `${Math.round(memoryUsage.external / 1024 / 1024)}MB`
+      external: `${Math.round(memoryUsage.external / 1024 / 1024)}MB`,
     },
     performance: {
       avgResponseTime: `${avgResponseTime.toFixed(2)}ms`,
-      errorRate: `${errorRate.toFixed(2)}%`
+      errorRate: `${errorRate.toFixed(2)}%`,
     },
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
   };
 
   // Mark as unhealthy if error rate is too high or response time is too slow
@@ -183,8 +182,8 @@ export const getMetrics = (req: Request, res: Response) => {
       avgResponseTime,
       errorRate,
       totalRequests: metrics.length,
-      topEndpoints
-    }
+      topEndpoints,
+    },
   });
 };
 
@@ -204,7 +203,7 @@ export class Analytics {
       properties,
       timestamp: Date.now(),
       userId,
-      sessionId
+      sessionId,
     });
 
     // In production, send to external analytics service
@@ -214,7 +213,7 @@ export class Analytics {
         properties,
         timestamp: Date.now(),
         userId,
-        sessionId
+        sessionId,
       });
     }
   }
@@ -224,23 +223,26 @@ export class Analytics {
       // Example: Send to Google Analytics, Mixpanel, etc.
       if (process.env.GA_MEASUREMENT_ID) {
         // Google Analytics 4 Measurement Protocol
-        const response = await fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${process.env.GA_MEASUREMENT_ID}&api_secret=${process.env.GA_API_SECRET}`, {
-          method: 'POST',
-          body: JSON.stringify({
-            client_id: eventData.userId || 'anonymous',
-            events: [{
-              name: eventData.event.replace(/[^a-zA-Z0-9_]/g, '_'),
-              parameters: eventData.properties
-            }]
-          })
-        });
+        const response = await fetch(
+          `https://www.google-analytics.com/mp/collect?measurement_id=${process.env.GA_MEASUREMENT_ID}&api_secret=${process.env.GA_API_SECRET}`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              client_id: eventData.userId || 'anonymous',
+              events: [
+                {
+                  name: eventData.event.replace(/[^a-zA-Z0-9_]/g, '_'),
+                  parameters: eventData.properties,
+                },
+              ],
+            }),
+          }
+        );
 
-        if (!response.ok) {
-          console.warn('Failed to send analytics event:', response.status);
-        }
+        // Silently fail - don't log warnings for external analytics service issues
       }
     } catch (error: unknown) {
-      console.error('Analytics error:', error);
+      // Silently fail - analytics errors should not impact application
     }
   }
 
@@ -265,7 +267,7 @@ export const errorTracking = (err: Error, req: Request, res: Response, next: Nex
     path: req.path,
     method: req.method,
     userAgent: req.get('User-Agent'),
-    ip: req.ip
+    ip: req.ip,
   });
 
   // Set error message header for metrics
@@ -284,21 +286,24 @@ export const getSystemMetrics = () => {
       heapUsed: memoryUsage.heapUsed,
       heapTotal: memoryUsage.heapTotal,
       external: memoryUsage.external,
-      rss: memoryUsage.rss
+      rss: memoryUsage.rss,
     },
     cpu: {
       user: cpuUsage.user,
-      system: cpuUsage.system
+      system: cpuUsage.system,
     },
     uptime: process.uptime(),
     loadAverage: require('os').loadavg(),
     freeMemory: require('os').freemem(),
-    totalMemory: require('os').totalmem()
+    totalMemory: require('os').totalmem(),
   };
 };
 
 // Clean up old metrics periodically
-setInterval(() => {
-  const oneHourAgo = Date.now() - (60 * 60 * 1000);
-  metricsStore.clear(); // In production, remove only old entries
-}, 10 * 60 * 1000); // Clean up every 10 minutes
+setInterval(
+  () => {
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    metricsStore.clear(); // In production, remove only old entries
+  },
+  10 * 60 * 1000
+); // Clean up every 10 minutes

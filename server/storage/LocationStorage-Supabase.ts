@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '../supabase-admin';
+import { logger } from '../logging/logger';
 
 export interface Location {
   id: number;
@@ -21,15 +22,12 @@ export class LocationStorage {
    */
   async getAll(): Promise<Location[]> {
     try {
-      const { data, error } = await this.supabaseAdmin
-        .from('locations')
-        .select('*')
-        .order('name');
+      const { data, error } = await this.supabaseAdmin.from('locations').select('*').order('name');
 
       if (error) throw error;
       return data || [];
     } catch (error: unknown) {
-      console.error('Error fetching locations:', error);
+      logger.error('Error fetching locations', error);
       throw new Error('Failed to fetch locations');
     }
   }
@@ -52,7 +50,7 @@ export class LocationStorage {
 
       return data;
     } catch (error: unknown) {
-      console.error('Error fetching location by ID:', error);
+      logger.error('Error fetching location by ID', error);
       throw new Error('Failed to fetch location');
     }
   }
@@ -75,7 +73,7 @@ export class LocationStorage {
 
       return data;
     } catch (error: unknown) {
-      console.error('Error fetching location by name:', error);
+      logger.error('Error fetching location by name:', error);
       throw new Error('Failed to fetch location');
     }
   }
@@ -94,7 +92,7 @@ export class LocationStorage {
       if (error) throw error;
       return data || [];
     } catch (error: unknown) {
-      console.error('Error searching locations:', error);
+      logger.error('Error searching locations:', error);
       throw new Error('Failed to search locations');
     }
   }
@@ -116,13 +114,14 @@ export class LocationStorage {
           country: data.country,
           coordinates: data.coordinates || null,
           description: data.description || null,
-          image_url: data.image_url || null
+          image_url: data.image_url || null,
         })
         .select()
         .single();
 
       if (error) {
-        if (error.code === '23505') { // Unique constraint violation
+        if (error.code === '23505') {
+          // Unique constraint violation
           throw new Error('Location with this name already exists');
         }
         throw error;
@@ -133,7 +132,7 @@ export class LocationStorage {
       if (error.message?.includes('Location with this name already exists')) {
         throw error;
       }
-      console.error('Error creating location:', error);
+      logger.error('Error creating location:', error);
       throw new Error('Failed to create location');
     }
   }
@@ -144,7 +143,7 @@ export class LocationStorage {
   async update(id: number, data: Partial<NewLocation>): Promise<Location> {
     try {
       const updateData: any = {
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       // Only include fields that are provided
@@ -176,7 +175,7 @@ export class LocationStorage {
       if (error.message?.includes('Location')) {
         throw error;
       }
-      console.error('Error updating location:', error);
+      logger.error('Error updating location:', error);
       throw new Error('Failed to update location');
     }
   }
@@ -192,16 +191,13 @@ export class LocationStorage {
         throw new Error(`Cannot delete location: used in ${usage.itineraryCount} itinerary items`);
       }
 
-      const { error } = await this.supabaseAdmin
-        .from('locations')
-        .delete()
-        .eq('id', id);
+      const { error } = await this.supabaseAdmin.from('locations').delete().eq('id', id);
 
       if (error) throw error;
 
       return true;
     } catch (error: unknown) {
-      console.error('Error deleting location:', error);
+      logger.error('Error deleting location:', error);
       throw error;
     }
   }
@@ -219,10 +215,10 @@ export class LocationStorage {
       if (error) throw error;
 
       return {
-        itineraryCount: data?.length || 0
+        itineraryCount: data?.length || 0,
       };
     } catch (error: unknown) {
-      console.error('Error checking location usage:', error);
+      logger.error('Error checking location usage:', error);
       throw new Error('Failed to check location usage');
     }
   }
@@ -251,10 +247,10 @@ export class LocationStorage {
 
       return {
         totalLocations: allLocations?.length || 0,
-        byCountry
+        byCountry,
       };
     } catch (error: unknown) {
-      console.error('Error getting location statistics:', error);
+      logger.error('Error getting location statistics:', error);
       throw new Error('Failed to get location statistics');
     }
   }
@@ -266,20 +262,22 @@ export class LocationStorage {
     try {
       const { data, error } = await this.supabaseAdmin
         .from('locations')
-        .insert(locationsData.map(loc => ({
-          name: loc.name,
-          country: loc.country,
-          coordinates: loc.coordinates || null,
-          description: loc.description || null,
-          image_url: loc.image_url || null
-        })))
+        .insert(
+          locationsData.map(loc => ({
+            name: loc.name,
+            country: loc.country,
+            coordinates: loc.coordinates || null,
+            description: loc.description || null,
+            image_url: loc.image_url || null,
+          }))
+        )
         .select();
 
       if (error) throw error;
 
       return data || [];
     } catch (error: unknown) {
-      console.error('Error bulk creating locations:', error);
+      logger.error('Error bulk creating locations:', error);
       throw new Error('Failed to bulk create locations');
     }
   }
@@ -300,5 +298,5 @@ export function getLocationStorage(): LocationStorage {
 export const locationStorage = new Proxy({} as LocationStorage, {
   get(target, prop) {
     return (getLocationStorage() as any)[prop];
-  }
+  },
 });

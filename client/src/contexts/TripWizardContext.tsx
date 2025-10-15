@@ -17,8 +17,10 @@ interface TripData {
   highlights: string;
 }
 
-interface ResortData {
+export interface ResortData {
   name: string;
+  location?: string;
+  locationName?: string; // Alias for location
   locationId?: number;
   capacity?: number;
   numberOfRooms?: number;
@@ -27,6 +29,11 @@ interface ResortData {
   propertyMapUrl: string;
   checkInTime: string;
   checkOutTime: string;
+  city?: string;
+  state_province?: string;
+  country?: string;
+  country_code?: string;
+  resortCompanyId?: number;
 }
 
 interface ShipData {
@@ -82,6 +89,11 @@ interface TripWizardState {
   isEditMode?: boolean;
 }
 
+interface SyncResult {
+  success: boolean;
+  entriesToDelete?: (ScheduleEntry | ItineraryEntry)[];
+}
+
 interface TripWizardContextType {
   state: TripWizardState;
   setCurrentPage: (page: number) => void;
@@ -109,6 +121,24 @@ interface TripWizardContextType {
   addTempFile: (path: string) => void;
   clearWizard: () => void;
   restoreFromDraft: (draftState: Partial<TripWizardState>) => void;
+  syncScheduleWithDates: (
+    oldStartDate: string,
+    oldEndDate: string,
+    newStartDate: string,
+    newEndDate: string
+  ) => SyncResult;
+  syncItineraryWithDates: (
+    oldStartDate: string,
+    oldEndDate: string,
+    newStartDate: string,
+    newEndDate: string
+  ) => SyncResult;
+  syncEventsWithDates: (
+    oldStartDate: string,
+    oldEndDate: string,
+    newStartDate: string,
+    newEndDate: string
+  ) => void;
 }
 
 const TripWizardContext = createContext<TripWizardContextType | undefined>(undefined);
@@ -375,6 +405,196 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     setState(newState);
   };
 
+  // Date synchronization methods
+  const parseDateLocal = (dateStr: string): Date => {
+    const parts = dateStr.split('-');
+    const year = Number(parts[0] || 2025);
+    const month = Number(parts[1] || 1);
+    const day = Number(parts[2] || 1);
+    return new Date(year, month - 1, day);
+  };
+
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const calculateDaysDifference = (start: string, end: string): number => {
+    const startDate = parseDateLocal(start);
+    const endDate = parseDateLocal(end);
+    const diffMs = endDate.getTime() - startDate.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+  };
+
+  const addDaysToDate = (dateStr: string, days: number): string => {
+    const date = parseDateLocal(dateStr);
+    date.setDate(date.getDate() + days);
+    return formatDateLocal(date);
+  };
+
+  const syncScheduleWithDates = (
+    oldStartDate: string,
+    oldEndDate: string,
+    newStartDate: string,
+    newEndDate: string
+  ): SyncResult => {
+    const oldDuration = calculateDaysDifference(oldStartDate, oldEndDate);
+    const newDuration = calculateDaysDifference(newStartDate, newEndDate);
+    const dateShift = calculateDaysDifference(oldStartDate, newStartDate);
+
+    const updatedEntries: ScheduleEntry[] = [];
+    const entriesToDelete: ScheduleEntry[] = [];
+
+    // Process existing entries
+    for (const entry of state.scheduleEntries) {
+      // Preserve special day numbers (pre/post trip)
+      if (entry.dayNumber < 0 || entry.dayNumber > 100) {
+        updatedEntries.push(entry);
+        continue;
+      }
+
+      // Check if entry is within new date range
+      if (entry.dayNumber > newDuration + 1) {
+        // Entry is outside new range
+        if (entry.description || entry.imageUrl) {
+          entriesToDelete.push(entry);
+        }
+        continue;
+      }
+
+      // Update entry date
+      const newDate = addDaysToDate(newStartDate, entry.dayNumber - 1);
+      updatedEntries.push({
+        ...entry,
+        date: newDate,
+      });
+    }
+
+    // Check if we need user confirmation for deletions
+    if (entriesToDelete.length > 0) {
+      return { success: false, entriesToDelete };
+    }
+
+    // Add blank entries if trip extended
+    const existingDayNumbers = new Set(updatedEntries.map(e => e.dayNumber));
+    for (let dayNum = 1; dayNum <= newDuration + 1; dayNum++) {
+      if (!existingDayNumbers.has(dayNum)) {
+        updatedEntries.push({
+          dayNumber: dayNum,
+          date: addDaysToDate(newStartDate, dayNum - 1),
+          description: '',
+          imageUrl: '',
+        });
+      }
+    }
+
+    // Sort by day number
+    updatedEntries.sort((a, b) => a.dayNumber - b.dayNumber);
+
+    setState(prev => ({ ...prev, scheduleEntries: updatedEntries }));
+    return { success: true };
+  };
+
+  const syncItineraryWithDates = (
+    oldStartDate: string,
+    oldEndDate: string,
+    newStartDate: string,
+    newEndDate: string
+  ): SyncResult => {
+    const oldDuration = calculateDaysDifference(oldStartDate, oldEndDate);
+    const newDuration = calculateDaysDifference(newStartDate, newEndDate);
+    const dateShift = calculateDaysDifference(oldStartDate, newStartDate);
+
+    const updatedEntries: ItineraryEntry[] = [];
+    const entriesToDelete: ItineraryEntry[] = [];
+
+    // Process existing entries
+    for (const entry of state.itineraryEntries) {
+      // Preserve special day numbers (pre/post trip)
+      if (entry.dayNumber < 0 || entry.dayNumber > 100) {
+        updatedEntries.push(entry);
+        continue;
+      }
+
+      // Check if entry is within new date range
+      if (entry.dayNumber > newDuration + 1) {
+        // Entry is outside new range
+        if (
+          entry.description ||
+          entry.imageUrl ||
+          entry.locationName ||
+          entry.arrivalTime ||
+          entry.departureTime
+        ) {
+          entriesToDelete.push(entry);
+        }
+        continue;
+      }
+
+      // Update entry date
+      const newDate = addDaysToDate(newStartDate, entry.dayNumber - 1);
+      updatedEntries.push({
+        ...entry,
+        date: newDate,
+      });
+    }
+
+    // Check if we need user confirmation for deletions
+    if (entriesToDelete.length > 0) {
+      return { success: false, entriesToDelete };
+    }
+
+    // Add blank entries if trip extended
+    const existingDayNumbers = new Set(updatedEntries.map(e => e.dayNumber));
+    for (let dayNum = 1; dayNum <= newDuration + 1; dayNum++) {
+      if (!existingDayNumbers.has(dayNum)) {
+        updatedEntries.push({
+          dayNumber: dayNum,
+          date: addDaysToDate(newStartDate, dayNum - 1),
+          locationName: '',
+          arrivalTime: '',
+          departureTime: '',
+          allAboardTime: '',
+          description: '',
+          imageUrl: '',
+        });
+      }
+    }
+
+    // Sort by day number
+    updatedEntries.sort((a, b) => a.dayNumber - b.dayNumber);
+
+    setState(prev => ({ ...prev, itineraryEntries: updatedEntries }));
+    return { success: true };
+  };
+
+  const syncEventsWithDates = (
+    oldStartDate: string,
+    oldEndDate: string,
+    newStartDate: string,
+    newEndDate: string
+  ): void => {
+    if (!state.events || state.events.length === 0) return;
+
+    const dateShift = calculateDaysDifference(oldStartDate, newStartDate);
+    if (dateShift === 0) return;
+
+    // Shift all event dates by the date difference
+    const updatedEvents = state.events.map(event => {
+      if (!event.date) return event;
+
+      const newEventDate = addDaysToDate(event.date, dateShift);
+      return {
+        ...event,
+        date: newEventDate,
+      };
+    });
+
+    setState(prev => ({ ...prev, events: updatedEvents }));
+  };
+
   const value: TripWizardContextType = {
     state,
     setCurrentPage,
@@ -402,6 +622,9 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     addTempFile,
     clearWizard,
     restoreFromDraft,
+    syncScheduleWithDates,
+    syncItineraryWithDates,
+    syncEventsWithDates,
   };
 
   return <TripWizardContext.Provider value={value}>{children}</TripWizardContext.Provider>;

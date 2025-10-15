@@ -300,7 +300,7 @@ export function registerFaqRoutes(app: Express) {
 
       // Update all assignments in a transaction
       const updatePromises = assignments.map(
-        assignment =>
+        (assignment: { id: number; order_index: number }) =>
           supabaseAdmin
             .from('trip_faq_assignments')
             .update({

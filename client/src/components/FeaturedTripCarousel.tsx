@@ -233,6 +233,8 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
   if (trips.length === 0) return null;
 
   const currentTrip = trips[currentIndex];
+  if (!currentTrip) return null;
+
   const startDate = dateOnly(currentTrip.startDate);
   const endDate = dateOnly(currentTrip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);

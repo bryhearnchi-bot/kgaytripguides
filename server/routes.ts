@@ -6,6 +6,7 @@ import { generalRateLimit, authRateLimit } from './middleware/rate-limiting';
 import { doubleSubmitCsrf } from './middleware/csrf';
 import { validateVersion } from './middleware/versioning';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { logger } from './logging/logger';
 import invitationRoutes from './routes/invitation-routes';
 import { registerAdminUsersRoutes } from './routes/admin-users-routes';
 import { registerAdminLookupTablesRoutes } from './routes/admin-lookup-tables-routes';
@@ -156,7 +157,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register admin user management routes
   // Debug middleware for admin users routes
   app.use('/api/admin/users', (req, res, next) => {
-    console.log('🔍 ADMIN USERS ROUTE HIT:', req.method, req.url, req.query);
+    logger.debug('Admin users route accessed', {
+      method: req.method,
+      url: req.url,
+      query: req.query,
+    });
     next();
   });
 

@@ -4,6 +4,7 @@ import * as fsSync from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from './logging/logger';
 
 // Configure multer for temporary uploads
 const storage = multer.memoryStorage(); // Use memory storage
@@ -92,7 +93,7 @@ export async function uploadToSupabase(
   file: Express.Multer.File,
   imageType: string
 ): Promise<string> {
-  console.log('🚀 uploadToSupabase called with imageType:', imageType);
+  logger.debug('uploadToSupabase called', { imageType });
 
   // Perform malware scan
   const isSafe = await scanFileForMalware(file.buffer);
@@ -104,8 +105,10 @@ export async function uploadToSupabase(
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  console.log('🔧 Supabase URL:', supabaseUrl ? 'configured' : 'missing');
-  console.log('🔧 Service key:', supabaseServiceKey ? 'configured' : 'missing');
+  logger.debug('Supabase configuration check', {
+    urlConfigured: !!supabaseUrl,
+    keyConfigured: !!supabaseServiceKey,
+  });
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Supabase configuration missing');
@@ -162,9 +165,13 @@ export async function uploadToSupabase(
   // Construct full path
   const fullPath = folderPath ? `${folderPath}/${filename}` : filename;
 
-  console.log('📦 Using bucket:', bucket);
-  console.log('📁 Full path:', fullPath);
-  console.log('📄 File info:', { name: file.originalname, size: file.size, type: file.mimetype });
+  logger.debug('Uploading to Supabase Storage', {
+    bucket,
+    fullPath,
+    originalName: file.originalname,
+    size: file.size,
+    mimeType: file.mimetype,
+  });
 
   // Upload to Supabase Storage
   const { data, error } = await supabase.storage.from(bucket).upload(fullPath, file.buffer, {

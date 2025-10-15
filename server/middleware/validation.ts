@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
+import { logger } from '../logging/logger';
 
 /**
  * Format validation errors for better user experience
@@ -58,22 +59,23 @@ function formatZodError(error: ZodError): any {
 export function validateBody<T>(schema: ZodSchema<T>) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log('🔵 validateBody - Received body:', req.body);
+      logger.debug('validateBody - Received body', { body: req.body });
       const validationResult = schema.safeParse(req.body);
 
       if (!validationResult.success) {
-        console.error('❌ validateBody - Validation failed:', validationResult.error.errors);
+        logger.warn('validateBody - Validation failed', {
+          errors: validationResult.error.errors,
+        });
         const formatted = formatZodError(validationResult.error);
-        console.error('❌ validateBody - Formatted error:', formatted);
         return res.status(400).json(formatted);
       }
 
-      console.log('✅ validateBody - Validation passed:', validationResult.data);
+      logger.debug('validateBody - Validation passed', { data: validationResult.data });
       // Replace req.body with validated and transformed data
       req.body = validationResult.data;
       return next();
     } catch (error: unknown) {
-      console.error('Validation middleware error:', error);
+      logger.error('Validation middleware error', error);
       return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during validation',
@@ -97,7 +99,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       req.query = validationResult.data as any;
       return next();
     } catch (error: unknown) {
-      console.error('Query validation middleware error:', error);
+      logger.error('Query validation middleware error', error);
       return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during query validation',
@@ -121,7 +123,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       req.params = validationResult.data as any;
       return next();
     } catch (error: unknown) {
-      console.error('Parameter validation middleware error:', error);
+      logger.error('Parameter validation middleware error', error);
       return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during parameter validation',
@@ -190,7 +192,7 @@ export function validateRequest<TBody = any, TQuery = any, TParams = any>({
 
       return next();
     } catch (error: unknown) {
-      console.error('Request validation middleware error:', error);
+      logger.error('Request validation middleware error', error);
       return res.status(500).json({
         error: 'Internal validation error',
         message: 'An unexpected error occurred during request validation',

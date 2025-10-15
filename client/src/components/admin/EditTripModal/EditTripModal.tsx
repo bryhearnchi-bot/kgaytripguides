@@ -214,7 +214,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
   const handleSaveTrip = async () => {
     try {
       // Build trip update payload - ONLY trip data, NO amenities or venues
-      const updatePayload = {
+      const updatePayload: any = {
         id: trip.id,
         name: state.tripData.name,
         slug: state.tripData.slug,
@@ -282,7 +282,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         if (!open) handleClose();
       }}
       title="Edit Trip"
-      subtitle={tripData?.name || 'Loading...'}
+      description={tripData?.name || 'Loading...'}
       maxWidthClassName="max-w-4xl"
       contentClassName="pb-6"
       primaryAction={{

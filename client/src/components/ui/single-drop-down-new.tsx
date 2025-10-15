@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 export interface DropdownOption {
   value: string;
   label: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 interface SingleDropDownNewProps {

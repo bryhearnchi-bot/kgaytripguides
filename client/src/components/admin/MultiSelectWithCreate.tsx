@@ -24,7 +24,7 @@ export interface MultiSelectItem {
   description?: string;
 }
 
-export type MultiSelectMenuVariant = 'compact' | 'minimal' | 'elevated';
+export type MultiSelectMenuVariant = 'default' | 'compact' | 'minimal' | 'elevated';
 
 // Convert our item format to the shadcn format
 interface MultiSelectOption {

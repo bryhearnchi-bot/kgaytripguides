@@ -1,4 +1,4 @@
-import { parseTime } from '@/lib/timeFormat';
+import { parseTime, parseDateString, formatDateToString } from '@/lib/timeFormat';
 
 export function timeToMinutes(timeStr: string): number {
   const parsed = parseTime(timeStr);
@@ -9,8 +9,10 @@ export function timeToMinutes(timeStr: string): number {
 export function isDateInPast(dateKey: string): boolean {
   const today = new Date();
   // Parse date string directly as local date
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const tripDate = new Date(year || 2025, (month || 1) - 1, day || 1, 0, 0, 0, 0);
+  const parsed = parseDateString(dateKey);
+  if (!parsed) return false;
+
+  const tripDate = new Date(parsed.year, parsed.month - 1, parsed.day, 0, 0, 0, 0);
 
   // Set today to start of day for comparison
   today.setHours(0, 0, 0, 0);
@@ -26,13 +28,12 @@ export function getScheduleDate(date: string, time: string | undefined): string 
   const hour = parseInt(timeParts[0] || '0');
   if (hour < 6) {
     // Before 6am - belongs to previous day (timezone-agnostic)
-    const [year, month, day] = date.split('-').map(Number);
-    const currentDate = new Date(year, month - 1, day);
+    const parsed = parseDateString(date);
+    if (!parsed) return date;
+
+    const currentDate = new Date(parsed.year, parsed.month - 1, parsed.day);
     currentDate.setDate(currentDate.getDate() - 1);
-    const y = currentDate.getFullYear();
-    const m = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const d = String(currentDate.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return formatDateToString(currentDate);
   }
   return date;
 }

@@ -104,7 +104,16 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
 
   const formatDate = (dateString: string) => {
     // Parse in local timezone to avoid UTC conversion
-    const [year, month, day] = dateString.split('-').map(Number);
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
+
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    // Validate all parts are valid numbers
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return dateString;
+
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -159,7 +168,10 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
 
   // Helper to parse date string in local timezone (not UTC)
   const parseDateString = (dateStr: string): Date => {
-    const [year, month, day] = dateStr.split('-').map(Number);
+    const parts = dateStr.split('-');
+    const year = Number(parts[0] || 2025);
+    const month = Number(parts[1] || 1);
+    const day = Number(parts[2] || 1);
     return new Date(year, month - 1, day);
   };
 
@@ -384,10 +396,9 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
                             </Label>
                             <ImageUploadField
                               label=""
-                              value={entry.imageUrl}
-                              onChange={url => handleImageUpload(index, url)}
-                              bucketName="trip-images"
-                              folder="itineraries"
+                              value={entry.imageUrl || ''}
+                              onChange={url => handleImageUpload(index, url || '')}
+                              imageType="locations"
                             />
                             <p className="text-[10px] text-white/50 mt-0.5">
                               Image of the port or location
