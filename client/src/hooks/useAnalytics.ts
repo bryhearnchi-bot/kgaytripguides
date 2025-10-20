@@ -32,8 +32,8 @@ class Analytics {
 
     // Initialize Google Analytics if available
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', 'GA_MEASUREMENT_ID', {
-        send_page_view: false // We'll send page views manually
+      window.gtag('config', 'G-H2QWVEYX0F', {
+        send_page_view: false, // We'll send page views manually
       });
     }
 
@@ -45,8 +45,8 @@ class Analytics {
 
     // Set user ID in Google Analytics
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', 'GA_MEASUREMENT_ID', {
-        user_id: userId
+      window.gtag('config', 'G-H2QWVEYX0F', {
+        user_id: userId,
       });
     }
   }
@@ -59,10 +59,10 @@ class Analytics {
         timestamp: Date.now(),
         url: window.location.href,
         referrer: document.referrer,
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
       },
       sessionId: this.sessionId,
-      userId: this.userId
+      userId: this.userId,
     };
 
     // Send to backend analytics
@@ -73,10 +73,9 @@ class Analytics {
       window.gtag('event', event, {
         ...properties,
         session_id: this.sessionId,
-        user_id: this.userId
+        user_id: this.userId,
       });
     }
-
   }
 
   pageView(page: string, title?: string, properties: Record<string, any> = {}) {
@@ -86,8 +85,8 @@ class Analytics {
       properties: {
         ...properties,
         timestamp: Date.now(),
-        referrer: document.referrer
-      }
+        referrer: document.referrer,
+      },
     };
 
     this.track('page_view', pageViewData);
@@ -99,7 +98,7 @@ class Analytics {
         page_location: window.location.href,
         page_path: page,
         session_id: this.sessionId,
-        user_id: this.userId
+        user_id: this.userId,
       });
     }
   }
@@ -109,9 +108,9 @@ class Analytics {
       await fetch('/api/analytics/track', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(eventData)
+        body: JSON.stringify(eventData),
       });
     } catch (error) {
       // Silently fail - don't let analytics errors break the app
@@ -146,7 +145,7 @@ export const useAnalytics = () => {
   return {
     track,
     pageView,
-    setUserId
+    setUserId,
   };
 };
 
@@ -182,13 +181,13 @@ export const useErrorTracking = () => {
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
-        stack: event.error?.stack
+        stack: event.error?.stack,
       });
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       track('unhandled_promise_rejection', {
-        reason: event.reason?.toString() || 'Unknown rejection'
+        reason: event.reason?.toString() || 'Unknown rejection',
       });
     };
 
@@ -209,34 +208,34 @@ export const usePerformanceTracking = (): void => {
     // Track Core Web Vitals
     if ('PerformanceObserver' in window) {
       // Track Largest Contentful Paint (LCP)
-      const lcpObserver = new PerformanceObserver((entryList) => {
+      const lcpObserver = new PerformanceObserver(entryList => {
         const entries = entryList.getEntries();
         const lastEntry = entries[entries.length - 1];
         if (lastEntry) {
           track('core_web_vital', {
             metric: 'LCP',
             value: lastEntry.startTime,
-            url: window.location.href
+            url: window.location.href,
           });
         }
       });
 
       // Track First Input Delay (FID)
-      const fidObserver = new PerformanceObserver((entryList) => {
+      const fidObserver = new PerformanceObserver(entryList => {
         const entries = entryList.getEntries();
         entries.forEach(entry => {
           const perfEntry = entry as any; // PerformanceEventTiming has these properties
           track('core_web_vital', {
             metric: 'FID',
             value: perfEntry.processingStart - entry.startTime,
-            url: window.location.href
+            url: window.location.href,
           });
         });
       });
 
       // Track Cumulative Layout Shift (CLS)
       let clsValue = 0;
-      const clsObserver = new PerformanceObserver((entryList) => {
+      const clsObserver = new PerformanceObserver(entryList => {
         const entries = entryList.getEntries();
         entries.forEach(entry => {
           const layoutEntry = entry as any; // LayoutShift has these properties
@@ -259,7 +258,7 @@ export const usePerformanceTracking = (): void => {
         track('core_web_vital', {
           metric: 'CLS',
           value: clsValue,
-          url: window.location.href
+          url: window.location.href,
         });
       };
 
@@ -284,31 +283,40 @@ export const usePerformanceTracking = (): void => {
 export const useInteractionTracking = () => {
   const { track } = useAnalytics();
 
-  const trackClick = useCallback((element: string, properties?: Record<string, any>) => {
-    track('click', {
-      element,
-      ...properties
-    });
-  }, [track]);
+  const trackClick = useCallback(
+    (element: string, properties?: Record<string, any>) => {
+      track('click', {
+        element,
+        ...properties,
+      });
+    },
+    [track]
+  );
 
-  const trackFormSubmit = useCallback((form: string, properties?: Record<string, any>) => {
-    track('form_submit', {
-      form,
-      ...properties
-    });
-  }, [track]);
+  const trackFormSubmit = useCallback(
+    (form: string, properties?: Record<string, any>) => {
+      track('form_submit', {
+        form,
+        ...properties,
+      });
+    },
+    [track]
+  );
 
-  const trackSearch = useCallback((query: string, properties?: Record<string, any>) => {
-    track('search', {
-      query,
-      ...properties
-    });
-  }, [track]);
+  const trackSearch = useCallback(
+    (query: string, properties?: Record<string, any>) => {
+      track('search', {
+        query,
+        ...properties,
+      });
+    },
+    [track]
+  );
 
   return {
     trackClick,
     trackFormSubmit,
-    trackSearch
+    trackSearch,
   };
 };
 
@@ -316,24 +324,30 @@ export const useInteractionTracking = () => {
 export const useEcommerceTracking = () => {
   const { track } = useAnalytics();
 
-  const trackPurchase = useCallback((transactionId: string, items: any[], properties?: Record<string, any>) => {
-    track('purchase', {
-      transaction_id: transactionId,
-      items,
-      ...properties
-    });
-  }, [track]);
+  const trackPurchase = useCallback(
+    (transactionId: string, items: any[], properties?: Record<string, any>) => {
+      track('purchase', {
+        transaction_id: transactionId,
+        items,
+        ...properties,
+      });
+    },
+    [track]
+  );
 
-  const trackAddToCart = useCallback((item: any, properties?: Record<string, any>) => {
-    track('add_to_cart', {
-      item,
-      ...properties
-    });
-  }, [track]);
+  const trackAddToCart = useCallback(
+    (item: any, properties?: Record<string, any>) => {
+      track('add_to_cart', {
+        item,
+        ...properties,
+      });
+    },
+    [track]
+  );
 
   return {
     trackPurchase,
-    trackAddToCart
+    trackAddToCart,
   };
 };
 

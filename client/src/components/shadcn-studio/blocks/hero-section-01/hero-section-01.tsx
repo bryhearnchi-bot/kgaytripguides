@@ -32,12 +32,15 @@ const HeroSection = ({
   const formatTripDates = () => {
     if (!startDate || !endDate) return null;
 
-    // Parse dates (YYYY-MM-DD format)
-    const startParts = startDate.split('-');
+    // Parse dates (YYYY-MM-DD format) - extract just the date part if there's a timestamp
+    const startDateStr = startDate.split('T')[0];
+    const endDateStr = endDate.split('T')[0];
+
+    const startParts = startDateStr.split('-');
     const startYear = Number(startParts[0] ?? 2025);
     const startMonth = Number(startParts[1] ?? 1);
     const startDay = Number(startParts[2] ?? 1);
-    const endParts = endDate.split('-');
+    const endParts = endDateStr.split('-');
     const endYear = Number(endParts[0] ?? 2025);
     const endMonth = Number(endParts[1] ?? 1);
     const endDay = Number(endParts[2] ?? 1);
@@ -233,7 +236,6 @@ const HeroSection = ({
             </span>{' '}
             {remainingWords}
           </span>
-          {isHalloweenCruise && <span className="text-3xl">🎃</span>}
         </h1>
 
         {/* Trip Dates - Mobile */}
@@ -326,7 +328,6 @@ const HeroSection = ({
             </span>{' '}
             {remainingWords}
           </span>
-          {isHalloweenCruise && <span className="text-4xl sm:text-5xl lg:text-6xl">🎃</span>}
         </h1>
 
         {/* Trip Dates - Desktop/Tablet */}
