@@ -50,10 +50,9 @@ export const InfoSectionCard = memo<InfoSectionCardProps>(function InfoSectionCa
       {/* Content Area with Frosted Glass Effect */}
       <CardContent className="p-4 bg-gradient-to-br from-slate-900/20 via-slate-800/20 to-slate-900/20 backdrop-blur-sm">
         {section.content ? (
-          <div
-            className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: section.content }}
-          />
+          <div className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
+            {section.content}
+          </div>
         ) : (
           <p className="text-white/50 text-sm italic">No content available</p>
         )}
