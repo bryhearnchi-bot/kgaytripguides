@@ -570,6 +570,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 timeFormat={timeFormat}
                 onPartyClick={handlePartyClick}
                 tripStatus={tripStatus}
+                tripId={tripData?.trip?.id}
               />
             </TabsContent>
 

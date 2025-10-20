@@ -141,7 +141,12 @@ function TripCard({ trip }: { trip: Trip }) {
       </Link>
 
       <div className="p-5 flex-1 flex flex-col">
-        <h4 className="text-xl font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors">
+        <h4
+          className="font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors whitespace-nowrap"
+          style={{
+            fontSize: `${Math.max(0.7, Math.min(1.25, 25 / trip.name.length))}rem`,
+          }}
+        >
           {trip.name}
         </h4>
 
@@ -316,21 +321,31 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
             {/* Featured Content - Right Side */}
             <div className="p-6 flex flex-col justify-between">
               <div>
-                {/* Header with Charter Logo */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  {/* Trip Name */}
-                  <h3 className="text-2xl font-black text-white leading-tight flex-1">
-                    {currentTrip.name}
-                  </h3>
-                  {/* Charter Logo - 2x larger (h-12 instead of h-6) */}
+                {/* Header with Charter Logo on top (right-aligned), Trip Name below (left-aligned) */}
+                <div className="flex flex-col gap-3 mb-3">
+                  {/* Charter Logo - Right-aligned, conditional sizing based on company */}
                   {currentTrip.charterCompanyLogo && (
                     <img
                       src={currentTrip.charterCompanyLogo}
                       alt={currentTrip.charterCompanyName || 'Charter Company'}
-                      className="h-12 w-auto object-contain rounded shadow flex-shrink-0"
+                      className={`${
+                        currentTrip.charterCompanyName?.toLowerCase().includes('atlantis') ||
+                        currentTrip.charterCompanyName?.toLowerCase().includes('vakaya')
+                          ? 'h-6'
+                          : 'h-12'
+                      } w-auto object-contain rounded shadow flex-shrink-0 self-end`}
                       loading="lazy"
                     />
                   )}
+                  {/* Trip Name - Left-aligned, auto-sizing to fit one line */}
+                  <h3
+                    className="font-black text-white leading-tight whitespace-nowrap"
+                    style={{
+                      fontSize: `${Math.max(0.75, Math.min(1.5, 30 / currentTrip.name.length))}rem`,
+                    }}
+                  >
+                    {currentTrip.name}
+                  </h3>
                 </div>
 
                 {/* Description - smaller font, more lines */}

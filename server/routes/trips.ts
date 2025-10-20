@@ -1119,6 +1119,65 @@ export function registerTripRoutes(app: Express) {
     })
   );
 
+  // ============ PARTY THEMES ENDPOINTS ============
+
+  // Get party themes for a trip
+  app.get(
+    '/api/trips/:tripId/party-themes',
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const tripId = req.params.tripId;
+      if (!tripId) {
+        throw ApiError.badRequest('Trip ID is required');
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+
+      const { data: tripPartyThemes, error } = await supabaseAdmin
+        .from('trip_party_themes')
+        .select(
+          `
+          order_index,
+          party_themes (
+            id,
+            name,
+            long_description,
+            short_description,
+            costume_ideas,
+            image_url,
+            party_type
+          )
+        `
+        )
+        .eq('trip_id', tripId)
+        .order('order_index');
+
+      if (error) {
+        logger.error('Error fetching trip party themes:', error, {
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch party themes');
+      }
+
+      // Transform snake_case to camelCase
+      const transformedThemes = (tripPartyThemes || []).map((item: any) => {
+        const theme = item.party_themes;
+        return {
+          id: theme.id,
+          name: theme.name,
+          longDescription: theme.long_description,
+          shortDescription: theme.short_description,
+          costumeIdeas: theme.costume_ideas,
+          imageUrl: theme.image_url,
+          partyType: theme.party_type,
+          orderIndex: item.order_index,
+        };
+      });
+
+      return res.json(transformedThemes);
+    })
+  );
+
   // ============ TRIP INFO SECTIONS ============
 
   // Get complete trip info with all sections (public - excludes drafts, allows preview)
