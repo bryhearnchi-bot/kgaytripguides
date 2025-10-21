@@ -81,11 +81,16 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
       }
     }
 
-    // Use absolute URLs for iOS PWA support
-    const tripUrl = `/trip/${slug}`;
+    // Use absolute URLs for social sharing (required for og:image)
+    const siteUrl = process.env.SITE_URL || 'http://localhost:3001';
+    const tripUrl = `${siteUrl}/trip/${slug}`;
     const description =
       trip.description || `Join us for ${trip.name}${dateRange ? ` • ${dateRange}` : ''}`;
-    const imageUrl = trip.hero_image_url || '/images/default-trip-hero.jpg';
+
+    // Handle both absolute URLs (from Supabase) and relative URLs
+    const heroImage = trip.hero_image_url || '/images/default-trip-hero.jpg';
+    const imageUrl = heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}`;
+
     const shortName = trip.name.length > 12 ? trip.name.substring(0, 12) : trip.name;
 
     // Build meta tags to inject
@@ -94,19 +99,22 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     <title>${trip.name} | KGay Travel Guides</title>
     <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
 
-    <!-- iOS PWA meta tags - CRITICAL: Must be absolute URLs -->
-    <meta name="apple-mobile-web-app-start-url" content="${tripUrl}" />
+    <!-- iOS PWA meta tags -->
+    <meta name="apple-mobile-web-app-start-url" content="/trip/${slug}" />
     <meta name="apple-mobile-web-app-title" content="${shortName}" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-    <!-- Open Graph / Social Sharing -->
+    <!-- Open Graph / Social Sharing - MUST use absolute URLs -->
     <meta property="og:title" content="${trip.name}" />
     <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
     <meta property="og:image" content="${imageUrl}" />
     <meta property="og:url" content="${tripUrl}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="KGay Travel Guides" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter Card - MUST use absolute URLs -->
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${trip.name}" />
     <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
     <meta name="twitter:image" content="${imageUrl}" />
