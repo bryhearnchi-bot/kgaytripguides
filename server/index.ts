@@ -57,7 +57,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { registerRoutes } from './routes';
-import { setupVite, log } from './vite';
+import { setupVite, serveStatic, log } from './vite';
 import { securityHeaders, rateLimit } from './middleware/security';
 import { cdnHeaders } from './lib/cdn';
 
@@ -344,11 +344,8 @@ if (process.env.NODE_ENV === 'production') {
   if (app.get('env') === 'development') {
     await setupVite(app, server);
   } else {
-    // In production, add the fallback to index.html for client-side routing
-    const distPath = path.join(process.cwd(), 'dist', 'public');
-    app.use('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    // In production, use serveStatic which handles meta tag injection for trip pages
+    serveStatic(app);
   }
 
   const port = parseInt(process.env.PORT || '3001', 10);
