@@ -43,8 +43,12 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
         hero_image_url,
         start_date,
         end_date,
+        trip_type_id,
         charter_companies (
           name
+        ),
+        trip_types (
+          trip_type
         )
       `
       )
@@ -61,6 +65,7 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     const trip = {
       ...data,
       charter_company_name: (data as any).charter_companies?.name || null,
+      trip_type: (data as any).trip_types?.trip_type || null,
     };
 
     // Format dates for display
@@ -91,12 +96,17 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     const heroImage = trip.hero_image_url || '/images/default-trip-hero.jpg';
     const imageUrl = heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}`;
 
+    // Determine title suffix based on trip type
+    const tripTypeSuffix =
+      trip.trip_type === 'Resort' ? 'Trip Guide' : trip.trip_type === 'Cruise' ? 'Guide' : '';
+    const titleWithSuffix = tripTypeSuffix ? `${trip.name} ${tripTypeSuffix}` : trip.name;
+
     const shortName = trip.name.length > 12 ? trip.name.substring(0, 12) : trip.name;
 
     // Build meta tags to inject
     const metaTags = `
     <!-- Trip-specific meta tags (server-injected for iOS sharing) -->
-    <title>${trip.name} | KGay Travel Guides</title>
+    <title>${titleWithSuffix} | KGay Travel Guides</title>
     <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
 
     <!-- iOS PWA meta tags -->
@@ -106,7 +116,7 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <!-- Open Graph / Social Sharing - MUST use absolute URLs -->
-    <meta property="og:title" content="${trip.name}" />
+    <meta property="og:title" content="${titleWithSuffix}" />
     <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
     <meta property="og:image" content="${imageUrl}" />
     <meta property="og:url" content="${tripUrl}" />
@@ -115,7 +125,7 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
 
     <!-- Twitter Card - MUST use absolute URLs -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${trip.name}" />
+    <meta name="twitter:title" content="${titleWithSuffix}" />
     <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
     <meta name="twitter:image" content="${imageUrl}" />
 
