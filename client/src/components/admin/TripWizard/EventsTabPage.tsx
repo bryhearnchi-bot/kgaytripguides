@@ -165,22 +165,24 @@ export function EventsTabPage() {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
-  // Get event image with fallback to first talent's profile image
+  // Get event image with fallback logic
+  // Note: Backend already applies party theme fallback to imageUrl
   const getEventImage = (event: Event): string | null => {
-    // If event has an image, use it
+    // Priority 1: Event's image (or party theme image if no event image - applied by backend)
     if (event.imageUrl) {
       return event.imageUrl;
     }
 
-    // Otherwise, use the single talent's image if exactly one talent is assigned
+    // Priority 2: First talent's profile image (if any talent assigned)
     if (
       Array.isArray(event.talentIds) &&
-      event.talentIds.length === 1 &&
-      Array.isArray(event.talentImages)
+      event.talentIds.length > 0 &&
+      Array.isArray(event.talentImages) &&
+      event.talentImages.length > 0
     ) {
-      const [imageCandidate] = event.talentImages;
-      if (imageCandidate) {
-        return imageCandidate;
+      const [firstTalentImage] = event.talentImages;
+      if (firstTalentImage) {
+        return firstTalentImage;
       }
     }
 

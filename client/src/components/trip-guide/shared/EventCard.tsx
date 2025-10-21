@@ -61,10 +61,10 @@ export const EventCard = memo<EventCardProps>(function EventCard({
     }
   }, [showViewTypeModal, showArtistSelectModal, showEventDescriptionModal]);
 
-  // Memoize computed values
+  // Memoize computed values with fallback chain: event image → talent image → party theme image
   const eventImage = useMemo(
-    () => event.imageUrl || event.talent?.[0]?.profileImageUrl,
-    [event.imageUrl, event.talent]
+    () => event.imageUrl || event.talent?.[0]?.profileImageUrl || event.partyTheme?.imageUrl,
+    [event.imageUrl, event.talent, event.partyTheme]
   );
 
   const hasArtists = useMemo(() => event.talent && event.talent.length > 0, [event.talent]);

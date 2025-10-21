@@ -12,12 +12,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { OceanInput } from '@/components/ui/ocean-input';
 import { OceanTextarea } from '@/components/ui/ocean-textarea';
-import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
+import {
+  SearchableDropdown,
+  type SearchableDropdownItem,
+} from '@/components/ui/SearchableDropdown';
 import { TimePicker } from '@/components/ui/time-picker';
 import { TripDayDropdown } from './TripDayDropdown';
 import { VenueDropdown } from './VenueDropdown';
 import { TalentSelector } from './TalentSelector';
-import { PartyThemeSelector } from './PartyThemeSelector';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { api } from '@/lib/api-client';
 import { toast } from '@/hooks/use-toast';
@@ -115,6 +117,11 @@ export function EventFormModal({
 }: EventFormModalProps) {
   const [saving, setSaving] = useState(false);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+  const [partyThemes, setPartyThemes] = useState<
+    { id: number; name: string; shortDescription?: string }[]
+  >([]);
+  const [loadingEventTypes, setLoadingEventTypes] = useState(true);
+  const [loadingPartyThemes, setLoadingPartyThemes] = useState(true);
   const [formData, setFormData] = useState<EventFormData>({
     tripId,
     date: '',
@@ -129,9 +136,10 @@ export function EventFormModal({
     description: '',
   });
 
-  // Load event types
+  // Load event types and party themes
   useEffect(() => {
     fetchEventTypes();
+    fetchPartyThemes();
   }, []);
 
   // Populate form when editing
@@ -170,6 +178,7 @@ export function EventFormModal({
 
   const fetchEventTypes = async () => {
     try {
+      setLoadingEventTypes(true);
       const response = await api.get('/api/admin/event-types');
       const data = await response.json();
       setEventTypes(data);
@@ -179,6 +188,25 @@ export function EventFormModal({
         description: 'Failed to load event types',
         variant: 'destructive',
       });
+    } finally {
+      setLoadingEventTypes(false);
+    }
+  };
+
+  const fetchPartyThemes = async () => {
+    try {
+      setLoadingPartyThemes(true);
+      const response = await api.get('/api/admin/party-themes');
+      const data = await response.json();
+      setPartyThemes(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load party themes',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingPartyThemes(false);
     }
   };
 
@@ -213,14 +241,6 @@ export function EventFormModal({
       setSaving(false);
     }
   };
-
-  // Build event type dropdown options
-  const eventTypeOptions = eventTypes
-    .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map(type => ({
-      value: String(type.id),
-      label: type.name,
-    }));
 
   // Check if party theme should be visible
   const isPartyEvent =
@@ -262,13 +282,15 @@ export function EventFormModal({
           </div>
 
           {/* Event Type */}
-          <SingleDropDownNew
+          <SearchableDropdown
+            items={eventTypes as SearchableDropdownItem[]}
+            value={formData.eventTypeId || null}
+            onChange={eventTypeId => setFormData({ ...formData, eventTypeId: eventTypeId || 0 })}
+            loading={loadingEventTypes}
             label="Event Type"
             placeholder="Select event type"
+            searchPlaceholder="Search event types..."
             emptyMessage="No event types found"
-            options={eventTypeOptions}
-            value={String(formData.eventTypeId || '')}
-            onChange={val => setFormData({ ...formData, eventTypeId: parseInt(val) })}
             required
           />
 
@@ -317,10 +339,19 @@ export function EventFormModal({
 
           {/* Party Theme (only for party events) */}
           {isPartyEvent && (
-            <PartyThemeSelector
+            <SearchableDropdown
+              items={partyThemes as SearchableDropdownItem[]}
               value={formData.partyThemeId}
               onChange={themeId => setFormData({ ...formData, partyThemeId: themeId })}
+              loading={loadingPartyThemes}
               label="Party Theme (Optional)"
+              placeholder="Select a party theme"
+              searchPlaceholder="Search party themes..."
+              emptyMessage="No party themes found"
+              formatDisplay={item => ({
+                primary: item.name,
+                secondary: (item as { shortDescription?: string }).shortDescription,
+              })}
             />
           )}
 
