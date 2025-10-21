@@ -127,7 +127,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
   const isDragStarsCruise = slug === 'drag-stars-at-sea';
   const isHalloweenCruise = slug === 'halloween-carribean-cruise';
-  const hasTalent = isGreekCruise || isDragStarsCruise;
+  const hasTalent = isGreekCruise || isDragStarsCruise || isHalloweenCruise;
   const TALENT = hasTalent ? data?.TALENT || [] : [];
   const PARTY_THEMES = hasTalent ? data?.PARTY_THEMES || [] : [];
   const IMPORTANT_INFO = hasTalent ? data?.IMPORTANT_INFO || {} : {};
