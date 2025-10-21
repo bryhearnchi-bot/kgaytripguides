@@ -130,6 +130,19 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     // CRITICAL: Also remove any manifest links that might have been added by client-side code
     template = template.replace(/<link rel="manifest"[^>]*>/g, '');
 
+    // CRITICAL: Remove default Open Graph and Twitter meta tags to avoid conflicts
+    // Social media crawlers get confused when multiple og:image tags exist
+    template = template.replace(/<meta property="og:type"[^>]*>/g, '');
+    template = template.replace(/<meta property="og:title"[^>]*>/g, '');
+    template = template.replace(/<meta property="og:description"[^>]*>/g, '');
+    template = template.replace(/<meta property="og:image"[^>]*>/g, '');
+    template = template.replace(/<meta property="og:url"[^>]*>/g, '');
+    template = template.replace(/<meta property="og:site_name"[^>]*>/g, '');
+    template = template.replace(/<meta name="twitter:card"[^>]*>/g, '');
+    template = template.replace(/<meta name="twitter:title"[^>]*>/g, '');
+    template = template.replace(/<meta name="twitter:description"[^>]*>/g, '');
+    template = template.replace(/<meta name="twitter:image"[^>]*>/g, '');
+
     // Now inject the trip-specific manifest as the ONLY manifest
     const manifestLink = `<link rel="manifest" href="/api/trips/${slug}/manifest.json" />`;
 
