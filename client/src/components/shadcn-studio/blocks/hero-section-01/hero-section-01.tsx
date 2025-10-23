@@ -104,6 +104,17 @@ const HeroSection = ({
     'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg', // Hanoi
   ];
 
+  // Tahiti cruise images (from locations table)
+  const tahitiImages = [
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-17245acc-fa05-4232-8781-4bef3c34ab2d.jpg', // Papeete
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-f94c7de5-554e-4fc8-a9f1-1a2f0f96d592.jpg', // Moorea
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-08f630a0-be59-4a3f-8d57-966b2e0ff9ff.jpg', // Bora Bora
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-2caa2223-e8f8-4c8e-a3f0-7be8d00c7cdb.jpg', // Raiatea
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-60e72a89-fc00-4828-9582-5bdc1e99f31b.jpg', // Huahine
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-8d34661c-97b5-4748-8095-b5830ffa2c20.jpg', // Rangiroa
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg', // Fakarava
+  ];
+
   // Dragstar cruise artist images - all square with varying sizes
   const dragstarImages = [
     {
@@ -152,13 +163,16 @@ const HeroSection = ({
   const isHalloweenCruise = slug === 'halloween-carribean-cruise';
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
   const isHongKongCruise = slug === 'hong-kong-to-singapore-cruise-2025';
+  const isTahitiCruise = slug === 'new-years-tahiti-cruise-2025';
 
   // Select the appropriate image set
   const images = isHalloweenCruise
     ? halloweenImages
     : isHongKongCruise
       ? hongKongImages
-      : greekImages;
+      : isTahitiCruise
+        ? tahitiImages
+        : greekImages;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -537,6 +551,95 @@ const HeroSection = ({
                 src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg"
                 alt="Hanoi"
                 className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+            </>
+          ) : isTahitiCruise ? (
+            <>
+              {/* First set of 7 Tahiti images */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-17245acc-fa05-4232-8781-4bef3c34ab2d.jpg"
+                alt="Papeete"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-f94c7de5-554e-4fc8-a9f1-1a2f0f96d592.jpg"
+                alt="Moorea"
+                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-08f630a0-be59-4a3f-8d57-966b2e0ff9ff.jpg"
+                alt="Bora Bora"
+                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-2caa2223-e8f8-4c8e-a3f0-7be8d00c7cdb.jpg"
+                alt="Raiatea"
+                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-60e72a89-fc00-4828-9582-5bdc1e99f31b.jpg"
+                alt="Huahine"
+                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-8d34661c-97b5-4748-8095-b5830ffa2c20.jpg"
+                alt="Rangiroa"
+                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg"
+                alt="Fakarava"
+                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              {/* Duplicate set for seamless loop */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-17245acc-fa05-4232-8781-4bef3c34ab2d.jpg"
+                alt="Papeete"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-f94c7de5-554e-4fc8-a9f1-1a2f0f96d592.jpg"
+                alt="Moorea"
+                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-08f630a0-be59-4a3f-8d57-966b2e0ff9ff.jpg"
+                alt="Bora Bora"
+                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-2caa2223-e8f8-4c8e-a3f0-7be8d00c7cdb.jpg"
+                alt="Raiatea"
+                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-60e72a89-fc00-4828-9582-5bdc1e99f31b.jpg"
+                alt="Huahine"
+                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-8d34661c-97b5-4748-8095-b5830ffa2c20.jpg"
+                alt="Rangiroa"
+                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg"
+                alt="Fakarava"
+                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
                 loading="lazy"
               />
             </>
