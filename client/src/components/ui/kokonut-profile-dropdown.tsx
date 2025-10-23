@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import TimeFormatToggle from '@/components/TimeFormatToggle';
 
 interface Profile {
   name: string;
@@ -44,6 +45,7 @@ interface ProfileDropdownProps extends React.HTMLAttributes<HTMLDivElement> {
   onNavigate: (path: string) => void;
   onEditTrip?: () => void;
   showEditTrip?: boolean;
+  isAdminRoute?: boolean;
 }
 
 export default function KokonutProfileDropdown({
@@ -53,6 +55,7 @@ export default function KokonutProfileDropdown({
   onNavigate,
   onEditTrip,
   showEditTrip = false,
+  isAdminRoute = false,
   className,
   ...props
 }: ProfileDropdownProps) {
@@ -239,6 +242,16 @@ export default function KokonutProfileDropdown({
                     </button>
                   ))}
                 </div>
+
+                {/* Time Format Toggle - shows on non-admin pages */}
+                {!isAdminRoute && (
+                  <>
+                    <Separator className="bg-white/10" />
+                    <div className="p-2">
+                      <TimeFormatToggle variant="menu" />
+                    </div>
+                  </>
+                )}
 
                 <Separator className="bg-white/10" />
 

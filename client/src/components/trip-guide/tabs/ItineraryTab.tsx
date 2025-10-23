@@ -48,38 +48,47 @@ export const ItineraryTab = memo(function ItineraryTab({
     const isPreCruise = stop.day < 0;
     const isPostCruise = stop.day >= 100;
 
-    // Build port name with suffix
-    let portName = stop.port;
+    // Build port name with country (show country for non-US ports)
+    const isUSPort =
+      stop.country &&
+      (stop.country.toLowerCase() === 'united states' ||
+        stop.country.toLowerCase() === 'usa' ||
+        stop.country.toLowerCase() === 'us');
+
+    // Build base port name with country if applicable
+    const basePortName = stop.country && !isUSPort ? `${stop.port}, ${stop.country}` : stop.port;
+
+    let portName = basePortName;
     let arriveDepart = '';
     let allAboard = '';
 
     if (isPreCruise || isPostCruise) {
       // Pre-cruise and post-cruise: just port name, no times
-      portName = stop.port;
+      portName = basePortName;
       arriveDepart = '';
       allAboard = '';
     } else if (isEmbarkation) {
       // Embarkation: add suffix and show only depart time and all aboard
-      portName = `${stop.port} - Embarkation`;
+      portName = `${basePortName} - Embarkation`;
       arriveDepart = stop.depart && stop.depart !== '—' ? `Depart: ${stop.depart}` : '';
       allAboard = stop.allAboard || '';
     } else if (isDisembarkation) {
       // Disembarkation: add suffix and show only arrival time
-      portName = `${stop.port} - Disembarkation`;
+      portName = `${basePortName} - Disembarkation`;
       arriveDepart = stop.arrive && stop.arrive !== '—' ? `Arrive: ${stop.arrive}` : '';
     } else if (isOvernightArrival) {
       // Overnight arrival: add suffix, show only arrival time, no all aboard
-      portName = `${stop.port} - Overnight`;
+      portName = `${basePortName} - Overnight`;
       arriveDepart = stop.arrive && stop.arrive !== '—' ? `Arrive: ${stop.arrive}` : '';
       allAboard = '';
     } else if (isOvernightDeparture) {
       // Overnight departure: NO suffix, show depart time and all aboard
-      portName = stop.port;
+      portName = basePortName;
       arriveDepart = stop.depart && stop.depart !== '—' ? `Depart: ${stop.depart}` : '';
       allAboard = stop.allAboard || '';
     } else if (isFullDayOvernight) {
       // Full day overnight: add suffix, no times shown
-      portName = `${stop.port} - Overnight Full Day`;
+      portName = `${basePortName} - Overnight Full Day`;
       arriveDepart = '';
       allAboard = '';
     } else {

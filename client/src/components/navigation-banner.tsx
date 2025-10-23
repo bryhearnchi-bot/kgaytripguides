@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
 import { AddToHomeScreen } from '@/components/AddToHomeScreen';
+import TimeFormatToggle from '@/components/TimeFormatToggle';
 import { useState, useEffect } from 'react';
 
 export default function NavigationBanner() {
@@ -111,6 +112,9 @@ export default function NavigationBanner() {
           {/* Add to Home Screen button - shows for all users if not in standalone mode */}
           <AddToHomeScreen />
 
+          {/* Time Format Toggle - shows for non-logged-in users on non-admin pages */}
+          {!user && !isAdminRoute && <TimeFormatToggle variant="banner" />}
+
           {user && profile && (
             <KokonutProfileDropdown
               user={user}
@@ -119,6 +123,7 @@ export default function NavigationBanner() {
               onNavigate={setLocation}
               onEditTrip={handleEditTrip}
               showEditTrip={showEditTrip}
+              isAdminRoute={isAdminRoute}
               className="touch-manipulation"
             />
           )}

@@ -164,11 +164,20 @@ Include these critical rules in the planning document:
    - Upload to appropriate Supabase bucket
    - Use only Supabase Storage URLs in database
 
-3. **Trip Status**: Always set to Preview (ID: 5) initially
+3. **Image Priority System**: Understand location vs. itinerary images
+   - **Location images** (`locations.image_url`): DEFAULT image for a location across ALL trips
+   - **Itinerary images** (`itinerary.location_image_url`): OPTIONAL override for specific itinerary entry
+   - **Priority order**: Itinerary-specific image → Location default image → Empty
+   - **Use location images when**: Same image should appear for this port on all cruises
+   - **Use itinerary images when**: This specific cruise needs a different image for this port
+   - **Hero carousel**: Automatically uses images based on priority (itinerary first, then location)
+   - **Example**: Puerto Limon has a default rainforest image in `locations.image_url`, but for one specific cruise you want to show a beach image instead, so you set `itinerary.location_image_url` for that entry
+
+4. **Trip Status**: Always set to Preview (ID: 5) initially
    - Allows review before publishing
    - Change to Published (ID: 1) after verification
 
-4. **Database Field Naming**:
+5. **Database Field Naming**:
    - Database: snake_case (`start_date`, `hero_image_url`)
    - API/Frontend: camelCase (`startDate`, `heroImageUrl`)
 
@@ -250,7 +259,10 @@ const cruiseData = {
       departureTime: '23:59:00',
       activities: 'Embarkation',
       locationTypeId: 1, // 1=Embarkation, 2=Disembarkation, 3=Port, 4=Day at Sea, 11=Overnight Arrival, 12=Overnight Departure
-      imageUrl: '', // Optional itinerary-specific image
+      imageUrl: '', // OPTIONAL: Itinerary-specific image override
+      // Leave empty to use location's default image (locations.image_url)
+      // Set to override location image for THIS SPECIFIC itinerary entry only
+      // Example: Set this if you want a different image than other cruises visiting this port
     },
     // ... more itinerary entries
   ],
@@ -488,7 +500,7 @@ async function createItinerary(tripId: number, locationMap: Map<string, number>)
       departure_time: entry.departureTime,
       activities: entry.activities,
       location_type_id: entry.locationTypeId,
-      location_image_url: entry.imageUrl,
+      location_image_url: entry.imageUrl, // OPTIONAL: Overrides location.image_url if set
     });
 
     if (error) {
@@ -612,18 +624,50 @@ VALUES
 
 ## Phase 4: Hero Carousel Integration
 
+### ⚡ Automatic Dynamic Carousel (Recommended)
+
+**Good news!** The hero carousel now **automatically** uses images from your trip's itinerary data. You don't need to manually add hardcoded image arrays anymore!
+
+**How it works:**
+
+1. The carousel fetches itinerary data from the API
+2. Extracts images from each port (using the image priority system)
+3. Automatically displays them in the carousel
+4. Updates automatically when you change itinerary images
+
+**Image priority (same as itinerary tabs):**
+
+- ✅ First: Itinerary-specific image (`itinerary.location_image_url`)
+- ✅ Then: Location default image (`locations.image_url`)
+- ✅ Filters out: Empty images and sea days
+
+**What you need to do:**
+
+✅ **NOTHING!** Just ensure your locations have images (already done in import script)
+
+The carousel will automatically populate with port images based on the itinerary data.
+
+### 📝 Manual Carousel Override (Optional - Legacy Method)
+
+**Only use this if** you want to override the automatic dynamic images with a specific hardcoded set.
+
+This method is kept for backwards compatibility with older cruises but is **NOT recommended for new cruises**.
+
+<details>
+<summary>Click to expand legacy manual carousel instructions</summary>
+
 ### Step 4.1: Retrieve Port Image URLs
 
 Query the database to get all port image URLs:
 
 ```sql
 SELECT
-  l.name,
-  l.image_url
+  i.location_name,
+  COALESCE(i.location_image_url, l.image_url) as image_url
 FROM itinerary i
-JOIN locations l ON i.location_id = l.id
+LEFT JOIN locations l ON i.location_id = l.id
 WHERE i.trip_id = 76  -- Replace with your trip ID
-  AND l.image_url IS NOT NULL
+  AND (i.location_image_url IS NOT NULL OR l.image_url IS NOT NULL)
   AND i.location_type_id IN (1, 2, 3, 11, 12)  -- Ports only, not sea days
 ORDER BY i.day;
 ```
@@ -700,6 +744,10 @@ const images = isHalloweenCruise
 - Width should be ~1.33x to 1.5x the height for landscape images
 - Follow the pattern of existing cruises (Greek, Halloween, Hong Kong)
 
+</details>
+
+**Note:** The manual method above is legacy and not recommended. New cruises automatically use dynamic carousel images from the itinerary data.
+
 ---
 
 ## Phase 5: Verification
@@ -748,6 +796,23 @@ WHERE id IN (
   FROM itinerary
   WHERE trip_id = [TRIP_ID]
 );
+
+-- Verify image priority system (itinerary images override location images)
+SELECT
+  i.day,
+  i.location_name,
+  i.location_image_url as itinerary_image,
+  l.image_url as location_image,
+  COALESCE(i.location_image_url, l.image_url) as final_image_used,
+  CASE
+    WHEN i.location_image_url IS NOT NULL THEN 'Using itinerary-specific image'
+    WHEN l.image_url IS NOT NULL THEN 'Using location default image'
+    ELSE 'No image available'
+  END as image_source
+FROM itinerary i
+LEFT JOIN locations l ON i.location_id = l.id
+WHERE i.trip_id = [TRIP_ID]
+ORDER BY i.day;
 ```
 
 ### Step 5.2: Visual Verification
@@ -765,7 +830,9 @@ WHERE id IN (
    ```
 
 3. **Check these elements:**
-   - [ ] Hero carousel displays port images
+   - [ ] Hero carousel displays port images **automatically** from itinerary
+   - [ ] Carousel images match the itinerary tab images
+   - [ ] Image priority works correctly (itinerary-specific images override location defaults)
    - [ ] Trip dates are correct (no timezone shifts)
    - [ ] Itinerary shows all days correctly
    - [ ] Port names and times are accurate
@@ -1083,7 +1150,9 @@ Before marking a cruise import as complete:
 - [ ] Ship venues created (using ship_venues table)
 - [ ] Ship amenities created
 - [ ] Locations created with Supabase image URLs
-- [ ] Hero carousel updated with port images
+- [ ] Image priority system verified (itinerary images override location images)
+- [ ] Hero carousel displays automatically (no manual code needed - see Phase 4)
+- [ ] Carousel images match itinerary tab images
 - [ ] NO timezone conversions anywhere
 - [ ] Dates stored as timestamp strings
 - [ ] Database verification queries run successfully

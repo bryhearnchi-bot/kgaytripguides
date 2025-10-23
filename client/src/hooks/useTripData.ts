@@ -134,6 +134,7 @@ export function transformTripData(data: TripData) {
     rawDate: stop.date, // Keep raw date for component date operations
     day: stop.day, // Day number for itinerary display
     port: stop.portName || (stop as any).locationName, // CRITICAL: Use portName (location_name from database) FIRST - this is the user-controlled text field
+    country: stop.country || (stop as any).location?.country || null, // Country from locations table
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
