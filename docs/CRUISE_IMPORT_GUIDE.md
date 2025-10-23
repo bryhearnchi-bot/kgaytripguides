@@ -11,8 +11,9 @@ This guide documents the complete process for importing a new cruise into the KG
 5. [Phase 3: Execution and Troubleshooting](#phase-3-execution-and-troubleshooting)
 6. [Phase 4: Hero Carousel Integration](#phase-4-hero-carousel-integration)
 7. [Phase 5: Verification](#phase-5-verification)
-8. [Common Issues and Solutions](#common-issues-and-solutions)
-9. [Database Schema Reference](#database-schema-reference)
+8. [Phase 6: Git Deployment](#phase-6-git-deployment)
+9. [Common Issues and Solutions](#common-issues-and-solutions)
+10. [Database Schema Reference](#database-schema-reference)
 
 ---
 
@@ -775,6 +776,95 @@ WHERE id IN (
 
 ---
 
+## Phase 6: Git Deployment
+
+### Step 6.1: Stage and Commit Changes
+
+After verifying the cruise import is working correctly, commit your changes:
+
+```bash
+# Check what files have changed
+git status
+
+# Stage the relevant files
+git add client/src/components/shadcn-studio/blocks/hero-section-01/hero-section-01.tsx
+git add "docs/Add [Cruise Name].md"
+git add scripts/import-[cruise-name].ts
+
+# Commit with descriptive message
+git commit -m "feat: Add [Cruise Name] ([Month Year])
+
+Add new [X]-night [region] cruise from [port] aboard [ship name] visiting [key ports].
+
+- Add comprehensive planning document with all cruise details
+- Create automated import script for cruise data
+- Import [X] locations with Supabase-hosted images
+- Create [X]-day itinerary with proper dates and times
+- Link ship venues and amenities to [ship name]
+- Update hero carousel with [X] port images
+- Set trip status to Preview (ID: 5) for review
+
+Trip ID: [TRIP_ID]
+Slug: [cruise-slug]
+Database: All images stored in Supabase Storage
+Status: Preview - Ready for verification
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+### Step 6.2: Push to ui-redesign Branch
+
+Push your committed changes to the ui-redesign branch:
+
+```bash
+# Ensure you're on ui-redesign branch
+git branch  # Should show * ui-redesign
+
+# Push to remote ui-redesign branch
+git push origin ui-redesign
+```
+
+### Step 6.3: Merge to main Branch
+
+After successful push to ui-redesign, merge to main:
+
+```bash
+# Checkout main branch
+git checkout main
+
+# Merge ui-redesign into main
+git merge ui-redesign
+
+# Push to remote main branch
+git push origin main
+
+# Switch back to ui-redesign for continued development
+git checkout ui-redesign
+```
+
+### Step 6.4: Verify Deployment
+
+1. **Check GitHub:**
+   - Verify commits appear on both ui-redesign and main branches
+   - Ensure no merge conflicts occurred
+
+2. **Verify Production (if auto-deployed):**
+   - Wait for deployment pipeline to complete
+   - Visit production site and verify cruise appears
+   - Test the cruise page in production
+
+**IMPORTANT NOTES:**
+
+- ✅ **ALWAYS push to ui-redesign first** - This is the development branch
+- ✅ **ALWAYS merge to main after ui-redesign** - Keeps branches in sync
+- ✅ **Verify in browser before pushing** - Catch issues locally first
+- ❌ **NEVER push directly to main** - Always go through ui-redesign first
+- ❌ **NEVER force push** - This can cause data loss
+
+---
+
 ## Common Issues and Solutions
 
 ### Issue 1: Dates Are Off by One Day
@@ -999,16 +1089,22 @@ Before marking a cruise import as complete:
 - [ ] Database verification queries run successfully
 - [ ] Visual verification completed in browser
 - [ ] Trip displays correctly at /trip/[slug]
-- [ ] Committed to ui-redesign branch
-- [ ] Merged to main branch
+- [ ] Committed to ui-redesign branch (see Phase 6)
+- [ ] Pushed to ui-redesign branch (see Phase 6)
+- [ ] Merged to main branch (see Phase 6)
+- [ ] Pushed to main branch (see Phase 6)
 
 ---
 
 ## Version History
 
+- **v1.1.0** (2025-10-22): Added Phase 6 for Git Deployment workflow
+  - Added detailed git workflow for pushing to ui-redesign and main
+  - Updated checklist to include push steps
+  - Added deployment verification steps
 - **v1.0.0** (2025-01-22): Initial guide based on Tahiti cruise import process
-- Created by: Claude Code AI
-- Based on: New Year's Tahiti Cruise import (Trip ID: 76)
+  - Created by: Claude Code AI
+  - Based on: New Year's Tahiti Cruise import (Trip ID: 76)
 
 ---
 
