@@ -95,7 +95,7 @@ function TripCard({ trip }: { trip: Trip }) {
               </span>
             </div>
           )}
-          {trip.status === 'upcoming' && daysUntilStart > 0 && daysUntilStart <= 30 && (
+          {trip.status === 'upcoming' && daysUntilStart > 0 && (
             <div className={`absolute ${trip.charterCompanyLogo ? 'bottom-3' : 'top-3'} right-3`}>
               <span className="px-3 py-1 bg-blue-400/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full border border-white/30">
                 {daysUntilStart} {daysUntilStart === 1 ? 'day' : 'days'} away
