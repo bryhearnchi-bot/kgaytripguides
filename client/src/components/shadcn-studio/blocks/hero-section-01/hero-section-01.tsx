@@ -115,6 +115,15 @@ const HeroSection = ({
     'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg', // Fakarava
   ];
 
+  // Tropical Americas cruise images (from locations table)
+  const tropicalAmericasImages = [
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-d2a6b93e-d1e9-4154-ab2e-f0fec5cc3645.jpg', // Costa Maya
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-7231eca8-1549-40be-9326-2509647262bd.jpg', // Puerto Limon
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-9fcc43a7-2816-437e-8183-e20cbb2b456f.jpg', // Colon
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-06d21593-7a21-4225-b73f-3974bd6895ce.jpg', // Cartagena
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-92dbb981-c39f-4061-b664-511c42bd4276.jpg', // Oranjestad
+  ];
+
   // Dragstar cruise artist images - all square with varying sizes
   const dragstarImages = [
     {
@@ -164,6 +173,7 @@ const HeroSection = ({
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
   const isHongKongCruise = slug === 'hong-kong-to-singapore-cruise-2025';
   const isTahitiCruise = slug === 'new-years-tahiti-cruise-2025';
+  const isTropicalAmericasCruise = slug === 'tropical-americas-2026';
 
   // Select the appropriate image set
   const images = isHalloweenCruise
@@ -172,7 +182,9 @@ const HeroSection = ({
       ? hongKongImages
       : isTahitiCruise
         ? tahitiImages
-        : greekImages;
+        : isTropicalAmericasCruise
+          ? tropicalAmericasImages
+          : greekImages;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -640,6 +652,71 @@ const HeroSection = ({
                 src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg"
                 alt="Fakarava"
                 className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+            </>
+          ) : isTropicalAmericasCruise ? (
+            <>
+              {/* First set of 5 Tropical Americas images */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-d2a6b93e-d1e9-4154-ab2e-f0fec5cc3645.jpg"
+                alt="Costa Maya"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-7231eca8-1549-40be-9326-2509647262bd.jpg"
+                alt="Puerto Limon"
+                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-9fcc43a7-2816-437e-8183-e20cbb2b456f.jpg"
+                alt="Colon"
+                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-06d21593-7a21-4225-b73f-3974bd6895ce.jpg"
+                alt="Cartagena"
+                className="h-[12.6rem] w-[16.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-92dbb981-c39f-4061-b664-511c42bd4276.jpg"
+                alt="Oranjestad"
+                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              {/* Duplicate set for seamless loop */}
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-d2a6b93e-d1e9-4154-ab2e-f0fec5cc3645.jpg"
+                alt="Costa Maya"
+                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-7231eca8-1549-40be-9326-2509647262bd.jpg"
+                alt="Puerto Limon"
+                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-9fcc43a7-2816-437e-8183-e20cbb2b456f.jpg"
+                alt="Colon"
+                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-06d21593-7a21-4225-b73f-3974bd6895ce.jpg"
+                alt="Cartagena"
+                className="h-[12.6rem] w-[16.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
+                loading="lazy"
+              />
+              <img
+                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-92dbb981-c39f-4061-b664-511c42bd4276.jpg"
+                alt="Oranjestad"
+                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
                 loading="lazy"
               />
             </>
