@@ -38,7 +38,8 @@ export interface TripData {
     arrivalTime: string | null;
     departureTime: string | null;
     allAboardTime?: string | null;
-    portImageUrl: string | null;
+    portImageUrl: string | null; // Deprecated - use imageUrl instead
+    imageUrl: string | null; // NEW: Combined field (itinerary image OR location image)
     description: string | null;
     highlights?: any;
     orderIndex: number;
@@ -136,8 +137,14 @@ export function transformTripData(data: TripData) {
     arrive: stop.arrivalTime || '—',
     depart: stop.departureTime || '—',
     allAboard: stop.allAboardTime,
+    // CRITICAL: Use imageUrl from API (which prioritizes itinerary image over location image)
+    // Fallback to deprecated portImageUrl for backwards compatibility
     imageUrl:
-      (stop as any).location?.imageUrl || (stop as any).location?.image_url || stop.portImageUrl, // Use location.imageUrl if available
+      stop.imageUrl ||
+      stop.portImageUrl ||
+      (stop as any).location?.imageUrl ||
+      (stop as any).location?.image_url ||
+      '',
     // CRITICAL: Use itinerary description FIRST, then fallback to location description
     description: stop.description || (stop as any).location?.description || null,
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available

@@ -2,6 +2,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 
+interface ItineraryImage {
+  imageUrl?: string;
+  locationName?: string;
+  port?: string;
+}
+
 interface HeroSectionProps {
   tripName?: string;
   tripDescription?: string;
@@ -11,6 +17,7 @@ interface HeroSectionProps {
   slug?: string;
   startDate?: string;
   endDate?: string;
+  itinerary?: ItineraryImage[]; // NEW: Dynamic itinerary images
 }
 
 const HeroSection = ({
@@ -22,6 +29,7 @@ const HeroSection = ({
   slug = '',
   startDate,
   endDate,
+  itinerary = [], // NEW: Accept itinerary prop
 }: HeroSectionProps) => {
   // Split trip name into words
   const words = tripName.split(' ');
@@ -175,16 +183,26 @@ const HeroSection = ({
   const isTahitiCruise = slug === 'new-years-tahiti-cruise-2025';
   const isTropicalAmericasCruise = slug === 'tropical-americas-2026';
 
+  // Extract images from itinerary (prioritize itinerary-specific images)
+  // Filter out entries without images and entries that are just sea days
+  const dynamicImages = itinerary
+    .filter(item => item.imageUrl && item.imageUrl.trim() !== '')
+    .map(item => item.imageUrl!);
+
   // Select the appropriate image set
-  const images = isHalloweenCruise
-    ? halloweenImages
-    : isHongKongCruise
-      ? hongKongImages
-      : isTahitiCruise
-        ? tahitiImages
-        : isTropicalAmericasCruise
-          ? tropicalAmericasImages
-          : greekImages;
+  // Priority: 1) Dynamic itinerary images, 2) Hardcoded cruise-specific images
+  const images =
+    dynamicImages.length > 0
+      ? dynamicImages
+      : isHalloweenCruise
+        ? halloweenImages
+        : isHongKongCruise
+          ? hongKongImages
+          : isTahitiCruise
+            ? tahitiImages
+            : isTropicalAmericasCruise
+              ? tropicalAmericasImages
+              : greekImages;
 
   useEffect(() => {
     if (scrollRef.current) {

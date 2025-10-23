@@ -265,9 +265,10 @@ export function registerTripRoutes(app: Express) {
             .eq('trip_id', trip.id);
 
           // Get itinerary entries (for cruise trips)
+          // Join with locations to get location image as fallback
           const { data: rawItineraryData } = await supabaseAdmin
             .from('itinerary')
-            .select('*')
+            .select('*, locations(image_url)')
             .eq('trip_id', trip.id)
             .order('day', { ascending: true });
 
@@ -283,6 +284,9 @@ export function registerTripRoutes(app: Express) {
               formattedDate = `${year}-${month}-${day}`;
             }
 
+            // Use itinerary-specific image if available, otherwise use location image
+            const imageUrl = item.location_image_url || item.locations?.image_url || '';
+
             const transformed = {
               dayNumber: item.day,
               date: formattedDate,
@@ -292,7 +296,7 @@ export function registerTripRoutes(app: Express) {
               arrivalTime: item.arrival_time,
               departureTime: item.departure_time,
               allAboardTime: item.all_aboard_time,
-              imageUrl: item.location_image_url,
+              imageUrl: imageUrl,
               description: item.description,
             };
 
