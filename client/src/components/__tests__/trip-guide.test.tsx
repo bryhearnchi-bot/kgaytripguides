@@ -20,30 +20,34 @@ vi.mock('../../hooks/useTripData', () => ({
       imageUrl: stop.portImageUrl,
       description: stop.description,
     })),
-    DAILY: [{
-      key: '2025-10-12',
-      items: data.events.map((event: any) => ({
-        time: event.time,
-        title: event.title,
-        type: event.type,
-        venue: event.venue,
-        description: event.description,
-        imageUrl: event.imageUrl,
-        talent: event.talentIds ? data.talent.filter((t: any) => event.talentIds.includes(t.id)) : []
-      }))
-    }],
+    DAILY: [
+      {
+        key: '2025-10-12',
+        items: data.events.map((event: any) => ({
+          time: event.time,
+          title: event.title,
+          type: event.type,
+          venue: event.venue,
+          description: event.description,
+          imageUrl: event.imageUrl,
+          talent: event.talentIds
+            ? data.talent.filter((t: any) => event.talentIds.includes(t.id))
+            : [],
+        })),
+      },
+    ],
     TALENT: data.talent.map((t: any) => ({
       name: t.name,
       bio: t.bio,
       cat: t.category,
       img: t.profileImageUrl,
       knownFor: t.category,
-      social: t.social
+      social: t.social,
     })),
     PARTY_THEMES: [],
     IMPORTANT_INFO: {},
-    TRIP_INFO: {}
-  }))
+    TRIP_INFO: {},
+  })),
 }));
 
 // Mock framer-motion to avoid animation issues in tests
@@ -79,6 +83,7 @@ const mockTripData: TripData = {
       departureTime: '18:00',
       allAboardTime: '17:00',
       portImageUrl: 'https://example.com/athens.jpg',
+      imageUrl: 'https://example.com/athens.jpg',
       description: 'Explore the historic city of Athens',
       orderIndex: 1,
     },

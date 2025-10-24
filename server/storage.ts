@@ -661,11 +661,16 @@ export class TripInfoStorage implements ITripInfoStorage {
         location:locations(
           id,
           name,
+          display_name,
           country,
           image_url,
           description,
           top_attractions,
           top_lgbt_venues
+        ),
+        location_type:location_types(
+          id,
+          type
         )
       `
       )
@@ -700,14 +705,14 @@ export class TripInfoStorage implements ITripInfoStorage {
         if (!attractionsMap[attraction.location_id]) {
           attractionsMap[attraction.location_id] = [];
         }
-        attractionsMap[attraction.location_id].push(attraction);
+        attractionsMap[attraction.location_id]!.push(attraction);
       });
 
       (venuesData || []).forEach((venue: any) => {
         if (!venuesMap[venue.location_id]) {
           venuesMap[venue.location_id] = [];
         }
-        venuesMap[venue.location_id].push(venue);
+        venuesMap[venue.location_id]!.push(venue);
       });
     }
 
@@ -749,19 +754,23 @@ export class TripInfoStorage implements ITripInfoStorage {
         tripId: item.trip_id,
         date: item.date,
         day: item.day,
-        locationName: item.location_name,
-        portName: item.location_name, // Keep for backward compatibility
+        locationName: item.location?.display_name || item.location?.name || item.location_name,
+        portName: item.location?.display_name || item.location?.name || item.location_name, // Keep for backward compatibility
         country: item.location?.country || null,
         arrivalTime: item.arrival_time,
         departureTime: item.departure_time,
         allAboardTime: item.all_aboard_time,
         portImageUrl: item.location_image_url,
+        imageUrl: item.location_image_url || item.location?.image_url || null, // Priority: itinerary image, then location image
+        itineraryImageUrl: item.location_image_url || null, // Itinerary-specific image for carousel logic
+        locationImageUrl: item.location?.image_url || null, // Location fallback image for carousel logic
         description: item.description,
         highlights: item.highlights,
         orderIndex: item.order_index,
         segment: item.segment,
         locationId: item.location_id,
         locationTypeId: item.location_type_id,
+        locationTypeName: item.location_type?.type || null, // Location type name (Embarkation, Port, Sea Day, etc.)
         location: item.location
           ? {
               id: item.location.id,

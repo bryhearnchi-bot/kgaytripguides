@@ -40,12 +40,15 @@ export interface TripData {
     allAboardTime?: string | null;
     portImageUrl: string | null; // Deprecated - use imageUrl instead
     imageUrl: string | null; // NEW: Combined field (itinerary image OR location image)
+    itineraryImageUrl?: string | null; // Itinerary-specific image for carousel logic
+    locationImageUrl?: string | null; // Location fallback image for carousel logic
     description: string | null;
     highlights?: any;
     orderIndex: number;
     segment?: string;
     locationId?: number | null;
     locationTypeId?: number | null;
+    locationTypeName?: string | null; // Location type name (Embarkation, Port, Sea Day, etc.)
   }>;
   scheduleEntries?: Array<{
     id: number;
@@ -146,6 +149,8 @@ export function transformTripData(data: TripData) {
       (stop as any).location?.imageUrl ||
       (stop as any).location?.image_url ||
       '',
+    itineraryImageUrl: stop.itineraryImageUrl, // Itinerary-specific image from API
+    locationImageUrl: stop.locationImageUrl, // Location fallback image from API
     // CRITICAL: Use itinerary description FIRST, then fallback to location description
     description: stop.description || (stop as any).location?.description || null,
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
@@ -155,6 +160,7 @@ export function transformTripData(data: TripData) {
     lgbtVenues: (stop as any).location?.lgbtVenues || [], // Location LGBT venues from junction table
     locationId: (stop as any).location?.id, // Location ID for reference
     locationTypeId: stop.locationTypeId, // Location type ID for embarkation/disembarkation logic
+    locationTypeName: stop.locationTypeName, // Location type name (Embarkation, Port, Sea Day, etc.)
     segment: stop.segment, // Segment for determining cruise phase
     portDetails: (stop as any).location, // Include full location details (renamed from port)
   }));

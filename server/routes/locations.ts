@@ -83,6 +83,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedResults = results.map((location: any) => ({
         id: location.id,
         name: location.name,
+        displayName: location.display_name,
         location: location.location,
         country: location.country,
         city: location.city,
@@ -129,6 +130,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedLocation = {
         id: location.id,
         name: location.name,
+        displayName: location.display_name,
         location: location.location,
         country: location.country,
         city: location.city,
@@ -167,6 +169,7 @@ export function registerLocationRoutes(app: Express) {
       // Prepare location data with proper field names
       const locationData = {
         name: req.body.name,
+        display_name: req.body.displayName || null,
         location: req.body.location || null,
         country: req.body.country,
         city: req.body.city || null,
@@ -206,6 +209,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedLocation = {
         id: location.id,
         name: location.name,
+        displayName: location.display_name,
         location: location.location,
         country: location.country,
         city: location.city,
@@ -240,6 +244,8 @@ export function registerLocationRoutes(app: Express) {
       // Prepare update data with proper field names
       const updateData: any = {};
       if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.displayName !== undefined)
+        updateData.display_name = req.body.displayName || null;
       if (req.body.location !== undefined) updateData.location = req.body.location || null;
       if (req.body.country !== undefined) updateData.country = req.body.country;
       if (req.body.city !== undefined) updateData.city = req.body.city || null;
@@ -278,6 +284,7 @@ export function registerLocationRoutes(app: Express) {
       const transformedLocation = {
         id: location.id,
         name: location.name,
+        displayName: location.display_name,
         location: location.location,
         country: location.country,
         city: location.city,

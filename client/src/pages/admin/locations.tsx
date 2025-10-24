@@ -20,6 +20,7 @@ import { LocationLGBTVenuesModal } from '@/components/admin/LocationLGBTVenuesMo
 interface Location {
   id?: number;
   name: string;
+  displayName?: string;
   location?: string;
   country: string;
   city?: string;
@@ -388,6 +389,20 @@ export default function LocationsManagement() {
             required
             className="bg-white/5 border-white/10 text-white"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="displayName" className="text-white/80">
+            Display Name
+          </Label>
+          <Input
+            id="displayName"
+            value={formData.displayName || ''}
+            onChange={e => setFormData({ ...formData, displayName: e.target.value })}
+            className="bg-white/5 border-white/10 text-white"
+            placeholder="Optional: Override display name"
+          />
+          <p className="text-xs text-white/50">Leave empty to use the location name</p>
         </div>
 
         <div className="space-y-2">

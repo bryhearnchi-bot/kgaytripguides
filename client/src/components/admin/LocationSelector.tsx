@@ -89,6 +89,7 @@ const scrollbarStyles = `
 interface Location {
   id: number;
   name: string;
+  displayName?: string;
   city?: string;
   stateProvince?: string;
   country: string;

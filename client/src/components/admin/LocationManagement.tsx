@@ -19,6 +19,7 @@ import { LocationLGBTVenuesPreview } from './LocationLGBTVenuesPreview';
 interface Location {
   id?: number;
   name: string;
+  displayName?: string;
   country: string;
   description?: string;
   imageUrl?: string;
@@ -370,6 +371,17 @@ export default function LocationManagement({
             required
             placeholder="Enter location name"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="displayName">Display Name</Label>
+          <Input
+            id="displayName"
+            value={formData.displayName || ''}
+            onChange={e => setFormData({ ...formData, displayName: e.target.value })}
+            placeholder="Optional: Override display name"
+          />
+          <p className="text-xs text-white/50">Leave empty to use the location name</p>
         </div>
 
         <div className="space-y-2">

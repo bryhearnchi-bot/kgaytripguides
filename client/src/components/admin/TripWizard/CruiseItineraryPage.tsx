@@ -129,30 +129,48 @@ export function CruiseItineraryPage() {
     });
   };
 
-  const handleLocationChange = async (index: number, locationId: number | null) => {
-    // Update itinerary entry with location ID and fetch location name
-    if (locationId === null) {
+  const handleLocationChange = async (
+    index: number,
+    locationId: number | null,
+    locationName?: string | null
+  ) => {
+    // If locationId is null but we have a custom name, use the custom name
+    if (locationId === null && locationName) {
+      updateItineraryEntry(index, { locationId: undefined, locationName: locationName });
+      return;
+    }
+
+    // If both are null, clear the field
+    if (locationId === null && !locationName) {
       updateItineraryEntry(index, { locationId: undefined, locationName: '' });
       return;
     }
 
-    // Fetch location name from API
-    try {
-      const response = await api.get(`/api/locations/${locationId}`);
-      if (response.ok) {
-        const location = await response.json();
-        // Update both locationId and locationName
+    // If we have a locationId, fetch the location name from API
+    if (locationId !== null) {
+      try {
+        const response = await api.get(`/api/locations/${locationId}`);
+        if (response.ok) {
+          const location = await response.json();
+          // Update both locationId and locationName
+          updateItineraryEntry(index, {
+            locationId: locationId,
+            locationName: location.name || '',
+          });
+        } else {
+          // Fallback: use provided name or just update locationId
+          updateItineraryEntry(index, {
+            locationId: locationId,
+            locationName: locationName || '',
+          });
+        }
+      } catch (error) {
+        // Fallback: use provided name or just update locationId
         updateItineraryEntry(index, {
           locationId: locationId,
-          locationName: location.name || '',
+          locationName: locationName || '',
         });
-      } else {
-        // Fallback: just update locationId if fetch fails
-        updateItineraryEntry(index, { locationId: locationId });
       }
-    } catch (error) {
-      // Fallback: just update locationId if fetch fails
-      updateItineraryEntry(index, { locationId: locationId });
     }
   };
 
@@ -327,9 +345,12 @@ export function CruiseItineraryPage() {
                 <LocationSelector
                   label="Port/Location"
                   selectedId={entry.locationId ?? null}
-                  onSelectionChange={locationId => handleLocationChange(index, locationId)}
+                  selectedName={entry.locationName ?? null}
+                  onSelectionChange={(locationId, locationName) =>
+                    handleLocationChange(index, locationId, locationName)
+                  }
                   placeholder="Select port or location..."
-                  required
+                  required={false}
                   wizardMode={true}
                 />
 

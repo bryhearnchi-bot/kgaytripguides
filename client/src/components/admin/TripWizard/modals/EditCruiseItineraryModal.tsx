@@ -122,10 +122,18 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
     });
   };
 
-  const handleLocationChange = (index: number, locationId: number | null) => {
+  const handleLocationChange = (
+    index: number,
+    locationId: number | null,
+    locationName?: string | null
+  ) => {
     setFormData(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], locationId: locationId ?? undefined };
+      updated[index] = {
+        ...updated[index],
+        locationId: locationId ?? undefined,
+        locationName: locationName || '',
+      };
       return updated;
     });
   };
@@ -323,11 +331,12 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
                           <LocationSelector
                             label="Port/Location"
                             selectedId={entry.locationId ?? null}
-                            onSelectionChange={locationId =>
-                              handleLocationChange(index, locationId)
+                            selectedName={entry.locationName ?? null}
+                            onSelectionChange={(locationId, locationName) =>
+                              handleLocationChange(index, locationId, locationName)
                             }
                             placeholder="Select port or location..."
-                            required
+                            required={false}
                             wizardMode={true}
                           />
 

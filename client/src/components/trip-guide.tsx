@@ -404,7 +404,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
           slug={slug}
           startDate={tripData?.trip?.startDate}
           endDate={tripData?.trip?.endDate}
-          itinerary={tripData?.itinerary}
+          itinerary={data?.ITINERARY || []}
         />
 
         {/* Preview Mode Banner */}

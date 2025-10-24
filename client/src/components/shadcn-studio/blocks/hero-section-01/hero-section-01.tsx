@@ -6,6 +6,9 @@ interface ItineraryImage {
   imageUrl?: string;
   locationName?: string;
   port?: string;
+  locationTypeName?: string;
+  itineraryImageUrl?: string;
+  locationImageUrl?: string;
 }
 
 interface HeroSectionProps {
@@ -76,61 +79,104 @@ const HeroSection = ({
 
   const tripDates = formatTripDates();
 
+  /**
+   * Build carousel images dynamically based on trip type and itinerary data
+   *
+   * For Cruise Trips:
+   * 1. Collect itinerary images from port stops (Embarkation, Disembarkation, Port, Overnight types)
+   * 2. If < 6 images, add location fallback images for ports without itinerary images
+   * 3. If still < 6, add BOTH images for ports that have both itinerary + location images
+   * 4. If still < 6, add sea day images as last resort
+   *
+   * For Resort Trips:
+   * 1. Collect schedule images only (no location fallbacks)
+   *
+   * @param itinerary - Array of itinerary/schedule items
+   * @param tripType - 'cruise' or 'resort'
+   * @returns Array of image URLs (minimum 6 for carousel)
+   */
+  const buildCarouselImages = (
+    itinerary: ItineraryImage[],
+    tripType: 'cruise' | 'resort' | null
+  ): string[] => {
+    const MIN_IMAGES = 6;
+    const images: string[] = [];
+
+    if (tripType === 'resort') {
+      // Resort trips: Only use schedule images (no location fallbacks per user requirement)
+      itinerary.forEach(item => {
+        if (item.imageUrl && item.imageUrl.trim() !== '') {
+          images.push(item.imageUrl);
+        }
+      });
+      return images;
+    }
+
+    // Cruise trips: Implement priority logic
+
+    // Separate port stops from sea days
+    const portStops = itinerary.filter(item => {
+      const typeName = item.locationTypeName?.toLowerCase() || '';
+      return !typeName.includes('sea day');
+    });
+
+    const seaDays = itinerary.filter(item => {
+      const typeName = item.locationTypeName?.toLowerCase() || '';
+      return typeName.includes('sea day');
+    });
+
+    // Priority 1: Itinerary-specific images from port stops
+    portStops.forEach(item => {
+      if (item.itineraryImageUrl && item.itineraryImageUrl.trim() !== '') {
+        images.push(item.itineraryImageUrl);
+      } else if (item.imageUrl && item.imageUrl.trim() !== '') {
+        // Fallback to imageUrl if itineraryImageUrl doesn't exist
+        images.push(item.imageUrl);
+      }
+    });
+
+    // Priority 2: Location fallback images for ports without itinerary images
+    if (images.length < MIN_IMAGES) {
+      portStops.forEach(item => {
+        const hasItineraryImage = item.itineraryImageUrl && item.itineraryImageUrl.trim() !== '';
+        if (!hasItineraryImage && item.locationImageUrl && item.locationImageUrl.trim() !== '') {
+          images.push(item.locationImageUrl);
+        }
+      });
+    }
+
+    // Priority 3: Add BOTH images for ports that have both (only if still need more)
+    if (images.length < MIN_IMAGES) {
+      portStops.forEach(item => {
+        const hasItineraryImage = item.itineraryImageUrl && item.itineraryImageUrl.trim() !== '';
+        const hasLocationImage = item.locationImageUrl && item.locationImageUrl.trim() !== '';
+
+        if (hasItineraryImage && hasLocationImage) {
+          // Add location image as well (itinerary image already added in Priority 1)
+          images.push(item.locationImageUrl!);
+        }
+      });
+    }
+
+    // Priority 4: Sea day images as last resort
+    if (images.length < MIN_IMAGES) {
+      seaDays.forEach(item => {
+        if (item.imageUrl && item.imageUrl.trim() !== '') {
+          images.push(item.imageUrl);
+        }
+      });
+    }
+
+    // Remove duplicates while preserving order
+    return Array.from(new Set(images));
+  };
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollWidth, setScrollWidth] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Greek Isles cruise images (from locations table)
-  const greekImages = [
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/mykonos-greece.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png',
-  ];
-
-  // Halloween cruise images (from locations table)
-  const halloweenImages = [
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/miami-1.webp',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/key-west.png',
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-3e8a6ad5-dff9-47b9-8559-4f59c071b785.jpg', // Puerto Plata
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-545c03d8-168e-4fb7-b351-b56051b83a0c.jpg', // Grand Turk
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/bimini.avif',
-  ];
-
-  // Hong Kong to Singapore cruise images (from itinerary table)
-  const hongKongImages = [
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-cda156ea-cc8a-4e0c-bc46-c20fda1486f1.jpg', // Hong Kong
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-db73e1a1-1bd3-42b0-8d52-a8e069f194e0.jpg', // Halong Bay
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-7801fc25-0d2e-447e-ba5d-8eaadd494ade.jpg', // Chan May
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-37d542fa-acc3-467f-9308-17ea92cf9d81.jpg', // Phu My
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-b6595f31-90dc-4238-92f8-f7297d4af4ee.jpg', // Bangkok
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-40448315-a849-405f-bca3-4703c9a8f251.jpg', // Ko Samui
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-e7545ce4-aa9d-4f2c-9953-1d3c75fd07f3.jpg', // Singapore
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg', // Hanoi
-  ];
-
-  // Tahiti cruise images (from locations table)
-  const tahitiImages = [
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-17245acc-fa05-4232-8781-4bef3c34ab2d.jpg', // Papeete
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-f94c7de5-554e-4fc8-a9f1-1a2f0f96d592.jpg', // Moorea
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-08f630a0-be59-4a3f-8d57-966b2e0ff9ff.jpg', // Bora Bora
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-2caa2223-e8f8-4c8e-a3f0-7be8d00c7cdb.jpg', // Raiatea
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-60e72a89-fc00-4828-9582-5bdc1e99f31b.jpg', // Huahine
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-8d34661c-97b5-4748-8095-b5830ffa2c20.jpg', // Rangiroa
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg', // Fakarava
-  ];
-
-  // Tropical Americas cruise images (from locations table)
-  const tropicalAmericasImages = [
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-d2a6b93e-d1e9-4154-ab2e-f0fec5cc3645.jpg', // Costa Maya
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-7231eca8-1549-40be-9326-2509647262bd.jpg', // Puerto Limon
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-9fcc43a7-2816-437e-8183-e20cbb2b456f.jpg', // Colon
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-06d21593-7a21-4225-b73f-3974bd6895ce.jpg', // Cartagena
-    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-92dbb981-c39f-4061-b664-511c42bd4276.jpg', // Oranjestad
-  ];
+  // LEGACY: Hardcoded images removed - now using dynamic buildCarouselImages() logic
+  // All cruise images are now pulled from database (itinerary + locations tables)
 
   // Dragstar cruise artist images - all square with varying sizes
   const dragstarImages = [
@@ -176,33 +222,35 @@ const HeroSection = ({
     },
   ];
 
+  // Size variants for visual variety in desktop carousel
+  const sizeVariants = [
+    { height: '16.2rem', width: '21.6rem' }, // Standard
+    { height: '14.4rem', width: '19.2rem' }, // Shorter
+    { height: '18rem', width: '24rem' }, // Taller/wider
+    { height: '15.3rem', width: '20.4rem' }, // Medium
+    { height: '13.5rem', width: '18rem' }, // Small
+    { height: '17.1rem', width: '22.8rem' }, // Tall
+    { height: '15.8rem', width: '21rem' }, // Medium-tall
+    { height: '12.6rem', width: '16.8rem' }, // Very small
+  ];
+
   const isDragstarCruise = slug === 'drag-stars-at-sea';
-  const isHalloweenCruise = slug === 'halloween-carribean-cruise';
-  const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
-  const isHongKongCruise = slug === 'hong-kong-to-singapore-cruise-2025';
-  const isTahitiCruise = slug === 'new-years-tahiti-cruise-2025';
-  const isTropicalAmericasCruise = slug === 'tropical-americas-2026';
 
-  // Extract images from itinerary (prioritize itinerary-specific images)
-  // Filter out entries without images and entries that are just sea days
-  const dynamicImages = itinerary
-    .filter(item => item.imageUrl && item.imageUrl.trim() !== '')
-    .map(item => item.imageUrl!);
+  // Build carousel images dynamically based on trip type and itinerary data
+  const dynamicImages = buildCarouselImages(itinerary, tripType);
 
-  // Select the appropriate image set
-  // Priority: 1) Dynamic itinerary images, 2) Hardcoded cruise-specific images
-  const images =
-    dynamicImages.length > 0
-      ? dynamicImages
-      : isHalloweenCruise
-        ? halloweenImages
-        : isHongKongCruise
-          ? hongKongImages
-          : isTahitiCruise
-            ? tahitiImages
-            : isTropicalAmericasCruise
-              ? tropicalAmericasImages
-              : greekImages;
+  // Debug logging
+  console.log('[HeroSection] Carousel Debug:', {
+    slug,
+    tripType,
+    itineraryCount: itinerary.length,
+    dynamicImagesCount: dynamicImages.length,
+    dynamicImages,
+    firstItem: itinerary[0],
+  });
+
+  // Use dynamic images - no more hardcoded fallbacks
+  const images = dynamicImages;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -245,7 +293,6 @@ const HeroSection = ({
         </div>
 
         <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap w-full px-2">
-          {isHalloweenCruise && <span className="text-3xl">🎃</span>}
           <span>
             <span className="relative">
               {firstWord}
@@ -337,7 +384,6 @@ const HeroSection = ({
         </div>
 
         <h1 className="text-2xl leading-[1.29167] font-bold text-balance sm:text-3xl lg:text-4xl text-white flex items-end justify-center gap-3 flex-wrap">
-          {isHalloweenCruise && <span className="text-4xl sm:text-5xl lg:text-6xl">🎃</span>}
           <span>
             <span className="relative">
               {firstWord}
@@ -418,414 +464,42 @@ const HeroSection = ({
                 />
               ))}
             </>
-          ) : isHalloweenCruise ? (
-            <>
-              {/* First set of 5 Halloween images */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/miami-1.webp"
-                alt="Miami, FL"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/key-west.png"
-                alt="Key West, FL"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-3e8a6ad5-dff9-47b9-8559-4f59c071b785.jpg"
-                alt="Puerto Plata"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-545c03d8-168e-4fb7-b351-b56051b83a0c.jpg"
-                alt="Grand Turk"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/bimini.avif"
-                alt="Bimini"
-                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              {/* Duplicate set for seamless loop */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/miami-1.webp"
-                alt="Miami, FL"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/key-west.png"
-                alt="Key West, FL"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-3e8a6ad5-dff9-47b9-8559-4f59c071b785.jpg"
-                alt="Puerto Plata"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-545c03d8-168e-4fb7-b351-b56051b83a0c.jpg"
-                alt="Grand Turk"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/bimini.avif"
-                alt="Bimini"
-                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-            </>
-          ) : isHongKongCruise ? (
-            <>
-              {/* First set of 8 Hong Kong to Singapore images */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-cda156ea-cc8a-4e0c-bc46-c20fda1486f1.jpg"
-                alt="Hong Kong"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-db73e1a1-1bd3-42b0-8d52-a8e069f194e0.jpg"
-                alt="Halong Bay"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-7801fc25-0d2e-447e-ba5d-8eaadd494ade.jpg"
-                alt="Chan May"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-37d542fa-acc3-467f-9308-17ea92cf9d81.jpg"
-                alt="Phu My"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-b6595f31-90dc-4238-92f8-f7297d4af4ee.jpg"
-                alt="Bangkok"
-                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-40448315-a849-405f-bca3-4703c9a8f251.jpg"
-                alt="Ko Samui"
-                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-e7545ce4-aa9d-4f2c-9953-1d3c75fd07f3.jpg"
-                alt="Singapore"
-                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg"
-                alt="Hanoi"
-                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              {/* Duplicate set for seamless loop */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-cda156ea-cc8a-4e0c-bc46-c20fda1486f1.jpg"
-                alt="Hong Kong"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-db73e1a1-1bd3-42b0-8d52-a8e069f194e0.jpg"
-                alt="Halong Bay"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-7801fc25-0d2e-447e-ba5d-8eaadd494ade.jpg"
-                alt="Chan May"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-37d542fa-acc3-467f-9308-17ea92cf9d81.jpg"
-                alt="Phu My"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-b6595f31-90dc-4238-92f8-f7297d4af4ee.jpg"
-                alt="Bangkok"
-                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-40448315-a849-405f-bca3-4703c9a8f251.jpg"
-                alt="Ko Samui"
-                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-e7545ce4-aa9d-4f2c-9953-1d3c75fd07f3.jpg"
-                alt="Singapore"
-                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/general/general-63abf100-e259-4480-8d0d-13fa0d21f3d3.jpg"
-                alt="Hanoi"
-                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-            </>
-          ) : isTahitiCruise ? (
-            <>
-              {/* First set of 7 Tahiti images */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-17245acc-fa05-4232-8781-4bef3c34ab2d.jpg"
-                alt="Papeete"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-f94c7de5-554e-4fc8-a9f1-1a2f0f96d592.jpg"
-                alt="Moorea"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-08f630a0-be59-4a3f-8d57-966b2e0ff9ff.jpg"
-                alt="Bora Bora"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-2caa2223-e8f8-4c8e-a3f0-7be8d00c7cdb.jpg"
-                alt="Raiatea"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-60e72a89-fc00-4828-9582-5bdc1e99f31b.jpg"
-                alt="Huahine"
-                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-8d34661c-97b5-4748-8095-b5830ffa2c20.jpg"
-                alt="Rangiroa"
-                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg"
-                alt="Fakarava"
-                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              {/* Duplicate set for seamless loop */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-17245acc-fa05-4232-8781-4bef3c34ab2d.jpg"
-                alt="Papeete"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-f94c7de5-554e-4fc8-a9f1-1a2f0f96d592.jpg"
-                alt="Moorea"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-08f630a0-be59-4a3f-8d57-966b2e0ff9ff.jpg"
-                alt="Bora Bora"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-2caa2223-e8f8-4c8e-a3f0-7be8d00c7cdb.jpg"
-                alt="Raiatea"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-60e72a89-fc00-4828-9582-5bdc1e99f31b.jpg"
-                alt="Huahine"
-                className="h-[13.5rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-8d34661c-97b5-4748-8095-b5830ffa2c20.jpg"
-                alt="Rangiroa"
-                className="h-[17.1rem] w-[22.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-bb018b6b-bb96-4da2-b763-fb95755fc3c4.jpg"
-                alt="Fakarava"
-                className="h-[15.8rem] w-[21rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-            </>
-          ) : isTropicalAmericasCruise ? (
-            <>
-              {/* First set of 5 Tropical Americas images */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-d2a6b93e-d1e9-4154-ab2e-f0fec5cc3645.jpg"
-                alt="Costa Maya"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-7231eca8-1549-40be-9326-2509647262bd.jpg"
-                alt="Puerto Limon"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-9fcc43a7-2816-437e-8183-e20cbb2b456f.jpg"
-                alt="Colon"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-06d21593-7a21-4225-b73f-3974bd6895ce.jpg"
-                alt="Cartagena"
-                className="h-[12.6rem] w-[16.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-92dbb981-c39f-4061-b664-511c42bd4276.jpg"
-                alt="Oranjestad"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              {/* Duplicate set for seamless loop */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-d2a6b93e-d1e9-4154-ab2e-f0fec5cc3645.jpg"
-                alt="Costa Maya"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-7231eca8-1549-40be-9326-2509647262bd.jpg"
-                alt="Puerto Limon"
-                className="h-[14.4rem] w-[19.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-9fcc43a7-2816-437e-8183-e20cbb2b456f.jpg"
-                alt="Colon"
-                className="h-[18rem] w-[24rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-06d21593-7a21-4225-b73f-3974bd6895ce.jpg"
-                alt="Cartagena"
-                className="h-[12.6rem] w-[16.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/images/locations/locations-92dbb981-c39f-4061-b664-511c42bd4276.jpg"
-                alt="Oranjestad"
-                className="h-[15.3rem] w-[20.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-            </>
           ) : (
             <>
-              {/* First set of 7 Greek images */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
-                alt="Athens, Greece"
-                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
-                alt="Santorini, Greece"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
-                alt="Kuşadası, Turkey"
-                className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
-                alt="Istanbul, Turkey"
-                className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/mykonos-greece.png"
-                alt="Mykonos, Greece"
-                className="h-[15rem] w-[20rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
-                alt="Iraklion, Crete"
-                className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
-                alt="Alexandria, Egypt"
-                className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
+              {/* Dynamic images from database with varying sizes */}
+              {images.map((img, index) => {
+                const sizeVariant = sizeVariants[index % sizeVariants.length];
+                return (
+                  <img
+                    key={img}
+                    src={img}
+                    alt={`Destination ${index + 1}`}
+                    className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                    style={{
+                      height: sizeVariant.height,
+                      width: sizeVariant.width,
+                    }}
+                    loading="lazy"
+                  />
+                );
+              })}
               {/* Duplicate set for seamless loop */}
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/athens-greece.png"
-                alt="Athens, Greece"
-                className="h-[12.6rem] w-[18rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/santorini-greece.png"
-                alt="Santorini, Greece"
-                className="h-[16.2rem] w-[21.6rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/kusadasi-turkey.png"
-                alt="Kuşadası, Turkey"
-                className="h-[14.4rem] w-[16.2rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/istanbul-turkey.png"
-                alt="Istanbul, Turkey"
-                className="h-[18rem] w-[19.8rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/mykonos-greece.png"
-                alt="Mykonos, Greece"
-                className="h-[15rem] w-[20rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/iraklion-crete.png"
-                alt="Iraklion, Crete"
-                className="h-[13.5rem] w-[14.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
-              <img
-                src="https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/itinerary/alexandria-egypt.png"
-                alt="Alexandria, Egypt"
-                className="h-[15.3rem] w-[23.4rem] object-cover flex-shrink-0 mx-2 rounded-lg"
-                loading="lazy"
-              />
+              {images.map((img, index) => {
+                const sizeVariant = sizeVariants[index % sizeVariants.length];
+                return (
+                  <img
+                    key={`${img}-duplicate`}
+                    src={img}
+                    alt={`Destination ${index + 1}`}
+                    className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                    style={{
+                      height: sizeVariant.height,
+                      width: sizeVariant.width,
+                    }}
+                    loading="lazy"
+                  />
+                );
+              })}
             </>
           )}
         </div>
