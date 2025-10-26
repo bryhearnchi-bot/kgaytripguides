@@ -530,6 +530,104 @@ async function createLocations(): Promise<Map<string, number>> {
   return locationMap;
 }
 
+// FUNCTION 4B: Create location attractions and LGBT venues in separate tables
+async function createLocationDetails(locationMap: Map<string, number>): Promise<void> {
+  logger.info('=== STEP 4B: Creating Location Attractions and LGBT Venues ===');
+
+  for (const location of cruiseData.locations) {
+    const locationId = locationMap.get(location.name);
+    if (!locationId) continue;
+
+    // Insert attractions
+    if (location.topAttractions && location.topAttractions.length > 0) {
+      for (let i = 0; i < location.topAttractions.length; i++) {
+        const attraction = location.topAttractions[i];
+        // Split on first " - " to separate name from description
+        const dashIndex = attraction.indexOf(' - ');
+        const name = dashIndex > 0 ? attraction.substring(0, dashIndex) : attraction;
+        const description = dashIndex > 0 ? attraction.substring(dashIndex + 3) : '';
+
+        // Determine category based on keywords
+        let category = 'Cultural';
+        if (
+          attraction.toLowerCase().includes('beach') ||
+          attraction.toLowerCase().includes('nature') ||
+          attraction.toLowerCase().includes('park') ||
+          attraction.toLowerCase().includes('marine')
+        ) {
+          category = 'Nature';
+        } else if (
+          attraction.toLowerCase().includes('historic') ||
+          attraction.toLowerCase().includes('lighthouse')
+        ) {
+          category = 'Historical';
+        } else if (
+          attraction.toLowerCase().includes('entertain') ||
+          attraction.toLowerCase().includes('pier')
+        ) {
+          category = 'Entertainment';
+        }
+
+        const { error } = await supabase.from('location_attractions').insert({
+          location_id: locationId,
+          name: name,
+          description: description,
+          category: category,
+          order_index: i,
+        });
+
+        if (error) {
+          logger.warn(`Failed to create attraction for ${location.name}: ${error.message}`);
+        } else {
+          logger.info(`Created attraction: ${name}`);
+        }
+      }
+    }
+
+    // Insert LGBT venues
+    if (location.lgbtVenues && location.lgbtVenues.length > 0) {
+      for (let i = 0; i < location.lgbtVenues.length; i++) {
+        const venue = location.lgbtVenues[i];
+        // Split on first " - " to separate name from description
+        const dashIndex = venue.indexOf(' - ');
+        const name = dashIndex > 0 ? venue.substring(0, dashIndex) : venue;
+        const description = dashIndex > 0 ? venue.substring(dashIndex + 3) : '';
+
+        // Determine venue type based on keywords
+        let venueType = 'Bar';
+        if (venue.toLowerCase().includes('club') || venue.toLowerCase().includes('nightclub')) {
+          venueType = 'Club';
+        } else if (
+          venue.toLowerCase().includes('restaurant') ||
+          venue.toLowerCase().includes('café')
+        ) {
+          venueType = 'Restaurant';
+        } else if (venue.toLowerCase().includes('beach')) {
+          venueType = 'Beach';
+        } else if (venue.toLowerCase().includes('hotel')) {
+          venueType = 'Hotel';
+        }
+
+        const { error } = await supabase.from('location_lgbt_venues').insert({
+          location_id: locationId,
+          name: name,
+          venue_type: venueType,
+          description: description,
+          order_index: i,
+        });
+
+        if (error) {
+          logger.warn(`Failed to create LGBT venue for ${location.name}: ${error.message}`);
+        } else {
+          logger.info(`Created LGBT venue: ${name}`);
+        }
+      }
+    }
+  }
+
+  logger.info('✅ All location details created');
+}
+
 // FUNCTION 5: Create trip record
 async function createTrip(shipId: number): Promise<number> {
   logger.info('=== STEP 5: Creating Trip ===');
@@ -932,6 +1030,9 @@ async function main() {
 
     // Create locations with research
     const locationMap = await createLocations();
+
+    // Create location attractions and LGBT venues in separate tables
+    await createLocationDetails(locationMap);
 
     // Create trip
     const tripId = await createTrip(shipId);
