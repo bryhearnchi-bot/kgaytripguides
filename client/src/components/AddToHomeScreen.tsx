@@ -95,7 +95,7 @@ export function AddToHomeScreen() {
         onClick={handleInstallClick}
         variant="outline"
         size="sm"
-        className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+        className="flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30 text-white hover:from-blue-500/30 hover:to-purple-500/30 hover:border-blue-400/50 transition-all duration-200 shadow-lg hover:shadow-blue-500/20"
       >
         <Download className="h-4 w-4" />
         <span className="hidden sm:inline">Add to Home Screen</span>
@@ -104,68 +104,101 @@ export function AddToHomeScreen() {
 
       {/* iOS Instructions Dialog */}
       <Dialog open={showIOSInstructions} onOpenChange={setShowIOSInstructions}>
-        <DialogContent className="sm:max-w-md bg-slate-900 border-white/20 text-white">
+        <DialogContent className="sm:max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-white/20 text-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Download className="h-6 w-6 text-blue-400" />
+              </div>
               Add to Home Screen
             </DialogTitle>
-            <DialogDescription className="text-white/70">
-              Follow these steps to install this app on your iPhone or iPad
+            <DialogDescription className="text-white/60 text-base">
+              Install this app for quick access and offline support
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-sm font-semibold">
+          <div className="space-y-5 py-6">
+            {/* Step 1 - With animated icon */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
                 1
               </div>
-              <div className="flex-1">
-                <p className="text-sm">
-                  Tap the <Share className="inline h-4 w-4 mx-1" /> <strong>Share</strong> button at
-                  the bottom of your browser
+              <div className="flex-1 pt-1">
+                <p className="text-base leading-relaxed">
+                  Tap the{' '}
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-500/20 mx-1 animate-pulse">
+                    <Share className="h-4 w-4 text-blue-400" />
+                  </span>{' '}
+                  <strong className="text-blue-400">Share</strong> button
                 </p>
+                <p className="text-sm text-white/50 mt-1">Located at the bottom of Safari</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-sm font-semibold">
+            {/* Visual separator */}
+            <div className="flex items-center gap-2 px-12">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-white/30">↓</div>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            </div>
+
+            {/* Step 2 - With icon */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
                 2
               </div>
-              <div className="flex-1">
-                <p className="text-sm">
-                  Scroll down and tap <Plus className="inline h-4 w-4 mx-1" />{' '}
-                  <strong>Add to Home Screen</strong>
+              <div className="flex-1 pt-1">
+                <p className="text-base leading-relaxed">
+                  Scroll down and tap{' '}
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-500/20 mx-1">
+                    <Plus className="h-4 w-4 text-blue-400" />
+                  </span>{' '}
+                  <strong className="text-blue-400">Add to Home Screen</strong>
                 </p>
+                <p className="text-sm text-white/50 mt-1">You may need to scroll to find it</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-sm font-semibold">
+            {/* Visual separator */}
+            <div className="flex items-center gap-2 px-12">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-white/30">↓</div>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
                 3
               </div>
-              <div className="flex-1">
-                <p className="text-sm">
-                  Tap <strong>Add</strong> in the top right corner
+              <div className="flex-1 pt-1">
+                <p className="text-base leading-relaxed">
+                  Tap <strong className="text-blue-400">Add</strong>
                 </p>
+                <p className="text-sm text-white/50 mt-1">In the top right corner</p>
               </div>
             </div>
 
-            <div className="mt-6 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <p className="text-xs text-white/80">
-                💡 <strong>Tip:</strong> Once added, the app will open directly to this page when
-                launched from your home screen
-              </p>
+            {/* Benefits card */}
+            <div className="mt-6 p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">✨</div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-300 mb-1">Quick Access</p>
+                  <p className="text-xs text-white/70 leading-relaxed">
+                    Launch instantly from your home screen. Works offline and loads faster!
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="flex justify-end">
             <Button
               onClick={() => setShowIOSInstructions(false)}
-              variant="outline"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-lg"
             >
-              Got it
+              Got it, thanks!
             </Button>
           </div>
         </DialogContent>
