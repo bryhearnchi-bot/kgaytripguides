@@ -11,8 +11,11 @@ interface TimeFormatContextType {
 const TimeFormatContext = createContext<TimeFormatContextType | undefined>(undefined);
 
 export function TimeFormatProvider({ children }: { children: React.ReactNode }) {
-  // ALWAYS use 24-hour format - database stores times in 24-hour format
-  const [timeFormat, setTimeFormatState] = useState<TimeFormat>('24h');
+  // Load saved preference from localStorage, default to 24-hour format
+  const [timeFormat, setTimeFormatState] = useState<TimeFormat>(() => {
+    const saved = localStorage.getItem('timeFormat');
+    return saved === '12h' || saved === '24h' ? saved : '24h';
+  });
 
   // Save to localStorage when format changes
   const setTimeFormat = (format: TimeFormat) => {
