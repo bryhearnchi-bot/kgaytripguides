@@ -95,7 +95,7 @@ export function AddToHomeScreen() {
         onClick={handleInstallClick}
         variant="outline"
         size="sm"
-        className="flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30 text-white hover:from-blue-500/30 hover:to-purple-500/30 hover:border-blue-400/50 transition-all duration-200 shadow-lg hover:shadow-blue-500/20"
+        className="flex items-center gap-2 text-white border-white/20 bg-white/10 hover:bg-white/20 hover:border-white/30 transition-colors"
       >
         <Download className="h-4 w-4" />
         <span className="hidden sm:inline">Add to Home Screen</span>
