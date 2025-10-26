@@ -1,5 +1,4 @@
 import { Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { cn } from '@/lib/utils';
 
@@ -14,26 +13,57 @@ export default function TimeFormatToggle({
 }: TimeFormatToggleProps) {
   const { timeFormat, toggleTimeFormat } = useTimeFormat();
 
+  const is24h = timeFormat === '24h';
+
   const variantStyles = {
-    default: '!text-gray-800 !border-gray-300 !bg-white hover:!bg-gray-100 hover:!text-gray-900',
-    banner: 'text-white border-white/20 bg-white/10 hover:bg-white/20 hover:border-white/30',
-    menu: 'text-white border-0 bg-transparent hover:bg-white/10 justify-start w-full',
+    default: {
+      text: 'text-gray-800',
+      track: 'bg-gray-300',
+      trackActive: 'bg-blue-500',
+      thumb: 'bg-white',
+    },
+    banner: {
+      text: 'text-white',
+      track: 'bg-white/20',
+      trackActive: 'bg-white/40',
+      thumb: 'bg-white',
+    },
+    menu: {
+      text: 'text-white',
+      track: 'bg-white/20',
+      trackActive: 'bg-white/40',
+      thumb: 'bg-white',
+    },
   };
 
+  const styles = variantStyles[variant];
+
   return (
-    <Button
-      variant="outline"
-      size="sm"
+    <button
       onClick={toggleTimeFormat}
-      className={cn(
-        'flex items-center space-x-2 transition-colors',
-        variantStyles[variant],
-        className
-      )}
-      title={`Switch to ${timeFormat === '12h' ? '24-hour' : '12-hour'} format`}
+      className={cn('flex items-center gap-2 transition-all', className)}
+      title={`Switch to ${is24h ? '12-hour' : '24-hour'} format`}
+      aria-label="Toggle between 12-hour and 24-hour time format"
     >
       <Clock className="w-4 h-4" />
-      <span className="text-xs font-medium">{timeFormat === '12h' ? 'AM/PM' : '24H'}</span>
-    </Button>
+      <span className={cn('text-xs font-medium', styles.text)}>{is24h ? '24H' : 'AM/PM'}</span>
+
+      {/* Toggle Switch */}
+      <div
+        className={cn(
+          'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+          is24h ? styles.trackActive : styles.track
+        )}
+      >
+        <span
+          className={cn(
+            'inline-block h-4 w-4 transform rounded-full transition-transform',
+            styles.thumb,
+            is24h ? 'translate-x-5' : 'translate-x-0.5',
+            'shadow-sm'
+          )}
+        />
+      </div>
+    </button>
   );
 }

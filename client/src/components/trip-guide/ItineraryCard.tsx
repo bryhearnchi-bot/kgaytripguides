@@ -4,6 +4,8 @@ import { useOnClickOutside } from 'usehooks-ts';
 import { MapPin, Anchor, Calendar, Clock, Landmark, Wine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { dateOnly } from '@/lib/utils';
+import { useTimeFormat } from '@/contexts/TimeFormatContext';
+import { formatTime } from '@/lib/timeFormat';
 
 export interface ItineraryStop {
   key: string;
@@ -26,6 +28,7 @@ export interface ItineraryCardProps {
 }
 
 export default function ItineraryCard({ stops, className, onViewEvents }: ItineraryCardProps) {
+  const { timeFormat } = useTimeFormat();
   const [activeStop, setActiveStop] = useState<ItineraryStop | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   useOnClickOutside(ref, () => setActiveStop(null));
@@ -122,21 +125,27 @@ export default function ItineraryCard({ stops, className, onViewEvents }: Itiner
                     <div className="flex items-center gap-2 rounded-lg bg-ocean-50 px-4 py-2">
                       <Anchor className="h-4 w-4 text-ocean-600" />
                       <span className="text-sm font-medium text-gray-700">Arrive:</span>
-                      <span className="text-sm font-bold text-ocean-700">{activeStop.arrive}</span>
+                      <span className="text-sm font-bold text-ocean-700">
+                        {formatTime(activeStop.arrive, timeFormat)}
+                      </span>
                     </div>
                   )}
                   {activeStop.depart !== '—' && (
                     <div className="flex items-center gap-2 rounded-lg bg-ocean-50 px-4 py-2">
                       <Anchor className="h-4 w-4 text-ocean-600 rotate-180" />
                       <span className="text-sm font-medium text-gray-700">Depart:</span>
-                      <span className="text-sm font-bold text-ocean-700">{activeStop.depart}</span>
+                      <span className="text-sm font-bold text-ocean-700">
+                        {formatTime(activeStop.depart, timeFormat)}
+                      </span>
                     </div>
                   )}
                   {activeStop.allAboard && activeStop.allAboard !== '—' && (
                     <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-coral to-pink-500 px-4 py-2 shadow-md">
                       <Clock className="h-4 w-4 text-white" />
                       <span className="text-sm font-bold text-white">All Aboard:</span>
-                      <span className="text-sm font-bold text-white">{activeStop.allAboard}</span>
+                      <span className="text-sm font-bold text-white">
+                        {formatTime(activeStop.allAboard, timeFormat)}
+                      </span>
                     </div>
                   )}
                 </motion.div>
@@ -312,7 +321,7 @@ export default function ItineraryCard({ stops, className, onViewEvents }: Itiner
                     {stop.arrive !== '—' && (
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium">Arrive:</span>
-                        <span className="font-bold">{stop.arrive}</span>
+                        <span className="font-bold">{formatTime(stop.arrive, timeFormat)}</span>
                       </div>
                     )}
                     {stop.depart !== '—' && (
@@ -320,7 +329,7 @@ export default function ItineraryCard({ stops, className, onViewEvents }: Itiner
                         <span className="text-white/50">•</span>
                         <div className="flex items-center gap-1.5">
                           <span className="font-medium">Depart:</span>
-                          <span className="font-bold">{stop.depart}</span>
+                          <span className="font-bold">{formatTime(stop.depart, timeFormat)}</span>
                         </div>
                       </>
                     )}
@@ -329,7 +338,9 @@ export default function ItineraryCard({ stops, className, onViewEvents }: Itiner
                         <span className="text-white/50">•</span>
                         <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-coral to-pink-500 px-2 py-0.5 text-white">
                           <Clock className="h-3 w-3" />
-                          <span className="font-bold">All Aboard: {stop.allAboard}</span>
+                          <span className="font-bold">
+                            All Aboard: {formatTime(stop.allAboard, timeFormat)}
+                          </span>
                         </div>
                       </>
                     )}

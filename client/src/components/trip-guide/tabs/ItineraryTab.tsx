@@ -1,6 +1,8 @@
 import React, { memo, useMemo } from 'react';
 import { Map } from 'lucide-react';
 import JobListingComponent, { type Job } from '@/components/smoothui/ui/JobListingComponent';
+import { useTimeFormat } from '@/contexts/TimeFormatContext';
+import { formatTime } from '@/lib/timeFormat';
 
 interface ItineraryTabProps {
   ITINERARY: any[];
@@ -17,6 +19,8 @@ export const ItineraryTab = memo(function ItineraryTab({
   talent,
   tripStatus = 'upcoming',
 }: ItineraryTabProps) {
+  const { timeFormat } = useTimeFormat();
+
   // Filter itinerary based on trip status
   const filteredItinerary = useMemo(() => {
     if (tripStatus !== 'current') {
@@ -70,22 +74,28 @@ export const ItineraryTab = memo(function ItineraryTab({
     } else if (isEmbarkation) {
       // Embarkation: add suffix and show only depart time and all aboard
       portName = `${basePortName} - Embarkation`;
-      arriveDepart = stop.depart && stop.depart !== '—' ? `Depart: ${stop.depart}` : '';
-      allAboard = stop.allAboard || '';
+      arriveDepart =
+        stop.depart && stop.depart !== '—' ? `Depart: ${formatTime(stop.depart, timeFormat)}` : '';
+      allAboard =
+        stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
     } else if (isDisembarkation) {
       // Disembarkation: add suffix and show only arrival time
       portName = `${basePortName} - Disembarkation`;
-      arriveDepart = stop.arrive && stop.arrive !== '—' ? `Arrive: ${stop.arrive}` : '';
+      arriveDepart =
+        stop.arrive && stop.arrive !== '—' ? `Arrive: ${formatTime(stop.arrive, timeFormat)}` : '';
     } else if (isOvernightArrival) {
       // Overnight arrival: add suffix, show only arrival time, no all aboard
       portName = `${basePortName} - Overnight`;
-      arriveDepart = stop.arrive && stop.arrive !== '—' ? `Arrive: ${stop.arrive}` : '';
+      arriveDepart =
+        stop.arrive && stop.arrive !== '—' ? `Arrive: ${formatTime(stop.arrive, timeFormat)}` : '';
       allAboard = '';
     } else if (isOvernightDeparture) {
       // Overnight departure: NO suffix, show depart time and all aboard
       portName = basePortName;
-      arriveDepart = stop.depart && stop.depart !== '—' ? `Depart: ${stop.depart}` : '';
-      allAboard = stop.allAboard || '';
+      arriveDepart =
+        stop.depart && stop.depart !== '—' ? `Depart: ${formatTime(stop.depart, timeFormat)}` : '';
+      allAboard =
+        stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
     } else if (isFullDayOvernight) {
       // Full day overnight: add suffix, no times shown
       portName = `${basePortName} - Overnight Full Day`;
@@ -95,11 +105,18 @@ export const ItineraryTab = memo(function ItineraryTab({
       // Regular port: show both arrive and depart
       const hasTimes = (stop.arrive && stop.arrive !== '—') || (stop.depart && stop.depart !== '—');
       if (hasTimes) {
-        const arriveText = stop.arrive && stop.arrive !== '—' ? `Arrive: ${stop.arrive}` : '';
-        const departText = stop.depart && stop.depart !== '—' ? `Depart: ${stop.depart}` : '';
+        const arriveText =
+          stop.arrive && stop.arrive !== '—'
+            ? `Arrive: ${formatTime(stop.arrive, timeFormat)}`
+            : '';
+        const departText =
+          stop.depart && stop.depart !== '—'
+            ? `Depart: ${formatTime(stop.depart, timeFormat)}`
+            : '';
         arriveDepart = [arriveText, departText].filter(Boolean).join(' • ');
       }
-      allAboard = stop.allAboard || '';
+      allAboard =
+        stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
     }
 
     return {

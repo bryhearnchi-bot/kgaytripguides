@@ -2,6 +2,8 @@ import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Circle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTimeFormat } from '@/contexts/TimeFormatContext';
+import { formatTime } from '@/lib/timeFormat';
 
 export interface EventCardProps {
   event: {
@@ -34,6 +36,7 @@ export const EventCard = memo<EventCardProps>(function EventCard({
   onPartyThemeClick,
   className = '',
 }) {
+  const { timeFormat } = useTimeFormat();
   const [showViewTypeModal, setShowViewTypeModal] = useState(false);
   const [showArtistSelectModal, setShowArtistSelectModal] = useState(false);
   const [showEventDescriptionModal, setShowEventDescriptionModal] = useState(false);
@@ -160,14 +163,18 @@ export const EventCard = memo<EventCardProps>(function EventCard({
           <div className="flex-1 flex flex-col gap-2.5 min-w-0">
             {/* Desktop/Tablet: Time • Event Name on one line */}
             <div className="hidden md:flex items-center gap-2">
-              <span className="text-ocean-200 text-sm font-semibold">{event.time}</span>
+              <span className="text-ocean-200 text-sm font-semibold">
+                {formatTime(event.time, timeFormat)}
+              </span>
               <Circle className="w-1.5 h-1.5 fill-current text-ocean-300" />
               <span className="text-white font-bold text-base">{event.title}</span>
             </div>
 
             {/* Mobile: Time on separate line */}
             <div className="md:hidden">
-              <span className="text-ocean-200 text-sm font-semibold">{event.time}</span>
+              <span className="text-ocean-200 text-sm font-semibold">
+                {formatTime(event.time, timeFormat)}
+              </span>
             </div>
 
             {/* Mobile: Event Name on separate line */}
@@ -416,7 +423,7 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                       {/* Time and Venue */}
                       <div className="mb-4 flex flex-wrap gap-2">
                         <span className="px-3 py-1.5 rounded-full bg-ocean-500/20 text-ocean-200 text-sm font-medium border border-ocean-400/30">
-                          {event.time}
+                          {formatTime(event.time, timeFormat)}
                         </span>
                         {event.venue && (
                           <span className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-200 text-sm font-medium border border-cyan-400/30">
