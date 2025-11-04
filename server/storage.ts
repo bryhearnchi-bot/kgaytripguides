@@ -762,7 +762,7 @@ export class TripInfoStorage implements ITripInfoStorage {
         allAboardTime: item.all_aboard_time,
         portImageUrl: item.location_image_url,
         imageUrl: item.location_image_url || item.location?.image_url || null, // Priority: itinerary image, then location image
-        itineraryImageUrl: item.location_image_url || null, // Itinerary-specific image for carousel logic
+        itineraryImageUrl: item.location_image_url || item.location?.image_url || null, // Itinerary-specific image for carousel logic, fallback to location image
         locationImageUrl: item.location?.image_url || null, // Location fallback image for carousel logic
         description: item.description,
         highlights: item.highlights,
