@@ -1,5 +1,7 @@
 # Cruise Import Guide: Complete Step-by-Step Process
 
+> **🤖 AI Users:** For a condensed version optimized for AI assistants, see **[CRUISE_IMPORT_GUIDE_V2.md](./CRUISE_IMPORT_GUIDE_V2.md)** (~250 lines vs 2500 lines)
+
 This guide provides a comprehensive walkthrough for importing a new cruise into the KGay Travel Guides application.
 
 ## Table of Contents
@@ -44,15 +46,19 @@ A complete cruise import includes:
 
 The import process follows this sequence:
 
-1. **Extract & Research** → Extract cruise data and research locations
-2. **Build Script** → Create automated import script with data structure
-3. **Self-Verify** → AI automatically verifies extraction against source
-4. **Upload Images** → Images uploaded to Supabase Storage
-5. **Preview** → Detailed preview shown to user
-6. **Confirm** → User types "yes" to proceed
-7. **Database Import** → Data written to database
-8. **Verify** → Manual verification in browser
-9. **Deploy** → Push to git and deploy
+1. **Extract Basic Data** → Extract cruise info and port names ONLY (no research yet)
+2. **🚨 Database Check** → Check what locations exist, what needs research
+3. **🚨 Research Plan Approval** → User approves which locations to research (saves API costs)
+4. **Research** → Research ONLY approved locations (attractions, LGBT venues)
+5. **🚨 Research Review** → Present research findings to user for approval
+6. **Build Script** → Create automated import script with user-approved data
+7. **Self-Verify** → AI automatically verifies extraction against source
+8. **Upload Images** → Images uploaded to Supabase Storage
+9. **Preview** → Detailed preview shown to user
+10. **Confirm** → User types "yes" to proceed
+11. **Database Import** → Data written to database
+12. **Verify** → Manual verification in browser
+13. **Deploy** → Push to git and deploy
 
 ---
 
@@ -96,17 +102,165 @@ const cruiseUrl = 'https://atlantisevents.com/vacation/cruise-name/';
 
 // Extract:
 // - Cruise name and dates
-// - Complete itinerary (ports, arrival/departure times)
-// - Ship information and amenities
-// - Pricing and cabin types
-// - Special events or theme parties
+// - Complete itinerary (ports list with names only - NO RESEARCH YET)
+// - Port arrival/departure times
+// - Ship name and cruise line
+// - Pricing and cabin types (optional)
+// - Special events or theme parties (optional)
+
+// IMPORTANT PROCESSING:
+// 1. Calculate all-aboard times: departure_time - 30 minutes
+//    Example: departure 18:00 → all_aboard 17:30
+//
+// 2. Identify overnight ports (same port on consecutive days):
+//    Day 1: locationTypeId = 11 (Overnight Arrival)
+//    Day 2: locationTypeId = 12 (Overnight Departure)
+//    Example:
+//      Day 3: Mykonos, arrive 11:00, no departure → type 11
+//      Day 4: Mykonos, no arrival, depart 21:00 → type 12
 ```
 
-### Step 2: Research Each Location
+**⚠️ IMPORTANT: At this step, ONLY extract the PORT NAMES and basic data. DO NOT research attractions or LGBT venues yet.**
 
-**For EVERY port in the itinerary**, research and document:
+### Step 2: Check Database for Existing Data
 
-#### A. Top 3 Attractions
+**BEFORE doing any research, check the database to see what already exists:**
+
+#### A. Check Ship
+
+```sql
+-- Check if ship exists and has data
+SELECT s.id, s.name, s.cruise_line_id, s.capacity, s.description,
+       (SELECT COUNT(*) FROM ship_venues WHERE ship_id = s.id) as venue_count,
+       (SELECT COUNT(*) FROM ship_amenities WHERE ship_id = s.id) as amenity_count
+FROM ships s
+WHERE s.name = 'Ship Name' AND s.cruise_line_id = (
+  SELECT id FROM cruise_lines WHERE name = 'Cruise Line Name'
+);
+```
+
+#### B. Check Locations
+
+```sql
+-- Check which locations already exist
+SELECT id, name,
+       CASE
+         WHEN top_attractions IS NOT NULL AND array_length(top_attractions, 1) > 0 THEN 'Has attractions'
+         ELSE 'Missing attractions'
+       END as attractions_status,
+       CASE
+         WHEN lgbt_venues IS NOT NULL AND array_length(lgbt_venues, 1) > 0 THEN 'Has LGBT venues'
+         ELSE 'Missing LGBT venues'
+       END as lgbt_status
+FROM locations
+WHERE name IN ('Port Name 1', 'Port Name 2', 'Port Name 3');
+```
+
+**Present findings to user:**
+
+```
+📊 DATABASE CHECK RESULTS
+
+SHIP:
+✅ Oceania Riviera - EXISTS (ID: 14, 12 venues, 8 amenities)
+   → NO SHIP RESEARCH NEEDED (complete data exists)
+
+   OR
+
+✅ Viking Star - EXISTS (ID: 23, 0 venues, 0 amenities)
+   → PARTIAL RESEARCH NEEDED (missing venues and amenities)
+
+   OR
+
+🆕 Celebrity Apex - NOT FOUND
+   → FULL SHIP RESEARCH NEEDED (capacity, description, image, venues, amenities)
+
+LOCATIONS:
+I found [X] ports in the cruise itinerary:
+
+EXISTING LOCATIONS (already in database):
+✅ [Location 1] - Has attractions (3), Has LGBT venues (2) - NO RESEARCH NEEDED
+✅ [Location 2] - Has attractions (3), Missing LGBT venues - PARTIAL RESEARCH NEEDED
+✅ [Location 3] - Missing attractions, Missing LGBT venues - FULL RESEARCH NEEDED
+
+NEW LOCATIONS (not in database):
+🆕 [Location 4] - FULL RESEARCH NEEDED (attractions + LGBT venues + description + image)
+🆕 [Location 5] - FULL RESEARCH NEEDED (attractions + LGBT venues + description + image)
+
+RESEARCH PLAN:
+Ship:
+- Skip ship research (complete data exists)
+  OR
+- Research ship venues and amenities (X venues + X amenities)
+  OR
+- Full ship research (capacity, description, image, venues, amenities)
+
+Locations:
+- Skip research: [X] locations (complete data exists)
+- Partial research: [X] locations (missing some data)
+- Full research: [X] locations (new locations)
+
+Total research tasks: [X ship tasks] + [X location tasks] (saving [X] unnecessary API calls)
+
+Should I proceed with this research plan?
+Type 'yes' to continue, or review the plan above.
+```
+
+**User must approve the research plan before proceeding.**
+
+### Step 3: Research Only Required Items
+
+**ONLY research items that need data (approved in Step 2):**
+
+#### A. Ship Research (if needed)
+
+**If ship doesn't exist or is missing data, research:**
+
+- **Ship Venues** (from cruise line website or ship deck plans):
+  - Venue name
+  - Venue type (dining, entertainment, bar, spa, recreation)
+  - Description
+
+- **Ship Amenities** (from cruise line website):
+  - Amenity name
+  - Description (optional)
+
+- **Ship Details**:
+  - Passenger capacity
+  - Ship description
+  - Ship image URL (for upload to Supabase Storage)
+
+**Example Ship Research for Viking Star:**
+
+```
+Venues:
+- The Restaurant (dining) - Main dining room with Nordic-inspired cuisine
+- World Cafe (dining) - Casual buffet with international selections
+- Pool Grill (dining) - Outdoor casual dining by the pool
+- Mamsen's (dining) - Norwegian deli with traditional fare
+- Wintergarden (bar) - Elegant afternoon tea lounge
+- Explorers' Lounge (bar) - Panoramic observation lounge
+- Torshavn (entertainment) - Main theater for performances
+- Spa (spa) - LivNordic Spa with thermal suite
+- Fitness Center (recreation) - State-of-the-art gym
+- Infinity Pool (recreation) - Main pool deck
+
+Amenities:
+- Infinity Pool - Glass-backed infinity pool
+- Hot Tubs - Multiple hot tubs on pool deck
+- LivNordic Spa - Scandinavian-inspired spa
+- Thermal Suite - Snow grotto and sauna
+- Fitness Center - Technogym equipment
+- Library - Books and comfortable reading areas
+- Theater - Main performance venue
+- Observation Lounge - 270-degree views
+```
+
+#### B. Location Research (only for locations needing data)
+
+**For each location requiring research**, gather:
+
+##### Top 3 Attractions
 
 Use Perplexity or WebSearch to find:
 
@@ -126,7 +280,9 @@ Top 3 Attractions:
 3. Matira Beach - Pristine white sand beach with turquoise waters
 ```
 
-#### B. Top 3 LGBT-Friendly Venues
+**❌ DO NOT research or find images for locations. Users will add images manually later.**
+
+##### Top 3 LGBT-Friendly Venues
 
 Research and document:
 
@@ -152,8 +308,9 @@ Top 3 LGBT-Friendly Venues:
 - Note if destination is generally LGBT-friendly even without dedicated venues
 - Research current laws and cultural attitudes toward LGBT travelers
 - Include any safety considerations or cultural sensitivities
+- **❌ DO NOT research or find images for locations - users will add manually later**
 
-### Step 3: Create Planning Document
+### Step 4: Create Planning Document
 
 Create a comprehensive planning document at `docs/Add [Cruise Name].md`:
 
@@ -238,7 +395,65 @@ Create a comprehensive planning document at `docs/Add [Cruise Name].md`:
 - [ ] [Continue for all ports...]
 ```
 
-### Step 4: Document Critical Rules
+### Step 5: Review Research with User
+
+**🚨 MANDATORY: Stop and review ALL research findings with the user BEFORE creating the import script.**
+
+Before proceeding to Phase 2 (script creation), present all research to the user for approval:
+
+#### Research Review Checklist
+
+Present the following to the user:
+
+1. **Cruise Overview:**
+   - Name, dates, ship, ports
+   - Itinerary day-by-day (all ports and times)
+   - Charter company and cruise line
+
+2. **For EACH Location:**
+   - Location name and description
+   - Top 3 attractions (with descriptions)
+   - Top 3 LGBT-friendly venues (with descriptions)
+   - Any LGBT travel notes or safety considerations
+   - Source image URL
+
+3. **Ship Information:**
+   - All venues (with types and descriptions)
+   - All amenities (with descriptions)
+   - Ship capacity and details
+
+4. **Ask the User:**
+
+   ```
+   📋 RESEARCH REVIEW REQUIRED
+
+   I've completed research for [X] locations with attractions and LGBT venues.
+
+   Please review the research findings above and confirm:
+
+   1. Are all location descriptions accurate?
+   2. Are the attractions appropriate and well-described?
+   3. Are the LGBT venues accurate and current?
+   4. Is any information missing or incorrect?
+   5. Should I proceed with creating the import script?
+
+   Please respond with:
+   - "approved" to proceed with script creation
+   - Any corrections needed before proceeding
+   ```
+
+**Why This Matters:**
+
+- Ensures research accuracy before it's locked into code
+- Allows you to catch errors early
+- Gives you control over what gets imported
+- Prevents having to re-run the entire import for research corrections
+
+**❌ DO NOT PROCEED to Phase 2 until user explicitly approves the research.**
+
+---
+
+### Step 6: Document Critical Rules
 
 Review these rules before proceeding:
 
@@ -250,19 +465,13 @@ Review these rules before proceeding:
    - NEVER use `new Date(dateString)` or `.toISOString()`
    - Parse: `const [y, m, d] = date.split('-').map(Number); new Date(y, m - 1, d);`
 
-2. **ALL Images in Supabase Storage**
-   - Download external images first
-   - Upload to Supabase Storage buckets
-   - Store only Supabase Storage URLs in database
-   - NO external image URLs allowed
+2. **Images**
+   - **Ship images:** Upload to Supabase Storage if researching new ship
+   - **Hero image:** Upload to Supabase Storage (cruise/trip image)
+   - **Location images:** ❌ DO NOT research or upload - users will add manually later
+   - Store only Supabase Storage URLs in database (for images you DO upload)
 
-3. **Image Priority System**
-   - `locations.image_url` = DEFAULT image across all trips
-   - `itinerary.location_image_url` = OPTIONAL trip-specific override
-   - Priority: Itinerary image → Location image → Empty
-   - Hero carousel uses this priority automatically
-
-4. **Sea Day Locations (IMPORTANT)**
+3. **Sea Day Locations (CRITICAL)**
    - Database has 4 pre-created Sea Day locations:
      - `Sea Day` (1st sea day)
      - `Sea Day 2` (2nd sea day)
@@ -274,18 +483,20 @@ Review these rules before proceeding:
      - Script will auto-assign correct Sea Day location
    - Example: If cruise has 3 sea days, they get assigned "Sea Day", "Sea Day 2", "Sea Day 3"
 
-5. **Trip Status**
+4. **Trip Status**
    - Always start with Preview (ID: 5)
    - Allows review before publishing
    - Change to Published (ID: 1) after verification
 
-6. **Field Naming**
+5. **Field Naming**
    - Database: snake_case (`start_date`, `hero_image_url`)
    - API/Frontend: camelCase (`startDate`, `heroImageUrl`)
 
 ---
 
 ## Phase 2: Import Script Creation
+
+**⚠️ PREREQUISITE: User must have approved research plan (Step 2) AND research findings (Step 5) from Phase 1.**
 
 ### Step 1: Create Script File
 
@@ -351,10 +562,9 @@ const cruiseData = {
     {
       name: 'Papeete',
       description: 'Capital city of French Polynesia',
-      imageUrl: 'https://example.com/papeete.jpg', // Will be uploaded
+      imageUrl: null, // DO NOT research - users add manually later
       countryId: 1, // From countries table
       stateProvinceId: null, // Optional
-      // LGBT venues and attractions will be added separately
       topAttractions: [
         'Mount Otemanu - Volcanic peak with stunning views',
         'Coral Gardens - World-class snorkeling',
@@ -372,20 +582,42 @@ const cruiseData = {
   itinerary: [
     {
       day: 1, // Sequential (must be unique per trip)
-      locationName: 'Papeete', // Maps to locations array
+      locationName: 'Papeete',
       arrivalTime: '14:00:00', // 24-hour format
       departureTime: null,
+      allAboardTime: null, // No departure = no all-aboard
       activities: 'Embarkation - Board ship around 2pm',
-      locationTypeId: 1, // 1=Embark, 2=Disembark, 3=Port, 4=Sea, 11=Overnight Arrival, 12=Overnight Departure
+      locationTypeId: 1, // Embarkation Port
       imageUrl: null, // OPTIONAL: Trip-specific image override
     },
     {
-      day: 2,
+      day: 2, // Regular port of call
       locationName: 'Moorea',
       arrivalTime: '09:00:00',
       departureTime: '18:00:00',
+      allAboardTime: '17:30:00', // 30 minutes before departure
       activities: 'Beach day and snorkeling',
       locationTypeId: 3, // Port of Call
+      imageUrl: null,
+    },
+    {
+      day: 3, // Overnight port - Day 1
+      locationName: 'Bora Bora',
+      arrivalTime: '11:00:00',
+      departureTime: null, // Overnight stay
+      allAboardTime: null,
+      activities: 'Overnight in port',
+      locationTypeId: 11, // Overnight Arrival
+      imageUrl: null,
+    },
+    {
+      day: 4, // Overnight port - Day 2
+      locationName: 'Bora Bora',
+      arrivalTime: null, // Already in port
+      departureTime: '21:00:00',
+      allAboardTime: '20:30:00', // 30 minutes before departure
+      activities: 'Final day in Bora Bora',
+      locationTypeId: 12, // Overnight Departure
       imageUrl: null,
     },
     {
@@ -395,9 +627,9 @@ const cruiseData = {
       departureTime: null,
       activities: 'Relax and enjoy ship amenities',
       locationTypeId: 4, // Day at Sea
-      imageUrl: null,
-      // NOTE: For Sea Days, locationName will be automatically assigned in sequential order
-      // 1st sea day → 'Sea Day', 2nd sea day → 'Sea Day 2', 3rd → 'Sea Day 3', 4th → 'Sea Day 4'
+      // CRITICAL: locationName MUST be null for sea days
+      // Script will auto-assign to "Sea Day", "Sea Day 2", "Sea Day 3", "Sea Day 4" in order
+      // These locations already exist in database - DO NOT create new ones
     },
     // ... more days
   ],
@@ -470,6 +702,123 @@ async function uploadImage(
     throw error;
   }
 }
+
+// Fuzzy match location names (prevents duplicates like "Mykonos" vs "Mykonos, Greece")
+async function findLocationByFuzzyMatch(
+  searchName: string
+): Promise<Array<{ id: number; name: string; country?: string }>> {
+  logger.info(`🔍 Fuzzy searching for location: "${searchName}"`);
+
+  // Get all locations that might match
+  const { data: allLocations, error } = await supabase
+    .from('locations')
+    .select('id, name, country:countries(name)')
+    .limit(1000); // Reasonable limit
+
+  if (error || !allLocations) {
+    logger.warn('Could not fetch locations for fuzzy matching');
+    return [];
+  }
+
+  const matches: Array<{ id: number; name: string; country?: string; score: number }> = [];
+  const searchLower = searchName.toLowerCase().trim();
+
+  for (const loc of allLocations) {
+    const locLower = loc.name.toLowerCase().trim();
+    let score = 0;
+
+    // Exact match (highest priority)
+    if (locLower === searchLower) {
+      score = 100;
+    }
+    // Location name contains search term (e.g., "Mykonos, Greece" contains "Mykonos")
+    else if (locLower.includes(searchLower)) {
+      score = 90;
+    }
+    // Search term contains location name (e.g., "Mykonos Greece" contains "Mykonos")
+    else if (searchLower.includes(locLower)) {
+      score = 85;
+    }
+    // Remove commas and compare (e.g., "Mykonos Greece" vs "Mykonos, Greece")
+    else if (locLower.replace(/,/g, '') === searchLower.replace(/,/g, '')) {
+      score = 95;
+    }
+    // First word matches (e.g., "Mykonos" matches "Mykonos, Greece")
+    else if (locLower.split(/[\s,]+/)[0] === searchLower.split(/[\s,]+/)[0]) {
+      score = 80;
+    }
+
+    if (score > 0) {
+      matches.push({
+        id: loc.id,
+        name: loc.name,
+        country: loc.country?.name,
+        score,
+      });
+    }
+  }
+
+  // Sort by score (highest first)
+  matches.sort((a, b) => b.score - a.score);
+
+  logger.info(`Found ${matches.length} potential matches`);
+  return matches.slice(0, 5); // Return top 5 matches
+}
+
+// Prompt user to confirm location match
+async function promptUserForLocationMatch(
+  searchName: string,
+  matches: Array<{ id: number; name: string; country?: string }>
+): Promise<{ action: 'use' | 'create'; locationId?: number }> {
+  console.log(`\n⚠️  Location "${searchName}" not found with exact match.`);
+
+  if (matches.length === 0) {
+    console.log(`   No similar locations found.`);
+    console.log(`   → Will create new location: "${searchName}"\n`);
+    return { action: 'create' };
+  }
+
+  console.log(`   Found ${matches.length} similar location(s):\n`);
+
+  matches.forEach((match, index) => {
+    const countryText = match.country ? ` (${match.country})` : '';
+    console.log(`   [${index + 1}] ${match.name}${countryText} (ID: ${match.id})`);
+  });
+
+  console.log(`   [0] Create new location: "${searchName}"\n`);
+
+  const readline = require('readline').createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise(resolve => {
+    readline.question(
+      '👉 Select option (0 to create new, 1-5 to use existing): ',
+      (answer: string) => {
+        readline.close();
+        const choice = parseInt(answer.trim());
+
+        if (isNaN(choice) || choice < 0 || choice > matches.length) {
+          logger.warn(`Invalid choice: ${answer}, creating new location`);
+          resolve({ action: 'create' });
+          return;
+        }
+
+        if (choice === 0) {
+          logger.info(`User chose to create new location: ${searchName}`);
+          resolve({ action: 'create' });
+        } else {
+          const selectedMatch = matches[choice - 1];
+          logger.info(
+            `User chose existing location: ${selectedMatch.name} (ID: ${selectedMatch.id})`
+          );
+          resolve({ action: 'use', locationId: selectedMatch.id });
+        }
+      }
+    );
+  });
+}
 ```
 
 ### Step 5: Implement Import Functions
@@ -479,13 +828,8 @@ async function uploadImage(
 async function uploadAllImages(): Promise<void> {
   logger.info('=== STEP 1: Uploading Images ===');
 
-  // Upload location images
-  for (const location of cruiseData.locations) {
-    if (location.imageUrl) {
-      const filename = `${location.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
-      location.imageUrl = await uploadImage(location.imageUrl, 'locations', filename);
-    }
-  }
+  // DO NOT upload location images - users add manually later
+  // Only upload hero image and ship image (if new ship)
 
   // Upload hero image
   if (cruiseData.trip.heroImageUrl) {
@@ -496,7 +840,16 @@ async function uploadAllImages(): Promise<void> {
     );
   }
 
-  logger.info('✅ All images uploaded');
+  // Upload ship image (if researching new ship)
+  if (cruiseData.ship?.imageUrl) {
+    cruiseData.ship.imageUrl = await uploadImage(
+      cruiseData.ship.imageUrl,
+      'ships',
+      `${cruiseData.ship.name.toLowerCase().replace(/\s+/g, '-')}.jpg`
+    );
+  }
+
+  logger.info('✅ Images uploaded (hero + ship only, location images added by users later)');
 }
 
 // FUNCTION 2: Find or create cruise line
@@ -651,48 +1004,70 @@ async function createAmenitiesForShip(shipId: number): Promise<void> {
   logger.info('✅ All amenities linked');
 }
 
-// FUNCTION 6: Create locations with attractions and LGBT venues
+// FUNCTION 6: Create locations with attractions and LGBT venues (with fuzzy matching)
 async function createLocations(): Promise<Map<string, number>> {
   logger.info('=== STEP 6: Creating Locations ===');
 
   const locationMap = new Map<string, number>();
 
   for (const location of cruiseData.locations) {
-    // Check if exists
-    const { data: existing } = await supabase
+    // STEP 1: Try exact match first
+    const { data: exactMatch } = await supabase
       .from('locations')
       .select('id')
       .eq('name', location.name)
       .single();
 
     let locationId: number;
+    let useExisting = false;
 
-    if (existing) {
-      locationId = existing.id;
-      logger.info(`Location exists: ${location.name} (ID: ${locationId})`);
+    if (exactMatch) {
+      // Exact match found
+      locationId = exactMatch.id;
+      useExisting = true;
+      logger.info(`✅ Exact match found: ${location.name} (ID: ${locationId})`);
+    } else {
+      // STEP 2: No exact match, try fuzzy matching
+      const fuzzyMatches = await findLocationByFuzzyMatch(location.name);
 
-      // IMPORTANT: Always update with attractions and LGBT venues
-      if (location.topAttractions || location.lgbtVenues) {
-        logger.info(`Updating ${location.name} with research data:`);
-        logger.info(`  - Attractions: ${location.topAttractions?.length || 0}`);
-        logger.info(`  - LGBT venues: ${location.lgbtVenues?.length || 0}`);
+      if (fuzzyMatches.length > 0) {
+        // STEP 3: Prompt user to confirm match
+        const userChoice = await promptUserForLocationMatch(location.name, fuzzyMatches);
 
-        const { error } = await supabase
-          .from('locations')
-          .update({
-            top_attractions: location.topAttractions || null,
-            lgbt_venues: location.lgbtVenues || null,
-          })
-          .eq('id', locationId);
-
-        if (error) {
-          logger.error(`Failed to update location research for ${location.name}:`, error);
-          throw new Error(`Failed to update location research: ${error.message}`);
+        if (userChoice.action === 'use' && userChoice.locationId) {
+          // User chose existing location
+          locationId = userChoice.locationId;
+          useExisting = true;
+          logger.info(`✅ Using existing location (ID: ${locationId})`);
         } else {
-          logger.info(`✅ Updated ${location.name} with attractions and LGBT venues`);
+          // User chose to create new
+          useExisting = false;
         }
       } else {
-        logger.warn(`⚠️  No research data for existing location: ${location.name}`);
+        // No fuzzy matches either, will create new
+        useExisting = false;
+      }
+    }
+
+    if (useExisting && locationId) {
+      // Update existing location with new research
+      logger.info(`Updating ${location.name} with research data:`);
+      logger.info(`  - Attractions: ${location.topAttractions?.length || 0}`);
+      logger.info(`  - LGBT venues: ${location.lgbtVenues?.length || 0}`);
+
+      const { error } = await supabase
+        .from('locations')
+        .update({
+          top_attractions: location.topAttractions || null,
+          lgbt_venues: location.lgbtVenues || null,
+        })
+        .eq('id', locationId!);
+
+      if (error) {
+        logger.error(`Failed to update location research for ${location.name}:`, error);
+        throw new Error(`Failed to update location research: ${error.message}`);
+      } else {
+        logger.info(`✅ Updated location with attractions and LGBT venues`);
       }
     } else {
       // Create new location
@@ -727,7 +1102,7 @@ async function createLocations(): Promise<Map<string, number>> {
     const { data: verification, error: verifyError } = await supabase
       .from('locations')
       .select('top_attractions, lgbt_venues')
-      .eq('id', locationId)
+      .eq('id', locationId!)
       .single();
 
     if (verifyError) {
@@ -748,7 +1123,7 @@ async function createLocations(): Promise<Map<string, number>> {
       }
     }
 
-    locationMap.set(location.name, locationId);
+    locationMap.set(location.name, locationId!);
   }
 
   logger.info('✅ All locations created and verified');
@@ -1867,8 +2242,9 @@ git checkout ui-redesign
 
 **Solution:**
 
-- ALL images MUST be in Supabase Storage
-- Use `downloadImageFromUrl()` in script
+- **Hero image:** Upload to Supabase Storage
+- **Ship image:** Upload to Supabase Storage (if new ship)
+- **Location images:** Users will add manually later - DO NOT research or upload in script
 - Store only Supabase URLs: `https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/...`
 
 ### Issue 3: Duplicate Day Error
@@ -1989,6 +2365,96 @@ WHERE name = 'Moorea';
 
 5. **If still failing**, the script now includes automatic verification that will throw an error if data isn't saved
 
+### Issue 8: Duplicate Locations Created
+
+**Problem:** Script creates "Mykonos" as a new location when "Mykonos, Greece" already exists in database
+
+**Cause:** Import script uses exact string matching, missing similar locations with different naming
+
+**Solution (Now Automated):**
+
+The import script now includes **fuzzy matching** to prevent duplicates:
+
+1. **How it works:**
+   - Script first tries exact match (e.g., "Mykonos" = "Mykonos")
+   - If no exact match, uses fuzzy logic to find similar names:
+     - Contains match: "Mykonos, Greece" contains "Mykonos"
+     - First word match: "Mykonos" matches first word of "Mykonos, Greece"
+     - Comma-removed match: "Mykonos Greece" vs "Mykonos, Greece"
+   - Ranks matches by similarity score (100 = exact, 90 = contains, etc.)
+
+2. **User confirmation prompt:**
+
+   ```
+   ⚠️  Location "Mykonos" not found with exact match.
+      Found 2 similar location(s):
+
+      [1] Mykonos, Greece (Greece) (ID: 45)
+      [2] Mykonos Town (Greece) (ID: 78)
+      [0] Create new location: "Mykonos"
+
+   👉 Select option (0 to create new, 1-2 to use existing):
+   ```
+
+3. **What to do:**
+   - Type `1` or `2` to use existing location
+   - Type `0` to create new location
+   - Invalid input defaults to creating new
+
+4. **Benefits:**
+   - Prevents duplicate locations
+   - Updates existing locations with new research
+   - Gives you full control over matches
+   - Shows country names to help identify correct match
+
+5. **Best practices:**
+   - When in doubt, use existing location (update is safer than duplicate)
+   - Check country name to verify correct location
+   - Only create new if location is genuinely different
+
+**Example interaction:**
+
+```
+=== STEP 6: Creating Locations ===
+🔍 Fuzzy searching for location: "Mykonos"
+Found 1 potential matches
+
+⚠️  Location "Mykonos" not found with exact match.
+   Found 1 similar location(s):
+
+   [1] Mykonos, Greece (Greece) (ID: 45)
+   [0] Create new location: "Mykonos"
+
+👉 Select option (0 to create new, 1 to use existing): 1
+
+✅ Using existing location (ID: 45)
+Updating Mykonos with research data:
+  - Attractions: 3
+  - LGBT venues: 2
+✅ Updated location with attractions and LGBT venues
+✅ Verified: Mykonos has 3 attractions, 2 LGBT venues
+```
+
+**Manual fix for existing duplicates:**
+
+If duplicates already exist, merge them manually:
+
+```sql
+-- 1. Find duplicates
+SELECT id, name, country_id
+FROM locations
+WHERE LOWER(name) LIKE '%mykonos%'
+ORDER BY name;
+
+-- 2. Update itinerary entries to use correct location
+UPDATE itinerary
+SET location_id = 45  -- Correct location ID
+WHERE location_id = 78;  -- Duplicate location ID
+
+-- 3. Delete duplicate
+DELETE FROM locations WHERE id = 78;
+```
+
 ---
 
 ## Database Schema Reference
@@ -2019,12 +2485,19 @@ day                 INTEGER NOT NULL    -- Sequential: 1, 2, 3...
 location_id         INTEGER             -- Foreign key to locations
 location_name       TEXT
 arrival_time        TIME                -- "14:00:00"
-departure_time      TIME
+departure_time      TIME                -- "18:00:00"
+all_aboard_time     TIME                -- "17:30:00" (30 min before departure)
 activities          TEXT
 location_type_id    INTEGER NOT NULL    -- 1-4, 11-12
 location_image_url  TEXT                -- Optional override
 
 UNIQUE CONSTRAINT: (trip_id, day)
+
+IMPORTANT:
+- If departure_time exists, all_aboard_time is REQUIRED (departure - 30 min)
+- Overnight ports use TWO days:
+  - Day 1: location_type_id = 11 (Overnight Arrival)
+  - Day 2: location_type_id = 12 (Overnight Departure)
 ```
 
 ### locations Table
@@ -2061,13 +2534,19 @@ amenity_id          INTEGER NOT NULL
 ### Location Type IDs
 
 ```
-1  = Embarkation Port
-2  = Disembarkation Port
-3  = Port of Call
-4  = Day at Sea
-11 = Overnight Arrival
-12 = Overnight Departure
+1  = Embarkation Port (first day, boarding)
+2  = Disembarkation Port (last day, leaving ship)
+3  = Port of Call (regular day port)
+4  = Day at Sea (no port, assign to "Sea Day" locations)
+11 = Overnight Arrival (day 1 of 2-day overnight port)
+12 = Overnight Departure (day 2 of 2-day overnight port)
 ```
+
+**Overnight Port Example:**
+
+- Cruise visits Mykonos for 2 nights
+- Day 3: Arrive 11:00, stay overnight → `locationTypeId: 11`
+- Day 4: Depart 21:00 → `locationTypeId: 12, allAboardTime: 20:30`
 
 ### Venue Type IDs
 
@@ -2085,19 +2564,26 @@ amenity_id          INTEGER NOT NULL
 
 Use this checklist to ensure nothing is missed:
 
-### Pre-Import
+### Pre-Import (Phase 1)
 
 - [ ] Charter company website URL obtained
-- [ ] Cruise data extracted (dates, itinerary, ship)
-- [ ] All ports researched (attractions + LGBT venues)
-- [ ] Planning document created
+- [ ] **Step 1: Basic data extracted** (dates, port names, itinerary, ship)
+- [ ] **Step 2: Database check completed** (checked existing locations)
+- [ ] **🚨 Step 2: Research plan presented to user** (showed what needs research)
+- [ ] **🚨 Step 2: User approved research plan** (approved which locations to research)
+- [ ] **Step 3: Research completed** (ONLY for approved locations - attractions + LGBT venues)
+- [ ] **Step 4: Planning document created**
+- [ ] **Step 5: 🚨 All research findings presented to user**
+- [ ] **Step 5: 🚨 User explicitly approved research findings**
 - [ ] Database IDs collected
 
-### Import Script
+### Import Script (Phase 2)
 
+- [ ] **Prerequisite: User approved research plan (Step 2) AND research findings (Step 5)**
 - [ ] Script created at `scripts/import-[cruise-name].ts`
 - [ ] Environment variables configured
-- [ ] Cruise data structure defined
+- [ ] Cruise data structure defined (using user-approved research)
+- [ ] Script uses ONLY researched locations (skips locations with complete data)
 - [ ] All helper functions implemented (including preview function)
 - [ ] Main execution function complete with preview step
 
@@ -2170,6 +2656,76 @@ Use this checklist to ensure nothing is missed:
 ---
 
 ## Version History
+
+- **v3.2.0** (2025-11-03): Added all-aboard time calculation and overnight port handling
+  - **REQUIRED:** Calculate all_aboard_time for ANY port with departure_time (departure - 30 min)
+  - **REQUIRED:** Overnight ports must use location types 11 & 12
+    - Day 1 of overnight: locationTypeId = 11 (Overnight Arrival)
+    - Day 2 of overnight: locationTypeId = 12 (Overnight Departure)
+  - Added all_aboard_time field to itinerary schema
+  - Updated examples to show overnight port handling
+  - Added common errors for missing all-aboard times and incorrect overnight types
+  - Addresses user feedback: "We need to make sure that it's creating an all-aboard time for any place that has a departure"
+  - Addresses user feedback: "Overnight port needs day one overnight arrival, day two overnight departure"
+
+- **v3.1.0** (2025-11-03): Removed location image research requirement
+  - **BREAKING CHANGE:** DO NOT research or upload images for locations
+  - Location images will be added manually by users later
+  - Only upload hero image and ship image (if new ship)
+  - Clarified Sea Day handling: use pre-existing "Sea Day" locations in database
+  - Sea days auto-assigned in sequential order based on number of sea days
+  - Updated uploadAllImages() to skip location images
+  - Simplified research requirements - focus on attractions and LGBT venues only
+  - Addresses user feedback: "Don't try to find images for locations; it's messing it all up"
+  - Addresses user feedback: "We have ports created for sea days, use those in order"
+
+- **v3.0.0** (2025-11-03): Major efficiency update - check database BEFORE research
+  - **BREAKING CHANGE:** Restructured Phase 1 to check database FIRST, research SECOND
+  - Added Step 2: "Check Database for Existing Data" (ships AND locations BEFORE research)
+  - Check ship existence and data completeness (venues, amenities)
+  - Only research ship/locations that actually need data (saves API costs)
+  - Present comprehensive research plan to user showing what needs work
+  - User approves research plan BEFORE expensive API calls
+  - Updated import flow to 13 steps (added database check + research plan approval)
+  - Step 1: Extract basic data only (ship name, port names, no research)
+  - Step 2: Check database for ship and locations, present research plan, get approval
+  - Step 3: Research ONLY approved ship/locations
+  - Step 5: Present research findings for final approval
+  - Prevents wasting API calls on ships/locations that already have complete data
+  - Addresses user feedback: "it's doing a lot of work before it even needs to do any work"
+  - Addresses user feedback: "check the ship to make sure the ship exists"
+  - Optimized for future AI tool with API cost awareness
+
+- **v2.5.0** (2025-11-03): Added mandatory user research review step
+  - Added Phase 1, Step 5: "Review Research with User" (MANDATORY)
+  - Research must be presented to user BEFORE creating import script
+  - User must explicitly approve all research findings before Phase 2
+  - Updated import flow to show USER REVIEW
+  - Updated checklist with USER REVIEW and USER APPROVAL checkboxes
+  - Added prerequisite note to Phase 2 requiring user approval
+  - Prevents importing incorrect or unreviewed research data
+  - Allows user to catch and correct errors before they're locked into code
+  - Addresses user feedback: "last time I don't think it actually stopped and asked me to kind of verify all the information"
+
+- **v2.4.0** (2025-11-03): Added fuzzy location matching to prevent duplicates
+  - Added `findLocationByFuzzyMatch()` helper function
+  - Added `promptUserForLocationMatch()` for user confirmation
+  - Updated `createLocations()` to use fuzzy matching with 3-step process:
+    1. Try exact match first
+    2. If no exact match, use fuzzy logic to find similar locations
+    3. Prompt user to confirm match or create new location
+  - Fuzzy matching rules:
+    - Exact match (score: 100)
+    - Contains match: "Mykonos, Greece" contains "Mykonos" (score: 90)
+    - Search contains location: "Mykonos Greece" contains "Mykonos" (score: 85)
+    - Comma-removed match: "Mykonos Greece" = "Mykonos, Greece" (score: 95)
+    - First word match: "Mykonos" = first word of "Mykonos, Greece" (score: 80)
+  - Shows top 5 matches ranked by similarity score
+  - Displays country names to help identify correct location
+  - Prevents duplicate locations like "Mykonos" when "Mykonos, Greece" exists
+  - Added Issue #8 to troubleshooting: "Duplicate Locations Created"
+  - Added manual fix SQL for merging existing duplicates
+  - Addressed user feedback from Athens to Venice 2026 import
 
 - **v2.3.1** (2025-10-26): Fixed attractions and LGBT venues not saving
   - Enhanced `createLocations()` function with explicit logging

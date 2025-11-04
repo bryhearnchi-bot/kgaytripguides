@@ -355,6 +355,34 @@ export default function TripsManagement() {
     },
   });
 
+  const moveToPreview = useMutation({
+    mutationFn: async (tripId: number) => {
+      if (!canCreateOrEditTrips) {
+        throw new Error('You do not have permission to move trips to preview.');
+      }
+      const response = await api.patch(`/api/admin/trips/${tripId}/move-to-preview`, {});
+      if (!response.ok) {
+        throw new Error('Failed to move trip to preview');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
+      toast({
+        title: 'Trip moved to preview',
+        description:
+          'The trip is now in preview mode. You can view it via the slug and make edits before republishing.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Move to preview failed',
+        description: error.message || 'Failed to move the trip to preview',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const exportTripData = useMutation({
     mutationFn: async (tripId: number) => {
       if (!canExportTrips) {
@@ -841,17 +869,17 @@ export default function TripsManagement() {
                   trip.tripStatusId !== 5 &&
                   trip.status !== 'preview',
               },
-              // Deactivate button (for active trips)
+              // Move to Preview button (for active published trips)
               {
-                label: 'Deactivate',
-                icon: <StopCircle className="h-4 w-4" />,
+                label: 'Move to Preview',
+                icon: <Eye className="h-4 w-4" />,
                 onClick: (trip: Trip) => {
                   if (
                     confirm(
-                      `Are you sure you want to deactivate "${trip.name}"? It will no longer appear on the site.`
+                      `Are you sure you want to move "${trip.name}" to preview mode? It will be removed from public listings but remain viewable via its URL. You can make edits and republish when ready.`
                     )
                   ) {
-                    deactivateTrip.mutate(trip.id);
+                    moveToPreview.mutate(trip.id);
                   }
                 },
                 visible: (trip: Trip) =>

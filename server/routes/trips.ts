@@ -582,6 +582,45 @@ export function registerTripRoutes(app: Express) {
     })
   );
 
+  // Move trip to preview (sets status to Preview, keeps viewable via slug)
+  app.patch(
+    '/api/admin/trips/:id/move-to-preview',
+    requireContentEditor,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const tripId = parseInt(req.params.id || '0');
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Get Preview status ID
+      const { data: previewStatus } = await supabaseAdmin
+        .from('trip_status')
+        .select('id')
+        .eq('status', 'Preview')
+        .single();
+
+      if (!previewStatus) {
+        throw ApiError.internalError('Preview status not found');
+      }
+
+      // Update trip to Preview status (removes from public listings, keeps viewable via slug)
+      const { error } = await supabaseAdmin
+        .from('trips')
+        .update({
+          trip_status_id: previewStatus.id,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', tripId);
+
+      if (error) {
+        logger.error('Failed to move trip to preview', { tripId, error });
+        throw ApiError.internalError('Failed to move trip to preview');
+      }
+
+      logger.info('Trip moved to preview', { tripId });
+      return res.json({ success: true, message: 'Trip moved to preview mode' });
+    })
+  );
+
   // Get trip statistics for admin dashboard
   app.get(
     '/api/admin/trips/stats',
