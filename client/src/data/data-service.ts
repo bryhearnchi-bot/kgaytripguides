@@ -14,7 +14,7 @@ export const getPartyThemesData = () => PARTY_THEMES;
 export const getCityAttractionsData = () => CITY_ATTRACTIONS;
 
 // Get the trip slug - always real data
-export const getTripSlug = () => 'greek-isles-2025';
+export const getTripSlug = () => 'hong-kong-to-singapore-cruise-2025';
 
 // Helper to check if we're using mock data - always false
 export const isUsingMockData = () => false;

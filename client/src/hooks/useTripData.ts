@@ -18,6 +18,7 @@ export interface TripData {
     endDate: string;
     status: string;
     heroImageUrl: string | null;
+    mapUrl: string | null;
     description: string | null;
     shortDescription: string | null;
     featured: boolean;

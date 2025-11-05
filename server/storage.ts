@@ -127,6 +127,7 @@ export class TripStorage implements ITripStorage {
       tripStatusId: dbTrip.trip_status_id,
       isActive: dbTrip.is_active,
       heroImageUrl: dbTrip.hero_image_url,
+      mapUrl: dbTrip.map_url,
       description: dbTrip.description,
       highlights: dbTrip.highlights,
       wizardState: dbTrip.wizard_state,
@@ -623,7 +624,7 @@ export class TripInfoStorage implements ITripInfoStorage {
   async getCompleteInfo(slug: string, type: string): Promise<any> {
     const supabaseAdmin = getSupabaseAdmin();
 
-    // Get trip data with charter company info
+    // Get trip data with charter company and ship info
     const { data: tripData, error: tripError } = await supabaseAdmin
       .from('trips')
       .select(
@@ -632,6 +633,18 @@ export class TripInfoStorage implements ITripInfoStorage {
         charter_companies (
           name,
           logo_url
+        ),
+        ships (
+          id,
+          name,
+          image_url,
+          capacity,
+          decks,
+          cruise_line_id,
+          cruise_lines (
+            id,
+            name
+          )
         )
       `
       )
@@ -641,11 +654,17 @@ export class TripInfoStorage implements ITripInfoStorage {
     if (tripError) throw tripError;
     if (!tripData) throw new Error('Trip not found');
 
-    // Flatten charter company data for transformTripData
+    // Flatten charter company and ship data for transformTripData
     const flattenedTripData = {
       ...tripData,
+      map_url: tripData.map_url, // Explicitly include map_url
       charter_company_name: tripData.charter_companies?.name || null,
       charter_company_logo: tripData.charter_companies?.logo_url || null,
+      ship_name: tripData.ships?.name || null,
+      ship_image_url: tripData.ships?.image_url || null,
+      ship_capacity: tripData.ships?.capacity || null,
+      ship_decks: tripData.ships?.decks || null,
+      cruise_line_name: tripData.ships?.cruise_lines?.name || null,
     };
 
     // Transform trip data to camelCase
@@ -1006,8 +1025,22 @@ export class TripInfoStorage implements ITripInfoStorage {
       },
     }));
 
+    // Create ship object if ship data exists
+    const shipData = tripData.ships
+      ? {
+          id: tripData.ships.id,
+          name: tripData.ships.name,
+          imageUrl: tripData.ships.image_url,
+          capacity: tripData.ships.capacity,
+          decks: tripData.ships.decks,
+          cruiseLineId: tripData.ships.cruise_line_id,
+          cruiseLineName: tripData.ships.cruise_lines?.name || null,
+        }
+      : null;
+
     return {
       trip: transformedTrip,
+      ship: shipData,
       itinerary: transformedItinerary,
       scheduleEntries: transformedSchedule,
       events: transformedEvents,

@@ -13,6 +13,7 @@ import {
   Eye,
   CheckCircle,
   HelpCircle,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 import { LoadingState, ErrorState } from './trip-guide/shared';
 import { useLocalStorage } from './trip-guide/hooks/useLocalStorage';
 import { useScheduledDaily } from './trip-guide/hooks/useScheduledDaily';
+import { OverviewTab } from './trip-guide/tabs/OverviewTab';
 import { ScheduleTab } from './trip-guide/tabs/ScheduleTab';
 import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
@@ -44,7 +46,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
   const { toast } = useToast();
   const { profile } = useSupabaseAuth();
-  const [activeTab, setActiveTab] = useState('itinerary');
+  const [activeTab, setActiveTab] = useState('overview');
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
   const [selectedItineraryStop, setSelectedItineraryStop] = useState<any>(null);
@@ -397,7 +399,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
       <div className="relative z-10">
         <HeroSection
           tripName={tripData?.trip?.name}
-          tripDescription={tripData?.trip?.description}
+          tripDescription={null} // Description moved to Overview tab
           tripType={isCruise ? 'cruise' : isResort ? 'resort' : null}
           charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
           charterCompanyName={tripData?.trip?.charterCompanyName}
@@ -439,6 +441,19 @@ export default function TripGuide({ slug }: TripGuideProps) {
           {/* Tab Bar */}
           <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                  activeTab === 'overview'
+                    ? 'bg-white text-ocean-900'
+                    : 'text-white/70 hover:text-white'
+                }`}
+                aria-label="Overview"
+              >
+                <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Overview</span>
+                {activeTab === 'overview' && <span className="sm:hidden">Overview</span>}
+              </button>
               <button
                 onClick={() => setActiveTab('itinerary')}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
@@ -521,6 +536,18 @@ export default function TripGuide({ slug }: TripGuideProps) {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsContent value="overview">
+              <OverviewTab
+                tripData={tripData}
+                ship={tripData?.ship}
+                ITINERARY={ITINERARY as any}
+                SCHEDULE={SCHEDULE as any}
+                DAILY={DAILY as any}
+                TALENT={TALENT as any}
+                PARTY_THEMES={PARTY_THEMES as any}
+              />
+            </TabsContent>
+
             <TabsContent value="schedule">
               <ScheduleTab
                 SCHEDULED_DAILY={SCHEDULED_DAILY}
