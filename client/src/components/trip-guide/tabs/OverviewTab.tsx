@@ -12,6 +12,7 @@ import {
   Sparkles,
   LayoutDashboard,
   Map,
+  Clock,
 } from 'lucide-react';
 
 interface OverviewTabProps {
@@ -43,6 +44,9 @@ export const OverviewTab = memo(function OverviewTab({
   updates = [],
   onNavigateToTab,
 }: OverviewTabProps) {
+  // Get embarkation info from first stop
+  const embarkationStop = ITINERARY[0];
+
   // Calculate statistics from actual data
   const statistics = {
     // Count unique ports (overnight stays at same port only count once)
@@ -202,10 +206,36 @@ export const OverviewTab = memo(function OverviewTab({
                   />
                 </div>
               )}
-              <p className="text-xs text-white/80 leading-relaxed flex-1">
-                {tripData?.trip?.description ||
-                  'Experience an unforgettable journey through stunning destinations with world-class entertainment and amenities.'}
-              </p>
+              <div className="flex-1 space-y-3">
+                <p className="text-xs text-white/80 leading-relaxed">
+                  {tripData?.trip?.description ||
+                    'Experience an unforgettable journey through stunning destinations with world-class entertainment and amenities.'}
+                </p>
+
+                {/* Time badges */}
+                {(embarkationStop?.depart || embarkationStop?.allAboard) && (
+                  <div className="flex flex-wrap gap-2">
+                    {embarkationStop?.depart && (
+                      <div className="flex items-center gap-1.5 bg-blue-500/20 border border-blue-400/30 rounded-full px-3 py-1">
+                        <Clock className="w-3 h-3 text-blue-300" />
+                        <span className="text-xs text-blue-100 font-medium">Depart:</span>
+                        <span className="text-xs text-white font-semibold">
+                          {embarkationStop.depart}
+                        </span>
+                      </div>
+                    )}
+                    {embarkationStop?.allAboard && (
+                      <div className="flex items-center gap-1.5 bg-orange-500/20 border border-orange-400/30 rounded-full px-3 py-1">
+                        <Clock className="w-3 h-3 text-orange-300" />
+                        <span className="text-xs text-orange-100 font-medium">All Aboard:</span>
+                        <span className="text-xs text-white font-semibold">
+                          {embarkationStop.allAboard}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
