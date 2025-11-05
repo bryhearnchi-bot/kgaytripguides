@@ -383,6 +383,22 @@ export function BasicInfoPage() {
             />
           </div>
 
+          {/* Map Image */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-white/90">Cruise Route Map</label>
+            <ImageUploadField
+              label="Cruise Route Map"
+              value={state.tripData.mapUrl || ''}
+              onChange={url => updateTripData({ mapUrl: url || '' })}
+              imageType="maps"
+              placeholder="No map image uploaded"
+              className="admin-form-modal"
+            />
+            <p className="text-[10px] text-white/50 mt-0.5">
+              Upload a map showing the cruise route or resort location
+            </p>
+          </div>
+
           {/* Description */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-white/90">Description *</label>

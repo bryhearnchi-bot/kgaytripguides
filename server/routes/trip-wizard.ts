@@ -123,6 +123,7 @@ async function createCompleteTrip(supabase: any, tripData: TripWizardData, userI
         start_date: tripData.startDate,
         end_date: tripData.endDate,
         hero_image_url: tripData.heroImageUrl || null,
+        map_url: tripData.mapUrl || null,
         description: tripData.description || null,
         highlights: tripData.highlights || null,
         ship_id: shipId,
@@ -307,7 +308,11 @@ export function registerTripWizardRoutes(app: Express) {
 
       if (isUpdate) {
         // UPDATE existing trip
-        logger.info('Updating trip from Edit Modal', { userId, tripName: tripData.name, tripId });
+        logger.info('Updating trip from Edit Modal', {
+          userId,
+          tripName: tripData.name,
+          tripId,
+        });
 
         // Update the main trip record
         const { data: updatedTrip, error: tripError } = await supabase
@@ -320,6 +325,7 @@ export function registerTripWizardRoutes(app: Express) {
             start_date: tripData.startDate,
             end_date: tripData.endDate,
             hero_image_url: tripData.heroImageUrl || null,
+            map_url: tripData.mapUrl || null,
             description: tripData.description || null,
             highlights: tripData.highlights || null,
             ship_id: tripData.shipId || null,
@@ -565,6 +571,7 @@ export function registerTripWizardRoutes(app: Express) {
             start_date: draftData.tripData.startDate || null,
             end_date: draftData.tripData.endDate || null,
             hero_image_url: draftData.tripData.heroImageUrl || null,
+            map_url: draftData.tripData.mapUrl || null,
             description: draftData.tripData.description || null,
             highlights: draftData.tripData.highlights || null,
             ship_id: shipId,
@@ -598,6 +605,7 @@ export function registerTripWizardRoutes(app: Express) {
             start_date: draftData.tripData.startDate || null,
             end_date: draftData.tripData.endDate || null,
             hero_image_url: draftData.tripData.heroImageUrl || null,
+            map_url: draftData.tripData.mapUrl || null,
             description: draftData.tripData.description || null,
             highlights: draftData.tripData.highlights || null,
             ship_id: shipId,

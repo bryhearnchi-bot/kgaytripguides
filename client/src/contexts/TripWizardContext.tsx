@@ -13,6 +13,7 @@ interface TripData {
   startDate: string;
   endDate: string;
   heroImageUrl: string;
+  mapUrl: string;
   description: string;
   highlights: string;
 }
@@ -154,6 +155,7 @@ const initialState: TripWizardState = {
     startDate: '',
     endDate: '',
     heroImageUrl: '',
+    mapUrl: '',
     description: '',
     highlights: '',
   },
@@ -349,6 +351,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
         startDate: '',
         endDate: '',
         heroImageUrl: '',
+        mapUrl: '',
         description: '',
         highlights: '',
       },

@@ -21,7 +21,8 @@ export type ImageType =
   | 'talent'
   | 'profiles'
   | 'charters'
-  | 'general';
+  | 'general'
+  | 'maps';
 
 export function useImageUpload() {
   const [state, setState] = useState<ImageUploadState>({

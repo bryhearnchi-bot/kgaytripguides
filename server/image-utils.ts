@@ -121,7 +121,7 @@ export async function uploadToSupabase(
   const filename = `${imageType}-${randomUUID()}${ext}`;
 
   // Determine bucket and folder path - using single bucket with folders as per user setup
-  const bucket = 'images'; // Single bucket for all images
+  const bucket = 'app-images'; // Single bucket for all images
   let folderPath = imageType;
 
   // Map image types to their folder names
@@ -157,6 +157,9 @@ export async function uploadToSupabase(
       break;
     case 'profiles':
       folderPath = 'profiles';
+      break;
+    case 'maps':
+      folderPath = 'maps';
       break;
     default:
       folderPath = imageType; // Use the imageType as folder name
@@ -245,7 +248,7 @@ export function getPublicImageUrl(imageType: string, filename: string): string {
   const supabaseUrl = process.env.SUPABASE_URL;
   if (supabaseUrl) {
     // Single bucket for all images
-    const bucket = 'images';
+    const bucket = 'app-images';
     return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filename}`;
   }
 
