@@ -99,9 +99,9 @@ export const OverviewTab = memo(function OverviewTab({
       </div>
 
       {/* All content in single flow */}
-      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
+      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:items-start">
         {/* About This Trip */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-1 lg:order-1 lg:col-span-2">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-1 lg:order-1 lg:col-span-2 lg:self-start">
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-ocean-500/30 p-1 rounded">
               <Info className="w-3 h-3 text-ocean-100" />
@@ -129,7 +129,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
 
         {/* Cruise Map */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-3 lg:order-2 lg:col-span-1">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-3 lg:order-2 lg:col-span-1 lg:self-start">
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-emerald-500/30 p-1 rounded">
               <Map className="w-3 h-3 text-emerald-100" />
@@ -152,7 +152,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
 
         {/* Ship Details */}
-        <div className="bg-white/10 border border-white/20 rounded-xl shadow-lg p-4 md:p-6 order-2 lg:order-3 lg:col-span-2">
+        <div className="bg-white/10 border border-white/20 rounded-xl shadow-lg p-4 md:p-6 order-2 lg:order-3 lg:col-span-2 lg:self-start">
           {/* Ship Header */}
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-purple-500/30 p-1 rounded">
@@ -242,7 +242,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
 
         {/* Updates */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-4 lg:order-4 lg:col-span-1">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-4 lg:order-4 lg:col-span-1 lg:self-start">
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-amber-500/30 p-1 rounded">
               <Bell className="w-3 h-3 text-amber-100" />
@@ -287,7 +287,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
 
         {/* Trip Statistics */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg order-5 lg:order-5 lg:col-span-2">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg order-5 lg:order-5 lg:col-span-2 lg:self-start">
           <div className="flex items-center space-x-2 mb-2 md:mb-3">
             <div className="bg-blue-500/30 p-1 rounded">
               <Activity className="w-3 h-3 text-blue-100" />
