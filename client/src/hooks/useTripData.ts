@@ -227,35 +227,53 @@ export function transformTripData(data: TripData) {
     social: t.socialLinks || {},
   }));
 
-  // Extract unique party themes from events (defensive check)
-  const uniquePartyThemes = new Map();
-  (data.events || []).forEach(event => {
-    if ((event as any).partyTheme) {
-      const theme = (event as any).partyTheme;
-      if (!uniquePartyThemes.has(theme.id)) {
-        uniquePartyThemes.set(theme.id, {
-          key: theme.name,
-          desc: theme.longDescription || theme.long_description || theme.description || '',
-          shortDesc:
-            theme.shortDescription ||
-            theme.short_description ||
-            (theme.longDescription ? `${theme.longDescription.substring(0, 50)}...` : ''),
-          costumeIdeas: theme.costumeIdeas || theme.costume_ideas,
-          amazonShoppingListUrl:
-            theme.amazonShoppingListUrl ||
-            theme.amazon_shopping_list_url ||
-            theme.shoppingList ||
-            theme.shopping_list,
-          imageUrl: theme.imageUrl || theme.image_url,
-          longDescription: theme.longDescription || theme.long_description,
-          shortDescription: theme.shortDescription || theme.short_description,
-        });
-      }
-    }
-  });
+  // Use party themes from API if available (from trip_party_themes junction table)
+  // Otherwise, extract unique party themes from events for backward compatibility
+  let partyThemes: any[] = [];
 
-  // Convert to array
-  const partyThemes = Array.from(uniquePartyThemes.values());
+  if (data.partyThemes && Array.isArray(data.partyThemes) && data.partyThemes.length > 0) {
+    // Use party themes from API (preferred method - from trip_party_themes table)
+    partyThemes = data.partyThemes.map((theme: any) => ({
+      key: theme.name,
+      desc: theme.longDescription || '',
+      shortDesc: theme.shortDescription || '',
+      costumeIdeas: theme.costumeIdeas,
+      amazonShoppingListUrl: theme.amazonShoppingListUrl,
+      imageUrl: theme.imageUrl,
+      longDescription: theme.longDescription,
+      shortDescription: theme.shortDescription,
+    }));
+  } else {
+    // Fallback: Extract unique party themes from events (legacy method)
+    const uniquePartyThemes = new Map();
+    (data.events || []).forEach(event => {
+      if ((event as any).partyTheme) {
+        const theme = (event as any).partyTheme;
+        if (!uniquePartyThemes.has(theme.id)) {
+          uniquePartyThemes.set(theme.id, {
+            key: theme.name,
+            desc: theme.longDescription || theme.long_description || theme.description || '',
+            shortDesc:
+              theme.shortDescription ||
+              theme.short_description ||
+              (theme.longDescription ? `${theme.longDescription.substring(0, 50)}...` : ''),
+            costumeIdeas: theme.costumeIdeas || theme.costume_ideas,
+            amazonShoppingListUrl:
+              theme.amazonShoppingListUrl ||
+              theme.amazon_shopping_list_url ||
+              theme.shoppingList ||
+              theme.shopping_list,
+            imageUrl: theme.imageUrl || theme.image_url,
+            longDescription: theme.longDescription || theme.long_description,
+            shortDescription: theme.shortDescription || theme.short_description,
+          });
+        }
+      }
+    });
+
+    // Convert to array
+    partyThemes = Array.from(uniquePartyThemes.values());
+  }
 
   // City attractions (keep static for now)
   const cityAttractions: any[] = [];

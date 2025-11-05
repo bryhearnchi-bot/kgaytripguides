@@ -131,14 +131,15 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const isCruise = !!tripData?.trip?.shipId;
   const isResort = !!tripData?.trip?.resortId;
 
-  // Show party themes, talent, and important info for cruises that have talent
+  // Check for specific cruise types (for styling/backgrounds)
   const isGreekCruise = slug === 'greek-isles-egypt-med-cruise';
   const isDragStarsCruise = slug === 'drag-stars-at-sea';
   const isHalloweenCruise = slug === 'halloween-carribean-cruise';
-  const hasTalent = isGreekCruise || isDragStarsCruise || isHalloweenCruise;
-  const TALENT = hasTalent ? data?.TALENT || [] : [];
-  const PARTY_THEMES = hasTalent ? data?.PARTY_THEMES || [] : [];
-  const IMPORTANT_INFO = hasTalent ? data?.IMPORTANT_INFO || {} : {};
+
+  // Load party themes, talent, and important info if available
+  const TALENT = data?.TALENT || [];
+  const PARTY_THEMES = data?.PARTY_THEMES || [];
+  const IMPORTANT_INFO = data?.IMPORTANT_INFO || {};
 
   // Calculate trip status based on start and end dates
   const tripStatus = useMemo(() => {

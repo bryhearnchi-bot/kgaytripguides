@@ -964,6 +964,55 @@ export class TripInfoStorage implements ITripInfoStorage {
         updatedAt: talent.updated_at,
       }));
 
+    // Get party themes data (only for this trip via trip_party_themes junction table)
+    const { data: partyThemesData, error: partyThemesError } = await supabaseAdmin
+      .from('trip_party_themes')
+      .select(
+        `
+        order_index,
+        party_themes:party_theme_id (
+          id,
+          name,
+          short_description,
+          long_description,
+          costume_ideas,
+          amazon_shopping_list_url,
+          image_url,
+          party_type,
+          created_at,
+          updated_at
+        )
+      `
+      )
+      .eq('trip_id', tripData.id)
+      .order('order_index', { ascending: true });
+
+    if (partyThemesError) throw partyThemesError;
+
+    // Log for debugging
+    logger.debug('Party themes query completed', {
+      tripId: tripData.id,
+      slug,
+      partyThemesCount: partyThemesData?.length || 0,
+    });
+
+    // Transform party themes data to camelCase (extract from junction table result)
+    const transformedPartyThemes = (partyThemesData || [])
+      .map((item: any) => item.party_themes) // Extract party_themes object from junction table
+      .filter((theme: any) => theme !== null) // Filter out any null values
+      .map((theme: any) => ({
+        id: theme.id,
+        name: theme.name,
+        shortDescription: theme.short_description,
+        longDescription: theme.long_description,
+        costumeIdeas: theme.costume_ideas,
+        amazonShoppingListUrl: theme.amazon_shopping_list_url,
+        imageUrl: theme.image_url,
+        partyType: theme.party_type,
+        createdAt: theme.created_at,
+        updatedAt: theme.updated_at,
+      }));
+
     // Get resort schedule data (for resort trips)
     const { data: scheduleData, error: scheduleError } = await supabaseAdmin
       .from('resort_schedules')
@@ -1045,6 +1094,7 @@ export class TripInfoStorage implements ITripInfoStorage {
       scheduleEntries: transformedSchedule,
       events: transformedEvents,
       talent: transformedTalent,
+      partyThemes: transformedPartyThemes,
       tripInfoSections: transformedTripInfoSections,
     };
   }

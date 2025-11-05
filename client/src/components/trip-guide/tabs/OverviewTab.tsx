@@ -74,15 +74,18 @@ export const OverviewTab = memo(function OverviewTab({
         stop.port.toLowerCase().includes('sea day') ||
         stop.port.toLowerCase().includes('at sea')
     ).length,
-    totalEvents: DAILY.reduce((acc, day) => acc + (day.items?.length || 0), 0),
-    totalParties: DAILY.reduce(
+    // Count total events from schedule (excluding parties)
+    totalEvents: DAILY.reduce(
       (acc, day) =>
         acc +
         (day.items?.filter(
-          (item: any) => item.type?.toLowerCase().includes('party') || item.partyThemeId
+          (item: any) => !item.type?.toLowerCase().includes('party') && !item.partyThemeId
         ).length || 0),
       0
     ),
+    // Count party themes (from PARTY_THEMES array)
+    totalParties: PARTY_THEMES.length,
+    // Count talent/performers
     totalTalent: TALENT.length,
     daysOfTravel: Math.max(ITINERARY.length, SCHEDULE.length, 1),
   };
@@ -162,22 +165,22 @@ export const OverviewTab = memo(function OverviewTab({
                 <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Sea Days</p>
               </button>
               <button
-                onClick={() => onNavigateToTab?.('schedule')}
-                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-              >
-                <p className="text-lg md:text-xl font-bold text-white">{statistics.totalEvents}</p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Total Events</p>
-              </button>
-              <button
                 onClick={() => onNavigateToTab?.('parties')}
-                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+                className="bg-blue-500/20 hover:bg-blue-500/30 rounded-lg p-2 text-center transition-colors cursor-pointer"
               >
                 <p className="text-lg md:text-xl font-bold text-white">{statistics.totalParties}</p>
                 <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Theme Parties</p>
               </button>
               <button
+                onClick={() => onNavigateToTab?.('schedule')}
+                className="bg-blue-500/20 hover:bg-blue-500/30 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.totalEvents}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Total Events</p>
+              </button>
+              <button
                 onClick={() => onNavigateToTab?.('talent')}
-                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+                className="bg-blue-500/20 hover:bg-blue-500/30 rounded-lg p-2 text-center transition-colors cursor-pointer"
               >
                 <p className="text-lg md:text-xl font-bold text-white">{statistics.totalTalent}</p>
                 <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Performers</p>
