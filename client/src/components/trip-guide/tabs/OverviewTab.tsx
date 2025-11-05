@@ -101,7 +101,7 @@ export const OverviewTab = memo(function OverviewTab({
       {/* All content in single flow */}
       <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
         {/* About This Trip */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-1 lg:col-span-2">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-1 lg:order-1 lg:col-span-2">
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-ocean-500/30 p-1 rounded">
               <Info className="w-3 h-3 text-ocean-100" />
@@ -128,8 +128,31 @@ export const OverviewTab = memo(function OverviewTab({
           </div>
         </div>
 
+        {/* Cruise Map */}
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-3 lg:order-2 lg:col-span-1">
+          <div className="flex items-center space-x-2 mb-3">
+            <div className="bg-emerald-500/30 p-1 rounded">
+              <Map className="w-3 h-3 text-emerald-100" />
+            </div>
+            <h3 className="text-sm font-bold text-white/90">Cruise Route</h3>
+          </div>
+          {tripData?.trip?.mapUrl ? (
+            <img
+              src={tripData.trip.mapUrl}
+              alt={`${tripData.trip.name} Route Map`}
+              className="w-full h-auto object-contain"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-lg">
+              <Map className="w-8 h-8 text-white/20 mb-2" />
+              <p className="text-xs text-white/50">Map not available</p>
+            </div>
+          )}
+        </div>
+
         {/* Ship Details */}
-        <div className="bg-white/10 border border-white/20 rounded-xl shadow-lg p-4 md:p-6 order-2 lg:col-span-2">
+        <div className="bg-white/10 border border-white/20 rounded-xl shadow-lg p-4 md:p-6 order-2 lg:order-3 lg:col-span-2">
           {/* Ship Header */}
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-purple-500/30 p-1 rounded">
@@ -218,31 +241,8 @@ export const OverviewTab = memo(function OverviewTab({
           )}
         </div>
 
-        {/* Cruise Map */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-3 lg:col-span-1 lg:row-span-2">
-          <div className="flex items-center space-x-2 mb-3">
-            <div className="bg-emerald-500/30 p-1 rounded">
-              <Map className="w-3 h-3 text-emerald-100" />
-            </div>
-            <h3 className="text-sm font-bold text-white/90">Cruise Route</h3>
-          </div>
-          {tripData?.trip?.mapUrl ? (
-            <img
-              src={tripData.trip.mapUrl}
-              alt={`${tripData.trip.name} Route Map`}
-              className="w-full h-auto object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-lg">
-              <Map className="w-8 h-8 text-white/20 mb-2" />
-              <p className="text-xs text-white/50">Map not available</p>
-            </div>
-          )}
-        </div>
-
         {/* Updates */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-4 lg:col-span-1">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-4 lg:order-4 lg:col-span-1">
           <div className="flex items-center space-x-2 mb-3">
             <div className="bg-amber-500/30 p-1 rounded">
               <Bell className="w-3 h-3 text-amber-100" />
@@ -287,7 +287,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
 
         {/* Trip Statistics */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg order-5 lg:col-span-2">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg order-5 lg:order-5 lg:col-span-2">
           <div className="flex items-center space-x-2 mb-2 md:mb-3">
             <div className="bg-blue-500/30 p-1 rounded">
               <Activity className="w-3 h-3 text-blue-100" />
