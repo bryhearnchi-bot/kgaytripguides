@@ -5,6 +5,7 @@ import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
 import { AddToHomeScreen } from '@/components/AddToHomeScreen';
 import TimeFormatToggle from '@/components/TimeFormatToggle';
+import { AboutKGayModal } from '@/components/AboutKGayModal';
 import { useState, useEffect } from 'react';
 
 export default function NavigationBanner() {
@@ -12,8 +13,12 @@ export default function NavigationBanner() {
   const [currentLocation, setLocation] = useLocation();
   const [showEditTrip, setShowEditTrip] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   const isAdminRoute = currentLocation.startsWith('/admin');
+  const isLandingPage = currentLocation === '/';
+  const isTripGuidePage = currentLocation.startsWith('/trip/');
+  const showAboutButton = isLandingPage || isTripGuidePage;
 
   // Detect if app is running in standalone mode (installed as PWA)
   useEffect(() => {
@@ -109,6 +114,16 @@ export default function NavigationBanner() {
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* About KGAY Travel button - shows on landing page and trip guide pages */}
+          {showAboutButton && (
+            <Button
+              onClick={() => setShowAboutModal(true)}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium text-[11px] px-2 !py-0 !h-[22px] !min-h-0 rounded-full shadow-sm hover:shadow-md transition-all whitespace-nowrap leading-[22px]"
+            >
+              About KGAY Travel
+            </Button>
+          )}
+
           {/* Add to Home Screen button - shows for all users if not in standalone mode */}
           <AddToHomeScreen />
 
@@ -129,6 +144,9 @@ export default function NavigationBanner() {
           )}
         </div>
       </div>
+
+      {/* About KGAY Travel Modal */}
+      <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
     </div>
   );
 }
