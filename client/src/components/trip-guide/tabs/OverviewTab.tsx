@@ -29,6 +29,7 @@ interface OverviewTabProps {
     description: string;
     type: 'info' | 'update' | 'new';
   }>;
+  onNavigateToTab?: (tab: string) => void;
 }
 
 export const OverviewTab = memo(function OverviewTab({
@@ -40,11 +41,35 @@ export const OverviewTab = memo(function OverviewTab({
   TALENT,
   PARTY_THEMES,
   updates = [],
+  onNavigateToTab,
 }: OverviewTabProps) {
   // Calculate statistics from actual data
   const statistics = {
-    totalPorts: ITINERARY.filter(stop => stop.port && !stop.port.toLowerCase().includes('sea day'))
-      .length,
+    // Count unique ports (overnight stays at same port only count once)
+    totalPorts: (() => {
+      const ports = ITINERARY.filter(
+        stop => stop.port && !stop.port.toLowerCase().includes('sea day')
+      );
+      let uniquePortCount = 0;
+      let lastPort = '';
+
+      ports.forEach(stop => {
+        // Only count if different from previous port (handles overnight stays)
+        if (stop.port !== lastPort) {
+          uniquePortCount++;
+          lastPort = stop.port;
+        }
+      });
+
+      return uniquePortCount;
+    })(),
+    // Count sea days
+    seaDays: ITINERARY.filter(
+      stop =>
+        !stop.port ||
+        stop.port.toLowerCase().includes('sea day') ||
+        stop.port.toLowerCase().includes('at sea')
+    ).length,
     totalEvents: DAILY.reduce((acc, day) => acc + (day.items?.length || 0), 0),
     totalParties: DAILY.reduce(
       (acc, day) =>
@@ -100,8 +125,62 @@ export const OverviewTab = memo(function OverviewTab({
 
       {/* Desktop: 3-column grid, Mobile: stack */}
       <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
-        {/* Left Column - About, Ship, Statistics */}
+        {/* Left Column - Statistics, About, Ship */}
         <div className="flex flex-col gap-4 lg:col-span-2">
+          {/* Trip Statistics - Desktop/iPad only (at top of left column) */}
+          <div className="hidden lg:block bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg">
+            <div className="flex items-center space-x-2 mb-2 md:mb-3">
+              <div className="bg-blue-500/30 p-1 rounded">
+                <Activity className="w-3 h-3 text-blue-100" />
+              </div>
+              <h3 className="text-sm font-bold text-white/90">Trip Statistics</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              <button
+                onClick={() => onNavigateToTab?.('itinerary')}
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.daysOfTravel}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Days of Travel</p>
+              </button>
+              <button
+                onClick={() => onNavigateToTab?.('itinerary')}
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.totalPorts}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Ports of Call</p>
+              </button>
+              <button
+                onClick={() => onNavigateToTab?.('itinerary')}
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.seaDays}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Sea Days</p>
+              </button>
+              <button
+                onClick={() => onNavigateToTab?.('schedule')}
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.totalEvents}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Total Events</p>
+              </button>
+              <button
+                onClick={() => onNavigateToTab?.('parties')}
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.totalParties}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Theme Parties</p>
+              </button>
+              <button
+                onClick={() => onNavigateToTab?.('talent')}
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+              >
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.totalTalent}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Performers</p>
+              </button>
+            </div>
+          </div>
+
           {/* About This Trip */}
           <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg">
             <div className="flex items-center space-x-2 mb-3">
@@ -119,7 +198,7 @@ export const OverviewTab = memo(function OverviewTab({
                   <img
                     src={tripData.trip.heroImageUrl}
                     alt={tripData.trip.name}
-                    className="w-full md:w-48 h-48 md:h-32 object-cover rounded-lg"
+                    className="w-full md:w-48 h-48 md:h-32 object-cover"
                   />
                 </div>
               )}
@@ -150,7 +229,7 @@ export const OverviewTab = memo(function OverviewTab({
                   <img
                     src={shipInfo.imageUrl}
                     alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
-                    className="w-full md:w-56 h-48 md:h-36 object-cover rounded-lg"
+                    className="w-full md:w-56 h-48 md:h-36 object-cover"
                   />
                 </div>
               )}
@@ -184,8 +263,8 @@ export const OverviewTab = memo(function OverviewTab({
                   <Utensils className="w-3 h-3 text-white/60" />
                   <p className="text-xs font-semibold text-white/80">Dining Venues</p>
                 </div>
-                {/* Mobile: 1 column, Tablet: 2 columns, Desktop: 2 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                {/* Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
                   {shipInfo.restaurants.slice(0, 6).map((restaurant, idx) => (
                     <p key={idx} className="text-xs text-white/70">
                       • {restaurant.name}
@@ -220,44 +299,6 @@ export const OverviewTab = memo(function OverviewTab({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Trip Statistics - Desktop only (in left column) */}
-          <div className="hidden lg:block bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg">
-            <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <div className="bg-blue-500/30 p-1 rounded">
-                <Activity className="w-3 h-3 text-blue-100" />
-              </div>
-              <h3 className="text-sm font-bold text-white/90">Trip Statistics</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
-              <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-                <p className="text-xl md:text-2xl font-bold text-white">
-                  {statistics.daysOfTravel}
-                </p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">
-                  Days of Travel
-                </p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-                <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalPorts}</p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Ports of Call</p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-                <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalEvents}</p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total Events</p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-                <p className="text-xl md:text-2xl font-bold text-white">
-                  {statistics.totalParties}
-                </p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Theme Parties</p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-                <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalTalent}</p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Performers</p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -343,27 +384,49 @@ export const OverviewTab = memo(function OverviewTab({
           </div>
           <h3 className="text-sm font-bold text-white/90">Trip Statistics</h3>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
-          <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-            <p className="text-xl md:text-2xl font-bold text-white">{statistics.daysOfTravel}</p>
-            <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Days of Travel</p>
-          </div>
-          <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-            <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalPorts}</p>
-            <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Ports of Call</p>
-          </div>
-          <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-            <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalEvents}</p>
-            <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total Events</p>
-          </div>
-          <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-            <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalParties}</p>
-            <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Theme Parties</p>
-          </div>
-          <div className="bg-white/5 rounded-lg p-2 md:p-3 text-center">
-            <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalTalent}</p>
-            <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Performers</p>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <button
+            onClick={() => onNavigateToTab?.('itinerary')}
+            className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+          >
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.daysOfTravel}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Days of Travel</p>
+          </button>
+          <button
+            onClick={() => onNavigateToTab?.('itinerary')}
+            className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+          >
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.totalPorts}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Ports of Call</p>
+          </button>
+          <button
+            onClick={() => onNavigateToTab?.('itinerary')}
+            className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+          >
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.seaDays}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Sea Days</p>
+          </button>
+          <button
+            onClick={() => onNavigateToTab?.('schedule')}
+            className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+          >
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.totalEvents}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Total Events</p>
+          </button>
+          <button
+            onClick={() => onNavigateToTab?.('parties')}
+            className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+          >
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.totalParties}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Theme Parties</p>
+          </button>
+          <button
+            onClick={() => onNavigateToTab?.('talent')}
+            className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
+          >
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.totalTalent}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Performers</p>
+          </button>
         </div>
       </div>
     </div>

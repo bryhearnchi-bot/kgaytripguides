@@ -6,9 +6,11 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext';
 import { TimeFormatProvider } from '@/contexts/TimeFormatContext';
+import { UpdateProvider } from '@/context/UpdateContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NavigationBanner from '@/components/navigation-banner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AppFooter } from '@/components/AppFooter';
 
 // Lazy load all route components for code splitting
 const LandingPage = lazy(() => import('@/pages/landing'));
@@ -254,15 +256,18 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <SupabaseAuthProvider>
           <TimeFormatProvider>
-            <TooltipProvider>
-              <NavigationBanner />
-              <div className="pt-10 w-full">
-                {' '}
-                {/* Add padding to account for fixed banner */}
-                <Toaster />
-                <Router />
-              </div>
-            </TooltipProvider>
+            <UpdateProvider>
+              <TooltipProvider>
+                <NavigationBanner />
+                <div className="pt-10 w-full">
+                  {' '}
+                  {/* Add padding to account for fixed banner */}
+                  <Toaster />
+                  <Router />
+                </div>
+                <AppFooter />
+              </TooltipProvider>
+            </UpdateProvider>
           </TimeFormatProvider>
         </SupabaseAuthProvider>
       </QueryClientProvider>

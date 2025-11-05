@@ -52,6 +52,12 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const [selectedItineraryStop, setSelectedItineraryStop] = useState<any>(null);
   const [showEventsModal, setShowEventsModal] = useState(false);
   const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
+
+  // Handler to navigate to tab and scroll to top
+  const handleNavigateToTab = (tab: string) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
@@ -545,6 +551,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 DAILY={DAILY as any}
                 TALENT={TALENT as any}
                 PARTY_THEMES={PARTY_THEMES as any}
+                onNavigateToTab={handleNavigateToTab}
               />
             </TabsContent>
 
