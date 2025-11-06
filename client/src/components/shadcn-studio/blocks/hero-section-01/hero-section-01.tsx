@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Share2 } from 'lucide-react';
 import { useShare } from '@/hooks/useShare';
 import { useHaptics } from '@/hooks/useHaptics';
+import { isNative } from '@/lib/capacitor';
 
 interface ItineraryImage {
   imageUrl?: string;
@@ -282,7 +283,9 @@ const HeroSection = ({
   }, [isDragstarCruise, images.length, dragstarImages.length]);
 
   return (
-    <section className="flex flex-1 flex-col gap-8 overflow-x-hidden pt-4 sm:pt-8 lg:pt-12">
+    <section
+      className={`flex flex-1 flex-col gap-8 overflow-x-hidden ${isNative ? 'pt-20' : 'pt-8'} sm:pt-8 lg:pt-12`}
+    >
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
         <div className="flex items-center justify-center gap-2.5 pt-3 flex-wrap w-full">

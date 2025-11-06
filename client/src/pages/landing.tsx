@@ -12,6 +12,7 @@ import { getTripButtonText } from '@/lib/tripUtils';
 import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 import { FeaturedTripCarousel } from '@/components/FeaturedTripCarousel';
+import { isNative } from '@/lib/capacitor';
 
 interface Trip {
   id: number;
@@ -280,7 +281,7 @@ export default function LandingPage() {
       {/* Content Layer */}
       <div className="relative z-10">
         {/* Floating Hero Section */}
-        <section className="pt-16 pb-6 px-4 sm:px-6 lg:px-8">
+        <section className={`${isNative ? 'pt-24' : 'pt-16'} pb-6 px-4 sm:px-6 lg:px-8`}>
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-6 animate-float">
               {/* Upcoming Trips Badge */}
