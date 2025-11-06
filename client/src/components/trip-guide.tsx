@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api-client';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
+import { useHaptics } from '@/hooks/useHaptics';
 
 // Import refactored components
 import { LoadingState, ErrorState } from './trip-guide/shared';
@@ -46,6 +47,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
   const { toast } = useToast();
   const { profile } = useSupabaseAuth();
+  const haptics = useHaptics();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
@@ -55,6 +57,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Handler to navigate to tab and scroll to top
   const handleNavigateToTab = (tab: string) => {
+    haptics.light();
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -449,7 +452,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
           <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
-                onClick={() => setActiveTab('overview')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('overview');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'overview'
                     ? 'bg-white text-ocean-900'
@@ -462,7 +468,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'overview' && <span className="sm:hidden">Overview</span>}
               </button>
               <button
-                onClick={() => setActiveTab('itinerary')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('itinerary');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'itinerary'
                     ? 'bg-white text-ocean-900'
@@ -477,7 +486,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('schedule')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('schedule');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'schedule'
                     ? 'bg-white text-ocean-900'
@@ -490,7 +502,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'schedule' && <span className="sm:hidden">Events</span>}
               </button>
               <button
-                onClick={() => setActiveTab('parties')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('parties');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'parties'
                     ? 'bg-white text-ocean-900'
@@ -503,7 +518,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'parties' && <span className="sm:hidden">Parties</span>}
               </button>
               <button
-                onClick={() => setActiveTab('talent')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('talent');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'talent'
                     ? 'bg-white text-ocean-900'
@@ -516,7 +534,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'talent' && <span className="sm:hidden">Talent</span>}
               </button>
               <button
-                onClick={() => setActiveTab('info')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('info');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'info'
                     ? 'bg-white text-ocean-900'
@@ -529,7 +550,10 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'info' && <span className="sm:hidden">Info</span>}
               </button>
               <button
-                onClick={() => setActiveTab('faq')}
+                onClick={() => {
+                  haptics.light();
+                  setActiveTab('faq');
+                }}
                 className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
                   activeTab === 'faq' ? 'bg-white text-ocean-900' : 'text-white/70 hover:text-white'
                 }`}
