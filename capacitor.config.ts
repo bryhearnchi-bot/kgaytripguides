@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'dist/public',
 
   ios: {
-    contentInset: 'always',
-    backgroundColor: '#ffffff',
+    contentInset: 'never',
+    backgroundColor: '#141A20', // Dark background matching app theme
     scrollEnabled: true,
   },
 

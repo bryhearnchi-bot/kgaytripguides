@@ -17,6 +17,8 @@
     padding: 0 !important;
     height: 100%;
     overflow-x: hidden;
+    /* Dark background to match app theme - prevents black bar on iOS */
+    background-color: hsl(210, 25%, 7.8431%);
   }
 
   #root {
@@ -47,9 +49,10 @@ html {
 
 body {
   /* Extend content behind Safari UI */
+  padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
 
-  /* Prevent bounce/overscroll that shows white */
+  /* Prevent bounce/overscroll that shows black/white */
   overscroll-behavior-y: none;
 
   /* Full viewport height accounting for mobile browser UI */
