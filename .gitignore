@@ -133,3 +133,21 @@ claude_desktop_config.json
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Capacitor
+ios/App/Pods
+ios/App/Podfile.lock
+ios/App/App.xcworkspace/xcuserdata
+ios/App/App.xcodeproj/xcuserdata
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata
+
+android/.gradle
+android/.idea
+android/app/build
+android/build
+android/local.properties
+android/gradle.properties
+
+# Don't ignore these (need for builds)
+!ios/App/App.xcodeproj
+!android/app/src

@@ -48,9 +48,18 @@
     "performance:test": "lhci autorun",
     "db:seed": "tsx server/seed.ts",
     "db:production-seed": "tsx server/production-seed.ts",
-    "api:docs": "echo 'API Documentation available at http://localhost:3001/api/docs'"
+    "api:docs": "echo 'API Documentation available at http://localhost:3001/api/docs'",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:ios": "npm run cap:sync && npx cap open ios",
+    "cap:android": "npm run cap:sync && npx cap open android",
+    "cap:serve:ios": "npx cap run ios --livereload --external",
+    "cap:serve:android": "npx cap run android --livereload --external"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
