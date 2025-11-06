@@ -17,10 +17,11 @@ const STATIC_ASSETS = [
 ];
 
 // Install event - cache static assets
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
+    caches
+      .open(STATIC_CACHE)
+      .then(cache => {
         console.log('Service Worker: Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
@@ -28,35 +29,38 @@ self.addEventListener('install', (event) => {
         console.log('Service Worker: Skip waiting');
         return self.skipWaiting();
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Service Worker: Install failed', error);
       })
   );
 });
 
 // Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   const currentCaches = [STATIC_CACHE, API_CACHE, CACHE_NAME, IMAGE_CACHE, FONT_CACHE];
 
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (!currentCaches.includes(cacheName)) {
-            console.log('Service Worker: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      console.log('Service Worker: Claiming clients');
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (!currentCaches.includes(cacheName)) {
+              console.log('Service Worker: Deleting old cache', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('Service Worker: Claiming clients');
+        return self.clients.claim();
+      })
   );
 });
 
 // Fetch event - implement caching strategy
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
@@ -71,40 +75,40 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle API requests with network-first strategy
+  // Skip cross-origin API requests (for Capacitor development)
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      networkFirst(request, API_CACHE)
-    );
+    // Only intercept if same origin
+    if (url.origin === self.location.origin) {
+      event.respondWith(networkFirst(request, API_CACHE));
+    }
     return;
   }
 
   // Handle image requests with cache-first strategy
-  if (request.destination === 'image' ||
-      url.pathname.includes('/images/') ||
-      url.hostname.includes('supabase.co') ||
-      url.hostname.includes('kgaytravel.com') ||
-      url.hostname.includes('freepik.com')) {
-    event.respondWith(
-      cacheFirst(request, CACHE_NAME)
-    );
+  if (
+    request.destination === 'image' ||
+    url.pathname.includes('/images/') ||
+    url.hostname.includes('supabase.co') ||
+    url.hostname.includes('kgaytravel.com') ||
+    url.hostname.includes('freepik.com')
+  ) {
+    event.respondWith(cacheFirst(request, CACHE_NAME));
     return;
   }
 
   // Handle static assets with stale-while-revalidate
-  if (url.pathname.includes('/assets/') ||
-      url.pathname === '/' ||
-      url.pathname.includes('.js') ||
-      url.pathname.includes('.css')) {
-    event.respondWith(
-      staleWhileRevalidate(request, STATIC_CACHE)
-    );
+  if (
+    url.pathname.includes('/assets/') ||
+    url.pathname === '/' ||
+    url.pathname.includes('.js') ||
+    url.pathname.includes('.css')
+  ) {
+    event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
     return;
   }
 
   // Default strategy for other requests
-  event.respondWith(
-    networkFirst(request, CACHE_NAME)
-  );
+  event.respondWith(networkFirst(request, CACHE_NAME));
 });
 
 // Network-first strategy (good for API calls)
@@ -119,7 +123,7 @@ async function networkFirst(request, cacheName) {
     }
 
     // If network fails, try cache
-    return await caches.match(request) || networkResponse;
+    return (await caches.match(request)) || networkResponse;
   } catch (error) {
     // Network failed, try cache
     const cachedResponse = await caches.match(request);
@@ -181,18 +185,20 @@ async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cachedResponse = await cache.match(request);
 
-  const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  }).catch(() => cachedResponse);
+  const fetchPromise = fetch(request)
+    .then(networkResponse => {
+      if (networkResponse.ok) {
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    })
+    .catch(() => cachedResponse);
 
   return cachedResponse || fetchPromise;
 }
 
 // Listen for message from main thread
-self.addEventListener('message', (event) => {
+self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
@@ -204,7 +210,7 @@ self.addEventListener('message', (event) => {
 
 // Background sync for offline actions (if supported)
 if ('sync' in self.registration) {
-  self.addEventListener('sync', (event) => {
+  self.addEventListener('sync', event => {
     if (event.tag === 'background-sync') {
       event.waitUntil(doBackgroundSync());
     }
