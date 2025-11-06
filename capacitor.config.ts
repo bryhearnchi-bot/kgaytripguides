@@ -6,13 +6,13 @@ const config: CapacitorConfig = {
   webDir: 'dist/public',
 
   ios: {
-    contentInset: 'never',
+    contentInset: 'always', // Respect safe area insets (status bar, notch, home indicator)
     backgroundColor: '#141A20', // Dark background matching app theme
     scrollEnabled: true,
   },
 
   android: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#141A20', // Dark background matching app theme
     allowMixedContent: true, // Allow HTTP in development
     captureInput: true,
   },
