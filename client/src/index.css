@@ -425,3 +425,51 @@ button.kokonut-profile-button::-moz-focus-inner {
 .overflow-y-scroll {
   overflow-y: scroll !important;
 }
+
+/* Phase 3: Performance Optimizations - Hardware Acceleration */
+/* Apply to all animated elements for smooth 60fps performance */
+.animated-element,
+[class*='animate-'],
+[class*='transition-'],
+.animate-fade-in,
+.animate-slide-up,
+.animate-scale-in,
+.animate-float {
+  /* Force hardware acceleration */
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  /* Prevent text rendering issues during animation */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply hardware acceleration to scrollable containers */
+[class*='overflow-'],
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-y-scroll {
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Force GPU acceleration */
+  transform: translateZ(0);
+}
+
+/* Optimize images for rendering performance */
+img {
+  /* Force hardware acceleration for images */
+  transform: translateZ(0);
+  /* Improve image rendering quality */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Optimize fixed/sticky positioned elements */
+.fixed,
+.sticky,
+[class*='fixed'],
+[class*='sticky'] {
+  /* Promote to own layer for better performance */
+  will-change: transform;
+  transform: translateZ(0);
+}

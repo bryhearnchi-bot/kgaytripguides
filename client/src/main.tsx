@@ -3,13 +3,15 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 import { installFetchWrapper } from './lib/fetch-wrapper';
-import { initializeNativeFeatures, setupNavigationHandlers } from './lib/capacitor';
+import { initializeNativeFeatures, setupNavigationHandlers, isNative } from './lib/capacitor';
 
 // Install global fetch wrapper to handle API URLs
 installFetchWrapper();
 
-// Register Service Worker for PWA functionality
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Register Service Worker for PWA functionality (disabled in native apps)
+if (isNative) {
+  console.log('Service worker disabled in native app');
+} else if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', async () => {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
