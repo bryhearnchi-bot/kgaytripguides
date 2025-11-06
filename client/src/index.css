@@ -48,9 +48,8 @@ html {
 }
 
 body {
-  /* Extend content behind Safari UI */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* DO NOT add safe area padding here - handled by fixed header */
+  /* Safe area padding is applied to the fixed NavigationBanner component */
 
   /* Prevent bounce/overscroll that shows black/white */
   overscroll-behavior-y: none;

@@ -11,14 +11,16 @@ export async function initializeNativeFeatures() {
   if (!isNative) return;
 
   try {
-    // Status bar - ocean theme
+    // Status bar - ocean theme with light text
     await StatusBar.setStyle({ style: Style.Light }); // Light text for dark header
 
     if (isAndroid) {
-      await StatusBar.setBackgroundColor({ color: '#1e40af' }); // Ocean blue
+      // On Android, make status bar transparent so our header color shows through
+      await StatusBar.setBackgroundColor({ color: '#00000000' }); // Transparent
+      await StatusBar.setOverlaysWebView({ overlay: true }); // Allow content to extend under status bar
     }
 
-    // iOS: status bar overlays content, styled via CSS
+    // iOS: status bar automatically overlays content with our setup
   } catch (error) {
     console.error('Failed to initialize native features:', error);
   }

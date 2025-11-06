@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist/public',
 
   ios: {
-    contentInset: 'always', // Respect safe area insets (status bar, notch, home indicator)
+    contentInset: 'never', // We handle safe areas manually with CSS
     backgroundColor: '#141A20', // Dark background matching app theme
     scrollEnabled: true,
   },
