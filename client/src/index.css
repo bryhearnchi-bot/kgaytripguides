@@ -60,18 +60,7 @@ body {
   min-height: -webkit-fill-available;
 }
 
-/* Add dark background pseudo-element to fill safe area on iOS */
-body::after {
-  content: '';
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-bottom, 0px);
-  background: hsl(210, 25%, 7.8431%); /* Match dark theme background */
-  z-index: 9999;
-  pointer-events: none;
-}
+/* Removed body::after pseudo-element - not needed with padding-bottom on body */
 
 /* DEFINITIVE SOLUTION: Remove blue outline from profile button and all focus states */
 /* Target the actual Radix PopoverTrigger element, not just the button */
