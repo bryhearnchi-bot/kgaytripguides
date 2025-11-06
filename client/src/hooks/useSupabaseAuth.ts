@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useLocation } from 'wouter';
+import { Preferences } from '@capacitor/preferences';
+import { isNative } from '../lib/capacitor';
 
 export interface Profile {
   id: string;
@@ -237,21 +239,38 @@ export function useSupabaseAuth() {
       setUser(null);
       setSession(null);
 
-      // Clear all Supabase auth data from localStorage
-      // This ensures the session is not restored on reload
+      // Clear all Supabase auth data from storage
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
       const projectId = supabaseUrl.split('//')[1]?.split('.')[0] || '';
-      if (projectId) {
-        const storageKey = `sb-${projectId}-auth-token`;
-        localStorage.removeItem(storageKey);
-      }
 
-      // Also clear any other potential Supabase storage keys
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-')) {
-          localStorage.removeItem(key);
+      if (isNative) {
+        // Clear from Capacitor Preferences
+        if (projectId) {
+          const storageKey = `sb-${projectId}-auth-token`;
+          await Preferences.remove({ key: storageKey });
         }
-      });
+
+        // Clear all Supabase keys from Preferences
+        const { keys } = await Preferences.keys();
+        for (const key of keys) {
+          if (key.startsWith('sb-')) {
+            await Preferences.remove({ key });
+          }
+        }
+      } else {
+        // Clear from localStorage
+        if (projectId) {
+          const storageKey = `sb-${projectId}-auth-token`;
+          localStorage.removeItem(storageKey);
+        }
+
+        // Also clear any other potential Supabase storage keys
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
 
       // Attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
@@ -264,11 +283,20 @@ export function useSupabaseAuth() {
       navigate('/');
     } catch (error) {
       // Clear storage even on error
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-')) {
-          localStorage.removeItem(key);
+      if (isNative) {
+        const { keys } = await Preferences.keys();
+        for (const key of keys) {
+          if (key.startsWith('sb-')) {
+            await Preferences.remove({ key });
+          }
         }
-      });
+      } else {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
       navigate('/');
     }
   };

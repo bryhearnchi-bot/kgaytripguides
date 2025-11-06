@@ -11,6 +11,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import NavigationBanner from '@/components/navigation-banner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AppFooter } from '@/components/AppFooter';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { isNative } from '@/lib/capacitor';
 
 // Lazy load all route components for code splitting
 const LandingPage = lazy(() => import('@/pages/landing'));
@@ -208,6 +210,11 @@ function Router() {
 
 function App() {
   useEffect(() => {
+    // Hide splash screen in native apps
+    if (isNative) {
+      SplashScreen.hide();
+    }
+
     // Disable browser scroll restoration globally
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';

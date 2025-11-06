@@ -1,4 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
+import { Preferences } from '@capacitor/preferences';
+import { isNative } from './capacitor';
+
+// Custom storage adapter for Capacitor
+const capacitorStorage = {
+  async getItem(key: string): Promise<string | null> {
+    if (isNative) {
+      const { value } = await Preferences.get({ key });
+      return value;
+    }
+    return localStorage.getItem(key);
+  },
+
+  async setItem(key: string, value: string): Promise<void> {
+    if (isNative) {
+      await Preferences.set({ key, value });
+    } else {
+      localStorage.setItem(key, value);
+    }
+  },
+
+  async removeItem(key: string): Promise<void> {
+    if (isNative) {
+      await Preferences.remove({ key });
+    } else {
+      localStorage.removeItem(key);
+    }
+  },
+};
 
 // Supabase configuration with proper error handling
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -8,16 +37,16 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl) {
   throw new Error(
     'Missing required environment variable: VITE_SUPABASE_URL\n' +
-    'Please set VITE_SUPABASE_URL in your .env file.\n' +
-    'Example: VITE_SUPABASE_URL=https://your-project.supabase.co'
+      'Please set VITE_SUPABASE_URL in your .env file.\n' +
+      'Example: VITE_SUPABASE_URL=https://your-project.supabase.co'
   );
 }
 
 if (!supabaseAnonKey) {
   throw new Error(
     'Missing required environment variable: VITE_SUPABASE_ANON_KEY\n' +
-    'Please set VITE_SUPABASE_ANON_KEY in your .env file.\n' +
-    'You can find this key in your Supabase project settings under API.'
+      'Please set VITE_SUPABASE_ANON_KEY in your .env file.\n' +
+      'You can find this key in your Supabase project settings under API.'
   );
 }
 
@@ -27,7 +56,7 @@ try {
 } catch (error) {
   throw new Error(
     `Invalid VITE_SUPABASE_URL format: ${supabaseUrl}\n` +
-    'Please ensure it is a valid URL starting with https://'
+      'Please ensure it is a valid URL starting with https://'
   );
 }
 
@@ -35,13 +64,14 @@ try {
 if (!supabaseAnonKey.includes('.') || supabaseAnonKey.split('.').length !== 3) {
   throw new Error(
     'Invalid VITE_SUPABASE_ANON_KEY format.\n' +
-    'The anon key should be a JWT token from your Supabase project settings.'
+      'The anon key should be a JWT token from your Supabase project settings.'
   );
 }
 
-// Create Supabase client
+// Create Supabase client with custom storage
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
+    storage: capacitorStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
@@ -92,13 +122,19 @@ export const auth = {
 
   // Get current user
   async getUser() {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
     return { user, error };
   },
 
   // Get session
   async getSession() {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
     return { session, error };
   },
 

@@ -3,6 +3,7 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 import { installFetchWrapper } from './lib/fetch-wrapper';
+import { initializeNativeFeatures, setupNavigationHandlers } from './lib/capacitor';
 
 // Install global fetch wrapper to handle API URLs
 installFetchWrapper();
@@ -179,3 +180,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </ErrorBoundary>
 );
+
+// Initialize native features (Capacitor)
+initializeNativeFeatures();
+setupNavigationHandlers();
