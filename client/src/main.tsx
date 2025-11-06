@@ -2,6 +2,10 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+import { installFetchWrapper } from './lib/fetch-wrapper';
+
+// Install global fetch wrapper to handle API URLs
+installFetchWrapper();
 
 // Register Service Worker for PWA functionality
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

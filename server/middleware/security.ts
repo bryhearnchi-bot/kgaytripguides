@@ -1,5 +1,36 @@
 import { Request, Response, NextFunction } from 'express';
 
+// CORS middleware for mobile app and cross-origin requests
+export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+
+  // Allow requests from Capacitor apps, localhost, and development servers
+  const allowedOrigins = [
+    'capacitor://localhost',
+    'http://localhost:5173',
+    'http://localhost:3001',
+    'http://192.168.4.105:5173',
+    'http://192.168.4.105:3001',
+  ];
+
+  // In development, allow all origins for easier testing
+  if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin || '')) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  }
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+
+  next();
+};
+
 // Security middleware for setting various security headers
 export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
   // Content Security Policy

@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase';
+import { getApiUrl } from './api-config';
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean;
@@ -44,8 +45,8 @@ export async function apiClient(url: string, options: FetchOptions = {}): Promis
     requestHeaders['Authorization'] = `Bearer ${session.access_token}`;
   }
 
-  // Make the request
-  return fetch(url, {
+  // Make the request with full API URL
+  return fetch(getApiUrl(url), {
     ...restOptions,
     headers: requestHeaders,
     credentials: 'include', // Include cookies for backward compatibility

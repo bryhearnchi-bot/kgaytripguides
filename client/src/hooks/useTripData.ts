@@ -8,6 +8,7 @@ import {
   getPartyThemesData,
 } from '../data/data-service';
 import { dateOnly } from '@/lib/utils';
+import { getApiUrl } from '@/lib/api-config';
 
 export interface TripData {
   trip: {
@@ -428,7 +429,7 @@ export function useTripData(slug: string = getTripSlug()) {
   return useQuery({
     queryKey: ['trip', slug],
     queryFn: async () => {
-      const response = await fetch(`/api/trips/${slug}/complete`);
+      const response = await fetch(getApiUrl(`/api/trips/${slug}/complete`));
       if (!response.ok) {
         throw new Error(`Failed to fetch trip data: ${response.statusText}`);
       }

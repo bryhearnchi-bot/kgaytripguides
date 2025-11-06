@@ -58,7 +58,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
-import { securityHeaders, rateLimit } from './middleware/security';
+import { corsMiddleware, securityHeaders, rateLimit } from './middleware/security';
 import { cdnHeaders } from './lib/cdn';
 
 // New logging and monitoring imports
@@ -99,7 +99,10 @@ app.get('/api/metrics', metricsHandler);
 app.get('/api', (_req, res) => res.json({ ok: true, message: 'API is running' }));
 app.head('/api', (_req, res) => res.sendStatus(200));
 
-// Apply security headers first
+// Apply CORS middleware first (before security headers)
+app.use(corsMiddleware);
+
+// Apply security headers
 app.use(securityHeaders);
 app.use(rateLimit());
 app.use(cdnHeaders);
