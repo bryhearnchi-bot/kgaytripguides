@@ -276,7 +276,7 @@ export const OverviewTab = memo(function OverviewTab({
                 </div>
                 {/* Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
-                  {shipInfo.restaurants.slice(0, 6).map((restaurant, idx) => (
+                  {shipInfo.restaurants.map((restaurant, idx) => (
                     <p key={idx} className="text-xs text-white/70">
                       • {restaurant.name}
                       {restaurant.venueType && (
@@ -285,11 +285,6 @@ export const OverviewTab = memo(function OverviewTab({
                     </p>
                   ))}
                 </div>
-                {shipInfo.restaurants.length > 6 && (
-                  <p className="text-xs text-white/50 mt-2">
-                    +{shipInfo.restaurants.length - 6} more venues
-                  </p>
-                )}
               </div>
             )}
 

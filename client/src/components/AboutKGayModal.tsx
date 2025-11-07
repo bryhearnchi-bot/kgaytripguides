@@ -13,6 +13,8 @@ export function AboutKGayModal({ open, onOpenChange }: AboutKGayModalProps) {
       <DialogContent
         className="max-w-2xl p-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-white/20 text-white overflow-hidden [&>button]:hidden"
         style={{
+          transform: 'translate(-50%, -50%)',
+          willChange: 'auto',
           borderRadius: 16,
           background:
             'linear-gradient(to bottom right, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98))',

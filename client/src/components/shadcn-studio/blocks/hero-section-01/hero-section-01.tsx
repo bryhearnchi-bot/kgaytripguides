@@ -305,6 +305,9 @@ const HeroSection = ({
                 ? 'Interactive Resort Guide'
                 : 'Interactive Travel Guide'}
           </Badge>
+          <Badge className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-400/50 text-xs font-semibold whitespace-nowrap px-2.5 py-0.5">
+            BETA
+          </Badge>
         </div>
 
         <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap w-full px-2">
@@ -395,6 +398,9 @@ const HeroSection = ({
               : tripType === 'resort'
                 ? 'Interactive Resort Guide'
                 : 'Interactive Travel Guide'}
+          </Badge>
+          <Badge className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-400/50 text-xs font-semibold whitespace-nowrap px-2.5 py-0.5">
+            BETA
           </Badge>
         </div>
 
