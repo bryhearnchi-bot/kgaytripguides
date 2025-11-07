@@ -92,34 +92,12 @@ export const OverviewTab = memo(function OverviewTab({
 
   // Get ship info from ship prop
   const shipInfo = {
-    imageUrl:
-      ship?.imageUrl ||
-      'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/ships/resilient-lady.jpg',
-    capacity: ship?.capacity ? `${ship.capacity.toLocaleString()} guests` : '2,770 guests',
-    crew: '1,160 crew members',
-    tonnage: '110,000 gross tons',
-    length: '278 meters',
-    decks: ship?.decks
-      ? `${ship.decks} decks (14 guest accessible)`
-      : '17 decks (14 guest accessible)',
-    amenities: [
-      'Multiple restaurants',
-      'The Manor nightclub',
-      'Red Room theater',
-      'Aquatic Club pool deck',
-      'Redemption Spa',
-      'Fitness center',
-      'Running track',
-      'Casino',
-    ],
-    restaurants: [
-      { name: 'The Wake', type: 'Steakhouse' },
-      { name: 'Razzle Dazzle', type: 'Vegetarian' },
-      { name: 'Pink Agave', type: 'Mexican' },
-      { name: 'Extra Virgin', type: 'Italian' },
-      { name: 'Test Kitchen', type: 'Experimental' },
-      { name: 'Gunbae', type: 'Korean BBQ' },
-    ],
+    imageUrl: ship?.imageUrl || tripData?.trip?.heroImageUrl,
+    capacity: ship?.capacity ? `${ship.capacity.toLocaleString()} guests` : undefined,
+    decks: ship?.decks ? `${ship.decks} decks` : undefined,
+    amenities: ship?.amenities || [],
+    restaurants:
+      ship?.venues?.filter((v: any) => ['Restaurant', 'Casual Dining'].includes(v.venueType)) || [],
   };
 
   return (
@@ -301,8 +279,8 @@ export const OverviewTab = memo(function OverviewTab({
                   {shipInfo.restaurants.slice(0, 6).map((restaurant, idx) => (
                     <p key={idx} className="text-xs text-white/70">
                       • {restaurant.name}
-                      {restaurant.type && (
-                        <span className="text-white/50"> ({restaurant.type})</span>
+                      {restaurant.venueType && (
+                        <span className="text-white/50"> ({restaurant.venueType})</span>
                       )}
                     </p>
                   ))}

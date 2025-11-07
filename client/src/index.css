@@ -464,10 +464,17 @@ img {
 }
 
 /* Optimize fixed/sticky positioned elements */
-.fixed,
-.sticky,
-[class*='fixed'],
-[class*='sticky'] {
+/* EXCLUDE dialogs and modals to prevent breaking centering transforms */
+.fixed:not([role='dialog']):not([data-radix-dialog-content]):not([data-radix-alert-dialog-content]),
+.sticky:not([role='dialog']):not([data-radix-dialog-content]):not(
+    [data-radix-alert-dialog-content]
+  ),
+[class*='fixed']:not([role='dialog']):not([data-radix-dialog-content]):not(
+    [data-radix-alert-dialog-content]
+  ),
+[class*='sticky']:not([role='dialog']):not([data-radix-dialog-content]):not(
+    [data-radix-alert-dialog-content]
+  ) {
   /* Promote to own layer for better performance */
   will-change: transform;
   transform: translateZ(0);

@@ -30,6 +30,26 @@ export interface TripData {
     charterCompanyName?: string | null;
     charterCompanyLogo?: string | null;
   };
+  ship?: {
+    id: number;
+    name: string;
+    imageUrl: string | null;
+    capacity: number | null;
+    decks: number | null;
+    cruiseLineId: number | null;
+    cruiseLineName: string | null;
+    venues?: Array<{
+      id: number;
+      shipId: number;
+      name: string;
+      description: string | null;
+      venueTypeId: number | null;
+      venueType: string | null;
+      deck: string | null;
+      imageUrl: string | null;
+    }>;
+    amenities?: string[];
+  } | null;
   itinerary: Array<{
     id: number;
     tripId: number;

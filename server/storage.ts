@@ -651,6 +651,44 @@ export class TripInfoStorage implements ITripInfoStorage {
       .eq('slug', slug)
       .single();
 
+    // Get ship venues if ship exists
+    let shipVenuesData = null;
+    if (tripData && tripData.ship_id) {
+      const { data: venues } = await supabaseAdmin
+        .from('ship_venues')
+        .select(
+          `
+          *,
+          venue_types (
+            id,
+            name
+          )
+        `
+        )
+        .eq('ship_id', tripData.ship_id)
+        .order('name', { ascending: true });
+      shipVenuesData = venues;
+    }
+
+    // Get ship amenities if ship exists
+    let shipAmenitiesData = null;
+    if (tripData && tripData.ship_id) {
+      const { data: amenities } = await supabaseAdmin
+        .from('ship_amenities')
+        .select(
+          `
+          *,
+          amenities (
+            id,
+            name
+          )
+        `
+        )
+        .eq('ship_id', tripData.ship_id)
+        .order('amenities(name)', { ascending: true });
+      shipAmenitiesData = amenities;
+    }
+
     if (tripError) throw tripError;
     if (!tripData) throw new Error('Trip not found');
 
@@ -1074,6 +1112,23 @@ export class TripInfoStorage implements ITripInfoStorage {
       },
     }));
 
+    // Transform ship venues to camelCase
+    const transformedShipVenues = (shipVenuesData || []).map((venue: any) => ({
+      id: venue.id,
+      shipId: venue.ship_id,
+      name: venue.name,
+      description: venue.description,
+      venueTypeId: venue.venue_type_id,
+      venueType: venue.venue_types?.name || null,
+      deck: venue.deck,
+      imageUrl: venue.image_url,
+    }));
+
+    // Transform ship amenities to camelCase (extract amenity names)
+    const transformedShipAmenities = (shipAmenitiesData || [])
+      .map((amenity: any) => amenity.amenities?.name || null)
+      .filter((name: string | null) => name !== null);
+
     // Create ship object if ship data exists
     const shipData = tripData.ships
       ? {
@@ -1084,6 +1139,8 @@ export class TripInfoStorage implements ITripInfoStorage {
           decks: tripData.ships.decks,
           cruiseLineId: tripData.ships.cruise_line_id,
           cruiseLineName: tripData.ships.cruise_lines?.name || null,
+          venues: transformedShipVenues,
+          amenities: transformedShipAmenities,
         }
       : null;
 

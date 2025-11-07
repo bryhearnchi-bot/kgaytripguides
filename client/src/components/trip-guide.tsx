@@ -457,7 +457,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
         <StandardizedContentLayout>
           {/* Tab Bar */}
-          <div className="flex justify-center items-center gap-2 mb-8 pt-8 sm:pt-16 lg:pt-16 px-4">
+          <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => {
@@ -572,15 +572,6 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'faq' && <span className="sm:hidden">FAQ</span>}
               </button>
             </div>
-
-            {/* Share Button */}
-            <button
-              onClick={handleShareClick}
-              className="bg-white/10 backdrop-blur-lg rounded-full p-2.5 transition-all flex items-center justify-center min-w-[44px] min-h-[44px] border border-white/20 text-white/70 hover:text-white hover:bg-white/20"
-              aria-label="Share Trip"
-            >
-              <Share2 className="w-4 h-4 flex-shrink-0" />
-            </button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
