@@ -170,6 +170,8 @@ export function AdminFormModal({
             'w-[calc(100%-1rem)] sm:w-full',
             maxWidthClassName,
             'max-h-[85vh] !flex !flex-col min-h-0',
+            // Force centered positioning
+            '!fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2',
             // Allow overflow-visible for trip wizard dropdowns, but default to overflow-hidden
             maxWidthClassName.includes('trip-wizard-modal')
               ? 'overflow-visible'

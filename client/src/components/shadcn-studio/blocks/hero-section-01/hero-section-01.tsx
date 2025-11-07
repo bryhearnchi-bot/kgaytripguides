@@ -347,17 +347,6 @@ const HeroSection = ({
         {/* Trip Dates - Mobile */}
         {tripDates && <p className="text-white/60 text-xs font-medium -mt-4">{tripDates}</p>}
 
-        {/* Share Button - Mobile */}
-        <Button
-          onClick={handleShare}
-          variant="outline"
-          size="sm"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
-        >
-          <Share2 className="w-4 h-4 mr-2" />
-          Share Trip
-        </Button>
-
         {/* Mobile carousel/image display */}
         <div className="relative w-full max-w-xs aspect-square overflow-hidden rounded-lg">
           {isDragstarCruise
@@ -448,17 +437,6 @@ const HeroSection = ({
 
         {/* Trip Dates - Desktop/Tablet */}
         {tripDates && <p className="text-white/60 text-sm font-medium -mt-6">{tripDates}</p>}
-
-        {/* Share Button - Desktop/Tablet */}
-        <Button
-          onClick={handleShare}
-          variant="outline"
-          size="default"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
-        >
-          <Share2 className="w-4 h-4 mr-2" />
-          Share Trip
-        </Button>
 
         <p className="text-white">{tripDescription}</p>
       </div>

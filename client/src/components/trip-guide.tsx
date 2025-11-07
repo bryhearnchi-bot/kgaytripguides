@@ -14,6 +14,7 @@ import {
   CheckCircle,
   HelpCircle,
   LayoutDashboard,
+  Share2,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ import { api } from '@/lib/api-client';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useShare } from '@/hooks/useShare';
 
 // Import refactored components
 import { LoadingState, ErrorState } from './trip-guide/shared';
@@ -48,6 +50,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
   const { toast } = useToast();
   const { profile } = useSupabaseAuth();
   const haptics = useHaptics();
+  const { shareTrip } = useShare();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
@@ -329,6 +332,11 @@ export default function TripGuide({ slug }: TripGuideProps) {
     }
   }, [tripData?.trip?.id, toast]);
 
+  const handleShareClick = useCallback(async () => {
+    haptics.light();
+    await shareTrip({ name: tripData?.trip?.name || '', slug: slug || '' });
+  }, [haptics, shareTrip, tripData?.trip?.name, slug]);
+
   // Expose edit trip handler globally for navigation banner
   useEffect(() => {
     if (canEditTrip && tripData?.trip) {
@@ -449,7 +457,7 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
         <StandardizedContentLayout>
           {/* Tab Bar */}
-          <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
+          <div className="flex justify-center items-center gap-2 mb-8 pt-8 sm:pt-16 lg:pt-16 px-4">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => {
@@ -564,6 +572,15 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 {activeTab === 'faq' && <span className="sm:hidden">FAQ</span>}
               </button>
             </div>
+
+            {/* Share Button */}
+            <button
+              onClick={handleShareClick}
+              className="bg-white/10 backdrop-blur-lg rounded-full p-2.5 transition-all flex items-center justify-center min-w-[44px] min-h-[44px] border border-white/20 text-white/70 hover:text-white hover:bg-white/20"
+              aria-label="Share Trip"
+            >
+              <Share2 className="w-4 h-4 flex-shrink-0" />
+            </button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

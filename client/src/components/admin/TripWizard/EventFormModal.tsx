@@ -248,7 +248,7 @@ export function EventFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="admin-form-modal sm:max-w-2xl border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="admin-form-modal sm:max-w-2xl border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Calendar className="w-5 h-5 text-cyan-400" />

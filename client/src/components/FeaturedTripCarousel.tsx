@@ -90,19 +90,6 @@ function TripCard({ trip }: { trip: Trip }) {
               e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
             }}
           />
-          <div className="absolute top-3 left-3">
-            {trip.tripTypeId === 2 ? (
-              <span className="px-3 py-1 bg-cyan-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1.5 border border-white/30">
-                <Home className="h-3 w-3" />
-                Resort
-              </span>
-            ) : trip.tripTypeId === 1 ? (
-              <span className="px-3 py-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1.5 border border-white/30">
-                <Ship className="h-3 w-3" />
-                Cruise
-              </span>
-            ) : null}
-          </div>
           {/* Charter Logo - Top Right with frosted glass background */}
           {trip.charterCompanyLogo && (
             <div className="absolute top-3 right-3">
@@ -116,20 +103,9 @@ function TripCard({ trip }: { trip: Trip }) {
               </div>
             </div>
           )}
-          <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
-            <div>{/* Status badge moved here if no logo, otherwise it stays clear */}</div>
-            <div>
-              {statusBadge.show && !trip.charterCompanyLogo && (
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full ${statusBadge.className} border border-white/30`}
-                >
-                  {statusBadge.text}
-                </span>
-              )}
-            </div>
-          </div>
-          {statusBadge.show && trip.charterCompanyLogo && (
-            <div className="absolute bottom-3 right-3">
+          {/* Status Badge - Days away shown in top left */}
+          {statusBadge.show && (
+            <div className="absolute top-3 left-3">
               <span
                 className={`px-3 py-1 text-xs font-semibold rounded-full ${statusBadge.className} border border-white/30`}
               >
@@ -291,24 +267,9 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
-              {/* Trip Type Badge */}
-              <div className="absolute top-4 left-4">
-                {currentTrip.tripTypeId === 2 ? (
-                  <span className="px-3 py-1.5 bg-cyan-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1.5 border border-white/30">
-                    <Home className="h-3.5 w-3.5" />
-                    Resort
-                  </span>
-                ) : currentTrip.tripTypeId === 1 ? (
-                  <span className="px-3 py-1.5 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1.5 border border-white/30">
-                    <Ship className="h-3.5 w-3.5" />
-                    Cruise
-                  </span>
-                ) : null}
-              </div>
-
-              {/* Status Badge */}
+              {/* Status Badge - Days away shown in top left */}
               {statusBadge.show && (
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 left-4">
                   <span
                     className={`px-3 py-1.5 text-xs font-bold rounded-full ${statusBadge.className} border border-white/30`}
                   >

@@ -263,8 +263,8 @@ export function MultiSelectWithCreate({
                     >
                       <span className="truncate max-w-[100px]">{item.name}</span>
                       <XCircle
-                        className="h-3 w-3 cursor-pointer hover:text-cyan-300 flex-shrink-0"
-                        onMouseDown={e => {
+                        className="h-3 w-3 cursor-pointer hover:text-cyan-300 flex-shrink-0 pointer-events-auto"
+                        onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           if (!disabled) {
@@ -433,8 +433,8 @@ export function MultiSelectWithCreate({
             >
               <span>{item.name}</span>
               <XCircle
-                className="h-3 w-3 cursor-pointer hover:text-cyan-300 flex-shrink-0"
-                onMouseDown={e => {
+                className="h-3 w-3 cursor-pointer hover:text-cyan-300 flex-shrink-0 pointer-events-auto"
+                onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (!disabled) {

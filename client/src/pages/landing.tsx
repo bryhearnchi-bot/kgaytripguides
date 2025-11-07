@@ -62,19 +62,6 @@ function TripCard({ trip }: { trip: Trip }) {
               e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
             }}
           />
-          <div className="absolute top-3 left-3">
-            {trip.tripTypeId === 2 ? (
-              <span className="px-3 py-1 bg-cyan-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1.5 border border-white/30">
-                <Home className="h-3 w-3" />
-                Resort
-              </span>
-            ) : trip.tripTypeId === 1 ? (
-              <span className="px-3 py-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1.5 border border-white/30">
-                <Ship className="h-3 w-3" />
-                Cruise
-              </span>
-            ) : null}
-          </div>
           {/* Charter Logo - Top Right with frosted glass background */}
           {trip.charterCompanyLogo && (
             <div className="absolute top-3 right-3">
@@ -88,18 +75,21 @@ function TripCard({ trip }: { trip: Trip }) {
               </div>
             </div>
           )}
-          {/* Status Badge - moves to bottom right if logo exists */}
-          {trip.status === 'current' && (
-            <div className={`absolute ${trip.charterCompanyLogo ? 'bottom-3' : 'top-3'} right-3`}>
-              <span className="px-3 py-1 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full animate-pulse border border-white/30">
-                Sailing Now
+          {/* Status Badge - Days away shown in top left */}
+          {trip.status === 'upcoming' && daysUntilStart > 0 && (
+            <div className="absolute top-3 left-3">
+              <span className="px-3 py-1 bg-blue-400/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full border border-white/30">
+                {daysUntilStart} {daysUntilStart === 1 ? 'day' : 'days'} away
               </span>
             </div>
           )}
-          {trip.status === 'upcoming' && daysUntilStart > 0 && (
-            <div className={`absolute ${trip.charterCompanyLogo ? 'bottom-3' : 'top-3'} right-3`}>
-              <span className="px-3 py-1 bg-blue-400/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full border border-white/30">
-                {daysUntilStart} {daysUntilStart === 1 ? 'day' : 'days'} away
+          {/* Current trip badge - shown in top right if charter logo exists, otherwise top left */}
+          {trip.status === 'current' && (
+            <div
+              className={`absolute top-3 ${trip.charterCompanyLogo ? 'bottom-3 right-3' : 'left-3'}`}
+            >
+              <span className="px-3 py-1 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full animate-pulse border border-white/30">
+                Sailing Now
               </span>
             </div>
           )}

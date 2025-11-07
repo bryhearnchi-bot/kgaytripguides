@@ -30,9 +30,6 @@ interface TalentTabProps {
   onTalentClick: (name: string) => void;
 }
 
-// Define headliners - these will appear in a special section
-const HEADLINERS = ['Audra McDonald'];
-
 export const TalentTabNew = memo(function TalentTabNew({
   TALENT,
   SCHEDULED_DAILY,
@@ -46,12 +43,16 @@ export const TalentTabNew = memo(function TalentTabNew({
     const others: Talent[] = [];
 
     TALENT.forEach(talent => {
-      if (HEADLINERS.includes(talent.name)) {
+      // Check if talent's category is "Headliners"
+      if (talent.cat === 'Headliners') {
         heads.push(talent);
       } else {
         others.push(talent);
       }
     });
+
+    // Sort headliners alphabetically
+    heads.sort((a, b) => a.name.localeCompare(b.name));
 
     // Sort others alphabetically
     others.sort((a, b) => a.name.localeCompare(b.name));
@@ -88,10 +89,11 @@ export const TalentTabNew = memo(function TalentTabNew({
   // Filter talent by selected type
   const filteredTalent = useMemo(() => {
     if (selectedFilter === 'All') {
-      return otherTalent;
+      // When "All" is selected, show headliners first, then other talent
+      return [...headliners, ...otherTalent];
     }
     return otherTalent.filter(talent => talent.cat === selectedFilter);
-  }, [otherTalent, selectedFilter]);
+  }, [headliners, otherTalent, selectedFilter]);
 
   const handleTalentClick = (talentName: string) => {
     onTalentClick(talentName);
@@ -111,8 +113,8 @@ export const TalentTabNew = memo(function TalentTabNew({
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-8">
-      {/* Headliners Section */}
-      {headliners.length > 0 && (
+      {/* Headliners Section - Only show when NOT on "All" filter */}
+      {headliners.length > 0 && selectedFilter !== 'All' && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
