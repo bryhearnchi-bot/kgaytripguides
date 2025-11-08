@@ -386,6 +386,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
         startDate: draftState.tripData?.startDate ?? '',
         endDate: draftState.tripData?.endDate ?? '',
         heroImageUrl: draftState.tripData?.heroImageUrl ?? '',
+        mapUrl: draftState.tripData?.mapUrl ?? '', // CRITICAL: Include map URL
         description: draftState.tripData?.description ?? '',
         highlights: draftState.tripData?.highlights ?? '',
         charterCompanyId: draftState.tripData?.charterCompanyId,

@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api-client';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
+import type { Update } from '@/types/trip-info';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useShare } from '@/hooks/useShare';
 
@@ -76,6 +77,31 @@ export default function TripGuide({ slug }: TripGuideProps) {
 
   // Use the trip data hook
   const { data: tripData, isLoading, error, refetch } = useTripData(slug);
+
+  // Fetch updates for this trip
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [updatesLoading, setUpdatesLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUpdates = async () => {
+      if (!tripData?.trip?.id) return;
+
+      try {
+        setUpdatesLoading(true);
+        const response = await api.get(`/api/trips/${tripData.trip.id}/updates`);
+        if (response.ok) {
+          const data = await response.json();
+          setUpdates(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch updates:', error);
+      } finally {
+        setUpdatesLoading(false);
+      }
+    };
+
+    fetchUpdates();
+  }, [tripData?.trip?.id]);
 
   const data = useMemo(() => {
     if (!tripData) return null;
@@ -584,6 +610,17 @@ export default function TripGuide({ slug }: TripGuideProps) {
                 DAILY={DAILY as any}
                 TALENT={TALENT as any}
                 PARTY_THEMES={PARTY_THEMES as any}
+                updates={updates.map(update => ({
+                  id: update.id,
+                  timestamp: new Date(update.created_at).toLocaleDateString(),
+                  title: update.custom_title || update.title,
+                  description: update.description,
+                  type: update.update_type.includes('new')
+                    ? ('new' as const)
+                    : update.update_type.includes('updated')
+                      ? ('update' as const)
+                      : ('info' as const),
+                }))}
                 onNavigateToTab={handleNavigateToTab}
               />
             </TabsContent>

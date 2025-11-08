@@ -25,3 +25,30 @@ export interface FAQ {
     order_index: number;
   };
 }
+
+export type UpdateType =
+  | 'new_cruise'
+  | 'party_themes_released'
+  | 'guide_updated'
+  | 'guide_live'
+  | 'new_event'
+  | 'new_artist'
+  | 'schedule_updated'
+  | 'ship_info_updated'
+  | 'custom';
+
+export type LinkSection = 'overview' | 'events' | 'artists' | 'schedule' | 'faqs' | 'ship' | 'none';
+
+export interface Update {
+  id: number;
+  trip_id: number;
+  title: string;
+  description: string;
+  update_type: UpdateType;
+  custom_title?: string | null;
+  link_section: LinkSection;
+  show_on_homepage: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}

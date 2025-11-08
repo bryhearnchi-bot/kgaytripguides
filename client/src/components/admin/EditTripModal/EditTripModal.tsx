@@ -10,6 +10,7 @@ import { EventsTabPage } from '../TripWizard/EventsTabPage';
 import { TalentTabPage } from '../TripWizard/TalentTabPage';
 import { TripInfoTabPage } from '../TripWizard/TripInfoTabPage';
 import { FAQTabPage } from '../TripWizard/FAQTabPage';
+import { UpdatesTabPage } from '../TripWizard/UpdatesTabPage';
 import { TripWizardProvider, useTripWizard } from '@/contexts/TripWizardContext';
 import { LocationsProvider } from '@/contexts/LocationsContext';
 import { Loader2 } from 'lucide-react';
@@ -362,6 +363,12 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
             >
               FAQ
             </TabsTrigger>
+            <TabsTrigger
+              value="updates"
+              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
+            >
+              Updates
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab Content */}
@@ -391,6 +398,10 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
 
           <TabsContent value="faq" className="mt-0">
             <FAQTabPage />
+          </TabsContent>
+
+          <TabsContent value="updates" className="mt-0">
+            <UpdatesTabPage />
           </TabsContent>
         </Tabs>
       )}

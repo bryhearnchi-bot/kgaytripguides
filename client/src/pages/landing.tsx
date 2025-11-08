@@ -13,6 +13,7 @@ import { StandardizedTabContainer } from '@/components/StandardizedTabContainer'
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 import { FeaturedTripCarousel } from '@/components/FeaturedTripCarousel';
 import { isNative } from '@/lib/capacitor';
+import type { Update, UpdateType } from '@/types/trip-info';
 
 interface Trip {
   id: number;
@@ -174,6 +175,22 @@ function getTripStatus(startDate: string, endDate: string): 'upcoming' | 'curren
   }
 }
 
+// Helper function to get color class for update type
+function getUpdateTypeColor(updateType: UpdateType): string {
+  const colors: Record<UpdateType, string> = {
+    new_cruise: 'text-emerald-400',
+    party_themes_released: 'text-orange-400',
+    guide_updated: 'text-blue-400',
+    guide_live: 'text-purple-400',
+    new_event: 'text-cyan-400',
+    new_artist: 'text-pink-400',
+    schedule_updated: 'text-amber-400',
+    ship_info_updated: 'text-slate-400',
+    custom: 'text-white',
+  };
+  return colors[updateType] || colors.custom;
+}
+
 export default function LandingPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
 
@@ -196,6 +213,22 @@ export default function LandingPage() {
     },
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
     refetchOnWindowFocus: true, // Refetch when user returns to tab
+  });
+
+  // Fetch homepage updates
+  const { data: homepageUpdates, isLoading: updatesLoading } = useQuery<
+    Array<Update & { trips: { slug: string } }>
+  >({
+    queryKey: ['homepage-updates'],
+    queryFn: async () => {
+      const response = await fetch('/api/updates/homepage?limit=3');
+      if (!response.ok) {
+        throw new Error('Failed to fetch updates');
+      }
+      return response.json();
+    },
+    staleTime: 1 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const hasCurrent = trips?.some(trip => trip.status === 'current') || false;
@@ -390,83 +423,46 @@ export default function LandingPage() {
                             </div>
 
                             <div className="space-y-4 flex-1">
-                              {/* News Item 1 - New Cruise Released (Clickable) */}
-                              <Link
-                                href="#"
-                                className="block pb-4 border-b border-white/10 transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer"
-                              >
-                                <p className="text-sm text-emerald-400 font-semibold mb-1 flex items-center gap-2">
-                                  New Cruise Released
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                              {updatesLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                </div>
+                              ) : homepageUpdates && homepageUpdates.length > 0 ? (
+                                homepageUpdates.map((update, index) => (
+                                  <Link
+                                    key={update.id}
+                                    href={`/trip/${update.trips.slug}${update.link_section !== 'none' ? `#${update.link_section}` : ''}`}
+                                    className={`block ${index < homepageUpdates.length - 1 ? 'pb-4 border-b border-white/10' : ''} transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer`}
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 5l7 7-7 7"
-                                    />
-                                  </svg>
-                                </p>
-                                <p className="text-sm text-ocean-200">
-                                  Exciting new destinations added for 2026 season!
-                                </p>
-                              </Link>
-
-                              {/* News Item 2 - Trip Guide Updated (Clickable) */}
-                              <Link
-                                href="#"
-                                className="block pb-4 border-b border-white/10 transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer"
-                              >
-                                <p className="text-sm text-blue-400 font-semibold mb-1 flex items-center gap-2">
-                                  Trip Guide Updated
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 5l7 7-7 7"
-                                    />
-                                  </svg>
-                                </p>
-                                <p className="text-sm text-ocean-200">
-                                  Greek Isles guide now includes new events and performers.
-                                </p>
-                              </Link>
-
-                              {/* News Item 3 - Trip Guide Live (Clickable) */}
-                              <Link
-                                href="#"
-                                className="block pb-4 transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer"
-                              >
-                                <p className="text-sm text-purple-400 font-semibold mb-1 flex items-center gap-2">
-                                  Trip Guide Live
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 5l7 7-7 7"
-                                    />
-                                  </svg>
-                                </p>
-                                <p className="text-sm text-ocean-200">
-                                  Drag Stars at Sea guide is now available with full details.
-                                </p>
-                              </Link>
+                                    <p
+                                      className={`text-sm ${getUpdateTypeColor(update.update_type)} font-semibold mb-1 flex items-center gap-2`}
+                                    >
+                                      {update.custom_title || update.title}
+                                      <svg
+                                        className="w-3 h-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M9 5l7 7-7 7"
+                                        />
+                                      </svg>
+                                    </p>
+                                    <p className="text-sm text-ocean-200 line-clamp-2">
+                                      {update.description}
+                                    </p>
+                                  </Link>
+                                ))
+                              ) : (
+                                <div className="flex flex-col items-center justify-center py-8">
+                                  <Clock className="w-12 h-12 text-white/20 mb-2" />
+                                  <p className="text-sm text-white/50">No updates yet</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
