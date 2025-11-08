@@ -54,7 +54,7 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
       'blob:',
       'https:', // Allow all HTTPS images
     ],
-    'connect-src': ["'self'", 'https:'],
+    'connect-src': ["'self'", 'https:', 'wss:'],
     'media-src': ["'self'", 'https:'],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],

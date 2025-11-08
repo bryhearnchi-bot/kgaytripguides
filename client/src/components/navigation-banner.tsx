@@ -1,24 +1,143 @@
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import KokonutProfileDropdown from '@/components/ui/kokonut-profile-dropdown';
-import { AddToHomeScreen } from '@/components/AddToHomeScreen';
-import TimeFormatToggle from '@/components/TimeFormatToggle';
-import { AboutKGayModal } from '@/components/AboutKGayModal';
-import { useState, useEffect } from 'react';
+import NavigationDrawer from '@/components/NavigationDrawer';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { GlobalNotificationBell } from '@/components/GlobalNotificationBell';
+import { GlobalNotificationsPanel } from '@/components/GlobalNotificationsPanel';
+import type { Update } from '@/types/trip-info';
+import { api } from '@/lib/api-client';
+import { supabase } from '@/lib/supabase';
+
+interface UpdateWithTrip extends Update {
+  trip_name?: string;
+  trip_slug?: string;
+  start_date?: string;
+}
 
 export default function NavigationBanner() {
-  const { user, profile, signOut } = useSupabaseAuthContext();
-  const [currentLocation, setLocation] = useLocation();
-  const [showEditTrip, setShowEditTrip] = useState(false);
+  const [currentLocation] = useLocation();
   const [isStandalone, setIsStandalone] = useState(false);
-  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [updates, setUpdates] = useState<UpdateWithTrip[]>([]);
+  const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
 
   const isAdminRoute = currentLocation.startsWith('/admin');
-  const isLandingPage = currentLocation === '/';
-  const isTripGuidePage = currentLocation.startsWith('/trip/');
-  const showAboutButton = isLandingPage || isTripGuidePage;
+
+  // Fetch all updates
+  const fetchUpdates = useCallback(async () => {
+    try {
+      const response = await api.get('/api/updates/all');
+      if (response.ok) {
+        const data = await response.json();
+        setUpdates(data);
+      }
+    } catch (error) {
+      console.error('Error fetching global updates:', error);
+    }
+  }, []);
+
+  const handleNotificationClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Toggle notification panel
+    const newState = !showNotifications;
+    setShowNotifications(newState);
+
+    // Close drawer if opening notifications
+    if (newState && showDrawer) {
+      setShowDrawer(false);
+    }
+
+    // Fetch fresh updates when opening notification panel
+    if (newState) {
+      fetchUpdates();
+    }
+  };
+
+  const handleDrawerOpenChange = (open: boolean) => {
+    // Close notifications when opening drawer
+    if (open && showNotifications) {
+      setShowNotifications(false);
+    }
+    setShowDrawer(open);
+  };
+
+  // Load last read timestamp from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('global-notifications-last-read');
+    setLastReadTimestamp(stored);
+  }, []);
+
+  // Fetch all updates on mount and every 5 minutes
+  useEffect(() => {
+    fetchUpdates();
+
+    // Refresh updates every 5 minutes
+    const interval = setInterval(fetchUpdates, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchUpdates]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('updates-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'updates',
+        },
+        async payload => {
+          // When a new update is inserted, fetch its full details with trip info
+          const newUpdate = payload.new as Update;
+
+          try {
+            // Fetch the trip details for this update
+            const { data: trip } = await supabase
+              .from('trips')
+              .select('id, slug, name, start_date')
+              .eq('id', newUpdate.trip_id)
+              .single();
+
+            // Add the new update with trip details to the beginning of the list
+            const updateWithTrip: UpdateWithTrip = {
+              ...newUpdate,
+              trip_name: trip?.name,
+              trip_slug: trip?.slug,
+              start_date: trip?.start_date,
+            };
+
+            setUpdates(prev => [updateWithTrip, ...prev]);
+          } catch (error) {
+            console.error('Error fetching trip details for new update:', error);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Check if there are unread notifications
+  const hasUnread = useMemo(() => {
+    if (!updates || updates.length === 0) return false;
+    if (!lastReadTimestamp) return updates.length > 0;
+
+    return updates.some(update => new Date(update.created_at) > new Date(lastReadTimestamp));
+  }, [updates, lastReadTimestamp]);
+
+  // Mark notifications as read
+  const handleMarkAsRead = useCallback(() => {
+    const now = new Date().toISOString();
+    localStorage.setItem('global-notifications-last-read', now);
+    setLastReadTimestamp(now);
+  }, []);
 
   // Detect if app is running in standalone mode (installed as PWA)
   useEffect(() => {
@@ -40,38 +159,11 @@ export default function NavigationBanner() {
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      // The signOut function already navigates to '/'
-      // No need to call setLocation here
-    } catch (error) {
-      // Error handling performed by signOut function
-    }
-  };
-
   const toggleAdminNavigation = () => {
     const event = new CustomEvent('admin-nav', {
       detail: { action: 'toggle' },
     });
     window.dispatchEvent(event);
-  };
-
-  // Listen for edit trip availability from TripGuide component
-  useEffect(() => {
-    const handleEditTripAvailable = (e: CustomEvent) => {
-      setShowEditTrip(e.detail.available);
-    };
-
-    window.addEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
-
-    return () => {
-      window.removeEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
-    };
-  }, []);
-
-  const handleEditTrip = () => {
-    window.dispatchEvent(new CustomEvent('request-edit-trip'));
   };
 
   return (
@@ -95,7 +187,7 @@ export default function NavigationBanner() {
           {isStandalone ? (
             <div className="flex items-center gap-2 sm:gap-3 cursor-default">
               <img src="/logos/kgay-logo.jpg" alt="KGay Travel" className="h-6 sm:h-8 w-auto" />
-              <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-white sm:inline">
+              <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
                 KGay Travel Guides
               </span>
             </div>
@@ -106,47 +198,30 @@ export default function NavigationBanner() {
                 alt="KGay Travel"
                 className="h-6 sm:h-8 w-auto hover:opacity-90 transition"
               />
-              <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-white sm:inline">
+              <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
                 KGay Travel Guides
               </span>
             </Link>
           )}
         </div>
 
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* About KGAY Travel button - shows on landing page and trip guide pages */}
-          {showAboutButton && (
-            <Button
-              onClick={() => setShowAboutModal(true)}
-              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium text-[11px] px-2 !py-0 !h-[22px] !min-h-0 rounded-full shadow-sm hover:shadow-md transition-all whitespace-nowrap leading-[22px]"
-            >
-              About KGAY Travel
-            </Button>
-          )}
-
-          {/* Add to Home Screen button - shows for all users if not in standalone mode */}
-          <AddToHomeScreen />
-
-          {/* Time Format Toggle - shows for non-logged-in users on non-admin pages */}
-          {!user && !isAdminRoute && <TimeFormatToggle variant="banner" />}
-
-          {user && profile && (
-            <KokonutProfileDropdown
-              user={user}
-              profile={profile}
-              onLogout={handleLogout}
-              onNavigate={setLocation}
-              onEditTrip={handleEditTrip}
-              showEditTrip={showEditTrip}
-              isAdminRoute={isAdminRoute}
-              className="touch-manipulation"
-            />
-          )}
+        <div className="flex items-center gap-2">
+          <GlobalNotificationBell
+            updatesCount={updates.length}
+            hasUnread={hasUnread}
+            onClick={handleNotificationClick}
+          />
+          <NavigationDrawer isOpen={showDrawer} onOpenChange={handleDrawerOpenChange} />
         </div>
       </div>
 
-      {/* About KGAY Travel Modal */}
-      <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
+      {/* Global Notifications Panel */}
+      <GlobalNotificationsPanel
+        open={showNotifications}
+        onOpenChange={setShowNotifications}
+        updates={updates}
+        onMarkAsRead={handleMarkAsRead}
+      />
     </div>
   );
 }

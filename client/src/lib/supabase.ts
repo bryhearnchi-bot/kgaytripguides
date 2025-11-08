@@ -77,6 +77,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     // Removed PKCE flow to fix authentication hanging issue
   },
+  realtime: {
+    log_level: 'error', // Only log errors, suppress info/debug logs
+  },
 });
 
 // Auth helper functions

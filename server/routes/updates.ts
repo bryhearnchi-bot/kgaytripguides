@@ -70,6 +70,65 @@ export function registerUpdateRoutes(app: Express) {
     })
   );
 
+  // Get ALL updates across all trips (for global notifications)
+  app.get(
+    '/api/updates/all',
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const supabaseAdmin = getSupabaseAdmin();
+      const limit = parseInt(req.query.limit as string) || 50;
+
+      // Get all updates
+      const { data: updates, error: updatesError } = await supabaseAdmin
+        .from('updates')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (updatesError) {
+        logger.error('Error fetching all updates:', {
+          error: JSON.stringify(updatesError),
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch updates');
+      }
+
+      if (!updates || updates.length === 0) {
+        return res.json([]);
+      }
+
+      // Get trip details for these updates
+      const tripIds = [...new Set(updates.map(u => u.trip_id))];
+      const { data: trips, error: tripsError } = await supabaseAdmin
+        .from('trips')
+        .select('id, slug, name, start_date')
+        .in('id', tripIds);
+
+      if (tripsError) {
+        logger.error('Error fetching trip details for updates:', {
+          error: JSON.stringify(tripsError),
+          method: req.method,
+          path: req.path,
+        });
+        throw ApiError.internal('Failed to fetch trip details');
+      }
+
+      // Combine updates with trip data
+      const tripsMap = new Map(trips?.map(t => [t.id, t]) || []);
+      const updatesWithTrips = updates.map(update => {
+        const trip = tripsMap.get(update.trip_id);
+        return {
+          ...update,
+          trip_name: trip?.name,
+          trip_slug: trip?.slug,
+          start_date: trip?.start_date,
+        };
+      });
+
+      return res.json(updatesWithTrips);
+    })
+  );
+
   // Get updates that should appear on homepage
   app.get(
     '/api/updates/homepage',

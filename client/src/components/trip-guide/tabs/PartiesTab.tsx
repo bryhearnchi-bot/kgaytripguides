@@ -93,20 +93,12 @@ export const PartiesTab = memo(function PartiesTab({
 
   // Fetch party themes if no events exist
   useEffect(() => {
-    console.log('[PartiesTab] Debug:', {
-      tripId,
-      partyEventsByDateLength: partyEventsByDate.length,
-      willFetch: tripId && partyEventsByDate.length === 0,
-    });
-
     if (tripId && partyEventsByDate.length === 0) {
-      console.log(`[PartiesTab] Fetching party themes for trip ${tripId}`);
       setIsLoadingThemes(true);
       api
         .get(`/api/trips/${tripId}/party-themes`, { requireAuth: false })
         .then(async response => {
           const data = await response.json();
-          console.log('[PartiesTab] Party themes received:', data);
           setPartyThemes(data || []);
         })
         .catch(error => {

@@ -8,6 +8,18 @@ import { initializeNativeFeatures, setupNavigationHandlers, isNative } from './l
 // Install global fetch wrapper to handle API URLs
 installFetchWrapper();
 
+// Suppress React DevTools message in development
+if (import.meta.env.DEV) {
+  const originalLog = console.log;
+  console.log = (...args: any[]) => {
+    // Filter out React DevTools message
+    if (args[0]?.includes?.('Download the React DevTools')) {
+      return;
+    }
+    originalLog.apply(console, args);
+  };
+}
+
 // Register Service Worker for PWA functionality (disabled in native apps)
 if (isNative) {
   console.log('Service worker disabled in native app');
