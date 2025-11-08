@@ -266,9 +266,7 @@ function App() {
             <UpdateProvider>
               <TooltipProvider>
                 <NavigationBanner />
-                <div className="pt-10 w-full">
-                  {' '}
-                  {/* Add padding to account for fixed banner */}
+                <div className="w-full">
                   <Toaster />
                   <Router />
                 </div>

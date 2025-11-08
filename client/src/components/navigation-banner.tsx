@@ -214,9 +214,7 @@ export default function NavigationBanner() {
   };
 
   return (
-    <div
-      className={`text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] ${isAdminRoute ? 'bg-[#10192f]' : 'bg-ocean-900 shadow-lg'}`}
-    >
+    <div className="text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           {isAdminRoute && (
