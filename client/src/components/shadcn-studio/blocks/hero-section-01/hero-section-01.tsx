@@ -252,16 +252,6 @@ const HeroSection = ({
   // Build carousel images dynamically based on trip type and itinerary data
   const dynamicImages = buildCarouselImages(itinerary, tripType);
 
-  // Debug logging
-  console.log('[HeroSection] Carousel Debug:', {
-    slug,
-    tripType,
-    itineraryCount: itinerary.length,
-    dynamicImagesCount: dynamicImages.length,
-    dynamicImages,
-    firstItem: itinerary[0],
-  });
-
   // Use dynamic images - no more hardcoded fallbacks
   const images = dynamicImages;
 

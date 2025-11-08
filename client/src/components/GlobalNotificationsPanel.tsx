@@ -11,6 +11,8 @@ import type { Update } from '@/types/trip-info';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface UpdateWithTrip extends Update {
   trip_name?: string;
@@ -33,21 +35,69 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
 }: GlobalNotificationsPanelProps) {
   const [, setLocation] = useLocation();
   const [lastReadTimestamp, setLastReadTimestamp] = React.useState<string | null>(null);
+  const { user } = useSupabaseAuthContext();
 
-  // Load last read timestamp
+  // Load last read timestamp - hybrid approach
+  // For logged-in users: fetch from database
+  // For anonymous users: use localStorage
   React.useEffect(() => {
-    const stored = localStorage.getItem('global-notifications-last-read');
-    setLastReadTimestamp(stored);
-  }, []);
+    const fetchLastRead = async () => {
+      if (user) {
+        // Logged-in user: fetch from database
+        const { data, error } = await supabase
+          .from('user_notification_reads')
+          .select('last_read_at')
+          .eq('user_id', user.id)
+          .single();
 
+        if (!error && data) {
+          setLastReadTimestamp(data.last_read_at);
+        } else if (error && error.code !== 'PGRST116') {
+          // PGRST116 is "no rows returned" error, which is expected for new users
+          console.error('Error fetching user notification read status:', error);
+        }
+      } else {
+        // Anonymous user: use localStorage
+        const stored = localStorage.getItem('global-notifications-last-read');
+        setLastReadTimestamp(stored);
+      }
+    };
+
+    fetchLastRead();
+  }, [user]);
+
+  // Mark notifications as read when panel opens
   useEffect(() => {
     if (open) {
       onMarkAsRead();
-      // Update local timestamp to reflect the read state
       const now = new Date().toISOString();
       setLastReadTimestamp(now);
+
+      // Save to database for logged-in users, localStorage for anonymous
+      if (user) {
+        // Upsert to database
+        supabase
+          .from('user_notification_reads')
+          .upsert(
+            {
+              user_id: user.id,
+              last_read_at: now,
+            },
+            {
+              onConflict: 'user_id',
+            }
+          )
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error updating user notification read status:', error);
+            }
+          });
+      } else {
+        // Save to localStorage for anonymous users
+        localStorage.setItem('global-notifications-last-read', now);
+      }
     }
-  }, [open, onMarkAsRead]);
+  }, [open, onMarkAsRead, user]);
 
   // Check if an update is unread
   const isUnread = (update: UpdateWithTrip) => {

@@ -8,6 +8,7 @@ import { GlobalNotificationsPanel } from '@/components/GlobalNotificationsPanel'
 import type { Update } from '@/types/trip-info';
 import { api } from '@/lib/api-client';
 import { supabase } from '@/lib/supabase';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 interface UpdateWithTrip extends Update {
   trip_name?: string;
@@ -22,6 +23,7 @@ export default function NavigationBanner() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [updates, setUpdates] = useState<UpdateWithTrip[]>([]);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
+  const { user } = useSupabaseAuthContext();
 
   const isAdminRoute = currentLocation.startsWith('/admin');
 
@@ -65,11 +67,34 @@ export default function NavigationBanner() {
     setShowDrawer(open);
   };
 
-  // Load last read timestamp from localStorage
+  // Load last read timestamp - hybrid approach
+  // For logged-in users: fetch from database
+  // For anonymous users: use localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('global-notifications-last-read');
-    setLastReadTimestamp(stored);
-  }, []);
+    const fetchLastRead = async () => {
+      if (user) {
+        // Logged-in user: fetch from database
+        const { data, error } = await supabase
+          .from('user_notification_reads')
+          .select('last_read_at')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data) {
+          setLastReadTimestamp(data.last_read_at);
+        } else if (error && error.code !== 'PGRST116') {
+          // PGRST116 is "no rows returned" error, which is expected for new users
+          console.error('Error fetching user notification read status:', error);
+        }
+      } else {
+        // Anonymous user: use localStorage
+        const stored = localStorage.getItem('global-notifications-last-read');
+        setLastReadTimestamp(stored);
+      }
+    };
+
+    fetchLastRead();
+  }, [user]);
 
   // Fetch all updates on mount and every 5 minutes
   useEffect(() => {
@@ -132,12 +157,35 @@ export default function NavigationBanner() {
     return updates.some(update => new Date(update.created_at) > new Date(lastReadTimestamp));
   }, [updates, lastReadTimestamp]);
 
-  // Mark notifications as read
+  // Mark notifications as read - hybrid approach
   const handleMarkAsRead = useCallback(() => {
     const now = new Date().toISOString();
-    localStorage.setItem('global-notifications-last-read', now);
     setLastReadTimestamp(now);
-  }, []);
+
+    // Save to database for logged-in users, localStorage for anonymous
+    if (user) {
+      // Upsert to database
+      supabase
+        .from('user_notification_reads')
+        .upsert(
+          {
+            user_id: user.id,
+            last_read_at: now,
+          },
+          {
+            onConflict: 'user_id',
+          }
+        )
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error updating user notification read status:', error);
+          }
+        });
+    } else {
+      // Save to localStorage for anonymous users
+      localStorage.setItem('global-notifications-last-read', now);
+    }
+  }, [user]);
 
   // Detect if app is running in standalone mode (installed as PWA)
   useEffect(() => {
