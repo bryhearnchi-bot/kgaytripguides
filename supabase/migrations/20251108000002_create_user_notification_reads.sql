@@ -58,3 +58,7 @@ CREATE POLICY "Users can delete own notification read status"
   ON public.user_notification_reads
   FOR DELETE
   USING (auth.uid() = user_id);
+
+-- Grant permissions to authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_notification_reads TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE public.user_notification_reads_id_seq TO authenticated;
