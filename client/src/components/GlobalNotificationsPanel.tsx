@@ -44,17 +44,16 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
     const fetchLastRead = async () => {
       if (user) {
         // Logged-in user: fetch from database
+        // RLS policies automatically filter by auth.uid()
         const { data, error } = await supabase
           .from('user_notification_reads')
           .select('last_read_at')
-          .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (!error && data) {
-          setLastReadTimestamp(data.last_read_at);
-        } else if (error && error.code !== 'PGRST116') {
-          // PGRST116 is "no rows returned" error, which is expected for new users
+        if (error) {
           console.error('Error fetching user notification read status:', error);
+        } else if (data) {
+          setLastReadTimestamp(data.last_read_at);
         }
       } else {
         // Anonymous user: use localStorage
