@@ -10,7 +10,7 @@ import { UpdateProvider } from '@/context/UpdateContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NavigationBanner from '@/components/navigation-banner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { AppFooter } from '@/components/AppFooter';
+import BottomSafeArea from '@/components/BottomSafeArea';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { isNative } from '@/lib/capacitor';
 
@@ -270,7 +270,7 @@ function App() {
                   <Toaster />
                   <Router />
                 </div>
-                <AppFooter />
+                <BottomSafeArea />
               </TooltipProvider>
             </UpdateProvider>
           </TimeFormatProvider>

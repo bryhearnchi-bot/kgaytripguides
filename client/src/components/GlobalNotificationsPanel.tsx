@@ -153,7 +153,7 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
         )}
         <SheetContent
           side="right"
-          className="w-[85%] sm:w-[400px] !top-[2.5rem] !bottom-0 !h-auto !z-50 bg-[#10192f] border-l border-white/10 text-white overflow-y-auto [&>button]:hidden"
+          className="w-[85%] sm:w-[400px] !top-[2.5rem] !bottom-0 !h-auto !z-50 bg-white/10 backdrop-blur-lg border-l border-white/10 text-white overflow-y-auto [&>button]:hidden"
         >
           <VisuallyHidden>
             <SheetTitle>Trip Updates</SheetTitle>
@@ -162,7 +162,7 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
             </SheetDescription>
           </VisuallyHidden>
 
-          <div className="py-4 space-y-6">
+          <div className="pt-5 pb-4 space-y-6">
             {/* Header */}
             <div className="px-4">
               <h2 className="text-base font-semibold text-white mb-2">Recent Updates</h2>
@@ -178,7 +178,7 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
             ) : (
               <div className="space-y-3 px-2">
                 {groupedUpdates.map((group, groupIndex) => (
-                  <div key={`${group.tripId}-${groupIndex}`} className="space-y-1">
+                  <div key={`${group.tripId}-${groupIndex}`} className="space-y-3">
                     {/* Trip Header - shown once per consecutive group */}
                     <div className="flex items-center gap-2 px-2">
                       <Ship className="w-4 h-4 text-ocean-400 flex-shrink-0" />

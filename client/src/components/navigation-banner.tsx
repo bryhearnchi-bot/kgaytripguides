@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, RefreshCw } from 'lucide-react';
 import NavigationDrawer from '@/components/NavigationDrawer';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { GlobalNotificationBell } from '@/components/GlobalNotificationBell';
@@ -9,6 +9,8 @@ import type { Update } from '@/types/trip-info';
 import { api } from '@/lib/api-client';
 import { supabase } from '@/lib/supabase';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import { useUpdate } from '@/context/UpdateContext';
+import { cn } from '@/lib/utils';
 
 interface UpdateWithTrip extends Update {
   trip_name?: string;
@@ -24,6 +26,7 @@ export default function NavigationBanner() {
   const [updates, setUpdates] = useState<UpdateWithTrip[]>([]);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
   const { user } = useSupabaseAuthContext();
+  const { updateAvailable, isChecking, checkForUpdates, applyUpdate } = useUpdate();
 
   const isAdminRoute = currentLocation.startsWith('/admin');
 
@@ -213,6 +216,16 @@ export default function NavigationBanner() {
     window.dispatchEvent(event);
   };
 
+  const handleRefreshClick = async () => {
+    if (updateAvailable) {
+      // Apply the waiting update
+      applyUpdate();
+    } else {
+      // Check for updates manually
+      await checkForUpdates();
+    }
+  };
+
   return (
     <div className="text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
@@ -251,6 +264,35 @@ export default function NavigationBanner() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefreshClick}
+            disabled={isChecking}
+            className={cn(
+              'relative h-10 w-10 rounded-full text-white transition-colors',
+              'hover:bg-white/10 active:bg-white/20',
+              'disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+            )}
+            title={
+              updateAvailable
+                ? 'Update available - tap to refresh'
+                : isChecking
+                  ? 'Checking for updates...'
+                  : 'Check for updates'
+            }
+          >
+            <RefreshCw
+              className={cn(
+                'w-5 h-5 transition-all',
+                isChecking && 'animate-spin text-blue-400',
+                !isChecking && updateAvailable && 'text-green-400',
+                !isChecking && !updateAvailable && 'text-white'
+              )}
+            />
+            {/* Badge for update available */}
+            {updateAvailable && !isChecking && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            )}
+          </button>
           <GlobalNotificationBell
             updatesCount={updates.length}
             hasUnread={hasUnread}

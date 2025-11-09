@@ -36,6 +36,8 @@ import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { AboutKGayModal } from '@/components/AboutKGayModal';
 import { cn } from '@/lib/utils';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useUpdate } from '@/context/UpdateContext';
+import { format } from 'date-fns';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -64,6 +66,7 @@ export default function NavigationDrawer({
   const { user, profile, signOut } = useSupabaseAuthContext();
   const { timeFormat, toggleTimeFormat } = useTimeFormat();
   const [currentLocation, setLocation] = useLocation();
+  const { lastUpdated } = useUpdate();
 
   const isAdminRoute = currentLocation.startsWith('/admin');
   const isTripGuidePage = currentLocation.startsWith('/trip/');
@@ -178,6 +181,24 @@ export default function NavigationDrawer({
     }
   };
 
+  const formatLastUpdated = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    } else if (diffMins < 1440) {
+      // Less than 24 hours - show time
+      return format(date, 'h:mm a');
+    } else {
+      // Older - show date and time
+      return format(date, 'MMM d, h:mm a');
+    }
+  };
+
   return (
     <>
       <Sheet open={isOpen} modal={false}>
@@ -204,14 +225,14 @@ export default function NavigationDrawer({
           )}
           <SheetContent
             side="right"
-            className="w-[85%] sm:w-[360px] !top-[2.5rem] !bottom-0 !h-auto !z-50 bg-[#10192f] border-white/10 text-white overflow-y-auto [&>button]:hidden"
+            className="w-[85%] sm:w-[360px] !top-[2.5rem] !bottom-0 !h-auto !z-50 bg-white/10 backdrop-blur-lg border-white/10 text-white overflow-y-auto [&>button]:hidden"
           >
             <VisuallyHidden>
               <SheetTitle>Navigation Menu</SheetTitle>
               <SheetDescription>Access your profile, settings, and app features</SheetDescription>
             </VisuallyHidden>
 
-            <div className="flex flex-col gap-3 pt-1.5">
+            <div className="flex flex-col gap-3 pt-2.5">
               {/* User Profile Section (when logged in) */}
               {user && profile ? (
                 <>
@@ -235,6 +256,11 @@ export default function NavigationDrawer({
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Last Updated - When Logged In */}
+                  <div className="flex items-center justify-center text-xs text-white/50 py-1">
+                    <span>Updated {formatLastUpdated(lastUpdated)}</span>
                   </div>
 
                   <Separator className="bg-white/10" />
@@ -271,9 +297,27 @@ export default function NavigationDrawer({
                       )}
                   </div>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  {/* Login Button - When Logged Out (at top where profile would be) */}
+                  <button
+                    onClick={() => handleNavigate('/admin')}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-left"
+                  >
+                    <User className="h-5 w-5 text-white" />
+                    <span className="text-sm font-medium">Login</span>
+                  </button>
 
-              <Separator className="bg-white/10" />
+                  {/* Last Updated - When Logged Out */}
+                  <div className="flex items-center justify-center text-xs text-white/50 py-1">
+                    <span>Updated {formatLastUpdated(lastUpdated)}</span>
+                  </div>
+
+                  <Separator className="bg-white/10" />
+                </>
+              )}
+
+              {user && <Separator className="bg-white/10" />}
 
               {/* Time Format Toggle */}
               <button
@@ -333,24 +377,18 @@ export default function NavigationDrawer({
                 </button>
               </div>
 
-              {/* Sign Out (when logged in) OR Login (when not logged in) - at the bottom */}
-              <Separator className="bg-white/10" />
-              {user ? (
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors text-left"
-                >
-                  <LogOut className="h-5 w-5 text-red-400" />
-                  <span className="text-sm font-medium text-red-400">Sign Out</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleNavigate('/admin')}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-ocean-500/10 hover:bg-ocean-500/20 border border-ocean-500/30 transition-colors text-left"
-                >
-                  <User className="h-5 w-5 text-ocean-400" />
-                  <span className="text-sm font-medium text-ocean-400">Login</span>
-                </button>
+              {/* Sign Out (when logged in) - at the bottom */}
+              {user && (
+                <>
+                  <Separator className="bg-white/10" />
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors text-left"
+                  >
+                    <LogOut className="h-5 w-5 text-red-400" />
+                    <span className="text-sm font-medium text-red-400">Sign Out</span>
+                  </button>
+                </>
               )}
             </div>
           </SheetContent>
