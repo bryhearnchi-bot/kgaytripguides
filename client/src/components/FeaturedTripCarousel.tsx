@@ -71,102 +71,8 @@ function TripCard({ trip }: { trip: Trip }) {
   const statusBadge = getTripStatusBadge(startDate, endDate, trip.status);
 
   return (
-    <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
-      <Link
-        href={`/trip/${trip.slug}`}
-        onClick={() => {
-          window.scrollTo(0, 0);
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        }}
-      >
-        <div className="relative h-48 overflow-hidden cursor-pointer">
-          <img
-            src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
-            alt={trip.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            loading="lazy"
-            onError={e => {
-              e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
-            }}
-          />
-          {/* Charter Logo - Top Right with frosted glass background */}
-          {trip.charterCompanyLogo && (
-            <div className="absolute top-3 right-3">
-              <div className="bg-white/60 backdrop-blur-lg rounded-lg px-2 py-1 shadow-lg border border-white/30">
-                <img
-                  src={trip.charterCompanyLogo}
-                  alt={trip.charterCompanyName || 'Charter Company'}
-                  className="h-6 w-auto object-contain"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          )}
-          {/* Status Badge - Days away shown in top left */}
-          {statusBadge.show && (
-            <div className="absolute top-3 left-3">
-              <span
-                className={`px-3 py-1 text-xs font-semibold rounded-full ${statusBadge.className} border border-white/30`}
-              >
-                {statusBadge.text}
-              </span>
-            </div>
-          )}
-        </div>
-      </Link>
-
-      <div className="p-5 flex-1 flex flex-col">
-        <h4
-          className="font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors whitespace-nowrap"
-          style={{
-            fontSize: `${Math.max(0.7, Math.min(1.25, 25 / trip.name.length))}rem`,
-          }}
-        >
-          {trip.name}
-        </h4>
-
-        <div className="space-y-2 mb-4 flex-1">
-          <div className="flex items-center gap-2 text-ocean-100 text-sm">
-            <CalendarDays className="w-4 h-4 flex-shrink-0" />
-            <span>
-              {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
-            </span>
-          </div>
-          {trip.tripTypeId === 2 ? (
-            // Resort Trip
-            <>
-              {trip.resortName && (
-                <div className="flex items-center gap-2 text-ocean-100 text-sm">
-                  <Home className="w-4 h-4 flex-shrink-0" />
-                  <span>{trip.resortName}</span>
-                </div>
-              )}
-              {trip.resortLocation && (
-                <div className="flex items-center gap-2 text-ocean-100 text-sm">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
-                  <span>{trip.resortLocation}</span>
-                </div>
-              )}
-            </>
-          ) : (
-            // Cruise Trip
-            <>
-              {trip.shipName && (
-                <div className="text-ocean-100 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Ship className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-medium">{trip.shipName}</span>
-                  </div>
-                  {trip.cruiseLine && (
-                    <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
+    <div className="rounded-2xl p-[2px] bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 shadow-[0_0_20px_rgba(255,0,255,0.5)] animate-gradient-x">
+      <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
         <Link
           href={`/trip/${trip.slug}`}
           onClick={() => {
@@ -175,10 +81,106 @@ function TripCard({ trip }: { trip: Trip }) {
             document.body.scrollTop = 0;
           }}
         >
-          <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl">
-            {getTripButtonText(trip.tripType)}
-          </Button>
+          <div className="relative h-48 overflow-hidden cursor-pointer">
+            <img
+              src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
+              alt={trip.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              loading="lazy"
+              onError={e => {
+                e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
+              }}
+            />
+            {/* Charter Logo - Top Right with frosted glass background */}
+            {trip.charterCompanyLogo && (
+              <div className="absolute top-3 right-3">
+                <div className="bg-white/60 backdrop-blur-lg rounded-lg px-2 py-1 shadow-lg border border-white/30">
+                  <img
+                    src={trip.charterCompanyLogo}
+                    alt={trip.charterCompanyName || 'Charter Company'}
+                    className="h-6 w-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            )}
+            {/* Status Badge - Days away shown in top left */}
+            {statusBadge.show && (
+              <div className="absolute top-3 left-3">
+                <span
+                  className={`px-3 py-1 text-xs font-semibold rounded-full ${statusBadge.className} border border-white/30`}
+                >
+                  {statusBadge.text}
+                </span>
+              </div>
+            )}
+          </div>
         </Link>
+
+        <div className="p-5 flex-1 flex flex-col">
+          <h4
+            className="font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors whitespace-nowrap"
+            style={{
+              fontSize: `${Math.max(0.7, Math.min(1.25, 25 / trip.name.length))}rem`,
+            }}
+          >
+            {trip.name}
+          </h4>
+
+          <div className="space-y-2 mb-4 flex-1">
+            <div className="flex items-center gap-2 text-ocean-100 text-sm">
+              <CalendarDays className="w-4 h-4 flex-shrink-0" />
+              <span>
+                {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
+              </span>
+            </div>
+            {trip.tripTypeId === 2 ? (
+              // Resort Trip
+              <>
+                {trip.resortName && (
+                  <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                    <Home className="w-4 h-4 flex-shrink-0" />
+                    <span>{trip.resortName}</span>
+                  </div>
+                )}
+                {trip.resortLocation && (
+                  <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span>{trip.resortLocation}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              // Cruise Trip
+              <>
+                {trip.shipName && (
+                  <div className="text-ocean-100 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Ship className="w-4 h-4 flex-shrink-0" />
+                      <span className="font-medium">{trip.shipName}</span>
+                    </div>
+                    {trip.cruiseLine && (
+                      <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <Link
+            href={`/trip/${trip.slug}`}
+            onClick={() => {
+              window.scrollTo(0, 0);
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
+            }}
+          >
+            <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl">
+              {getTripButtonText(trip.tripType)}
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -251,130 +253,134 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Main Featured Card - Side by Side Layout */}
-        <div className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl transition-all duration-300 hover:shadow-3xl">
-          <div className="grid md:grid-cols-2 gap-0">
-            {/* Featured Image - Left Side */}
-            <div className="relative h-48 md:h-96">
-              <img
-                src={currentTrip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
-                alt={currentTrip.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={e => {
-                  e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+        {/* Main Featured Card - Side by Side Layout with Rainbow Border */}
+        <div className="rounded-2xl p-[2px] bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 shadow-[0_0_20px_rgba(255,0,255,0.5)] animate-gradient-x">
+          <div className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-lg shadow-2xl transition-all duration-300 hover:shadow-3xl">
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Featured Image - Left Side */}
+              <div className="relative h-48 md:h-96">
+                <img
+                  src={currentTrip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
+                  alt={currentTrip.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={e => {
+                    e.currentTarget.src = '/images/ships/resilient-lady-hero.jpg';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
-              {/* Status Badge - Days away shown in top left */}
-              {statusBadge.show && (
-                <div className="absolute top-4 left-4">
-                  <span
-                    className={`px-3 py-1.5 text-xs font-bold rounded-full ${statusBadge.className} border border-white/30`}
-                  >
-                    {statusBadge.text}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Featured Content - Right Side */}
-            <div className="p-6 flex flex-col justify-between">
-              <div>
-                {/* Header with Charter Logo on top (right-aligned), Trip Name below (left-aligned) */}
-                <div className="flex flex-col gap-3 mb-3">
-                  {/* Charter Logo - Right-aligned, conditional sizing based on company */}
-                  {currentTrip.charterCompanyLogo && (
-                    <img
-                      src={currentTrip.charterCompanyLogo}
-                      alt={currentTrip.charterCompanyName || 'Charter Company'}
-                      className={`${
-                        currentTrip.charterCompanyName?.toLowerCase().includes('atlantis') ||
-                        currentTrip.charterCompanyName?.toLowerCase().includes('vakaya')
-                          ? 'h-6'
-                          : 'h-12'
-                      } w-auto object-contain rounded shadow flex-shrink-0 self-end`}
-                      loading="lazy"
-                    />
-                  )}
-                  {/* Trip Name - Left-aligned, auto-sizing to fit one line */}
-                  <h3
-                    className="font-black text-white leading-tight whitespace-nowrap"
-                    style={{
-                      fontSize: `${Math.max(0.75, Math.min(1.5, 30 / currentTrip.name.length))}rem`,
-                    }}
-                  >
-                    {currentTrip.name}
-                  </h3>
-                </div>
-
-                {/* Description - smaller font, more lines */}
-                <p className="text-sm text-ocean-100 mb-5 leading-relaxed line-clamp-4">
-                  {currentTrip.description || 'An exciting adventure awaits'}
-                </p>
-
-                {/* Details Grid */}
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-center gap-3 text-white">
-                    <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
-                      <CalendarDays className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
-                      </div>
-                      <div className="text-xs text-ocean-200">{duration} days of adventure</div>
-                    </div>
+                {/* Status Badge - Days away shown in top left */}
+                {statusBadge.show && (
+                  <div className="absolute top-4 left-4">
+                    <span
+                      className={`px-3 py-1.5 text-xs font-bold rounded-full ${statusBadge.className} border border-white/30`}
+                    >
+                      {statusBadge.text}
+                    </span>
                   </div>
-
-                  {currentTrip.tripTypeId === 2
-                    ? // Resort Trip
-                      currentTrip.resortName && (
-                        <div className="flex items-center gap-3 text-white">
-                          <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
-                            <Home className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold">{currentTrip.resortName}</div>
-                            {currentTrip.resortLocation && (
-                              <div className="text-xs text-ocean-200">
-                                {currentTrip.resortLocation}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    : // Cruise Trip
-                      currentTrip.shipName && (
-                        <div className="flex items-center gap-3 text-white">
-                          <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
-                            <Ship className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold">{currentTrip.shipName}</div>
-                            {currentTrip.cruiseLine && (
-                              <div className="text-xs text-ocean-200">{currentTrip.cruiseLine}</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                </div>
+                )}
               </div>
 
-              {/* CTA Button */}
-              <Link
-                href={`/trip/${currentTrip.slug}`}
-                onClick={() => {
-                  window.scrollTo(0, 0);
-                  document.documentElement.scrollTop = 0;
-                  document.body.scrollTop = 0;
-                }}
-              >
-                <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl text-sm">
-                  {getTripButtonText(currentTrip.tripType)} →
-                </Button>
-              </Link>
+              {/* Featured Content - Right Side */}
+              <div className="p-6 flex flex-col justify-between">
+                <div>
+                  {/* Header with Charter Logo on top (right-aligned), Trip Name below (left-aligned) */}
+                  <div className="flex flex-col gap-3 mb-3">
+                    {/* Charter Logo - Right-aligned, conditional sizing based on company */}
+                    {currentTrip.charterCompanyLogo && (
+                      <img
+                        src={currentTrip.charterCompanyLogo}
+                        alt={currentTrip.charterCompanyName || 'Charter Company'}
+                        className={`${
+                          currentTrip.charterCompanyName?.toLowerCase().includes('atlantis') ||
+                          currentTrip.charterCompanyName?.toLowerCase().includes('vakaya')
+                            ? 'h-6'
+                            : 'h-12'
+                        } w-auto object-contain rounded shadow flex-shrink-0 self-end`}
+                        loading="lazy"
+                      />
+                    )}
+                    {/* Trip Name - Left-aligned, auto-sizing to fit one line */}
+                    <h3
+                      className="font-black text-white leading-tight whitespace-nowrap"
+                      style={{
+                        fontSize: `${Math.max(0.75, Math.min(1.5, 30 / currentTrip.name.length))}rem`,
+                      }}
+                    >
+                      {currentTrip.name}
+                    </h3>
+                  </div>
+
+                  {/* Description - smaller font, more lines */}
+                  <p className="text-sm text-ocean-100 mb-5 leading-relaxed line-clamp-4">
+                    {currentTrip.description || 'An exciting adventure awaits'}
+                  </p>
+
+                  {/* Details Grid */}
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center gap-3 text-white">
+                      <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
+                        <CalendarDays className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
+                        </div>
+                        <div className="text-xs text-ocean-200">{duration} days of adventure</div>
+                      </div>
+                    </div>
+
+                    {currentTrip.tripTypeId === 2
+                      ? // Resort Trip
+                        currentTrip.resortName && (
+                          <div className="flex items-center gap-3 text-white">
+                            <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
+                              <Home className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold">{currentTrip.resortName}</div>
+                              {currentTrip.resortLocation && (
+                                <div className="text-xs text-ocean-200">
+                                  {currentTrip.resortLocation}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      : // Cruise Trip
+                        currentTrip.shipName && (
+                          <div className="flex items-center gap-3 text-white">
+                            <div className="w-9 h-9 rounded-full bg-ocean-600/30 flex items-center justify-center flex-shrink-0">
+                              <Ship className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold">{currentTrip.shipName}</div>
+                              {currentTrip.cruiseLine && (
+                                <div className="text-xs text-ocean-200">
+                                  {currentTrip.cruiseLine}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <Link
+                  href={`/trip/${currentTrip.slug}`}
+                  onClick={() => {
+                    window.scrollTo(0, 0);
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                  }}
+                >
+                  <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl text-sm">
+                    {getTripButtonText(currentTrip.tripType)} →
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
