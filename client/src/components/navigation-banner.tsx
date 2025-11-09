@@ -245,15 +245,13 @@ export default function NavigationBanner() {
           )}
           {isTripRoute && !isStandalone && (
             <Link href="/">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="icon"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1222] focus-visible:ring-white/40"
+                className="inline-flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white hover:bg-white/15 transition-colors"
                 aria-label="Back to home"
               >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+                <ArrowLeft className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
+              </button>
             </Link>
           )}
           {isStandalone ? (
