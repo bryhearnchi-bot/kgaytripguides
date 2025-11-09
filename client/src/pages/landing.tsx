@@ -298,24 +298,49 @@ export default function LandingPage() {
         <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-6 px-4 sm:px-6 lg:px-8`}>
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-6 animate-float">
-              {/* Upcoming Trips Badge */}
-              {(groupedTrips.current?.length || 0) + (groupedTrips.upcoming?.length || 0) > 0 && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-lg text-white/90 text-sm mb-5 border border-white/20">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                  {(groupedTrips.current?.length || 0) + (groupedTrips.upcoming?.length || 0)}{' '}
-                  upcoming trips
-                </div>
-              )}
+              {/* Interactive Travel Guides Badge */}
+              <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-base px-8 py-0.5 whitespace-nowrap mb-5 font-semibold">
+                Interactive Travel Guides
+              </Badge>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
-                Your Guide to an
-                <br />
-                Unforgettable Experience
+                Experiences of a{' '}
+                <span className="relative inline-block">
+                  Lifetime
+                  <svg
+                    width="223"
+                    height="12"
+                    viewBox="0 0 223 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+                  >
+                    <defs>
+                      <linearGradient id="rainbow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="16.67%" stopColor="#f97316" />
+                        <stop offset="33.33%" stopColor="#eab308" />
+                        <stop offset="50%" stopColor="#22c55e" />
+                        <stop offset="66.67%" stopColor="#3b82f6" />
+                        <stop offset="83.33%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#ec4899" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                      stroke="url(#rainbow-gradient)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
               </h2>
 
-              <p className="text-lg text-ocean-100 max-w-2xl mx-auto">
-                Immerse yourself in extraordinary LGBTQ+ travel experiences with world-class talent,
-                breathtaking destinations, and a vibrant community that feels like home.
+              <p className="text-lg text-ocean-200 max-w-2xl mx-auto">
+                Interactive guides to immerse yourself in LGBTQ+ travel experiences with world-class
+                talent, breathtaking destinations, and a vibrant community.
+                <br />
+                <span className="font-bold">NO MATTER WHERE YOU ARE!</span>
               </p>
             </div>
           </div>
@@ -323,7 +348,7 @@ export default function LandingPage() {
 
         <StandardizedContentLayout>
           {/* Tab Bar - Glass Effect Style */}
-          <div id="trips" className="flex justify-center sm:justify-end mb-8">
+          <div id="trips" className="flex justify-center mb-8">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveFilter('all')}
