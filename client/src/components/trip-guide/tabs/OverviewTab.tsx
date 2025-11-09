@@ -17,7 +17,8 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
-import { cn } from '@/lib/utils';
+import { cn, dateOnly } from '@/lib/utils';
+import { differenceInCalendarDays } from 'date-fns';
 
 interface OverviewTabProps {
   tripData: any;
@@ -99,7 +100,17 @@ export const OverviewTab = memo(function OverviewTab({
     totalParties: PARTY_THEMES.length,
     // Count talent/performers
     totalTalent: TALENT.length,
-    daysOfTravel: Math.max(ITINERARY.length, SCHEDULE.length, 1),
+    // Calculate nights from actual trip dates (not itinerary length)
+    nights: (() => {
+      if (tripData?.trip?.startDate && tripData?.trip?.endDate) {
+        const startDate = dateOnly(tripData.trip.startDate);
+        const endDate = dateOnly(tripData.trip.endDate);
+        // Days between dates minus 1 = nights (e.g., Nov 16-28 is 12 days = 11 nights)
+        const days = differenceInCalendarDays(endDate, startDate);
+        return days > 0 ? days : 1;
+      }
+      return Math.max(ITINERARY.length, SCHEDULE.length, 1) - 1;
+    })(),
   };
 
   // Get ship info from ship prop
@@ -131,8 +142,8 @@ export const OverviewTab = memo(function OverviewTab({
                 onClick={() => onNavigateToTab?.('itinerary')}
                 className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
               >
-                <p className="text-lg md:text-xl font-bold text-white">{statistics.daysOfTravel}</p>
-                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Days of Travel</p>
+                <p className="text-lg md:text-xl font-bold text-white">{statistics.nights}</p>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Nights</p>
               </button>
               <button
                 onClick={() => onNavigateToTab?.('itinerary')}
@@ -428,8 +439,8 @@ export const OverviewTab = memo(function OverviewTab({
             onClick={() => onNavigateToTab?.('itinerary')}
             className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
           >
-            <p className="text-lg md:text-xl font-bold text-white">{statistics.daysOfTravel}</p>
-            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Days of Travel</p>
+            <p className="text-lg md:text-xl font-bold text-white">{statistics.nights}</p>
+            <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Nights</p>
           </button>
           <button
             onClick={() => onNavigateToTab?.('itinerary')}

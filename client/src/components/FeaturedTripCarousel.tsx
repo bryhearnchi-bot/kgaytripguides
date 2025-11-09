@@ -131,7 +131,7 @@ function TripCard({ trip }: { trip: Trip }) {
             <div className="flex items-center gap-2 text-ocean-100 text-sm">
               <CalendarDays className="w-4 h-4 flex-shrink-0" />
               <span>
-                {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} days
+                {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')} • {duration} nights
               </span>
             </div>
             {trip.tripTypeId === 2 ? (
@@ -327,7 +327,7 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                         <div className="text-sm font-semibold">
                           {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
                         </div>
-                        <div className="text-xs text-ocean-200">{duration} days of adventure</div>
+                        <div className="text-xs text-ocean-200">{duration} nights</div>
                       </div>
                     </div>
 
