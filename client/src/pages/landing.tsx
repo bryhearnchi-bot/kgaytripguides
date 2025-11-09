@@ -297,7 +297,7 @@ export default function LandingPage() {
         {/* Floating Hero Section */}
         <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-6 animate-float">
+            <div className="text-center mb-[21px] animate-float">
               {/* Interactive Travel Guides Badge */}
               <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-base px-8 py-0.5 whitespace-nowrap mb-5 font-semibold">
                 Interactive Travel Guides
@@ -348,7 +348,7 @@ export default function LandingPage() {
 
         <StandardizedContentLayout>
           {/* Tab Bar - Glass Effect Style */}
-          <div id="trips" className="flex justify-center my-6">
+          <div id="trips" className="flex justify-center mt-[14px] mb-6">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveFilter('all')}
