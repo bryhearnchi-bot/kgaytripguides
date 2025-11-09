@@ -7,12 +7,12 @@ const config: CapacitorConfig = {
 
   ios: {
     contentInset: 'never', // We handle safe areas manually with CSS
-    backgroundColor: '#141A20', // Dark background matching app theme
+    backgroundColor: '#001a35', // Dark blue matching app theme
     scrollEnabled: true,
   },
 
   android: {
-    backgroundColor: '#141A20', // Dark background matching app theme
+    backgroundColor: '#001a35', // Dark blue matching app theme
     allowMixedContent: true, // Allow HTTP in development
     captureInput: true,
   },
@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: '#1e40af', // Ocean blue
+      backgroundColor: '#001a35', // Dark blue
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,

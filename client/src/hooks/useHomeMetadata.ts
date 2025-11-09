@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 /**
  * Hook to set default metadata for the home/landing page
  * This ensures proper social sharing with the KGay logo when sharing the main site
+ * CRITICAL: Also ensures theme-color is set for Safari iOS address bar
  */
 export function useHomeMetadata() {
   useEffect(() => {
@@ -39,6 +40,11 @@ export function useHomeMetadata() {
       'Comprehensive LGBTQ+ travel guides for cruise adventures and destinations. Interactive itineraries, entertainment schedules, and travel resources.',
       'name'
     );
+
+    // CRITICAL: Ensure theme-color is set for Safari iOS address bar
+    // This is a fallback in case the static HTML meta tag was removed by service worker caching
+    updateMetaTag('theme-color', '#001a35', 'name');
+    updateMetaTag('color-scheme', 'dark', 'name');
 
     // Ensure default manifest is active (not trip-specific)
     restoreDefaultManifest();

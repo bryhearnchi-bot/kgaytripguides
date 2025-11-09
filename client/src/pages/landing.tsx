@@ -13,6 +13,7 @@ import { StandardizedTabContainer } from '@/components/StandardizedTabContainer'
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
 import { FeaturedTripCarousel } from '@/components/FeaturedTripCarousel';
 import { isNative } from '@/lib/capacitor';
+import { useHomeMetadata } from '@/hooks/useHomeMetadata';
 import type { Update, UpdateType } from '@/types/trip-info';
 
 interface Trip {
@@ -192,6 +193,9 @@ function getUpdateTypeColor(updateType: UpdateType): string {
 }
 
 export default function LandingPage() {
+  // Set home page metadata including theme-color for Safari iOS
+  useHomeMetadata();
+
   const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
 
   const {

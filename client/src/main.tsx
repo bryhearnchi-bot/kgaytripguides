@@ -3,7 +3,12 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 import { installFetchWrapper } from './lib/fetch-wrapper';
-import { initializeNativeFeatures, setupNavigationHandlers, isNative } from './lib/capacitor';
+import {
+  initializeNativeFeatures,
+  setupNavigationHandlers,
+  isNative,
+  setThemeColor,
+} from './lib/capacitor';
 
 // Install global fetch wrapper to handle API URLs
 installFetchWrapper();
@@ -198,3 +203,7 @@ createRoot(document.getElementById('root')!).render(
 // Initialize native features (Capacitor)
 initializeNativeFeatures();
 setupNavigationHandlers();
+
+// Set iOS status bar style and theme color for Safari/PWA
+// This ensures both the status bar (top) and address bar (bottom) are dark
+setThemeColor();

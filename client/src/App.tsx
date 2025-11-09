@@ -12,7 +12,12 @@ import NavigationBanner from '@/components/navigation-banner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import BottomSafeArea from '@/components/BottomSafeArea';
 import { SplashScreen } from '@capacitor/splash-screen';
-import { isNative } from '@/lib/capacitor';
+import {
+  isNative,
+  initializeNativeFeatures,
+  ensureThemeMetaTags,
+  setupNavigationHandlers,
+} from '@/lib/capacitor';
 
 // Lazy load all route components for code splitting
 const LandingPage = lazy(() => import('@/pages/landing'));
@@ -212,10 +217,16 @@ function Router() {
 
 function App() {
   useEffect(() => {
-    // Hide splash screen in native apps
+    // Initialize native features (status bar, etc.) for Capacitor apps
     if (isNative) {
+      initializeNativeFeatures();
+      setupNavigationHandlers();
       SplashScreen.hide();
     }
+
+    // Ensure theme meta tags are set correctly for Safari iOS
+    // This handles both regular Safari browsing and PWA mode
+    ensureThemeMetaTags();
 
     // Disable browser scroll restoration globally
     if ('scrollRestoration' in history) {

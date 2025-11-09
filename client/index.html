@@ -1,7 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="color-scheme: dark; background-color: #001a35;">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- CRITICAL: Theme color MUST be early for Safari iOS to read it before rendering -->
+    <!-- This controls the address bar (iOS 15+) and status bar colors -->
+    <meta name="theme-color" content="#001a35" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+
     <title>KGay Travel Guides</title>
 
     <!-- Primary favicon -->
@@ -17,17 +24,13 @@
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Theme Colors -->
-    <meta name="theme-color" content="#1a202c" />
-    <meta name="msapplication-TileColor" content="#1a202c" />
-    <meta name="msapplication-navbutton-color" content="#1a202c" />
-
     <!-- App Names -->
     <meta name="application-name" content="KGay Travel Guides" />
     <meta name="apple-mobile-web-app-title" content="KGay Guides" />
 
     <!-- Apple iOS specific -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Use 'black-translucent' to allow dark background to show through status bar -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-touch-fullscreen" content="yes" />
 
@@ -65,6 +68,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- CRITICAL: Inline script to set theme meta tags BEFORE React loads -->
+    <!-- This ensures Safari iOS sees the theme-color even if service worker serves stale HTML -->
+    <script>
+      (function() {
+        // Force theme-color meta tag to be set immediately
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) {
+          themeColor.setAttribute('content', '#001a35');
+        }
+
+        // Set background color on html element immediately to prevent white flash
+        document.documentElement.style.backgroundColor = '#001a35';
+        document.documentElement.style.colorScheme = 'dark';
+      })();
+    </script>
+
     <!-- Google Analytics (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-H2QWVEYX0F"></script>
     <script>
@@ -74,7 +93,7 @@
       gtag('config', 'G-H2QWVEYX0F');
     </script>
   </head>
-  <body>
+  <body style="background-color: #001a35; margin: 0; padding: 0;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -11,14 +11,30 @@
     box-sizing: border-box;
   }
 
-  html,
+  :root {
+    /* Tell browsers this is a dark color scheme */
+    color-scheme: dark;
+  }
+
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100%;
+    overflow-x: hidden;
+    /* Solid dark blue background - no gradients */
+    background-color: #001a35;
+    /* Explicitly declare dark color scheme for Safari */
+    color-scheme: dark;
+  }
+
   body {
     margin: 0 !important;
     padding: 0 !important;
     height: 100%;
     overflow-x: hidden;
-    /* Solid Oxford blue background - no gradients */
-    background-color: #002147;
+    /* Solid dark blue background - matches app theme */
+    background-color: #001a35;
+    color-scheme: dark;
   }
 
   #root {

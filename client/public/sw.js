@@ -1,13 +1,13 @@
-const CACHE_NAME = 'k-gay-travel-guide-v2';
-const STATIC_CACHE = 'static-v3';
-const API_CACHE = 'api-v3';
-const IMAGE_CACHE = 'images-v2';
-const FONT_CACHE = 'fonts-v2';
+const CACHE_NAME = 'k-gay-travel-guide-v3';
+const STATIC_CACHE = 'static-v4';
+const API_CACHE = 'api-v4';
+const IMAGE_CACHE = 'images-v3';
+const FONT_CACHE = 'fonts-v3';
 
 // Assets to cache on install
+// CRITICAL: Never cache '/' or '/index.html' to prevent stale theme-color meta tags
+// Safari iOS needs fresh HTML to read theme-color for address bar
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/images/icons/icon-192x192.png',
   '/images/icons/icon-512x512.png',
@@ -97,13 +97,33 @@ self.addEventListener('fetch', event => {
   }
 
   // Handle static assets with stale-while-revalidate
+  // CRITICAL: Never cache '/' (root HTML) - Safari iOS needs fresh HTML for theme-color meta tag
   if (
     url.pathname.includes('/assets/') ||
-    url.pathname === '/' ||
     url.pathname.includes('.js') ||
     url.pathname.includes('.css')
   ) {
     event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+    return;
+  }
+
+  // Handle navigation requests (HTML pages) - always fetch fresh
+  // This ensures Safari iOS gets latest theme-color meta tags
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request, {
+        cache: 'no-store', // Force fresh fetch, bypass HTTP cache
+      }).catch(() => {
+        // Fallback to cached response only if offline
+        return (
+          caches.match(request) ||
+          new Response('Offline', {
+            status: 503,
+            headers: new Headers({ 'Content-Type': 'text/html' }),
+          })
+        );
+      })
+    );
     return;
   }
 
