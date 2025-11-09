@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Grid3X3, Home } from 'lucide-react';
+import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Home } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useState } from 'react';
 import React from 'react';
@@ -196,7 +196,7 @@ export default function LandingPage() {
   // Set home page metadata including theme-color for Safari iOS
   useHomeMetadata();
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'current' | 'past'>('all');
+  const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
 
   const {
     data: trips,
@@ -240,7 +240,7 @@ export default function LandingPage() {
 
   React.useEffect(() => {
     if (trips && !hasSetDefault) {
-      setActiveFilter('all');
+      setActiveFilter('upcoming');
       setHasSetDefault(true);
     }
   }, [trips, hasSetDefault]);
@@ -274,8 +274,7 @@ export default function LandingPage() {
     );
   }
 
-  const filteredTrips =
-    trips?.filter(trip => (activeFilter === 'all' ? true : trip.status === activeFilter)) || [];
+  const filteredTrips = trips?.filter(trip => trip.status === activeFilter) || [];
 
   const groupedTrips = trips
     ? {
@@ -354,19 +353,6 @@ export default function LandingPage() {
           {/* Tab Bar - Glass Effect Style */}
           <div id="trips" className="flex justify-center mt-[14px] mb-6">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
-              <button
-                onClick={() => setActiveFilter('all')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
-                  activeFilter === 'all'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Grid3X3 className="w-4 h-4 flex-shrink-0" />
-                <span className={activeFilter === 'all' ? 'inline' : 'hidden sm:inline'}>
-                  All Sailings
-                </span>
-              </button>
               {hasCurrent && (
                 <button
                   onClick={() => setActiveFilter('current')}
@@ -391,9 +377,7 @@ export default function LandingPage() {
                 }`}
               >
                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className={activeFilter === 'upcoming' ? 'inline' : 'hidden sm:inline'}>
-                  Upcoming
-                </span>
+                <span>Upcoming</span>
               </button>
               <button
                 onClick={() => setActiveFilter('past')}
@@ -404,15 +388,13 @@ export default function LandingPage() {
                 }`}
               >
                 <History className="w-4 h-4 flex-shrink-0" />
-                <span className={activeFilter === 'past' ? 'inline' : 'hidden sm:inline'}>
-                  Past
-                </span>
+                <span>Past</span>
               </button>
             </div>
           </div>
           {filteredTrips.length > 0 ? (
             <section>
-              {activeFilter === 'all' ? (
+              {activeFilter === 'upcoming' ? (
                 <div>
                   {hasFeaturedTrip && (
                     <div className="mb-8">
@@ -504,8 +486,11 @@ export default function LandingPage() {
                       </div>
                     </div>
                   )}
-
-                  {groupedTrips.past.length > 0 && (
+                </div>
+              ) : (
+                <div>
+                  {/* Different header styles based on filter */}
+                  {activeFilter === 'past' ? (
                     <div className="mb-8">
                       <div className="flex items-center gap-2 mb-6">
                         <History className="w-4 h-4 text-purple-400" />
@@ -513,40 +498,36 @@ export default function LandingPage() {
                         <div className="flex-1 h-px bg-white/20 ml-3"></div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                        {groupedTrips.past.map(trip => (
+                        {filteredTrips.map(trip => (
+                          <TripCard key={trip.id} trip={trip} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-center mb-8">
+                        <div className="flex items-center justify-center gap-3 mb-2">
+                          {activeFilter === 'current' && (
+                            <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
+                          )}
+                          <h2 className="text-2xl font-semibold text-white capitalize">
+                            {activeFilter === 'current'
+                              ? 'Active Trips'
+                              : `${activeFilter} Adventures`}
+                          </h2>
+                        </div>
+                        <p className="text-sm text-white/70">
+                          {activeFilter === 'current' && 'Experience the journey as it unfolds'}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                        {filteredTrips.map(trip => (
                           <TripCard key={trip.id} trip={trip} />
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
-              ) : (
-                <div>
-                  <div className="text-center mb-8">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      {activeFilter === 'current' && (
-                        <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
-                      )}
-                      {activeFilter === 'upcoming' && (
-                        <Calendar className="w-6 h-6 text-blue-400" />
-                      )}
-                      {activeFilter === 'past' && <History className="w-6 h-6 text-purple-400" />}
-                      <h2 className="text-2xl font-semibold text-white capitalize">
-                        {activeFilter === 'current' ? 'Active Trips' : `${activeFilter} Adventures`}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-white/70">
-                      {activeFilter === 'current' && 'Experience the journey as it unfolds'}
-                      {activeFilter === 'upcoming' && 'Get ready for your next adventure'}
-                      {activeFilter === 'past' && 'Relive the memories of past adventures'}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                    {filteredTrips.map(trip => (
-                      <TripCard key={trip.id} trip={trip} />
-                    ))}
-                  </div>
                 </div>
               )}
             </section>
@@ -554,19 +535,19 @@ export default function LandingPage() {
             <div className="text-center py-16">
               <Ship className="h-16 w-16 mx-auto mb-4 text-white/40" />
               <h3 className="text-xl font-semibold text-white mb-2">
-                No {activeFilter === 'all' ? '' : activeFilter} trips found
+                No {activeFilter} trips found
               </h3>
               <p className="text-white/70 mb-4">
-                {activeFilter === 'all'
+                {activeFilter === 'upcoming'
                   ? 'Check back soon for exciting new adventures!'
                   : `No ${activeFilter} trips are currently available.`}
               </p>
-              {activeFilter !== 'all' && (
+              {activeFilter !== 'upcoming' && (
                 <Button
-                  onClick={() => setActiveFilter('all')}
+                  onClick={() => setActiveFilter('upcoming')}
                   className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
                 >
-                  View All Trips
+                  View Upcoming Trips
                 </Button>
               )}
             </div>

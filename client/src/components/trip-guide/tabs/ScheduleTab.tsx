@@ -35,13 +35,7 @@ export const ScheduleTab = memo(function ScheduleTab({
 
   return (
     <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
-      <div className="flex items-center justify-between mb-4 -mt-2">
-        <div className="flex items-center space-x-2">
-          <CalendarDays className="w-5 h-5 text-white/80" />
-          <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
-            Events Schedule
-          </h2>
-        </div>
+      <div className="flex items-center justify-end mb-4 -mt-2">
         <div>
           <button
             onClick={onCollapseAll}

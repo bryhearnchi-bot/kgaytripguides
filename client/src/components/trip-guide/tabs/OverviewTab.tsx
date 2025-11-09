@@ -114,12 +114,6 @@ export const OverviewTab = memo(function OverviewTab({
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-center space-x-2 mb-4 -mt-2">
-        <LayoutDashboard className="w-5 h-5 text-white/80" />
-        <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Trip Overview</h2>
-      </div>
-
       {/* Desktop: 3-column grid, Mobile: stack with custom order */}
       <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
         {/* Left Column - Statistics, About, Ship */}

@@ -188,49 +188,6 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                 {event.venue || 'TBD'}
               </span>
             </div>
-
-            {/* Artists - separate line for both */}
-            {event.talent && event.talent.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {event.talent.map((t: any, tidx: number) => (
-                  <button
-                    key={tidx}
-                    onClick={e => {
-                      e.stopPropagation();
-                      if (onTalentClick) {
-                        onTalentClick(t.name);
-                      }
-                    }}
-                    className="text-xs px-2.5 py-1 bg-purple-500/20 text-purple-200 rounded-full hover:bg-purple-500/30 transition-colors border border-purple-400/30 font-medium flex items-center gap-1 group"
-                  >
-                    <span>{t.name}</span>
-                    <span className="text-purple-300 group-hover:translate-x-0.5 transition-transform text-[10px]">
-                      →
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Party Theme Badge - Below Artists */}
-            {event.partyTheme && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    if (onPartyThemeClick) {
-                      onPartyThemeClick(event.partyTheme);
-                    }
-                  }}
-                  className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs font-medium border border-blue-400/30 hover:bg-blue-500/30 transition-colors flex items-center gap-1 group"
-                >
-                  <span>Party Theme: {event.partyTheme.name}</span>
-                  <span className="text-blue-300 group-hover:translate-x-0.5 transition-transform text-[10px]">
-                    →
-                  </span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

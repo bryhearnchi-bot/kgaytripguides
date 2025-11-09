@@ -8,6 +8,9 @@ interface TalentCardProps {
   onClick: () => void;
   delay?: number;
   categoryIcon?: LucideIcon;
+  hideCategoryBadge?: boolean;
+  useYellowBadge?: boolean;
+  disableAnimation?: boolean;
 }
 
 export const TalentCard = memo<TalentCardProps>(function TalentCard({
@@ -15,18 +18,18 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
   onClick,
   delay = 0,
   categoryIcon: CategoryIcon,
+  hideCategoryBadge = false,
+  useYellowBadge = false,
+  disableAnimation = false,
 }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
-      onClick={onClick}
-      className="group relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:border-white/30"
-    >
+  const cardClassName =
+    'group relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:border-white/30';
+
+  const cardContent = (
+    <>
       <div className="flex flex-row h-full">
-        {/* Left: Artist Image */}
-        <div className="relative w-32 sm:w-40 md:w-48 flex-shrink-0">
+        {/* Left: Artist Image - Square aspect ratio */}
+        <div className="relative w-32 sm:w-40 md:w-48 aspect-square flex-shrink-0">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
           <img
             src={talent.img}
@@ -53,13 +56,21 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
               {talent.name}
             </h3>
 
-            {/* Talent Type Badge */}
-            <div className="mb-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-200 text-xs font-medium border border-purple-400/30">
-                {CategoryIcon && <CategoryIcon className="w-3 h-3" />}
-                {talent.cat}
-              </span>
-            </div>
+            {/* Talent Type Badge - Hide if hideCategoryBadge is true */}
+            {!hideCategoryBadge && (
+              <div className="mb-2">
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    useYellowBadge
+                      ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white border-yellow-400/50'
+                      : 'bg-purple-500/20 text-purple-200 border-purple-400/30'
+                  }`}
+                >
+                  {CategoryIcon && <CategoryIcon className="w-3 h-3" />}
+                  {talent.cat}
+                </span>
+              </div>
+            )}
 
             {/* Bio - Small font underneath badge */}
             {talent.bio && (
@@ -70,6 +81,26 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
           </div>
         </div>
       </div>
+    </>
+  );
+
+  if (disableAnimation) {
+    return (
+      <div onClick={onClick} className={cardClassName}>
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay }}
+      onClick={onClick}
+      className={cardClassName}
+    >
+      {cardContent}
     </motion.div>
   );
 });

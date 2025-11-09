@@ -120,11 +120,6 @@ export const PartiesTab = memo(function PartiesTab({
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex items-center space-x-2 mb-6 -mt-2">
-        <PartyPopper className="w-5 h-5 text-white/80" />
-        <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">Party Schedule</h2>
-      </div>
-
       {partyEventsByDate.length === 0 ? (
         isLoadingThemes ? (
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">

@@ -16,12 +16,6 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
   if (tripId) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center space-x-2 mb-6 -mt-2">
-          <Info className="w-5 h-5 text-white/80" />
-          <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
-            Trip Information
-          </h2>
-        </div>
         <InfoSectionsBentoGrid tripId={tripId} />
       </div>
     );
@@ -32,12 +26,6 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
   if (!IMPORTANT_INFO || Object.keys(IMPORTANT_INFO).length === 0) {
     return (
       <div className="max-w-6xl mx-auto space-y-4">
-        <div className="flex items-center space-x-2 mb-2 -mt-2">
-          <Info className="w-5 h-5 text-white/80" />
-          <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
-            Important Information
-          </h2>
-        </div>
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
           <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No information available</h3>
@@ -49,13 +37,6 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
-      <div className="flex items-center space-x-2 mb-2 -mt-2">
-        <Info className="w-5 h-5 text-white/80" />
-        <h2 className="text-lg font-bold text-white/90 tracking-wide uppercase">
-          Important Information
-        </h2>
-      </div>
-
       <div className="space-y-4">
         {/* First Day Tips */}
         {IMPORTANT_INFO.firstDayTips && IMPORTANT_INFO.firstDayTips.length > 0 && (

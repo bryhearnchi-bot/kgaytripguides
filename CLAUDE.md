@@ -143,6 +143,50 @@ const imageUrl = 'https://example.com/image.jpg';
 <div style={{ backgroundImage: 'radial-gradient(...)' }}>
 ```
 
+### 7. Component Patterns & Gotchas (IMPORTANT)
+
+**Event Rendering - Dual Locations:**
+
+Events are rendered in TWO separate places in the codebase. When making changes to event display, you MUST update both:
+
+1. **`EventCard` component** (`/client/src/components/trip-guide/shared/EventCard.tsx`)
+   - Used in: Events tab (ScheduleTab), EventsModal
+   - Main event card component with badges, talent, party themes
+   - Has built-in modals for talent/party theme details
+
+2. **`JobListingComponent` inline rendering** (`/client/src/components/smoothui/ui/JobListingComponent.tsx`)
+   - Used in: Itinerary tab → "View Events for This Day" modal (lines ~518-576)
+   - Inline event rendering within the day events modal
+   - Simpler layout with larger images (24x24)
+   - Has its own slide-in panels for talent/party details
+
+**Why this matters:**
+
+- Changes to event display (badges, layout, styling) must be applied to both locations
+- Badge removals, venue display, artist rendering - all need dual updates
+- Future refactoring opportunity: consolidate into single EventCard component with flexible layouts
+
+**Current state:** Both locations show only venue badge (cyan). Artist and party theme badges removed from both (as of Nov 2025).
+
+**Trip Guide Tab Components:**
+
+Active tabs (in `/client/src/components/trip-guide/tabs/`):
+
+- `OverviewTab.tsx` - Trip overview (ACTIVE)
+- `ItineraryTab.tsx` - Daily itinerary with ports
+- `ScheduleTab.tsx` - Events schedule (uses EventCard)
+- `TalentTabNew.tsx` - Talent roster (ACTIVE)
+- `PartiesTab.tsx` - Party schedule
+- `InfoTab.tsx` - Important trip information
+- `FAQTab.tsx` - Frequently asked questions
+
+Deprecated tabs (for reference only):
+
+- `TalentTab.tsx` - Old talent tab (use TalentTabNew.tsx instead)
+- `OverviewTab_*.tsx` - Various overview experiments (not used)
+
+**Tab Headers:** All tab headers have been removed as of Nov 2025 to provide more content space.
+
 ---
 
 ## 🔐 Security Standards (MANDATORY)
@@ -311,12 +355,15 @@ npm run dev
 ```bash
 # Development
 npm run dev                    # Start dev server (port 3001)
-npm run build                  # Production build
+npm run build                  # Production build (includes PWA files)
 npm run check                  # TypeScript type checking
+npm run clean:cache            # Clear Vite cache
 
 # Testing
 npm test                       # Run Vitest unit tests
 npm run test:e2e              # Playwright E2E tests
+npm run test:e2e:ui           # Playwright E2E with UI
+npm run test:coverage         # Test coverage report
 
 # Database
 npm run db:seed                # Seed development database
@@ -325,10 +372,51 @@ npm run production:seed        # Seed production database
 # Code Quality
 npm run lint                   # ESLint checking
 npm run format                 # Prettier formatting
+npm run security:check         # Security vulnerability check
 
 # API Docs
 npm run api:docs               # View at localhost:3001/api/docs
+
+# Capacitor / Mobile App
+npm run cap:sync              # Sync web build to native projects
+npm run cap:ios               # Open iOS project in Xcode
+npm run cap:android           # Open Android project in Android Studio
+npm run cap:serve:ios         # Run iOS app with live reload
+npm run cap:serve:android     # Run Android app with live reload
 ```
+
+---
+
+## 📱 PWA & Mobile App (Capacitor)
+
+**Progressive Web App (PWA):**
+
+- App is installable on iOS, Android, and desktop browsers
+- PWA manifest: `/public/manifest.json`
+- Service worker for offline functionality
+- App icons and splash screens in `/public/`
+
+**Capacitor Native Apps:**
+
+- iOS and Android native wrappers for the web app
+- Configuration: `/capacitor.config.ts`
+- Native plugins: Haptics, Status Bar, Splash Screen, Share, Preferences
+- Live reload available for development
+- Build web app first with `npm run build`, then sync with `npm run cap:sync`
+
+**PWA Detection:**
+
+- Use `window.matchMedia('(display-mode: standalone)').matches` to detect PWA mode
+- Navigation behavior differs in PWA vs browser (back buttons, logo navigation)
+- Status bar and theme colors configured in manifest
+
+**Key Files:**
+
+- `/capacitor.config.ts` - Capacitor configuration
+- `/public/manifest.json` - PWA manifest
+- `/ios/` - iOS native project
+- `/android/` - Android native project
+- `/scripts/copy-pwa-files.js` - Build-time PWA file copying
 
 ---
 
@@ -355,16 +443,41 @@ Before committing, verify:
 
 ```
 ├── client/src/
-│   ├── components/        # Reusable UI components
-│   ├── pages/            # Application routes (lazy loaded)
-│   ├── lib/              # Core libraries (logger, queryClient)
-│   └── types/            # TypeScript types
+│   ├── components/
+│   │   ├── trip-guide/              # Trip guide components
+│   │   │   ├── tabs/                # Tab components (Itinerary, Events, Talent, etc.)
+│   │   │   ├── modals/              # Modal components (EventsModal, etc.)
+│   │   │   ├── shared/              # Shared components (EventCard, TalentCard, etc.)
+│   │   │   ├── info-sections/       # Info tab sections
+│   │   │   ├── hooks/               # Custom hooks
+│   │   │   └── utils/               # Utility functions
+│   │   ├── smoothui/                # SmoothUI library components
+│   │   ├── admin/                   # Admin page components
+│   │   ├── ui/                      # Base UI components (shadcn/ui)
+│   │   └── ...
+│   ├── pages/
+│   │   ├── landing.tsx              # Landing page (trip list)
+│   │   ├── trip.tsx                 # Trip guide page
+│   │   ├── admin/                   # Admin pages
+│   │   └── auth/                    # Auth pages
+│   ├── lib/                         # Core libraries (api-client, logger, etc.)
+│   ├── contexts/                    # React contexts
+│   ├── hooks/                       # Custom hooks
+│   ├── types/                       # TypeScript types
+│   └── data/                        # Static data (deprecated - moving to DB)
 ├── server/
-│   ├── routes/           # API route handlers
-│   ├── middleware/       # Express middleware
-│   ├── logging/          # Winston logger service
-│   └── schemas/          # Zod validation schemas
-└── supabase/             # Database migrations
+│   ├── routes/                      # API route handlers
+│   ├── middleware/                  # Express middleware (auth, logging, etc.)
+│   ├── logging/                     # Winston logger service
+│   ├── schemas/                     # Zod validation schemas
+│   ├── storage/                     # Database query functions
+│   └── index.ts                     # Express server entry point
+├── supabase/                        # Supabase (deprecated - using direct SQL)
+├── docs/                            # Documentation
+├── scripts/                         # Build and utility scripts
+├── public/                          # Static assets (PWA icons, manifest)
+├── ios/                             # Capacitor iOS native project
+└── android/                         # Capacitor Android native project
 ```
 
 ---
@@ -455,14 +568,74 @@ JWT_SECRET=...
 - Tailwind CSS
 - Mobile-first responsive design
 
+### Admin Pages Architecture
+
+**Available Admin Pages (all in `/client/src/pages/admin/`):**
+
+- `trips-management.tsx` - Main trips list and management
+- `trip-wizard.tsx` - New trip creation wizard
+- `trip-detail.tsx` - Edit trip details, itinerary, events
+- `locations.tsx` - Manage ports/destinations
+- `ships.tsx` - Manage cruise ships
+- `resorts.tsx` - Manage resorts
+- `artists.tsx` - Manage talent/performers
+- `talent.tsx` - Legacy talent management (deprecated)
+- `themes.tsx` - Manage party themes
+- `faqs.tsx` - Manage FAQ entries
+- `trip-info-sections.tsx` - Manage info sections
+- `lookup-tables.tsx` - Manage reference data
+- `users.tsx` - User management
+- `invitations.tsx` - Invitation system
+- `profile.tsx` - User profile settings
+
+**Admin Page Pattern:**
+
+1. Use existing admin pages - NEVER create new pages
+2. Follow LocationManagement.tsx pattern for consistency
+3. Solid Oxford Blue background (#002147)
+4. Table-based layouts with filters and search
+5. Modal-based forms for create/edit operations
+6. Toast notifications for user feedback
+7. Proper loading states and error handling
+8. Role-based access control (admin only)
+
+**Admin Style Guide:** See `docs/admin-style-guide.md` for detailed specifications
+
 ---
 
 ## 📚 Additional Documentation
 
-- **Detailed Tech Stack**: See `docs/REFERENCE.md`
-- **Admin Style Guide**: See `docs/admin-style-guide.md`
-- **Remediation Plan**: See `docs/COMPREHENSIVE_REMEDIATION_PLAN_V2.md`
+**Core Documentation:**
+
+- **Detailed Tech Stack**: `docs/REFERENCE.md`
+- **Admin Style Guide**: `docs/admin-style-guide.md`
 - **API Documentation**: http://localhost:3001/api/docs
+- **API Request Standards**: `docs/API_REQUEST_STANDARDS.md`
+
+**Development Guides:**
+
+- **Capacitor Mobile App**: `docs/capacitor-guide.md` & `docs/mobile-app-implementation-plan.md`
+- **Trip Wizard**: `docs/trip-wizard.md`
+- **Cruise Import Protocol**: `docs/CRUISE_GUIDE_IMPORT_PROTOCOL.md`
+- **Database Sequence Fix**: `docs/DATABASE-SEQUENCE-FIX.md`
+
+**Architecture & Patterns:**
+
+- **Modal Architecture**: `docs/MODAL_ARCHITECTURE_FIX.md` & `docs/MODAL_INTERACTION_FLOW.md`
+- **Overview Tab Templates**: `docs/OVERVIEW_TAB_TEMPLATES.md`
+- **Trip Info Sections**: `docs/TripInfoAndFAQ.md`
+
+**Reports & Audits:**
+
+- **Security Audit**: `docs/SECURITY_AUDIT_REPORT.md` & `docs/security-review.md`
+- **Performance Optimization**: `docs/PERFORMANCE_OPTIMIZATION_REPORT.md`
+- **Mobile Responsiveness**: `docs/MOBILE_RESPONSIVENESS_AUDIT.md` & `docs/MOBILE_FIXES_SUMMARY.md`
+- **Phase Reports**: `docs/PHASE_*_CHECKPOINT_REPORT.md` (Phases 1-8)
+
+**Deployment:**
+
+- **Railway Deployment**: `docs/RAILWAY_DEPLOYMENT.md`
+- **Supabase Keys**: `docs/GET_SUPABASE_KEYS.md`
 
 ---
 
@@ -491,7 +664,16 @@ JWT_SECRET=...
 
 ---
 
-_Last updated: November 2025_
+---
+
+_Last updated: January 2025_
 _Color Scheme: Oxford Blue (#002147) - Solid backgrounds, no gradients_
-_Current Phase: Phase 4 Complete (Code Splitting & Bundling)_
+_Current Phase: Phase 8+ Complete (Mobile App, PWA, Performance Optimization)_
 _For detailed documentation, see `docs/REFERENCE.md`_
+
+**Key Recent Updates:**
+
+- Added PWA & Capacitor mobile app support
+- Event rendering dual location documentation (EventCard + JobListingComponent)
+- Updated command reference with Capacitor and testing commands
+- Expanded project structure with trip-guide component organization
