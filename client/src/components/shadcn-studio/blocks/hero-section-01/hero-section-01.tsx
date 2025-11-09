@@ -313,7 +313,7 @@ const HeroSection = ({
                 className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
               >
                 <defs>
-                  <linearGradient id="rainbow-gradient-trip" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient id="rainbow-gradient-mobile" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#ef4444" />
                     <stop offset="16.67%" stopColor="#f97316" />
                     <stop offset="33.33%" stopColor="#eab308" />
@@ -325,7 +325,7 @@ const HeroSection = ({
                 </defs>
                 <path
                   d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
-                  stroke="url(#rainbow-gradient-trip)"
+                  stroke="url(#rainbow-gradient-mobile)"
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
@@ -405,7 +405,7 @@ const HeroSection = ({
                 className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
               >
                 <defs>
-                  <linearGradient id="rainbow-gradient-trip" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient id="rainbow-gradient-desktop" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#ef4444" />
                     <stop offset="16.67%" stopColor="#f97316" />
                     <stop offset="33.33%" stopColor="#eab308" />
@@ -417,7 +417,7 @@ const HeroSection = ({
                 </defs>
                 <path
                   d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
-                  stroke="url(#rainbow-gradient-trip)"
+                  stroke="url(#rainbow-gradient-desktop)"
                   strokeWidth="2"
                   strokeLinecap="round"
                 />

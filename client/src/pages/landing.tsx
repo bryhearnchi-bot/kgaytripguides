@@ -336,7 +336,7 @@ export default function LandingPage() {
                 </span>
               </h2>
 
-              <p className="text-lg text-ocean-200 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg text-ocean-200 max-w-2xl mx-auto">
                 Interactive guides to immerse yourself in LGBTQ+ travel experiences with world-class
                 talent, breathtaking destinations, and a vibrant community.
                 <br />
@@ -348,7 +348,7 @@ export default function LandingPage() {
 
         <StandardizedContentLayout>
           {/* Tab Bar - Glass Effect Style */}
-          <div id="trips" className="flex justify-center mb-8">
+          <div id="trips" className="flex justify-center my-6">
             <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
               <button
                 onClick={() => setActiveFilter('all')}
