@@ -33,8 +33,8 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-[#2a2a2a] rounded-2xl shadow-2xl w-full max-w-[400px] animate-slide-up border border-white/10 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-[400px] animate-slide-up border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="relative p-6 sm:p-8">
           {/* Close button */}
           <button
@@ -66,9 +66,9 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
                 variables: {
                   default: {
                     colors: {
-                      brand: '#ffffff',
-                      brandAccent: '#e5e5e5',
-                      brandButtonText: '#000000',
+                      brand: 'rgba(255, 255, 255, 0.1)',
+                      brandAccent: 'rgba(255, 255, 255, 0.15)',
+                      brandButtonText: '#ffffff',
                       defaultButtonBackground: '#3a3a3a',
                       defaultButtonBackgroundHover: '#444444',
                       defaultButtonBorder: '#4a4a4a',

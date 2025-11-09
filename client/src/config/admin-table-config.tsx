@@ -41,15 +41,18 @@ export const ICON_SPECS = {
 export const BUTTON_SPECS = {
   // Standard action buttons
   actionButton: {
-    className: 'h-4 w-4 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:bg-white/10',
+    className:
+      'h-4 w-4 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:bg-white/10',
   },
   // Destructive action buttons (delete, remove, etc.)
   destructiveButton: {
-    className: 'h-4 w-4 rounded-xl border border-[#fb7185]/30 bg-[#fb7185]/10 text-[#fb7185] hover:bg-[#fb7185]/20',
+    className:
+      'h-4 w-4 rounded-xl border border-[#fb7185]/30 bg-[#fb7185]/10 text-[#fb7185] hover:bg-[#fb7185]/20',
   },
   // Add new item button
   addButton: {
-    className: 'h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15',
+    className:
+      'h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15',
   },
   // Button container
   actionContainer: {
@@ -64,7 +67,8 @@ export const IMAGE_SPECS = {
   },
   // Image wrapper with gradient background
   wrapper: {
-    className: 'flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10',
+    className:
+      'flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10',
   },
   // Image element
   image: {
@@ -75,7 +79,8 @@ export const IMAGE_SPECS = {
 export const TABLE_LAYOUT_SPECS = {
   // Table header
   header: {
-    className: 'flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between',
+    className:
+      'flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between',
   },
   // Table title
   title: {
@@ -91,7 +96,8 @@ export const TABLE_LAYOUT_SPECS = {
   },
   // Table wrapper
   wrapper: {
-    className: 'rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur',
+    className:
+      'rounded-2xl border border-white/10 bg-white/5/80 shadow-2xl shadow-black/40 backdrop-blur',
   },
 } as const;
 
@@ -151,9 +157,7 @@ export function createNameColumn<T>(
     minWidth,
     render: (_value: any, item: T) => {
       const nameElement = (
-        <p className={NAME_COLUMN_SPECS.primaryText.className}>
-          {getName(item)}
-        </p>
+        <p className={NAME_COLUMN_SPECS.primaryText.className}>{getName(item)}</p>
       );
       return nameElement;
     },
@@ -161,16 +165,16 @@ export function createNameColumn<T>(
 }
 
 // Helper to format footer text
-export function formatTableFooter(
-  showing: number,
-  total: number,
-  itemName: string
-): string {
+export function formatTableFooter(showing: number, total: number, itemName: string): string {
   return `Showing ${showing} of ${total} ${itemName}`;
 }
 
 // Helper to format table title
-export function formatTableTitle(title: string, showCount: boolean = false, count?: number): string {
+export function formatTableTitle(
+  title: string,
+  showCount: boolean = false,
+  count?: number
+): string {
   // Never show count in title per template
   return title;
 }

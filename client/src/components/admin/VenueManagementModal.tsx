@@ -391,7 +391,7 @@ export function VenueManagementModal({
                     <SelectTrigger className="h-9 bg-white/[0.04] border-white/10 text-white">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#10192f] border-white/10 text-white">
+                    <SelectContent className="bg-white/5 border-white/10 text-white">
                       {venueTypes.map(type => (
                         <SelectItem key={type.id} value={type.id.toString()}>
                           {type.name}
@@ -450,7 +450,7 @@ export function VenueManagementModal({
                         <SelectTrigger className="h-9 bg-white/[0.04] border-white/10 text-white">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#10192f] border-white/10 text-white">
+                        <SelectContent className="bg-white/5 border-white/10 text-white">
                           {venueTypes.map(type => (
                             <SelectItem key={type.id} value={type.id.toString()}>
                               {type.name}

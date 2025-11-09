@@ -201,7 +201,7 @@ export default function NavigationDrawer({
 
   return (
     <>
-      <Sheet open={isOpen} modal={false}>
+      <Sheet open={isOpen} modal={true} onOpenChange={setIsOpen}>
         <Button
           onClick={e => {
             e.preventDefault();
@@ -217,15 +217,9 @@ export default function NavigationDrawer({
         </Button>
 
         <SheetPortal>
-          {isOpen && (
-            <div
-              className="fixed inset-0 top-[2.5rem] z-40 bg-black/80 animate-in fade-in-0"
-              onClick={() => setIsOpen(false)}
-            />
-          )}
           <SheetContent
             side="right"
-            className="w-[85%] sm:w-[360px] !top-[2.5rem] !bottom-0 !h-auto !z-50 bg-white/10 backdrop-blur-lg border-white/10 text-white overflow-y-auto [&>button]:hidden"
+            className="w-[85%] sm:w-[360px] !top-[calc(env(safe-area-inset-top)+2.5rem+21px)] !bottom-0 !h-auto !z-50 bg-[#001833] border-white/10 text-white overflow-y-auto [&>button]:hidden"
           >
             <VisuallyHidden>
               <SheetTitle>Navigation Menu</SheetTitle>

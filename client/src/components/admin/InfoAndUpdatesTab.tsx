@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +28,7 @@ import {
   Library,
   List,
   Search,
-  X
+  X,
 } from 'lucide-react';
 import {
   DndContext,
@@ -33,17 +39,15 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  DragOverlay
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  useSortable
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface InfoSection {
@@ -74,19 +78,14 @@ interface InfoAndUpdatesTabProps {
 // Sortable Item Component for Assigned Sections (Left Panel)
 function SortableAssignedSection({
   section,
-  onRemove
+  onRemove,
 }: {
   section: InfoSection;
   onRemove: (assignmentId: number) => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: section.assignment!.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: section.assignment!.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -124,7 +123,9 @@ function SortableAssignedSection({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="font-bold text-sm text-white truncate">{section.title}</h3>
-            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${getSectionTypeBadgeClass(section.section_type)}`}>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${getSectionTypeBadgeClass(section.section_type)}`}
+            >
               {getSectionTypeIcon(section.section_type)}
               {section.section_type === 'general' ? 'Reusable' : 'Trip-Specific'}
             </span>
@@ -134,8 +135,7 @@ function SortableAssignedSection({
             <p className="text-xs text-white/60 line-clamp-2">
               {section.content.length > 150
                 ? `${section.content.substring(0, 150)}...`
-                : section.content
-              }
+                : section.content}
             </p>
           )}
         </div>
@@ -158,7 +158,7 @@ function SortableAssignedSection({
 function LibrarySectionItem({
   section,
   onAssign,
-  isAssigned
+  isAssigned,
 }: {
   section: InfoSection;
   onAssign: (sectionId: number) => void;
@@ -184,7 +184,9 @@ function LibrarySectionItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-bold text-xs text-white truncate">{section.title}</h4>
-            <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs font-medium ${getSectionTypeBadgeClass(section.section_type)}`}>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs font-medium ${getSectionTypeBadgeClass(section.section_type)}`}
+            >
               {getSectionTypeIcon(section.section_type)}
             </span>
           </div>
@@ -193,8 +195,7 @@ function LibrarySectionItem({
             <p className="text-xs text-white/50 line-clamp-2">
               {section.content.length > 100
                 ? `${section.content.substring(0, 100)}...`
-                : section.content
-              }
+                : section.content}
             </p>
           )}
         </div>
@@ -218,10 +219,7 @@ function LibrarySectionItem({
   );
 }
 
-export default function InfoAndUpdatesTab({
-  trip,
-  onDataChange
-}: InfoAndUpdatesTabProps) {
+export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdatesTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -229,7 +227,7 @@ export default function InfoAndUpdatesTab({
   const [newSectionData, setNewSectionData] = useState({
     title: '',
     content: '',
-    section_type: 'general' as 'general' | 'trip_specific'
+    section_type: 'general' as 'general' | 'trip_specific',
   });
   const [activeId, setActiveId] = useState<number | null>(null);
 
@@ -245,7 +243,11 @@ export default function InfoAndUpdatesTab({
   );
 
   // Fetch trip sections (assigned sections)
-  const { data: assignedSections = [], isLoading: isLoadingAssigned, refetch: refetchAssigned } = useQuery<InfoSection[]>({
+  const {
+    data: assignedSections = [],
+    isLoading: isLoadingAssigned,
+    refetch: refetchAssigned,
+  } = useQuery<InfoSection[]>({
     queryKey: ['trip-sections', trip?.id],
     queryFn: async () => {
       if (!trip?.id) return [];
@@ -253,7 +255,7 @@ export default function InfoAndUpdatesTab({
       if (!response.ok) throw new Error('Failed to fetch trip sections');
       return response.json();
     },
-    enabled: !!trip?.id
+    enabled: !!trip?.id,
   });
 
   // Fetch all available sections (library)
@@ -263,17 +265,21 @@ export default function InfoAndUpdatesTab({
       const response = await api.get('/api/trip-info-sections');
       if (!response.ok) throw new Error('Failed to fetch sections');
       return response.json();
-    }
+    },
   });
 
   // Create section mutation
   const createSectionMutation = useMutation({
-    mutationFn: async (data: { title: string; content: string; section_type: 'general' | 'trip_specific' }) => {
+    mutationFn: async (data: {
+      title: string;
+      content: string;
+      section_type: 'general' | 'trip_specific';
+    }) => {
       const response = await api.post('/api/trip-info-sections', data);
       if (!response.ok) throw new Error('Failed to create section');
       return response.json();
     },
-    onSuccess: (newSection) => {
+    onSuccess: newSection => {
       queryClient.invalidateQueries({ queryKey: ['trip-info-sections'] });
       setShowCreateForm(false);
       setNewSectionData({ title: '', content: '', section_type: 'general' });
@@ -286,7 +292,7 @@ export default function InfoAndUpdatesTab({
         assignSectionMutation.mutate({
           trip_id: trip.id,
           section_id: newSection.id,
-          order_index: assignedSections.length + 1
+          order_index: assignedSections.length + 1,
         });
       }
     },
@@ -296,7 +302,7 @@ export default function InfoAndUpdatesTab({
         description: 'Failed to create section',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Assign section mutation
@@ -320,7 +326,7 @@ export default function InfoAndUpdatesTab({
         description: 'Failed to assign section',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Remove assignment mutation
@@ -343,13 +349,21 @@ export default function InfoAndUpdatesTab({
         description: 'Failed to remove section',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   // Update assignment order mutation
   const updateOrderMutation = useMutation({
-    mutationFn: async ({ assignmentId, orderIndex }: { assignmentId: number; orderIndex: number }) => {
-      const response = await api.put(`/api/trip-section-assignments/${assignmentId}`, { order_index: orderIndex });
+    mutationFn: async ({
+      assignmentId,
+      orderIndex,
+    }: {
+      assignmentId: number;
+      orderIndex: number;
+    }) => {
+      const response = await api.put(`/api/trip-section-assignments/${assignmentId}`, {
+        order_index: orderIndex,
+      });
       if (!response.ok) throw new Error('Failed to update order');
       return response.json();
     },
@@ -363,7 +377,7 @@ export default function InfoAndUpdatesTab({
         description: 'Failed to update section order',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -374,8 +388,10 @@ export default function InfoAndUpdatesTab({
     const { active, over } = event;
 
     if (over && active.id !== over.id && assignedSections.length > 1) {
-      const oldIndex = assignedSections.findIndex((item) => item.assignment!.id === Number(active.id));
-      const newIndex = assignedSections.findIndex((item) => item.assignment!.id === Number(over.id));
+      const oldIndex = assignedSections.findIndex(
+        item => item.assignment!.id === Number(active.id)
+      );
+      const newIndex = assignedSections.findIndex(item => item.assignment!.id === Number(over.id));
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newArray = arrayMove(assignedSections, oldIndex, newIndex);
@@ -386,7 +402,7 @@ export default function InfoAndUpdatesTab({
           if (item.assignment!.order_index !== newOrderIndex) {
             updateOrderMutation.mutate({
               assignmentId: item.assignment!.id,
-              orderIndex: newOrderIndex
+              orderIndex: newOrderIndex,
             });
           }
         });
@@ -401,7 +417,7 @@ export default function InfoAndUpdatesTab({
     assignSectionMutation.mutate({
       trip_id: trip.id,
       section_id: sectionId,
-      order_index: nextOrderIndex
+      order_index: nextOrderIndex,
     });
   };
 
@@ -413,13 +429,16 @@ export default function InfoAndUpdatesTab({
   // Filter library sections (exclude already assigned ones)
   const assignedSectionIds = new Set(assignedSections.map(s => s.id));
   const filteredLibrarySections = allSections.filter(section => {
-    const matchesSearch = section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       section.content?.toLowerCase().includes(searchTerm.toLowerCase());
     const notAssigned = !assignedSectionIds.has(section.id);
     return matchesSearch && notAssigned;
   });
 
-  const activeDragItem = activeId ? assignedSections.find(s => s.assignment!.id === activeId) : null;
+  const activeDragItem = activeId
+    ? assignedSections.find(s => s.assignment!.id === activeId)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -438,14 +457,16 @@ export default function InfoAndUpdatesTab({
 
       {/* Two-Panel Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* LEFT PANEL: Assigned Sections (Current sections with drag to reorder) */}
-        <div className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-white/5/80 shadow-2xl shadow-black/40 backdrop-blur">
           <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div className="flex items-center gap-2">
               <List className="h-5 w-5 text-white" />
               <h3 className="text-lg font-semibold text-white">Assigned Sections</h3>
-              <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+              <Badge
+                variant="secondary"
+                className="bg-blue-500/20 text-blue-300 border-blue-500/30"
+              >
                 {assignedSections.length}
               </Badge>
             </div>
@@ -460,7 +481,9 @@ export default function InfoAndUpdatesTab({
               <div className="flex flex-col items-center justify-center gap-3 py-12 text-white/60">
                 <List className="h-12 w-12 text-white/30" />
                 <h4 className="font-medium text-white/80">No Sections Assigned</h4>
-                <p className="text-sm text-center">Add sections from the library on the right to get started.</p>
+                <p className="text-sm text-center">
+                  Add sections from the library on the right to get started.
+                </p>
               </div>
             ) : (
               <DndContext
@@ -476,7 +499,7 @@ export default function InfoAndUpdatesTab({
                   <div className="space-y-3">
                     {assignedSections
                       .sort((a, b) => a.assignment!.order_index - b.assignment!.order_index)
-                      .map((section) => (
+                      .map(section => (
                         <SortableAssignedSection
                           key={section.assignment!.id}
                           section={section}
@@ -487,10 +510,7 @@ export default function InfoAndUpdatesTab({
                 </SortableContext>
                 <DragOverlay>
                   {activeDragItem ? (
-                    <SortableAssignedSection
-                      section={activeDragItem}
-                      onRemove={() => {}}
-                    />
+                    <SortableAssignedSection section={activeDragItem} onRemove={() => {}} />
                   ) : null}
                 </DragOverlay>
               </DndContext>
@@ -507,7 +527,7 @@ export default function InfoAndUpdatesTab({
         </div>
 
         {/* RIGHT PANEL: Available Sections Library + Create New */}
-        <div className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-white/5/80 shadow-2xl shadow-black/40 backdrop-blur">
           <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div className="flex items-center gap-2">
               <Library className="h-5 w-5 text-white" />
@@ -531,7 +551,7 @@ export default function InfoAndUpdatesTab({
               <Input
                 placeholder="Search available sections..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="h-10 rounded-xl border-white/10 bg-white/5 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
               />
             </div>
@@ -549,7 +569,7 @@ export default function InfoAndUpdatesTab({
                   <Input
                     placeholder="Section title"
                     value={newSectionData.title}
-                    onChange={(e) => setNewSectionData({ ...newSectionData, title: e.target.value })}
+                    onChange={e => setNewSectionData({ ...newSectionData, title: e.target.value })}
                     className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
                   />
                 </div>
@@ -587,7 +607,9 @@ export default function InfoAndUpdatesTab({
                   <Textarea
                     placeholder="Section content..."
                     value={newSectionData.content}
-                    onChange={(e) => setNewSectionData({ ...newSectionData, content: e.target.value })}
+                    onChange={e =>
+                      setNewSectionData({ ...newSectionData, content: e.target.value })
+                    }
                     rows={3}
                     className="border-white/10 bg-white/5 text-white placeholder:text-white/50"
                   />
@@ -632,12 +654,11 @@ export default function InfoAndUpdatesTab({
                       ? 'No sections match your search.'
                       : assignedSectionIds.size === allSections.length
                         ? 'All available sections are already assigned.'
-                        : 'No sections available in the library.'
-                    }
+                        : 'No sections available in the library.'}
                   </p>
                 </div>
               ) : (
-                filteredLibrarySections.map((section) => (
+                filteredLibrarySections.map(section => (
                   <LibrarySectionItem
                     key={section.id}
                     section={section}

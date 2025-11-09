@@ -186,7 +186,7 @@ export default function KokonutProfileDropdown({
             sideOffset={8}
             className="w-64 p-0 border-0 bg-transparent shadow-none"
           >
-            <Card className="bg-[#10192f] backdrop-blur-xl border-white/10 shadow-2xl shadow-black/40 rounded-2xl overflow-hidden">
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl shadow-black/40 rounded-2xl overflow-hidden">
               {/* Profile header */}
               <CardHeader className="pb-2 pt-3 px-3">
                 <div className="flex flex-col">

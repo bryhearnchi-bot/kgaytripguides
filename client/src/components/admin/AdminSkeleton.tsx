@@ -9,7 +9,7 @@ interface AdminSkeletonProps {
 export function AdminTableSkeleton({
   rows = 5,
   showHeader = true,
-  showActions = true
+  showActions = true,
 }: AdminSkeletonProps) {
   return (
     <div className="space-y-8">
@@ -34,7 +34,7 @@ export function AdminTableSkeleton({
       </section>
 
       {/* Table Section Skeleton */}
-      <section className="rounded-2xl border border-white/10 bg-[#10192f]/80 shadow-2xl shadow-black/40 backdrop-blur">
+      <section className="rounded-2xl border border-white/10 bg-white/5/80 shadow-2xl shadow-black/40 backdrop-blur">
         {showHeader && (
           <header className="flex flex-col gap-2 border-b border-white/10 px-6 py-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
@@ -111,7 +111,10 @@ export function AdminCardSkeleton({ rows = 3 }: { rows?: number }) {
       <section>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: rows }).map((_, index) => (
-            <div key={index} className="rounded-2xl border border-white/10 bg-[#10192f]/80 p-6 shadow-2xl shadow-black/40 backdrop-blur">
+            <div
+              key={index}
+              className="rounded-2xl border border-white/10 bg-white/5/80 p-6 shadow-2xl shadow-black/40 backdrop-blur"
+            >
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Skeleton className="h-12 w-12 bg-white/10 rounded-xl flex-shrink-0" />

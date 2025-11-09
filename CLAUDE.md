@@ -110,6 +110,39 @@ const imageUrl = 'https://example.com/image.jpg';
 - Then upload to Supabase storage
 - Use the Supabase storage URL in the database
 
+### 6. Color Scheme Rules (MANDATORY)
+
+**SOLID OXFORD BLUE BACKGROUNDS. NO GRADIENTS. NO EXCEPTIONS.**
+
+- ✅ Background color: `#002147` (Oxford Blue)
+- ✅ Apply to ALL pages, slide-out menus, and content areas
+- ❌ NEVER use gradients on backgrounds (`bg-gradient-*`)
+- ❌ NEVER use background images on page backgrounds
+- ❌ NEVER use radial gradients or any gradient effects
+- 🔥 **Frosted glass ONLY on navigation bar and safe areas**
+
+**Frosted Glass (Limited Use):**
+
+```tsx
+// ✅ CORRECT - Navigation bar only
+<div className="bg-white/10 backdrop-blur-lg">
+
+// ❌ WRONG - Content areas
+<div className="bg-white/10 backdrop-blur-lg"> // NO!
+```
+
+**Page Backgrounds:**
+
+```tsx
+// ✅ CORRECT
+<div className="min-h-screen bg-[#002147]">
+<SheetContent className="bg-[#002147] border-white/10 text-white">
+
+// ❌ WRONG
+<div className="bg-gradient-to-br from-blue-500 to-purple-500">
+<div style={{ backgroundImage: 'radial-gradient(...)' }}>
+```
+
 ---
 
 ## 🔐 Security Standards (MANDATORY)
@@ -312,6 +345,8 @@ Before committing, verify:
 - [ ] React Query staleTime is finite
 - [ ] Images have loading="lazy"
 - [ ] Routes are lazy loaded
+- [ ] **No gradients on backgrounds** (use solid #002147)
+- [ ] **Frosted glass only on navigation** (not content areas)
 - [ ] Code review passed
 
 ---
@@ -360,18 +395,62 @@ JWT_SECRET=...
 
 ---
 
-## 🎨 UI Guidelines (Simplified)
+## 🎨 UI Guidelines & Color Scheme (MANDATORY)
+
+### Color Scheme
+
+**The application uses a consistent, solid color scheme with NO gradients.**
+
+**Primary Background Color:**
+
+- **#002147** (Oxford Blue) - Used for ALL page backgrounds, slide-out menus, and main content areas
+- ✅ Apply to: `body`, `html`, `App.tsx`, `NavigationDrawer`, `Sheet`, `trip-guide.tsx`
+- ❌ NEVER use gradients on page backgrounds
+- ❌ NEVER use background images on page backgrounds
+
+**Frosted Glass Effect:**
+
+- **ONLY** used for navigation bar and safe areas
+- Classes: `bg-white/10 backdrop-blur-lg`
+- Applied to:
+  - Navigation banner (top)
+  - Bottom safe area
+  - Profile dropdown popover
+- ❌ NEVER apply frosted glass to page backgrounds or content areas
+
+**Example Usage:**
+
+```tsx
+// ✅ CORRECT - Page background
+<div className="min-h-screen bg-[#002147]">
+
+// ✅ CORRECT - Navigation bar (frosted glass)
+<div className="bg-white/10 backdrop-blur-lg">
+
+// ✅ CORRECT - Slide-out menu
+<SheetContent className="bg-[#002147] border-white/10 text-white">
+
+// ❌ WRONG - Gradient background
+<div className="bg-gradient-to-br from-blue-500 to-purple-500">
+
+// ❌ WRONG - Background image
+<div style={{ backgroundImage: 'radial-gradient(...)' }}>
+
+// ❌ WRONG - Frosted glass on content
+<div className="bg-white/10 backdrop-blur-lg"> // Only for nav!
+```
 
 ### Admin Style Guide
 
 - **Reference**: `docs/admin-style-guide.md` for detailed specs
 - **Never create new admin pages** - only update existing
 - **Use LocationManagement.tsx pattern** for all admin pages
-- **Ocean theme colors** with frosted glass effects
+- **Consistent Oxford Blue (#002147) background** across all admin pages
 
 ### Design System
 
-- Ocean theme (blue/teal gradients)
+- **Solid Oxford Blue (#002147)** background - NO gradients
+- Frosted glass effects on navigation only
 - Shadcn/ui components
 - Tailwind CSS
 - Mobile-first responsive design
@@ -412,6 +491,7 @@ JWT_SECRET=...
 
 ---
 
-_Last updated: September 2025_
+_Last updated: November 2025_
+_Color Scheme: Oxford Blue (#002147) - Solid backgrounds, no gradients_
 _Current Phase: Phase 4 Complete (Code Splitting & Bundling)_
 _For detailed documentation, see `docs/REFERENCE.md`_

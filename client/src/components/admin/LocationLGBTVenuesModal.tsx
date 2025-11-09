@@ -322,7 +322,7 @@ export function LocationLGBTVenuesModal({
                     <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#10192f] border-white/10 text-white">
+                    <SelectContent className="bg-white/5 border-white/10 text-white">
                       {VENUE_TYPES.map(type => (
                         <SelectItem key={type} value={type}>
                           {type}

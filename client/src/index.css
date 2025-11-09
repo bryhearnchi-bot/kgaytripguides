@@ -17,8 +17,8 @@
     padding: 0 !important;
     height: 100%;
     overflow-x: hidden;
-    /* Dark background to match app theme - prevents black bar on iOS */
-    background-color: hsl(210, 25%, 7.8431%);
+    /* Solid Oxford blue background - no gradients */
+    background-color: #002147;
   }
 
   #root {

@@ -394,50 +394,14 @@ export default function TripGuide({ slug }: TripGuideProps) {
   }
 
   return (
-    <div className="min-h-screen w-full relative bg-[#0f172a]">
-      {isGreekCruise ? (
-        /* Blue Radial Glow - Greek Isle Cruise Only */
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `radial-gradient(circle 600px at 50% 50%, rgba(59,130,246,0.3), transparent)`,
-          }}
-        />
-      ) : isDragStarsCruise ? (
+    <div className="min-h-screen w-full relative">
+      {isDragStarsCruise ? (
         /* Cosmic Aurora - Dragstar Cruise Only */
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `
-              radial-gradient(ellipse at 20% 30%, rgba(56, 189, 248, 0.4) 0%, transparent 60%),
-              radial-gradient(ellipse at 80% 70%, rgba(139, 92, 246, 0.3) 0%, transparent 70%),
-              radial-gradient(ellipse at 60% 20%, rgba(236, 72, 153, 0.25) 0%, transparent 50%),
-              radial-gradient(ellipse at 40% 80%, rgba(34, 197, 94, 0.2) 0%, transparent 65%)
-            `,
-          }}
-        />
+        <div className="absolute inset-0 z-0 bg-[#002147]" />
       ) : isHalloweenCruise ? (
-        /* Ember Glow - Halloween Cruise Only */
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `
-              radial-gradient(circle at 50% 100%, rgba(255, 69, 0, 0.6) 0%, transparent 60%),
-              radial-gradient(circle at 50% 100%, rgba(255, 140, 0, 0.4) 0%, transparent 70%),
-              radial-gradient(circle at 50% 100%, rgba(255, 215, 0, 0.3) 0%, transparent 80%)
-            `,
-          }}
-        />
-      ) : (
-        /* Deep Ocean Glow Background - Default */
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background:
-              'radial-gradient(70% 55% at 50% 50%, #2a5d77 0%, #184058 18%, #0f2a43 34%, #0a1b30 50%, #071226 66%, #040d1c 80%, #020814 92%, #01040d 97%, #000309 100%), radial-gradient(160% 130% at 10% 10%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%), radial-gradient(160% 130% at 90% 90%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%)',
-          }}
-        />
-      )}
+        /* Halloween Cruise - Solid Color */
+        <div className="absolute inset-0 z-0 bg-[#002147]" />
+      ) : null}
 
       {/* Content Layer */}
       <div className="relative z-10">

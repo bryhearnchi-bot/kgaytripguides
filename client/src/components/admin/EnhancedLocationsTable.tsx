@@ -253,7 +253,7 @@ export function EnhancedLocationsTable({
           return (
             <Card
               key={rowKey}
-              className="border border-white/10 bg-[#10192f]/80 backdrop-blur overflow-hidden"
+              className="border border-white/10 bg-white/5/80 backdrop-blur overflow-hidden"
             >
               <CardContent className="p-0">
                 <div className="p-4">

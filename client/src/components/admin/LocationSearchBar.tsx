@@ -194,7 +194,7 @@ export function LocationSearchBar({
 
         {isOpen && suggestions.length > 0 && (
           <PopoverContent
-            className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#10192f]/95 border-white/10 backdrop-blur"
+            className="w-[var(--radix-popover-trigger-width)] p-0 bg-white/5/95 border-white/10 backdrop-blur"
             align="start"
             onOpenAutoFocus={e => e.preventDefault()}
             onCloseAutoFocus={e => e.preventDefault()}

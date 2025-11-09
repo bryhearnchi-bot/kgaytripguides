@@ -171,10 +171,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const BANNER_OFFSET = 64;
 
   return (
-    <div className="flex min-h-screen bg-[#0b1222] text-white">
+    <div className="flex min-h-screen text-white">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex lg:flex-col lg:bg-[#10192f] lg:py-6 lg:backdrop-blur-lg lg:transition-all lg:duration-300 ${
+        className={`hidden lg:flex lg:flex-col lg:bg-white/5 lg:py-6 lg:backdrop-blur-lg lg:transition-all lg:duration-300 ${
           sidebarCollapsed ? 'lg:w-16' : 'lg:w-48 xl:w-56'
         }`}
       >
@@ -223,7 +223,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {mobileOpen && (
         <>
           <div
-            className="fixed left-0 right-0 z-50 border-b border-white/10 bg-[#10192f] px-4 py-6 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden"
+            className="fixed left-0 right-0 z-50 border-b border-white/10 bg-white/10 px-4 py-6 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden"
             style={{ top: BANNER_OFFSET }}
           >
             <div className="max-h-[calc(100vh-80px)] space-y-5 overflow-y-auto">

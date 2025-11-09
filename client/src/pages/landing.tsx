@@ -151,7 +151,7 @@ function TripCard({ trip }: { trip: Trip }) {
             document.body.scrollTop = 0;
           }}
         >
-          <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl">
+          <Button className="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl">
             {getTripButtonText(trip.tripType)}
           </Button>
         </Link>
@@ -243,7 +243,7 @@ export default function LandingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-white text-xl">Loading trip guides...</p>
@@ -254,7 +254,7 @@ export default function LandingPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-ocean-600 via-ocean-500 to-ocean-400 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-white">
           <Ship className="h-16 w-16 mx-auto mb-4 text-red-400" />
           <h2 className="text-2xl font-bold mb-2">Unable to load trip guides</h2>
@@ -291,16 +291,7 @@ export default function LandingPage() {
   const upcomingTrips = isFeaturedUpcoming ? groupedTrips.upcoming.slice(1) : groupedTrips.upcoming;
 
   return (
-    <div className="min-h-screen w-full bg-black relative">
-      {/* Deep Ocean Glow Background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background:
-            'radial-gradient(70% 55% at 50% 50%, #2a5d77 0%, #184058 18%, #0f2a43 34%, #0a1b30 50%, #071226 66%, #040d1c 80%, #020814 92%, #01040d 97%, #000309 100%), radial-gradient(160% 130% at 10% 10%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%), radial-gradient(160% 130% at 90% 90%, rgba(0,0,0,0) 38%, #000309 76%, #000208 100%)',
-        }}
-      />
-
+    <div className="min-h-screen w-full">
       {/* Content Layer */}
       <div className="relative z-10">
         {/* Floating Hero Section */}

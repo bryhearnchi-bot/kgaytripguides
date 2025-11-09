@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
@@ -46,10 +53,12 @@ export function ResponsiveAdminTable({
   isLoading = false,
   emptyMessage = 'No data available',
   className = '',
-  mobileBreakpoint = 768
+  mobileBreakpoint = 768,
 }: ResponsiveAdminTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint
+  );
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -76,7 +85,11 @@ export function ResponsiveAdminTable({
   const lowPriorityColumns = columns.filter(col => col.priority === 'low');
 
   const mobileVisibleColumns = highPriorityColumns.slice(0, 2); // Show only 2 most important columns on mobile
-  const hiddenColumns = [...mediumPriorityColumns, ...lowPriorityColumns, ...highPriorityColumns.slice(2)];
+  const hiddenColumns = [
+    ...mediumPriorityColumns,
+    ...lowPriorityColumns,
+    ...highPriorityColumns.slice(2),
+  ];
 
   const renderCellValue = (column: TableColumn, row: any) => {
     const value = row[column.key];
@@ -118,18 +131,21 @@ export function ResponsiveAdminTable({
   if (isMobile) {
     return (
       <div className={`space-y-3 ${className}`}>
-        {data.map((row) => {
+        {data.map(row => {
           const rowKey = row[keyField];
           const isExpanded = expandedRows.has(rowKey);
 
           return (
-            <Card key={rowKey} className="border border-white/10 bg-[#10192f]/80 backdrop-blur overflow-hidden">
+            <Card
+              key={rowKey}
+              className="border border-white/10 bg-white/5/80 backdrop-blur overflow-hidden"
+            >
               <CardContent className="p-0">
                 {/* Main content */}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0 space-y-2">
-                      {mobileVisibleColumns.map((column) => (
+                      {mobileVisibleColumns.map(column => (
                         <div key={column.key} className="flex justify-between items-start gap-2">
                           <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
                             {column.label}:
@@ -177,7 +193,9 @@ export function ResponsiveAdminTable({
                                 onClick={() => action.onClick(row)}
                                 disabled={action.disabled?.(row)}
                                 className={`text-white hover:bg-white/10 ${
-                                  action.variant === 'destructive' ? 'text-red-400 hover:text-red-300' : ''
+                                  action.variant === 'destructive'
+                                    ? 'text-red-400 hover:text-red-300'
+                                    : ''
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -196,7 +214,7 @@ export function ResponsiveAdminTable({
                 {/* Expanded content */}
                 {isExpanded && hiddenColumns.length > 0 && (
                   <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
-                    {hiddenColumns.map((column) => (
+                    {hiddenColumns.map(column => (
                       <div key={column.key} className="flex justify-between items-start gap-2">
                         <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
                           {column.label}:
@@ -222,11 +240,8 @@ export function ResponsiveAdminTable({
       <Table className="min-w-full text-sm text-white/80">
         <TableHeader className="bg-white/5">
           <TableRow className="border-white/10">
-            {columns.map((column) => (
-              <TableHead
-                key={column.key}
-                className={`text-white/60 ${column.className || ''}`}
-              >
+            {columns.map(column => (
+              <TableHead key={column.key} className={`text-white/60 ${column.className || ''}`}>
                 {column.label}
               </TableHead>
             ))}
@@ -236,9 +251,9 @@ export function ResponsiveAdminTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((row) => (
+          {data.map(row => (
             <TableRow key={row[keyField]} className="border-white/10 hover:bg-white/5">
-              {columns.map((column) => (
+              {columns.map(column => (
                 <TableCell key={column.key} className={`py-4 ${column.className || ''}`}>
                   {renderCellValue(column, row)}
                 </TableCell>

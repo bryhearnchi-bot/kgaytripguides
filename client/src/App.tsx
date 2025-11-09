@@ -45,8 +45,10 @@ const InvitationsManagement = lazy(() => import('@/pages/admin/invitations'));
 // Loading fallback component
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen w-full bg-gradient-to-br from-blue-950 via-blue-900 to-cyan-900">
-      <div className="text-center space-y-4">
+    <div className="flex items-center justify-center min-h-screen w-full bg-[#002147] relative">
+      {/* 30% black overlay for darkening effect */}
+      <div className="fixed inset-0 bg-black/30 pointer-events-none z-0" />
+      <div className="text-center space-y-4 relative z-10">
         <div className="relative w-16 h-16 mx-auto">
           <div className="absolute inset-0 border-4 border-blue-400/20 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 rounded-full animate-spin"></div>
@@ -259,18 +261,22 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full m-0 p-0">
+    <div className="min-h-screen w-full bg-[#002147] m-0 p-0 relative">
+      {/* 30% black overlay for darkening effect */}
+      <div className="fixed inset-0 bg-black/30 pointer-events-none z-0" />
       <QueryClientProvider client={queryClient}>
         <SupabaseAuthProvider>
           <TimeFormatProvider>
             <UpdateProvider>
               <TooltipProvider>
-                <NavigationBanner />
-                <div className="w-full">
-                  <Toaster />
-                  <Router />
+                <div className="relative z-10">
+                  <NavigationBanner />
+                  <div className="w-full">
+                    <Toaster />
+                    <Router />
+                  </div>
+                  <BottomSafeArea />
                 </div>
-                <BottomSafeArea />
               </TooltipProvider>
             </UpdateProvider>
           </TimeFormatProvider>

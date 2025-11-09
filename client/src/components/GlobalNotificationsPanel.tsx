@@ -143,17 +143,11 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
   });
 
   return (
-    <Sheet open={open} modal={false}>
+    <Sheet open={open} modal={true} onOpenChange={onOpenChange}>
       <SheetPortal>
-        {open && (
-          <div
-            className="fixed inset-0 top-[2.5rem] z-40 bg-black/80 animate-in fade-in-0"
-            onClick={() => onOpenChange(false)}
-          />
-        )}
         <SheetContent
           side="right"
-          className="w-[85%] sm:w-[400px] !top-[2.5rem] !bottom-0 !h-auto !z-50 bg-white/10 backdrop-blur-lg border-l border-white/10 text-white overflow-y-auto [&>button]:hidden"
+          className="w-[85%] sm:w-[400px] !top-[calc(env(safe-area-inset-top)+2.5rem+21px)] !bottom-0 !h-auto !z-50 bg-[#001833] border-l border-white/10 text-white overflow-y-auto [&>button]:hidden"
         >
           <VisuallyHidden>
             <SheetTitle>Trip Updates</SheetTitle>
