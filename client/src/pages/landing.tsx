@@ -295,7 +295,7 @@ export default function LandingPage() {
       {/* Content Layer */}
       <div className="relative z-10">
         {/* Floating Hero Section */}
-        <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-6 px-4 sm:px-6 lg:px-8`}>
+        <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-6 animate-float">
               {/* Interactive Travel Guides Badge */}

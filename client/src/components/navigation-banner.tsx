@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Menu, RefreshCw } from 'lucide-react';
+import { Menu, RefreshCw, ArrowLeft } from 'lucide-react';
 import NavigationDrawer from '@/components/NavigationDrawer';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { GlobalNotificationBell } from '@/components/GlobalNotificationBell';
@@ -29,6 +29,7 @@ export default function NavigationBanner() {
   const { updateAvailable, isChecking, checkForUpdates, applyUpdate } = useUpdate();
 
   const isAdminRoute = currentLocation.startsWith('/admin');
+  const isTripRoute = currentLocation.startsWith('/trip/');
 
   // Fetch all updates
   const fetchUpdates = useCallback(async () => {
@@ -241,6 +242,19 @@ export default function NavigationBanner() {
             >
               <Menu className="h-5 w-5" />
             </Button>
+          )}
+          {isTripRoute && !isStandalone && (
+            <Link href="/">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1222] focus-visible:ring-white/40"
+                aria-label="Back to home"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
           )}
           {isStandalone ? (
             <div className="flex items-center gap-2 sm:gap-3 cursor-default">
