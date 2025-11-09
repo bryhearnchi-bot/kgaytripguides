@@ -11,12 +11,12 @@ export async function initializeNativeFeatures() {
   if (!isNative) return;
 
   try {
-    // Status bar - ocean theme with light text
+    // Status bar - Oxford Blue background with light text
     await StatusBar.setStyle({ style: Style.Light }); // Light text for dark header
 
     if (isAndroid) {
-      // On Android, make status bar transparent so our header color shows through
-      await StatusBar.setBackgroundColor({ color: '#00000000' }); // Transparent
+      // On Android, use Oxford Blue to match navigation bar
+      await StatusBar.setBackgroundColor({ color: '#002147' }); // Oxford Blue
       await StatusBar.setOverlaysWebView({ overlay: true }); // Allow content to extend under status bar
     }
 
