@@ -403,34 +403,33 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
   return (
     <>
       <div className="max-w-6xl mx-auto pt-6 pb-2">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-cyan-400" />
           <h3 className="text-lg font-semibold text-white">Information</h3>
           <div className="flex-1 h-px bg-white/20 mx-3"></div>
-        </div>
-
-        {/* Sub-tabs */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setSubTab('info')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              subTab === 'info'
-                ? 'bg-white/20 text-white border border-white/30'
-                : 'text-white/60 hover:text-white/80 hover:bg-white/5'
-            }`}
-          >
-            Info
-          </button>
-          <button
-            onClick={() => setSubTab('faq')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              subTab === 'faq'
-                ? 'bg-white/20 text-white border border-white/30'
-                : 'text-white/60 hover:text-white/80 hover:bg-white/5'
-            }`}
-          >
-            FAQs
-          </button>
+          {/* Sub-tabs on the right */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSubTab('info')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                subTab === 'info'
+                  ? 'bg-white/20 text-white border border-white/30'
+                  : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+              }`}
+            >
+              Info
+            </button>
+            <button
+              onClick={() => setSubTab('faq')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                subTab === 'faq'
+                  ? 'bg-white/20 text-white border border-white/30'
+                  : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+              }`}
+            >
+              FAQs
+            </button>
+          </div>
         </div>
       </div>
 
