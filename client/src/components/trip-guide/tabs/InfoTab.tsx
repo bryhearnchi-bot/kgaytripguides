@@ -411,7 +411,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
           <div className="flex gap-2">
             <button
               onClick={() => setSubTab('info')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                 subTab === 'info'
                   ? 'bg-white/20 text-white border border-white/30'
                   : 'text-white/60 hover:text-white/80 hover:bg-white/5'
@@ -421,7 +421,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
             </button>
             <button
               onClick={() => setSubTab('faq')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                 subTab === 'faq'
                   ? 'bg-white/20 text-white border border-white/30'
                   : 'text-white/60 hover:text-white/80 hover:bg-white/5'
