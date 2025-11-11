@@ -209,7 +209,7 @@ export default function PastTrips() {
 
       <div className="max-w-7xl mx-auto px-4">
         {/* Header - Sticky */}
-        <div className="safari-sticky-header sticky top-16 z-20 mt-2 mb-8 pb-6 -mx-4 px-4">
+        <div className="safari-sticky-header sticky top-16 z-20 mt-4 mb-2 pb-6 -mx-4 px-4">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-purple-400" />
             <h3 className="text-lg font-semibold text-white">Past Trips</h3>

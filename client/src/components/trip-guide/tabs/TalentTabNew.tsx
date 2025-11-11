@@ -11,9 +11,19 @@ import {
   Drama,
   Users,
   Crown,
+  Star,
+  Filter,
+  ChevronDown,
 } from 'lucide-react';
 import type { Talent } from '@/data/trip-data';
 import { TalentCard } from '../shared/TalentCard';
+import { TabHeader } from '../shared/TabHeader';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface TalentTabProps {
   TALENT: Talent[];
@@ -128,99 +138,96 @@ export const TalentTabNew = memo(function TalentTabNew({
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-8">
-      {/* Talent Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="space-y-4"
-      >
-        <div className="flex items-center mb-6">
-          {/* Filter Bar - Left-aligned */}
-          <div className="flex flex-wrap gap-2">
-            {talentTypes.map(type => {
-              const isActive = selectedFilter === type;
-              const Icon = getTalentIcon(type);
-              const isHeadliners = type === 'Headliners';
+    <>
+      <div className="max-w-7xl mx-auto pt-6 pb-6">
+        <div className="flex items-center gap-2">
+          <Star className="w-4 h-4 text-amber-400" />
+          <h3 className="text-lg font-semibold text-white">Talent</h3>
+          <div className="flex-1 h-px bg-white/20 mx-3"></div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
+                <Filter className="w-3 h-3" />
+                <span>{selectedFilter}</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#002147] border-white/20">
+              {talentTypes.map(type => {
+                const isActive = selectedFilter === type;
+                const Icon = getTalentIcon(type);
 
-              return (
-                <button
-                  key={type}
-                  onClick={() => setSelectedFilter(type)}
-                  className={`text-xs px-2.5 py-1 rounded-full transition-colors border flex items-center gap-1 ${
-                    isHeadliners
-                      ? isActive
-                        ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white border-yellow-400/50 font-bold shadow-lg'
-                        : 'bg-yellow-500/20 text-yellow-200 border-yellow-400/30 hover:bg-yellow-500/30 font-medium'
-                      : isActive
-                        ? 'bg-purple-400/50 text-white border-purple-300/60 font-bold shadow-lg'
-                        : 'bg-purple-500/20 text-purple-200 border-purple-400/30 hover:bg-purple-500/30 font-medium'
-                  }`}
-                  aria-label={type}
-                >
-                  <Icon className="w-3 h-3" />
-                  <span className="hidden sm:inline">{type}</span>
-                  {isActive && (
-                    <span className="sm:hidden">
-                      {type === 'Piano Bar / Cabaret'
-                        ? 'Cabaret'
-                        : type === 'Drag & Variety'
-                          ? 'Drag'
-                          : type}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Talent Grid */}
-        {filteredTalent.length === 0 ? (
-          <div className="bg-white/5 backdrop-blur-md rounded-xl p-8 text-center border border-white/20">
-            <User className="w-12 h-12 text-white/30 mx-auto mb-3" />
-            <p className="text-white/60">No talent found for this category</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredTalent.map((talent, index) => {
-              const isHeadliner = talent.cat === 'Headliners';
-              const showYellowBorder =
-                isHeadliner && (selectedFilter === 'All' || selectedFilter === 'Headliners');
-              const useYellowBadge =
-                isHeadliner && (selectedFilter === 'All' || selectedFilter === 'Headliners');
-
-              return (
-                <motion.div
-                  key={`${selectedFilter}-${talent.name}`}
-                  className="relative"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                >
-                  <div
-                    className={
-                      showYellowBorder
-                        ? 'rounded-xl border-2 border-yellow-400/60 shadow-[0_0_15px_rgba(250,204,21,0.3)]'
-                        : ''
-                    }
+                return (
+                  <DropdownMenuItem
+                    key={type}
+                    onClick={() => setSelectedFilter(type)}
+                    className={`cursor-pointer text-white hover:bg-white/10 ${
+                      isActive ? 'bg-white/20' : ''
+                    }`}
                   >
-                    <TalentCard
-                      talent={talent}
-                      onClick={() => handleTalentClick(talent.name)}
-                      delay={0}
-                      categoryIcon={getTalentIcon(talent.cat)}
-                      useYellowBadge={useYellowBadge}
-                      disableAnimation={true}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </motion.div>
-    </div>
+                    <Icon className="w-4 h-4 mr-2" />
+                    {type}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto space-y-8 pb-8">
+        {/* Talent Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-4"
+        >
+          {/* Talent Grid */}
+          {filteredTalent.length === 0 ? (
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-8 text-center border border-white/20">
+              <User className="w-12 h-12 text-white/30 mx-auto mb-3" />
+              <p className="text-white/60">No talent found for this category</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredTalent.map((talent, index) => {
+                const isHeadliner = talent.cat === 'Headliners';
+                const showYellowBorder =
+                  isHeadliner && (selectedFilter === 'All' || selectedFilter === 'Headliners');
+                const useYellowBadge =
+                  isHeadliner && (selectedFilter === 'All' || selectedFilter === 'Headliners');
+
+                return (
+                  <motion.div
+                    key={`${selectedFilter}-${talent.name}`}
+                    className="relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <div
+                      className={
+                        showYellowBorder
+                          ? 'rounded-xl border-2 border-yellow-400/60 shadow-[0_0_15px_rgba(250,204,21,0.3)]'
+                          : ''
+                      }
+                    >
+                      <TalentCard
+                        talent={talent}
+                        onClick={() => handleTalentClick(talent.name)}
+                        delay={0}
+                        categoryIcon={getTalentIcon(talent.cat)}
+                        useYellowBadge={useYellowBadge}
+                        disableAnimation={true}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </>
   );
 });

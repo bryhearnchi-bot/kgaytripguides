@@ -274,7 +274,7 @@ const HeroSection = ({
 
   return (
     <section
-      className={`flex flex-1 flex-col gap-5 overflow-x-hidden ${isNative ? 'pt-8' : 'pt-8'} sm:pt-8 lg:pt-8`}
+      className={`flex flex-1 flex-col gap-5 overflow-x-hidden ${isNative ? 'pt-8 pb-0' : 'pt-8 pb-0'} sm:pt-8 sm:pb-0 lg:pt-8 lg:pb-4`}
     >
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">

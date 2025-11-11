@@ -513,21 +513,6 @@ export default function TripGuide({
           </div>
         </div>
 
-        {/* Spacer to push hero content down below sticky header */}
-        <div className="h-24 sm:h-28"></div>
-
-        <HeroSection
-          tripName={tripData?.trip?.name}
-          tripDescription={null} // Description moved to Overview tab
-          tripType={isCruise ? 'cruise' : isResort ? 'resort' : null}
-          charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
-          charterCompanyName={tripData?.trip?.charterCompanyName}
-          slug={slug}
-          startDate={tripData?.trip?.startDate}
-          endDate={tripData?.trip?.endDate}
-          itinerary={data?.ITINERARY || []}
-        />
-
         {/* Preview Mode Banner */}
         {tripData?.trip?.tripStatusId === 5 && !tripData?.trip?.isActive && (
           <div className="bg-amber-500/10 border-y border-amber-400/30 backdrop-blur-sm">
@@ -704,6 +689,9 @@ export default function TripGuide({
                       : ('info' as const),
                 }))}
                 onNavigateToTab={handleNavigateToTab}
+                isCruise={isCruise}
+                isResort={isResort}
+                slug={slug}
               />
             </TabsContent>
 

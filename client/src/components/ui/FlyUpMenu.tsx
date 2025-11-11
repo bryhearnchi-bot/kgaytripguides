@@ -86,7 +86,16 @@ export function FlyUpMenu({
       {/* Custom Navigation Header - Rendered OUTSIDE scrollable container so it stays fixed */}
       <div className="xl:hidden fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
         <div className="px-3 sm:px-4 py-2 flex items-center justify-between">
-          {/* Left side - Charter logo and badge */}
+          {/* Left side - Close button (X only) */}
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-white hover:text-white/70 transition-colors p-2"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Center - Charter logo and badge */}
           <div className="flex items-center gap-2">
             {charterCompanyLogo && (
               <img
@@ -111,14 +120,8 @@ export function FlyUpMenu({
             </Badge>
           </div>
 
-          {/* Right side - Close button (X only, no circle) */}
-          <button
-            onClick={() => onOpenChange(false)}
-            className="text-white hover:text-white/70 transition-colors p-2"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Right side - Empty spacer for balance */}
+          <div className="w-9"></div>
         </div>
       </div>
 

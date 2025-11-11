@@ -3,7 +3,9 @@ import { isNative } from '@/lib/capacitor';
 
 export function useShare() {
   const shareTrip = async (trip: { name: string; slug: string }) => {
-    const url = `https://atlantisevents.com/trip/${trip.slug}`;
+    // Use environment variable for site URL, fallback to production domain
+    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
+    const url = `${siteUrl}/trip/${trip.slug}`;
 
     if (isNative) {
       try {
