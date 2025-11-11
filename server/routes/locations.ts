@@ -48,7 +48,7 @@ export function registerLocationRoutes(app: Express) {
   app.get(
     '/api/locations',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { search = '', country, limit = '100', offset = '0' } = req.query;
+      const { search = '', country, limit, offset } = req.query;
 
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -64,10 +64,12 @@ export function registerLocationRoutes(app: Express) {
         query = query.eq('country', country as string);
       }
 
-      // Apply pagination
-      const startIndex = parseInt(offset as string);
-      const endIndex = startIndex + parseInt(limit as string) - 1;
-      query = query.range(startIndex, endIndex);
+      // Apply pagination only if limit is specified
+      if (limit && offset !== undefined) {
+        const startIndex = parseInt(offset as string);
+        const endIndex = startIndex + parseInt(limit as string) - 1;
+        query = query.range(startIndex, endIndex);
+      }
 
       const { data: results, error } = await query;
 
@@ -423,7 +425,7 @@ export function registerLocationRoutes(app: Express) {
   app.get(
     '/api/ships',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { search = '', minCapacity, maxCapacity, limit = '50', offset = '0' } = req.query;
+      const { search = '', minCapacity, maxCapacity, limit, offset } = req.query;
 
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -446,10 +448,12 @@ export function registerLocationRoutes(app: Express) {
         query = query.lte('capacity', parseInt(maxCapacity as string));
       }
 
-      // Apply pagination
-      const start = parseInt(offset as string);
-      const end = start + parseInt(limit as string) - 1;
-      query = query.range(start, end);
+      // Apply pagination only if limit is specified
+      if (limit && offset !== undefined) {
+        const start = parseInt(offset as string);
+        const end = start + parseInt(limit as string) - 1;
+        query = query.range(start, end);
+      }
 
       const { data: results, error } = await query;
 
@@ -1340,7 +1344,7 @@ export function registerLocationRoutes(app: Express) {
   app.get(
     '/api/resorts',
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { search = '', location, limit = '100', offset = '0' } = req.query;
+      const { search = '', location, limit, offset } = req.query;
 
       // Use Supabase Admin client
       const supabaseAdmin = getSupabaseAdmin();
@@ -1356,10 +1360,12 @@ export function registerLocationRoutes(app: Express) {
         query = query.eq('location', location as string);
       }
 
-      // Apply pagination
-      const startIndex = parseInt(offset as string);
-      const endIndex = startIndex + parseInt(limit as string) - 1;
-      query = query.range(startIndex, endIndex);
+      // Apply pagination only if limit is specified
+      if (limit && offset !== undefined) {
+        const startIndex = parseInt(offset as string);
+        const endIndex = startIndex + parseInt(limit as string) - 1;
+        query = query.range(startIndex, endIndex);
+      }
 
       const { data: results, error } = await query;
 

@@ -36,12 +36,8 @@ const managementNav: NavItem[] = [
   { label: 'Locations', path: '/admin/locations', icon: <MapPin className="h-4 w-4" /> },
   { label: 'Artists', path: '/admin/artists', icon: <Users className="h-4 w-4" /> },
   { label: 'Party Themes', path: '/admin/themes', icon: <Palette className="h-4 w-4" /> },
-  {
-    label: 'Trip Info Sections',
-    path: '/admin/trip-info-sections',
-    icon: <FileText className="h-4 w-4" />,
-  },
-  { label: 'FAQs', path: '/admin/faqs', icon: <HelpCircle className="h-4 w-4" /> },
+  // { label: 'Trip Info Sections', path: '/admin/trip-info-sections', icon: <FileText className="h-4 w-4" /> }, // Hidden
+  // { label: 'FAQs', path: '/admin/faqs', icon: <HelpCircle className="h-4 w-4" /> }, // Hidden
 ];
 
 const adminNav: NavItem[] = [
@@ -171,7 +167,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const BANNER_OFFSET = 64;
 
   return (
-    <div className="flex min-h-screen text-white">
+    <div className="flex min-h-screen text-white pt-16">
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:flex lg:flex-col lg:bg-white/5 lg:py-6 lg:backdrop-blur-lg lg:transition-all lg:duration-300 ${

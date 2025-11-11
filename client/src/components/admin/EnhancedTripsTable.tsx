@@ -318,27 +318,36 @@ export function EnhancedTripsTable({
           const rowKey = row[keyField];
           const isExpanded = expandedRows.has(rowKey);
 
+          const imageColumn = columns.find(col => col.key === 'image');
+          const nameColumn = columns.find(col => col.key === 'name');
+          const statusColumn = columns.find(col => col.key === 'status');
+
           return (
             <Card
               key={rowKey}
-              className="border border-white/10 bg-white/5/80 backdrop-blur overflow-hidden"
+              className="border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden"
             >
               <CardContent className="p-0">
                 <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-2">
-                      {mobileVisibleColumns.map(column => (
-                        <div key={column.key} className="flex justify-between items-start gap-2">
-                          <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                            {column.label}:
-                          </span>
-                          <div className="text-sm text-white text-right flex-1 min-w-0">
-                            {renderCellValue(column, row)}
-                          </div>
+                  <div className="flex items-center gap-3">
+                    {/* Image on the left */}
+                    {imageColumn && (
+                      <div className="flex-shrink-0">{renderCellValue(imageColumn, row)}</div>
+                    )}
+
+                    {/* Name and Status in the middle */}
+                    <div className="flex-1 min-w-0">
+                      {nameColumn && (
+                        <div className="text-sm text-white font-medium">
+                          {renderCellValue(nameColumn, row)}
                         </div>
-                      ))}
+                      )}
+                      {statusColumn && (
+                        <div className="mt-2 text-xs">{renderCellValue(statusColumn, row)}</div>
+                      )}
                     </div>
 
+                    {/* Buttons on the right */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {hiddenColumns.length > 0 && (
                         <Button
@@ -367,7 +376,10 @@ export function EnhancedTripsTable({
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-white/15 backdrop-blur-xl border-white/10"
+                          >
                             {actions
                               .filter(action => !action.visible || action.visible(row))
                               .map((action, index) => (
@@ -396,16 +408,33 @@ export function EnhancedTripsTable({
 
                 {isExpanded && hiddenColumns.length > 0 && (
                   <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
-                    {hiddenColumns.map(column => (
-                      <div key={column.key} className="flex justify-between items-start gap-2">
-                        <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                          {column.label}:
-                        </span>
-                        <div className="text-sm text-white text-right flex-1 min-w-0">
-                          {renderCellValue(column, row)}
+                    {hiddenColumns
+                      .filter(column => column.key !== 'status')
+                      .map(column => (
+                        <div
+                          key={column.key}
+                          className={
+                            column.key === 'highlights'
+                              ? ''
+                              : 'flex justify-between items-start gap-2'
+                          }
+                        >
+                          {column.key !== 'highlights' && (
+                            <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
+                              {column.label}:
+                            </span>
+                          )}
+                          <div
+                            className={
+                              column.key === 'highlights'
+                                ? 'text-sm text-white'
+                                : 'text-sm text-white text-right flex-1 min-w-0'
+                            }
+                          >
+                            {renderCellValue(column, row)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </CardContent>

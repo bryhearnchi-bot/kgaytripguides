@@ -38,6 +38,9 @@ export default function ShipsManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingShip, setEditingShip] = useState<Ship | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
 
   const handleModalOpenChange = (open: boolean) => {
     setShowAddModal(open);
@@ -106,33 +109,82 @@ export default function ShipsManagement() {
       ship.cruiseLineName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Reset to page 1 when search term changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredShips.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedShips = filteredShips.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-4 sm:px-6 py-4 sm:py-6 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
-              <Ship className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
-              <span>Cruise Ships</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-white/60 mt-1">
-              Manage your fleet information and specifications
-            </p>
-          </div>
-          <div className="relative w-full md:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <Input
-              placeholder="Search ships..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="h-10 sm:h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
-            />
+    <div className="space-y-4">
+      {/* Header Section - Sticky */}
+      <div className="sticky top-16 z-20 bg-[#002147] pb-4 space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
+            <Ship className="h-5 w-5 sm:h-6 sm:w-6" />
+            Cruise Ships
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSearch(!showSearch)}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Search ships"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setEditingShip(null);
+                setShowAddModal(true);
+              }}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Add new ship"
+              title="Add New Ship"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 shadow-2xl shadow-black/40 backdrop-blur">
-        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
+        {/* Search Bar */}
+        {showSearch && (
+          <div className="relative px-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              value={searchTerm}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="Search ships..."
+              className="h-11 rounded-full border-white/5 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 focus-visible:ring-offset-0 focus:border-white/20 focus:ring-1 focus:ring-white/10 focus:ring-offset-0 transition-all"
+              autoFocus
+            />
+          </div>
+        )}
+
+        {/* Mobile header - shows current view */}
+        <div className="sm:hidden px-1">
+          <h2 className="text-lg font-semibold text-white">All Ships</h2>
+        </div>
+      </div>
+
+      <section className="relative sm:rounded-2xl sm:border sm:border-white/10 sm:bg-white/5 sm:shadow-2xl sm:shadow-black/40 sm:backdrop-blur">
+        <header className="hidden sm:flex flex-col gap-2 border-b border-white/10 px-3 sm:pl-6 sm:pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">All Ships</h2>
           </div>
@@ -173,7 +225,7 @@ export default function ShipsManagement() {
           </div>
         ) : (
           <EnhancedShipsTable
-            data={filteredShips}
+            data={paginatedShips}
             columns={[
               {
                 key: 'image',
@@ -273,9 +325,68 @@ export default function ShipsManagement() {
         )}
 
         {filteredShips.length > 0 && (
-          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
-            <div className="text-xs text-white/50">
-              Showing {filteredShips.length} of {ships.length} ships
+          <footer className="border-t border-white/10 px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs text-white/50">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredShips.length)} of{' '}
+                {filteredShips.length} ships
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3 rounded-full bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`h-8 w-8 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-white/15 text-white'
+                              : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          {pageNumber}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3 rounded-full bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </div>
           </footer>
         )}

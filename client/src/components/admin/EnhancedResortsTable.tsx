@@ -241,7 +241,7 @@ export function EnhancedResortsTable({
     );
   }
 
-  // Mobile Card Layout (unchanged)
+  // Mobile Card Layout
   if (isMobile) {
     return (
       <div className={`space-y-3 ${className}`}>
@@ -249,27 +249,33 @@ export function EnhancedResortsTable({
           const rowKey = row[keyField];
           const isExpanded = expandedRows.has(rowKey);
 
+          // Find specific columns for the new layout
+          const imageColumn = columns.find(col => col.key === 'image');
+          const nameColumn = columns.find(col => col.key === 'name');
+
           return (
             <Card
               key={rowKey}
-              className="border border-white/10 bg-white/5/80 backdrop-blur overflow-hidden"
+              className="border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden"
             >
               <CardContent className="p-0">
                 <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-2">
-                      {mobileVisibleColumns.map(column => (
-                        <div key={column.key} className="flex justify-between items-start gap-2">
-                          <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                            {column.label}:
-                          </span>
-                          <div className="text-sm text-white text-right flex-1 min-w-0">
-                            {renderCellValue(column, row)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-3">
+                    {/* Image - left aligned */}
+                    {imageColumn && (
+                      <div className="flex-shrink-0">{renderCellValue(imageColumn, row)}</div>
+                    )}
 
+                    {/* Name - middle, flexible width */}
+                    {nameColumn && (
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-white font-medium">
+                          {renderCellValue(nameColumn, row)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Buttons - right aligned */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {hiddenColumns.length > 0 && (
                         <Button
@@ -298,7 +304,10 @@ export function EnhancedResortsTable({
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-white/15 backdrop-blur-xl border-white/10"
+                          >
                             {actions.map((action, index) => (
                               <DropdownMenuItem
                                 key={index}
@@ -307,9 +316,9 @@ export function EnhancedResortsTable({
                                   action.onClick(row);
                                 }}
                                 disabled={action.disabled?.(row)}
-                                className={`text-white hover:bg-white/10 ${
+                                className={`text-white hover:bg-white/10 focus:bg-white/10 transition-colors ${
                                   action.variant === 'destructive'
-                                    ? 'text-red-400 hover:text-red-300'
+                                    ? 'text-red-400 hover:bg-red-400/10'
                                     : ''
                                 }`}
                               >
@@ -330,10 +339,8 @@ export function EnhancedResortsTable({
                   <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
                     {hiddenColumns.map(column => (
                       <div key={column.key} className="flex justify-between items-start gap-2">
-                        <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                          {column.label}:
-                        </span>
-                        <div className="text-sm text-white text-right flex-1 min-w-0">
+                        <span className="text-xs text-white/50 font-medium">{column.label}:</span>
+                        <div className="text-sm text-white text-right flex-1">
                           {renderCellValue(column, row)}
                         </div>
                       </div>

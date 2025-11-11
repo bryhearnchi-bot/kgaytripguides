@@ -23,6 +23,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -55,6 +61,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  Filter,
   Home,
   Link,
   Loader2,
@@ -153,6 +160,7 @@ export default function TripsManagement() {
   const [tripToEdit, setTripToEdit] = useState<Trip | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [showSearch, setShowSearch] = useState(false);
 
   const {
     data: allTrips = [],
@@ -574,61 +582,104 @@ export default function TripsManagement() {
   };
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <TreePalm className="h-6 w-6" />
-              Trip Management
-            </h1>
-            <p className="text-sm text-white/60">
-              Manage upcoming, current, and past trips all in one place.
-            </p>
-          </div>
-          <div className="relative w-full md:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <Input
-              value={searchTerm}
-              onChange={event => setSearchTerm(event.target.value)}
-              placeholder="Search voyages by name, ship, or cruise line"
-              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70 focus:ring-0"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
-        <div className="flex flex-wrap items-center gap-2">
-          {statusFilters.map(filter => {
-            const isActive = statusFilter === filter.value;
-            return (
-              <button
-                key={filter.value}
-                onClick={() => setStatusFilter(filter.value as StatusFilter)}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition ${
-                  isActive
-                    ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-900/30'
-                    : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white'
-                }`}
+    <div className="space-y-4">
+      {/* Header Section - no container on mobile */}
+      <div className="flex items-center justify-between px-1">
+        <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
+          <TreePalm className="h-5 w-5 sm:h-6 sm:w-6" />
+          Trip Management
+        </h1>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSearch(!showSearch)}
+            className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+            aria-label="Search trips"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+                aria-label="Filter trips"
               >
-                <span>{filter.label}</span>
-                {typeof filter.count === 'number' && (
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] leading-none text-white/70">
-                    {filter.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                <Filter className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white/15 backdrop-blur-xl border-white/10"
+            >
+              {statusFilters
+                .filter(filter => typeof filter.count === 'number' && filter.count > 0)
+                .map(filter => {
+                  const isActive = statusFilter === filter.value;
+                  return (
+                    <DropdownMenuItem
+                      key={filter.value}
+                      onClick={() => setStatusFilter(filter.value as StatusFilter)}
+                      className={`text-white hover:bg-white/10 focus:bg-white/10 transition-colors ${
+                        isActive ? 'bg-white/20 font-medium' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full gap-3">
+                        <span>{filter.label}</span>
+                        <span className="text-xs text-white/60">{filter.count}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {canCreateOrEditTrips && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsWizardOpen(true)}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Add new trip"
+              title="Add New Trip"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-      </section>
+      </div>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 shadow-2xl shadow-black/40 backdrop-blur">
-        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
+      {/* Search Bar - shown when search button is clicked */}
+      {showSearch && (
+        <div className="relative px-1 animate-in fade-in slide-in-from-top-2 duration-200">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          <Input
+            value={searchTerm}
+            onChange={event => setSearchTerm(event.target.value)}
+            placeholder="Search voyages by name, ship, or cruise line"
+            className="h-11 rounded-full border-white/5 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 focus-visible:ring-offset-0 focus:border-white/20 focus:ring-1 focus:ring-white/10 focus:ring-offset-0 transition-all"
+            autoFocus
+          />
+        </div>
+      )}
+
+      {/* Mobile header - shows current filter */}
+      <div className="sm:hidden px-1 mb-4">
+        <h2 className="text-lg font-semibold text-white">
+          {statusFilters.find(f => f.value === statusFilter)?.label || 'All Trips'}
+        </h2>
+      </div>
+
+      <section className="relative sm:rounded-2xl sm:border sm:border-white/10 sm:bg-white/5 sm:shadow-2xl sm:shadow-black/40 sm:backdrop-blur">
+        <header className="hidden sm:flex flex-col gap-2 border-b border-white/10 px-3 sm:pl-6 sm:pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Trips</h2>
+            <h2 className="text-lg font-semibold text-white">
+              {statusFilters.find(f => f.value === statusFilter)?.label || 'All Trips'}
+            </h2>
           </div>
           {canCreateOrEditTrips && (
             <Button
@@ -644,7 +695,7 @@ export default function TripsManagement() {
         </header>
 
         {showEmpty || showError ? (
-          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+          <div className="flex flex-col items-center justify-center gap-3 px-3 sm:px-6 py-10 sm:py-14 text-white/60">
             {tableEmptyState}
           </div>
         ) : (
@@ -967,7 +1018,7 @@ export default function TripsManagement() {
         )}
 
         {!showEmpty && !showError && (
-          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+          <footer className="flex items-center justify-between sm:border-t sm:border-white/10 px-3 sm:px-6 py-3 sm:py-4">
             <div className="text-xs text-white/50">{tableFooter}</div>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">

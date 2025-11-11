@@ -20,7 +20,8 @@
     margin: 0 !important;
     padding: 0 !important;
     height: 100%;
-    overflow-x: hidden;
+    /* Remove overflow-x from html to fix Safari sticky */
+    /* overflow-x: hidden; */
     /* Solid dark blue background - no gradients */
     background-color: #001a35;
     /* Explicitly declare dark color scheme for Safari */
@@ -480,20 +481,56 @@ img {
 }
 
 /* Optimize fixed/sticky positioned elements */
-/* EXCLUDE dialogs and modals to prevent breaking centering transforms */
-.fixed:not([role='dialog']):not([data-radix-dialog-content]):not([data-radix-alert-dialog-content]),
+/* EXCLUDE dialogs, modals, AND admin headers to prevent breaking centering transforms and sticky positioning */
+.fixed:not([role='dialog']):not([data-radix-dialog-content]):not(
+    [data-radix-alert-dialog-content]
+  ):not(.safari-sticky-header),
 .sticky:not([role='dialog']):not([data-radix-dialog-content]):not(
     [data-radix-alert-dialog-content]
-  ),
+  ):not(.safari-sticky-header),
 [class*='fixed']:not([role='dialog']):not([data-radix-dialog-content]):not(
     [data-radix-alert-dialog-content]
-  ),
+  ):not(.safari-sticky-header),
 [class*='sticky']:not([role='dialog']):not([data-radix-dialog-content]):not(
     [data-radix-alert-dialog-content]
-  ) {
+  ):not(.safari-sticky-header) {
   /* Promote to own layer for better performance */
   will-change: transform;
   transform: translateZ(0);
+}
+
+/* Safari-compatible sticky header */
+.safari-sticky-header {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  transform: none !important;
+  will-change: auto !important;
+  -webkit-transform: none !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+}
+
+/* Safari mobile specific fixes for sticky containers */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari sticky fix */
+  .sticky,
+  .safari-sticky-header {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+  }
+
+  /* Ensure body allows sticky on iOS */
+  body {
+    position: relative;
+    overflow-x: clip; /* Use clip instead of hidden for iOS Safari */
+  }
+
+  /* Parent container fixes for Safari mobile */
+  .safari-sticky-container {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    overflow: visible !important;
+  }
 }
 
 /* Rainbow gradient animation for featured trips */
@@ -510,4 +547,14 @@ img {
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 3s ease infinite;
+}
+
+/* Hide scrollbars while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
 }

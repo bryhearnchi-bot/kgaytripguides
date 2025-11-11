@@ -195,8 +195,8 @@ export function registerMediaRoutes(app: Express) {
         search = '',
         categoryId,
         category, // Accept category name for backward compatibility
-        limit = '50',
-        offset = '0',
+        limit,
+        offset,
       } = req.query;
 
       const supabaseAdmin = getSupabaseAdmin();
@@ -228,13 +228,24 @@ export function registerMediaRoutes(app: Express) {
         query = query.eq('talent_categories.category', category as string);
       }
 
-      // Apply pagination and ordering
-      const { data: results, error } = await query
-        .order('name', { ascending: true })
-        .range(
+      // Apply ordering
+      query = query.order('name', { ascending: true });
+
+      // Apply pagination only if limit is specified
+      let results, error;
+      if (limit && offset !== undefined) {
+        const response = await query.range(
           parseInt(offset as string),
           parseInt(offset as string) + parseInt(limit as string) - 1
         );
+        results = response.data;
+        error = response.error;
+      } else {
+        // Return all results when no pagination is specified
+        const response = await query;
+        results = response.data;
+        error = response.error;
+      }
 
       if (error) {
         logger.error('Error fetching talent:', error, {
