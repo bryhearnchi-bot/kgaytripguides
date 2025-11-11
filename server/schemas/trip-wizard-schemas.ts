@@ -60,6 +60,7 @@ export const tripWizardSchema = z
     endDate: z.string().min(1, 'End date is required'),
     heroImageUrl: z.string().optional(),
     mapUrl: z.string().optional(),
+    bookingUrl: z.string().optional(),
     description: z.string().optional(),
     highlights: z.string().optional(),
 
@@ -109,6 +110,7 @@ export const tripDraftSchema = z.object({
     endDate: z.string().optional().nullable(),
     heroImageUrl: z.string().optional().nullable(),
     mapUrl: z.string().optional().nullable(),
+    bookingUrl: z.string().optional().nullable(),
     description: z.string().optional().nullable(),
     highlights: z.string().optional().nullable(),
   }),

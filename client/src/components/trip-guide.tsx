@@ -15,6 +15,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   Share2,
+  User as UserIcon,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
+import Settings from '@/pages/settings';
 
 interface TripGuideProps {
   slug?: string;
@@ -55,7 +57,7 @@ export default function TripGuide({
 }: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
   const { toast } = useToast();
-  const { profile } = useSupabaseAuth();
+  const { profile, user } = useSupabaseAuth();
   const haptics = useHaptics();
   const { shareTrip } = useShare();
   const [internalActiveTab, setInternalActiveTab] = useState('overview');
@@ -203,8 +205,9 @@ export default function TripGuide({
     return status;
   }, [tripData?.trip?.startDate, tripData?.trip?.endDate]);
 
-  // Check if user can edit trips (super_admin or content_manager)
-  const canEditTrip = profile?.role && ['super_admin', 'content_manager'].includes(profile.role);
+  // Check if user can edit trips (super_admin, content_manager, or admin)
+  const canEditTrip =
+    profile?.role && ['super_admin', 'content_manager', 'admin'].includes(profile.role);
 
   // Use the scheduled daily hook
   const SCHEDULED_DAILY = useScheduledDaily({ DAILY, tripStatus });
@@ -451,11 +454,20 @@ export default function TripGuide({
     <div className="min-h-screen w-full relative">
       {isDragStarsCruise ? (
         /* Cosmic Aurora - Dragstar Cruise Only */
-        <div className="absolute inset-0 z-0 bg-[#002147]" />
+        <>
+          <div className="absolute inset-0 z-0 bg-[#002147]" />
+          <div className="absolute inset-0 z-[1] bg-black/30 pointer-events-none" />
+        </>
       ) : isHalloweenCruise ? (
         /* Halloween Cruise - Solid Color */
-        <div className="absolute inset-0 z-0 bg-[#002147]" />
-      ) : null}
+        <>
+          <div className="absolute inset-0 z-0 bg-[#002147]" />
+          <div className="absolute inset-0 z-[1] bg-black/30 pointer-events-none" />
+        </>
+      ) : (
+        /* Default - Black overlay only (Oxford Blue comes from App.tsx) */
+        <div className="absolute inset-0 z-0 bg-black/30 pointer-events-none" />
+      )}
 
       {/* Content Layer */}
       <div className="relative z-10">
@@ -627,6 +639,31 @@ export default function TripGuide({
                   <span className="hidden sm:inline">Information</span>
                   {activeTab === 'info' && <span className="sm:hidden">Information</span>}
                 </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('settings');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'settings'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="Settings"
+                >
+                  <UserIcon
+                    className={cn(
+                      'w-4 h-4 flex-shrink-0',
+                      activeTab === 'settings' && user
+                        ? 'fill-ocean-900 stroke-ocean-900'
+                        : user
+                          ? 'fill-blue-600 stroke-blue-600'
+                          : ''
+                    )}
+                  />
+                  <span className="hidden sm:inline">Settings</span>
+                  {activeTab === 'settings' && <span className="sm:hidden">Settings</span>}
+                </button>
               </div>
             </div>
           )}
@@ -706,6 +743,10 @@ export default function TripGuide({
 
             <TabsContent value="info">
               <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} tripId={tripData?.trip?.id} />
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <Settings showEditTrip={canEditTrip} onEditTrip={() => setShowEditModal(true)} />
             </TabsContent>
           </Tabs>
         </StandardizedContentLayout>

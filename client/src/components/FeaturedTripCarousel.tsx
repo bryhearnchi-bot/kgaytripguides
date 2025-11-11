@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CalendarDays, Ship, MapPin, Clock, Home } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Ship,
+  MapPin,
+  Clock,
+  Home,
+  Bookmark,
+  Info,
+} from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
 import { getTripButtonText } from '@/lib/tripUtils';
+import { useLocation } from 'wouter';
 
 interface Trip {
   id: number;
@@ -60,20 +72,25 @@ function getTripStatusBadge(startDate: Date, endDate: Date, status: string) {
 
 interface FeaturedTripCarouselProps {
   trips: Trip[];
-  onOpenFlyUp: (slug: string) => void;
 }
 
 // Regular TripCard component for mobile view
-function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: string) => void }) {
+function TripCard({ trip }: { trip: Trip }) {
+  const [, setLocation] = useLocation();
   const startDate = dateOnly(trip.startDate);
   const endDate = dateOnly(trip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);
   const statusBadge = getTripStatusBadge(startDate, endDate, trip.status);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const daysUntilStart = differenceInCalendarDays(startDate, now);
+  const isPastTrip = now > endDate;
+  const showBookButton = daysUntilStart >= 10 && !isPastTrip;
 
   return (
     <div className="rounded-2xl p-[2px] bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 shadow-[0_0_20px_rgba(255,0,255,0.5)] animate-gradient-x">
       <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
-        <div onClick={() => onOpenFlyUp(trip.slug)} className="cursor-pointer">
+        <div onClick={() => setLocation(`/trip/${trip.slug}`)} className="cursor-pointer">
           <div className="relative h-48 overflow-hidden">
             <img
               src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
@@ -156,21 +173,84 @@ function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: strin
             )}
           </div>
 
-          <Button
-            onClick={() => onOpenFlyUp(trip.slug)}
-            className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
-          >
-            {getTripButtonText(trip.tripType)}
-          </Button>
+          {showBookButton ? (
+            <TooltipProvider>
+              <div className="grid grid-cols-3 gap-2">
+                {trip.bookingUrl ? (
+                  <Button
+                    onClick={e => {
+                      e.stopPropagation();
+                      window.open(trip.bookingUrl, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
+                    style={{
+                      padding: '8px 16px',
+                      minHeight: 'auto',
+                      height: 'auto',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    <Info className="w-3.5 h-3.5 mr-1" />
+                    Book
+                  </Button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={e => {
+                          e.stopPropagation();
+                        }}
+                        disabled
+                        className="bg-orange-500/10 backdrop-blur-lg text-orange-400 font-medium rounded-lg transition-all text-sm border border-orange-500/30 opacity-50 cursor-not-allowed"
+                        style={{
+                          padding: '8px 16px',
+                          minHeight: 'auto',
+                          height: 'auto',
+                          lineHeight: '1.2',
+                        }}
+                      >
+                        <Info className="w-3.5 h-3.5 mr-1" />
+                        Book
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">Booking not yet available</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Button
+                  onClick={() => setLocation(`/trip/${trip.slug}`)}
+                  className="col-span-2 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-lg transition-all text-sm"
+                  style={{
+                    padding: '8px 16px',
+                    minHeight: 'auto',
+                    height: 'auto',
+                    lineHeight: '1.2',
+                  }}
+                >
+                  View Trip Guide →
+                </Button>
+              </div>
+            </TooltipProvider>
+          ) : (
+            <Button
+              onClick={() => setLocation(`/trip/${trip.slug}`)}
+              className="w-full bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-lg transition-all text-sm"
+              style={{ padding: '8px 16px', minHeight: 'auto', height: 'auto', lineHeight: '1.2' }}
+            >
+              {getTripButtonText(trip.tripType)} →
+            </Button>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export function FeaturedTripCarousel({ trips, onOpenFlyUp }: FeaturedTripCarouselProps) {
+export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Auto-advance every 7 seconds
   useEffect(() => {
@@ -204,12 +284,17 @@ export function FeaturedTripCarousel({ trips, onOpenFlyUp }: FeaturedTripCarouse
   const endDate = dateOnly(currentTrip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);
   const statusBadge = getTripStatusBadge(startDate, endDate, currentTrip.status);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const daysUntilStart = differenceInCalendarDays(startDate, now);
+  const isPastTrip = now > endDate;
+  const showBookButton = daysUntilStart >= 10 && !isPastTrip;
 
   return (
     <div>
       {/* Mobile: Show regular TripCard (below sm breakpoint - 640px) */}
       <div className="sm:hidden">
-        <TripCard trip={currentTrip} onOpenFlyUp={onOpenFlyUp} />
+        <TripCard trip={currentTrip} />
         {/* Dot Indicators for Mobile */}
         {trips.length > 1 && (
           <div className="flex justify-center gap-2 mt-5">
@@ -351,12 +436,79 @@ export function FeaturedTripCarousel({ trips, onOpenFlyUp }: FeaturedTripCarouse
                 </div>
 
                 {/* CTA Button */}
-                <Button
-                  onClick={() => onOpenFlyUp(currentTrip.slug)}
-                  className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl text-sm"
-                >
-                  {getTripButtonText(currentTrip.tripType)} →
-                </Button>
+                {showBookButton ? (
+                  <TooltipProvider>
+                    <div className="grid grid-cols-3 gap-2">
+                      {currentTrip.bookingUrl ? (
+                        <Button
+                          onClick={e => {
+                            e.stopPropagation();
+                            window.open(currentTrip.bookingUrl, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
+                          style={{
+                            padding: '8px 16px',
+                            minHeight: 'auto',
+                            height: 'auto',
+                            lineHeight: '1.2',
+                          }}
+                        >
+                          <Info className="w-3.5 h-3.5 mr-1" />
+                          Book
+                        </Button>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              onClick={e => {
+                                e.stopPropagation();
+                              }}
+                              disabled
+                              className="bg-orange-500/10 backdrop-blur-lg text-orange-400 font-medium rounded-lg transition-all text-sm border border-orange-500/30 opacity-50 cursor-not-allowed"
+                              style={{
+                                padding: '8px 16px',
+                                minHeight: 'auto',
+                                height: 'auto',
+                                lineHeight: '1.2',
+                              }}
+                            >
+                              <Info className="w-3.5 h-3.5 mr-1" />
+                              Book
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-sm">Booking not yet available</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Button
+                        onClick={() => setLocation(`/trip/${currentTrip.slug}`)}
+                        className="col-span-2 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-lg transition-all text-sm"
+                        style={{
+                          padding: '8px 16px',
+                          minHeight: 'auto',
+                          height: 'auto',
+                          lineHeight: '1.2',
+                        }}
+                      >
+                        View Trip Guide →
+                      </Button>
+                    </div>
+                  </TooltipProvider>
+                ) : (
+                  <Button
+                    onClick={() => setLocation(`/trip/${currentTrip.slug}`)}
+                    className="w-full bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl text-sm"
+                    style={{
+                      padding: '8px 16px',
+                      minHeight: 'auto',
+                      height: 'auto',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    {getTripButtonText(currentTrip.tripType)} →
+                  </Button>
+                )}
               </div>
             </div>
           </div>

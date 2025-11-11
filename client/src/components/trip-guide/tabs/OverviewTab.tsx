@@ -65,6 +65,15 @@ export const OverviewTab = memo(function OverviewTab({
     setIsShipExpanded(prev => !prev);
   };
 
+  // Calculate booking button visibility
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const startDate = tripData?.trip?.startDate ? dateOnly(tripData.trip.startDate) : null;
+  const endDate = tripData?.trip?.endDate ? dateOnly(tripData.trip.endDate) : null;
+  const daysUntilStart = startDate ? differenceInCalendarDays(startDate, now) : 0;
+  const isPastTrip = endDate ? now > endDate : false;
+  const showBookButton = tripData?.trip?.bookingUrl && daysUntilStart >= 10 && !isPastTrip;
+
   // Get embarkation info from first stop
   const embarkationStop = ITINERARY[0];
 
@@ -145,6 +154,29 @@ export const OverviewTab = memo(function OverviewTab({
         endDate={tripData?.trip?.endDate}
         itinerary={ITINERARY || []}
       />
+
+      {/* Book Button - Below carousel, before Overview header */}
+      {showBookButton && (
+        <div className="max-w-6xl mx-auto px-4 mb-3 md:mt-3 flex justify-center">
+          <button
+            onClick={() => window.open(tripData.trip.bookingUrl, '_blank', 'noopener,noreferrer')}
+            className="w-full bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
+            style={{
+              padding: '8px 16px',
+              minHeight: 'auto',
+              height: 'auto',
+              lineHeight: '1.2',
+              maxWidth: '390px',
+            }}
+          >
+            <Info
+              className="w-3.5 h-3.5 mr-1"
+              style={{ display: 'inline-block', verticalAlign: 'middle' }}
+            />
+            Click Here for Booking Info
+          </button>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto">
         <TabHeader icon={LayoutDashboard} title="Overview" iconColor="text-blue-400" />

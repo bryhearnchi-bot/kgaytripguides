@@ -1,4 +1,4 @@
-import React, { memo, useState, useMemo } from 'react';
+import React, { memo, useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Info,
@@ -48,6 +48,14 @@ interface InfoTabProps {
 export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTabProps) {
   const [subTab, setSubTab] = useState<'info' | 'faq'>('info');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Scroll to top when sub-tab changes
+  useEffect(() => {
+    // Try multiple methods to ensure scrolling works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [subTab]);
 
   // Fetch FAQs
   const {
@@ -425,7 +433,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
                 subTab === 'faq'
                   ? 'bg-white/20 text-cyan-400 border border-white/30'
-                  : 'text-cyan-400 hover:text-cyan-300 hover:bg-white/5'
+                  : 'text-cyan-400 hover:text-cyan-300 hover:bg-white/5 border border-cyan-400'
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />

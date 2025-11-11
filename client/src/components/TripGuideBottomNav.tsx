@@ -7,8 +7,10 @@ import {
   Info,
   HelpCircle,
   LayoutDashboard,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 interface TripGuideBottomNavProps {
   activeTab: string;
@@ -17,6 +19,8 @@ interface TripGuideBottomNavProps {
 }
 
 export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGuideBottomNavProps) {
+  const { user } = useSupabaseAuthContext();
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[10001] xl:hidden pointer-events-none">
       <div
@@ -114,6 +118,33 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
               )}
             >
               Info
+            </span>
+          </button>
+          <button
+            onClick={() => onTabChange('settings')}
+            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+              activeTab === 'settings' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
+            }`}
+            aria-label="Settings"
+          >
+            <User
+              className={cn(
+                'w-4 h-4 flex-shrink-0',
+                activeTab === 'settings' && user
+                  ? 'fill-black stroke-black'
+                  : user
+                    ? 'fill-blue-600 stroke-blue-600'
+                    : ''
+              )}
+            />
+            <span
+              className={cn(
+                'animate-in fade-in slide-in-from-left-2 duration-200',
+                'hidden md:inline',
+                activeTab === 'settings' && 'inline md:inline'
+              )}
+            >
+              Settings
             </span>
           </button>
         </nav>

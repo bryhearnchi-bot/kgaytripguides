@@ -2,8 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { InfoSectionCard } from './InfoSectionCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 interface InfoSection {
   id: number;
@@ -53,23 +52,21 @@ export function InfoSectionsBentoGrid({ tripId }: InfoSectionsBentoGridProps) {
 
   if (error) {
     return (
-      <Alert className="border-red-500/50 bg-red-500/10">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error loading trip information</AlertTitle>
-        <AlertDescription>
-          Unable to load trip information sections. Please try again later.
-        </AlertDescription>
-      </Alert>
+      <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+        <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-white mb-2">Failed to load information</h3>
+        <p className="text-white/70">Please try refreshing the page</p>
+      </div>
     );
   }
 
   if (!sections || sections.length === 0) {
     return (
-      <Alert className="border-blue-500/50 bg-blue-500/10">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>No information available</AlertTitle>
-        <AlertDescription>There are no information sections for this trip yet.</AlertDescription>
-      </Alert>
+      <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+        <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-white mb-2">No information available</h3>
+        <p className="text-white/70">Check back later for additional trip information</p>
+      </div>
     );
   }
 

@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'wouter';
-import { TreePalm, History, Star, Bell, User, RefreshCw } from 'lucide-react';
+import { TreePalm, History, Star, Bell, User, RefreshCw, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useUpdate } from '@/context/UpdateContext';
 import { useState } from 'react';
+import { useShare } from '@/hooks/useShare';
+import { useToast } from '@/hooks/use-toast';
 import {
   Sheet,
   SheetContent,
@@ -18,10 +20,12 @@ import Settings from '@/pages/settings';
 
 export default function NavigationBanner() {
   const [currentLocation, setLocation] = useLocation();
-  const { user } = useSupabaseAuthContext();
+  const { user, profile } = useSupabaseAuthContext();
   const { updateAvailable, isChecking, checkForUpdates, applyUpdate } = useUpdate();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { shareContent } = useShare();
+  const { toast } = useToast();
 
   // Determine active tab based on current location
   const getActiveTab = () => {
@@ -65,6 +69,41 @@ export default function NavigationBanner() {
       // Check for updates manually
       await checkForUpdates();
     }
+  };
+
+  const handleShareClick = async () => {
+    const siteUrl = window.location.origin.includes('localhost')
+      ? window.location.origin
+      : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
+
+    try {
+      await shareContent({
+        title: 'KGay Travel Guides',
+        text: 'Check out these amazing LGBTQ+ travel guides!',
+        url: siteUrl,
+        dialogTitle: 'Share KGay Travel Guides',
+      });
+    } catch (error) {
+      // If share fails, copy to clipboard
+      try {
+        await navigator.clipboard.writeText(siteUrl);
+        toast({
+          title: 'Link copied!',
+          description: 'App link copied to clipboard',
+        });
+      } catch (clipboardError) {
+        console.error('Failed to share or copy:', error, clipboardError);
+      }
+    }
+  };
+
+  const handleNavigateFromSheet = (path: string) => {
+    // Close the Sheet first
+    setSettingsOpen(false);
+    // Then navigate after a brief delay to allow Sheet to close
+    setTimeout(() => {
+      setLocation(path);
+    }, 100);
   };
 
   return (
@@ -119,6 +158,19 @@ export default function NavigationBanner() {
               {updateAvailable && !isChecking && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               )}
+            </button>
+
+            {/* Share Button - Hidden on desktop */}
+            <button
+              onClick={handleShareClick}
+              className={cn(
+                'h-10 w-10 rounded-full text-white transition-colors xl:hidden',
+                'hover:bg-white/10 active:bg-white/20',
+                'flex items-center justify-center'
+              )}
+              title="Share KGay Travel Guides"
+            >
+              <Share2 className="w-5 h-5" />
             </button>
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
@@ -232,7 +284,7 @@ export default function NavigationBanner() {
               <SheetDescription>Manage your preferences and account settings</SheetDescription>
             </VisuallyHidden>
             <div className="-mt-16">
-              <Settings />
+              <Settings onNavigate={handleNavigateFromSheet} />
             </div>
           </SheetContent>
         </SheetPortal>

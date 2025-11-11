@@ -91,6 +91,8 @@ interface Trip {
   status: 'upcoming' | 'ongoing' | 'past' | 'archived' | 'draft' | 'preview';
   tripTypeId?: number;
   heroImageUrl?: string;
+  mapUrl?: string;
+  bookingUrl?: string;
   guestCount?: number;
   ports?: number;
   eventsCount?: number;

@@ -43,6 +43,14 @@ export const ScheduleTab = memo(function ScheduleTab({
   const [partyThemes, setPartyThemes] = useState<any[]>([]);
   const [isLoadingThemes, setIsLoadingThemes] = useState(false);
 
+  // Scroll to top when sub-tab changes
+  useEffect(() => {
+    // Try multiple methods to ensure scrolling works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [subTab]);
+
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
     let filteredScheduledDaily = SCHEDULED_DAILY;
@@ -146,7 +154,7 @@ export const ScheduleTab = memo(function ScheduleTab({
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
                 subTab === 'parties'
                   ? 'bg-pink-500/30 text-white border border-pink-400/50'
-                  : 'text-pink-300 hover:text-pink-200 hover:bg-pink-500/10 border border-transparent'
+                  : 'text-pink-300 hover:text-pink-200 hover:bg-white/5 border border-pink-300'
               }`}
             >
               <PartyPopper className="w-3.5 h-3.5" />

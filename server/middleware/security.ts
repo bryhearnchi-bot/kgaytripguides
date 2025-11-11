@@ -126,6 +126,11 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    // Skip rate limiting in development mode to avoid issues with hot reloading
+    if (process.env.NODE_ENV === 'development') {
+      return next();
+    }
+
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
     const key = `${ip}:${req.path}`;

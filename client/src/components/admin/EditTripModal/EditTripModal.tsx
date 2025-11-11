@@ -150,6 +150,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
             endDate: formatDate(trip.endDate),
             heroImageUrl: trip.heroImageUrl || '',
             mapUrl: trip.mapUrl || '',
+            bookingUrl: trip.bookingUrl || '',
             description: trip.description || '',
             highlights: Array.isArray(trip.highlights)
               ? trip.highlights.join('\n')
@@ -226,6 +227,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         endDate: state.tripData.endDate,
         heroImageUrl: state.tripData.heroImageUrl || undefined,
         mapUrl: state.tripData.mapUrl || undefined,
+        bookingUrl: state.tripData.bookingUrl || undefined,
         description: state.tripData.description || undefined,
         highlights: state.tripData.highlights || undefined,
       };

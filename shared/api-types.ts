@@ -23,6 +23,7 @@ export interface Trip {
   featuredImage?: string;
   maxCapacity?: number;
   currentBookings?: number;
+  bookingUrl?: string;
   metadata?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
@@ -198,6 +199,7 @@ export interface CreateTripRequest {
   featuredImage?: string;
   maxCapacity?: number;
   currentBookings?: number;
+  bookingUrl?: string;
   metadata?: Record<string, any>;
 }
 
@@ -215,6 +217,7 @@ export interface UpdateTripRequest {
   featuredImage?: string;
   maxCapacity?: number;
   currentBookings?: number;
+  bookingUrl?: string;
   metadata?: Record<string, any>;
 }
 

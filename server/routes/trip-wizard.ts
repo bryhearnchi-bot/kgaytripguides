@@ -124,6 +124,7 @@ async function createCompleteTrip(supabase: any, tripData: TripWizardData, userI
         end_date: tripData.endDate,
         hero_image_url: tripData.heroImageUrl || null,
         map_url: tripData.mapUrl || null,
+        booking_url: tripData.bookingUrl || null,
         description: tripData.description || null,
         highlights: tripData.highlights || null,
         ship_id: shipId,
@@ -312,6 +313,9 @@ export function registerTripWizardRoutes(app: Express) {
           userId,
           tripName: tripData.name,
           tripId,
+          bookingUrl: tripData.bookingUrl,
+          mapUrl: tripData.mapUrl,
+          heroImageUrl: tripData.heroImageUrl,
         });
 
         // Update the main trip record
@@ -326,6 +330,7 @@ export function registerTripWizardRoutes(app: Express) {
             end_date: tripData.endDate,
             hero_image_url: tripData.heroImageUrl || null,
             map_url: tripData.mapUrl || null,
+            booking_url: tripData.bookingUrl || null,
             description: tripData.description || null,
             highlights: tripData.highlights || null,
             ship_id: tripData.shipId || null,

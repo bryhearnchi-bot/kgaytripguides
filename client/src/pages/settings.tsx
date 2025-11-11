@@ -23,9 +23,22 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export default function Settings() {
+interface SettingsProps {
+  showEditTrip?: boolean;
+  onEditTrip?: () => void;
+  onNavigate?: (path: string) => void;
+}
+
+export default function Settings({
+  showEditTrip: showEditTripProp,
+  onEditTrip,
+  onNavigate,
+}: SettingsProps = {}) {
   const [, setLocation] = useLocation();
-  const [showEditTrip, setShowEditTrip] = useState(false);
+  const [showEditTripFromEvent, setShowEditTripFromEvent] = useState(false);
+
+  // Use prop if provided, otherwise use event-based state
+  const showEditTrip = showEditTripProp !== undefined ? showEditTripProp : showEditTripFromEvent;
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -93,10 +106,10 @@ export default function Settings() {
     };
   }, []);
 
-  // Listen for edit trip availability from TripGuide component
+  // Listen for edit trip availability from TripGuide component (for event-based mode)
   useEffect(() => {
     const handleEditTripAvailable = (e: CustomEvent) => {
-      setShowEditTrip(e.detail.available);
+      setShowEditTripFromEvent(e.detail.available);
     };
 
     window.addEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
@@ -107,7 +120,12 @@ export default function Settings() {
   }, []);
 
   const handleEditTrip = () => {
-    window.dispatchEvent(new CustomEvent('request-edit-trip'));
+    // Use prop callback if provided, otherwise use event system
+    if (onEditTrip) {
+      onEditTrip();
+    } else {
+      window.dispatchEvent(new CustomEvent('request-edit-trip'));
+    }
   };
 
   const handleLogout = async () => {
@@ -120,13 +138,25 @@ export default function Settings() {
   };
 
   const handleNavigate = (path: string) => {
-    setLocation(path);
+    // Use callback if provided (Sheet mode), otherwise navigate normally
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      setLocation(path);
+    }
   };
 
   const handleLoginClick = () => {
-    // Store current location (settings) to return after login
-    sessionStorage.setItem('login-return-url', '/settings');
-    handleNavigate('/admin');
+    // Only set return URL if we're on the standalone settings page, not in a trip page Sheet
+    if (onNavigate) {
+      // In Sheet mode - don't set return URL, user will stay on current page
+      // The onNavigate callback will close the Sheet and navigate
+      handleNavigate('/admin');
+    } else {
+      // Standalone settings page - return here after login
+      sessionStorage.setItem('login-return-url', '/settings');
+      handleNavigate('/admin');
+    }
   };
 
   const handleTimeFormatToggle = () => {
@@ -170,7 +200,7 @@ export default function Settings() {
 
   return (
     <>
-      <div className="min-h-screen text-white pt-16 pb-24">
+      <div className="min-h-screen text-white">
         <div className="max-w-2xl mx-auto px-4">
           {/* Header */}
           <div className="mt-6 mb-8">
@@ -232,7 +262,9 @@ export default function Settings() {
                   )}
 
                   {showEditTrip &&
-                    (profile?.role === 'super_admin' || profile?.role === 'content_manager') && (
+                    (profile?.role === 'super_admin' ||
+                      profile?.role === 'content_manager' ||
+                      profile?.role === 'admin') && (
                       <button
                         onClick={handleEditTrip}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left"

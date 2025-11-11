@@ -14,6 +14,7 @@ interface TripData {
   endDate: string;
   heroImageUrl: string;
   mapUrl: string;
+  bookingUrl?: string;
   description: string;
   highlights: string;
 }

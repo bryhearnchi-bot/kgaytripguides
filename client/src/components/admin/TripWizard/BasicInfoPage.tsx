@@ -399,6 +399,18 @@ export function BasicInfoPage() {
             </p>
           </div>
 
+          {/* Booking URL */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-white/90">Booking URL</label>
+            <Input
+              placeholder="https://example.com/booking"
+              value={state.tripData.bookingUrl || ''}
+              onChange={e => updateTripData({ bookingUrl: e.target.value })}
+              className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+            />
+            <p className="text-[10px] text-white/50 mt-0.5">URL where users can book this trip</p>
+          </div>
+
           {/* Description */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-white/90">Description *</label>

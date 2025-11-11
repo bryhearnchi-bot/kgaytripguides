@@ -13,6 +13,22 @@ export default function TripPage() {
   // Only run hooks if we have a valid match and slug
   const slug = match && params?.slug ? params.slug : '';
 
+  // Ensure body is scrollable (in case it got stuck from modal)
+  useEffect(() => {
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+  }, []);
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    // Try multiple methods to ensure scrolling works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab]);
+
   // Inject trip-specific metadata and PWA manifest
   useTripMetadata(slug);
 
@@ -141,6 +157,9 @@ export default function TripPage() {
         tripType={isCruise ? 'cruise' : 'resort'}
         tripSlug={slug}
         tripName={tripData?.trip?.name}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isCruise={isCruise}
       />
 
       <TripGuide

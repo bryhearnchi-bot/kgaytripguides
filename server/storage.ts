@@ -129,6 +129,7 @@ export class TripStorage implements ITripStorage {
       heroImageUrl: dbTrip.hero_image_url,
       mapUrl: dbTrip.map_url,
       description: dbTrip.description,
+      bookingUrl: dbTrip.booking_url,
       highlights: dbTrip.highlights,
       wizardState: dbTrip.wizard_state,
       wizardCurrentPage: dbTrip.wizard_current_page,

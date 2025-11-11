@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Trip } from '@/types/trip';
@@ -7,18 +7,17 @@ import { format, differenceInCalendarDays } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
 import { getTripButtonText } from '@/lib/tripUtils';
 import { Button } from '@/components/ui/button';
-import { FlyUpMenu } from '@/components/ui/FlyUpMenu';
-import TripGuide from '@/components/trip-guide';
-import { TripGuideBottomNav } from '@/components/TripGuideBottomNav';
+import { useLocation } from 'wouter';
 
-function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: string) => void }) {
+function TripCard({ trip }: { trip: Trip }) {
+  const [, setLocation] = useLocation();
   const startDate = dateOnly(trip.startDate);
   const endDate = dateOnly(trip.endDate);
   const tripDuration = differenceInCalendarDays(endDate, startDate);
 
   return (
     <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
-      <div onClick={() => onOpenFlyUp(trip.slug)} className="cursor-pointer">
+      <div onClick={() => setLocation(`/trip/${trip.slug}`)} className="cursor-pointer">
         <div className="relative h-48 overflow-hidden">
           <img
             src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
@@ -90,10 +89,11 @@ function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: strin
         </div>
 
         <Button
-          onClick={() => onOpenFlyUp(trip.slug)}
-          className="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
+          onClick={() => setLocation(`/trip/${trip.slug}`)}
+          className="w-full bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl text-sm"
+          style={{ padding: '8px 16px', minHeight: 'auto', height: 'auto', lineHeight: '1.2' }}
         >
-          {getTripButtonText(trip.tripType)}
+          {getTripButtonText(trip.tripType)} →
         </Button>
       </div>
     </div>
@@ -101,26 +101,13 @@ function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: strin
 }
 
 export default function PastTrips() {
-  const [flyUpOpen, setFlyUpOpen] = useState(false);
-  const [selectedTripSlug, setSelectedTripSlug] = useState<string | null>(null);
-  const [tripGuideActiveTab, setTripGuideActiveTab] = useState('overview');
-
-  // Handler to open trip in fly-up menu
-  const handleOpenFlyUp = (slug: string) => {
-    setSelectedTripSlug(slug);
-    setTripGuideActiveTab('overview'); // Reset to overview tab
-    setFlyUpOpen(true);
-  };
-
-  // Handler to close fly-up
-  const handleCloseFlyUp = () => {
-    setFlyUpOpen(false);
-    // Small delay before clearing slug to allow animation to complete
-    setTimeout(() => {
-      setSelectedTripSlug(null);
-      setTripGuideActiveTab('overview');
-    }, 200);
-  };
+  // Ensure body is scrollable (in case it got stuck from modal)
+  useEffect(() => {
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+  }, []);
 
   const { data: trips, isLoading } = useQuery<Trip[]>({
     queryKey: ['trips'],
@@ -149,9 +136,6 @@ export default function PastTrips() {
         return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
       });
   }, [trips]);
-
-  // Get selected trip data for fly-up header
-  const selectedTrip = trips?.find(trip => trip.slug === selectedTripSlug);
 
   if (isLoading) {
     return (
@@ -226,39 +210,11 @@ export default function PastTrips() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
             {pastTrips.map(trip => (
-              <TripCard key={trip.id} trip={trip} onOpenFlyUp={handleOpenFlyUp} />
+              <TripCard key={trip.id} trip={trip} />
             ))}
           </div>
         )}
       </div>
-
-      {/* Full-page fly-up menu for trip guide */}
-      <FlyUpMenu
-        open={flyUpOpen}
-        onOpenChange={open => {
-          if (!open) handleCloseFlyUp();
-        }}
-        variant="full"
-        charterCompanyLogo={selectedTrip?.charterCompanyLogo}
-        charterCompanyName={selectedTrip?.charterCompanyName}
-        tripType={selectedTrip?.tripTypeId === 2 ? 'resort' : 'cruise'}
-        bottomNavigation={
-          <TripGuideBottomNav
-            activeTab={tripGuideActiveTab}
-            onTabChange={setTripGuideActiveTab}
-            isCruise={selectedTrip?.tripTypeId !== 2}
-          />
-        }
-      >
-        {selectedTripSlug && (
-          <TripGuide
-            slug={selectedTripSlug}
-            showBottomNav={true}
-            activeTab={tripGuideActiveTab}
-            onTabChange={setTripGuideActiveTab}
-          />
-        )}
-      </FlyUpMenu>
     </div>
   );
 }
