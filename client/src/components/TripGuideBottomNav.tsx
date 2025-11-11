@@ -43,39 +43,41 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
             </span>
           </button>
           <button
-            onClick={() => onTabChange('schedule')}
+            onClick={() => onTabChange('itinerary')}
             className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'schedule' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
+              activeTab === 'itinerary'
+                ? 'bg-white/60 text-black'
+                : 'text-black hover:text-black/80'
             }`}
-            aria-label="Schedule"
+            aria-label="Itinerary"
           >
             <Map className="w-4 h-4 flex-shrink-0" />
             <span
               className={cn(
                 'animate-in fade-in slide-in-from-left-2 duration-200',
                 'hidden md:inline',
-                activeTab === 'schedule' && 'inline md:inline'
+                activeTab === 'itinerary' && 'inline md:inline'
               )}
             >
-              Schedule
+              Itinerary
             </span>
           </button>
           <button
-            onClick={() => onTabChange('parties')}
+            onClick={() => onTabChange('events')}
             className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'parties' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
+              activeTab === 'events' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
             }`}
-            aria-label="Parties"
+            aria-label="Events"
           >
-            <PartyPopper className="w-4 h-4 flex-shrink-0" />
+            <CalendarDays className="w-4 h-4 flex-shrink-0" />
             <span
               className={cn(
                 'animate-in fade-in slide-in-from-left-2 duration-200',
                 'hidden md:inline',
-                activeTab === 'parties' && 'inline md:inline'
+                activeTab === 'events' && 'inline md:inline'
               )}
             >
-              Parties
+              Events
             </span>
           </button>
           <button

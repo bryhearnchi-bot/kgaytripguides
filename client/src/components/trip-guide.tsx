@@ -35,8 +35,8 @@ import { useLocalStorage } from './trip-guide/hooks/useLocalStorage';
 import { useScheduledDaily } from './trip-guide/hooks/useScheduledDaily';
 import { OverviewTab } from './trip-guide/tabs/OverviewTab';
 import { ScheduleTab } from './trip-guide/tabs/ScheduleTab';
+import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
-import { PartiesTab } from './trip-guide/tabs/PartiesTab';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
 
@@ -566,34 +566,34 @@ export default function TripGuide({
                 <button
                   onClick={() => {
                     haptics.light();
-                    setActiveTab('schedule');
+                    setActiveTab('itinerary');
                   }}
                   className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'schedule'
+                    activeTab === 'itinerary'
                       ? 'bg-white text-ocean-900'
                       : 'text-white/70 hover:text-white'
                   }`}
-                  aria-label="Schedule"
+                  aria-label="Itinerary"
                 >
                   <Map className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Schedule</span>
-                  {activeTab === 'schedule' && <span className="sm:hidden">Schedule</span>}
+                  <span className="hidden sm:inline">Itinerary</span>
+                  {activeTab === 'itinerary' && <span className="sm:hidden">Itinerary</span>}
                 </button>
                 <button
                   onClick={() => {
                     haptics.light();
-                    setActiveTab('parties');
+                    setActiveTab('events');
                   }}
                   className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'parties'
+                    activeTab === 'events'
                       ? 'bg-white text-ocean-900'
                       : 'text-white/70 hover:text-white'
                   }`}
-                  aria-label="Parties"
+                  aria-label="Events"
                 >
-                  <PartyPopper className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Parties</span>
-                  {activeTab === 'parties' && <span className="sm:hidden">Parties</span>}
+                  <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Events</span>
+                  {activeTab === 'events' && <span className="sm:hidden">Events</span>}
                 </button>
                 <button
                   onClick={() => {
@@ -659,7 +659,27 @@ export default function TripGuide({
               />
             </TabsContent>
 
-            <TabsContent value="schedule">
+            <TabsContent value="itinerary">
+              {isCruise ? (
+                <ItineraryTab
+                  ITINERARY={ITINERARY as any}
+                  onViewEvents={handleViewEvents}
+                  scheduledDaily={SCHEDULED_DAILY}
+                  talent={TALENT as any}
+                  tripStatus={tripStatus}
+                />
+              ) : (
+                <ItineraryTab
+                  ITINERARY={SCHEDULE as any}
+                  onViewEvents={handleViewEvents}
+                  scheduledDaily={SCHEDULED_DAILY}
+                  talent={TALENT as any}
+                  tripStatus={tripStatus}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="events">
               <ScheduleTab
                 SCHEDULED_DAILY={SCHEDULED_DAILY}
                 ITINERARY={isCruise ? (ITINERARY as any) : (SCHEDULE as any)}
@@ -671,10 +691,8 @@ export default function TripGuide({
                 onTalentClick={handleTalentClick}
                 onPartyClick={handlePartyClick}
                 onPartyThemeClick={handlePartyThemeClick}
-                onViewEvents={handleViewEvents}
-                scheduledDaily={SCHEDULED_DAILY}
-                talent={TALENT as any}
                 tripStatus={tripStatus}
+                tripId={tripData?.trip?.id}
               />
             </TabsContent>
 
@@ -683,17 +701,6 @@ export default function TripGuide({
                 TALENT={TALENT as any}
                 SCHEDULED_DAILY={SCHEDULED_DAILY}
                 onTalentClick={handleTalentClick}
-              />
-            </TabsContent>
-
-            <TabsContent value="parties">
-              <PartiesTab
-                SCHEDULED_DAILY={SCHEDULED_DAILY}
-                ITINERARY={ITINERARY as any}
-                timeFormat={timeFormat}
-                onPartyClick={handlePartyClick}
-                tripStatus={tripStatus}
-                tripId={tripData?.trip?.id}
               />
             </TabsContent>
 

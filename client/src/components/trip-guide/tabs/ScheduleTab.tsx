@@ -1,13 +1,13 @@
-import React, { memo, useCallback, useState, useMemo } from 'react';
-import { CalendarDays, ChevronDown, ChevronUp, MapPin, Map } from 'lucide-react';
+import React, { memo, useCallback, useState, useMemo, useEffect } from 'react';
+import { CalendarDays, ChevronDown, ChevronUp, MapPin, PartyPopper } from 'lucide-react';
 import { EventCard } from '../shared/EventCard';
+import { PartyCard } from '../shared/PartyCard';
 import { isDateInPast } from '../utils/dateHelpers';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime as globalFormatTime } from '@/lib/timeFormat';
-import { formatTime } from '@/lib/timeFormat';
 import type { Talent } from '@/data/trip-data';
 import { TabHeader } from '../shared/TabHeader';
-import JobListingComponent, { type Job } from '@/components/smoothui/ui/JobListingComponent';
+import { api } from '@/lib/api-client';
 
 interface ScheduleTabProps {
   SCHEDULED_DAILY: any[];
@@ -20,10 +20,8 @@ interface ScheduleTabProps {
   onTalentClick: (name: string) => void;
   onPartyClick: (party: any) => void;
   onPartyThemeClick?: (partyTheme: any) => void;
-  onViewEvents: (dateKey: string, portName: string) => void;
-  scheduledDaily?: any[];
-  talent?: any[];
   tripStatus?: string;
+  tripId?: number;
 }
 
 export const ScheduleTab = memo(function ScheduleTab({
@@ -37,178 +35,126 @@ export const ScheduleTab = memo(function ScheduleTab({
   onTalentClick,
   onPartyClick,
   onPartyThemeClick,
-  onViewEvents,
-  scheduledDaily,
-  talent,
   tripStatus = 'upcoming',
+  tripId,
 }: ScheduleTabProps) {
   const { timeFormat } = useTimeFormat();
-  const [subTab, setSubTab] = useState<'itinerary' | 'events'>('itinerary');
+  const [subTab, setSubTab] = useState<'schedule' | 'parties'>('schedule');
+  const [partyThemes, setPartyThemes] = useState<any[]>([]);
+  const [isLoadingThemes, setIsLoadingThemes] = useState(false);
 
-  // Filter itinerary based on trip status
-  const filteredItinerary = useMemo(() => {
-    if (tripStatus !== 'current') {
-      return ITINERARY;
+  // Filter and organize party events by date
+  const partyEventsByDate = useMemo(() => {
+    let filteredScheduledDaily = SCHEDULED_DAILY;
+
+    if (tripStatus === 'current') {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      filteredScheduledDaily = SCHEDULED_DAILY.map(day => {
+        const dayDate = day.key;
+
+        if (dayDate > today) {
+          return day;
+        }
+
+        if (dayDate < today) {
+          return { ...day, items: [] };
+        }
+
+        const filteredItems = day.items.filter(event => {
+          const [eventHour, eventMinute] = event.time.split(':').map(Number);
+          const eventTotalMinutes = eventHour * 60 + eventMinute;
+          const currentTotalMinutes = currentHour * 60 + currentMinute;
+          return eventTotalMinutes > currentTotalMinutes;
+        });
+
+        return { ...day, items: filteredItems };
+      }).filter(day => day.items.length > 0);
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    return ITINERARY.filter(stop => {
-      const stopDate = stop.key || stop.date?.split('T')[0];
-      return stopDate >= today;
-    });
-  }, [ITINERARY, tripStatus]);
+    return filteredScheduledDaily
+      .map(day => {
+        const partyEvents = day.items.filter(
+          event => event.type === 'party' || event.type === 'after'
+        );
 
-  // Transform itinerary data to Job format for the component
-  const jobsData: Job[] = filteredItinerary.map((stop, index) => {
-    const isEmbarkation = stop.locationTypeId === 1;
-    const isDisembarkation = stop.locationTypeId === 2;
-    const isOvernightArrival = stop.locationTypeId === 8 || stop.locationTypeId === 11;
-    const isOvernightDeparture = stop.locationTypeId === 9 || stop.locationTypeId === 12;
-    const isFullDayOvernight = stop.locationTypeId === 10 || stop.locationTypeId === 13;
-    const isPreCruise = stop.day < 0;
-    const isPostCruise = stop.day >= 100;
+        const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
 
-    const uniqueKey = `${stop.key}-${stop.locationId || 'loc'}-${index}`;
+        return {
+          key: day.key,
+          date: itineraryStop?.date || day.key,
+          port: itineraryStop?.port,
+          events: partyEvents,
+          totalEvents: partyEvents.length,
+        };
+      })
+      .filter(day => day.totalEvents > 0);
+  }, [SCHEDULED_DAILY, ITINERARY, tripStatus]);
 
-    const isUSPort =
-      stop.country &&
-      (stop.country.toLowerCase() === 'united states' ||
-        stop.country.toLowerCase() === 'usa' ||
-        stop.country.toLowerCase() === 'us');
-
-    const basePortName = stop.country && !isUSPort ? `${stop.port}, ${stop.country}` : stop.port;
-
-    let portName = basePortName;
-    let arriveDepart = '';
-    let allAboard = '';
-
-    if (isPreCruise || isPostCruise) {
-      portName = basePortName;
-      arriveDepart = '';
-      allAboard = '';
-    } else if (isEmbarkation) {
-      portName = `${basePortName} - Embarkation`;
-      arriveDepart =
-        stop.depart && stop.depart !== '—' ? `Depart: ${formatTime(stop.depart, timeFormat)}` : '';
-      allAboard =
-        stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
-    } else if (isDisembarkation) {
-      portName = `${basePortName} - Disembarkation`;
-      arriveDepart =
-        stop.arrive && stop.arrive !== '—' ? `Arrive: ${formatTime(stop.arrive, timeFormat)}` : '';
-    } else if (isOvernightArrival) {
-      portName = `${basePortName} - Overnight`;
-      arriveDepart =
-        stop.arrive && stop.arrive !== '—' ? `Arrive: ${formatTime(stop.arrive, timeFormat)}` : '';
-      allAboard = '';
-    } else if (isOvernightDeparture) {
-      portName = basePortName;
-      arriveDepart =
-        stop.depart && stop.depart !== '—' ? `Depart: ${formatTime(stop.depart, timeFormat)}` : '';
-      allAboard =
-        stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
-    } else if (isFullDayOvernight) {
-      portName = `${basePortName} - Overnight Full Day`;
-      arriveDepart = '';
-      allAboard = '';
-    } else {
-      const hasTimes = (stop.arrive && stop.arrive !== '—') || (stop.depart && stop.depart !== '—');
-      if (hasTimes) {
-        const arriveText =
-          stop.arrive && stop.arrive !== '—'
-            ? `Arrive: ${formatTime(stop.arrive, timeFormat)}`
-            : '';
-        const departText =
-          stop.depart && stop.depart !== '—'
-            ? `Depart: ${formatTime(stop.depart, timeFormat)}`
-            : '';
-        arriveDepart = [arriveText, departText].filter(Boolean).join(' • ');
-      }
-      allAboard =
-        stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
+  // Fetch party themes if no party events exist
+  useEffect(() => {
+    if (tripId && partyEventsByDate.length === 0) {
+      setIsLoadingThemes(true);
+      api
+        .get(`/api/trips/${tripId}/party-themes`, { requireAuth: false })
+        .then(async response => {
+          const data = await response.json();
+          setPartyThemes(data || []);
+        })
+        .catch(error => {
+          console.error('[ScheduleTab] Failed to fetch party themes:', error);
+          setPartyThemes([]);
+        })
+        .finally(() => {
+          setIsLoadingThemes(false);
+        });
     }
+  }, [tripId, partyEventsByDate.length]);
 
-    return {
-      company: portName,
-      title: stop.date,
-      logo: (
-        <img
-          src={
-            stop.imageUrl
-              ? `${stop.imageUrl}?t=${Date.now()}`
-              : 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'
-          }
-          alt={stop.port}
-          className="w-32 h-20 sm:w-52 sm:h-32 object-cover rounded"
-          loading="lazy"
-          onError={e => {
-            e.currentTarget.src =
-              'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
-          }}
-        />
-      ),
-      job_description: stop.description || 'Description coming soon',
-      salary: arriveDepart,
-      location: '',
-      remote: allAboard,
-      job_time: uniqueKey,
-      dayNumber: stop.day,
-      attractions: stop.attractions || [],
-      lgbtVenues: stop.lgbtVenues || [],
-    };
-  });
+  // Organize party themes by type
+  const organizedPartyThemes = useMemo(() => {
+    const tDances = partyThemes.filter(theme => theme.partyType === 'T-Dance');
+    const nightParties = partyThemes.filter(theme => theme.partyType === 'Night Party');
+    return [...tDances, ...nightParties];
+  }, [partyThemes]);
 
   return (
     <>
       <div className="max-w-6xl mx-auto pt-6 pb-2">
         <div className="flex items-center gap-2">
-          <Map className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-lg font-semibold text-white">Schedule</h3>
+          <CalendarDays className="w-4 h-4 text-purple-400" />
+          <h3 className="text-lg font-semibold text-white">Events</h3>
           <div className="flex-1 h-px bg-white/20 mx-3"></div>
           {/* Sub-tabs on the right */}
           <div className="flex gap-2">
             <button
-              onClick={() => setSubTab('itinerary')}
+              onClick={() => setSubTab('schedule')}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                subTab === 'itinerary'
+                subTab === 'schedule'
                   ? 'bg-white/20 text-white border border-white/30'
                   : 'text-white/60 hover:text-white/80 hover:bg-white/5'
               }`}
             >
-              Itinerary
+              Schedule
             </button>
             <button
-              onClick={() => setSubTab('events')}
+              onClick={() => setSubTab('parties')}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                subTab === 'events'
+                subTab === 'parties'
                   ? 'bg-white/20 text-white border border-white/30'
                   : 'text-white/60 hover:text-white/80 hover:bg-white/5'
               }`}
             >
-              Events
+              Parties
             </button>
           </div>
         </div>
       </div>
 
-      {subTab === 'itinerary' ? (
-        <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4 pt-4">
-          {filteredItinerary.length === 0 ? (
-            <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-              <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No itinerary available</h3>
-              <p className="text-white/70">Itinerary information will be available soon.</p>
-            </div>
-          ) : (
-            <JobListingComponent
-              jobs={jobsData}
-              onViewEvents={onViewEvents}
-              scheduledDaily={scheduledDaily}
-              talent={talent}
-            />
-          )}
-        </div>
-      ) : (
+      {subTab === 'schedule' ? (
         <>
           <div className="max-w-6xl mx-auto pt-4 pb-2">
             <div className="flex items-center gap-2">
@@ -329,6 +275,99 @@ export const ScheduleTab = memo(function ScheduleTab({
             )}
           </div>
         </>
+      ) : (
+        <div className="max-w-6xl mx-auto space-y-8 pt-4">
+          {partyEventsByDate.length === 0 ? (
+            isLoadingThemes ? (
+              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
+                <PartyPopper className="w-16 h-16 text-white/40 mx-auto mb-4 animate-pulse" />
+                <h3 className="text-lg font-medium text-white mb-2">Loading party themes...</h3>
+              </div>
+            ) : organizedPartyThemes.length > 0 ? (
+              <div className="space-y-8">
+                {organizedPartyThemes.some(theme => theme.partyType === 'T-Dance') && (
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
+                      <h3 className="text-sm font-bold text-white">T-Dances</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {organizedPartyThemes
+                        .filter(theme => theme.partyType === 'T-Dance')
+                        .map(theme => (
+                          <div
+                            key={theme.id}
+                            className="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                          >
+                            {theme.imageUrl && (
+                              <img
+                                src={theme.imageUrl}
+                                alt={theme.name}
+                                className="w-full h-48 object-cover"
+                                loading="lazy"
+                              />
+                            )}
+                            <div className="p-4">
+                              <h4 className="text-lg font-bold text-white mb-2">{theme.name}</h4>
+                              <p className="text-sm text-white/70">{theme.shortDescription}</p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {organizedPartyThemes.some(theme => theme.partyType === 'Night Party') && (
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pink-500/20 backdrop-blur-sm rounded-full border border-pink-400/30">
+                      <h3 className="text-sm font-bold text-white">Night Parties</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {organizedPartyThemes
+                        .filter(theme => theme.partyType === 'Night Party')
+                        .map(theme => (
+                          <div
+                            key={theme.id}
+                            className="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                          >
+                            {theme.imageUrl && (
+                              <img
+                                src={theme.imageUrl}
+                                alt={theme.name}
+                                className="w-full h-48 object-cover"
+                                loading="lazy"
+                              />
+                            )}
+                            <div className="p-4">
+                              <h4 className="text-lg font-bold text-white mb-2">{theme.name}</h4>
+                              <p className="text-sm text-white/70">{theme.shortDescription}</p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
+                <PartyPopper className="w-16 h-16 text-white/40 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">No parties scheduled</h3>
+                <p className="text-white/70">Party information will be available soon.</p>
+              </div>
+            )
+          ) : (
+            <div className="space-y-6">
+              {partyEventsByDate.map(day => (
+                <PartyCard
+                  key={day.key}
+                  date={day.date}
+                  port={day.port}
+                  events={day.events}
+                  timeFormat={timeFormat}
+                  onPartyClick={onPartyClick}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </>
   );
