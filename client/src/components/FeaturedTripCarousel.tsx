@@ -120,12 +120,7 @@ function TripCard({ trip }: { trip: Trip }) {
         </Link>
 
         <div className="p-4 flex-1 flex flex-col">
-          <h4
-            className="font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors whitespace-nowrap"
-            style={{
-              fontSize: `${Math.max(0.7, Math.min(1.25, 25 / trip.name.length))}rem`,
-            }}
-          >
+          <h4 className="text-lg font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors line-clamp-2">
             {trip.name}
           </h4>
 
