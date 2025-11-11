@@ -2,192 +2,21 @@ import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Menu, RefreshCw, ArrowLeft } from 'lucide-react';
 import NavigationDrawer from '@/components/NavigationDrawer';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { GlobalNotificationBell } from '@/components/GlobalNotificationBell';
-import { GlobalNotificationsPanel } from '@/components/GlobalNotificationsPanel';
-import type { Update } from '@/types/trip-info';
-import { api } from '@/lib/api-client';
-import { supabase } from '@/lib/supabase';
-import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
+import { useState } from 'react';
 import { useUpdate } from '@/context/UpdateContext';
 import { cn } from '@/lib/utils';
 
-interface UpdateWithTrip extends Update {
-  trip_name?: string;
-  trip_slug?: string;
-  start_date?: string;
-}
-
 export default function NavigationBanner() {
   const [currentLocation] = useLocation();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [updates, setUpdates] = useState<UpdateWithTrip[]>([]);
-  const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
-  const { user } = useSupabaseAuthContext();
   const { updateAvailable, isChecking, checkForUpdates, applyUpdate } = useUpdate();
 
   const isAdminRoute = currentLocation.startsWith('/admin');
   const isTripRoute = currentLocation.startsWith('/trip/');
 
-  // Fetch all updates
-  const fetchUpdates = useCallback(async () => {
-    try {
-      const response = await api.get('/api/updates/all');
-      if (response.ok) {
-        const data = await response.json();
-        setUpdates(data);
-      }
-    } catch (error) {
-      console.error('Error fetching global updates:', error);
-    }
-  }, []);
-
-  const handleNotificationClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Toggle notification panel
-    const newState = !showNotifications;
-    setShowNotifications(newState);
-
-    // Close drawer if opening notifications
-    if (newState && showDrawer) {
-      setShowDrawer(false);
-    }
-
-    // Fetch fresh updates when opening notification panel
-    if (newState) {
-      fetchUpdates();
-    }
-  };
-
   const handleDrawerOpenChange = (open: boolean) => {
-    // Close notifications when opening drawer
-    if (open && showNotifications) {
-      setShowNotifications(false);
-    }
     setShowDrawer(open);
   };
-
-  // Load last read timestamp - hybrid approach
-  // For logged-in users: fetch from database
-  // For anonymous users: use localStorage
-  useEffect(() => {
-    const fetchLastRead = async () => {
-      if (user) {
-        // Logged-in user: fetch from database
-        // RLS policies automatically filter by auth.uid()
-        const { data, error } = await supabase
-          .from('user_notification_reads')
-          .select('last_read_at')
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching user notification read status:', error);
-        } else if (data) {
-          setLastReadTimestamp(data.last_read_at);
-        }
-      } else {
-        // Anonymous user: use localStorage
-        const stored = localStorage.getItem('global-notifications-last-read');
-        setLastReadTimestamp(stored);
-      }
-    };
-
-    fetchLastRead();
-  }, [user]);
-
-  // Fetch all updates on mount and every 5 minutes
-  useEffect(() => {
-    fetchUpdates();
-
-    // Refresh updates every 5 minutes
-    const interval = setInterval(fetchUpdates, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchUpdates]);
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('updates-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'updates',
-        },
-        async payload => {
-          // When a new update is inserted, fetch its full details with trip info
-          const newUpdate = payload.new as Update;
-
-          try {
-            // Fetch the trip details for this update
-            const { data: trip } = await supabase
-              .from('trips')
-              .select('id, slug, name, start_date')
-              .eq('id', newUpdate.trip_id)
-              .single();
-
-            // Add the new update with trip details to the beginning of the list
-            const updateWithTrip: UpdateWithTrip = {
-              ...newUpdate,
-              trip_name: trip?.name,
-              trip_slug: trip?.slug,
-              start_date: trip?.start_date,
-            };
-
-            setUpdates(prev => [updateWithTrip, ...prev]);
-          } catch (error) {
-            console.error('Error fetching trip details for new update:', error);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // Check if there are unread notifications
-  const hasUnread = useMemo(() => {
-    if (!updates || updates.length === 0) return false;
-    if (!lastReadTimestamp) return updates.length > 0;
-
-    return updates.some(update => new Date(update.created_at) > new Date(lastReadTimestamp));
-  }, [updates, lastReadTimestamp]);
-
-  // Mark notifications as read - hybrid approach
-  const handleMarkAsRead = useCallback(() => {
-    const now = new Date().toISOString();
-    setLastReadTimestamp(now);
-
-    // Save to database for logged-in users, localStorage for anonymous
-    if (user) {
-      // Upsert to database
-      supabase
-        .from('user_notification_reads')
-        .upsert(
-          {
-            user_id: user.id,
-            last_read_at: now,
-          },
-          {
-            onConflict: 'user_id',
-          }
-        )
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error updating user notification read status:', error);
-          }
-        });
-    } else {
-      // Save to localStorage for anonymous users
-      localStorage.setItem('global-notifications-last-read', now);
-    }
-  }, [user]);
 
   const toggleAdminNavigation = () => {
     const event = new CustomEvent('admin-nav', {
@@ -275,22 +104,9 @@ export default function NavigationBanner() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             )}
           </button>
-          <GlobalNotificationBell
-            updatesCount={updates.length}
-            hasUnread={hasUnread}
-            onClick={handleNotificationClick}
-          />
           <NavigationDrawer isOpen={showDrawer} onOpenChange={handleDrawerOpenChange} />
         </div>
       </div>
-
-      {/* Global Notifications Panel */}
-      <GlobalNotificationsPanel
-        open={showNotifications}
-        onOpenChange={setShowNotifications}
-        updates={updates}
-        onMarkAsRead={handleMarkAsRead}
-      />
     </div>
   );
 }

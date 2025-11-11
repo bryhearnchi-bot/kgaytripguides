@@ -294,267 +294,173 @@ export default function LandingPage() {
   // Remove the featured trip from upcoming list if it's being shown as featured
   const upcomingTrips = isFeaturedUpcoming ? groupedTrips.upcoming.slice(1) : groupedTrips.upcoming;
 
+  const handleFilterChange = (filter: 'upcoming' | 'current' | 'past') => {
+    setActiveFilter(filter);
+  };
+
   return (
-    <div className="min-h-screen w-full">
-      {/* Content Layer */}
-      <div className="relative z-10">
-        {/* Floating Hero Section */}
-        <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-[21px] animate-float">
-              {/* Interactive Travel Guides Badge */}
-              <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-base px-8 py-0.5 whitespace-nowrap mb-5 font-semibold">
-                Interactive Travel Guides
-              </Badge>
+    <>
+      <div className="min-h-screen w-full pb-20 md:pb-0">
+        {/* Content Layer */}
+        <div className="relative z-10">
+          {/* Floating Hero Section */}
+          <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-[21px] animate-float">
+                {/* Interactive Travel Guides Badge */}
+                <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-base px-8 py-0.5 whitespace-nowrap mb-5 font-semibold">
+                  Interactive Travel Guides
+                </Badge>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
-                Experiences of a{' '}
-                <span className="relative inline-block">
-                  Lifetime
-                  <svg
-                    width="223"
-                    height="12"
-                    viewBox="0 0 223 12"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
-                  >
-                    <defs>
-                      <linearGradient id="rainbow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#ef4444" />
-                        <stop offset="16.67%" stopColor="#f97316" />
-                        <stop offset="33.33%" stopColor="#eab308" />
-                        <stop offset="50%" stopColor="#22c55e" />
-                        <stop offset="66.67%" stopColor="#3b82f6" />
-                        <stop offset="83.33%" stopColor="#8b5cf6" />
-                        <stop offset="100%" stopColor="#ec4899" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
-                      stroke="url(#rainbow-gradient)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
-              </h2>
-
-              <p className="text-base sm:text-lg text-ocean-200 max-w-2xl mx-auto">
-                Interactive guides to immerse yourself in LGBTQ+ travel experiences with world-class
-                talent, breathtaking destinations, and a vibrant community.
-                <br />
-                <span className="font-bold">NO MATTER WHERE YOU ARE!</span>
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <StandardizedContentLayout>
-          {/* Tab Bar - Glass Effect Style */}
-          <div id="trips" className="flex justify-center mt-[14px] mb-6">
-            <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
-              {hasCurrent && (
-                <button
-                  onClick={() => setActiveFilter('current')}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
-                    activeFilter === 'current'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"></span>
-                  <span className={activeFilter === 'current' ? 'inline' : 'hidden sm:inline'}>
-                    Current
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
+                  Experiences of a{' '}
+                  <span className="relative inline-block">
+                    Lifetime
+                    <svg
+                      width="223"
+                      height="12"
+                      viewBox="0 0 223 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+                    >
+                      <defs>
+                        <linearGradient id="rainbow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="16.67%" stopColor="#f97316" />
+                          <stop offset="33.33%" stopColor="#eab308" />
+                          <stop offset="50%" stopColor="#22c55e" />
+                          <stop offset="66.67%" stopColor="#3b82f6" />
+                          <stop offset="83.33%" stopColor="#8b5cf6" />
+                          <stop offset="100%" stopColor="#ec4899" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                        stroke="url(#rainbow-gradient)"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
                   </span>
-                </button>
-              )}
-              <button
-                onClick={() => setActiveFilter('upcoming')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
-                  activeFilter === 'upcoming'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span>Upcoming</span>
-              </button>
-              <button
-                onClick={() => setActiveFilter('past')}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
-                  activeFilter === 'past'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <History className="w-4 h-4 flex-shrink-0" />
-                <span>Past</span>
-              </button>
-            </div>
-          </div>
-          {filteredTrips.length > 0 ? (
-            <section>
-              {activeFilter === 'upcoming' ? (
-                <div>
-                  {hasFeaturedTrip && (
-                    <div className="mb-8">
-                      {/* Featured Trip Header - Changes based on current vs upcoming */}
-                      <div className="flex items-center gap-3 mb-6">
-                        <span
-                          className={`w-3 h-3 rounded-full ${isFeaturedUpcoming ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}
-                        ></span>
-                        <h3 className="text-2xl font-bold text-white">
-                          {isFeaturedUpcoming ? 'Next Trip' : 'Current Trips'}
-                        </h3>
-                        <div className="flex-1 h-px bg-white/20"></div>
-                      </div>
+                </h2>
 
-                      {/* Featured Trip + Latest News Grid */}
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        {/* Featured Trip Carousel - 2 columns wide */}
-                        <div className="lg:col-span-2">
-                          <FeaturedTripCarousel trips={featuredTrips} />
+                <p className="text-base sm:text-lg text-ocean-200 max-w-2xl mx-auto">
+                  Interactive guides to immerse yourself in LGBTQ+ travel experiences with
+                  world-class talent, breathtaking destinations, and a vibrant community.
+                  <br />
+                  <span className="font-bold">NO MATTER WHERE YOU ARE!</span>
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <StandardizedContentLayout>
+            {filteredTrips.length > 0 ? (
+              <section>
+                {activeFilter === 'upcoming' ? (
+                  <div>
+                    {hasFeaturedTrip && (
+                      <div className="mb-8">
+                        {/* Featured Trip Header - Changes based on current vs upcoming */}
+                        <div className="flex items-center gap-2 mb-6">
+                          <Calendar
+                            className={`w-4 h-4 ${isFeaturedUpcoming ? 'text-blue-400' : 'text-emerald-400'}`}
+                          />
+                          <h3 className="text-lg font-semibold text-white">
+                            {isFeaturedUpcoming ? 'Next Adventure' : 'Current Trips'}
+                          </h3>
+                          <div className="flex-1 h-px bg-white/20 ml-3"></div>
                         </div>
 
-                        {/* Latest News Card - 1 column wide */}
-                        <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl flex flex-col h-full">
-                          <div className="p-6 flex-1 flex flex-col">
-                            <div className="flex items-center gap-2 mb-4">
-                              <Clock className="w-5 h-5 text-emerald-400 animate-pulse" />
-                              <h3 className="text-xl font-bold text-white">Latest News</h3>
-                            </div>
+                        {/* Featured Trip Carousel - Full Width */}
+                        <FeaturedTripCarousel trips={featuredTrips} />
+                      </div>
+                    )}
 
-                            <div className="space-y-4 flex-1">
-                              {updatesLoading ? (
-                                <div className="flex items-center justify-center py-8">
-                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                                </div>
-                              ) : homepageUpdates && homepageUpdates.length > 0 ? (
-                                homepageUpdates.map((update, index) => (
-                                  <Link
-                                    key={update.id}
-                                    href={`/trip/${update.trips.slug}${update.link_section !== 'none' ? `#${update.link_section}` : ''}`}
-                                    className={`block ${index < homepageUpdates.length - 1 ? 'pb-4 border-b border-white/10' : ''} transition-all hover:bg-white/5 hover:-translate-x-1 px-2 -mx-2 py-2 rounded-lg cursor-pointer`}
-                                  >
-                                    <p
-                                      className={`text-sm ${getUpdateTypeColor(update.update_type)} font-semibold mb-1 flex items-center gap-2`}
-                                    >
-                                      {update.custom_title || update.title}
-                                      <svg
-                                        className="w-3 h-3"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M9 5l7 7-7 7"
-                                        />
-                                      </svg>
-                                    </p>
-                                    <p className="text-sm text-ocean-200 line-clamp-2">
-                                      {update.description}
-                                    </p>
-                                  </Link>
-                                ))
-                              ) : (
-                                <div className="flex flex-col items-center justify-center py-8">
-                                  <Clock className="w-12 h-12 text-white/20 mb-2" />
-                                  <p className="text-sm text-white/50">No updates yet</p>
-                                </div>
-                              )}
-                            </div>
+                    {upcomingTrips.length > 0 && (
+                      <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-6">
+                          <Calendar className="w-4 h-4 text-blue-400" />
+                          <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
+                          <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                          {upcomingTrips.map(trip => (
+                            <TripCard key={trip.id} trip={trip} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    {/* Different header styles based on filter */}
+                    {activeFilter === 'past' ? (
+                      <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-6">
+                          <History className="w-4 h-4 text-purple-400" />
+                          <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
+                          <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                          {filteredTrips.map(trip => (
+                            <TripCard key={trip.id} trip={trip} />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-center mb-8">
+                          <div className="flex items-center justify-center gap-3 mb-2">
+                            {activeFilter === 'current' && (
+                              <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
+                            )}
+                            <h2 className="text-2xl font-semibold text-white capitalize">
+                              {activeFilter === 'current'
+                                ? 'Active Trips'
+                                : `${activeFilter} Adventures`}
+                            </h2>
                           </div>
+                          <p className="text-sm text-white/70">
+                            {activeFilter === 'current' && 'Experience the journey as it unfolds'}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                          {filteredTrips.map(trip => (
+                            <TripCard key={trip.id} trip={trip} />
+                          ))}
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {upcomingTrips.length > 0 && (
-                    <div className="mb-8">
-                      <div className="flex items-center gap-2 mb-6">
-                        <Calendar className="w-4 h-4 text-blue-400" />
-                        <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
-                        <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                        {upcomingTrips.map(trip => (
-                          <TripCard key={trip.id} trip={trip} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  {/* Different header styles based on filter */}
-                  {activeFilter === 'past' ? (
-                    <div className="mb-8">
-                      <div className="flex items-center gap-2 mb-6">
-                        <History className="w-4 h-4 text-purple-400" />
-                        <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
-                        <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                        {filteredTrips.map(trip => (
-                          <TripCard key={trip.id} trip={trip} />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-center mb-8">
-                        <div className="flex items-center justify-center gap-3 mb-2">
-                          {activeFilter === 'current' && (
-                            <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
-                          )}
-                          <h2 className="text-2xl font-semibold text-white capitalize">
-                            {activeFilter === 'current'
-                              ? 'Active Trips'
-                              : `${activeFilter} Adventures`}
-                          </h2>
-                        </div>
-                        <p className="text-sm text-white/70">
-                          {activeFilter === 'current' && 'Experience the journey as it unfolds'}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                        {filteredTrips.map(trip => (
-                          <TripCard key={trip.id} trip={trip} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
-          ) : (
-            <div className="text-center py-16">
-              <Ship className="h-16 w-16 mx-auto mb-4 text-white/40" />
-              <h3 className="text-xl font-semibold text-white mb-2">
-                No {activeFilter} trips found
-              </h3>
-              <p className="text-white/70 mb-4">
-                {activeFilter === 'upcoming'
-                  ? 'Check back soon for exciting new adventures!'
-                  : `No ${activeFilter} trips are currently available.`}
-              </p>
-              {activeFilter !== 'upcoming' && (
-                <Button
-                  onClick={() => setActiveFilter('upcoming')}
-                  className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
-                >
-                  View Upcoming Trips
-                </Button>
-              )}
-            </div>
-          )}
-        </StandardizedContentLayout>
+                    )}
+                  </div>
+                )}
+              </section>
+            ) : (
+              <div className="text-center py-16">
+                <Ship className="h-16 w-16 mx-auto mb-4 text-white/40" />
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  No {activeFilter} trips found
+                </h3>
+                <p className="text-white/70 mb-4">
+                  {activeFilter === 'upcoming'
+                    ? 'Check back soon for exciting new adventures!'
+                    : `No ${activeFilter} trips are currently available.`}
+                </p>
+                {activeFilter !== 'upcoming' && (
+                  <Button
+                    onClick={() => setActiveFilter('upcoming')}
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
+                  >
+                    View Upcoming Trips
+                  </Button>
+                )}
+              </div>
+            )}
+          </StandardizedContentLayout>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

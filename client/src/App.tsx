@@ -11,6 +11,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import NavigationBanner from '@/components/navigation-banner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import BottomSafeArea from '@/components/BottomSafeArea';
+import BottomNavigation from '@/components/BottomNavigation';
 import { SplashScreen } from '@capacitor/splash-screen';
 import {
   isNative,
@@ -30,6 +31,10 @@ const AccountSetup = lazy(() => import('@/pages/auth/AccountSetup'));
 const NotFound = lazy(() => import('@/pages/not-found'));
 const ImageTest = lazy(() => import('@/pages/image-test'));
 const LandingMockupsPage = lazy(() => import('@/pages/landing-mockups'));
+const PastTrips = lazy(() => import('@/pages/past-trips'));
+const MyStuff = lazy(() => import('@/pages/my-stuff'));
+const Alerts = lazy(() => import('@/pages/alerts'));
+const Settings = lazy(() => import('@/pages/settings'));
 
 // Admin pages - lazy loaded
 const ShipsManagement = lazy(() => import('@/pages/admin/ships'));
@@ -70,6 +75,10 @@ function Router() {
         <Route path="/" component={LandingPage} />
         <Route path="/image-test" component={ImageTest} />
         <Route path="/landing-mockups" component={LandingMockupsPage} />
+        <Route path="/past-trips" component={PastTrips} />
+        <Route path="/my-stuff" component={MyStuff} />
+        <Route path="/alerts" component={Alerts} />
+        <Route path="/settings" component={Settings} />
         <Route path="/trip/:slug" component={TripPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/auth/callback" component={AuthCallback} />
@@ -284,6 +293,7 @@ function App() {
                     <Toaster />
                     <Router />
                   </div>
+                  <BottomNavigation />
                   <BottomSafeArea />
                 </div>
               </TooltipProvider>
