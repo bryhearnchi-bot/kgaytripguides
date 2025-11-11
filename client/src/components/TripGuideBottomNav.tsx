@@ -113,7 +113,7 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
                 activeTab === 'info' && 'inline md:inline'
               )}
             >
-              Information
+              Info
             </span>
           </button>
         </nav>

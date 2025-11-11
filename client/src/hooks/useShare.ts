@@ -3,9 +3,17 @@ import { isNative } from '@/lib/capacitor';
 
 export function useShare() {
   const shareTrip = async (trip: { name: string; slug: string }) => {
-    // Use environment variable for site URL, fallback to production domain
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
+    // Use current origin for local development (localhost or IP), fallback to production URL
+    const siteUrl =
+      window.location.origin.includes('localhost') ||
+      window.location.origin.match(/\d+\.\d+\.\d+\.\d+/)
+        ? window.location.origin
+        : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
     const url = `${siteUrl}/trip/${trip.slug}`;
+
+    console.log('Share - Site URL:', siteUrl);
+    console.log('Share - Trip slug:', trip.slug);
+    console.log('Share - Full URL:', url);
 
     if (isNative) {
       try {

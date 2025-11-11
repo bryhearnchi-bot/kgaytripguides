@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { Switch, Route, Redirect } from 'wouter';
+import { Switch, Route, Redirect, useLocation } from 'wouter';
 import { queryClient } from './lib/queryClient';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -222,6 +222,26 @@ function Router() {
   );
 }
 
+// Wrapper component to conditionally show NavigationBanner
+function AppContent() {
+  const [location] = useLocation();
+  const isTripPage = location.startsWith('/trip/');
+
+  return (
+    <div className="relative z-10">
+      {/* Hide NavigationBanner on trip pages - they use custom TripPageNavigation */}
+      {!isTripPage && <NavigationBanner />}
+      <div className="w-full">
+        <Toaster />
+        <Router />
+      </div>
+      {/* Hide BottomNavigation on trip pages - they use TripGuideBottomNav */}
+      {!isTripPage && <BottomNavigation />}
+      <BottomSafeArea />
+    </div>
+  );
+}
+
 function App() {
   useEffect(() => {
     // Initialize native features (status bar, etc.) for Capacitor apps
@@ -287,15 +307,7 @@ function App() {
           <TimeFormatProvider>
             <UpdateProvider>
               <TooltipProvider>
-                <div className="relative z-10">
-                  <NavigationBanner />
-                  <div className="w-full">
-                    <Toaster />
-                    <Router />
-                  </div>
-                  <BottomNavigation />
-                  <BottomSafeArea />
-                </div>
+                <AppContent />
               </TooltipProvider>
             </UpdateProvider>
           </TimeFormatProvider>

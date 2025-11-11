@@ -219,7 +219,7 @@ const HeroSection = ({
       size: 15.3,
     },
     {
-      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/sugar_vpd0ut.jpg',
+      url: 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/talent/spice_placeholder.jpg',
       name: 'Spice',
       size: 12.6,
     },

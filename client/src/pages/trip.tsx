@@ -1,13 +1,23 @@
 import { useRoute } from 'wouter';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import TripGuide from '@/components/trip-guide';
+import { TripGuideBottomNav } from '@/components/TripGuideBottomNav';
+import { TripPageNavigation } from '@/components/TripPageNavigation';
 import { useTripMetadata } from '@/hooks/useTripMetadata';
+import { useTripData } from '@/hooks/useTripData';
 
 export default function TripPage() {
   const [match, params] = useRoute('/trip/:slug');
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Only run hooks if we have a valid match and slug
+  const slug = match && params?.slug ? params.slug : '';
 
   // Inject trip-specific metadata and PWA manifest
-  useTripMetadata(params?.slug);
+  useTripMetadata(slug);
+
+  // Fetch trip data to determine cruise vs resort
+  const { data: tripData, error: tripDataError, isLoading: tripDataLoading } = useTripData(slug);
 
   // Auto-refresh when app is opened in standalone mode (if online)
   useEffect(() => {
@@ -79,13 +89,68 @@ export default function TripPage() {
     });
   }, [params?.slug]);
 
-  if (!match || !params?.slug) {
+  if (!match || !slug) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-600">Invalid trip URL</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#002147]">
+        <p className="text-white">Invalid trip URL</p>
       </div>
     );
   }
 
-  return <TripGuide slug={params.slug} />;
+  // Show loading while fetching data
+  if (tripDataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#002147]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-xl">Loading trip guide...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if trip not found
+  if (tripDataError || !tripData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#002147]">
+        <div className="text-center text-white max-w-md px-4">
+          <h2 className="text-2xl font-bold mb-4">Trip Not Found</h2>
+          <p className="mb-4">
+            The trip "{slug}" could not be found. Please check the URL or return to the home page.
+          </p>
+          <a
+            href="/"
+            className="inline-block px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+          >
+            Return to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine if this is a cruise or resort for bottom nav
+  const isCruise = !!tripData?.trip?.shipId;
+
+  return (
+    <>
+      {/* Custom navigation for trip page with back button and share */}
+      <TripPageNavigation
+        charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
+        charterCompanyName={tripData?.trip?.charterCompanyName}
+        tripType={isCruise ? 'cruise' : 'resort'}
+        tripSlug={slug}
+        tripName={tripData?.trip?.name}
+      />
+
+      <TripGuide
+        slug={slug}
+        showBottomNav={true}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      <TripGuideBottomNav activeTab={activeTab} onTabChange={setActiveTab} isCruise={isCruise} />
+    </>
+  );
 }

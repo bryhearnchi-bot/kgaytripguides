@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { ArrowLeft, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { ShareMenu } from '@/components/ShareMenu';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface FlyUpMenuProps {
   open: boolean;
@@ -13,6 +15,8 @@ interface FlyUpMenuProps {
   charterCompanyName?: string | null;
   tripType?: 'cruise' | 'resort' | null;
   bottomNavigation?: React.ReactNode;
+  tripSlug?: string | null;
+  tripName?: string | null;
 }
 
 /**
@@ -38,7 +42,11 @@ export function FlyUpMenu({
   charterCompanyName = null,
   tripType = null,
   bottomNavigation = null,
+  tripSlug = null,
+  tripName = null,
 }: FlyUpMenuProps) {
+  const haptics = useHaptics();
+
   // Prevent body scroll when open
   useEffect(() => {
     if (open) {
@@ -86,13 +94,13 @@ export function FlyUpMenu({
       {/* Custom Navigation Header - Rendered OUTSIDE scrollable container so it stays fixed */}
       <div className="xl:hidden fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
         <div className="px-3 sm:px-4 py-2 flex items-center justify-between">
-          {/* Left side - Close button (X only) */}
+          {/* Left side - Back button */}
           <button
             onClick={() => onOpenChange(false)}
             className="text-white hover:text-white/70 transition-colors p-2"
-            aria-label="Close"
+            aria-label="Back"
           >
-            <X className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
 
           {/* Center - Charter logo and badge */}
@@ -120,26 +128,62 @@ export function FlyUpMenu({
             </Badge>
           </div>
 
-          {/* Right side - Empty spacer for balance */}
-          <div className="w-9"></div>
+          {/* Right side - Share button */}
+          {tripSlug && tripName && (
+            <ShareMenu tripSlug={tripSlug} tripName={tripName}>
+              {({ onClick, isOpen }) => (
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    onClick();
+                  }}
+                  className="text-white hover:text-white/70 transition-colors p-2"
+                  aria-label="Share"
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+              )}
+            </ShareMenu>
+          )}
         </div>
       </div>
 
-      {/* Desktop close button - Rendered OUTSIDE scrollable container */}
-      <button
-        onClick={() => onOpenChange(false)}
-        className={cn(
-          'hidden xl:block fixed z-[10000] p-3 rounded-full',
-          'bg-white/10 backdrop-blur-lg border border-white/20',
-          'hover:bg-white/20 transition-colors',
-          'text-white',
-          // Position based on variant
-          variant === 'full' ? 'top-4 right-4' : 'top-4 right-4'
+      {/* Desktop buttons - Rendered OUTSIDE scrollable container */}
+      <div className="hidden xl:flex fixed z-[10000] top-4 right-4 gap-2">
+        {tripSlug && tripName && (
+          <ShareMenu tripSlug={tripSlug} tripName={tripName}>
+            {({ onClick, isOpen }) => (
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onClick();
+                }}
+                className={cn(
+                  'p-3 rounded-full',
+                  'bg-white/10 backdrop-blur-lg border border-white/20',
+                  'hover:bg-white/20 transition-colors',
+                  'text-white'
+                )}
+                aria-label="Share"
+              >
+                <Share2 className="w-6 h-6" />
+              </button>
+            )}
+          </ShareMenu>
         )}
-        aria-label="Close"
-      >
-        <X className="w-6 h-6" />
-      </button>
+        <button
+          onClick={() => onOpenChange(false)}
+          className={cn(
+            'p-3 rounded-full',
+            'bg-white/10 backdrop-blur-lg border border-white/20',
+            'hover:bg-white/20 transition-colors',
+            'text-white'
+          )}
+          aria-label="Close"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+      </div>
 
       {/* Main fly-up container */}
       <div

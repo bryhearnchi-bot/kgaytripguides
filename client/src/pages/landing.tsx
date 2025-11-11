@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Home } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import React from 'react';
 import { dateOnly } from '@/lib/utils';
 import { getTripButtonText } from '@/lib/tripUtils';
@@ -481,6 +481,8 @@ export default function LandingPage() {
         charterCompanyLogo={selectedTrip?.charterCompanyLogo}
         charterCompanyName={selectedTrip?.charterCompanyName}
         tripType={selectedTrip?.tripTypeId === 2 ? 'resort' : 'cruise'}
+        tripSlug={selectedTripSlug}
+        tripName={selectedTrip?.name}
         bottomNavigation={
           <TripGuideBottomNav
             activeTab={tripGuideActiveTab}
