@@ -213,7 +213,7 @@ export default function NavigationDrawer({
           className="h-10 w-10 rounded-full text-white hover:bg-white/10"
           aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
         >
-          <Menu className="h-6 w-6" />
+          <User className="h-6 w-6" />
         </Button>
 
         <SheetPortal>

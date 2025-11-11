@@ -142,14 +142,14 @@ export default function PastTrips() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#002147] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-white animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#002147] text-white pt-16 pb-24">
+    <div className="min-h-screen text-white pt-16 pb-24">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mt-6 mb-8">

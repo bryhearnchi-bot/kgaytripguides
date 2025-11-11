@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Home } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
@@ -300,18 +299,13 @@ export default function LandingPage() {
 
   return (
     <>
-      <div className="min-h-screen w-full pb-20 md:pb-0">
+      <div className="min-h-screen w-full">
         {/* Content Layer */}
         <div className="relative z-10">
           {/* Floating Hero Section */}
           <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-[21px] animate-float">
-                {/* Interactive Travel Guides Badge */}
-                <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-base px-8 py-0.5 whitespace-nowrap mb-5 font-semibold">
-                  Interactive Travel Guides
-                </Badge>
-
+              <div className="text-center mb-[21px]">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
                   Experiences of a{' '}
                   <span className="relative inline-block">
@@ -345,11 +339,8 @@ export default function LandingPage() {
                   </span>
                 </h2>
 
-                <p className="text-base sm:text-lg text-ocean-200 max-w-2xl mx-auto">
-                  Interactive guides to immerse yourself in LGBTQ+ travel experiences with
-                  world-class talent, breathtaking destinations, and a vibrant community.
-                  <br />
-                  <span className="font-bold">NO MATTER WHERE YOU ARE!</span>
+                <p className="text-sm sm:text-base md:text-lg text-ocean-200 max-w-3xl mx-auto px-4 line-clamp-2">
+                  The interactive guides to immerse yourself in LGBTQ+ travel experiences.
                 </p>
               </div>
             </div>

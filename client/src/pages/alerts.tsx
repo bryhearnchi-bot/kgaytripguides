@@ -124,7 +124,7 @@ export default function Alerts() {
   });
 
   return (
-    <div className="min-h-screen bg-[#002147] text-white pt-16 pb-24">
+    <div className="min-h-screen text-white pt-16 pb-24">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mt-6 mb-8">

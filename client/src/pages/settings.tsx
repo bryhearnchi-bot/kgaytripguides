@@ -164,7 +164,7 @@ export default function Settings() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#002147] text-white pt-16 pb-24">
+      <div className="min-h-screen text-white pt-16 pb-24">
         <div className="max-w-2xl mx-auto px-4">
           <div className="flex flex-col gap-3 pt-6">
             {/* User Profile Section (when logged in) */}

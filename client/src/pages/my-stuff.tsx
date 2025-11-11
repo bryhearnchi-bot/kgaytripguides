@@ -2,7 +2,7 @@ import { Star } from 'lucide-react';
 
 export default function MyStuff() {
   return (
-    <div className="min-h-screen bg-[#002147] text-white pt-16 pb-24">
+    <div className="min-h-screen text-white pt-16 pb-24">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mt-12 text-center py-16">
           <Star className="w-20 h-20 mx-auto mb-6 text-white/40" />
