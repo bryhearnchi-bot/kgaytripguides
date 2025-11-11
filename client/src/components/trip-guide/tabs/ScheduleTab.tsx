@@ -356,16 +356,36 @@ export const ScheduleTab = memo(function ScheduleTab({
               </div>
             )
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-10">
               {partyEventsByDate.map(day => (
-                <PartyCard
-                  key={day.key}
-                  date={day.date}
-                  port={day.port}
-                  events={day.events}
-                  timeFormat={timeFormat}
-                  onPartyClick={onPartyClick}
-                />
+                <div key={day.key} className="space-y-4">
+                  {/* Compact Date Header */}
+                  <div className="flex items-center gap-3 pb-2 mb-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
+                      <CalendarDays className="w-3.5 h-3.5 text-purple-300" />
+                      <h3 className="text-sm font-bold text-white">{day.date}</h3>
+                    </div>
+                    {day.port && (
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-blue-300" />
+                        <span className="text-sm text-white/70 font-medium">{day.port}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Party Cards Grid - 2 columns max */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {day.events.map((event, eventIndex) => (
+                      <PartyCard
+                        key={`${day.key}-${eventIndex}`}
+                        event={event}
+                        partyTheme={event.partyTheme}
+                        timeFormat={timeFormat}
+                        onPartyClick={onPartyClick}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
