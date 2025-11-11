@@ -83,6 +83,61 @@ export function FlyUpMenu({
         />
       )}
 
+      {/* Custom Navigation Header - Rendered OUTSIDE scrollable container so it stays fixed */}
+      <div className="xl:hidden fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
+        <div className="px-3 sm:px-4 py-2 flex items-center justify-between">
+          {/* Left side - Charter logo and badge */}
+          <div className="flex items-center gap-2">
+            {charterCompanyLogo && (
+              <img
+                src={charterCompanyLogo}
+                alt={charterCompanyName || 'Charter Company'}
+                className={`w-auto object-contain ${
+                  charterCompanyName?.toLowerCase().includes('atlantis')
+                    ? 'h-5'
+                    : charterCompanyName?.toLowerCase().includes('drag')
+                      ? 'h-6'
+                      : 'h-6'
+                }`}
+                loading="lazy"
+              />
+            )}
+            <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-[10px] px-2 py-0 font-semibold whitespace-nowrap">
+              {tripType === 'cruise'
+                ? 'Interactive Cruise Guide'
+                : tripType === 'resort'
+                  ? 'Interactive Resort Guide'
+                  : 'Interactive Travel Guide'}
+            </Badge>
+          </div>
+
+          {/* Right side - Close button (X only, no circle) */}
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-white hover:text-white/70 transition-colors p-2"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop close button - Rendered OUTSIDE scrollable container */}
+      <button
+        onClick={() => onOpenChange(false)}
+        className={cn(
+          'hidden xl:block fixed z-[10000] p-3 rounded-full',
+          'bg-white/10 backdrop-blur-lg border border-white/20',
+          'hover:bg-white/20 transition-colors',
+          'text-white',
+          // Position based on variant
+          variant === 'full' ? 'top-4 right-4' : 'top-4 right-4'
+        )}
+        aria-label="Close"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
       {/* Main fly-up container */}
       <div
         className={cn(
@@ -100,60 +155,6 @@ export function FlyUpMenu({
       >
         {/* 30% black overlay for darkening effect - matching landing page */}
         <div className="fixed inset-0 bg-black/30 pointer-events-none z-0" />
-        {/* Custom Navigation Header - Only on mobile/tablet (not desktop) */}
-        <div className="xl:hidden fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
-          <div className="px-3 sm:px-4 py-2 flex items-center justify-between">
-            {/* Left side - Charter logo and badge */}
-            <div className="flex items-center gap-2">
-              {charterCompanyLogo && (
-                <img
-                  src={charterCompanyLogo}
-                  alt={charterCompanyName || 'Charter Company'}
-                  className={`w-auto object-contain ${
-                    charterCompanyName?.toLowerCase().includes('atlantis')
-                      ? 'h-5'
-                      : charterCompanyName?.toLowerCase().includes('drag')
-                        ? 'h-6'
-                        : 'h-6'
-                  }`}
-                  loading="lazy"
-                />
-              )}
-              <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-[10px] px-2 py-0 font-semibold whitespace-nowrap">
-                {tripType === 'cruise'
-                  ? 'Interactive Cruise Guide'
-                  : tripType === 'resort'
-                    ? 'Interactive Resort Guide'
-                    : 'Interactive Travel Guide'}
-              </Badge>
-            </div>
-
-            {/* Right side - Close button (X only, no circle) */}
-            <button
-              onClick={() => onOpenChange(false)}
-              className="text-white hover:text-white/70 transition-colors p-2"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Desktop close button - Only shown on desktop */}
-        <button
-          onClick={() => onOpenChange(false)}
-          className={cn(
-            'hidden xl:block fixed z-[10000] p-3 rounded-full',
-            'bg-white/10 backdrop-blur-lg border border-white/20',
-            'hover:bg-white/20 transition-colors',
-            'text-white',
-            // Position based on variant
-            variant === 'full' ? 'top-4 right-4' : 'top-4 right-4'
-          )}
-          aria-label="Close"
-        >
-          <X className="w-6 h-6" />
-        </button>
 
         {/* Content */}
         <div

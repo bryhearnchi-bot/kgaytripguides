@@ -407,6 +407,48 @@ export default function TripGuide({
     return <ErrorState />;
   }
 
+  // Format trip dates
+  const formatTripDates = () => {
+    if (!tripData?.trip?.startDate || !tripData?.trip?.endDate) return null;
+
+    const startDateStr = tripData.trip.startDate.split('T')[0];
+    const endDateStr = tripData.trip.endDate.split('T')[0];
+
+    const startParts = startDateStr.split('-');
+    const startYear = Number(startParts[0] ?? 2025);
+    const startMonth = Number(startParts[1] ?? 1);
+    const startDay = Number(startParts[2] ?? 1);
+    const endParts = endDateStr.split('-');
+    const endYear = Number(endParts[0] ?? 2025);
+    const endMonth = Number(endParts[1] ?? 1);
+    const endDay = Number(endParts[2] ?? 1);
+
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
+
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    };
+
+    // If same month and year, show "Month Day - Day, Year"
+    if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${endDay}, ${start.getFullYear()}`;
+    }
+
+    // Otherwise show full dates
+    const startFormatted = start.toLocaleDateString('en-US', formatOptions);
+    const endFormatted = end.toLocaleDateString('en-US', formatOptions);
+    return `${startFormatted} - ${endFormatted}`;
+  };
+
+  const tripDates = formatTripDates();
+  const tripName = tripData?.trip?.name || 'Your Next Adventure';
+  const words = tripName.split(' ');
+  const firstWord = words[0];
+  const remainingWords = words.slice(1).join(' ');
+
   return (
     <div className="min-h-screen w-full relative">
       {isDragStarsCruise ? (
@@ -419,6 +461,61 @@ export default function TripGuide({
 
       {/* Content Layer */}
       <div className="relative z-10">
+        {/* Sticky Trip Header - Always visible below navigation bar */}
+        <div className="sticky top-14 sm:top-16 z-30 pt-4 pb-4">
+          <div className="mx-auto max-w-3xl px-4 text-center">
+            {/* Trip Name */}
+            <h1 className="text-2xl leading-tight font-bold text-white flex items-end justify-center gap-3 flex-wrap sm:text-3xl lg:text-4xl">
+              <span>
+                <span className="relative">
+                  {firstWord}
+                  <svg
+                    width="223"
+                    height="12"
+                    viewBox="0 0 223 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="rainbow-gradient-sticky"
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="0%"
+                      >
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="16.67%" stopColor="#f97316" />
+                        <stop offset="33.33%" stopColor="#eab308" />
+                        <stop offset="50%" stopColor="#22c55e" />
+                        <stop offset="66.67%" stopColor="#3b82f6" />
+                        <stop offset="83.33%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#ec4899" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                      stroke="url(#rainbow-gradient-sticky)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>{' '}
+                {remainingWords}
+              </span>
+            </h1>
+
+            {/* Trip Dates */}
+            {tripDates && (
+              <p className="text-white/60 text-xs font-medium mt-2 sm:text-sm">{tripDates}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Spacer to push hero content down below sticky header */}
+        <div className="h-24 sm:h-28"></div>
+
         <HeroSection
           tripName={tripData?.trip?.name}
           tripDescription={null} // Description moved to Overview tab
