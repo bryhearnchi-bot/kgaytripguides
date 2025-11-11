@@ -278,7 +278,8 @@ const HeroSection = ({
     >
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
-        <div className="flex items-center justify-center gap-2.5 pt-3 flex-wrap w-full">
+        {/* Charter Logo and Badges - Hidden on mobile/tablet, shown on desktop */}
+        <div className="hidden xl:flex items-center justify-center gap-2.5 pt-3 flex-wrap w-full">
           {/* Charter Logo - Left side */}
           {charterCompanyLogo && (
             <img
@@ -300,7 +301,7 @@ const HeroSection = ({
           </Badge>
         </div>
 
-        <h1 className="text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap w-full px-2">
+        <h1 className="xl:hidden text-2xl leading-[1.29167] font-bold text-balance text-white flex items-end justify-center gap-3 flex-wrap w-full px-2 sticky top-0 z-30">
           <span>
             <span className="relative">
               {firstWord}
@@ -336,7 +337,9 @@ const HeroSection = ({
         </h1>
 
         {/* Trip Dates - Mobile */}
-        {tripDates && <p className="text-white/60 text-xs font-medium -mt-4">{tripDates}</p>}
+        {tripDates && (
+          <p className="xl:hidden text-white/60 text-xs font-medium -mt-4">{tripDates}</p>
+        )}
 
         {/* Mobile carousel/image display */}
         <div className="relative w-full max-w-xs aspect-square overflow-hidden rounded-lg">
@@ -370,7 +373,8 @@ const HeroSection = ({
 
       {/* Hero Content - Desktop/Tablet */}
       <div className="hidden sm:flex mx-auto max-w-3xl flex-col items-center gap-8 px-4 text-center sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2.5">
+        {/* Charter Logo and Badges - Hidden on tablet, shown on desktop */}
+        <div className="hidden xl:flex items-center gap-2.5">
           {/* Charter Logo - Left side */}
           {charterCompanyLogo && (
             <img
@@ -392,7 +396,7 @@ const HeroSection = ({
           </Badge>
         </div>
 
-        <h1 className="text-2xl leading-[1.29167] font-bold text-balance sm:text-3xl lg:text-4xl text-white flex items-end justify-center gap-3 flex-wrap">
+        <h1 className="xl:hidden text-2xl leading-[1.29167] font-bold text-balance sm:text-3xl lg:text-4xl text-white flex items-end justify-center gap-3 flex-wrap sticky top-0 z-30">
           <span>
             <span className="relative">
               {firstWord}
@@ -405,7 +409,7 @@ const HeroSection = ({
                 className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
               >
                 <defs>
-                  <linearGradient id="rainbow-gradient-desktop" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient id="rainbow-gradient-tablet" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#ef4444" />
                     <stop offset="16.67%" stopColor="#f97316" />
                     <stop offset="33.33%" stopColor="#eab308" />
@@ -417,7 +421,7 @@ const HeroSection = ({
                 </defs>
                 <path
                   d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
-                  stroke="url(#rainbow-gradient-desktop)"
+                  stroke="url(#rainbow-gradient-tablet)"
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
@@ -427,8 +431,57 @@ const HeroSection = ({
           </span>
         </h1>
 
-        {/* Trip Dates - Desktop/Tablet */}
-        {tripDates && <p className="text-white/60 text-sm font-medium -mt-6">{tripDates}</p>}
+        {/* Trip Dates - Tablet */}
+        {tripDates && (
+          <p className="xl:hidden text-white/60 text-sm font-medium -mt-6">{tripDates}</p>
+        )}
+
+        {/* Desktop only - non-sticky heading */}
+        <div className="hidden xl:flex mx-auto max-w-3xl flex-col items-center gap-8 px-4 text-center sm:px-6 lg:px-8">
+          <h1 className="text-2xl leading-[1.29167] font-bold text-balance sm:text-3xl lg:text-4xl text-white flex items-end justify-center gap-3 flex-wrap">
+            <span>
+              <span className="relative">
+                {firstWord}
+                <svg
+                  width="223"
+                  height="12"
+                  viewBox="0 0 223 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+                >
+                  <defs>
+                    <linearGradient
+                      id="rainbow-gradient-desktop-2"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="16.67%" stopColor="#f97316" />
+                      <stop offset="33.33%" stopColor="#eab308" />
+                      <stop offset="50%" stopColor="#22c55e" />
+                      <stop offset="66.67%" stopColor="#3b82f6" />
+                      <stop offset="83.33%" stopColor="#8b5cf6" />
+                      <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                    stroke="url(#rainbow-gradient-desktop-2)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>{' '}
+              {remainingWords}
+            </span>
+          </h1>
+
+          {/* Trip Dates - Desktop */}
+          {tripDates && <p className="text-white/60 text-sm font-medium -mt-6">{tripDates}</p>}
+        </div>
 
         <p className="text-white">{tripDescription}</p>
       </div>
