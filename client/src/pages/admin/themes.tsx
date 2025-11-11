@@ -214,8 +214,8 @@ export default function ThemesManagement() {
 
   return (
     <div className="space-y-4">
-      {/* Header Section - Sticky */}
-      <div className="sticky top-16 z-20 bg-[#002147] pb-4 space-y-4">
+      {/* Header Section - Sticky with Safari fix */}
+      <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
         <div className="flex items-center justify-between px-1">
           <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
             <Palette className="h-5 w-5 sm:h-6 sm:w-6" />

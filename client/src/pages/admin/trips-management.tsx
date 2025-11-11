@@ -583,89 +583,91 @@ export default function TripsManagement() {
 
   return (
     <div className="space-y-4">
-      {/* Header Section - no container on mobile */}
-      <div className="flex items-center justify-between px-1">
-        <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
-          <TreePalm className="h-5 w-5 sm:h-6 sm:w-6" />
-          Trip Management
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSearch(!showSearch)}
-            className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
-            aria-label="Search trips"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
-                aria-label="Filter trips"
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white/15 backdrop-blur-xl border-white/10"
-            >
-              {statusFilters
-                .filter(filter => typeof filter.count === 'number' && filter.count > 0)
-                .map(filter => {
-                  const isActive = statusFilter === filter.value;
-                  return (
-                    <DropdownMenuItem
-                      key={filter.value}
-                      onClick={() => setStatusFilter(filter.value as StatusFilter)}
-                      className={`text-white hover:bg-white/10 focus:bg-white/10 transition-colors ${
-                        isActive ? 'bg-white/20 font-medium' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full gap-3">
-                        <span>{filter.label}</span>
-                        <span className="text-xs text-white/60">{filter.count}</span>
-                      </div>
-                    </DropdownMenuItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {canCreateOrEditTrips && (
+      {/* Header Section - Sticky with Safari fix */}
+      <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
+            <TreePalm className="h-5 w-5 sm:h-6 sm:w-6" />
+            Trip Management
+          </h1>
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => setIsWizardOpen(true)}
+              onClick={() => setShowSearch(!showSearch)}
               className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
-              aria-label="Add new trip"
-              title="Add New Trip"
+              aria-label="Search trips"
             >
-              <Plus className="h-4 w-4" />
+              <Search className="h-4 w-4" />
             </Button>
-          )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+                  aria-label="Filter trips"
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white/15 backdrop-blur-xl border-white/10"
+              >
+                {statusFilters
+                  .filter(filter => typeof filter.count === 'number' && filter.count > 0)
+                  .map(filter => {
+                    const isActive = statusFilter === filter.value;
+                    return (
+                      <DropdownMenuItem
+                        key={filter.value}
+                        onClick={() => setStatusFilter(filter.value as StatusFilter)}
+                        className={`text-white hover:bg-white/10 focus:bg-white/10 transition-colors ${
+                          isActive ? 'bg-white/20 font-medium' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full gap-3">
+                          <span>{filter.label}</span>
+                          <span className="text-xs text-white/60">{filter.count}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {canCreateOrEditTrips && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsWizardOpen(true)}
+                className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+                aria-label="Add new trip"
+                title="Add New Trip"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Search Bar - shown when search button is clicked */}
-      {showSearch && (
-        <div className="relative px-1 animate-in fade-in slide-in-from-top-2 duration-200">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-          <Input
-            value={searchTerm}
-            onChange={event => setSearchTerm(event.target.value)}
-            placeholder="Search voyages by name, ship, or cruise line"
-            className="h-11 rounded-full border-white/5 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 focus-visible:ring-offset-0 focus:border-white/20 focus:ring-1 focus:ring-white/10 focus:ring-offset-0 transition-all"
-            autoFocus
-          />
-        </div>
-      )}
+        {/* Search Bar - shown when search button is clicked */}
+        {showSearch && (
+          <div className="relative px-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              value={searchTerm}
+              onChange={event => setSearchTerm(event.target.value)}
+              placeholder="Search voyages by name, ship, or cruise line"
+              className="h-11 rounded-full border-white/5 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 focus-visible:ring-offset-0 focus:border-white/20 focus:ring-1 focus:ring-white/10 focus:ring-offset-0 transition-all"
+              autoFocus
+            />
+          </div>
+        )}
+      </div>
 
       {/* Mobile header - shows current filter */}
       <div className="sm:hidden px-1 mb-4">
