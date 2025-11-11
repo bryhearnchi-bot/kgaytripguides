@@ -67,7 +67,7 @@ export default function BottomNavigation() {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
 
     if (isLeftSwipe && currentIndex < tabs.length - 1) {
       // Swipe left - go to next tab
@@ -101,11 +101,15 @@ export default function BottomNavigation() {
           >
             <TreePalm className="w-4 h-4 flex-shrink-0" />
             {/* Tablet: Always show label. Mobile: Only show if active */}
-            <span className={cn(
-              "animate-in fade-in slide-in-from-left-2 duration-200",
-              "hidden md:inline", // Always show on tablet
-              activeTab === 'home' && "inline md:inline" // Show on mobile only if active
-            )}>Trips</span>
+            <span
+              className={cn(
+                'animate-in fade-in slide-in-from-left-2 duration-200',
+                'hidden md:inline', // Always show on tablet
+                activeTab === 'home' && 'inline md:inline' // Show on mobile only if active
+              )}
+            >
+              Trips
+            </span>
           </button>
 
           {/* Past Trips */}
@@ -117,11 +121,15 @@ export default function BottomNavigation() {
             )}
           >
             <History className="w-4 h-4 flex-shrink-0" />
-            <span className={cn(
-              "animate-in fade-in slide-in-from-left-2 duration-200",
-              "hidden md:inline",
-              activeTab === 'past' && "inline md:inline"
-            )}>Past</span>
+            <span
+              className={cn(
+                'animate-in fade-in slide-in-from-left-2 duration-200',
+                'hidden md:inline',
+                activeTab === 'past' && 'inline md:inline'
+              )}
+            >
+              Past
+            </span>
           </button>
 
           {/* My Stuff */}
@@ -133,11 +141,15 @@ export default function BottomNavigation() {
             )}
           >
             <Star className="w-4 h-4 flex-shrink-0" />
-            <span className={cn(
-              "animate-in fade-in slide-in-from-left-2 duration-200",
-              "hidden md:inline",
-              activeTab === 'mystuff' && "inline md:inline"
-            )}>My Stuff</span>
+            <span
+              className={cn(
+                'animate-in fade-in slide-in-from-left-2 duration-200',
+                'hidden md:inline',
+                activeTab === 'mystuff' && 'inline md:inline'
+              )}
+            >
+              My Stuff
+            </span>
           </button>
 
           {/* Alerts */}
@@ -149,11 +161,15 @@ export default function BottomNavigation() {
             )}
           >
             <Bell className="w-4 h-4 flex-shrink-0" />
-            <span className={cn(
-              "animate-in fade-in slide-in-from-left-2 duration-200",
-              "hidden md:inline",
-              activeTab === 'alerts' && "inline md:inline"
-            )}>Alerts</span>
+            <span
+              className={cn(
+                'animate-in fade-in slide-in-from-left-2 duration-200',
+                'hidden md:inline',
+                activeTab === 'alerts' && 'inline md:inline'
+              )}
+            >
+              Alerts
+            </span>
           </button>
 
           {/* Settings */}
@@ -161,22 +177,19 @@ export default function BottomNavigation() {
             onClick={() => handleNavigation('/settings')}
             className={cn(
               'px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px]',
-              activeTab === 'settings'
-                ? 'bg-white/60 text-black'
-                : 'text-black hover:text-black/80'
+              activeTab === 'settings' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
             )}
           >
-            <User
+            <User className={cn('w-5 h-5 flex-shrink-0', user ? 'fill-black stroke-black' : '')} />
+            <span
               className={cn(
-                'w-5 h-5 flex-shrink-0',
-                user ? 'fill-black stroke-black' : ''
+                'animate-in fade-in slide-in-from-left-2 duration-200',
+                'hidden md:inline',
+                activeTab === 'settings' && 'inline md:inline'
               )}
-            />
-            <span className={cn(
-              "animate-in fade-in slide-in-from-left-2 duration-200",
-              "hidden md:inline",
-              activeTab === 'settings' && "inline md:inline"
-            )}>Settings</span>
+            >
+              Settings
+            </span>
           </button>
         </nav>
       </div>
