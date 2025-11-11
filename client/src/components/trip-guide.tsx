@@ -44,15 +44,29 @@ import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-gu
 
 interface TripGuideProps {
   slug?: string;
+  showBottomNav?: boolean;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export default function TripGuide({ slug }: TripGuideProps) {
+export default function TripGuide({
+  slug,
+  showBottomNav = false,
+  activeTab: externalActiveTab,
+  onTabChange: externalOnTabChange,
+}: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
   const { toast } = useToast();
   const { profile } = useSupabaseAuth();
   const haptics = useHaptics();
   const { shareTrip } = useShare();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [internalActiveTab, setInternalActiveTab] = useState('overview');
+
+  // Use external state if provided (for fly-up menu), otherwise use internal state
+  const activeTab = showBottomNav ? externalActiveTab || 'overview' : internalActiveTab;
+  const setActiveTab = showBottomNav
+    ? externalOnTabChange || setInternalActiveTab
+    : setInternalActiveTab;
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
   const [selectedItineraryStop, setSelectedItineraryStop] = useState<any>(null);
@@ -446,123 +460,130 @@ export default function TripGuide({ slug }: TripGuideProps) {
         )}
 
         <StandardizedContentLayout>
-          {/* Tab Bar */}
-          <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
-            <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('overview');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'overview'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                aria-label="Overview"
-              >
-                <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Overview</span>
-                {activeTab === 'overview' && <span className="sm:hidden">Overview</span>}
-              </button>
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('itinerary');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'itinerary'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                aria-label={isCruise ? 'Itinerary' : 'Schedule'}
-              >
-                <Map className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">{isCruise ? 'Itinerary' : 'Schedule'}</span>
-                {activeTab === 'itinerary' && (
-                  <span className="sm:hidden">{isCruise ? 'Itinerary' : 'Schedule'}</span>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('schedule');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'schedule'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                aria-label="Events"
-              >
-                <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Events</span>
-                {activeTab === 'schedule' && <span className="sm:hidden">Events</span>}
-              </button>
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('parties');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'parties'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                aria-label="Parties"
-              >
-                <PartyPopper className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Parties</span>
-                {activeTab === 'parties' && <span className="sm:hidden">Parties</span>}
-              </button>
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('talent');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'talent'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                aria-label="Talent"
-              >
-                <Star className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Talent</span>
-                {activeTab === 'talent' && <span className="sm:hidden">Talent</span>}
-              </button>
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('info');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'info'
-                    ? 'bg-white text-ocean-900'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                aria-label="Info"
-              >
-                <Info className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Info</span>
-                {activeTab === 'info' && <span className="sm:hidden">Info</span>}
-              </button>
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setActiveTab('faq');
-                }}
-                className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                  activeTab === 'faq' ? 'bg-white text-ocean-900' : 'text-white/70 hover:text-white'
-                }`}
-                aria-label="FAQ"
-              >
-                <HelpCircle className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">FAQ</span>
-                {activeTab === 'faq' && <span className="sm:hidden">FAQ</span>}
-              </button>
+          {/* Add spacing when using bottom nav instead of middle tab bar */}
+          {showBottomNav && <div className="pt-8 sm:pt-16 lg:pt-16" />}
+
+          {/* Tab Bar - Only show when NOT using bottom navigation */}
+          {!showBottomNav && (
+            <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
+              <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('overview');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'overview'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="Overview"
+                >
+                  <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Overview</span>
+                  {activeTab === 'overview' && <span className="sm:hidden">Overview</span>}
+                </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('itinerary');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'itinerary'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label={isCruise ? 'Itinerary' : 'Schedule'}
+                >
+                  <Map className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">{isCruise ? 'Itinerary' : 'Schedule'}</span>
+                  {activeTab === 'itinerary' && (
+                    <span className="sm:hidden">{isCruise ? 'Itinerary' : 'Schedule'}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('schedule');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'schedule'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="Events"
+                >
+                  <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Events</span>
+                  {activeTab === 'schedule' && <span className="sm:hidden">Events</span>}
+                </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('parties');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'parties'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="Parties"
+                >
+                  <PartyPopper className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Parties</span>
+                  {activeTab === 'parties' && <span className="sm:hidden">Parties</span>}
+                </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('talent');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'talent'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="Talent"
+                >
+                  <Star className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Talent</span>
+                  {activeTab === 'talent' && <span className="sm:hidden">Talent</span>}
+                </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('info');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'info'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="Info"
+                >
+                  <Info className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Info</span>
+                  {activeTab === 'info' && <span className="sm:hidden">Info</span>}
+                </button>
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setActiveTab('faq');
+                  }}
+                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+                    activeTab === 'faq'
+                      ? 'bg-white text-ocean-900'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                  aria-label="FAQ"
+                >
+                  <HelpCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">FAQ</span>
+                  {activeTab === 'faq' && <span className="sm:hidden">FAQ</span>}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsContent value="overview">

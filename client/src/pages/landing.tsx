@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Ship, MapPin, Clock, Calendar, History, Home } from 'lucide-react';
@@ -14,6 +13,9 @@ import { FeaturedTripCarousel } from '@/components/FeaturedTripCarousel';
 import { isNative } from '@/lib/capacitor';
 import { useHomeMetadata } from '@/hooks/useHomeMetadata';
 import type { Update, UpdateType } from '@/types/trip-info';
+import { FlyUpMenu } from '@/components/ui/FlyUpMenu';
+import TripGuide from '@/components/trip-guide';
+import { TripGuideBottomNav } from '@/components/TripGuideBottomNav';
 
 interface Trip {
   id: number;
@@ -35,7 +37,7 @@ interface Trip {
   charterCompanyLogo?: string;
 }
 
-function TripCard({ trip }: { trip: Trip }) {
+function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: string) => void }) {
   const startDate = dateOnly(trip.startDate);
   const endDate = dateOnly(trip.endDate);
   const tripDuration = differenceInCalendarDays(endDate, startDate);
@@ -45,15 +47,8 @@ function TripCard({ trip }: { trip: Trip }) {
 
   return (
     <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
-      <Link
-        href={`/trip/${trip.slug}`}
-        onClick={() => {
-          window.scrollTo(0, 0);
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        }}
-      >
-        <div className="relative h-48 overflow-hidden cursor-pointer">
+      <div onClick={() => onOpenFlyUp(trip.slug)} className="cursor-pointer">
+        <div className="relative h-48 overflow-hidden">
           <img
             src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
             alt={trip.name}
@@ -97,7 +92,7 @@ function TripCard({ trip }: { trip: Trip }) {
             </div>
           )}
         </div>
-      </Link>
+      </div>
 
       <div className="p-4 flex-1 flex flex-col">
         <h4 className="text-lg font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors line-clamp-2">
@@ -144,18 +139,12 @@ function TripCard({ trip }: { trip: Trip }) {
           )}
         </div>
 
-        <Link
-          href={`/trip/${trip.slug}`}
-          onClick={() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-          }}
+        <Button
+          onClick={() => onOpenFlyUp(trip.slug)}
+          className="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
         >
-          <Button className="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl">
-            {getTripButtonText(trip.tripType)}
-          </Button>
-        </Link>
+          {getTripButtonText(trip.tripType)}
+        </Button>
       </div>
     </div>
   );
@@ -197,6 +186,26 @@ export default function LandingPage() {
   useHomeMetadata();
 
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
+  const [flyUpOpen, setFlyUpOpen] = useState(false);
+  const [selectedTripSlug, setSelectedTripSlug] = useState<string | null>(null);
+  const [tripGuideActiveTab, setTripGuideActiveTab] = useState('overview');
+
+  // Handler to open trip in fly-up menu
+  const handleOpenFlyUp = (slug: string) => {
+    setSelectedTripSlug(slug);
+    setTripGuideActiveTab('overview'); // Reset to overview tab
+    setFlyUpOpen(true);
+  };
+
+  // Handler to close fly-up
+  const handleCloseFlyUp = () => {
+    setFlyUpOpen(false);
+    // Small delay before clearing slug to allow animation to complete
+    setTimeout(() => {
+      setSelectedTripSlug(null);
+      setTripGuideActiveTab('overview');
+    }, 200);
+  };
 
   const {
     data: trips,
@@ -218,6 +227,9 @@ export default function LandingPage() {
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
     refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
+
+  // Get selected trip data for fly-up header
+  const selectedTrip = trips?.find(trip => trip.slug === selectedTripSlug);
 
   // Fetch homepage updates
   const { data: homepageUpdates, isLoading: updatesLoading } = useQuery<
@@ -365,7 +377,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* Featured Trip Carousel - Full Width */}
-                        <FeaturedTripCarousel trips={featuredTrips} />
+                        <FeaturedTripCarousel trips={featuredTrips} onOpenFlyUp={handleOpenFlyUp} />
                       </div>
                     )}
 
@@ -382,7 +394,7 @@ export default function LandingPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                           {upcomingTrips.map(trip => (
-                            <TripCard key={trip.id} trip={trip} />
+                            <TripCard key={trip.id} trip={trip} onOpenFlyUp={handleOpenFlyUp} />
                           ))}
                         </div>
                       </div>
@@ -402,7 +414,7 @@ export default function LandingPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                           {filteredTrips.map(trip => (
-                            <TripCard key={trip.id} trip={trip} />
+                            <TripCard key={trip.id} trip={trip} onOpenFlyUp={handleOpenFlyUp} />
                           ))}
                         </div>
                       </div>
@@ -426,7 +438,7 @@ export default function LandingPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                           {filteredTrips.map(trip => (
-                            <TripCard key={trip.id} trip={trip} />
+                            <TripCard key={trip.id} trip={trip} onOpenFlyUp={handleOpenFlyUp} />
                           ))}
                         </div>
                       </div>
@@ -458,6 +470,34 @@ export default function LandingPage() {
           </StandardizedContentLayout>
         </div>
       </div>
+
+      {/* Full-page fly-up menu for trip guide */}
+      <FlyUpMenu
+        open={flyUpOpen}
+        onOpenChange={open => {
+          if (!open) handleCloseFlyUp();
+        }}
+        variant="full"
+        charterCompanyLogo={selectedTrip?.charterCompanyLogo}
+        charterCompanyName={selectedTrip?.charterCompanyName}
+        tripType={selectedTrip?.tripTypeId === 2 ? 'resort' : 'cruise'}
+        bottomNavigation={
+          <TripGuideBottomNav
+            activeTab={tripGuideActiveTab}
+            onTabChange={setTripGuideActiveTab}
+            isCruise={selectedTrip?.tripTypeId !== 2}
+          />
+        }
+      >
+        {selectedTripSlug && (
+          <TripGuide
+            slug={selectedTripSlug}
+            showBottomNav={true}
+            activeTab={tripGuideActiveTab}
+            onTabChange={setTripGuideActiveTab}
+          />
+        )}
+      </FlyUpMenu>
     </>
   );
 }

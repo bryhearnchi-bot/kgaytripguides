@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, CalendarDays, Ship, MapPin, Clock, Home } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
@@ -61,10 +60,11 @@ function getTripStatusBadge(startDate: Date, endDate: Date, status: string) {
 
 interface FeaturedTripCarouselProps {
   trips: Trip[];
+  onOpenFlyUp: (slug: string) => void;
 }
 
 // Regular TripCard component for mobile view
-function TripCard({ trip }: { trip: Trip }) {
+function TripCard({ trip, onOpenFlyUp }: { trip: Trip; onOpenFlyUp: (slug: string) => void }) {
   const startDate = dateOnly(trip.startDate);
   const endDate = dateOnly(trip.endDate);
   const duration = differenceInCalendarDays(endDate, startDate);
@@ -73,15 +73,8 @@ function TripCard({ trip }: { trip: Trip }) {
   return (
     <div className="rounded-2xl p-[2px] bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 shadow-[0_0_20px_rgba(255,0,255,0.5)] animate-gradient-x">
       <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
-        <Link
-          href={`/trip/${trip.slug}`}
-          onClick={() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-          }}
-        >
-          <div className="relative h-48 overflow-hidden cursor-pointer">
+        <div onClick={() => onOpenFlyUp(trip.slug)} className="cursor-pointer">
+          <div className="relative h-48 overflow-hidden">
             <img
               src={trip.heroImageUrl || '/images/ships/resilient-lady-hero.jpg'}
               alt={trip.name}
@@ -117,7 +110,7 @@ function TripCard({ trip }: { trip: Trip }) {
               </div>
             )}
           </div>
-        </Link>
+        </div>
 
         <div className="p-4 flex-1 flex flex-col">
           <h4 className="text-lg font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors line-clamp-2">
@@ -163,25 +156,19 @@ function TripCard({ trip }: { trip: Trip }) {
             )}
           </div>
 
-          <Link
-            href={`/trip/${trip.slug}`}
-            onClick={() => {
-              window.scrollTo(0, 0);
-              document.documentElement.scrollTop = 0;
-              document.body.scrollTop = 0;
-            }}
+          <Button
+            onClick={() => onOpenFlyUp(trip.slug)}
+            className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
           >
-            <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl">
-              {getTripButtonText(trip.tripType)}
-            </Button>
-          </Link>
+            {getTripButtonText(trip.tripType)}
+          </Button>
         </div>
       </div>
     </div>
   );
 }
 
-export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
+export function FeaturedTripCarousel({ trips, onOpenFlyUp }: FeaturedTripCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -222,7 +209,7 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
     <div>
       {/* Mobile: Show regular TripCard (below sm breakpoint - 640px) */}
       <div className="sm:hidden">
-        <TripCard trip={currentTrip} />
+        <TripCard trip={currentTrip} onOpenFlyUp={onOpenFlyUp} />
         {/* Dot Indicators for Mobile */}
         {trips.length > 1 && (
           <div className="flex justify-center gap-2 mt-5">
@@ -364,18 +351,12 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                 </div>
 
                 {/* CTA Button */}
-                <Link
-                  href={`/trip/${currentTrip.slug}`}
-                  onClick={() => {
-                    window.scrollTo(0, 0);
-                    document.documentElement.scrollTop = 0;
-                    document.body.scrollTop = 0;
-                  }}
+                <Button
+                  onClick={() => onOpenFlyUp(currentTrip.slug)}
+                  className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl text-sm"
                 >
-                  <Button className="w-full py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl text-sm">
-                    {getTripButtonText(currentTrip.tripType)} →
-                  </Button>
-                </Link>
+                  {getTripButtonText(currentTrip.tripType)} →
+                </Button>
               </div>
             </div>
           </div>
