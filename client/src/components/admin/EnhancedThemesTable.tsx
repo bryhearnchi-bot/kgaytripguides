@@ -339,7 +339,7 @@ export function EnhancedThemesTable({
                     {hiddenColumns.map(column => (
                       <div key={column.key} className="flex justify-between items-start gap-2">
                         <span className="text-xs text-white/50 font-medium">{column.label}:</span>
-                        <div className="text-sm text-white text-right flex-1">
+                        <div className="text-xs text-white text-right flex-1">
                           {renderCellValue(column, row)}
                         </div>
                       </div>

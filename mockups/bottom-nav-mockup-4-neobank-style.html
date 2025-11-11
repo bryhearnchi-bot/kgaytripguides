@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bottom Navigation Mockup 4 - Neobank Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #002147;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Mobile/Tablet container */
+        .device-frame {
+            max-width: 430px;
+            margin: 20px auto;
+            background: #002147;
+            min-height: 100vh;
+            position: relative;
+            border: 3px solid #1a1a1a;
+            border-radius: 45px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .device-screen {
+            background: #002147;
+            border-radius: 35px;
+            overflow: hidden;
+            min-height: calc(100vh - 40px);
+            position: relative;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            padding: 12px 20px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* Top Navigation (existing) */
+        .top-nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .top-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* Main Content Area */
+        .content {
+            padding: 20px 16px 100px 16px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 24px;
+        }
+
+        /* Trip Cards */
+        .trip-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .trip-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .trip-card-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* BOTTOM NAVIGATION - NEOBANK STYLE */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 8px 16px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            min-width: 70px;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            position: relative;
+        }
+
+        /* SVG Icons */
+        .icon-svg {
+            width: 24px;
+            height: 24px;
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .nav-item.active .icon-svg {
+            stroke: #000;
+        }
+
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-label {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .nav-item.active .nav-label {
+            color: #000;
+            font-weight: 600;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+        }
+
+        .mockup-label {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #06b6d4;
+            border: 1px solid #06b6d4;
+            z-index: 1000;
+        }
+
+        /* Home indicator */
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mockup-label">MOCKUP 4: NEOBANK</div>
+
+    <div class="device-frame">
+        <div class="device-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div>9:41</div>
+                <div class="status-icons">
+                    <span>📶</span>
+                    <span>📡</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+
+            <!-- Existing Top Nav (simplified for mockup) -->
+            <div class="top-nav">
+                <div class="top-nav-left">
+                    <div class="logo">KGay Guides</div>
+                </div>
+                <div class="top-nav-right">
+                    <button class="icon-button">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: white;">
+                            <path d="M21.5 2v6m-3-3h6M21.34 15.57c-.78-.78-2.04-.78-2.82 0l-3.75 3.75-1.06-1.06c-.78-.78-2.05-.78-2.83 0l-3.75 3.75m11.21-6.44L23 21.23M3 21.23l3.75-3.75m0 0L11.46 13M6.75 17.48l-3.75 3.75m14.5-8.75v8.75m-3.5 0v-8.75"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="content">
+                <h1 class="page-title">My Trips</h1>
+                <p class="page-subtitle">Your upcoming adventures</p>
+
+                <div class="trip-card">
+                    <div class="trip-card-title">🏖️ Caribbean Paradise Cruise</div>
+                    <div class="trip-card-date">Oct 12-18, 2025 • 7 Days</div>
+                </div>
+
+                <div class="trip-card">
+                    <div class="trip-card-title">🌴 Atlantis Puerto Vallarta</div>
+                    <div class="trip-card-date">Nov 5-12, 2025 • 8 Days</div>
+                </div>
+
+                <div class="trip-card">
+                    <div class="trip-card-title">⛵ Mediterranean Adventure</div>
+                    <div class="trip-card-date">Dec 1-8, 2025 • 8 Days</div>
+                </div>
+            </div>
+
+            <!-- NEW BOTTOM NAVIGATION - NEOBANK STYLE -->
+            <div class="bottom-nav">
+                <!-- Profile / Account -->
+                <div class="nav-item">
+                    <div class="nav-icon">
+                        <div class="profile-avatar">B</div>
+                    </div>
+                    <div class="nav-label">Profile</div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="nav-item">
+                    <div class="nav-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <span class="notification-badge"></span>
+                    </div>
+                    <div class="nav-label">Alerts</div>
+                </div>
+
+                <!-- My Stuff -->
+                <div class="nav-item">
+                    <div class="nav-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="nav-label">My Stuff</div>
+                </div>
+
+                <!-- Trips -->
+                <div class="nav-item active">
+                    <div class="nav-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                    </div>
+                    <div class="nav-label">Trips</div>
+                </div>
+            </div>
+
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+
+    <div style="text-align: center; padding: 20px; color: rgba(255, 255, 255, 0.5); font-size: 12px;">
+        <p><strong>Mockup 4: Neobank-Style Clean Design</strong></p>
+        <p>Minimal line icons with labels. Light background nav bar. Active state shown on "Trips".</p>
+    </div>
+</body>
+</html>

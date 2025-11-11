@@ -443,7 +443,7 @@ export default function TripsManagement() {
 
   const statusFilters = useMemo(
     () => [
-      { value: 'all', label: 'All trips', count: groupedTrips.active.length },
+      { value: 'all', label: 'All Trips', count: groupedTrips.active.length },
       { value: 'draft', label: 'Drafts', count: groupedTrips.draft.length },
       { value: 'preview', label: 'Preview', count: groupedTrips.preview.length },
       { value: 'upcoming', label: 'Upcoming', count: groupedTrips.upcoming.length },
@@ -683,17 +683,6 @@ export default function TripsManagement() {
               {statusFilters.find(f => f.value === statusFilter)?.label || 'All Trips'}
             </h2>
           </div>
-          {canCreateOrEditTrips && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsWizardOpen(true)}
-              className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
-              title="Add New Trip"
-            >
-              <PlusSquare className="h-5 w-5 text-blue-400/80" />
-            </Button>
-          )}
         </header>
 
         {showEmpty || showError ? (

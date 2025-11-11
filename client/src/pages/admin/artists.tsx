@@ -425,19 +425,6 @@ export default function ArtistsManagement() {
           <div>
             <h2 className="text-lg font-semibold text-white">{getViewDisplayName()}</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              setEditingArtist(null);
-              resetForm();
-              setShowAddModal(true);
-            }}
-            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
-            title="Add New Artist"
-          >
-            <PlusSquare className="h-5 w-5 text-blue-400/80" />
-          </Button>
         </header>
 
         {filteredArtists.length === 0 ? (
@@ -497,19 +484,16 @@ export default function ArtistsManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: value => <p className="font-bold text-xs text-white">{value}</p>,
-              },
-              {
-                key: 'category',
-                label: 'Category',
-                priority: 'high',
-                sortable: true,
-                minWidth: 150,
-                render: (value, artist) => (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
-                    {getCategoryIcon(artist.category)}
-                    <span>{artist.category}</span>
-                  </span>
+                render: (_value, artist) => (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="font-bold text-sm text-white">{artist.name}</p>
+                    {artist.category && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-xs text-white/70 w-fit">
+                        {getCategoryIcon(artist.category)}
+                        <span>{artist.category}</span>
+                      </span>
+                    )}
+                  </div>
                 ),
               },
               {

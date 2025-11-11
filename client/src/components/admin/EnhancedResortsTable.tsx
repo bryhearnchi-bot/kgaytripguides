@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronDown, ChevronRight, MoreVertical, ChevronUp, ChevronsUpDown } from 'lucide-react';
+import { ChevronDown, MoreVertical, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +47,6 @@ export function EnhancedResortsTable({
   className = '',
   mobileBreakpoint = 768,
 }: EnhancedResortsTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint
   );
@@ -169,27 +168,8 @@ export function EnhancedResortsTable({
     };
   }, [isResizing, updateColumnWidth]);
 
-  const toggleRowExpansion = (rowKey: any) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(rowKey)) {
-      newExpanded.delete(rowKey);
-    } else {
-      newExpanded.add(rowKey);
-    }
-    setExpandedRows(newExpanded);
-  };
-
   // Get columns for different screen sizes
   const highPriorityColumns = columns.filter(col => col.priority === 'high' || !col.priority);
-  const mediumPriorityColumns = columns.filter(col => col.priority === 'medium');
-  const lowPriorityColumns = columns.filter(col => col.priority === 'low');
-
-  const mobileVisibleColumns = highPriorityColumns.slice(0, 2);
-  const hiddenColumns = [
-    ...mediumPriorityColumns,
-    ...lowPriorityColumns,
-    ...highPriorityColumns.slice(2),
-  ];
 
   const renderCellValue = (column: TableColumn, row: any) => {
     const value = row[column.key];
@@ -247,7 +227,6 @@ export function EnhancedResortsTable({
       <div className={`space-y-3 ${className}`}>
         {sortedData.map(row => {
           const rowKey = row[keyField];
-          const isExpanded = expandedRows.has(rowKey);
 
           // Find specific columns for the new layout
           const imageColumn = columns.find(col => col.key === 'image');
@@ -277,22 +256,6 @@ export function EnhancedResortsTable({
 
                     {/* Buttons - right aligned */}
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      {hiddenColumns.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => toggleRowExpansion(rowKey)}
-                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
-                          title={isExpanded ? 'Collapse' : 'Expand'}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-
                       {actions.length > 0 && (
                         <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
@@ -334,19 +297,6 @@ export function EnhancedResortsTable({
                     </div>
                   </div>
                 </div>
-
-                {isExpanded && hiddenColumns.length > 0 && (
-                  <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
-                    {hiddenColumns.map(column => (
-                      <div key={column.key} className="flex justify-between items-start gap-2">
-                        <span className="text-xs text-white/50 font-medium">{column.label}:</span>
-                        <div className="text-sm text-white text-right flex-1">
-                          {renderCellValue(column, row)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           );

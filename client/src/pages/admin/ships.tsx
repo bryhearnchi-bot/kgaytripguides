@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,12 @@ import { EnhancedShipsTable } from '@/components/admin/EnhancedShipsTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
 import { api } from '@/lib/api-client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Ship,
   Plus,
@@ -17,6 +23,7 @@ import {
   Users,
   Calendar,
   Anchor,
+  Filter,
 } from 'lucide-react';
 
 interface Ship {
@@ -36,6 +43,7 @@ export default function ShipsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [cruiseLineFilter, setCruiseLineFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingShip, setEditingShip] = useState<Ship | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -103,13 +111,47 @@ export default function ShipsManagement() {
     setEditingShip(null);
   };
 
-  const filteredShips = ships.filter(
-    ship =>
-      ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ship.cruiseLineName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get available cruise lines
+  const availableCruiseLines = useMemo(() => {
+    const cruiseLineMap = new Map<string, number>();
+    ships.forEach(ship => {
+      if (ship.cruiseLineName) {
+        cruiseLineMap.set(ship.cruiseLineName, (cruiseLineMap.get(ship.cruiseLineName) || 0) + 1);
+      }
+    });
+    return Array.from(cruiseLineMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [ships]);
 
-  // Reset to page 1 when search term changes
+  // Create cruise line filters
+  const cruiseLineFilters = useMemo(() => {
+    return [
+      { value: 'all', label: 'All cruise lines', count: ships.length },
+      ...availableCruiseLines.map(cl => ({
+        value: cl.name,
+        label: cl.name,
+        count: cl.count,
+      })),
+    ];
+  }, [availableCruiseLines, ships.length]);
+
+  const filteredShips = useMemo(() => {
+    return ships.filter(ship => {
+      // Search filter
+      const matchesSearch =
+        ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ship.cruiseLineName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Cruise line filter
+      const matchesCruiseLine =
+        cruiseLineFilter === 'all' || ship.cruiseLineName === cruiseLineFilter;
+
+      return matchesSearch && matchesCruiseLine;
+    });
+  }, [ships, searchTerm, cruiseLineFilter]);
+
+  // Reset to page 1 when search term or filter changes
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
@@ -124,6 +166,14 @@ export default function ShipsManagement() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Get display name for current view
+  const getViewDisplayName = () => {
+    if (cruiseLineFilter === 'all') {
+      return 'All Ships';
+    }
+    return cruiseLineFilter;
   };
 
   return (
@@ -146,6 +196,44 @@ export default function ShipsManagement() {
             >
               <Search className="h-4 w-4" />
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+                  aria-label="Filter ships by cruise line"
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white/15 backdrop-blur-xl border-white/10"
+              >
+                {cruiseLineFilters.map(filter => {
+                  const isActive = cruiseLineFilter === filter.value;
+                  return (
+                    <DropdownMenuItem
+                      key={filter.value}
+                      onClick={() => {
+                        setCruiseLineFilter(filter.value);
+                        setCurrentPage(1);
+                      }}
+                      className={`text-white hover:bg-white/10 focus:bg-white/10 transition-colors ${
+                        isActive ? 'bg-white/20 font-medium' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full gap-3">
+                        <span>{filter.label}</span>
+                        <span className="text-xs text-white/60">{filter.count}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               type="button"
               variant="ghost"
@@ -176,30 +264,18 @@ export default function ShipsManagement() {
             />
           </div>
         )}
+      </div>
 
-        {/* Mobile header - shows current view */}
-        <div className="sm:hidden px-1">
-          <h2 className="text-lg font-semibold text-white">All Ships</h2>
-        </div>
+      {/* Subheader - Non-sticky, scrolls with content */}
+      <div className="sm:hidden px-1">
+        <h2 className="text-lg font-semibold text-white">{getViewDisplayName()}</h2>
       </div>
 
       <section className="relative sm:rounded-2xl sm:border sm:border-white/10 sm:bg-white/5 sm:shadow-2xl sm:shadow-black/40 sm:backdrop-blur">
         <header className="hidden sm:flex flex-col gap-2 border-b border-white/10 px-3 sm:pl-6 sm:pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">All Ships</h2>
+            <h2 className="text-lg font-semibold text-white">{getViewDisplayName()}</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              setEditingShip(null);
-              setShowAddModal(true);
-            }}
-            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
-            title="Add New Ship"
-          >
-            <PlusSquare className="h-5 w-5 text-blue-400/80" />
-          </Button>
         </header>
 
         {filteredShips.length === 0 ? (
@@ -258,15 +334,14 @@ export default function ShipsManagement() {
                 priority: 'high',
                 sortable: true,
                 minWidth: 200,
-                render: value => <p className="font-bold text-xs text-white">{value}</p>,
-              },
-              {
-                key: 'cruiseLineName',
-                label: 'Cruise Line',
-                priority: 'high',
-                sortable: true,
-                minWidth: 150,
-                render: value => <span className="text-white/80">{value}</span>,
+                render: (_value, ship) => (
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-bold text-sm text-white">{ship.name}</p>
+                    {ship.cruiseLineName && (
+                      <p className="text-xs text-white/60">{ship.cruiseLineName}</p>
+                    )}
+                  </div>
+                ),
               },
               {
                 key: 'description',

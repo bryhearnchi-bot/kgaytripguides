@@ -263,11 +263,11 @@ export default function ThemesManagement() {
             />
           </div>
         )}
+      </div>
 
-        {/* Mobile header - shows current view */}
-        <div className="sm:hidden px-1">
-          <h2 className="text-lg font-semibold text-white">All Themes</h2>
-        </div>
+      {/* Subheader - Non-sticky, scrolls with content */}
+      <div className="px-1">
+        <h2 className="text-lg font-semibold text-white">All Themes</h2>
       </div>
 
       <section className="relative sm:rounded-2xl sm:border sm:border-white/10 sm:bg-white/5 sm:shadow-2xl sm:shadow-black/40 sm:backdrop-blur">
@@ -275,19 +275,6 @@ export default function ThemesManagement() {
           <div>
             <h2 className="text-lg font-semibold text-white">All Themes</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              setEditingTheme(null);
-              resetForm();
-              setShowAddModal(true);
-            }}
-            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
-            title="Add New Theme"
-          >
-            <PlusSquare className="h-5 w-5 text-blue-400/80" />
-          </Button>
         </header>
 
         {filteredThemes.length === 0 ? (
