@@ -98,7 +98,9 @@ function TripCard({ trip }: { trip: Trip }) {
                   <img
                     src={trip.charterCompanyLogo}
                     alt={trip.charterCompanyName || 'Charter Company'}
-                    className="h-6 w-auto object-contain"
+                    className={`${
+                      trip.charterCompanyName?.toLowerCase().includes('atlantis') ? 'h-5' : 'h-6'
+                    } w-auto object-contain`}
                     loading="lazy"
                   />
                 </div>
@@ -117,9 +119,9 @@ function TripCard({ trip }: { trip: Trip }) {
           </div>
         </Link>
 
-        <div className="p-5 flex-1 flex flex-col">
+        <div className="p-4 flex-1 flex flex-col">
           <h4
-            className="font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors whitespace-nowrap"
+            className="font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors whitespace-nowrap"
             style={{
               fontSize: `${Math.max(0.7, Math.min(1.25, 25 / trip.name.length))}rem`,
             }}
@@ -127,7 +129,7 @@ function TripCard({ trip }: { trip: Trip }) {
             {trip.name}
           </h4>
 
-          <div className="space-y-2 mb-4 flex-1">
+          <div className="space-y-1.5 mb-3 flex-1">
             <div className="flex items-center gap-2 text-ocean-100 text-sm">
               <CalendarDays className="w-4 h-4 flex-shrink-0" />
               <span>
@@ -154,14 +156,12 @@ function TripCard({ trip }: { trip: Trip }) {
               // Cruise Trip
               <>
                 {trip.shipName && (
-                  <div className="text-ocean-100 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Ship className="w-4 h-4 flex-shrink-0" />
-                      <span className="font-medium">{trip.shipName}</span>
-                    </div>
-                    {trip.cruiseLine && (
-                      <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
-                    )}
+                  <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                    <Ship className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                      {trip.shipName}
+                      {trip.cruiseLine && <> - {trip.cruiseLine}</>}
+                    </span>
                   </div>
                 )}
               </>
@@ -293,10 +293,11 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                         src={currentTrip.charterCompanyLogo}
                         alt={currentTrip.charterCompanyName || 'Charter Company'}
                         className={`${
-                          currentTrip.charterCompanyName?.toLowerCase().includes('atlantis') ||
-                          currentTrip.charterCompanyName?.toLowerCase().includes('vakaya')
-                            ? 'h-6'
-                            : 'h-12'
+                          currentTrip.charterCompanyName?.toLowerCase().includes('atlantis')
+                            ? 'h-5'
+                            : currentTrip.charterCompanyName?.toLowerCase().includes('vakaya')
+                              ? 'h-6'
+                              : 'h-12'
                         } w-auto object-contain rounded shadow flex-shrink-0 self-end`}
                         loading="lazy"
                       />

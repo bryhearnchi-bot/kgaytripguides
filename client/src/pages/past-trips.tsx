@@ -40,7 +40,9 @@ function TripCard({ trip }: { trip: Trip }) {
                 <img
                   src={trip.charterCompanyLogo}
                   alt={trip.charterCompanyName || 'Charter Company'}
-                  className="h-6 w-auto object-contain"
+                  className={`${
+                    trip.charterCompanyName?.toLowerCase().includes('atlantis') ? 'h-5' : 'h-6'
+                  } w-auto object-contain`}
                   loading="lazy"
                 />
               </div>
@@ -49,12 +51,12 @@ function TripCard({ trip }: { trip: Trip }) {
         </div>
       </Link>
 
-      <div className="p-5 flex-1 flex flex-col">
-        <h4 className="text-xl font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors">
+      <div className="p-4 flex-1 flex flex-col">
+        <h4 className="text-xl font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors">
           {trip.name}
         </h4>
 
-        <div className="space-y-2 mb-4 flex-1">
+        <div className="space-y-1.5 mb-3 flex-1">
           <div className="flex items-center gap-2 text-ocean-100 text-sm">
             <CalendarDays className="w-4 h-4 flex-shrink-0" />
             <span>
@@ -80,14 +82,12 @@ function TripCard({ trip }: { trip: Trip }) {
           ) : (
             <>
               {trip.shipName && (
-                <div className="text-ocean-100 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Ship className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-medium">{trip.shipName}</span>
-                  </div>
-                  {trip.cruiseLine && (
-                    <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
-                  )}
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <Ship className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    {trip.shipName}
+                    {trip.cruiseLine && <> - {trip.cruiseLine}</>}
+                  </span>
                 </div>
               )}
             </>
@@ -149,19 +149,59 @@ export default function PastTrips() {
   }
 
   return (
-    <div className="min-h-screen text-white pt-16 pb-24">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="mt-6 mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <History className="w-8 h-8 text-white/80" />
-            <h1 className="text-3xl font-bold text-white">Past Trips</h1>
+    <div className="min-h-screen w-full">
+      {/* Hero Section */}
+      <section className="pt-24 pb-0 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
+              <span className="relative inline-block">
+                Once
+                <svg
+                  width="223"
+                  height="12"
+                  viewBox="0 0 223 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
+                >
+                  <defs>
+                    <linearGradient id="rainbow-gradient-past" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="16.67%" stopColor="#f97316" />
+                      <stop offset="33.33%" stopColor="#eab308" />
+                      <stop offset="50%" stopColor="#22c55e" />
+                      <stop offset="66.67%" stopColor="#3b82f6" />
+                      <stop offset="83.33%" stopColor="#8b5cf6" />
+                      <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
+                    stroke="url(#rainbow-gradient-past)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>{' '}
+              Upon a Time
+            </h2>
+
+            <p className="text-sm sm:text-base md:text-lg text-ocean-200 max-w-3xl mx-auto px-4 line-clamp-2">
+              Interactive Guides of the Past to Relive the Memories.
+            </p>
           </div>
-          <p className="text-sm text-white/70">
-            {pastTrips.length === 0
-              ? 'No past trips yet'
-              : `${pastTrips.length} trip${pastTrips.length === 1 ? '' : 's'}`}
-          </p>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header - Sticky */}
+        <div className="safari-sticky-header sticky top-16 z-20 mt-2 mb-8 pb-6 -mx-4 px-4">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-purple-400" />
+            <h3 className="text-lg font-semibold text-white">Past Trips</h3>
+            <div className="flex-1 h-px bg-white/20 ml-3"></div>
+          </div>
         </div>
 
         {pastTrips.length === 0 ? (
@@ -171,7 +211,7 @@ export default function PastTrips() {
             <p className="text-sm text-white/40">Your completed trips will appear here</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
             {pastTrips.map(trip => (
               <TripCard key={trip.id} trip={trip} />
             ))}

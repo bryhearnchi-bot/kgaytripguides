@@ -22,7 +22,15 @@ export function AuthModal({ isOpen, onClose, defaultView = 'sign_in' }: AuthModa
       if (event === 'SIGNED_IN' && session) {
         // User just signed in - wait a moment for auth context to update, then redirect
         setTimeout(() => {
-          navigate('/admin/trips');
+          // Check for return URL in sessionStorage
+          const returnUrl = sessionStorage.getItem('login-return-url');
+          if (returnUrl) {
+            sessionStorage.removeItem('login-return-url');
+            navigate(returnUrl);
+          } else {
+            // Default to home page if no return URL specified
+            navigate('/');
+          }
         }, 100);
       }
     });

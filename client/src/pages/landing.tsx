@@ -70,7 +70,9 @@ function TripCard({ trip }: { trip: Trip }) {
                 <img
                   src={trip.charterCompanyLogo}
                   alt={trip.charterCompanyName || 'Charter Company'}
-                  className="h-6 w-auto object-contain"
+                  className={`${
+                    trip.charterCompanyName?.toLowerCase().includes('atlantis') ? 'h-5' : 'h-6'
+                  } w-auto object-contain`}
                   loading="lazy"
                 />
               </div>
@@ -97,12 +99,12 @@ function TripCard({ trip }: { trip: Trip }) {
         </div>
       </Link>
 
-      <div className="p-5 flex-1 flex flex-col">
-        <h4 className="text-xl font-bold text-white mb-4 group-hover:text-ocean-200 transition-colors">
+      <div className="p-4 flex-1 flex flex-col">
+        <h4 className="text-xl font-bold text-white mb-2.5 group-hover:text-ocean-200 transition-colors">
           {trip.name}
         </h4>
 
-        <div className="space-y-2 mb-4 flex-1">
+        <div className="space-y-1.5 mb-3 flex-1">
           <div className="flex items-center gap-2 text-ocean-100 text-sm">
             <CalendarDays className="w-4 h-4 flex-shrink-0" />
             <span>
@@ -130,14 +132,12 @@ function TripCard({ trip }: { trip: Trip }) {
             // Cruise Trip
             <>
               {trip.shipName && (
-                <div className="text-ocean-100 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Ship className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-medium">{trip.shipName}</span>
-                  </div>
-                  {trip.cruiseLine && (
-                    <div className="ml-6 text-xs text-ocean-200 mt-0.5">{trip.cruiseLine}</div>
-                  )}
+                <div className="flex items-center gap-2 text-ocean-100 text-sm">
+                  <Ship className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    {trip.shipName}
+                    {trip.cruiseLine && <> - {trip.cruiseLine}</>}
+                  </span>
                 </div>
               )}
             </>
@@ -371,10 +371,14 @@ export default function LandingPage() {
 
                     {upcomingTrips.length > 0 && (
                       <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                          <Calendar className="w-4 h-4 text-blue-400" />
-                          <h3 className="text-lg font-semibold text-white">Upcoming Adventures</h3>
-                          <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                        <div className="safari-sticky-header sticky top-16 z-20 pb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-400" />
+                            <h3 className="text-lg font-semibold text-white">
+                              Upcoming Adventures
+                            </h3>
+                            <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                          </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                           {upcomingTrips.map(trip => (
@@ -389,10 +393,12 @@ export default function LandingPage() {
                     {/* Different header styles based on filter */}
                     {activeFilter === 'past' ? (
                       <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                          <History className="w-4 h-4 text-purple-400" />
-                          <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
-                          <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                        <div className="safari-sticky-header sticky top-16 z-20 pb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                          <div className="flex items-center gap-2">
+                            <History className="w-4 h-4 text-purple-400" />
+                            <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
+                            <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                          </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                           {filteredTrips.map(trip => (

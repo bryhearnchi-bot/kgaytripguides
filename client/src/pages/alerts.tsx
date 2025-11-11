@@ -128,8 +128,11 @@ export default function Alerts() {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mt-6 mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Trip Alerts</h1>
-          <p className="text-sm text-white/70">Recent updates and announcements</p>
+          <div className="flex items-center gap-2 mb-6">
+            <Bell className="w-4 h-4 text-amber-400" />
+            <h3 className="text-lg font-semibold text-white">Trip Alerts</h3>
+            <div className="flex-1 h-px bg-white/20 ml-3"></div>
+          </div>
         </div>
 
         {updates.length === 0 ? (

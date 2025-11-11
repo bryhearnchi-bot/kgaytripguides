@@ -52,6 +52,9 @@ export const ItineraryTab = memo(function ItineraryTab({
     const isPreCruise = stop.day < 0;
     const isPostCruise = stop.day >= 100;
 
+    // Generate unique key combining date, location ID, and index to handle duplicates (e.g., overnight ports)
+    const uniqueKey = `${stop.key}-${stop.locationId || 'loc'}-${index}`;
+
     // Build port name with country (show country for non-US ports)
     const isUSPort =
       stop.country &&
@@ -142,7 +145,7 @@ export const ItineraryTab = memo(function ItineraryTab({
       salary: arriveDepart,
       location: '', // Not used anymore, arrive/depart combined in salary
       remote: allAboard,
-      job_time: stop.key,
+      job_time: uniqueKey,
       dayNumber: stop.day,
       // Add attractions and LGBT venues data
       attractions: stop.attractions || [],

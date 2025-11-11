@@ -123,6 +123,12 @@ export default function Settings() {
     setLocation(path);
   };
 
+  const handleLoginClick = () => {
+    // Store current location (settings) to return after login
+    sessionStorage.setItem('login-return-url', '/settings');
+    handleNavigate('/admin');
+  };
+
   const handleTimeFormatToggle = () => {
     toggleTimeFormat();
   };
@@ -166,7 +172,16 @@ export default function Settings() {
     <>
       <div className="min-h-screen text-white pt-16 pb-24">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="flex flex-col gap-3 pt-6">
+          {/* Header */}
+          <div className="mt-6 mb-8">
+            <div className="flex items-center gap-2 mb-6">
+              <User className="w-4 h-4 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">Settings</h3>
+              <div className="flex-1 h-px bg-white/20 ml-3"></div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
             {/* User Profile Section (when logged in) */}
             {user && profile ? (
               <>
@@ -232,7 +247,7 @@ export default function Settings() {
               <>
                 {/* Login Button - When Logged Out (at top where profile would be) */}
                 <button
-                  onClick={() => handleNavigate('/admin')}
+                  onClick={handleLoginClick}
                   className="w-full flex items-center gap-3 p-3.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-left"
                 >
                   <User className="h-5 w-5 text-white" />
@@ -284,21 +299,21 @@ export default function Settings() {
 
             {/* Quick Actions */}
             <div className="space-y-1.5">
-              {/* Add to Home Screen - Frosted Blue Bubble - conditionally shown */}
+              {/* Add to Home Screen - conditionally shown */}
               {showInstallButton && (
                 <button
                   onClick={handleInstallClick}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left"
                 >
                   <Download className="h-5 w-5 text-blue-400" />
                   <span className="text-sm font-medium text-blue-400">Add to Home Screen</span>
                 </button>
               )}
 
-              {/* About KGAY Travel - Frosted Orange Bubble */}
+              {/* About KGAY Travel */}
               <button
                 onClick={() => setShowAboutModal(true)}
-                className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left"
               >
                 <Info className="h-5 w-5 text-orange-400" />
                 <span className="text-sm font-medium text-orange-400">About KGAY Travel</span>
@@ -311,7 +326,7 @@ export default function Settings() {
                 <Separator className="bg-white/10" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left"
                 >
                   <LogOut className="h-5 w-5 text-red-400" />
                   <span className="text-sm font-medium text-red-400">Sign Out</span>
