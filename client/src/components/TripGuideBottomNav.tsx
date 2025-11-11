@@ -43,33 +43,13 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
             </span>
           </button>
           <button
-            onClick={() => onTabChange('itinerary')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'itinerary'
-                ? 'bg-white/60 text-black'
-                : 'text-black hover:text-black/80'
-            }`}
-            aria-label={isCruise ? 'Itinerary' : 'Schedule'}
-          >
-            <Map className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'itinerary' && 'inline md:inline'
-              )}
-            >
-              {isCruise ? 'Itinerary' : 'Schedule'}
-            </span>
-          </button>
-          <button
             onClick={() => onTabChange('schedule')}
             className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
               activeTab === 'schedule' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
             }`}
-            aria-label="Events"
+            aria-label="Schedule"
           >
-            <CalendarDays className="w-4 h-4 flex-shrink-0" />
+            <Map className="w-4 h-4 flex-shrink-0" />
             <span
               className={cn(
                 'animate-in fade-in slide-in-from-left-2 duration-200',
@@ -77,7 +57,7 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
                 activeTab === 'schedule' && 'inline md:inline'
               )}
             >
-              Events
+              Schedule
             </span>
           </button>
           <button
@@ -121,7 +101,7 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
             className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
               activeTab === 'info' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
             }`}
-            aria-label="Info"
+            aria-label="Information"
           >
             <Info className="w-4 h-4 flex-shrink-0" />
             <span
@@ -131,25 +111,7 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
                 activeTab === 'info' && 'inline md:inline'
               )}
             >
-              Info
-            </span>
-          </button>
-          <button
-            onClick={() => onTabChange('faq')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'faq' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
-            }`}
-            aria-label="FAQ"
-          >
-            <HelpCircle className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'faq' && 'inline md:inline'
-              )}
-            >
-              FAQ
+              Information
             </span>
           </button>
         </nav>

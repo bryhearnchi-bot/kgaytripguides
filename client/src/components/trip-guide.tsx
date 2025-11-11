@@ -35,11 +35,9 @@ import { useLocalStorage } from './trip-guide/hooks/useLocalStorage';
 import { useScheduledDaily } from './trip-guide/hooks/useScheduledDaily';
 import { OverviewTab } from './trip-guide/tabs/OverviewTab';
 import { ScheduleTab } from './trip-guide/tabs/ScheduleTab';
-import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
 import { PartiesTab } from './trip-guide/tabs/PartiesTab';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
-import { FAQTab } from './trip-guide/tabs/FAQTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
 
 interface TripGuideProps {
@@ -568,24 +566,6 @@ export default function TripGuide({
                 <button
                   onClick={() => {
                     haptics.light();
-                    setActiveTab('itinerary');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'itinerary'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label={isCruise ? 'Itinerary' : 'Schedule'}
-                >
-                  <Map className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">{isCruise ? 'Itinerary' : 'Schedule'}</span>
-                  {activeTab === 'itinerary' && (
-                    <span className="sm:hidden">{isCruise ? 'Itinerary' : 'Schedule'}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
                     setActiveTab('schedule');
                   }}
                   className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
@@ -593,11 +573,11 @@ export default function TripGuide({
                       ? 'bg-white text-ocean-900'
                       : 'text-white/70 hover:text-white'
                   }`}
-                  aria-label="Events"
+                  aria-label="Schedule"
                 >
-                  <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Events</span>
-                  {activeTab === 'schedule' && <span className="sm:hidden">Events</span>}
+                  <Map className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Schedule</span>
+                  {activeTab === 'schedule' && <span className="sm:hidden">Schedule</span>}
                 </button>
                 <button
                   onClick={() => {
@@ -641,27 +621,11 @@ export default function TripGuide({
                       ? 'bg-white text-ocean-900'
                       : 'text-white/70 hover:text-white'
                   }`}
-                  aria-label="Info"
+                  aria-label="Information"
                 >
                   <Info className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Info</span>
-                  {activeTab === 'info' && <span className="sm:hidden">Info</span>}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('faq');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'faq'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label="FAQ"
-                >
-                  <HelpCircle className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">FAQ</span>
-                  {activeTab === 'faq' && <span className="sm:hidden">FAQ</span>}
+                  <span className="hidden sm:inline">Information</span>
+                  {activeTab === 'info' && <span className="sm:hidden">Information</span>}
                 </button>
               </div>
             </div>
@@ -698,7 +662,7 @@ export default function TripGuide({
             <TabsContent value="schedule">
               <ScheduleTab
                 SCHEDULED_DAILY={SCHEDULED_DAILY}
-                ITINERARY={ITINERARY as any}
+                ITINERARY={isCruise ? (ITINERARY as any) : (SCHEDULE as any)}
                 TALENT={TALENT as any}
                 PARTY_THEMES={PARTY_THEMES}
                 collapsedDays={collapsedDays}
@@ -707,27 +671,11 @@ export default function TripGuide({
                 onTalentClick={handleTalentClick}
                 onPartyClick={handlePartyClick}
                 onPartyThemeClick={handlePartyThemeClick}
+                onViewEvents={handleViewEvents}
+                scheduledDaily={SCHEDULED_DAILY}
+                talent={TALENT as any}
+                tripStatus={tripStatus}
               />
-            </TabsContent>
-
-            <TabsContent value="itinerary">
-              {isCruise ? (
-                <ItineraryTab
-                  ITINERARY={ITINERARY as any}
-                  onViewEvents={handleViewEvents}
-                  scheduledDaily={SCHEDULED_DAILY}
-                  talent={TALENT as any}
-                  tripStatus={tripStatus}
-                />
-              ) : (
-                <ItineraryTab
-                  ITINERARY={SCHEDULE as any}
-                  onViewEvents={handleViewEvents}
-                  scheduledDaily={SCHEDULED_DAILY}
-                  talent={TALENT as any}
-                  tripStatus={tripStatus}
-                />
-              )}
             </TabsContent>
 
             <TabsContent value="talent">
@@ -751,10 +699,6 @@ export default function TripGuide({
 
             <TabsContent value="info">
               <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} tripId={tripData?.trip?.id} />
-            </TabsContent>
-
-            <TabsContent value="faq">
-              {tripData?.trip?.id && <FAQTab tripId={tripData.trip.id} />}
             </TabsContent>
           </Tabs>
         </StandardizedContentLayout>
