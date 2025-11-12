@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useState, useMemo, useEffect } from 'react';
-import { CalendarDays, ChevronDown, ChevronUp, MapPin, PartyPopper } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronUp, MapPin, PartyPopper, Filter } from 'lucide-react';
 import { EventCard } from '../shared/EventCard';
 import { PartyCard } from '../shared/PartyCard';
 import { isDateInPast } from '../utils/dateHelpers';
@@ -8,6 +8,12 @@ import { formatTime as globalFormatTime } from '@/lib/timeFormat';
 import type { Talent } from '@/data/trip-data';
 import { TabHeader } from '../shared/TabHeader';
 import { api } from '@/lib/api-client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ScheduleTabProps {
   SCHEDULED_DAILY: any[];
@@ -42,6 +48,8 @@ export const ScheduleTab = memo(function ScheduleTab({
   const [subTab, setSubTab] = useState<'schedule' | 'parties'>('schedule');
   const [partyThemes, setPartyThemes] = useState<any[]>([]);
   const [isLoadingThemes, setIsLoadingThemes] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>('All Dates');
+  const [selectedPartyDate, setSelectedPartyDate] = useState<string>('All Dates');
 
   // Scroll to top when sub-tab changes
   useEffect(() => {
@@ -129,21 +137,58 @@ export const ScheduleTab = memo(function ScheduleTab({
     return [...tDances, ...nightParties];
   }, [partyThemes]);
 
+  // Filter schedule by selected date
+  const filteredSchedule = useMemo(() => {
+    if (selectedDate === 'All Dates') {
+      return SCHEDULED_DAILY;
+    }
+    return SCHEDULED_DAILY.filter(day => day.key === selectedDate);
+  }, [SCHEDULED_DAILY, selectedDate]);
+
+  // Create date options for dropdown
+  const dateOptions = useMemo(() => {
+    return SCHEDULED_DAILY.map(day => {
+      const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
+      return {
+        key: day.key,
+        label: itineraryStop?.date || day.key,
+        port: itineraryStop?.port,
+      };
+    });
+  }, [SCHEDULED_DAILY, ITINERARY]);
+
+  // Filter parties by selected date
+  const filteredPartyEvents = useMemo(() => {
+    if (selectedPartyDate === 'All Dates') {
+      return partyEventsByDate;
+    }
+    return partyEventsByDate.filter(day => day.key === selectedPartyDate);
+  }, [partyEventsByDate, selectedPartyDate]);
+
+  // Create date options for parties dropdown
+  const partyDateOptions = useMemo(() => {
+    return partyEventsByDate.map(day => {
+      return {
+        key: day.key,
+        label: day.date,
+        port: day.port,
+      };
+    });
+  }, [partyEventsByDate]);
+
   return (
     <>
-      <div className="max-w-6xl mx-auto pt-6 pb-2">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="w-4 h-4 text-purple-400" />
-          <h3 className="text-lg font-semibold text-white">Events</h3>
-          <div className="flex-1 h-px bg-white/20 mx-3"></div>
-          {/* Sub-tabs on the right */}
-          <div className="flex gap-2">
+      {/* Header: Tab bar on left, filter on right */}
+      <div className="max-w-6xl mx-auto pt-6 pb-8">
+        <div className="flex items-center justify-between gap-4">
+          {/* Sub-tabs on the left */}
+          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
             <button
               onClick={() => setSubTab('schedule')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 subTab === 'schedule'
-                  ? 'bg-white/20 text-white border border-white/30'
-                  : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+                  ? 'bg-white/20 text-white'
+                  : 'text-white/60 hover:text-white/80'
               }`}
             >
               <CalendarDays className="w-3.5 h-3.5" />
@@ -151,143 +196,170 @@ export const ScheduleTab = memo(function ScheduleTab({
             </button>
             <button
               onClick={() => setSubTab('parties')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 subTab === 'parties'
-                  ? 'bg-pink-500/30 text-white border border-pink-400/50'
-                  : 'text-pink-300 hover:text-pink-200 hover:bg-white/5 border border-pink-300'
+                  ? 'bg-pink-500/30 text-white'
+                  : 'text-pink-300 hover:text-pink-200'
               }`}
             >
               <PartyPopper className="w-3.5 h-3.5" />
               Parties
             </button>
           </div>
+
+          {/* Date filter on the right */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
+                <Filter className="w-3 h-3" />
+                <span>
+                  {subTab === 'schedule'
+                    ? selectedDate === 'All Dates'
+                      ? 'Select Date'
+                      : dateOptions.find(opt => opt.key === selectedDate)?.label || selectedDate
+                    : selectedPartyDate === 'All Dates'
+                      ? 'Select Date'
+                      : partyDateOptions.find(opt => opt.key === selectedPartyDate)?.label ||
+                        selectedPartyDate}
+                </span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#002147] border-white/20 min-w-[280px]">
+              {subTab === 'schedule' ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => setSelectedDate('All Dates')}
+                    className={`cursor-pointer text-white hover:bg-white/10 ${
+                      selectedDate === 'All Dates' ? 'bg-white/20' : ''
+                    }`}
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    All Dates
+                  </DropdownMenuItem>
+                  {dateOptions.map(option => {
+                    const isActive = selectedDate === option.key;
+                    return (
+                      <DropdownMenuItem
+                        key={option.key}
+                        onClick={() => setSelectedDate(option.key)}
+                        className={`cursor-pointer text-white hover:bg-white/10 ${
+                          isActive ? 'bg-white/20' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{option.label}</span>
+                          {option.port && (
+                            <>
+                              <span className="text-white/40">•</span>
+                              <span className="text-white/70">{option.port}</span>
+                            </>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => setSelectedPartyDate('All Dates')}
+                    className={`cursor-pointer text-white hover:bg-white/10 ${
+                      selectedPartyDate === 'All Dates' ? 'bg-white/20' : ''
+                    }`}
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    All Dates
+                  </DropdownMenuItem>
+                  {partyDateOptions.map(option => {
+                    const isActive = selectedPartyDate === option.key;
+                    return (
+                      <DropdownMenuItem
+                        key={option.key}
+                        onClick={() => setSelectedPartyDate(option.key)}
+                        className={`cursor-pointer text-white hover:bg-white/10 ${
+                          isActive ? 'bg-white/20' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{option.label}</span>
+                          {option.port && (
+                            <>
+                              <span className="text-white/40">•</span>
+                              <span className="text-white/70">{option.port}</span>
+                            </>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       {subTab === 'schedule' ? (
-        <>
-          <div className="max-w-6xl mx-auto pt-4 pb-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1"></div>
-              <button
-                onClick={onCollapseAll}
-                className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50"
-              >
-                {SCHEDULED_DAILY.length === collapsedDays.length ? (
-                  <>
-                    <ChevronDown className="w-3 h-3" />
-                    <span>Expand All</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronUp className="w-3 h-3" />
-                    <span>Collapse All</span>
-                  </>
-                )}
-              </button>
+        <div className="max-w-6xl mx-auto space-y-8">
+          {filteredSchedule.length === 0 ? (
+            <div className="bg-white/10 rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+              <CalendarDays className="w-16 h-16 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No events found</h3>
+              <p className="text-white/70">No events are currently scheduled.</p>
             </div>
-          </div>
-          <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
-            <div className="space-y-6">
-              {SCHEDULED_DAILY.map((day, dayIndex) => {
-                const isCollapsed = collapsedDays.includes(day.key);
+          ) : (
+            <div className="space-y-10">
+              {filteredSchedule.map(day => {
                 const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
-                const isPastDate = isDateInPast(day.key);
-
-                // Format the date from YYYY-MM-DD to a readable format with day of week
-                const formatDateKey = (dateKey: string) => {
-                  const [year, month, dayNum] = dateKey.split('-');
-                  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(dayNum));
-                  return date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  });
-                };
 
                 return (
-                  <div key={day.key} className={`${isPastDate ? 'opacity-75' : ''}`}>
-                    <div className="bg-white/10 border border-white/20 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200">
-                      <div
-                        className={`p-4 cursor-pointer transition-all duration-200 ${
-                          isCollapsed ? 'hover:bg-white/15' : 'bg-white/5'
-                        }`}
-                        onClick={() => onToggleDayCollapse(day.key)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="bg-ocean-500/30 text-ocean-100 text-sm font-bold px-4 py-1.5 rounded-full border border-ocean-400/30">
-                              {itineraryStop?.date || formatDateKey(day.key)}
-                            </div>
-                            {itineraryStop && (
-                              <div className="text-white/80 text-sm flex items-center gap-1.5">
-                                <MapPin className="w-4 h-4" />
-                                <span>{itineraryStop.port}</span>
-                              </div>
-                            )}
-                            {/* Event count badge */}
-                            {day.items.length > 0 && (
-                              <div className="bg-purple-500/30 text-purple-200 text-xs font-bold px-2 py-0.5 rounded-full border border-purple-400/40">
-                                {day.items.length} {day.items.length === 1 ? 'event' : 'events'}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            {day.items.length > 0 && (
-                              <span className="text-xs text-white/50 hidden sm:inline">
-                                Last event:{' '}
-                                {globalFormatTime(day.items[day.items.length - 1].time, timeFormat)}
-                              </span>
-                            )}
-                            {isCollapsed ? (
-                              <ChevronDown className="w-5 h-5 text-ocean-300 hover:text-ocean-200 transition-colors" />
-                            ) : (
-                              <ChevronUp className="w-5 h-5 text-ocean-300 hover:text-ocean-200 transition-colors" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {!isCollapsed && (
-                        <div className="border-t border-white/10">
-                          <div className="px-4 pt-4 pb-4 bg-gradient-to-br from-slate-900/40 via-slate-800/40 to-slate-900/40">
-                            {day.items.length === 0 ? (
-                              <p className="text-white/60 text-center py-8">
-                                No scheduled events for this day
-                              </p>
-                            ) : (
-                              <div className="space-y-3">
-                                {day.items.map((event: any, idx: number) => (
-                                  <EventCard
-                                    key={idx}
-                                    event={event}
-                                    onTalentClick={onTalentClick}
-                                    onPartyThemeClick={onPartyThemeClick}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                  <div key={day.key} className="space-y-4">
+                    {/* Compact Date Header */}
+                    <div className="flex items-center gap-2 pb-2 mb-1">
+                      <CalendarDays className="w-4 h-4 text-purple-400" />
+                      <h3 className="text-sm font-semibold text-white">
+                        {itineraryStop?.date || day.key}
+                      </h3>
+                      <div className="flex-1 h-px bg-white/20 mx-3"></div>
+                      {itineraryStop && (
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-blue-300" />
+                          <span className="text-sm text-white/70 font-medium">
+                            {itineraryStop.port}
+                          </span>
                         </div>
                       )}
                     </div>
+
+                    {/* Event Cards */}
+                    {day.items.length === 0 ? (
+                      <p className="text-white/60 text-center py-8">
+                        No scheduled events for this day
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {day.items.map((event: any, idx: number) => (
+                          <EventCard
+                            key={idx}
+                            event={event}
+                            onTalentClick={onTalentClick}
+                            onPartyThemeClick={onPartyThemeClick}
+                            allSchedule={SCHEDULED_DAILY}
+                            itinerary={ITINERARY}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
-
-            {SCHEDULED_DAILY.length === 0 && (
-              <div className="bg-white/10 rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-                <CalendarDays className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No events found</h3>
-                <p className="text-white/70">No events are currently scheduled.</p>
-              </div>
-            )}
-          </div>
-        </>
+          )}
+        </div>
       ) : (
-        <div className="max-w-6xl mx-auto space-y-8 pt-4">
-          {partyEventsByDate.length === 0 ? (
+        <div className="max-w-6xl mx-auto space-y-8">
+          {filteredPartyEvents.length === 0 && partyEventsByDate.length === 0 ? (
             isLoadingThemes ? (
               <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
                 <PartyPopper className="w-16 h-16 text-white/40 mx-auto mb-4 animate-pulse" />
@@ -363,16 +435,21 @@ export const ScheduleTab = memo(function ScheduleTab({
                 <p className="text-white/70">Party information will be available soon.</p>
               </div>
             )
+          ) : filteredPartyEvents.length === 0 ? (
+            <div className="bg-white/10 rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+              <PartyPopper className="w-16 h-16 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No parties found</h3>
+              <p className="text-white/70">No parties scheduled for this date.</p>
+            </div>
           ) : (
             <div className="space-y-10">
-              {partyEventsByDate.map(day => (
+              {filteredPartyEvents.map(day => (
                 <div key={day.key} className="space-y-4">
                   {/* Compact Date Header */}
-                  <div className="flex items-center gap-3 pb-2 mb-1">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
-                      <CalendarDays className="w-3.5 h-3.5 text-purple-300" />
-                      <h3 className="text-sm font-bold text-white">{day.date}</h3>
-                    </div>
+                  <div className="flex items-center gap-2 pb-2 mb-1">
+                    <CalendarDays className="w-4 h-4 text-purple-400" />
+                    <h3 className="text-sm font-semibold text-white">{day.date}</h3>
+                    <div className="flex-1 h-px bg-white/20 mx-3"></div>
                     {day.port && (
                       <div className="flex items-center gap-1.5">
                         <MapPin className="w-4 h-4 text-blue-300" />

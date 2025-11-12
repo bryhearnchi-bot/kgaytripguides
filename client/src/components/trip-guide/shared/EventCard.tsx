@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Circle, X } from 'lucide-react';
+import { Circle, X, ChevronRight, CalendarDays } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
@@ -28,6 +28,25 @@ export interface EventCardProps {
   onTalentClick?: (name: string) => void;
   onPartyThemeClick?: (partyTheme: any) => void;
   className?: string;
+  allSchedule?: Array<{
+    key: string;
+    date?: string;
+    items: Array<{
+      time: string;
+      title: string;
+      venue?: string;
+      talent?: Array<{
+        id: number;
+        name: string;
+        profileImageUrl?: string;
+      }>;
+    }>;
+  }>;
+  itinerary?: Array<{
+    key: string;
+    date?: string;
+    port?: string;
+  }>;
 }
 
 export const EventCard = memo<EventCardProps>(function EventCard({
@@ -35,15 +54,25 @@ export const EventCard = memo<EventCardProps>(function EventCard({
   onTalentClick,
   onPartyThemeClick,
   className = '',
+  allSchedule = [],
+  itinerary = [],
 }) {
   const { timeFormat } = useTimeFormat();
   const [showViewTypeModal, setShowViewTypeModal] = useState(false);
   const [showArtistSelectModal, setShowArtistSelectModal] = useState(false);
   const [showEventDescriptionModal, setShowEventDescriptionModal] = useState(false);
+  const [showEventInfoSlideUp, setShowEventInfoSlideUp] = useState(false);
+  const [showArtistScheduleSlideUp, setShowArtistScheduleSlideUp] = useState(false);
 
   // Lock body scroll when modals are open
   useEffect(() => {
-    if (showViewTypeModal || showArtistSelectModal || showEventDescriptionModal) {
+    if (
+      showViewTypeModal ||
+      showArtistSelectModal ||
+      showEventDescriptionModal ||
+      showEventInfoSlideUp ||
+      showArtistScheduleSlideUp
+    ) {
       // Store current scroll position
       const scrollY = window.scrollY;
 
@@ -75,6 +104,31 @@ export const EventCard = memo<EventCardProps>(function EventCard({
   const hasPartyTheme = useMemo(() => !!event.partyTheme, [event.partyTheme]);
 
   const hasBoth = useMemo(() => hasArtists && hasPartyTheme, [hasArtists, hasPartyTheme]);
+
+  // Get all events where any of the current event's artists appear
+  const artistSchedule = useMemo(() => {
+    if (!hasArtists || !event.talent) return [];
+
+    const artistNames = event.talent.map(t => t.name);
+    const schedule: Array<{ date: string; dateKey: string; events: any[] }> = [];
+
+    allSchedule.forEach(day => {
+      const matchingEvents = day.items.filter(item =>
+        item.talent?.some(t => artistNames.includes(t.name))
+      );
+
+      if (matchingEvents.length > 0) {
+        const itineraryStop = itinerary.find(stop => stop.key === day.key);
+        schedule.push({
+          date: itineraryStop?.date || day.date || day.key,
+          dateKey: day.key,
+          events: matchingEvents,
+        });
+      }
+    });
+
+    return schedule;
+  }, [hasArtists, event.talent, allSchedule, itinerary]);
 
   const handleCardClick = useCallback(() => {
     if (hasBoth) {
@@ -144,49 +198,61 @@ export const EventCard = memo<EventCardProps>(function EventCard({
     <>
       <div
         onClick={handleCardClick}
-        className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-lg ${className}`}
+        className={`bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-lg overflow-hidden ${className}`}
       >
-        <div className="flex gap-4">
-          {/* Event/Artist Image - Larger Square */}
+        <div className="flex h-32">
+          {/* Event/Artist Image - Takes up left third, full height */}
           {eventImage && (
-            <div className="flex-shrink-0">
+            <div className="w-1/3 flex-shrink-0">
               <img
                 src={eventImage}
                 alt={event.title}
-                className="w-24 h-24 object-cover rounded-lg border border-white/20 shadow-md"
+                className="w-full h-full object-cover"
                 loading="lazy"
               />
             </div>
           )}
 
           {/* Event Details */}
-          <div className="flex-1 flex flex-col gap-2.5 min-w-0">
-            {/* Desktop/Tablet: Time • Event Name on one line */}
-            <div className="hidden md:flex items-center gap-2">
-              <span className="text-ocean-200 text-sm font-semibold">
-                {formatTime(event.time, timeFormat)}
-              </span>
-              <Circle className="w-1.5 h-1.5 fill-current text-ocean-300" />
-              <span className="text-white font-bold text-base">{event.title}</span>
+          <div className="flex-1 flex flex-col justify-between min-w-0 p-4">
+            <div className="space-y-2">
+              {/* Event Title */}
+              <div>
+                <span className="text-white font-bold text-base line-clamp-1">{event.title}</span>
+              </div>
+
+              {/* Time • Venue on one line */}
+              <div className="flex items-center gap-2">
+                <span className="text-ocean-200 text-xs font-semibold">
+                  {formatTime(event.time, timeFormat)}
+                </span>
+                <Circle className="w-1.5 h-1.5 fill-current text-ocean-300" />
+                <span className="text-cyan-200 text-xs font-medium">{event.venue || 'TBD'}</span>
+              </div>
             </div>
 
-            {/* Mobile: Time on separate line */}
-            <div className="md:hidden">
-              <span className="text-ocean-200 text-sm font-semibold">
-                {formatTime(event.time, timeFormat)}
-              </span>
-            </div>
-
-            {/* Mobile: Event Name on separate line */}
-            <div className="md:hidden">
-              <span className="text-white font-bold text-base">{event.title}</span>
-            </div>
-
-            {/* Venue/Location - separate line for both */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-medium border border-cyan-400/30">
-                {event.venue || 'TBD'}
-              </span>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setShowEventInfoSlideUp(true);
+                }}
+                className="px-6 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
+              >
+                Event Info
+              </button>
+              {hasArtists && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setShowArtistScheduleSlideUp(true);
+                  }}
+                  className="px-6 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
+                >
+                  Schedule
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -398,6 +464,189 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* Event Info Slide-Up Card */}
+      {showEventInfoSlideUp &&
+        createPortal(
+          <AnimatePresence>
+            <div
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowEventInfoSlideUp(false)}
+            >
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                onClick={e => e.stopPropagation()}
+                className="absolute -bottom-px left-0 right-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl max-h-[85vh] overflow-y-auto"
+              >
+                <div className="p-6">
+                  {/* Header with icon, title, line, and close button */}
+                  <div className="max-w-4xl mx-auto mb-6">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-purple-400" />
+                      <h2 className="text-lg font-semibold text-white">Events</h2>
+                      <div className="flex-1 h-px bg-white/20 mx-3"></div>
+                      <button
+                        onClick={() => setShowEventInfoSlideUp(false)}
+                        className="text-white/60 hover:text-white transition-colors"
+                        aria-label="Close"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 max-w-4xl mx-auto">
+                    {/* Event Info */}
+                    <div className="flex flex-col md:flex-row-reverse gap-6">
+                      {/* Event Image */}
+                      {eventImage && (
+                        <div className="w-full md:w-64 md:flex-shrink-0">
+                          <img
+                            src={eventImage}
+                            alt={event.title}
+                            className="w-full aspect-square object-cover rounded-xl border-2 border-cyan-400/30 shadow-lg"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+
+                      {/* Event Details */}
+                      <div className="flex-1">
+                        {/* Event Name */}
+                        <h2 className="text-2xl font-bold mb-4 text-white">{event.title}</h2>
+
+                        {/* Time and Venue */}
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          <span className="px-3 py-1.5 rounded-full bg-ocean-500/20 text-ocean-200 text-sm font-medium border border-ocean-400/30">
+                            {formatTime(event.time, timeFormat)}
+                          </span>
+                          {event.venue && (
+                            <span className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-200 text-sm font-medium border border-cyan-400/30">
+                              {event.venue}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Description */}
+                        {event.description && (
+                          <div className="mb-6">
+                            <p className="text-blue-50 text-sm leading-relaxed">
+                              {event.description}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* Artist Schedule Slide-Up Card */}
+      {showArtistScheduleSlideUp &&
+        createPortal(
+          <AnimatePresence>
+            <div
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowArtistScheduleSlideUp(false)}
+            >
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                onClick={e => e.stopPropagation()}
+                className="absolute -bottom-px left-0 right-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl max-h-[85vh] overflow-y-auto"
+              >
+                <div className="p-6">
+                  {/* Header with icon, title, line, and close button */}
+                  <div className="max-w-4xl mx-auto mb-6">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-purple-400" />
+                      <h2 className="text-lg font-semibold text-white">Artist Schedule</h2>
+                      <div className="flex-1 h-px bg-white/20 mx-3"></div>
+                      <button
+                        onClick={() => setShowArtistScheduleSlideUp(false)}
+                        className="text-white/60 hover:text-white transition-colors"
+                        aria-label="Close"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 max-w-4xl mx-auto">
+                    {/* Artist Info with Photo - No Background */}
+                    {event.talent && event.talent.length > 0 && (
+                      <div className="space-y-4 mb-6">
+                        {event.talent.map((artist, idx) => (
+                          <div key={idx} className="flex items-center gap-4">
+                            {artist.profileImageUrl && (
+                              <img
+                                src={artist.profileImageUrl}
+                                alt={artist.name}
+                                className="w-20 h-20 rounded-lg object-cover border border-purple-400/30"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-white">{artist.name}</h3>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* All Schedule Times */}
+                    {artistSchedule.length > 0 ? (
+                      <div className="space-y-2">
+                        {artistSchedule.map((day, dayIdx) => (
+                          <div key={day.dateKey}>
+                            {/* Events for this date */}
+                            {day.events.map((evt, evtIdx) => (
+                              <div
+                                key={evtIdx}
+                                className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all mb-2"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <p className="text-white font-semibold text-sm mb-1">
+                                      {evt.title}
+                                    </p>
+                                    <p className="text-white/60 text-xs">
+                                      {formatTime(evt.time, timeFormat)} • {evt.venue || 'TBD'}
+                                    </p>
+                                  </div>
+                                  <div className="ml-3">
+                                    <div className="inline-flex items-center px-2.5 py-1 bg-purple-500/20 rounded-full border border-purple-400/30">
+                                      <span className="text-xs font-semibold text-white whitespace-nowrap">
+                                        {day.date}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-white/60 text-sm italic">
+                        No other schedule times found for this artist.
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.div>
