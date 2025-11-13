@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useHaptics } from '@/hooks/useHaptics';
-import { ShareMenu } from '@/components/ShareMenu';
+import { useShare } from '@/hooks/useShare';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useLocation } from 'wouter';
@@ -68,6 +69,8 @@ export function TripPageNavigation({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const { shareContent } = useShare();
+  const { toast } = useToast();
 
   // Sheet swipe state
   const [sheetTouchStart, setSheetTouchStart] = useState<number | null>(null);
@@ -87,6 +90,35 @@ export function TripPageNavigation({
     haptics.light();
     // Always navigate to landing page (main trip list)
     setLocation('/');
+  };
+
+  const handleShareClick = async () => {
+    if (!tripSlug || !tripName) return;
+
+    const siteUrl = window.location.origin.includes('localhost')
+      ? window.location.origin
+      : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
+    const tripUrl = `${siteUrl}/trip/${tripSlug}`;
+
+    try {
+      await shareContent({
+        title: tripName,
+        text: `Check out this amazing LGBTQ+ travel guide: ${tripName}`,
+        url: tripUrl,
+        dialogTitle: `Share ${tripName}`,
+      });
+    } catch (error) {
+      // If share fails, copy to clipboard
+      try {
+        await navigator.clipboard.writeText(tripUrl);
+        toast({
+          title: 'Link copied!',
+          description: 'Trip guide link copied to clipboard',
+        });
+      } catch (clipboardError) {
+        console.error('Failed to share or copy:', error, clipboardError);
+      }
+    }
   };
 
   const handleSettingsClick = () => {
@@ -219,20 +251,16 @@ export function TripPageNavigation({
           <div className="flex items-center gap-2 xl:hidden">
             {/* Share button */}
             {tripSlug && tripName && (
-              <ShareMenu tripSlug={tripSlug} tripName={tripName}>
-                {({ onClick, isOpen }) => (
-                  <button
-                    onClick={() => {
-                      haptics.light();
-                      onClick();
-                    }}
-                    className="h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
-                    aria-label="Share"
-                  >
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                )}
-              </ShareMenu>
+              <button
+                onClick={() => {
+                  haptics.light();
+                  handleShareClick();
+                }}
+                className="h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+                aria-label="Share"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
             )}
 
             {/* Alerts button */}
