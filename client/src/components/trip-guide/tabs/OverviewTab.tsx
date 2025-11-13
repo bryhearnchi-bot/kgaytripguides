@@ -30,13 +30,6 @@ interface OverviewTabProps {
   DAILY: any[];
   TALENT: any[];
   PARTY_THEMES: any[];
-  updates?: Array<{
-    id: number;
-    timestamp: string;
-    title: string;
-    description: string;
-    type: 'info' | 'update' | 'new';
-  }>;
   onNavigateToTab?: (tab: string) => void;
   isCruise?: boolean;
   isResort?: boolean;
@@ -51,7 +44,6 @@ export const OverviewTab = memo(function OverviewTab({
   DAILY,
   TALENT,
   PARTY_THEMES,
-  updates = [],
   onNavigateToTab,
   isCruise = false,
   isResort = false,
@@ -418,10 +410,10 @@ export const OverviewTab = memo(function OverviewTab({
             </div>
           </div>
 
-          {/* Right Column - Cruise Route, Updates */}
+          {/* Right Column - Cruise Route */}
           <div className="flex flex-col gap-4 lg:col-span-1 lg:order-none">
-            {/* Cruise Route - Mobile: 4th */}
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-4 lg:order-none">
+            {/* Cruise Route */}
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg">
               <div className="flex items-center space-x-2 mb-3">
                 <div className="bg-emerald-500/30 p-1 rounded">
                   <Map className="w-3 h-3 text-emerald-100" />
@@ -439,53 +431,6 @@ export const OverviewTab = memo(function OverviewTab({
                 <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-lg">
                   <Map className="w-8 h-8 text-white/20 mb-2" />
                   <p className="text-xs text-white/50">Map not available</p>
-                </div>
-              )}
-            </div>
-
-            {/* Updates - Mobile: 1st */}
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg flex-1 order-1 lg:order-none">
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="bg-amber-500/30 p-1 rounded">
-                  <Bell className="w-3 h-3 text-amber-100" />
-                </div>
-                <h3 className="text-sm font-bold text-white/90">Updates</h3>
-                {updates && updates.length > 0 && (
-                  <span className="text-xs bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full">
-                    {updates.length}
-                  </span>
-                )}
-              </div>
-
-              {updates && updates.length > 0 ? (
-                <div className="space-y-2">
-                  {updates.map(update => (
-                    <div key={update.id} className="bg-white/5 rounded-lg p-2">
-                      <div className="flex items-start justify-between mb-1">
-                        <span
-                          className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                            update.type === 'new'
-                              ? 'bg-emerald-500/20 text-emerald-300'
-                              : update.type === 'update'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-white/20 text-white/60'
-                          }`}
-                        >
-                          {update.type.toUpperCase()}
-                        </span>
-                        <span className="text-xs text-white/50">{update.timestamp}</span>
-                      </div>
-                      <p className="text-xs font-medium text-white/90">{update.title}</p>
-                      <p className="text-xs text-white/60 line-clamp-2 mt-0.5">
-                        {update.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Bell className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                  <p className="text-xs text-white/50">No updates yet</p>
                 </div>
               )}
             </div>
