@@ -13,24 +13,48 @@ interface UpdateWithTrip extends Update {
   start_date?: string;
 }
 
-export default function Alerts() {
+interface AlertsProps {
+  tripSlug?: string;
+  tripId?: number;
+}
+
+export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
   const [, setLocation] = useLocation();
   const [updates, setUpdates] = useState<UpdateWithTrip[]>([]);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useSupabaseAuthContext();
 
-  // Fetch all updates
+  // Fetch updates - either for specific trip or all trips
   const fetchUpdates = useCallback(async () => {
     try {
-      const response = await api.get('/api/updates/all');
+      setIsLoading(true);
+      let endpoint = '/api/updates/all';
+
+      // If tripId is provided directly, use it (faster, no extra API call)
+      if (tripId) {
+        endpoint = `/api/trips/${tripId}/updates`;
+      }
+      // Otherwise, if tripSlug is provided, fetch trip-specific updates
+      else if (tripSlug) {
+        const tripResponse = await api.get(`/api/trips/${tripSlug}/complete`);
+        if (tripResponse.ok) {
+          const tripData = await tripResponse.json();
+          endpoint = `/api/trips/${tripData.trip.id}/updates`;
+        }
+      }
+
+      const response = await api.get(endpoint);
       if (response.ok) {
         const data = await response.json();
         setUpdates(data);
       }
     } catch (error) {
-      console.error('Error fetching global updates:', error);
+      console.error('Error fetching updates:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [tripSlug, tripId]);
 
   // Load last read timestamp
   useEffect(() => {
@@ -100,7 +124,7 @@ export default function Alerts() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
-  // Group consecutive updates from the same trip
+  // Group consecutive updates from the same trip (only if not filtered by trip)
   const groupedUpdates: Array<{
     tripId: number;
     tripName: string;
@@ -108,20 +132,33 @@ export default function Alerts() {
     updates: UpdateWithTrip[];
   }> = [];
 
-  sortedUpdates.forEach(update => {
-    const lastGroup = groupedUpdates[groupedUpdates.length - 1];
+  // Only group by trip if we're showing all trips
+  if (!tripSlug && !tripId) {
+    sortedUpdates.forEach(update => {
+      const lastGroup = groupedUpdates[groupedUpdates.length - 1];
 
-    if (lastGroup && lastGroup.tripId === update.trip_id) {
-      lastGroup.updates.push(update);
-    } else {
+      if (lastGroup && lastGroup.tripId === update.trip_id) {
+        lastGroup.updates.push(update);
+      } else {
+        groupedUpdates.push({
+          tripId: update.trip_id,
+          tripName: update.trip_name || 'Unknown Trip',
+          tripSlug: update.trip_slug || '',
+          updates: [update],
+        });
+      }
+    });
+  } else {
+    // If filtered by trip, show all updates without grouping
+    if (sortedUpdates.length > 0) {
       groupedUpdates.push({
-        tripId: update.trip_id,
-        tripName: update.trip_name || 'Unknown Trip',
-        tripSlug: update.trip_slug || '',
-        updates: [update],
+        tripId: sortedUpdates[0].trip_id,
+        tripName: '', // Don't show trip name when filtered
+        tripSlug: sortedUpdates[0].trip_slug || '',
+        updates: sortedUpdates,
       });
     }
-  });
+  }
 
   return (
     <div className="min-h-screen text-white pt-16 pb-24">
@@ -130,12 +167,19 @@ export default function Alerts() {
         <div className="mt-6 mb-8">
           <div className="flex items-center gap-2 mb-6">
             <Bell className="w-4 h-4 text-amber-400" />
-            <h3 className="text-lg font-semibold text-white">Trip Alerts</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Alerts{tripSlug || tripId ? ' (This Trip)' : ' (All Trips)'}
+            </h3>
             <div className="flex-1 h-px bg-white/20 ml-3"></div>
           </div>
         </div>
 
-        {updates.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/40 mx-auto mb-4"></div>
+            <p className="text-sm text-white/40">Loading alerts...</p>
+          </div>
+        ) : updates.length === 0 ? (
           <div className="text-center py-16">
             <Bell className="w-20 h-20 text-white/20 mx-auto mb-6" />
             <h3 className="text-xl font-medium text-white/60 mb-3">No updates yet</h3>
@@ -145,13 +189,15 @@ export default function Alerts() {
           <div className="space-y-4">
             {groupedUpdates.map((group, groupIndex) => (
               <div key={`${group.tripId}-${groupIndex}`} className="space-y-3">
-                {/* Trip Header */}
-                <div className="flex items-center gap-2 px-2">
-                  <Ship className="w-5 h-5 text-ocean-400 flex-shrink-0" />
-                  <h3 className="text-base font-semibold text-white flex-1 min-w-0 truncate">
-                    {group.tripName}
-                  </h3>
-                </div>
+                {/* Trip Header - only show if not filtered by trip */}
+                {!tripSlug && !tripId && (
+                  <div className="flex items-center gap-2 px-2">
+                    <Ship className="w-5 h-5 text-ocean-400 flex-shrink-0" />
+                    <h3 className="text-base font-semibold text-white flex-1 min-w-0 truncate">
+                      {group.tripName}
+                    </h3>
+                  </div>
+                )}
 
                 {/* Updates in this group */}
                 {group.updates.map(update => (

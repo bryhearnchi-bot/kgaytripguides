@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Map,
   CalendarDays,
@@ -20,135 +20,147 @@ interface TripGuideBottomNavProps {
 
 export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGuideBottomNavProps) {
   const { user } = useSupabaseAuthContext();
+  const navRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  // Handle scroll to show/hide navigation
+  const handleScroll = useCallback(() => {
+    const currentScrollY = window.scrollY;
+
+    if (!ticking.current) {
+      window.requestAnimationFrame(() => {
+        // Prevent hiding during iOS Safari bounce (negative scroll)
+        if (currentScrollY < 0) {
+          ticking.current = false;
+          return;
+        }
+
+        // Only hide if scrolled more than 10px
+        if (currentScrollY < 10) {
+          setIsVisible(true);
+        } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+          // Scrolling down - require more scroll distance to hide
+          setIsVisible(false);
+        } else if (currentScrollY < lastScrollY.current) {
+          // Scrolling up
+          setIsVisible(true);
+        }
+
+        lastScrollY.current = currentScrollY;
+        ticking.current = false;
+      });
+
+      ticking.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    // Reset visibility when component mounts
+    setIsVisible(true);
+    lastScrollY.current = window.scrollY;
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[10001] xl:hidden pointer-events-none">
-      <div
-        className="flex justify-center px-4 pb-4"
-        style={{ paddingBottom: 'max(16px, calc(env(safe-area-inset-bottom) + 8px))' }}
+    <div className="fixed bottom-0 left-0 right-0 z-[10001] xl:hidden">
+      <nav
+        ref={navRef}
+        className={cn(
+          'bg-white/30 backdrop-blur-lg border-t border-white/30 transition-transform duration-300 ease-in-out',
+          !isVisible && 'translate-y-full'
+        )}
+        style={{
+          transform: isVisible ? 'translate3d(0, 0, 0)' : 'translate3d(0, 100%, 0)',
+          willChange: 'transform',
+          paddingBottom: 'var(--nav-bottom-padding, 0px)',
+        }}
       >
-        <nav className="bg-white/35 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20 pointer-events-auto">
+        <div className="flex items-center max-w-2xl mx-auto pt-1.5 px-3">
           <button
             onClick={() => onTabChange('overview')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'overview' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
-            }`}
-            aria-label="Overview"
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
+              activeTab === 'overview'
+                ? 'text-blue-900 bg-white/40'
+                : 'text-black opacity-60 hover:opacity-100'
+            )}
           >
-            <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'overview' && 'inline md:inline'
-              )}
-            >
-              Overview
-            </span>
+            <LayoutDashboard className="w-[24px] h-[24px]" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Overview</span>
           </button>
           <button
             onClick={() => onTabChange('itinerary')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
               activeTab === 'itinerary'
-                ? 'bg-white/60 text-black'
-                : 'text-black hover:text-black/80'
-            }`}
-            aria-label="Itinerary"
+                ? 'text-blue-900 bg-white/40'
+                : 'text-black opacity-60 hover:opacity-100'
+            )}
           >
-            <Map className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'itinerary' && 'inline md:inline'
-              )}
-            >
-              Itinerary
-            </span>
+            <Map className="w-[24px] h-[24px]" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Itinerary</span>
           </button>
+
           <button
             onClick={() => onTabChange('events')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'events' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
-            }`}
-            aria-label="Events"
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
+              activeTab === 'events'
+                ? 'text-blue-900 bg-white/40'
+                : 'text-black opacity-60 hover:opacity-100'
+            )}
           >
-            <CalendarDays className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'events' && 'inline md:inline'
-              )}
-            >
-              Events
-            </span>
+            <CalendarDays className="w-[24px] h-[24px]" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Events</span>
           </button>
+
           <button
             onClick={() => onTabChange('talent')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'talent' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
-            }`}
-            aria-label="Talent"
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
+              activeTab === 'talent'
+                ? 'text-blue-900 bg-white/40'
+                : 'text-black opacity-60 hover:opacity-100'
+            )}
           >
-            <Star className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'talent' && 'inline md:inline'
-              )}
-            >
-              Talent
-            </span>
+            <Star className="w-[24px] h-[24px]" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Talent</span>
           </button>
+
           <button
             onClick={() => onTabChange('info')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'info' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
-            }`}
-            aria-label="Information"
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
+              activeTab === 'info'
+                ? 'text-blue-900 bg-white/40'
+                : 'text-black opacity-60 hover:opacity-100'
+            )}
           >
-            <Info className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'info' && 'inline md:inline'
-              )}
-            >
-              Info
-            </span>
+            <Info className="w-[24px] h-[24px]" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Info</span>
           </button>
+
           <button
             onClick={() => onTabChange('settings')}
-            className={`px-3 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-              activeTab === 'settings' ? 'bg-white/60 text-black' : 'text-black hover:text-black/80'
-            }`}
-            aria-label="Settings"
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
+              activeTab === 'settings'
+                ? 'text-blue-900 bg-white/40'
+                : 'text-black opacity-60 hover:opacity-100'
+            )}
           >
-            <User
-              className={cn(
-                'w-4 h-4 flex-shrink-0',
-                activeTab === 'settings' && user
-                  ? 'fill-black stroke-black'
-                  : user
-                    ? 'fill-blue-600 stroke-blue-600'
-                    : ''
-              )}
-            />
-            <span
-              className={cn(
-                'animate-in fade-in slide-in-from-left-2 duration-200',
-                'hidden md:inline',
-                activeTab === 'settings' && 'inline md:inline'
-              )}
-            >
-              Settings
-            </span>
+            <User className="w-[24px] h-[24px]" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Settings</span>
           </button>
-        </nav>
-      </div>
+        </div>
+      </nav>
     </div>
   );
 }

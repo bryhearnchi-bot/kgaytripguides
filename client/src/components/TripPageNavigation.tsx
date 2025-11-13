@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   ArrowLeft,
   Share2,
+  Bell,
   LayoutDashboard,
   Map,
   CalendarDays,
@@ -24,6 +25,8 @@ import {
 } from '@/components/ui/sheet';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import Settings from '@/pages/settings';
+import Alerts from '@/pages/alerts';
+import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
 
 interface TripPageNavigationProps {
   charterCompanyLogo?: string | null;
@@ -31,6 +34,7 @@ interface TripPageNavigationProps {
   tripType?: 'cruise' | 'resort' | null;
   tripSlug?: string | null;
   tripName?: string | null;
+  tripId?: number | null;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   isCruise?: boolean;
@@ -53,6 +57,7 @@ export function TripPageNavigation({
   tripType = null,
   tripSlug = null,
   tripName = null,
+  tripId = null,
   activeTab,
   onTabChange,
   isCruise,
@@ -61,7 +66,18 @@ export function TripPageNavigation({
   const { user, profile } = useSupabaseAuthContext();
   const [, setLocation] = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Sheet swipe state
+  const [sheetTouchStart, setSheetTouchStart] = useState<number | null>(null);
+  const [sheetTouchEnd, setSheetTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  // Get unread alerts count for this specific trip
+  const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts(tripSlug || undefined);
 
   // Check if user can edit trips (on a trip page with admin rights)
   const canEditTrip =
@@ -94,21 +110,85 @@ export function TripPageNavigation({
     }, 100);
   };
 
+  // Sheet swipe handlers for bottom sheet (Alerts)
+  const onBottomSheetTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    const scrollableParent = target.closest('.overflow-y-auto');
+
+    // Only allow swipe-to-close if we're at the top of scrolled content or on non-scrollable area
+    if (scrollableParent && scrollableParent.scrollTop > 0) {
+      setSheetTouchStart(null);
+      return;
+    }
+
+    setSheetTouchEnd(null);
+    setSheetTouchStart(e.targetTouches[0].clientY);
+  };
+
+  const onBottomSheetTouchMove = (e: React.TouchEvent) => {
+    if (sheetTouchStart === null) return;
+    setSheetTouchEnd(e.targetTouches[0].clientY);
+  };
+
+  const onBottomSheetTouchEnd = () => {
+    if (!sheetTouchStart || !sheetTouchEnd) return;
+
+    const distance = sheetTouchStart - sheetTouchEnd;
+    const isDownSwipe = distance < -minSwipeDistance;
+
+    if (isDownSwipe) {
+      // Swipe down - close whichever bottom sheet is open
+      if (alertsOpen) setAlertsOpen(false);
+      if (settingsOpen) setSettingsOpen(false);
+    }
+
+    // Reset state
+    setSheetTouchStart(null);
+    setSheetTouchEnd(null);
+  };
+
+  // Sheet swipe handlers for right sheet (Settings)
+  const onRightSheetTouchStart = (e: React.TouchEvent) => {
+    setSheetTouchEnd(null);
+    setSheetTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onRightSheetTouchMove = (e: React.TouchEvent) => {
+    if (sheetTouchStart === null) return;
+    setSheetTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onRightSheetTouchEnd = () => {
+    if (!sheetTouchStart || !sheetTouchEnd) return;
+
+    const distance = sheetTouchStart - sheetTouchEnd;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isRightSwipe) {
+      // Swipe right - close the right sheet
+      setSettingsOpen(false);
+    }
+
+    // Reset state
+    setSheetTouchStart(null);
+    setSheetTouchEnd(null);
+  };
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
+    <div className="fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/35 backdrop-blur-lg">
       <div className="px-3 sm:px-4 py-2 flex items-center justify-between">
-        {/* Left side - Back button + Logo/Badge (logo/badge only on desktop) */}
+        {/* Left side - Back button + Logo/Badge */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleBack}
-            className="text-white hover:text-white/70 transition-colors p-2"
+            className="text-black hover:text-black/70 transition-colors p-2"
             aria-label="Back to home"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          {/* Logo and badge - Center on mobile, left on desktop */}
-          <div className="hidden xl:flex items-center gap-2">
+          {/* Logo and badge - Always on left side */}
+          <div className="flex items-center gap-2">
             {charterCompanyLogo && (
               <img
                 src={charterCompanyLogo}
@@ -133,31 +213,6 @@ export function TripPageNavigation({
           </div>
         </div>
 
-        {/* Center - Charter logo and badge (mobile only) */}
-        <div className="flex xl:hidden items-center gap-2">
-          {charterCompanyLogo && (
-            <img
-              src={charterCompanyLogo}
-              alt={charterCompanyName || 'Charter Company'}
-              className={`w-auto object-contain ${
-                charterCompanyName?.toLowerCase().includes('atlantis')
-                  ? 'h-5'
-                  : charterCompanyName?.toLowerCase().includes('drag')
-                    ? 'h-6'
-                    : 'h-6'
-              }`}
-              loading="lazy"
-            />
-          )}
-          <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-[10px] px-2 py-0 font-semibold whitespace-nowrap">
-            {tripType === 'cruise'
-              ? 'Interactive Cruise Guide'
-              : tripType === 'resort'
-                ? 'Interactive Resort Guide'
-                : 'Interactive Travel Guide'}
-          </Badge>
-        </div>
-
         {/* Right side - Menu items (desktop only) + Share button */}
         <div className="flex items-center gap-1">
           {/* Desktop Menu Items */}
@@ -175,7 +230,9 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <LayoutDashboard className="w-4 h-4" />
+                <LayoutDashboard
+                  className={cn('w-4 h-4', activeTab === 'overview' && '!text-blue-400')}
+                />
                 <span>Overview</span>
               </button>
 
@@ -191,7 +248,7 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <Map className="w-4 h-4" />
+                <Map className={cn('w-4 h-4', activeTab === 'itinerary' && '!text-blue-400')} />
                 <span>Itinerary</span>
               </button>
 
@@ -207,7 +264,9 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <CalendarDays className="w-4 h-4" />
+                <CalendarDays
+                  className={cn('w-4 h-4', activeTab === 'events' && '!text-blue-400')}
+                />
                 <span>Events</span>
               </button>
 
@@ -223,7 +282,7 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <Star className="w-4 h-4" />
+                <Star className={cn('w-4 h-4', activeTab === 'talent' && '!text-blue-400')} />
                 <span>Talent</span>
               </button>
 
@@ -239,7 +298,7 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <Info className="w-4 h-4" />
+                <Info className={cn('w-4 h-4', activeTab === 'info' && '!text-blue-400')} />
                 <span>Info</span>
               </button>
 
@@ -255,6 +314,7 @@ export function TripPageNavigation({
                 <User
                   className={cn(
                     'w-4 h-4',
+                    activeTab === 'settings' && '!text-blue-400',
                     settingsOpen && user
                       ? 'fill-white stroke-white'
                       : user
@@ -267,6 +327,23 @@ export function TripPageNavigation({
             </div>
           )}
 
+          {/* Alerts button */}
+          <button
+            onClick={() => {
+              haptics.light();
+              setAlertsOpen(true);
+            }}
+            className="text-black hover:text-black/70 transition-colors p-2.5 flex items-center justify-center min-w-[44px] min-h-[44px] relative"
+            aria-label="Alerts"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+
           {/* Share button */}
           {tripSlug && tripName && (
             <ShareMenu tripSlug={tripSlug} tripName={tripName}>
@@ -276,7 +353,7 @@ export function TripPageNavigation({
                     haptics.light();
                     onClick();
                   }}
-                  className="text-white hover:text-white/70 transition-colors p-2"
+                  className="text-black hover:text-black/70 transition-colors p-2.5 flex items-center justify-center min-w-[44px] min-h-[44px]"
                   aria-label="Share"
                 >
                   <Share2 className="w-5 h-5" />
@@ -293,6 +370,9 @@ export function TripPageNavigation({
           <SheetContent
             side="right"
             className="w-[85%] sm:w-[480px] !top-[calc(env(safe-area-inset-top)+3.25rem)] !bottom-0 !h-auto !z-50 bg-[#001833] border-white/10 text-white overflow-y-auto [&>button]:top-4 !pt-2"
+            onTouchStart={onRightSheetTouchStart}
+            onTouchMove={onRightSheetTouchMove}
+            onTouchEnd={onRightSheetTouchEnd}
           >
             <VisuallyHidden>
               <SheetTitle>Settings</SheetTitle>
@@ -307,6 +387,38 @@ export function TripPageNavigation({
             </div>
           </SheetContent>
         </SheetPortal>
+      </Sheet>
+
+      {/* Alerts Sheet */}
+      <Sheet
+        open={alertsOpen}
+        modal={true}
+        onOpenChange={open => {
+          setAlertsOpen(open);
+          if (!open) {
+            // Refresh alerts count after closing
+            refreshAlerts();
+          }
+        }}
+      >
+        <SheetContent
+          side="bottom"
+          className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
+          onTouchStart={onBottomSheetTouchStart}
+          onTouchMove={onBottomSheetTouchMove}
+          onTouchEnd={onBottomSheetTouchEnd}
+        >
+          <VisuallyHidden>
+            <SheetTitle>Trip Alerts</SheetTitle>
+            <SheetDescription>View trip updates and notifications</SheetDescription>
+          </VisuallyHidden>
+          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="relative h-full overflow-y-auto pt-4">
+            <div className="[&>div]:pt-0 [&>div]:min-h-0">
+              <Alerts tripId={tripId || undefined} tripSlug={tripSlug || undefined} />
+            </div>
+          </div>
+        </SheetContent>
       </Sheet>
     </div>
   );

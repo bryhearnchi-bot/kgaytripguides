@@ -1,14 +1,28 @@
-import { useRoute } from 'wouter';
+import { useRoute, useLocation } from 'wouter';
 import { useEffect, useState } from 'react';
 import TripGuide from '@/components/trip-guide';
 import { TripGuideBottomNav } from '@/components/TripGuideBottomNav';
 import { TripPageNavigation } from '@/components/TripPageNavigation';
 import { useTripMetadata } from '@/hooks/useTripMetadata';
 import { useTripData } from '@/hooks/useTripData';
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import Settings from '@/pages/settings';
+import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 export default function TripPage() {
   const [match, params] = useRoute('/trip/:slug');
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
+  const { profile } = useSupabaseAuthContext();
+
+  // Sheet swipe state
+  const [sheetTouchStart, setSheetTouchStart] = useState<number | null>(null);
+  const [sheetTouchEnd, setSheetTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   // Only run hooks if we have a valid match and slug
   const slug = match && params?.slug ? params.slug : '';
@@ -148,6 +162,69 @@ export default function TripPage() {
   // Determine if this is a cruise or resort for bottom nav
   const isCruise = !!tripData?.trip?.shipId;
 
+  // Check if user can edit trips (admin rights)
+  const canEditTrip =
+    profile?.role && ['super_admin', 'content_manager', 'admin'].includes(profile.role);
+
+  // Handle tab changes - intercept settings to show sheet instead
+  const handleTabChange = (tab: string) => {
+    if (tab === 'settings') {
+      setShowSettingsSheet(true);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  // Handle edit trip - dispatch event for trip-guide component to open the modal
+  const handleEditTrip = () => {
+    window.dispatchEvent(new CustomEvent('request-edit-trip'));
+    setShowSettingsSheet(false);
+  };
+
+  // Handle navigation from Settings sheet
+  const handleNavigateFromSheet = (path: string) => {
+    setShowSettingsSheet(false);
+    setTimeout(() => {
+      setLocation(path);
+    }, 100);
+  };
+
+  // Sheet swipe handlers for bottom sheet
+  const onSheetTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    const scrollableParent = target.closest('.overflow-y-auto');
+
+    // Only allow swipe-to-close if we're at the top of scrolled content or on non-scrollable area
+    if (scrollableParent && scrollableParent.scrollTop > 0) {
+      setSheetTouchStart(null);
+      return;
+    }
+
+    setSheetTouchEnd(null);
+    setSheetTouchStart(e.targetTouches[0].clientY);
+  };
+
+  const onSheetTouchMove = (e: React.TouchEvent) => {
+    if (sheetTouchStart === null) return;
+    setSheetTouchEnd(e.targetTouches[0].clientY);
+  };
+
+  const onSheetTouchEnd = () => {
+    if (!sheetTouchStart || !sheetTouchEnd) return;
+
+    const distance = sheetTouchStart - sheetTouchEnd;
+    const isDownSwipe = distance < -minSwipeDistance;
+
+    if (isDownSwipe) {
+      // Swipe down - close the settings sheet
+      setShowSettingsSheet(false);
+    }
+
+    // Reset state
+    setSheetTouchStart(null);
+    setSheetTouchEnd(null);
+  };
+
   return (
     <>
       {/* Custom navigation for trip page with back button and share */}
@@ -157,8 +234,9 @@ export default function TripPage() {
         tripType={isCruise ? 'cruise' : 'resort'}
         tripSlug={slug}
         tripName={tripData?.trip?.name}
+        tripId={tripData?.trip?.id}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isCruise={isCruise}
       />
 
@@ -166,10 +244,36 @@ export default function TripPage() {
         slug={slug}
         showBottomNav={true}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
 
-      <TripGuideBottomNav activeTab={activeTab} onTabChange={setActiveTab} isCruise={isCruise} />
+      <TripGuideBottomNav activeTab={activeTab} onTabChange={handleTabChange} isCruise={isCruise} />
+
+      {/* Settings Sheet */}
+      <Sheet open={showSettingsSheet} onOpenChange={setShowSettingsSheet}>
+        <SheetContent
+          side="bottom"
+          className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
+          onTouchStart={onSheetTouchStart}
+          onTouchMove={onSheetTouchMove}
+          onTouchEnd={onSheetTouchEnd}
+        >
+          <VisuallyHidden>
+            <SheetTitle>Settings</SheetTitle>
+            <SheetDescription>Manage your profile and app preferences</SheetDescription>
+          </VisuallyHidden>
+          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="relative h-full overflow-y-auto pt-4">
+            <div className="[&>div]:pt-0 [&>div]:min-h-0">
+              <Settings
+                showEditTrip={canEditTrip}
+                onEditTrip={handleEditTrip}
+                onNavigate={handleNavigateFromSheet}
+              />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
