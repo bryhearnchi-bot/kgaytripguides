@@ -85,8 +85,8 @@ export function TripPageNavigation({
 
   const handleBack = () => {
     haptics.light();
-    // Use browser history to go back to previous page (landing or past-trips)
-    window.history.back();
+    // Always navigate to landing page (main trip list)
+    setLocation('/');
   };
 
   const handleSettingsClick = () => {

@@ -31,8 +31,8 @@
     height: 100%;
     /* Remove overflow-x from html to fix Safari sticky */
     /* overflow-x: hidden; */
-    /* Solid dark blue background - no gradients */
-    background-color: #001a35;
+    /* Solid Oxford Blue background - matches app theme */
+    background-color: #002147;
     /* Explicitly declare dark color scheme for Safari */
     color-scheme: dark;
   }
@@ -42,8 +42,8 @@
     padding: 0 !important;
     height: 100%;
     overflow-x: hidden;
-    /* Solid dark blue background - matches app theme */
-    background-color: #001a35;
+    /* Solid Oxford Blue background - matches app theme */
+    background-color: #002147;
     color-scheme: dark;
   }
 
