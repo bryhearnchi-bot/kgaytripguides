@@ -95,10 +95,8 @@ export function TripPageNavigation({
   const handleShareClick = async () => {
     if (!tripSlug || !tripName) return;
 
-    const siteUrl = window.location.origin.includes('localhost')
-      ? window.location.origin
-      : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
-    const tripUrl = `${siteUrl}/trip/${tripSlug}`;
+    // Always use the current site's origin (works for localhost, dev, and production)
+    const tripUrl = `${window.location.origin}/trip/${tripSlug}`;
 
     try {
       await shareContent({

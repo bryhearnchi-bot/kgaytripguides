@@ -73,9 +73,8 @@ export default function NavigationBanner() {
   };
 
   const handleShareClick = async () => {
-    const siteUrl = window.location.origin.includes('localhost')
-      ? window.location.origin
-      : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
+    // Always use the current site's origin (works for localhost, dev, and production)
+    const siteUrl = window.location.origin;
 
     try {
       await shareContent({
