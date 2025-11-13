@@ -277,14 +277,6 @@ export default function Settings({
 
                 {/* Navigation Links */}
                 <div className="space-y-1">
-                  <button
-                    onClick={() => handleNavigate('/admin/profile')}
-                    className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                  >
-                    <User className="h-5 w-5 text-ocean-300" />
-                    <span className="text-sm font-medium">Profile</span>
-                  </button>
-
                   {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
                     <button
                       onClick={() => handleNavigate('/admin/trips')}
