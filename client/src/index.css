@@ -14,6 +14,15 @@
   :root {
     /* Tell browsers this is a dark color scheme */
     color-scheme: dark;
+    /* Bottom navigation padding - 2px in browser, more in PWA */
+    --nav-bottom-padding: 2px;
+  }
+
+  /* Apply more bottom padding in PWA/standalone mode */
+  @media (display-mode: standalone) {
+    :root {
+      --nav-bottom-padding: 24px;
+    }
   }
 
   html {

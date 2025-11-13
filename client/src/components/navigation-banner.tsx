@@ -108,7 +108,7 @@ export default function NavigationBanner() {
 
   return (
     <>
-      <div className="text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/10 backdrop-blur-lg">
+      <div className="text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/30 backdrop-blur-lg">
         <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/" className="flex items-center gap-2 sm:gap-3">
@@ -134,7 +134,7 @@ export default function NavigationBanner() {
               onClick={handleRefreshClick}
               disabled={isChecking}
               className={cn(
-                'relative h-10 w-10 rounded-full text-white transition-colors xl:hidden',
+                'relative h-10 w-10 rounded-full text-black transition-colors xl:hidden',
                 'hover:bg-white/10 active:bg-white/20',
                 'disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
               )}
@@ -151,7 +151,7 @@ export default function NavigationBanner() {
                   'w-5 h-5 transition-all',
                   isChecking && 'animate-spin text-blue-400',
                   !isChecking && updateAvailable && 'text-green-400',
-                  !isChecking && !updateAvailable && 'text-white'
+                  !isChecking && !updateAvailable && 'text-black'
                 )}
               />
               {/* Badge for update available */}
@@ -164,7 +164,7 @@ export default function NavigationBanner() {
             <button
               onClick={handleShareClick}
               className={cn(
-                'h-10 w-10 rounded-full text-white transition-colors xl:hidden',
+                'h-10 w-10 rounded-full text-black transition-colors xl:hidden',
                 'hover:bg-white/10 active:bg-white/20',
                 'flex items-center justify-center'
               )}

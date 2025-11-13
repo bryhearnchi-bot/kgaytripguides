@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { Talent } from '@/data/trip-data';
 import { useTripData, transformTripData } from '@/hooks/useTripData';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
@@ -29,6 +31,7 @@ import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 import type { Update } from '@/types/trip-info';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useShare } from '@/hooks/useShare';
+import { cn } from '@/lib/utils';
 
 // Import refactored components
 import { LoadingState, ErrorState } from './trip-guide/shared';
@@ -61,24 +64,11 @@ export default function TripGuide({
   const haptics = useHaptics();
   const { shareTrip } = useShare();
   const [internalActiveTab, setInternalActiveTab] = useState('overview');
-
-  // Use external state if provided (for fly-up menu), otherwise use internal state
-  const activeTab = showBottomNav ? externalActiveTab || 'overview' : internalActiveTab;
-  const setActiveTab = showBottomNav
-    ? externalOnTabChange || setInternalActiveTab
-    : setInternalActiveTab;
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
   const [showTalentModal, setShowTalentModal] = useState(false);
   const [selectedItineraryStop, setSelectedItineraryStop] = useState<any>(null);
   const [showEventsModal, setShowEventsModal] = useState(false);
   const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
-
-  // Handler to navigate to tab and scroll to top
-  const handleNavigateToTab = (tab: string) => {
-    haptics.light();
-    setActiveTab(tab);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [cameFromEventsModal, setCameFromEventsModal] = useState(false);
@@ -88,6 +78,19 @@ export default function TripGuide({
   const [isApproving, setIsApproving] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [hasInitializedCollapsedDays, setHasInitializedCollapsedDays] = useState(false);
+
+  // Use external state if provided (for fly-up menu), otherwise use internal state
+  const activeTab = showBottomNav ? externalActiveTab || 'overview' : internalActiveTab;
+  const setActiveTab = showBottomNav
+    ? externalOnTabChange || setInternalActiveTab
+    : setInternalActiveTab;
+
+  // Handler to navigate to tab and scroll to top
+  const handleNavigateToTab = (tab: string) => {
+    haptics.light();
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Use the trip data hook
   const { data: tripData, isLoading, error, refetch } = useTripData(slug);
@@ -454,19 +457,13 @@ export default function TripGuide({
     <div className="min-h-screen w-full relative">
       {isDragStarsCruise ? (
         /* Cosmic Aurora - Dragstar Cruise Only */
-        <>
-          <div className="absolute inset-0 z-0 bg-[#002147]" />
-          <div className="absolute inset-0 z-[1] bg-black/30 pointer-events-none" />
-        </>
+        <div className="absolute inset-0 z-0 bg-[#002147]" />
       ) : isHalloweenCruise ? (
         /* Halloween Cruise - Solid Color */
-        <>
-          <div className="absolute inset-0 z-0 bg-[#002147]" />
-          <div className="absolute inset-0 z-[1] bg-black/30 pointer-events-none" />
-        </>
+        <div className="absolute inset-0 z-0 bg-[#002147]" />
       ) : (
-        /* Default - Black overlay only (Oxford Blue comes from App.tsx) */
-        <div className="absolute inset-0 z-0 bg-black/30 pointer-events-none" />
+        /* Default - Solid Oxford Blue */
+        <div className="absolute inset-0 z-0 bg-[#002147]" />
       )}
 
       {/* Content Layer */}
@@ -644,25 +641,16 @@ export default function TripGuide({
                     haptics.light();
                     setActiveTab('settings');
                   }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'settings'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
+                  className="px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] text-white/70 hover:text-white"
                   aria-label="Settings"
                 >
                   <UserIcon
                     className={cn(
                       'w-4 h-4 flex-shrink-0',
-                      activeTab === 'settings' && user
-                        ? 'fill-ocean-900 stroke-ocean-900'
-                        : user
-                          ? 'fill-blue-600 stroke-blue-600'
-                          : ''
+                      user ? 'fill-blue-600 stroke-blue-600' : ''
                     )}
                   />
                   <span className="hidden sm:inline">Settings</span>
-                  {activeTab === 'settings' && <span className="sm:hidden">Settings</span>}
                 </button>
               </div>
             </div>
@@ -743,10 +731,6 @@ export default function TripGuide({
 
             <TabsContent value="info">
               <InfoTab IMPORTANT_INFO={IMPORTANT_INFO} tripId={tripData?.trip?.id} />
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <Settings showEditTrip={canEditTrip} onEditTrip={() => setShowEditModal(true)} />
             </TabsContent>
           </Tabs>
         </StandardizedContentLayout>

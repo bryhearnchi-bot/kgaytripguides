@@ -63,7 +63,7 @@ function TripCard({ trip }: { trip: Trip }) {
   };
 
   return (
-    <div className="group rounded-2xl overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
+    <div className="group rounded-2xl overflow-hidden border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
       <div onClick={handleCardClick} className="cursor-pointer">
         <div className="relative h-48 overflow-hidden">
           <img
@@ -282,38 +282,6 @@ export default function LandingPage() {
 
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
 
-  // Scroll to top when filter changes
-  useEffect(() => {
-    const forceScrollToTop = () => {
-      // Multiple scroll methods for maximum compatibility
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-
-      // Also try with options
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: 'instant' as ScrollBehavior,
-      });
-    };
-
-    // Immediate scroll
-    forceScrollToTop();
-
-    // Use requestAnimationFrame for next paint cycle
-    requestAnimationFrame(() => {
-      forceScrollToTop();
-
-      // Additional attempts with longer delays to ensure content has rendered
-      setTimeout(forceScrollToTop, 1);
-      setTimeout(forceScrollToTop, 10);
-      setTimeout(forceScrollToTop, 50);
-      setTimeout(forceScrollToTop, 100);
-      setTimeout(forceScrollToTop, 200);
-    });
-  }, [activeFilter]);
-
   // Save scroll position when navigating away, restore when coming back
   useEffect(() => {
     const savedScroll = sessionStorage.getItem('landing-scroll');
@@ -479,88 +447,99 @@ export default function LandingPage() {
           <StandardizedContentLayout>
             {filteredTrips.length > 0 ? (
               <section>
+                {/* Next Trip - Always visible regardless of toggle */}
+                {hasFeaturedTrip && (
+                  <div className="mb-8">
+                    {/* Featured Trip Header - Changes based on current vs upcoming */}
+                    <div className="flex items-center gap-2 mb-6">
+                      <Calendar
+                        className={`w-4 h-4 ${isFeaturedUpcoming ? 'text-blue-400' : 'text-emerald-400'}`}
+                      />
+                      <h3 className="text-base font-semibold text-white">
+                        {isFeaturedUpcoming ? 'Next Trip' : 'Current Trips'}
+                      </h3>
+                      <div className="flex-1 h-px bg-white/20 ml-3"></div>
+                    </div>
+
+                    {/* Featured Trip Carousel - Full Width */}
+                    <FeaturedTripCarousel trips={featuredTrips} />
+                  </div>
+                )}
+
+                {/* Toggle Header - Between Next Trip and grid */}
+                <div className="pb-3 mb-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      {activeFilter === 'upcoming' ? (
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                      ) : (
+                        <History className="w-4 h-4 text-purple-400" />
+                      )}
+                      <h3 className="text-base font-semibold text-white">
+                        {activeFilter === 'upcoming' ? 'Upcoming Trips' : 'Past Trips'}
+                      </h3>
+                    </div>
+
+                    {/* Toggle bubble - like Schedule/Parties */}
+                    <div className="bg-white/25 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
+                      <button
+                        onClick={() => setActiveFilter('upcoming')}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          activeFilter === 'upcoming'
+                            ? 'bg-white/20 text-white'
+                            : 'text-white/60 hover:text-white/80'
+                        }`}
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        Upcoming
+                      </button>
+                      <button
+                        onClick={() => setActiveFilter('past')}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          activeFilter === 'past'
+                            ? 'bg-purple-500/30 text-white'
+                            : 'text-purple-300 hover:text-purple-200'
+                        }`}
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        Past
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid of trips - Changes based on toggle */}
                 {activeFilter === 'upcoming' ? (
-                  <div>
-                    {hasFeaturedTrip && (
-                      <div className="mb-8">
-                        {/* Featured Trip Header - Changes based on current vs upcoming */}
-                        <div className="flex items-center gap-2 mb-6">
-                          <Calendar
-                            className={`w-4 h-4 ${isFeaturedUpcoming ? 'text-blue-400' : 'text-emerald-400'}`}
-                          />
-                          <h3 className="text-lg font-semibold text-white">
-                            {isFeaturedUpcoming ? 'Next Adventure' : 'Current Trips'}
-                          </h3>
-                          <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                        </div>
-
-                        {/* Featured Trip Carousel - Full Width */}
-                        <FeaturedTripCarousel trips={featuredTrips} />
-                      </div>
-                    )}
-
-                    {upcomingTrips.length > 0 && (
-                      <div className="mb-8">
-                        <div className="safari-sticky-header sticky top-16 z-20 pb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-blue-400" />
-                            <h3 className="text-lg font-semibold text-white">
-                              Upcoming Adventures
-                            </h3>
-                            <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                          {upcomingTrips.map(trip => (
-                            <TripCard key={trip.id} trip={trip} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  upcomingTrips.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                      {upcomingTrips.map(trip => (
+                        <TripCard key={trip.id} trip={trip} />
+                      ))}
+                    </div>
+                  )
+                ) : activeFilter === 'past' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                    {filteredTrips.map(trip => (
+                      <TripCard key={trip.id} trip={trip} />
+                    ))}
                   </div>
                 ) : (
                   <div>
-                    {/* Different header styles based on filter */}
-                    {activeFilter === 'past' ? (
-                      <div className="mb-8">
-                        <div className="safari-sticky-header sticky top-16 z-20 pb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-                          <div className="flex items-center gap-2">
-                            <History className="w-4 h-4 text-purple-400" />
-                            <h3 className="text-lg font-semibold text-white">Past Adventures</h3>
-                            <div className="flex-1 h-px bg-white/20 ml-3"></div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                          {filteredTrips.map(trip => (
-                            <TripCard key={trip.id} trip={trip} />
-                          ))}
-                        </div>
+                    <div className="text-center mb-8">
+                      <div className="flex items-center justify-center gap-3 mb-2">
+                        <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
+                        <h2 className="text-2xl font-semibold text-white capitalize">
+                          Current Trips
+                        </h2>
                       </div>
-                    ) : (
-                      <div>
-                        <div className="text-center mb-8">
-                          <div className="flex items-center justify-center gap-3 mb-2">
-                            {activeFilter === 'current' && (
-                              <Clock className="w-6 h-6 text-emerald-400 animate-pulse" />
-                            )}
-                            <h2 className="text-2xl font-semibold text-white capitalize">
-                              {activeFilter === 'current'
-                                ? 'Active Trips'
-                                : `${activeFilter} Adventures`}
-                            </h2>
-                          </div>
-                          <p className="text-sm text-white/70">
-                            {activeFilter === 'current' && 'Experience the journey as it unfolds'}
-                          </p>
-                        </div>
+                      <p className="text-sm text-white/70">Experience the journey as it unfolds</p>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                          {filteredTrips.map(trip => (
-                            <TripCard key={trip.id} trip={trip} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                      {filteredTrips.map(trip => (
+                        <TripCard key={trip.id} trip={trip} />
+                      ))}
+                    </div>
                   </div>
                 )}
               </section>
