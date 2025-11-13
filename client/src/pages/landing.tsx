@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   CalendarDays,
@@ -437,8 +438,9 @@ export default function LandingPage() {
                   </span>
                 </h2>
 
-                <p className="text-sm sm:text-base md:text-lg text-ocean-200 max-w-3xl mx-auto px-4 line-clamp-2">
-                  The interactive guides to immerse yourself in LGBTQ+ travel experiences.
+                <p className="text-sm sm:text-base md:text-lg text-white max-w-3xl mx-auto px-4 line-clamp-2">
+                  The <span className="text-orange-400 font-semibold">INTERACTIVE</span> guides to
+                  immerse yourself in unforgettable LGBTQ+ travel experiences.
                 </p>
               </div>
             </div>

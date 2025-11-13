@@ -205,19 +205,69 @@ export function TripPageNavigation({
             )}
             <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-[10px] px-2 py-0 font-semibold whitespace-nowrap">
               {tripType === 'cruise'
-                ? 'Interactive Cruise Guide'
+                ? 'Cruise Guide'
                 : tripType === 'resort'
-                  ? 'Interactive Resort Guide'
-                  : 'Interactive Travel Guide'}
+                  ? 'Resort Guide'
+                  : 'Travel Guide'}
             </Badge>
           </div>
         </div>
 
-        {/* Right side - Menu items (desktop only) + Share button */}
-        <div className="flex items-center gap-1">
+        {/* Right side - Mobile buttons + Desktop menu items */}
+        <div className="flex items-center gap-2">
+          {/* Mobile buttons - Share, Alerts, Settings (hidden on desktop) */}
+          <div className="flex items-center gap-2 xl:hidden">
+            {/* Share button */}
+            {tripSlug && tripName && (
+              <ShareMenu tripSlug={tripSlug} tripName={tripName}>
+                {({ onClick, isOpen }) => (
+                  <button
+                    onClick={() => {
+                      haptics.light();
+                      onClick();
+                    }}
+                    className="h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+                    aria-label="Share"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                )}
+              </ShareMenu>
+            )}
+
+            {/* Alerts button */}
+            <button
+              onClick={() => {
+                haptics.light();
+                setAlertsOpen(true);
+              }}
+              className="relative h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              aria-label="Alerts"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Settings button */}
+            <button
+              onClick={() => {
+                haptics.light();
+                setSettingsOpen(true);
+              }}
+              className="h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              aria-label="Settings"
+            >
+              <User className="w-5 h-5" />
+            </button>
+          </div>
+
           {/* Desktop Menu Items */}
           {activeTab && onTabChange && (
-            <div className="hidden xl:flex items-center gap-1 mr-2">
+            <div className="hidden xl:flex items-center gap-1">
               <button
                 onClick={() => {
                   haptics.light();
@@ -326,70 +376,37 @@ export function TripPageNavigation({
               </button>
             </div>
           )}
-
-          {/* Alerts button */}
-          <button
-            onClick={() => {
-              haptics.light();
-              setAlertsOpen(true);
-            }}
-            className="text-black hover:text-black/70 transition-colors p-2.5 flex items-center justify-center min-w-[44px] min-h-[44px] relative"
-            aria-label="Alerts"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Share button */}
-          {tripSlug && tripName && (
-            <ShareMenu tripSlug={tripSlug} tripName={tripName}>
-              {({ onClick, isOpen }) => (
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    onClick();
-                  }}
-                  className="text-black hover:text-black/70 transition-colors p-2.5 flex items-center justify-center min-w-[44px] min-h-[44px]"
-                  aria-label="Share"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-              )}
-            </ShareMenu>
-          )}
         </div>
       </div>
 
-      {/* Settings Sheet - Desktop only */}
+      {/* Settings Sheet - Fly-up (bottom sheet) */}
       <Sheet open={settingsOpen} modal={true} onOpenChange={setSettingsOpen}>
         <SheetPortal>
           <SheetContent
-            side="right"
-            className="w-[85%] sm:w-[480px] !top-[calc(env(safe-area-inset-top)+3.25rem)] !bottom-0 !h-auto !z-50 bg-[#001833] border-white/10 text-white overflow-y-auto [&>button]:top-4 !pt-2"
-            onTouchStart={onRightSheetTouchStart}
-            onTouchMove={onRightSheetTouchMove}
-            onTouchEnd={onRightSheetTouchEnd}
+            side="bottom"
+            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
+            onTouchStart={onBottomSheetTouchStart}
+            onTouchMove={onBottomSheetTouchMove}
+            onTouchEnd={onBottomSheetTouchEnd}
           >
             <VisuallyHidden>
               <SheetTitle>Settings</SheetTitle>
               <SheetDescription>Manage your preferences and account settings</SheetDescription>
             </VisuallyHidden>
-            <div className="-mt-16">
-              <Settings
-                showEditTrip={canEditTrip}
-                onEditTrip={handleEditTrip}
-                onNavigate={handleNavigateFromSheet}
-              />
+            <div className="h-full overflow-y-auto pt-4">
+              <div className="[&>div]:pt-0 [&>div]:min-h-0">
+                <Settings
+                  showEditTrip={canEditTrip}
+                  onEditTrip={handleEditTrip}
+                  onNavigate={handleNavigateFromSheet}
+                />
+              </div>
             </div>
           </SheetContent>
         </SheetPortal>
       </Sheet>
 
-      {/* Alerts Sheet */}
+      {/* Alerts Sheet - Fly-up (bottom sheet) */}
       <Sheet
         open={alertsOpen}
         modal={true}
@@ -401,24 +418,25 @@ export function TripPageNavigation({
           }
         }}
       >
-        <SheetContent
-          side="bottom"
-          className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
-          onTouchStart={onBottomSheetTouchStart}
-          onTouchMove={onBottomSheetTouchMove}
-          onTouchEnd={onBottomSheetTouchEnd}
-        >
-          <VisuallyHidden>
-            <SheetTitle>Trip Alerts</SheetTitle>
-            <SheetDescription>View trip updates and notifications</SheetDescription>
-          </VisuallyHidden>
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="relative h-full overflow-y-auto pt-4">
-            <div className="[&>div]:pt-0 [&>div]:min-h-0">
-              <Alerts tripId={tripId || undefined} tripSlug={tripSlug || undefined} />
+        <SheetPortal>
+          <SheetContent
+            side="bottom"
+            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
+            onTouchStart={onBottomSheetTouchStart}
+            onTouchMove={onBottomSheetTouchMove}
+            onTouchEnd={onBottomSheetTouchEnd}
+          >
+            <VisuallyHidden>
+              <SheetTitle>Trip Alerts</SheetTitle>
+              <SheetDescription>View trip updates and notifications</SheetDescription>
+            </VisuallyHidden>
+            <div className="h-full overflow-y-auto pt-4">
+              <div className="[&>div]:pt-0 [&>div]:min-h-0">
+                <Alerts tripId={tripId || undefined} tripSlug={tripSlug || undefined} />
+              </div>
             </div>
-          </div>
-        </SheetContent>
+          </SheetContent>
+        </SheetPortal>
       </Sheet>
     </div>
   );

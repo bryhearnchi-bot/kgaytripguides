@@ -224,6 +224,7 @@ function Router() {
 function AppContent() {
   const [location] = useLocation();
   const isTripPage = location.startsWith('/trip/');
+  const isLandingPage = location === '/';
 
   return (
     <div className="relative z-10">
@@ -233,8 +234,8 @@ function AppContent() {
         <Toaster />
         <Router />
       </div>
-      {/* Hide BottomNavigation on trip pages - they use TripGuideBottomNav */}
-      {!isTripPage && <BottomNavigation />}
+      {/* Hide BottomNavigation on trip pages and landing page */}
+      {!isTripPage && !isLandingPage && <BottomNavigation />}
       <BottomSafeArea />
     </div>
   );

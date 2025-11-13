@@ -1,7 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { User, Shield, Edit, LogOut, Download, Info, Clock, Plus, Share } from 'lucide-react';
+import {
+  User,
+  Shield,
+  Edit,
+  LogOut,
+  Download,
+  Info,
+  Clock,
+  Plus,
+  Share,
+  RefreshCw,
+  Star,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -47,7 +60,7 @@ export default function Settings({
   const [isStandalone, setIsStandalone] = useState(false);
   const { user, profile, signOut } = useSupabaseAuthContext();
   const { timeFormat, toggleTimeFormat } = useTimeFormat();
-  const { lastUpdated } = useUpdate();
+  const { lastUpdated, updateAvailable, isChecking, checkForUpdates, applyUpdate } = useUpdate();
 
   // Get the first name for display
   const displayName = profile?.name?.first || user?.email?.split('@')[0] || 'User';
@@ -163,6 +176,16 @@ export default function Settings({
     toggleTimeFormat();
   };
 
+  const handleRefreshClick = async () => {
+    if (updateAvailable) {
+      // Apply the waiting update
+      applyUpdate();
+    } else {
+      // Check for updates manually
+      await checkForUpdates();
+    }
+  };
+
   const handleInstallClick = async () => {
     if (isIOS) {
       // Show iOS instructions
@@ -234,9 +257,20 @@ export default function Settings({
                   </div>
                 </div>
 
-                {/* Last Updated - When Logged In */}
-                <div className="flex items-center justify-center text-xs text-white/50 py-1">
-                  <span>Updated {formatLastUpdated(lastUpdated)}</span>
+                <Separator className="bg-white/10" />
+
+                {/* My Stuff Section - When Logged In */}
+                <div className="space-y-1">
+                  <button
+                    disabled
+                    className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left opacity-60 cursor-not-allowed"
+                  >
+                    <Star className="h-5 w-5 text-ocean-300" />
+                    <span className="text-sm font-medium">My Stuff</span>
+                    <Badge className="rounded-full bg-amber-500/20 text-amber-300 border-amber-400/30 text-[10px] px-2 py-0 font-semibold ml-auto">
+                      Coming Soon
+                    </Badge>
+                  </button>
                 </div>
 
                 <Separator className="bg-white/10" />
@@ -286,16 +320,9 @@ export default function Settings({
                   <span className="text-sm font-medium">Login</span>
                 </button>
 
-                {/* Last Updated - When Logged Out */}
-                <div className="flex items-center justify-center text-xs text-white/50 py-1">
-                  <span>Updated {formatLastUpdated(lastUpdated)}</span>
-                </div>
-
                 <Separator className="bg-white/10" />
               </>
             )}
-
-            {user && <Separator className="bg-white/10" />}
 
             {/* Time Format Toggle */}
             <button
@@ -352,7 +379,7 @@ export default function Settings({
               </button>
             </div>
 
-            {/* Sign Out (when logged in) - at the bottom */}
+            {/* Sign Out (when logged in) */}
             {user && (
               <>
                 <Separator className="bg-white/10" />
@@ -365,6 +392,35 @@ export default function Settings({
                 </button>
               </>
             )}
+
+            {/* Last Updated & Refresh Button - After Sign Out, centered */}
+            <div className="flex items-center justify-center gap-2 py-3">
+              <span className="text-xs text-white/50">
+                Updated {formatLastUpdated(lastUpdated)}
+              </span>
+              <button
+                onClick={handleRefreshClick}
+                disabled={isChecking}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 transition-colors disabled:opacity-50"
+                title={
+                  updateAvailable
+                    ? 'Update available - tap to refresh'
+                    : isChecking
+                      ? 'Checking for updates...'
+                      : 'Check for updates'
+                }
+              >
+                <RefreshCw
+                  className={cn(
+                    'w-3.5 h-3.5 transition-all',
+                    isChecking && 'animate-spin text-blue-400',
+                    !isChecking && updateAvailable && 'text-green-400',
+                    !isChecking && !updateAvailable && 'text-blue-400'
+                  )}
+                />
+                <span className="text-[10px] font-medium text-blue-400">Refresh</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

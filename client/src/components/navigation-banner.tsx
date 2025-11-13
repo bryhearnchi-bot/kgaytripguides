@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useUpdate } from '@/context/UpdateContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useShare } from '@/hooks/useShare';
 import { useToast } from '@/hooks/use-toast';
+import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
 import {
   Sheet,
   SheetContent,
@@ -26,6 +27,7 @@ export default function NavigationBanner() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { shareContent } = useShare();
   const { toast } = useToast();
+  const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts();
 
   // Determine active tab based on current location
   const getActiveTab = () => {
@@ -44,21 +46,20 @@ export default function NavigationBanner() {
   };
 
   const handleAlertsClick = () => {
-    // Check if desktop (xl+)
-    if (window.innerWidth >= 1280) {
-      setAlertsOpen(true);
-    } else {
-      handleNavigation('/alerts');
-    }
+    // Always open sheet on mobile (no navigation)
+    setAlertsOpen(true);
   };
 
-  const handleSettingsClick = () => {
-    // Check if desktop (xl+)
-    if (window.innerWidth >= 1280) {
-      setSettingsOpen(true);
-    } else {
-      handleNavigation('/settings');
+  // Refresh alerts count when alerts sheet is closed
+  useEffect(() => {
+    if (!alertsOpen) {
+      refreshAlerts();
     }
+  }, [alertsOpen, refreshAlerts]);
+
+  const handleSettingsClick = () => {
+    // Always open sheet on mobile (no navigation)
+    setSettingsOpen(true);
   };
 
   const handleRefreshClick = async () => {
@@ -117,50 +118,14 @@ export default function NavigationBanner() {
                 alt="KGay Travel"
                 className="h-6 sm:h-8 w-auto hover:opacity-90 transition"
               />
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
-                  KGay Travel Guides
-                </span>
-                <Badge className="rounded-full bg-blue-500/30 text-white border-blue-400/50 text-[10px] px-2 py-0 font-semibold">
-                  Interactive
-                </Badge>
-              </div>
+              <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
+                KGay Travel Guides
+              </span>
             </Link>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Refresh Button - Hidden on desktop */}
-            <button
-              onClick={handleRefreshClick}
-              disabled={isChecking}
-              className={cn(
-                'relative h-10 w-10 rounded-full text-black transition-colors xl:hidden',
-                'hover:bg-white/10 active:bg-white/20',
-                'disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
-              )}
-              title={
-                updateAvailable
-                  ? 'Update available - tap to refresh'
-                  : isChecking
-                    ? 'Checking for updates...'
-                    : 'Check for updates'
-              }
-            >
-              <RefreshCw
-                className={cn(
-                  'w-5 h-5 transition-all',
-                  isChecking && 'animate-spin text-blue-400',
-                  !isChecking && updateAvailable && 'text-green-400',
-                  !isChecking && !updateAvailable && 'text-black'
-                )}
-              />
-              {/* Badge for update available */}
-              {updateAvailable && !isChecking && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              )}
-            </button>
-
-            {/* Share Button - Hidden on desktop */}
+            {/* Share Button - Mobile only */}
             <button
               onClick={handleShareClick}
               className={cn(
@@ -171,6 +136,37 @@ export default function NavigationBanner() {
               title="Share KGay Travel Guides"
             >
               <Share2 className="w-5 h-5" />
+            </button>
+
+            {/* Alerts Button - Mobile only */}
+            <button
+              onClick={handleAlertsClick}
+              className={cn(
+                'relative h-10 w-10 rounded-full text-black transition-colors xl:hidden',
+                'hover:bg-white/10 active:bg-white/20',
+                'flex items-center justify-center'
+              )}
+              title="Alerts"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Settings Button - Mobile only */}
+            <button
+              onClick={handleSettingsClick}
+              className={cn(
+                'h-10 w-10 rounded-full text-black transition-colors xl:hidden',
+                'hover:bg-white/10 active:bg-white/20',
+                'flex items-center justify-center'
+              )}
+              title="Settings"
+            >
+              <User className="w-5 h-5" />
             </button>
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
@@ -254,37 +250,41 @@ export default function NavigationBanner() {
         </div>
       </div>
 
-      {/* Alerts Sheet - Desktop only */}
+      {/* Alerts Sheet - Fly-up (bottom sheet) */}
       <Sheet open={alertsOpen} modal={true} onOpenChange={setAlertsOpen}>
         <SheetPortal>
           <SheetContent
-            side="right"
-            className="w-[85%] sm:w-[480px] !top-[calc(env(safe-area-inset-top)+3.25rem)] !bottom-0 !h-auto !z-50 bg-[#001833] border-white/10 text-white overflow-y-auto [&>button]:top-4 !pt-2"
+            side="bottom"
+            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
           >
             <VisuallyHidden>
               <SheetTitle>Trip Alerts</SheetTitle>
               <SheetDescription>View recent updates and announcements</SheetDescription>
             </VisuallyHidden>
-            <div className="-mt-16">
-              <Alerts />
+            <div className="h-full overflow-y-auto pt-4">
+              <div className="[&>div]:pt-0 [&>div]:min-h-0">
+                <Alerts />
+              </div>
             </div>
           </SheetContent>
         </SheetPortal>
       </Sheet>
 
-      {/* Settings Sheet - Desktop only */}
+      {/* Settings Sheet - Fly-up (bottom sheet) */}
       <Sheet open={settingsOpen} modal={true} onOpenChange={setSettingsOpen}>
         <SheetPortal>
           <SheetContent
-            side="right"
-            className="w-[85%] sm:w-[480px] !top-[calc(env(safe-area-inset-top)+3.25rem)] !bottom-0 !h-auto !z-50 bg-[#001833] border-white/10 text-white overflow-y-auto [&>button]:top-4 !pt-2"
+            side="bottom"
+            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
           >
             <VisuallyHidden>
               <SheetTitle>Settings</SheetTitle>
               <SheetDescription>Manage your preferences and account settings</SheetDescription>
             </VisuallyHidden>
-            <div className="-mt-16">
-              <Settings onNavigate={handleNavigateFromSheet} />
+            <div className="h-full overflow-y-auto pt-4">
+              <div className="[&>div]:pt-0 [&>div]:min-h-0">
+                <Settings onNavigate={handleNavigateFromSheet} />
+              </div>
             </div>
           </SheetContent>
         </SheetPortal>

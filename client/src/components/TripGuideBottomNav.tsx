@@ -146,19 +146,6 @@ export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGui
             <Info className="w-[24px] h-[24px]" strokeWidth={2} />
             <span className="text-[10px] font-medium">Info</span>
           </button>
-
-          <button
-            onClick={() => onTabChange('settings')}
-            className={cn(
-              'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
-              activeTab === 'settings'
-                ? 'text-blue-900 bg-white/40'
-                : 'text-black opacity-60 hover:opacity-100'
-            )}
-          >
-            <User className="w-[24px] h-[24px]" strokeWidth={2} />
-            <span className="text-[10px] font-medium">Settings</span>
-          </button>
         </div>
       </nav>
     </div>
