@@ -25,6 +25,7 @@ interface HeroSectionProps {
   startDate?: string;
   endDate?: string;
   itinerary?: ItineraryImage[]; // NEW: Dynamic itinerary images
+  heroImageUrl?: string | null; // NEW: Hero image for trip
 }
 
 const HeroSection = ({
@@ -37,6 +38,7 @@ const HeroSection = ({
   startDate,
   endDate,
   itinerary = [], // NEW: Accept itinerary prop
+  heroImageUrl = null, // NEW: Accept hero image
 }: HeroSectionProps) => {
   const { shareTrip } = useShare();
   const haptics = useHaptics();
@@ -187,6 +189,7 @@ const HeroSection = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollWidth, setScrollWidth] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [shuffledImages, setShuffledImages] = useState<string[]>([]);
 
   // LEGACY: Hardcoded images removed - now using dynamic buildCarouselImages() logic
   // All cruise images are now pulled from database (itinerary + locations tables)
@@ -252,8 +255,37 @@ const HeroSection = ({
   // Build carousel images dynamically based on trip type and itinerary data
   const dynamicImages = buildCarouselImages(itinerary, tripType);
 
-  // Use dynamic images - no more hardcoded fallbacks
-  const images = dynamicImages;
+  // Helper function to shuffle array
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Initialize shuffled images once on mount
+  useEffect(() => {
+    if (isDragstarCruise) {
+      setShuffledImages(dragstarImages.map(img => img.url));
+      return;
+    }
+
+    const allImages = [...dynamicImages];
+
+    // If hero image exists, add it first, then shuffle the rest
+    if (heroImageUrl && heroImageUrl.trim() !== '') {
+      const otherImages = allImages.filter(img => img !== heroImageUrl);
+      const shuffledOthers = shuffleArray(otherImages);
+      setShuffledImages([heroImageUrl, ...shuffledOthers]);
+    } else {
+      // No hero image, just shuffle all
+      setShuffledImages(shuffleArray(allImages));
+    }
+  }, [heroImageUrl, isDragstarCruise]); // Only re-shuffle if heroImageUrl or trip changes
+
+  const images = shuffledImages;
 
   useEffect(() => {
     if (scrollRef.current) {

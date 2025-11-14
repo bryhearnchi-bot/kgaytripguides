@@ -146,6 +146,7 @@ export const OverviewTab = memo(function OverviewTab({
         startDate={tripData?.trip?.startDate}
         endDate={tripData?.trip?.endDate}
         itinerary={ITINERARY || []}
+        heroImageUrl={tripData?.trip?.heroImageUrl}
       />
 
       {/* Book Button - Below carousel, before Overview header */}
