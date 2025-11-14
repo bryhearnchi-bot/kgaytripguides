@@ -104,16 +104,17 @@ async function injectTripMetaTags(template: string, url: string): Promise<string
     const shortName = trip.name.length > 12 ? trip.name.substring(0, 12) : trip.name;
 
     // Build meta tags to inject
+    // CRITICAL iOS PWA Fix: Match start-url to manifest start_url for consistency
     const metaTags = `
     <!-- Trip-specific meta tags (server-injected for iOS sharing) -->
     <title>${titleWithSuffix} | KGay Travel Guides</title>
     <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
 
     <!-- iOS PWA meta tags -->
-    <meta name="apple-mobile-web-app-start-url" content="/trip/${slug}" />
+    <meta name="apple-mobile-web-app-start-url" content="/trip/${slug}?pwa=true" />
     <meta name="apple-mobile-web-app-title" content="${shortName}" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <!-- Open Graph / Social Sharing - MUST use absolute URLs -->
     <meta property="og:title" content="${titleWithSuffix}" />

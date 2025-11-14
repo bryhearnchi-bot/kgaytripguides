@@ -18,6 +18,7 @@ import {
   initializeNativeFeatures,
   ensureThemeMetaTags,
   setupNavigationHandlers,
+  setupPWANavigationInterceptor,
 } from '@/lib/capacitor';
 
 // Lazy load all route components for code splitting
@@ -253,6 +254,10 @@ function App() {
     // Ensure theme meta tags are set correctly for Safari iOS
     // This handles both regular Safari browsing and PWA mode
     ensureThemeMetaTags();
+
+    // CRITICAL iOS PWA Fix: Setup navigation interceptor to maintain PWA context
+    // This prevents iOS from showing browser chrome during navigation
+    setupPWANavigationInterceptor();
 
     // Disable browser scroll restoration globally
     if ('scrollRestoration' in history) {

@@ -91,3 +91,64 @@ export function setupNavigationHandlers() {
     });
   }
 }
+
+/**
+ * Detects if the app is running in PWA mode (standalone display mode)
+ * Works for both iOS and Android PWAs
+ */
+export function isPWA(): boolean {
+  // Method 1: Check display-mode media query (most reliable)
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    return true;
+  }
+
+  // Method 2: iOS-specific check
+  if ((window.navigator as any).standalone === true) {
+    return true;
+  }
+
+  // Method 3: Check for ?pwa=true parameter (our custom indicator)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('pwa') === 'true') {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * CRITICAL iOS PWA Fix: Intercepts navigation to maintain PWA context
+ * This prevents iOS from showing browser chrome during in-app navigation
+ *
+ * How it works:
+ * 1. All navigation uses History API with PWA state markers
+ * 2. iOS recognizes these navigations as "in-app" rather than "leaving app"
+ * 3. Browser chrome stays hidden throughout the user journey
+ */
+export function setupPWANavigationInterceptor() {
+  // Only run in PWA mode
+  if (!isPWA()) return;
+
+  // Mark current state as PWA
+  if (window.history.state?.pwa !== true) {
+    window.history.replaceState({ ...window.history.state, pwa: true }, '', window.location.href);
+  }
+
+  // Intercept all internal navigation events
+  const originalPushState = window.history.pushState;
+  const originalReplaceState = window.history.replaceState;
+
+  // Override pushState to always include PWA marker
+  window.history.pushState = function (state, title, url) {
+    const pwaState = { ...state, pwa: true };
+    return originalPushState.call(this, pwaState, title, url);
+  };
+
+  // Override replaceState to always include PWA marker
+  window.history.replaceState = function (state, title, url) {
+    const pwaState = { ...state, pwa: true };
+    return originalReplaceState.call(this, pwaState, title, url);
+  };
+
+  console.log('[PWA] Navigation interceptor initialized');
+}

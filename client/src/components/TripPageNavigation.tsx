@@ -22,6 +22,7 @@ import { FlyUpSheet } from '@/components/FlyUpSheet';
 import Settings from '@/pages/settings';
 import Alerts from '@/pages/alerts';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
+import { isPWA } from '@/lib/capacitor';
 
 interface TripPageNavigationProps {
   charterCompanyLogo?: string | null;
@@ -75,7 +76,16 @@ export function TripPageNavigation({
 
   const handleBack = () => {
     haptics.light();
-    // Always navigate to landing page (main trip list)
+
+    // In PWA mode, use window.location to ensure iOS maintains PWA context
+    if (isPWA()) {
+      // Use window.location.href to force a full navigation that iOS recognizes
+      // This prevents iOS from showing browser chrome
+      window.location.href = '/?pwa=true';
+      return;
+    }
+
+    // Non-PWA: use wouter for normal navigation
     setLocation('/');
   };
 
@@ -128,13 +138,13 @@ export function TripPageNavigation({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/35 backdrop-blur-lg">
+    <div className="fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-[#002147]/90 backdrop-blur-lg">
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         {/* Left side - Back button + Logo/Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleBack}
-            className="text-black hover:text-black/70 transition-colors"
+            className="text-white hover:text-white/70 transition-colors"
             aria-label="Back to home"
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -171,7 +181,7 @@ export function TripPageNavigation({
                   haptics.light();
                   handleEditTrip();
                 }}
-                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
                 aria-label="Edit Trip"
               >
                 <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -185,7 +195,7 @@ export function TripPageNavigation({
                   haptics.light();
                   handleShareClick();
                 }}
-                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
                 aria-label="Share"
               >
                 <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -198,7 +208,7 @@ export function TripPageNavigation({
                 haptics.light();
                 setAlertsOpen(true);
               }}
-              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
               aria-label="Alerts"
             >
               <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -215,7 +225,7 @@ export function TripPageNavigation({
                 haptics.light();
                 setSettingsOpen(true);
               }}
-              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
               aria-label="Settings"
             >
               <User className="w-4 h-4 sm:w-5 sm:h-5" />

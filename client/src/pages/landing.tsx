@@ -60,7 +60,15 @@ function TripCard({ trip }: { trip: Trip }) {
   const showBookButton = daysUntilStart >= 10;
 
   const handleCardClick = () => {
-    setLocation(`/trip/${trip.slug}`);
+    // In PWA mode, use window.location to maintain PWA context
+    if (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+    ) {
+      window.location.href = `/trip/${trip.slug}?pwa=true`;
+    } else {
+      setLocation(`/trip/${trip.slug}`);
+    }
   };
 
   return (
@@ -402,7 +410,10 @@ export default function LandingPage() {
         {/* Content Layer */}
         <div className="relative z-10">
           {/* Floating Hero Section */}
-          <section className={`${isNative ? 'pt-20' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
+          <section
+            className="pb-1.5 px-4 sm:px-6 lg:px-8"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 5rem)' }}
+          >
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-[21px]">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">

@@ -459,9 +459,15 @@ export default function TripGuide({
       )}
 
       {/* Content Layer */}
-      <div className="relative z-10">
+      <div
+        className="relative z-10"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
+      >
         {/* Sticky Trip Header - Always visible below navigation bar */}
-        <div className="sticky top-14 sm:top-16 z-30 pt-4 pb-4">
+        <div
+          className="sticky z-30 pt-2 pb-4"
+          style={{ top: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
+        >
           <div className="mx-auto max-w-3xl px-4 text-center">
             {/* Trip Name */}
             <h1 className="text-2xl leading-tight font-bold text-white flex items-end justify-center gap-3 flex-wrap sm:text-3xl lg:text-4xl">

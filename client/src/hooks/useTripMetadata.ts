@@ -153,11 +153,12 @@ function restoreDefaultManifest() {
 
 /**
  * Updates iOS-specific meta tags for proper Add to Home Screen behavior
+ * CRITICAL iOS PWA Fix: Match start-url to the trip page to maintain context
  */
 function updateAppleMetaTags(slug: string, tripName: string) {
-  // Set the start URL for iOS Add to Home Screen
-  // This tells iOS where to open when the PWA is launched from the home screen
-  const startUrl = `/trip/${slug}`;
+  // CRITICAL iOS PWA Fix: Set start URL to current trip with pwa=true parameter
+  // This ensures iOS recognizes the entire scope when navigating
+  const startUrl = `/trip/${slug}?pwa=true`;
   updateMetaTag('apple-mobile-web-app-start-url', startUrl, 'name');
 
   // Update the app title for iOS
@@ -166,6 +167,9 @@ function updateAppleMetaTags(slug: string, tripName: string) {
 
   // Ensure apple-mobile-web-app-capable is set
   updateMetaTag('apple-mobile-web-app-capable', 'yes', 'name');
+
+  // CRITICAL: Use black-translucent for better PWA immersion
+  updateMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent', 'name');
 }
 
 /**

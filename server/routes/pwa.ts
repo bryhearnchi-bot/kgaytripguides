@@ -58,15 +58,17 @@ export function registerPWARoutes(app: Express): void {
       // trip-specific images when sharing links on social media
 
       // Generate trip-specific manifest
+      // CRITICAL iOS PWA Fix: Use start_url parameter to preserve trip context while maintaining app-wide scope
+      // This allows the app to open to the trip page but navigate freely without triggering browser chrome
       const manifest = {
         name: trip.name,
         short_name: trip.name.length > 12 ? trip.name.substring(0, 12) : trip.name,
         description: trip.description || `Travel guide for ${trip.name}`,
-        start_url: `/trip/${slug}`,
-        scope: `/trip/${slug}`,
+        start_url: `/trip/${slug}?pwa=true`,
+        scope: '/',
         display: 'standalone',
-        background_color: '#1e40af',
-        theme_color: '#1e40af',
+        background_color: '#002147', // Oxford Blue
+        theme_color: '#002147', // Oxford Blue
         orientation: 'portrait-primary',
         lang: 'en',
         categories: ['travel', 'entertainment', 'lifestyle', 'lgbtq'],
