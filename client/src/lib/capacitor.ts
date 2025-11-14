@@ -15,8 +15,8 @@ export async function initializeNativeFeatures() {
     await StatusBar.setStyle({ style: Style.Light }); // Light text for dark header
 
     if (isAndroid) {
-      // On Android, use dark blue to match navigation bar
-      await StatusBar.setBackgroundColor({ color: '#001a35' }); // Dark blue
+      // On Android, use Oxford Blue to match navigation bar
+      await StatusBar.setBackgroundColor({ color: '#002147' }); // Oxford Blue
       await StatusBar.setOverlaysWebView({ overlay: true }); // Allow content to extend under status bar
     }
 
@@ -35,7 +35,7 @@ export async function initializeNativeFeatures() {
  * - apple-mobile-web-app-status-bar-style: Controls status bar in PWA mode
  */
 export function ensureThemeMetaTags() {
-  const themeColor = '#001a35'; // Oxford Blue
+  const themeColor = '#002147'; // Oxford Blue
 
   // 1. Set theme-color for Safari iOS 15+ address bar (regular browsing mode)
   let themeColorMeta = document.querySelector('meta[name="theme-color"]');

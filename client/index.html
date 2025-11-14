@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" style="color-scheme: dark; background-color: #001a35;">
+<html lang="en" style="color-scheme: dark; background-color: #002147;">
   <head>
     <meta charset="UTF-8" />
 
     <!-- CRITICAL: Theme color MUST be early for Safari iOS to read it before rendering -->
     <!-- This controls the address bar (iOS 15+) and status bar colors -->
-    <meta name="theme-color" content="#001a35" />
+    <meta name="theme-color" content="#002147" />
     <meta name="color-scheme" content="dark" />
     <meta name="supported-color-schemes" content="dark" />
 
@@ -75,11 +75,11 @@
         // Force theme-color meta tag to be set immediately
         var themeColor = document.querySelector('meta[name="theme-color"]');
         if (themeColor) {
-          themeColor.setAttribute('content', '#001a35');
+          themeColor.setAttribute('content', '#002147');
         }
 
         // Set background color on html element immediately to prevent white flash
-        document.documentElement.style.backgroundColor = '#001a35';
+        document.documentElement.style.backgroundColor = '#002147';
         document.documentElement.style.colorScheme = 'dark';
       })();
     </script>
@@ -93,7 +93,7 @@
       gtag('config', 'G-H2QWVEYX0F');
     </script>
   </head>
-  <body style="background-color: #001a35; margin: 0; padding: 0;">
+  <body style="background-color: #002147; margin: 0; padding: 0;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

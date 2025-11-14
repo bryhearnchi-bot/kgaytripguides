@@ -43,7 +43,7 @@ export function useHomeMetadata() {
 
     // CRITICAL: Ensure theme-color is set for Safari iOS address bar
     // This is a fallback in case the static HTML meta tag was removed by service worker caching
-    updateMetaTag('theme-color', '#001a35', 'name');
+    updateMetaTag('theme-color', '#002147', 'name');
     updateMetaTag('color-scheme', 'dark', 'name');
 
     // Ensure default manifest is active (not trip-specific)
