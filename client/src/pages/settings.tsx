@@ -190,18 +190,7 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
 
   return (
     <>
-      <div className="min-h-screen text-white">
-        <div className="max-w-2xl mx-auto px-4">
-          {/* Header */}
-          <div className="mt-6 mb-8">
-            <div className="flex items-center gap-2 mb-6">
-              <User className="w-4 h-4 text-blue-400" />
-              <h3 className="text-lg font-semibold text-white">Settings</h3>
-              <div className="flex-1 h-px bg-white/20 ml-3"></div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
             {/* User Profile Section (when logged in) */}
             {user && profile ? (
               <>
@@ -367,15 +356,12 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
                 <span className="text-[10px] font-medium text-blue-400">Refresh</span>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* About KGAY Travel Modal */}
-      <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
+            {/* About KGAY Travel Modal */}
+            <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
 
-      {/* iOS Instructions Dialog */}
-      <Dialog open={showIOSInstructions} onOpenChange={setShowIOSInstructions}>
+            {/* iOS Instructions Dialog */}
+            <Dialog open={showIOSInstructions} onOpenChange={setShowIOSInstructions}>
         <DialogContent className="sm:max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-white/20 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
@@ -474,7 +460,8 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+            </Dialog>
+      </div>
     </>
   );
 }

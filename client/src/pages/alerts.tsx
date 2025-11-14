@@ -161,20 +161,8 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
   }
 
   return (
-    <div className="min-h-screen text-white pt-16 pb-24">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
-        <div className="mt-6 mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <Bell className="w-4 h-4 text-amber-400" />
-            <h3 className="text-lg font-semibold text-white">
-              Alerts{tripSlug || tripId ? ' (This Trip)' : ' (All Trips)'}
-            </h3>
-            <div className="flex-1 h-px bg-white/20 ml-3"></div>
-          </div>
-        </div>
-
-        {isLoading ? (
+    <>
+      {isLoading ? (
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/40 mx-auto mb-4"></div>
             <p className="text-sm text-white/40">Loading alerts...</p>
@@ -236,7 +224,6 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </>
   );
 }

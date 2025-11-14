@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Share2,
   Bell,
+  Edit,
   LayoutDashboard,
   Map,
   CalendarDays,
@@ -17,14 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useLocation } from 'wouter';
-import {
-  Sheet,
-  SheetContent,
-  SheetPortal,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { FlyUpSheet } from '@/components/FlyUpSheet';
 import Settings from '@/pages/settings';
 import Alerts from '@/pages/alerts';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
@@ -71,13 +65,6 @@ export function TripPageNavigation({
   const [showEditModal, setShowEditModal] = useState(false);
   const { shareContent } = useShare();
   const { toast } = useToast();
-
-  // Sheet swipe state
-  const [sheetTouchStart, setSheetTouchStart] = useState<number | null>(null);
-  const [sheetTouchEnd, setSheetTouchEnd] = useState<number | null>(null);
-
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
 
   // Get unread alerts count for this specific trip
   const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts(tripSlug || undefined);
@@ -140,96 +127,26 @@ export function TripPageNavigation({
     }, 100);
   };
 
-  // Sheet swipe handlers for bottom sheet (Alerts)
-  const onBottomSheetTouchStart = (e: React.TouchEvent) => {
-    const target = e.target as HTMLElement;
-    const scrollableParent = target.closest('.overflow-y-auto');
-
-    // Only allow swipe-to-close if we're at the top of scrolled content or on non-scrollable area
-    if (scrollableParent && scrollableParent.scrollTop > 0) {
-      setSheetTouchStart(null);
-      return;
-    }
-
-    setSheetTouchEnd(null);
-    setSheetTouchStart(e.targetTouches[0].clientY);
-  };
-
-  const onBottomSheetTouchMove = (e: React.TouchEvent) => {
-    if (sheetTouchStart === null) return;
-    setSheetTouchEnd(e.targetTouches[0].clientY);
-  };
-
-  const onBottomSheetTouchEnd = () => {
-    if (!sheetTouchStart || !sheetTouchEnd) return;
-
-    const distance = sheetTouchStart - sheetTouchEnd;
-    const isDownSwipe = distance < -minSwipeDistance;
-
-    if (isDownSwipe) {
-      // Swipe down - close whichever bottom sheet is open
-      if (alertsOpen) setAlertsOpen(false);
-      if (settingsOpen) setSettingsOpen(false);
-    }
-
-    // Reset state
-    setSheetTouchStart(null);
-    setSheetTouchEnd(null);
-  };
-
-  // Sheet swipe handlers for right sheet (Settings)
-  const onRightSheetTouchStart = (e: React.TouchEvent) => {
-    setSheetTouchEnd(null);
-    setSheetTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onRightSheetTouchMove = (e: React.TouchEvent) => {
-    if (sheetTouchStart === null) return;
-    setSheetTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onRightSheetTouchEnd = () => {
-    if (!sheetTouchStart || !sheetTouchEnd) return;
-
-    const distance = sheetTouchStart - sheetTouchEnd;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isRightSwipe) {
-      // Swipe right - close the right sheet
-      setSettingsOpen(false);
-    }
-
-    // Reset state
-    setSheetTouchStart(null);
-    setSheetTouchEnd(null);
-  };
-
   return (
     <div className="fixed top-0 left-0 right-0 z-[10000] pt-[env(safe-area-inset-top)] bg-white/35 backdrop-blur-lg">
-      <div className="px-3 sm:px-4 py-2 flex items-center justify-between">
+      <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         {/* Left side - Back button + Logo/Badge */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleBack}
-            className="text-black hover:text-black/70 transition-colors p-2"
+            className="text-black hover:text-black/70 transition-colors"
             aria-label="Back to home"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
           {/* Logo and badge - Always on left side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             {charterCompanyLogo && (
               <img
                 src={charterCompanyLogo}
                 alt={charterCompanyName || 'Charter Company'}
-                className={`w-auto object-contain ${
-                  charterCompanyName?.toLowerCase().includes('atlantis')
-                    ? 'h-5'
-                    : charterCompanyName?.toLowerCase().includes('drag')
-                      ? 'h-6'
-                      : 'h-6'
-                }`}
+                className="h-5 sm:h-7 w-auto object-contain"
                 loading="lazy"
               />
             )}
@@ -244,9 +161,23 @@ export function TripPageNavigation({
         </div>
 
         {/* Right side - Mobile buttons + Desktop menu items */}
-        <div className="flex items-center gap-2">
-          {/* Mobile buttons - Share, Alerts, Settings (hidden on desktop) */}
-          <div className="flex items-center gap-2 xl:hidden">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Mobile buttons - Edit, Share, Alerts, Settings (hidden on desktop) */}
+          <div className="flex items-center gap-1 sm:gap-2 xl:hidden">
+            {/* Edit button - Only for admins/content managers */}
+            {canEditTrip && (
+              <button
+                onClick={() => {
+                  haptics.light();
+                  handleEditTrip();
+                }}
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+                aria-label="Edit Trip"
+              >
+                <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            )}
+
             {/* Share button */}
             {tripSlug && tripName && (
               <button
@@ -254,10 +185,10 @@ export function TripPageNavigation({
                   haptics.light();
                   handleShareClick();
                 }}
-                className="h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
                 aria-label="Share"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
 
@@ -267,10 +198,10 @@ export function TripPageNavigation({
                 haptics.light();
                 setAlertsOpen(true);
               }}
-              className="relative h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
               aria-label="Alerts"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -284,10 +215,10 @@ export function TripPageNavigation({
                 haptics.light();
                 setSettingsOpen(true);
               }}
-              className="h-10 w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
               aria-label="Settings"
             >
-              <User className="w-5 h-5" />
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
@@ -406,64 +337,35 @@ export function TripPageNavigation({
       </div>
 
       {/* Settings Sheet - Fly-up (bottom sheet) */}
-      <Sheet open={settingsOpen} modal={true} onOpenChange={setSettingsOpen}>
-        <SheetPortal>
-          <SheetContent
-            side="bottom"
-            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
-            onTouchStart={onBottomSheetTouchStart}
-            onTouchMove={onBottomSheetTouchMove}
-            onTouchEnd={onBottomSheetTouchEnd}
-          >
-            <VisuallyHidden>
-              <SheetTitle>Settings</SheetTitle>
-              <SheetDescription>Manage your preferences and account settings</SheetDescription>
-            </VisuallyHidden>
-            <div className="h-full overflow-y-auto pt-4">
-              <div className="[&>div]:pt-0 [&>div]:min-h-0">
-                <Settings
-                  showEditTrip={canEditTrip}
-                  onEditTrip={handleEditTrip}
-                  onNavigate={handleNavigateFromSheet}
-                />
-              </div>
-            </div>
-          </SheetContent>
-        </SheetPortal>
-      </Sheet>
+      <FlyUpSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        icon={User}
+        iconColor="text-blue-400"
+        title="Settings"
+        accessibleTitle="Settings"
+        accessibleDescription="Manage your preferences and account settings"
+      >
+        <Settings
+          showEditTrip={canEditTrip}
+          onEditTrip={handleEditTrip}
+          onNavigate={handleNavigateFromSheet}
+        />
+      </FlyUpSheet>
 
       {/* Alerts Sheet - Fly-up (bottom sheet) */}
-      <Sheet
+      <FlyUpSheet
         open={alertsOpen}
-        modal={true}
-        onOpenChange={open => {
-          setAlertsOpen(open);
-          if (!open) {
-            // Refresh alerts count after closing
-            refreshAlerts();
-          }
-        }}
+        onOpenChange={setAlertsOpen}
+        onClose={refreshAlerts}
+        icon={Bell}
+        iconColor="text-amber-400"
+        title={`Alerts${tripSlug || tripId ? ' (This Trip)' : ' (All Trips)'}`}
+        accessibleTitle="Trip Alerts"
+        accessibleDescription="View trip updates and notifications"
       >
-        <SheetPortal>
-          <SheetContent
-            side="bottom"
-            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
-            onTouchStart={onBottomSheetTouchStart}
-            onTouchMove={onBottomSheetTouchMove}
-            onTouchEnd={onBottomSheetTouchEnd}
-          >
-            <VisuallyHidden>
-              <SheetTitle>Trip Alerts</SheetTitle>
-              <SheetDescription>View trip updates and notifications</SheetDescription>
-            </VisuallyHidden>
-            <div className="h-full overflow-y-auto pt-4">
-              <div className="[&>div]:pt-0 [&>div]:min-h-0">
-                <Alerts tripId={tripId || undefined} tripSlug={tripSlug || undefined} />
-              </div>
-            </div>
-          </SheetContent>
-        </SheetPortal>
-      </Sheet>
+        <Alerts tripId={tripId || undefined} tripSlug={tripSlug || undefined} />
+      </FlyUpSheet>
     </div>
   );
 }

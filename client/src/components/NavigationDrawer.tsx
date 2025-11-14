@@ -14,14 +14,7 @@ import {
   Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetPortal,
-} from '@/components/ui/sheet';
+import { FlyUpSheet } from '@/components/FlyUpSheet';
 import {
   Dialog,
   DialogContent,

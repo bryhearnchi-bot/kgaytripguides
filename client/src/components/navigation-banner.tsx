@@ -8,14 +8,7 @@ import { useState, useEffect } from 'react';
 import { useShare } from '@/hooks/useShare';
 import { useToast } from '@/hooks/use-toast';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
-import {
-  Sheet,
-  SheetContent,
-  SheetPortal,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { FlyUpSheet } from '@/components/FlyUpSheet';
 import Alerts from '@/pages/alerts';
 import Settings from '@/pages/settings';
 
@@ -250,44 +243,31 @@ export default function NavigationBanner() {
       </div>
 
       {/* Alerts Sheet - Fly-up (bottom sheet) */}
-      <Sheet open={alertsOpen} modal={true} onOpenChange={setAlertsOpen}>
-        <SheetPortal>
-          <SheetContent
-            side="bottom"
-            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
-          >
-            <VisuallyHidden>
-              <SheetTitle>Trip Alerts</SheetTitle>
-              <SheetDescription>View recent updates and announcements</SheetDescription>
-            </VisuallyHidden>
-            <div className="h-full overflow-y-auto pt-4">
-              <div className="[&>div]:pt-0 [&>div]:min-h-0">
-                <Alerts />
-              </div>
-            </div>
-          </SheetContent>
-        </SheetPortal>
-      </Sheet>
+      <FlyUpSheet
+        open={alertsOpen}
+        onOpenChange={setAlertsOpen}
+        onClose={refreshAlerts}
+        icon={Bell}
+        iconColor="text-amber-400"
+        title="Alerts (All Trips)"
+        accessibleTitle="Trip Alerts"
+        accessibleDescription="View recent updates and announcements"
+      >
+        <Alerts />
+      </FlyUpSheet>
 
       {/* Settings Sheet - Fly-up (bottom sheet) */}
-      <Sheet open={settingsOpen} modal={true} onOpenChange={setSettingsOpen}>
-        <SheetPortal>
-          <SheetContent
-            side="bottom"
-            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-[#002147] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:w-12 [&>button]:h-12"
-          >
-            <VisuallyHidden>
-              <SheetTitle>Settings</SheetTitle>
-              <SheetDescription>Manage your preferences and account settings</SheetDescription>
-            </VisuallyHidden>
-            <div className="h-full overflow-y-auto pt-4">
-              <div className="[&>div]:pt-0 [&>div]:min-h-0">
-                <Settings onNavigate={handleNavigateFromSheet} />
-              </div>
-            </div>
-          </SheetContent>
-        </SheetPortal>
-      </Sheet>
+      <FlyUpSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        icon={User}
+        iconColor="text-blue-400"
+        title="Settings"
+        accessibleTitle="Settings"
+        accessibleDescription="Manage your preferences and account settings"
+      >
+        <Settings onNavigate={handleNavigateFromSheet} />
+      </FlyUpSheet>
     </>
   );
 }

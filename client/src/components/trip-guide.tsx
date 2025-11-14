@@ -142,6 +142,19 @@ export default function TripGuide({
     };
   }, [refetch]);
 
+  // Listen for edit trip requests from navigation
+  useEffect(() => {
+    const handleEditRequest = () => {
+      setShowEditModal(true);
+    };
+
+    window.addEventListener('request-edit-trip', handleEditRequest);
+
+    return () => {
+      window.removeEventListener('request-edit-trip', handleEditRequest);
+    };
+  }, []);
+
   // Robust scroll to top when component content is ready
   useEffect(() => {
     if (!data || isLoading) {
@@ -495,33 +508,6 @@ export default function TripGuide({
             {/* Trip Dates */}
             {tripDates && (
               <p className="text-white/60 text-xs font-medium mt-2 sm:text-sm">{tripDates}</p>
-            )}
-
-            {/* Edit Trip Button - Only visible for authorized users */}
-            {canEditTrip && (
-              <div className="flex justify-center mt-3">
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setShowEditModal(true);
-                  }}
-                  className="w-full font-medium rounded-lg transition-all text-sm shadow-lg bg-blue-500/75 backdrop-blur-lg hover:bg-blue-600/75 hover:shadow-xl text-white border border-blue-500/30 cursor-pointer"
-                  style={{
-                    padding: '8px 16px',
-                    minHeight: 'auto',
-                    height: 'auto',
-                    lineHeight: '1.2',
-                    maxWidth: '195px',
-                  }}
-                  title="Edit trip details"
-                >
-                  <Edit
-                    className="w-3.5 h-3.5 mr-1"
-                    style={{ display: 'inline-block', verticalAlign: 'middle' }}
-                  />
-                  Edit Trip
-                </button>
-              </div>
             )}
           </div>
         </div>
