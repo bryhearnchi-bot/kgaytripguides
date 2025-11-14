@@ -98,6 +98,9 @@ temp/
 *.swo
 *~
 
+# Backup files
+*.bak
+
 # OS generated files
 Thumbs.db
 
