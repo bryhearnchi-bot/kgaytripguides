@@ -184,7 +184,7 @@ export function TripPageNavigation({
                 className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
                 aria-label="Edit Trip"
               >
-                <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Edit className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             )}
 
@@ -198,7 +198,7 @@ export function TripPageNavigation({
                 className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
                 aria-label="Share"
               >
-                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Share2 className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             )}
 
@@ -211,7 +211,7 @@ export function TripPageNavigation({
               className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
               aria-label="Alerts"
             >
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -228,7 +228,7 @@ export function TripPageNavigation({
               className="h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
               aria-label="Settings"
             >
-              <User className="w-4 h-4 sm:w-5 sm:h-5" />
+              <User className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
@@ -248,7 +248,7 @@ export function TripPageNavigation({
                 )}
               >
                 <LayoutDashboard
-                  className={cn('w-4 h-4', activeTab === 'overview' && '!text-blue-400')}
+                  className={cn('w-5 h-5', activeTab === 'overview' && '!text-blue-400')}
                 />
                 <span>Overview</span>
               </button>
@@ -265,7 +265,7 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <Map className={cn('w-4 h-4', activeTab === 'itinerary' && '!text-blue-400')} />
+                <Map className={cn('w-5 h-5', activeTab === 'itinerary' && '!text-blue-400')} />
                 <span>Itinerary</span>
               </button>
 
@@ -282,7 +282,7 @@ export function TripPageNavigation({
                 )}
               >
                 <CalendarDays
-                  className={cn('w-4 h-4', activeTab === 'events' && '!text-blue-400')}
+                  className={cn('w-5 h-5', activeTab === 'events' && '!text-blue-400')}
                 />
                 <span>Events</span>
               </button>
@@ -299,7 +299,7 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <Star className={cn('w-4 h-4', activeTab === 'talent' && '!text-blue-400')} />
+                <Star className={cn('w-5 h-5', activeTab === 'talent' && '!text-blue-400')} />
                 <span>Talent</span>
               </button>
 
@@ -315,7 +315,7 @@ export function TripPageNavigation({
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 )}
               >
-                <Info className={cn('w-4 h-4', activeTab === 'info' && '!text-blue-400')} />
+                <Info className={cn('w-5 h-5', activeTab === 'info' && '!text-blue-400')} />
                 <span>Info</span>
               </button>
 

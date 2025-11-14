@@ -127,7 +127,7 @@ export default function NavigationBanner() {
               )}
               title="Share KGay Travel Guides"
             >
-              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Share2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             {/* Alerts Button - Mobile only */}
@@ -140,7 +140,7 @@ export default function NavigationBanner() {
               )}
               title="Alerts"
             >
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -158,7 +158,7 @@ export default function NavigationBanner() {
               )}
               title="Settings"
             >
-              <User className="w-4 h-4 sm:w-5 sm:h-5" />
+              <User className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
@@ -171,7 +171,7 @@ export default function NavigationBanner() {
                   activeTab === 'home' ? 'bg-white/70 text-black' : 'text-white/70 hover:text-white'
                 )}
               >
-                <TreePalm className="w-4 h-4 flex-shrink-0" />
+                <TreePalm className="w-5 h-5 flex-shrink-0" />
                 <span>Trips</span>
               </button>
 
@@ -183,7 +183,7 @@ export default function NavigationBanner() {
                   activeTab === 'past' ? 'bg-white/70 text-black' : 'text-white/70 hover:text-white'
                 )}
               >
-                <History className="w-4 h-4 flex-shrink-0" />
+                <History className="w-5 h-5 flex-shrink-0" />
                 <span>Past</span>
               </button>
 
@@ -197,7 +197,7 @@ export default function NavigationBanner() {
                     : 'text-white/70 hover:text-white'
                 )}
               >
-                <Star className="w-4 h-4 flex-shrink-0" />
+                <Star className="w-5 h-5 flex-shrink-0" />
                 <span>My Stuff</span>
               </button>
 
@@ -211,7 +211,7 @@ export default function NavigationBanner() {
                     : 'text-white/70 hover:text-white'
                 )}
               >
-                <Bell className="w-4 h-4 flex-shrink-0" />
+                <Bell className="w-5 h-5 flex-shrink-0" />
                 <span>Alerts</span>
               </button>
 
