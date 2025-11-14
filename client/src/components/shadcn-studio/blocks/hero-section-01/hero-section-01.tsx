@@ -267,7 +267,7 @@ const HeroSection = ({
     const imageCount = isDragstarCruise ? dragstarImages.length : images.length;
     const interval = setInterval(() => {
       setCurrentImageIndex(prev => (prev + 1) % imageCount);
-    }, 4000); // Change image every 4 seconds
+    }, 2500); // Change image every 2.5 seconds
 
     return () => clearInterval(interval);
   }, [isDragstarCruise, images.length, dragstarImages.length]);
@@ -279,7 +279,7 @@ const HeroSection = ({
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center pb-6">
         {/* Mobile carousel/image display */}
-        <div className="relative w-full max-w-xs aspect-square overflow-hidden rounded-lg">
+        <div className="relative w-full aspect-video overflow-hidden rounded-lg">
           {isDragstarCruise
             ? /* Single rotating image for Drag Cruise - Mobile */
               dragstarImages.map((img, index) => (
