@@ -30,6 +30,9 @@ export function BasicInfoPage() {
     syncItineraryWithDates,
     syncEventsWithDates,
   } = useTripWizard();
+
+  // Debug: Log bookingUrl value
+  console.log('🔍 BasicInfoPage: bookingUrl value:', state.tripData.bookingUrl);
   const [charterCompanies, setCharterCompanies] = useState<CharterCompany[]>([]);
   const [tripTypes, setTripTypes] = useState<TripType[]>([]);
   const [loading, setLoading] = useState(true);

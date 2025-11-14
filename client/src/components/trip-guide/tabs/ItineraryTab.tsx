@@ -134,7 +134,7 @@ export const ItineraryTab = memo(function ItineraryTab({
               : 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'
           }
           alt={stop.port}
-          className="w-32 h-20 sm:w-52 sm:h-32 object-cover rounded"
+          className="w-full h-full object-cover rounded-l-xl"
           loading="lazy"
           onError={e => {
             e.currentTarget.src =
@@ -142,7 +142,8 @@ export const ItineraryTab = memo(function ItineraryTab({
           }}
         />
       ),
-      job_description: stop.description || 'Description coming soon',
+      job_description: stop.locationDescription || 'Description coming soon', // Location description for modal (always from location table)
+      itinerary_description: stop.description || undefined, // Itinerary-specific description for card (only if exists in itinerary table)
       salary: arriveDepart,
       location: '', // Not used anymore, arrive/depart combined in salary
       remote: allAboard,

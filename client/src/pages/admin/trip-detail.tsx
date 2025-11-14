@@ -6,7 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -27,7 +33,7 @@ import {
   Star,
   Clock,
   Anchor,
-  Upload
+  Upload,
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { dateOnly } from '@/lib/utils';
@@ -43,6 +49,8 @@ interface TripDetail {
   cruiseLine?: string;
   status: 'upcoming' | 'ongoing' | 'past' | 'archived';
   heroImageUrl?: string;
+  mapUrl?: string;
+  bookingUrl?: string;
   guestCount?: number;
   maxCapacity?: number;
   highlights?: any;
@@ -65,6 +73,8 @@ interface TripFormData {
   guestCount: number;
   maxCapacity: number;
   heroImageUrl: string;
+  mapUrl: string;
+  bookingUrl: string;
 }
 
 export default function TripDetail() {
@@ -82,6 +92,8 @@ export default function TripDetail() {
     guestCount: 0,
     maxCapacity: 0,
     heroImageUrl: '',
+    mapUrl: '',
+    bookingUrl: '',
   });
 
   const queryClient = useQueryClient();
@@ -91,7 +103,11 @@ export default function TripDetail() {
   const tripId = new URLSearchParams(window.location.search).get('id');
 
   // Fetch trip details
-  const { data: tripData, isLoading: tripLoading, error: tripError } = useQuery<TripDetail>({
+  const {
+    data: tripData,
+    isLoading: tripLoading,
+    error: tripError,
+  } = useQuery<TripDetail>({
     queryKey: ['admin-trip-detail', tripId],
     queryFn: async () => {
       if (!tripId) throw new Error('No trip ID provided');
@@ -121,6 +137,8 @@ export default function TripDetail() {
         guestCount: tripData.guestCount || 0,
         maxCapacity: tripData.maxCapacity || 0,
         heroImageUrl: tripData.heroImageUrl || '',
+        mapUrl: tripData.mapUrl || '',
+        bookingUrl: tripData.bookingUrl || '',
       });
     }
   }, [tripData]);
@@ -130,7 +148,7 @@ export default function TripDetail() {
     mutationFn: async (data: Partial<TripFormData>) => {
       if (!tripId) throw new Error('No trip ID');
 
-      const response = await fetch(`/api/admin/trips/${tripId}`, {
+      const response = await fetch(`/api/trips/${tripId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +172,7 @@ export default function TripDetail() {
       queryClient.invalidateQueries({ queryKey: ['admin-trip-detail', tripId] });
       setIsEditing(false);
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update trip',
@@ -201,13 +219,29 @@ export default function TripDetail() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'upcoming':
-        return <Badge variant="default" className="bg-blue-100 text-blue-800">Upcoming</Badge>;
+        return (
+          <Badge variant="default" className="bg-blue-100 text-blue-800">
+            Upcoming
+          </Badge>
+        );
       case 'ongoing':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Ongoing</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            Ongoing
+          </Badge>
+        );
       case 'past':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Past</Badge>;
+        return (
+          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+            Past
+          </Badge>
+        );
       case 'archived':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-700">Archived</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+            Archived
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -221,9 +255,7 @@ export default function TripDetail() {
             <Ship className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Trip Selected</h3>
             <p className="text-gray-500 mb-4">Please select a trip to view details.</p>
-            <Button onClick={() => setLocation('/admin/trips')}>
-              View All Trips
-            </Button>
+            <Button onClick={() => setLocation('/admin/trips')}>View All Trips</Button>
           </CardContent>
         </Card>
       </div>
@@ -251,9 +283,7 @@ export default function TripDetail() {
             <p className="text-gray-500 mb-4">
               {tripError?.message || 'Failed to load trip details'}
             </p>
-            <Button onClick={() => setLocation('/admin/trips')}>
-              View All Trips
-            </Button>
+            <Button onClick={() => setLocation('/admin/trips')}>View All Trips</Button>
           </CardContent>
         </Card>
       </div>
@@ -356,7 +386,7 @@ export default function TripDetail() {
                             <Input
                               id="name"
                               value={formData.name}
-                              onChange={(e) => handleInputChange('name', e.target.value)}
+                              onChange={e => handleInputChange('name', e.target.value)}
                               placeholder="Enter trip name"
                             />
                           </div>
@@ -365,7 +395,7 @@ export default function TripDetail() {
                             <Input
                               id="shipName"
                               value={formData.shipName}
-                              onChange={(e) => handleInputChange('shipName', e.target.value)}
+                              onChange={e => handleInputChange('shipName', e.target.value)}
                               placeholder="Enter ship name"
                             />
                           </div>
@@ -376,7 +406,7 @@ export default function TripDetail() {
                           <Input
                             id="cruiseLine"
                             value={formData.cruiseLine}
-                            onChange={(e) => handleInputChange('cruiseLine', e.target.value)}
+                            onChange={e => handleInputChange('cruiseLine', e.target.value)}
                             placeholder="Enter cruise line"
                           />
                         </div>
@@ -386,7 +416,7 @@ export default function TripDetail() {
                           <Textarea
                             id="description"
                             value={formData.description}
-                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            onChange={e => handleInputChange('description', e.target.value)}
                             placeholder="Enter trip description"
                             rows={4}
                           />
@@ -399,7 +429,7 @@ export default function TripDetail() {
                               id="startDate"
                               type="date"
                               value={formData.startDate}
-                              onChange={(e) => handleInputChange('startDate', e.target.value)}
+                              onChange={e => handleInputChange('startDate', e.target.value)}
                             />
                           </div>
                           <div className="space-y-2">
@@ -408,7 +438,7 @@ export default function TripDetail() {
                               id="endDate"
                               type="date"
                               value={formData.endDate}
-                              onChange={(e) => handleInputChange('endDate', e.target.value)}
+                              onChange={e => handleInputChange('endDate', e.target.value)}
                             />
                           </div>
                         </div>
@@ -420,7 +450,9 @@ export default function TripDetail() {
                               id="guestCount"
                               type="number"
                               value={formData.guestCount}
-                              onChange={(e) => handleInputChange('guestCount', parseInt(e.target.value) || 0)}
+                              onChange={e =>
+                                handleInputChange('guestCount', parseInt(e.target.value) || 0)
+                              }
                               placeholder="0"
                             />
                           </div>
@@ -430,7 +462,9 @@ export default function TripDetail() {
                               id="maxCapacity"
                               type="number"
                               value={formData.maxCapacity}
-                              onChange={(e) => handleInputChange('maxCapacity', parseInt(e.target.value) || 0)}
+                              onChange={e =>
+                                handleInputChange('maxCapacity', parseInt(e.target.value) || 0)
+                              }
                               placeholder="0"
                             />
                           </div>
@@ -441,8 +475,28 @@ export default function TripDetail() {
                           <Input
                             id="heroImageUrl"
                             value={formData.heroImageUrl}
-                            onChange={(e) => handleInputChange('heroImageUrl', e.target.value)}
+                            onChange={e => handleInputChange('heroImageUrl', e.target.value)}
                             placeholder="Enter image URL"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="mapUrl">Map URL</Label>
+                          <Input
+                            id="mapUrl"
+                            value={formData.mapUrl}
+                            onChange={e => handleInputChange('mapUrl', e.target.value)}
+                            placeholder="Enter map URL"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="bookingUrl">Booking URL</Label>
+                          <Input
+                            id="bookingUrl"
+                            value={formData.bookingUrl}
+                            onChange={e => handleInputChange('bookingUrl', e.target.value)}
+                            placeholder="Enter booking URL"
                           />
                         </div>
                       </>
@@ -463,18 +517,26 @@ export default function TripDetail() {
                             <div>
                               <p className="text-sm text-gray-600">Duration</p>
                               <p className="font-medium">
-                                {differenceInDays(dateOnly(cruise.endDate), dateOnly(cruise.startDate))} days
+                                {differenceInDays(
+                                  dateOnly(cruise.endDate),
+                                  dateOnly(cruise.startDate)
+                                )}{' '}
+                                days
                               </p>
                             </div>
                           </div>
                           <div className="space-y-3">
                             <div>
                               <p className="text-sm text-gray-600">Departure</p>
-                              <p className="font-medium">{format(dateOnly(cruise.startDate), 'MMM dd, yyyy')}</p>
+                              <p className="font-medium">
+                                {format(dateOnly(cruise.startDate), 'MMM dd, yyyy')}
+                              </p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-600">Return</p>
-                              <p className="font-medium">{format(dateOnly(cruise.endDate), 'MMM dd, yyyy')}</p>
+                              <p className="font-medium">
+                                {format(dateOnly(cruise.endDate), 'MMM dd, yyyy')}
+                              </p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-600">Status</p>
@@ -634,9 +696,7 @@ export default function TripDetail() {
               <CardContent className="text-center py-12">
                 <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Events Management</h3>
-                <p className="text-gray-500">
-                  Events management features will be integrated here.
-                </p>
+                <p className="text-gray-500">Events management features will be integrated here.</p>
               </CardContent>
             </Card>
           </TabsContent>

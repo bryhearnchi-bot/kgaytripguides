@@ -123,31 +123,31 @@ export default function NavigationBanner() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* Share Button - Mobile only */}
             <button
               onClick={handleShareClick}
               className={cn(
-                'h-10 w-10 rounded-full text-black transition-colors xl:hidden',
+                'h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors xl:hidden',
                 'hover:bg-white/10 active:bg-white/20',
                 'flex items-center justify-center'
               )}
               title="Share KGay Travel Guides"
             >
-              <Share2 className="w-5 h-5" />
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Alerts Button - Mobile only */}
             <button
               onClick={handleAlertsClick}
               className={cn(
-                'relative h-10 w-10 rounded-full text-black transition-colors xl:hidden',
+                'relative h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors xl:hidden',
                 'hover:bg-white/10 active:bg-white/20',
                 'flex items-center justify-center'
               )}
               title="Alerts"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -159,13 +159,13 @@ export default function NavigationBanner() {
             <button
               onClick={handleSettingsClick}
               className={cn(
-                'h-10 w-10 rounded-full text-black transition-colors xl:hidden',
+                'h-8 w-8 sm:h-10 sm:w-10 rounded-full text-black transition-colors xl:hidden',
                 'hover:bg-white/10 active:bg-white/20',
                 'flex items-center justify-center'
               )}
               title="Settings"
             >
-              <User className="w-5 h-5" />
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}

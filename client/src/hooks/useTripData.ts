@@ -173,8 +173,9 @@ export function transformTripData(data: TripData) {
       '',
     itineraryImageUrl: stop.itineraryImageUrl, // Itinerary-specific image from API
     locationImageUrl: stop.locationImageUrl, // Location fallback image from API
-    // CRITICAL: Use itinerary description FIRST, then fallback to location description
-    description: stop.description || (stop as any).location?.description || null,
+    // Store BOTH descriptions separately - DO NOT merge them
+    description: stop.description || null, // Itinerary-specific description only
+    locationDescription: (stop as any).location?.description || null, // Location description only
     highlights: (stop as any).location?.highlights || stop.highlights, // Use location.highlights if available
     topAttractions: (stop as any).location?.topAttractions || [], // Location top attractions (JSONB field)
     topLgbtVenues: (stop as any).location?.topLgbtVenues || [], // Location LGBT venues (JSONB field)

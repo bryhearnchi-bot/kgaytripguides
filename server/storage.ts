@@ -3,6 +3,7 @@
 
 import { getSupabaseAdmin } from './supabase-admin';
 import { logger } from './logging/logger';
+import { transformObjectToSnakeCase } from './utils/field-transformers';
 import type {
   Profile,
   Trip,
@@ -179,9 +180,11 @@ export class TripStorage implements ITripStorage {
 
   async updateTrip(id: number, data: any): Promise<Trip> {
     const supabaseAdmin = getSupabaseAdmin();
+    // Transform camelCase to snake_case for database
+    const snakeCaseData = transformObjectToSnakeCase(data);
     const { data: trip, error } = await supabaseAdmin
       .from('trips')
-      .update({ ...data, updated_at: new Date().toISOString() })
+      .update({ ...snakeCaseData, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();

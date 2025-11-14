@@ -64,7 +64,8 @@ export const OverviewTab = memo(function OverviewTab({
   const endDate = tripData?.trip?.endDate ? dateOnly(tripData.trip.endDate) : null;
   const daysUntilStart = startDate ? differenceInCalendarDays(startDate, now) : 0;
   const isPastTrip = endDate ? now > endDate : false;
-  const showBookButton = tripData?.trip?.bookingUrl && daysUntilStart >= 10 && !isPastTrip;
+  const showBookButton = daysUntilStart >= 10 && !isPastTrip;
+  const hasBookingUrl = !!tripData?.trip?.bookingUrl;
 
   // Get embarkation info from first stop
   const embarkationStop = ITINERARY[0];
@@ -151,21 +152,30 @@ export const OverviewTab = memo(function OverviewTab({
       {showBookButton && (
         <div className="max-w-6xl mx-auto px-4 mb-3 md:mt-3 flex justify-center">
           <button
-            onClick={() => window.open(tripData.trip.bookingUrl, '_blank', 'noopener,noreferrer')}
-            className="w-full bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
+            onClick={() =>
+              hasBookingUrl &&
+              window.open(tripData.trip.bookingUrl, '_blank', 'noopener,noreferrer')
+            }
+            disabled={!hasBookingUrl}
+            className={`w-full font-medium rounded-lg transition-all text-sm shadow-lg ${
+              hasBookingUrl
+                ? 'bg-orange-500/75 backdrop-blur-lg hover:bg-orange-600/75 hover:shadow-xl text-white border border-orange-500/30 cursor-pointer'
+                : 'bg-orange-500/20 text-orange-300/60 border border-orange-500/20 cursor-not-allowed'
+            }`}
             style={{
               padding: '8px 16px',
               minHeight: 'auto',
               height: 'auto',
               lineHeight: '1.2',
-              maxWidth: '390px',
+              maxWidth: '195px',
             }}
+            title={hasBookingUrl ? 'Click for booking information' : 'Booking not yet available'}
           >
             <Info
               className="w-3.5 h-3.5 mr-1"
               style={{ display: 'inline-block', verticalAlign: 'middle' }}
             />
-            Click Here for Booking Info
+            {hasBookingUrl ? 'Click to Book' : 'Not Available'}
           </button>
         </div>
       )}
@@ -177,10 +187,10 @@ export const OverviewTab = memo(function OverviewTab({
       <div className="max-w-6xl mx-auto space-y-4">
         {/* Desktop: 3-column grid, Mobile: stack with custom order */}
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
-          {/* Left Column - Statistics, About, Ship */}
-          <div className="flex flex-col gap-4 lg:col-span-2 lg:order-none">
-            {/* Trip Statistics - Desktop/iPad only (at top of left column) */}
-            <div className="hidden lg:block bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg">
+          {/* Left Column Container - Desktop only (2 columns wide) */}
+          <div className="hidden lg:flex flex-col gap-4 lg:col-span-2">
+            {/* Trip Statistics - Desktop only */}
+            <div className="bg-white/5 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg">
               <div className="flex items-center space-x-2 mb-2 md:mb-3">
                 <div className="bg-blue-500/30 p-1 rounded">
                   <Activity className="w-3 h-3 text-blue-100" />
@@ -239,8 +249,8 @@ export const OverviewTab = memo(function OverviewTab({
               </div>
             </div>
 
-            {/* About This Trip - Mobile: 2nd */}
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg order-2 lg:order-none">
+            {/* About This Trip - Desktop */}
+            <div className="bg-white/5 border border-white/20 rounded-xl p-4 shadow-lg">
               <div className="flex items-center space-x-2 mb-3">
                 <div className="bg-ocean-500/30 p-1 rounded">
                   <Info className="w-3 h-3 text-ocean-100" />
@@ -265,36 +275,12 @@ export const OverviewTab = memo(function OverviewTab({
                     {tripData?.trip?.description ||
                       'Experience an unforgettable journey through stunning destinations with world-class entertainment and amenities.'}
                   </p>
-
-                  {/* Time badges */}
-                  {(embarkationStop?.depart || embarkationStop?.allAboard) && (
-                    <div className="flex flex-wrap gap-2">
-                      {embarkationStop?.depart && (
-                        <div className="flex items-center gap-1.5 bg-blue-500/20 border border-blue-400/30 rounded-full px-3 py-1">
-                          <Clock className="w-3 h-3 text-blue-300" />
-                          <span className="text-xs text-blue-100 font-medium">Depart:</span>
-                          <span className="text-xs text-white font-semibold">
-                            {embarkationStop.depart}
-                          </span>
-                        </div>
-                      )}
-                      {embarkationStop?.allAboard && (
-                        <div className="flex items-center gap-1.5 bg-orange-500/20 border border-orange-400/30 rounded-full px-3 py-1">
-                          <Clock className="w-3 h-3 text-orange-300" />
-                          <span className="text-xs text-orange-100 font-medium">All Aboard:</span>
-                          <span className="text-xs text-white font-semibold">
-                            {embarkationStop.allAboard}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Ship Details - Mobile: 3rd (collapsible) */}
-            <div className="bg-white/10 border border-white/20 rounded-xl shadow-lg p-4 md:p-6 order-3 lg:order-none">
+            {/* Ship Details - Desktop (collapsible) */}
+            <div className="bg-white/5 border border-white/20 rounded-xl shadow-lg p-4 md:p-6">
               {/* Ship Header */}
               <div className="flex items-center space-x-2 mb-3">
                 <div className="bg-purple-500/30 p-1 rounded">
@@ -410,10 +396,10 @@ export const OverviewTab = memo(function OverviewTab({
             </div>
           </div>
 
-          {/* Right Column - Cruise Route */}
-          <div className="flex flex-col gap-4 lg:col-span-1 lg:order-none">
+          {/* Right Column - Desktop only (1 column wide) */}
+          <div className="hidden lg:flex flex-col gap-4 lg:col-span-1">
             {/* Cruise Route */}
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg">
+            <div className="bg-white/5 border border-white/20 rounded-xl p-4 shadow-lg">
               <div className="flex items-center space-x-2 mb-3">
                 <div className="bg-emerald-500/30 p-1 rounded">
                   <Map className="w-3 h-3 text-emerald-100" />
@@ -435,60 +421,213 @@ export const OverviewTab = memo(function OverviewTab({
               )}
             </div>
           </div>
-        </div>
 
-        {/* Trip Statistics - Bottom on mobile only */}
-        <div className="bg-white/10 border border-white/20 rounded-xl p-3 md:p-4 shadow-lg lg:hidden">
-          <div className="flex items-center space-x-2 mb-2 md:mb-3">
-            <div className="bg-blue-500/30 p-1 rounded">
-              <Activity className="w-3 h-3 text-blue-100" />
+          {/* Mobile Only Cards - Direct children with flex order */}
+          {/* 1. Trip Statistics - Mobile */}
+          <div className="lg:hidden bg-white/5 border border-white/20 rounded-xl p-3 shadow-lg order-1">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="bg-blue-500/30 p-1 rounded">
+                <Activity className="w-3 h-3 text-blue-100" />
+              </div>
+              <h3 className="text-sm font-bold text-white/90">Trip Statistics</h3>
             </div>
-            <h3 className="text-sm font-bold text-white/90">Trip Statistics</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onNavigateToTab?.('itinerary');
+                }}
+                className="flex items-center justify-center gap-1 bg-white/5 hover:bg-white/10 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
+              >
+                <span className="text-base font-bold text-white">{statistics.nights}</span>
+                <span className="text-[10px] text-white/60">Nights</span>
+              </button>
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onNavigateToTab?.('itinerary');
+                }}
+                className="flex items-center justify-center gap-1 bg-white/5 hover:bg-white/10 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
+              >
+                <span className="text-base font-bold text-white">{statistics.totalPorts}</span>
+                <span className="text-[10px] text-white/60">Ports</span>
+              </button>
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onNavigateToTab?.('itinerary');
+                }}
+                className="flex items-center justify-center gap-1 bg-white/5 hover:bg-white/10 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
+              >
+                <span className="text-base font-bold text-white">{statistics.seaDays}</span>
+                <span className="text-[10px] text-white/60">Sea Days</span>
+              </button>
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onNavigateToTab?.('parties');
+                }}
+                className="flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
+              >
+                <span className="text-base font-bold text-white">{statistics.totalParties}</span>
+                <span className="text-[10px] text-white/60">Parties</span>
+              </button>
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onNavigateToTab?.('schedule');
+                }}
+                className="flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
+              >
+                <span className="text-base font-bold text-white">{statistics.totalEvents}</span>
+                <span className="text-[10px] text-white/60">Events</span>
+              </button>
+              <button
+                onClick={() => {
+                  haptics.light();
+                  onNavigateToTab?.('talent');
+                }}
+                className="flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
+              >
+                <span className="text-base font-bold text-white">{statistics.totalTalent}</span>
+                <span className="text-[10px] text-white/60">Talent</span>
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <button
-              onClick={() => onNavigateToTab?.('itinerary')}
-              className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-            >
-              <p className="text-lg md:text-xl font-bold text-white">{statistics.nights}</p>
-              <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Nights</p>
-            </button>
-            <button
-              onClick={() => onNavigateToTab?.('itinerary')}
-              className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-            >
-              <p className="text-lg md:text-xl font-bold text-white">{statistics.totalPorts}</p>
-              <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Ports of Call</p>
-            </button>
-            <button
-              onClick={() => onNavigateToTab?.('itinerary')}
-              className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-            >
-              <p className="text-lg md:text-xl font-bold text-white">{statistics.seaDays}</p>
-              <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Sea Days</p>
-            </button>
-            <button
-              onClick={() => onNavigateToTab?.('schedule')}
-              className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-            >
-              <p className="text-lg md:text-xl font-bold text-white">{statistics.totalEvents}</p>
-              <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Total Events</p>
-            </button>
-            <button
-              onClick={() => onNavigateToTab?.('parties')}
-              className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-            >
-              <p className="text-lg md:text-xl font-bold text-white">{statistics.totalParties}</p>
-              <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Theme Parties</p>
-            </button>
-            <button
-              onClick={() => onNavigateToTab?.('talent')}
-              className="bg-white/5 hover:bg-white/10 rounded-lg p-2 text-center transition-colors cursor-pointer"
-            >
-              <p className="text-lg md:text-xl font-bold text-white">{statistics.totalTalent}</p>
-              <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Performers</p>
-            </button>
+
+          {/* 2. About This Trip - Mobile */}
+          <div className="lg:hidden bg-white/5 border border-white/20 rounded-xl p-4 shadow-lg order-2">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="bg-ocean-500/30 p-1 rounded">
+                <Info className="w-3 h-3 text-ocean-100" />
+              </div>
+              <h3 className="text-sm font-bold text-white/90">About This Trip</h3>
+            </div>
+            <div className="flex-1 space-y-3">
+              <p className="text-xs text-white/80 leading-relaxed">
+                {tripData?.trip?.description ||
+                  'Experience an unforgettable journey through stunning destinations with world-class entertainment and amenities.'}
+              </p>
+            </div>
           </div>
+
+          {/* 3. Cruise Route - Mobile */}
+          <div className="lg:hidden bg-white/5 border border-white/20 rounded-xl p-4 shadow-lg order-3">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="bg-emerald-500/30 p-1 rounded">
+                <Map className="w-3 h-3 text-emerald-100" />
+              </div>
+              <h3 className="text-sm font-bold text-white/90">Cruise Route</h3>
+            </div>
+            {tripData?.trip?.mapUrl ? (
+              <img
+                src={tripData.trip.mapUrl}
+                alt={`${tripData.trip.name} Route Map`}
+                className="w-full h-auto object-contain"
+                loading="lazy"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-lg">
+                <Map className="w-8 h-8 text-white/20 mb-2" />
+                <p className="text-xs text-white/50">Map not available</p>
+              </div>
+            )}
+          </div>
+
+          {/* 4. Ship Details - Mobile */}
+          {isCruise && (
+            <div className="lg:hidden bg-white/5 border border-white/20 rounded-xl shadow-lg p-4 order-4">
+              <div className="flex items-center space-x-2 mb-3">
+                <div className="bg-purple-500/30 p-1 rounded">
+                  <Ship className="w-3 h-3 text-purple-100" />
+                </div>
+                <h3 className="text-sm font-bold text-white/90">
+                  {ship?.name || tripData?.trip?.shipName || 'Ship'}
+                </h3>
+              </div>
+              <div className="flex flex-col gap-4">
+                {shipInfo?.imageUrl && (
+                  <div className="flex-shrink-0 w-full flex justify-center">
+                    <img
+                      src={shipInfo.imageUrl}
+                      alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
+                      className="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div>
+                    <p className="text-xs text-white/60">Cruise Line</p>
+                    <p className="text-xs text-white/90">
+                      {ship?.cruiseLineName || tripData?.trip?.cruiseLine || 'Virgin Voyages'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/60">Capacity</p>
+                    <p className="text-xs text-white/90">{shipInfo?.capacity || '2,770 guests'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/60">Decks</p>
+                    <p className="text-xs text-white/90">{shipInfo?.decks || '17 (14 guest)'}</p>
+                  </div>
+                </div>
+                <div className={cn(isShipExpanded ? 'block' : 'hidden')}>
+                  {shipInfo?.restaurants && shipInfo.restaurants.length > 0 && (
+                    <div className="border-t border-white/10 pt-4 pb-4">
+                      <div className="flex items-center space-x-1 mb-3">
+                        <Utensils className="w-3 h-3 text-white/60" />
+                        <p className="text-xs font-semibold text-white/80">Dining Venues</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-y-1">
+                        {shipInfo.restaurants.map((restaurant, idx) => (
+                          <p key={idx} className="text-xs text-white/70">
+                            • {restaurant.name}
+                            {restaurant.venueType && (
+                              <span className="text-white/50"> ({restaurant.venueType})</span>
+                            )}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {shipInfo?.amenities && shipInfo.amenities.length > 0 && (
+                    <div className="border-t border-white/10 pt-4 pb-2">
+                      <div className="flex items-center space-x-1 mb-3">
+                        <Sparkles className="w-3 h-3 text-white/60" />
+                        <p className="text-xs font-semibold text-white/80">Amenities</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-y-1">
+                        {shipInfo.amenities.map((amenity, idx) => (
+                          <p key={idx} className="text-xs text-white/70">
+                            • {amenity}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={toggleShipInfo}
+                    className="flex items-center gap-1 text-xs text-white/70 hover:text-white/90 transition-colors px-3 py-1.5 rounded-md hover:bg-white/5 border border-white/20"
+                  >
+                    {isShipExpanded ? (
+                      <>
+                        Less Info
+                        <ChevronUp className="w-3 h-3" />
+                      </>
+                    ) : (
+                      <>
+                        More Info
+                        <ChevronDown className="w-3 h-3" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Share2,
   User as UserIcon,
+  Edit,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -381,28 +382,6 @@ export default function TripGuide({
     await shareTrip({ name: tripData?.trip?.name || '', slug: slug || '' });
   }, [haptics, shareTrip, tripData?.trip?.name, slug]);
 
-  // Expose edit trip handler globally for navigation banner
-  useEffect(() => {
-    if (canEditTrip && tripData?.trip) {
-      const handleEditTripEvent = () => {
-        setShowEditModal(true);
-      };
-
-      // Register the handler
-      window.addEventListener('request-edit-trip', handleEditTripEvent);
-
-      // Dispatch event to notify that edit trip is available
-      window.dispatchEvent(new CustomEvent('edit-trip-available', { detail: { available: true } }));
-
-      return () => {
-        window.removeEventListener('request-edit-trip', handleEditTripEvent);
-        window.dispatchEvent(
-          new CustomEvent('edit-trip-available', { detail: { available: false } })
-        );
-      };
-    }
-  }, [canEditTrip, tripData?.trip]);
-
   if (isLoading) {
     return <LoadingState />;
   }
@@ -516,6 +495,33 @@ export default function TripGuide({
             {/* Trip Dates */}
             {tripDates && (
               <p className="text-white/60 text-xs font-medium mt-2 sm:text-sm">{tripDates}</p>
+            )}
+
+            {/* Edit Trip Button - Only visible for authorized users */}
+            {canEditTrip && (
+              <div className="flex justify-center mt-3">
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setShowEditModal(true);
+                  }}
+                  className="w-full font-medium rounded-lg transition-all text-sm shadow-lg bg-blue-500/75 backdrop-blur-lg hover:bg-blue-600/75 hover:shadow-xl text-white border border-blue-500/30 cursor-pointer"
+                  style={{
+                    padding: '8px 16px',
+                    minHeight: 'auto',
+                    height: 'auto',
+                    lineHeight: '1.2',
+                    maxWidth: '195px',
+                  }}
+                  title="Edit trip details"
+                >
+                  <Edit
+                    className="w-3.5 h-3.5 mr-1"
+                    style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                  />
+                  Edit Trip
+                </button>
+              </div>
             )}
           </div>
         </div>

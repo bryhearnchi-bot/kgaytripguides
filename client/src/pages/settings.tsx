@@ -3,7 +3,6 @@ import { useLocation } from 'wouter';
 import {
   User,
   Shield,
-  Edit,
   LogOut,
   Download,
   Info,
@@ -37,21 +36,11 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 interface SettingsProps {
-  showEditTrip?: boolean;
-  onEditTrip?: () => void;
   onNavigate?: (path: string) => void;
 }
 
-export default function Settings({
-  showEditTrip: showEditTripProp,
-  onEditTrip,
-  onNavigate,
-}: SettingsProps = {}) {
+export default function Settings({ onNavigate }: SettingsProps = {}) {
   const [, setLocation] = useLocation();
-  const [showEditTripFromEvent, setShowEditTripFromEvent] = useState(false);
-
-  // Use prop if provided, otherwise use event-based state
-  const showEditTrip = showEditTripProp !== undefined ? showEditTripProp : showEditTripFromEvent;
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -118,28 +107,6 @@ export default function Settings({
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
-
-  // Listen for edit trip availability from TripGuide component (for event-based mode)
-  useEffect(() => {
-    const handleEditTripAvailable = (e: CustomEvent) => {
-      setShowEditTripFromEvent(e.detail.available);
-    };
-
-    window.addEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
-
-    return () => {
-      window.removeEventListener('edit-trip-available', handleEditTripAvailable as EventListener);
-    };
-  }, []);
-
-  const handleEditTrip = () => {
-    // Use prop callback if provided, otherwise use event system
-    if (onEditTrip) {
-      onEditTrip();
-    } else {
-      window.dispatchEvent(new CustomEvent('request-edit-trip'));
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -286,19 +253,6 @@ export default function Settings({
                       <span className="text-sm font-medium">Admin Panel</span>
                     </button>
                   )}
-
-                  {showEditTrip &&
-                    (profile?.role === 'super_admin' ||
-                      profile?.role === 'content_manager' ||
-                      profile?.role === 'admin') && (
-                      <button
-                        onClick={handleEditTrip}
-                        className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                      >
-                        <Edit className="h-5 w-5 text-ocean-300" />
-                        <span className="text-sm font-medium">Edit Trip</span>
-                      </button>
-                    )}
                 </div>
               </>
             ) : (

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type JSX } from 'react';
+import React, { useEffect, useRef, useState, type JSX } from 'react';
 import type { SVGProps } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useOnClickOutside } from 'usehooks-ts';
@@ -14,6 +14,7 @@ import {
   Music,
   X,
   ChevronRight,
+  CalendarDays,
 } from 'lucide-react';
 
 export interface LocationAttraction {
@@ -43,7 +44,8 @@ export interface Job {
   company: string;
   title: string;
   logo: React.ReactNode;
-  job_description: string;
+  job_description: string; // Location description (for modal)
+  itinerary_description?: string; // Itinerary description (for card)
   salary: string;
   location: string;
   remote: string;
@@ -1063,93 +1065,168 @@ export default function JobListingComponent({
       </AnimatePresence>
       <div className={`relative flex items-start ${className || ''}`}>
         <div className="relative flex w-full flex-col items-center gap-4">
-          {jobs.map(role => (
-            <motion.div
-              layoutId={
-                activeItem?.job_time === role.job_time ? undefined : `workItem-${role.job_time}`
+          {jobs.map((role, index) => {
+            // Check if we need to show a date header (first item or date changed from previous)
+            const showDateHeader = index === 0 || jobs[index - 1].title !== role.title;
+
+            // Determine the day label based on dayNumber
+            let dayLabel = '';
+            if (role.dayNumber !== undefined) {
+              if (role.dayNumber < 0) {
+                dayLabel = 'Pre-Cruise';
+              } else if (role.dayNumber >= 100) {
+                dayLabel = 'Post-Cruise';
+              } else {
+                dayLabel = `Day ${role.dayNumber}`;
               }
-              key={role.job_time}
-              className="group bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.01] flex w-full cursor-pointer flex-row items-center gap-4 py-3 pl-3 pr-3 min-h-[140px] relative"
-              onClick={() => {
-                setActiveItem(role);
-                if (onJobClick) onJobClick(role);
-              }}
-              style={{ borderRadius: 12, opacity: activeItem?.job_time === role.job_time ? 0 : 1 }}
-            >
-              <motion.div
-                layoutId={
-                  activeItem?.job_time === role.job_time
-                    ? undefined
-                    : `workItemLogo-${role.job_time}`
-                }
-              >
-                {role.logo}
-              </motion.div>
-              <div className="flex w-full flex-col items-start justify-between gap-0.5 pr-10">
-                {/* Day Number and Date Row */}
-                <motion.div
-                  className="text-ocean-100 text-xs sm:text-sm font-medium flex items-center gap-2"
-                  layoutId={
-                    activeItem?.job_time === role.job_time
-                      ? undefined
-                      : `workItemDayDate-${role.job_time}`
-                  }
-                >
-                  <span className="whitespace-nowrap">{formatDayLabel(role.dayNumber)}</span>
-                  {role.dayNumber !== undefined && (
-                    <>
-                      <Circle className="w-1.5 h-1.5 fill-current flex-shrink-0" />
-                      <span className="truncate">{role.title}</span>
-                    </>
-                  )}
-                </motion.div>
+            }
 
-                <motion.div
-                  className="text-white font-bold text-base sm:text-lg group-hover:text-ocean-200 transition-colors"
-                  layoutId={
-                    activeItem?.job_time === role.job_time
-                      ? undefined
-                      : `workItemCompany-${role.job_time}`
-                  }
-                >
-                  {role.company}
-                </motion.div>
-                <motion.div
-                  className="text-ocean-200 text-xs sm:text-sm"
-                  layoutId={
-                    activeItem?.job_time === role.job_time
-                      ? undefined
-                      : `workItemTitle-${role.job_time}`
-                  }
-                >
-                  {role.salary}
-                </motion.div>
+            // Check for special location types from the company name
+            const isEmbarkation = role.company?.includes('- Embarkation');
+            const isDisembarkation = role.company?.includes('- Disembarkation');
+            const isOvernightArrival =
+              role.company?.includes('- Overnight') && !role.company?.includes('Full Day');
+            const isOvernightFullDay = role.company?.includes('- Overnight Full Day');
 
-                {/* All Aboard Time - Frosted Pink/Red Badge */}
-                {role.remote && (
-                  <motion.div
-                    className="flex flex-row gap-2 text-sm mt-1"
-                    layoutId={
-                      activeItem?.job_time === role.job_time
-                        ? undefined
-                        : `workItemExtras-${role.job_time}`
-                    }
-                  >
-                    <span className="px-3 py-1 rounded-full bg-gradient-to-r from-pink-500/20 to-red-500/20 backdrop-blur-sm border border-pink-300/30 text-pink-100 text-xs font-semibold shadow-md">
-                      All Aboard: {role.remote}
-                    </span>
-                  </motion.div>
+            // Add special label to day
+            if (isEmbarkation) {
+              dayLabel += ' • Embarkation';
+            } else if (isDisembarkation) {
+              dayLabel += ' • Disembarkation';
+            } else if (isOvernightArrival) {
+              dayLabel += ' • Overnight';
+            } else if (isOvernightFullDay) {
+              dayLabel += ' • Overnight';
+            }
+
+            return (
+              <React.Fragment key={role.job_time}>
+                {showDateHeader && (
+                  <div className="w-full flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-purple-400" />
+                    <h3 className="text-sm font-semibold text-white">
+                      {role.title}
+                      {dayLabel && (
+                        <>
+                          <Circle className="w-1.5 h-1.5 fill-current inline-block mx-2 align-middle" />
+                          <span className="text-white/90">{dayLabel}</span>
+                        </>
+                      )}
+                    </h3>
+                  </div>
                 )}
-              </div>
+                <motion.div
+                  layoutId={
+                    activeItem?.job_time === role.job_time ? undefined : `workItem-${role.job_time}`
+                  }
+                  className={`bg-white/5 rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-lg overflow-hidden w-full ${!showDateHeader ? 'mt-1' : ''}`}
+                  onClick={() => {
+                    setActiveItem(role);
+                    if (onJobClick) onJobClick(role);
+                  }}
+                  style={{ opacity: activeItem?.job_time === role.job_time ? 0 : 1 }}
+                >
+                  <div className="flex h-32">
+                    <motion.div
+                      layoutId={
+                        activeItem?.job_time === role.job_time
+                          ? undefined
+                          : `workItemLogo-${role.job_time}`
+                      }
+                      className="w-1/3 flex-shrink-0"
+                    >
+                      {role.logo}
+                    </motion.div>
+                    <div className="flex-1 flex flex-col justify-between min-w-0 py-2 pl-4 pr-2">
+                      <div className="space-y-1">
+                        {/* Port/Location Name - cleaned up without suffixes */}
+                        <div>
+                          <motion.span
+                            className="text-white font-bold text-base line-clamp-1"
+                            layoutId={
+                              activeItem?.job_time === role.job_time
+                                ? undefined
+                                : `workItemCompany-${role.job_time}`
+                            }
+                          >
+                            {role.company
+                              .replace(' - Embarkation', '')
+                              .replace(' - Disembarkation', '')
+                              .replace(' - Overnight', '')
+                              .replace(' - Overnight Full Day', '')}
+                          </motion.span>
+                        </div>
 
-              {/* Frosted Glass Arrow Button - Right Side */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <div className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center group-hover:bg-white/20 group-hover:border-white/40 transition-all duration-300 shadow-lg">
-                  <ChevronRight className="w-5 h-5 text-white/80 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                        {/* Arrive/Depart Times */}
+                        {role.salary && (
+                          <motion.div
+                            className="text-ocean-200 text-xs"
+                            layoutId={
+                              activeItem?.job_time === role.job_time
+                                ? undefined
+                                : `workItemTitle-${role.job_time}`
+                            }
+                          >
+                            {role.salary}
+                          </motion.div>
+                        )}
+
+                        {/* All Aboard Time */}
+                        {role.remote && (
+                          <motion.div
+                            className="text-pink-300 text-xs font-bold"
+                            layoutId={
+                              activeItem?.job_time === role.job_time
+                                ? undefined
+                                : `workItemExtras-${role.job_time}`
+                            }
+                          >
+                            All Aboard: {role.remote}
+                          </motion.div>
+                        )}
+
+                        {/* Itinerary Description */}
+                        {role.itinerary_description && (
+                          <motion.div
+                            className="text-white/70 text-xs line-clamp-2"
+                            layoutId={
+                              activeItem?.job_time === role.job_time
+                                ? undefined
+                                : `workItemDescription-${role.job_time}`
+                            }
+                          >
+                            {role.itinerary_description}
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons - Always at bottom */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            // Info button action - to be implemented
+                          }}
+                          className="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all"
+                        >
+                          Info
+                        </button>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            // Events button action - to be implemented
+                          }}
+                          className="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all"
+                        >
+                          Events
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
     </>

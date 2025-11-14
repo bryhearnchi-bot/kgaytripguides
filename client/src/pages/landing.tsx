@@ -64,7 +64,7 @@ function TripCard({ trip }: { trip: Trip }) {
   };
 
   return (
-    <div className="group rounded-2xl overflow-hidden border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
+    <div className="group bg-white/5 rounded-2xl overflow-hidden border border-white/20 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
       <div onClick={handleCardClick} className="cursor-pointer">
         <div className="relative h-48 overflow-hidden">
           <img
@@ -174,7 +174,7 @@ function TripCard({ trip }: { trip: Trip }) {
                     e.stopPropagation();
                     window.open(trip.bookingUrl!, '_blank', 'noopener,noreferrer');
                   }}
-                  className="bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
+                  className="bg-orange-500/75 backdrop-blur-lg hover:bg-orange-600/75 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/30"
                   style={{
                     padding: '8px 16px',
                     minHeight: 'auto',
@@ -193,7 +193,7 @@ function TripCard({ trip }: { trip: Trip }) {
                         e.stopPropagation();
                       }}
                       disabled
-                      className="bg-orange-500/10 backdrop-blur-lg text-orange-400 font-medium rounded-lg transition-all text-sm border border-orange-500/30 opacity-50 cursor-not-allowed"
+                      className="bg-orange-500/20 text-orange-300/60 font-medium rounded-lg transition-all text-sm border border-orange-500/20 cursor-not-allowed"
                       style={{
                         padding: '8px 16px',
                         minHeight: 'auto',
@@ -402,7 +402,7 @@ export default function LandingPage() {
         {/* Content Layer */}
         <div className="relative z-10">
           {/* Floating Hero Section */}
-          <section className={`${isNative ? 'pt-32' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
+          <section className={`${isNative ? 'pt-20' : 'pt-24'} pb-1.5 px-4 sm:px-6 lg:px-8`}>
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-[21px]">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-2xl">

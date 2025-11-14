@@ -157,6 +157,7 @@ const initialState: TripWizardState = {
     endDate: '',
     heroImageUrl: '',
     mapUrl: '',
+    bookingUrl: '',
     description: '',
     highlights: '',
   },
@@ -388,6 +389,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
         endDate: draftState.tripData?.endDate ?? '',
         heroImageUrl: draftState.tripData?.heroImageUrl ?? '',
         mapUrl: draftState.tripData?.mapUrl ?? '', // CRITICAL: Include map URL
+        bookingUrl: draftState.tripData?.bookingUrl ?? '', // CRITICAL: Include booking URL
         description: draftState.tripData?.description ?? '',
         highlights: draftState.tripData?.highlights ?? '',
         charterCompanyId: draftState.tripData?.charterCompanyId,

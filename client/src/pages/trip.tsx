@@ -162,10 +162,6 @@ export default function TripPage() {
   // Determine if this is a cruise or resort for bottom nav
   const isCruise = !!tripData?.trip?.shipId;
 
-  // Check if user can edit trips (admin rights)
-  const canEditTrip =
-    profile?.role && ['super_admin', 'content_manager', 'admin'].includes(profile.role);
-
   // Handle tab changes - intercept settings to show sheet instead
   const handleTabChange = (tab: string) => {
     if (tab === 'settings') {
@@ -173,12 +169,6 @@ export default function TripPage() {
     } else {
       setActiveTab(tab);
     }
-  };
-
-  // Handle edit trip - dispatch event for trip-guide component to open the modal
-  const handleEditTrip = () => {
-    window.dispatchEvent(new CustomEvent('request-edit-trip'));
-    setShowSettingsSheet(false);
   };
 
   // Handle navigation from Settings sheet
@@ -265,11 +255,7 @@ export default function TripPage() {
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative h-full overflow-y-auto pt-4">
             <div className="[&>div]:pt-0 [&>div]:min-h-0">
-              <Settings
-                showEditTrip={canEditTrip}
-                onEditTrip={handleEditTrip}
-                onNavigate={handleNavigateFromSheet}
-              />
+              <Settings onNavigate={handleNavigateFromSheet} />
             </div>
           </div>
         </SheetContent>
