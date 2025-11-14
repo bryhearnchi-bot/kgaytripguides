@@ -465,7 +465,7 @@ export default function TripGuide({
       >
         {/* Sticky Trip Header - Always visible below navigation bar */}
         <div
-          className="sticky z-30 pt-2 pb-4"
+          className="sticky z-30 pt-2 pb-0"
           style={{ top: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
         >
           <div className="mx-auto max-w-3xl px-4 text-center">
