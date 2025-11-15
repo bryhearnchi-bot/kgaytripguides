@@ -203,7 +203,7 @@ export const OverviewTab = memo(function OverviewTab({
                   <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Sea Days</p>
                 </button>
                 <button
-                  onClick={() => onNavigateToTab?.('parties')}
+                  onClick={() => onNavigateToTab?.('events:parties')}
                   className="bg-blue-500/20 hover:bg-blue-500/30 rounded-lg p-2 text-center transition-colors cursor-pointer"
                 >
                   <p className="text-lg md:text-xl font-bold text-white">
@@ -212,7 +212,7 @@ export const OverviewTab = memo(function OverviewTab({
                   <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Theme Parties</p>
                 </button>
                 <button
-                  onClick={() => onNavigateToTab?.('schedule')}
+                  onClick={() => onNavigateToTab?.('events:schedule')}
                   className="bg-blue-500/20 hover:bg-blue-500/30 rounded-lg p-2 text-center transition-colors cursor-pointer"
                 >
                   <p className="text-lg md:text-xl font-bold text-white">
@@ -443,7 +443,7 @@ export const OverviewTab = memo(function OverviewTab({
               <button
                 onClick={() => {
                   haptics.light();
-                  onNavigateToTab?.('parties');
+                  onNavigateToTab?.('events:parties');
                 }}
                 className="flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
               >
@@ -453,7 +453,7 @@ export const OverviewTab = memo(function OverviewTab({
               <button
                 onClick={() => {
                   haptics.light();
-                  onNavigateToTab?.('schedule');
+                  onNavigateToTab?.('events:schedule');
                 }}
                 className="flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg py-1.5 px-2 transition-colors cursor-pointer"
               >

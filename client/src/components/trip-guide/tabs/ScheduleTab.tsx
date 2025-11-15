@@ -38,6 +38,7 @@ interface ScheduleTabProps {
   onPartyThemeClick?: (partyTheme: any) => void;
   tripStatus?: string;
   tripId?: number;
+  initialSubTab?: 'schedule' | 'parties';
 }
 
 export const ScheduleTab = memo(function ScheduleTab({
@@ -53,9 +54,10 @@ export const ScheduleTab = memo(function ScheduleTab({
   onPartyThemeClick,
   tripStatus = 'upcoming',
   tripId,
+  initialSubTab = 'schedule',
 }: ScheduleTabProps) {
   const { timeFormat } = useTimeFormat();
-  const [subTab, setSubTab] = useState<'schedule' | 'parties'>('schedule');
+  const [subTab, setSubTab] = useState<'schedule' | 'parties'>(initialSubTab);
   const [partyThemes, setPartyThemes] = useState<any[]>([]);
   const [isLoadingThemes, setIsLoadingThemes] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('All Dates');
@@ -68,6 +70,11 @@ export const ScheduleTab = memo(function ScheduleTab({
   const [selectedParty, setSelectedParty] = useState<any | null>(null);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
   const [showCostumeSheet, setShowCostumeSheet] = useState(false);
+
+  // Update subTab when initialSubTab prop changes
+  useEffect(() => {
+    setSubTab(initialSubTab);
+  }, [initialSubTab]);
 
   // Scroll to top when sub-tab changes
   useEffect(() => {

@@ -33,6 +33,7 @@ import type { Update } from '@/types/trip-info';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useShare } from '@/hooks/useShare';
 import { cn } from '@/lib/utils';
+import { useUpdate } from '@/context/UpdateContext';
 
 // Import refactored components
 import { LoadingState, ErrorState } from './trip-guide/shared';
@@ -64,6 +65,7 @@ export default function TripGuide({
   const { toast } = useToast();
   const { profile, user } = useSupabaseAuth();
   const haptics = useHaptics();
+  const { updateAvailable } = useUpdate();
   const { shareTrip } = useShare();
   const [internalActiveTab, setInternalActiveTab] = useState('overview');
   const [selectedTalent, setSelectedTalent] = useState<Talent | null>(null);
@@ -80,6 +82,7 @@ export default function TripGuide({
   const [isApproving, setIsApproving] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [hasInitializedCollapsedDays, setHasInitializedCollapsedDays] = useState(false);
+  const [eventsSubTab, setEventsSubTab] = useState<'schedule' | 'parties'>('schedule');
 
   // Use external state if provided (for fly-up menu), otherwise use internal state
   const activeTab = showBottomNav ? externalActiveTab || 'overview' : internalActiveTab;
@@ -90,7 +93,16 @@ export default function TripGuide({
   // Handler to navigate to tab and scroll to top
   const handleNavigateToTab = (tab: string) => {
     haptics.light();
-    setActiveTab(tab);
+    // Check if navigating to events with a specific sub-tab
+    if (tab === 'events:parties') {
+      setEventsSubTab('parties');
+      setActiveTab('events');
+    } else if (tab === 'events:schedule' || tab === 'events') {
+      setEventsSubTab('schedule');
+      setActiveTab('events');
+    } else {
+      setActiveTab(tab);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -637,22 +649,27 @@ export default function TripGuide({
                     haptics.light();
                     setActiveTab('settings');
                   }}
-                  className="px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] text-white/70 hover:text-white"
+                  className="px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] text-white/70 hover:text-white relative"
                   aria-label="Settings"
                 >
-                  <UserIcon
-                    className={cn(
-                      'w-4 h-4 flex-shrink-0',
-                      user ? 'fill-blue-600 stroke-blue-600' : ''
+                  <div className="relative">
+                    <UserIcon
+                      className={cn(
+                        'w-4 h-4 flex-shrink-0',
+                        user ? 'fill-blue-600 stroke-blue-600' : ''
+                      )}
+                    />
+                    {updateAvailable && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                     )}
-                  />
+                  </div>
                   <span className="hidden sm:inline">Settings</span>
                 </button>
               </div>
             </div>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pb-12">
             <TabsContent value="overview">
               <OverviewTab
                 tripData={tripData}
@@ -714,6 +731,7 @@ export default function TripGuide({
                 onPartyThemeClick={handlePartyThemeClick}
                 tripStatus={tripStatus}
                 tripId={tripData?.trip?.id}
+                initialSubTab={eventsSubTab}
               />
             </TabsContent>
 

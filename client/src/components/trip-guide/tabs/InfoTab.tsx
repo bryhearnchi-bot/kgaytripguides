@@ -11,6 +11,8 @@ import {
   HelpCircle,
   Search,
   X,
+  ChevronDown,
+  FileText,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +27,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface FAQ {
   id: number;
@@ -40,14 +43,38 @@ interface FAQ {
   };
 }
 
+interface InfoSection {
+  id: number;
+  title: string;
+  content: string | null;
+  section_type: 'trip_specific' | 'general' | 'always';
+  updated_by: string | null;
+  updated_at: string;
+  assignment_id: number | null;
+  order_index: number;
+  is_always: boolean;
+  is_assigned: boolean;
+}
+
 interface InfoTabProps {
   IMPORTANT_INFO: typeof IMPORTANT_INFO;
   tripId?: number;
 }
 
+// Color gradient options for info section top bars
+const colorGradients = [
+  'from-cyan-400 to-blue-500',
+  'from-orange-400 to-red-500',
+  'from-green-400 to-emerald-500',
+  'from-purple-400 to-pink-500',
+  'from-yellow-400 to-orange-500',
+  'from-teal-400 to-cyan-500',
+];
+
 export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTabProps) {
   const [subTab, setSubTab] = useState<'info' | 'faq'>('info');
   const [searchTerm, setSearchTerm] = useState('');
+  const [openInfoSections, setOpenInfoSections] = useState<Set<number>>(new Set());
 
   // Scroll to top when sub-tab changes
   useEffect(() => {
@@ -76,6 +103,38 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
     enabled: !!tripId,
   });
 
+  // Fetch Info Sections
+  const {
+    data: infoSections,
+    isLoading: infoLoading,
+    error: infoError,
+  } = useQuery<InfoSection[]>({
+    queryKey: ['trip-info-sections-comprehensive', tripId],
+    queryFn: async () => {
+      if (!tripId) return [];
+      const response = await fetch(`/api/trip-info-sections/trip/${tripId}/all`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch trip info sections');
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!tripId,
+  });
+
+  // Sort info sections
+  const sortedInfoSections = useMemo(() => {
+    if (!infoSections) return [];
+    return [...infoSections].sort((a, b) => {
+      if (a.is_always && !b.is_always) return -1;
+      if (!a.is_always && b.is_always) return 1;
+      if (a.order_index !== b.order_index) {
+        return a.order_index - b.order_index;
+      }
+      return a.title.localeCompare(b.title);
+    });
+  }, [infoSections]);
+
   // Filter FAQs based on search term
   const filteredFaqs = useMemo(() => {
     if (!faqs) return [];
@@ -88,18 +147,117 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
     );
   }, [faqs, searchTerm]);
 
+  // Filter Info Sections based on search term
+  const filteredInfoSections = useMemo(() => {
+    if (!sortedInfoSections) return [];
+    if (!searchTerm.trim()) return sortedInfoSections;
+
+    const search = searchTerm.toLowerCase();
+    return sortedInfoSections.filter(
+      section =>
+        section.title.toLowerCase().includes(search) ||
+        (section.content && section.content.toLowerCase().includes(search))
+    );
+  }, [sortedInfoSections, searchTerm]);
+
+  // Check if we're in search mode (showing combined results)
+  const isSearchMode = searchTerm.trim().length > 0;
+
+  // Toggle info section open/close
+  const toggleInfoSection = (id: number) => {
+    setOpenInfoSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Render a single Info Section card
+  const renderInfoSectionCard = (section: InfoSection, index: number) => {
+    const gradientClass = colorGradients[index % colorGradients.length];
+    const isOpen = openInfoSections.has(section.id);
+
+    return (
+      <Collapsible
+        key={section.id}
+        open={isOpen}
+        onOpenChange={() => toggleInfoSection(section.id)}
+      >
+        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+          <div className={`h-1 bg-gradient-to-r ${gradientClass}`} />
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors">
+              <h3 className="text-base font-semibold text-white">{section.title}</h3>
+              <ChevronDown
+                className={`w-5 h-5 text-white/60 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4 pt-0 border-t border-white/5">
+              {section.content ? (
+                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap pt-3">
+                  {section.content}
+                </p>
+              ) : (
+                <p className="text-white/50 text-sm italic pt-3">No content available</p>
+              )}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    );
+  };
+
   // Render Info content
   const renderInfoContent = () => {
-    // If tripId is provided, use the new database-driven bento grid
-    if (tripId) {
+    if (infoLoading) {
       return (
-        <div className="max-w-6xl mx-auto space-y-6 pt-4">
-          <InfoSectionsBentoGrid tripId={tripId} />
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <p className="text-white/70">Loading information...</p>
         </div>
       );
     }
 
-    // Legacy fallback for hardcoded IMPORTANT_INFO
+    if (infoError) {
+      return (
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">Failed to load information</h3>
+          <p className="text-white/70">Please try refreshing the page</p>
+        </div>
+      );
+    }
+
+    if (!filteredInfoSections || filteredInfoSections.length === 0) {
+      return (
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">
+            {searchTerm ? 'No results found' : 'No information available'}
+          </h3>
+          <p className="text-white/70">
+            {searchTerm
+              ? 'Try adjusting your search term'
+              : 'Check back later for additional trip information'}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {filteredInfoSections.map((section, index) => renderInfoSectionCard(section, index))}
+      </div>
+    );
+  };
+
+  // Legacy fallback for hardcoded IMPORTANT_INFO (kept for backwards compatibility)
+  const renderLegacyInfoContent = () => {
     // Early return if no data
     if (!IMPORTANT_INFO || Object.keys(IMPORTANT_INFO).length === 0) {
       return (
@@ -316,92 +474,119 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
   const renderFAQContent = () => {
     if (faqsLoading) {
       return (
-        <div className="max-w-6xl mx-auto space-y-4 pt-4">
-          <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-            <p className="text-white/70">Loading FAQs...</p>
-          </div>
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <p className="text-white/70">Loading FAQs...</p>
         </div>
       );
     }
 
     if (faqsError) {
       return (
-        <div className="max-w-6xl mx-auto space-y-4 pt-4">
-          <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-            <HelpCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Failed to load FAQs</h3>
-            <p className="text-white/70">Please try refreshing the page</p>
-          </div>
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <HelpCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">Failed to load FAQs</h3>
+          <p className="text-white/70">Please try refreshing the page</p>
         </div>
       );
     }
 
-    if (!faqs || faqs.length === 0) {
+    if (!filteredFaqs || filteredFaqs.length === 0) {
       return (
-        <div className="max-w-6xl mx-auto space-y-4 pt-4">
-          <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-            <HelpCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No FAQs available</h3>
-            <p className="text-white/70">
-              Check back later for frequently asked questions about this trip
-            </p>
-          </div>
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <HelpCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">
+            {searchTerm ? 'No results found' : 'No FAQs available'}
+          </h3>
+          <p className="text-white/70">
+            {searchTerm
+              ? 'Try adjusting your search term'
+              : 'Check back later for frequently asked questions about this trip'}
+          </p>
         </div>
       );
     }
 
     return (
-      <div className="max-w-6xl mx-auto space-y-4 pt-4">
-        {/* Search Input - Full width on mobile, half width on tablet/desktop */}
-        <div className="w-full md:w-1/2">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
-            <input
-              type="text"
-              placeholder="Search FAQs..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-12 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
-                aria-label="Clear search"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="space-y-4">
+        {filteredFaqs.map(faq => (
+          <Accordion key={faq.id} type="single" collapsible className="w-full">
+            <AccordionItem
+              value={`faq-${faq.id}`}
+              className="bg-white/5 rounded-xl overflow-hidden shadow-lg shadow-black/20 border-0"
+            >
+              <AccordionTrigger className="px-4 py-4 text-left hover:bg-white/10 transition-colors [&[data-state=open]]:bg-white/5">
+                <span className="text-white font-semibold text-sm pr-4">{faq.question}</span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 pt-0 border-t border-white/5">
+                <div className="text-white/80 text-sm leading-relaxed whitespace-pre-line pt-3">
+                  {faq.answer}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        ))}
+      </div>
+    );
+  };
 
-        {/* Results */}
-        {filteredFaqs.length === 0 ? (
-          <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-            <HelpCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No results found</h3>
-            <p className="text-white/70">Try adjusting your search term</p>
+  // Render combined search results
+  const renderSearchResults = () => {
+    const hasInfoResults = filteredInfoSections.length > 0;
+    const hasFaqResults = filteredFaqs.length > 0;
+
+    if (!hasInfoResults && !hasFaqResults) {
+      return (
+        <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
+          <Search className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No results found</h3>
+          <p className="text-white/70">Try adjusting your search term</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Info Results */}
+        {hasInfoResults && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-cyan-400" />
+              <h4 className="text-sm font-semibold text-white/80">
+                Information ({filteredInfoSections.length})
+              </h4>
+            </div>
+            <div className="space-y-3">
+              {filteredInfoSections.map((section, index) => renderInfoSectionCard(section, index))}
+            </div>
           </div>
-        ) : (
-          <div className="bg-white/10 backdrop-blur-lg rounded-md border border-white/20 overflow-hidden">
-            <Accordion type="single" collapsible className="w-full">
-              {filteredFaqs.map((faq, index) => (
-                <AccordionItem
-                  key={faq.id}
-                  value={`faq-${faq.id}`}
-                  className={`border-b border-white/10 ${index === filteredFaqs.length - 1 ? 'border-b-0' : ''}`}
-                >
-                  <AccordionTrigger className="px-6 py-4 text-left hover:bg-white/5 transition-colors">
-                    <span className="text-white font-semibold text-base pr-4">{faq.question}</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4 pt-0">
-                    <div className="text-white/80 text-sm leading-relaxed whitespace-pre-line">
-                      {faq.answer}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+        )}
+
+        {/* FAQ Results */}
+        {hasFaqResults && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <HelpCircle className="w-4 h-4 text-cyan-400" />
+              <h4 className="text-sm font-semibold text-white/80">FAQs ({filteredFaqs.length})</h4>
+            </div>
+            <div className="space-y-4">
+              {filteredFaqs.map(faq => (
+                <Accordion key={faq.id} type="single" collapsible className="w-full">
+                  <AccordionItem
+                    value={`faq-${faq.id}`}
+                    className="bg-white/5 rounded-xl overflow-hidden shadow-lg shadow-black/20 border-0"
+                  >
+                    <AccordionTrigger className="px-4 py-4 text-left hover:bg-white/10 transition-colors [&[data-state=open]]:bg-white/5">
+                      <span className="text-white font-semibold text-sm pr-4">{faq.question}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-0 border-t border-white/5">
+                      <div className="text-white/80 text-sm leading-relaxed whitespace-pre-line pt-3">
+                        {faq.answer}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               ))}
-            </Accordion>
+            </div>
           </div>
         )}
       </div>
@@ -410,40 +595,66 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
 
   return (
     <>
-      <div className="max-w-6xl mx-auto pb-2">
-        <div className="flex items-center gap-2">
-          <Info className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-lg font-semibold text-white">Information</h3>
-          <div className="flex-1 h-px bg-white/20 mx-3"></div>
-          {/* Sub-tabs on the right */}
-          <div className="flex gap-2">
+      {/* Header with Mini Tab Bar and Search */}
+      <div className="max-w-6xl mx-auto pb-4">
+        <div className="flex items-center justify-between gap-4">
+          {/* Sub-tabs on the left - matching ScheduleTab style */}
+          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
             <button
               onClick={() => setSubTab('info')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                subTab === 'info'
-                  ? 'bg-white/20 text-white border border-white/30'
-                  : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                subTab === 'info' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white/80'
               }`}
             >
-              <Info className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5" />
               Info
             </button>
             <button
               onClick={() => setSubTab('faq')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                subTab === 'faq'
-                  ? 'bg-white/20 text-cyan-400 border border-white/30'
-                  : 'text-cyan-400 hover:text-cyan-300 hover:bg-white/5 border border-cyan-400'
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                subTab === 'faq' ? 'bg-cyan-500/30 text-white' : 'text-cyan-300 hover:text-cyan-200'
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
               FAQs
             </button>
           </div>
+
+          {/* Search on the right */}
+          <div className="relative flex-1 max-w-xs">
+            <div className="absolute left-3 top-0 bottom-0 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-white/50" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full h-9 pl-9 pr-9 bg-white/10 border border-white/20 rounded-full text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
+            />
+            {searchTerm && (
+              <div className="absolute right-3 top-0 bottom-0 flex items-center">
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="text-white/50 hover:text-white/80 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {subTab === 'info' ? renderInfoContent() : renderFAQContent()}
+      {/* Content Area */}
+      <div className="max-w-6xl mx-auto pt-2">
+        {isSearchMode
+          ? renderSearchResults()
+          : subTab === 'info'
+            ? renderInfoContent()
+            : renderFAQContent()}
+      </div>
     </>
   );
 });

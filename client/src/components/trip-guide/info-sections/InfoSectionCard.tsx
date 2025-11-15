@@ -1,6 +1,6 @@
-import React, { memo, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Info, Sparkles, MapPin } from 'lucide-react';
+import React, { memo, useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface InfoSection {
   id: number;
@@ -17,46 +17,58 @@ interface InfoSection {
 
 interface InfoSectionCardProps {
   section: InfoSection;
-  featured?: boolean;
+  colorIndex?: number;
 }
 
-// Move helper function outside component to avoid recreation
-const truncateContent = (text: string | null, maxLength: number = 150) => {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
-  return `${text.substring(0, maxLength)}...`;
-};
+// Color gradient options for the top bar
+const colorGradients = [
+  'from-cyan-400 to-blue-500',
+  'from-orange-400 to-red-500',
+  'from-green-400 to-emerald-500',
+  'from-purple-400 to-pink-500',
+  'from-yellow-400 to-orange-500',
+  'from-teal-400 to-cyan-500',
+];
 
 export const InfoSectionCard = memo<InfoSectionCardProps>(function InfoSectionCard({
   section,
-  featured = false,
+  colorIndex = 0,
 }) {
-  const sectionIcon = useMemo(() => {
-    if (section.is_always) return <Sparkles className="h-5 w-5 text-white" />;
-    if (section.section_type === 'general') return <Info className="h-5 w-5 text-white" />;
-    return <MapPin className="h-5 w-5 text-white" />;
-  }, [section.is_always, section.section_type]);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const gradientClass = useMemo(() => {
+    return colorGradients[colorIndex % colorGradients.length];
+  }, [colorIndex]);
 
   return (
-    <Card className="group relative overflow-hidden bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl transition-all duration-300">
-      {/* Header Bar with Ocean Gradient */}
-      <div className="bg-gradient-to-r from-ocean-600/80 to-ocean-400/80 backdrop-blur-sm p-3.5 border-b border-white/10">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">{sectionIcon}</div>
-          <h3 className="text-lg font-bold text-white tracking-wide">{section.title}</h3>
-        </div>
-      </div>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+        {/* Top Color Bar */}
+        <div className={`h-1 bg-gradient-to-r ${gradientClass}`} />
 
-      {/* Content Area with Frosted Glass Effect */}
-      <CardContent className="p-4 bg-gradient-to-br from-slate-900/20 via-slate-800/20 to-slate-900/20 backdrop-blur-sm">
-        {section.content ? (
-          <div className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
-            {section.content}
+        {/* Collapsible Trigger */}
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors">
+            <h3 className="text-base font-semibold text-white">{section.title}</h3>
+            <ChevronDown
+              className={`w-5 h-5 text-white/60 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+        </CollapsibleTrigger>
+
+        {/* Collapsible Content */}
+        <CollapsibleContent>
+          <div className="px-4 pb-4 pt-0 border-t border-white/5">
+            {section.content ? (
+              <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap pt-3">
+                {section.content}
+              </p>
+            ) : (
+              <p className="text-white/50 text-sm italic pt-3">No content available</p>
+            )}
           </div>
-        ) : (
-          <p className="text-white/50 text-sm italic">No content available</p>
-        )}
-      </CardContent>
-    </Card>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 });

@@ -40,19 +40,17 @@ export function InfoSectionsBentoGrid({ tripId }: InfoSectionsBentoGridProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-64 bg-white/10" />
-          ))}
-        </div>
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-16 bg-white/10 rounded-xl" />
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+      <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
         <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-white mb-2">Failed to load information</h3>
         <p className="text-white/70">Please try refreshing the page</p>
@@ -62,7 +60,7 @@ export function InfoSectionsBentoGrid({ tripId }: InfoSectionsBentoGridProps) {
 
   if (!sections || sections.length === 0) {
     return (
-      <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+      <div className="bg-white/5 rounded-xl p-6 shadow-lg shadow-black/20 text-center py-8">
         <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-white mb-2">No information available</h3>
         <p className="text-white/70">Check back later for additional trip information</p>
@@ -86,9 +84,9 @@ export function InfoSectionsBentoGrid({ tripId }: InfoSectionsBentoGridProps) {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {sortedSections.map(section => (
-        <InfoSectionCard key={section.id} section={section} />
+    <div className="space-y-3">
+      {sortedSections.map((section, index) => (
+        <InfoSectionCard key={section.id} section={section} colorIndex={index} />
       ))}
     </div>
   );

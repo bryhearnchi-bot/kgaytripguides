@@ -154,11 +154,14 @@ export default function NavigationBanner() {
               className={cn(
                 'h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors xl:hidden',
                 'hover:bg-white/10 active:bg-white/20',
-                'flex items-center justify-center'
+                'flex items-center justify-center relative'
               )}
               title="Settings"
             >
               <User className="w-5 h-5 sm:w-6 sm:h-6" />
+              {updateAvailable && (
+                <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+              )}
             </button>
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
@@ -219,22 +222,27 @@ export default function NavigationBanner() {
               <button
                 onClick={handleSettingsClick}
                 className={cn(
-                  'px-3 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2',
+                  'px-3 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 relative',
                   activeTab === 'settings'
                     ? 'bg-white/70 text-black'
                     : 'text-white/70 hover:text-white'
                 )}
               >
-                <User
-                  className={cn(
-                    'w-4 h-4 flex-shrink-0',
-                    activeTab === 'settings' && user
-                      ? 'fill-black stroke-black'
-                      : user
-                        ? 'fill-blue-600 stroke-blue-600'
-                        : ''
+                <div className="relative">
+                  <User
+                    className={cn(
+                      'w-4 h-4 flex-shrink-0',
+                      activeTab === 'settings' && user
+                        ? 'fill-black stroke-black'
+                        : user
+                          ? 'fill-blue-600 stroke-blue-600'
+                          : ''
+                    )}
+                  />
+                  {updateAvailable && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   )}
-                />
+                </div>
                 <span>Settings</span>
               </button>
             </div>
