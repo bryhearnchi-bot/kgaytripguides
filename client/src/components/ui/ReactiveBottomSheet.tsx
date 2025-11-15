@@ -65,6 +65,30 @@ export function ReactiveBottomSheet({
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
+  // Lock body scroll when sheet is open to prevent background scrolling
+  useEffect(() => {
+    if (open) {
+      // Store current scroll position
+      const scrollY = window.scrollY;
+
+      // Lock scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+
+      return () => {
+        // Restore scroll
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+    return undefined;
+  }, [open]);
+
   // Check if content is scrollable and update indicator
   useEffect(() => {
     if (!open) return;
@@ -109,7 +133,10 @@ export function ReactiveBottomSheet({
     }
 
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    if (touch) {
+      setTouchStart(touch.clientY);
+    }
 
     // Stop propagation to prevent parent sheets from receiving the event
     e.stopPropagation();
@@ -117,7 +144,10 @@ export function ReactiveBottomSheet({
 
   const onTouchMove = (e: React.TouchEvent) => {
     if (touchStart === null) return;
-    setTouchEnd(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    if (touch) {
+      setTouchEnd(touch.clientY);
+    }
 
     // Stop propagation to prevent parent sheets from receiving the event
     e.stopPropagation();

@@ -151,14 +151,36 @@ async function networkFirst(request, cacheName) {
       return cachedResponse;
     }
 
+    // Check trip-specific offline caches
+    // These are created by OfflineStorageContext when user enables offline mode
+    const cacheNames = await caches.keys();
+    const tripCaches = cacheNames.filter(
+      name => name.startsWith('trip-') && name.endsWith('-offline')
+    );
+
+    for (const tripCacheName of tripCaches) {
+      const tripCache = await caches.open(tripCacheName);
+      const tripCachedResponse = await tripCache.match(request);
+      if (tripCachedResponse) {
+        console.log('[ServiceWorker] Found in trip offline cache:', tripCacheName, request.url);
+        return tripCachedResponse;
+      }
+    }
+
     // Return offline fallback
-    return new Response('Offline', {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: new Headers({
-        'Content-Type': 'text/plain',
+    return new Response(
+      JSON.stringify({
+        error: 'Network unavailable',
+        message: 'Please check your internet connection',
       }),
-    });
+      {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: new Headers({
+          'Content-Type': 'application/json',
+        }),
+      }
+    );
   }
 }
 
@@ -168,6 +190,21 @@ async function cacheFirst(request, cacheName) {
 
   if (cachedResponse) {
     return cachedResponse;
+  }
+
+  // Check trip-specific offline caches for images
+  const cacheNames = await caches.keys();
+  const tripCaches = cacheNames.filter(
+    name => name.startsWith('trip-') && name.endsWith('-offline')
+  );
+
+  for (const tripCacheName of tripCaches) {
+    const tripCache = await caches.open(tripCacheName);
+    const tripCachedResponse = await tripCache.match(request);
+    if (tripCachedResponse) {
+      console.log('[ServiceWorker] Found image in trip offline cache:', tripCacheName, request.url);
+      return tripCachedResponse;
+    }
   }
 
   try {

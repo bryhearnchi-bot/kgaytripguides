@@ -97,7 +97,7 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
 
   // Save dismissed alerts to localStorage
   useEffect(() => {
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissedAlerts]));
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(dismissedAlerts)));
   }, [dismissedAlerts]);
 
   const isOfflineEnabled = useCallback(
@@ -134,14 +134,16 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
     let totalSize = 0;
     const cache = await caches.open(`trip-${tripId}-offline`);
 
-    // List of API endpoints to cache
+    // List of API endpoints to cache (using correct endpoint patterns)
+    // Cache BOTH the complete endpoint (used by main trip page) AND individual endpoints (used by some components)
     const apiEndpoints = [
-      `/api/trips/${tripSlug}`,
-      `/api/itinerary/trip/${tripId}`,
-      `/api/events/trip/${tripId}`,
-      `/api/talent/trip/${tripId}`,
-      `/api/trip-info-sections/trip/${tripId}/all`,
-      `/api/faqs/trip/${tripId}`,
+      `/api/trips/${tripSlug}`, // Basic trip info
+      `/api/trips/${tripSlug}/complete`, // Main trip page uses this - includes all data
+      `/api/trips/${tripId}/itinerary`, // Individual endpoint for components
+      `/api/trips/${tripId}/events`, // Individual endpoint for components
+      `/api/trips/${tripId}/talent`, // Individual endpoint for components
+      `/api/trip-info-sections/trip/${tripId}/all`, // Info sections (used by InfoTab)
+      `/api/faqs/trip/${tripId}`, // FAQs (used by InfoTab)
     ];
 
     const imageUrls: string[] = [];
@@ -162,7 +164,50 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
           totalSize += jsonSize;
 
           // Extract image URLs from the data
-          if (endpoint.includes('/trips/')) {
+          if (endpoint.includes('/complete')) {
+            // Complete endpoint - extract all images from the comprehensive data
+            // Trip images
+            if (data.trip?.heroImageUrl) imageUrls.push(data.trip.heroImageUrl);
+            if (data.trip?.mapUrl) imageUrls.push(data.trip.mapUrl);
+            if (data.trip?.charterCompanyLogo) imageUrls.push(data.trip.charterCompanyLogo);
+
+            // Ship images
+            if (data.ship?.imageUrl) imageUrls.push(data.ship.imageUrl);
+
+            // Itinerary images
+            if (Array.isArray(data.itinerary)) {
+              data.itinerary.forEach((item: any) => {
+                if (item.imageUrl) imageUrls.push(item.imageUrl);
+                if (item.portImageUrl) imageUrls.push(item.portImageUrl);
+                if (item.itineraryImageUrl) imageUrls.push(item.itineraryImageUrl);
+                if (item.locationImageUrl) imageUrls.push(item.locationImageUrl);
+                if (item.location?.imageUrl) imageUrls.push(item.location.imageUrl);
+              });
+            }
+
+            // Event images
+            if (Array.isArray(data.events)) {
+              data.events.forEach((event: any) => {
+                if (event.imageUrl) imageUrls.push(event.imageUrl);
+                if (event.partyTheme?.imageUrl) imageUrls.push(event.partyTheme.imageUrl);
+              });
+            }
+
+            // Talent images
+            if (Array.isArray(data.talent)) {
+              data.talent.forEach((talent: any) => {
+                if (talent.profileImageUrl) imageUrls.push(talent.profileImageUrl);
+              });
+            }
+
+            // Party theme images
+            if (Array.isArray(data.partyThemes)) {
+              data.partyThemes.forEach((theme: any) => {
+                if (theme.imageUrl) imageUrls.push(theme.imageUrl);
+              });
+            }
+          } else if (endpoint.includes('/trips/') && !endpoint.includes('/complete')) {
+            // Basic trip info endpoint
             if (data.heroImageUrl) imageUrls.push(data.heroImageUrl);
             if (data.mapUrl) imageUrls.push(data.mapUrl);
             if (data.charterCompanyLogo) imageUrls.push(data.charterCompanyLogo);
@@ -181,15 +226,28 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
             }
           }
 
-          if (endpoint.includes('/itinerary/')) {
+          if (endpoint.includes('/itinerary')) {
             if (Array.isArray(data)) {
-              data.forEach((item: { imageUrl?: string }) => {
-                if (item.imageUrl) imageUrls.push(item.imageUrl);
-              });
+              data.forEach(
+                (item: {
+                  imageUrl?: string;
+                  portImageUrl?: string;
+                  itineraryImageUrl?: string;
+                  locationImageUrl?: string;
+                  location?: { imageUrl?: string };
+                }) => {
+                  // Cache all possible image URLs for itinerary stops
+                  if (item.imageUrl) imageUrls.push(item.imageUrl);
+                  if (item.portImageUrl) imageUrls.push(item.portImageUrl);
+                  if (item.itineraryImageUrl) imageUrls.push(item.itineraryImageUrl);
+                  if (item.locationImageUrl) imageUrls.push(item.locationImageUrl);
+                  if (item.location?.imageUrl) imageUrls.push(item.location.imageUrl);
+                }
+              );
             }
           }
 
-          if (endpoint.includes('/events/')) {
+          if (endpoint.includes('/events')) {
             if (Array.isArray(data)) {
               data.forEach((event: { imageUrl?: string; partyTheme?: { imageUrl?: string } }) => {
                 if (event.imageUrl) imageUrls.push(event.imageUrl);
@@ -198,11 +256,14 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
             }
           }
 
-          if (endpoint.includes('/talent/')) {
+          if (endpoint.includes('/talent')) {
             if (Array.isArray(data)) {
-              data.forEach((talent: { artist?: { imageUrl?: string } }) => {
-                if (talent.artist?.imageUrl) imageUrls.push(talent.artist.imageUrl);
-              });
+              data.forEach(
+                (talent: { artist?: { imageUrl?: string }; profileImageUrl?: string }) => {
+                  if (talent.artist?.imageUrl) imageUrls.push(talent.artist.imageUrl);
+                  if (talent.profileImageUrl) imageUrls.push(talent.profileImageUrl);
+                }
+              );
             }
           }
         }
@@ -216,9 +277,12 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
       }
     }
 
+    // Remove duplicate image URLs
+    const uniqueImageUrls = Array.from(new Set(imageUrls.filter(url => url && url.length > 0)));
+
     // Download all images
-    const totalItems = totalRequests + imageUrls.length;
-    for (const imageUrl of imageUrls) {
+    const totalItems = totalRequests + uniqueImageUrls.length;
+    for (const imageUrl of uniqueImageUrls) {
       try {
         const response = await fetch(imageUrl);
         if (response.ok) {
