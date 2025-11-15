@@ -20,6 +20,33 @@ import type { Talent, DailySchedule, ItineraryStop } from '@/data/trip-data';
 import { findTalentInTitle } from '../utils/talentHelpers';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
+import { dateOnly } from '@/lib/utils';
+
+// Helper function to format dateKey (YYYY-MM-DD) to readable format (Thu, Nov 15)
+function formatDateKey(dateKey: string): string {
+  // Parse YYYY-MM-DD without timezone conversion
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!year || !month || !day) return dateKey;
+
+  const date = dateOnly(new Date(year, month - 1, day));
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+}
 
 interface TalentModalProps {
   open: boolean;
@@ -93,7 +120,7 @@ export const TalentModal = memo(function TalentModal({
         .map(event => ({
           ...event,
           dateKey: day.key,
-          date: ITINERARY.find(stop => stop.key === day.key)?.date || day.key,
+          date: ITINERARY.find(stop => stop.key === day.key)?.date || formatDateKey(day.key),
         }))
     ).sort((a, b) => {
       const dateCompare = a.dateKey.localeCompare(b.dateKey);

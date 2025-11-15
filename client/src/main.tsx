@@ -191,7 +191,8 @@ function showToast(message: string, type: 'success' | 'warning' | 'error' = 'suc
   const toast = document.createElement('div');
   const bgColor =
     type === 'success' ? 'bg-green-600' : type === 'warning' ? 'bg-yellow-600' : 'bg-red-600';
-  toast.className = `fixed top-4 left-4 right-4 ${bgColor} text-white p-3 rounded-lg shadow-lg z-50 text-center`;
+  // Compact toast at bottom center, above the bottom navigation
+  toast.className = `fixed bottom-20 left-1/2 transform -translate-x-1/2 ${bgColor} text-white px-4 py-2 rounded-full shadow-lg z-50 text-sm font-medium whitespace-nowrap`;
   toast.textContent = message;
 
   document.body.appendChild(toast);

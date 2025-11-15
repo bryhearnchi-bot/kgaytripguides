@@ -14,6 +14,33 @@ import type { Talent } from '@/data/trip-data';
 import { ReactiveBottomSheet } from '@/components/ui/ReactiveBottomSheet';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
+import { dateOnly } from '@/lib/utils';
+
+// Helper function to format dateKey (YYYY-MM-DD) to readable format (Thu, Nov 15)
+function formatDateKey(dateKey: string): string {
+  // Parse YYYY-MM-DD without timezone conversion
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!year || !month || !day) return dateKey;
+
+  const date = dateOnly(new Date(year, month - 1, day));
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+}
 
 // Social media icon components
 const InstagramIcon = () => (
@@ -163,7 +190,8 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
       if (eventsForArtist.length > 0) {
         // Find the formatted date from itinerary
         const itineraryDay = itinerary.find(it => it.key === day.key);
-        const formattedDate = itineraryDay?.date || day.date || day.key;
+        // Use itinerary date, then day.date, then format the key if needed
+        const formattedDate = itineraryDay?.date || day.date || formatDateKey(day.key);
 
         performances.push({
           dateKey: day.key,

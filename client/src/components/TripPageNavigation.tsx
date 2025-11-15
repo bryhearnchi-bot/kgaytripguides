@@ -22,6 +22,7 @@ import { FlyUpSheet } from '@/components/FlyUpSheet';
 import Settings from '@/pages/settings';
 import Alerts from '@/pages/alerts';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
+import { useOfflineStorage } from '@/contexts/OfflineStorageContext';
 import { isPWA } from '@/lib/capacitor';
 
 interface TripPageNavigationProps {
@@ -69,6 +70,13 @@ export function TripPageNavigation({
 
   // Get unread alerts count for this specific trip
   const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts(tripSlug || undefined);
+
+  // Get offline storage status for this trip
+  const { isOfflineEnabled, isCacheOutdated, isAlertDismissed } = useOfflineStorage();
+
+  // Check if bell should be yellow (offline not enabled or cache outdated)
+  const shouldHighlightBell =
+    tripId && (!isOfflineEnabled(tripId) || isCacheOutdated(tripId)) && !isAlertDismissed(tripId);
 
   // Check if user can edit trips (on a trip page with admin rights)
   const canEditTrip =
@@ -229,7 +237,10 @@ export function TripPageNavigation({
                 haptics.light();
                 setAlertsOpen(true);
               }}
-              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+              className={cn(
+                'relative h-8 w-8 sm:h-10 sm:w-10 rounded-full transition-colors hover:bg-white/10 active:bg-white/20 flex items-center justify-center',
+                shouldHighlightBell ? 'text-amber-400' : 'text-white'
+              )}
               aria-label="Alerts"
             >
               <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
