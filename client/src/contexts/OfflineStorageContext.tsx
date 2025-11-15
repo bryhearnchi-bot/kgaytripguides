@@ -233,7 +233,10 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
         const response = await fetch(endpoint);
         if (response.ok) {
           const clonedResponse = response.clone();
-          await cache.put(endpoint, clonedResponse);
+          // Cache using BOTH the path and full URL to ensure matches
+          // Service worker will check with full URL, so cache both patterns
+          await cache.put(endpoint, clonedResponse.clone());
+          await cache.put(new URL(endpoint, window.location.origin).href, clonedResponse);
 
           const data = await response.json();
           const jsonSize = JSON.stringify(data).length;

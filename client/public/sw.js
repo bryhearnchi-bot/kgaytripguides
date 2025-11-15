@@ -218,11 +218,13 @@ async function networkFirstWithProgressiveCaching(request, cacheName) {
     // Network failed, try cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
+      console.log('[ServiceWorker] Found in general cache:', request.url);
       return cachedResponse;
     }
 
     // Check trip-specific offline caches
     // These are created by OfflineStorageContext when user enables offline mode
+    // IMPORTANT: Check ALL trip caches for ANY API request (including /api/trips for landing page)
     const cacheNames = await caches.keys();
     const tripCaches = cacheNames.filter(
       name => name.startsWith('trip-') && name.endsWith('-offline')
@@ -236,6 +238,8 @@ async function networkFirstWithProgressiveCaching(request, cacheName) {
         return tripCachedResponse;
       }
     }
+
+    console.log('[ServiceWorker] No cached response found for:', request.url);
 
     // Return offline fallback
     return new Response(
