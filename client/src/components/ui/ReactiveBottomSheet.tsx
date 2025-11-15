@@ -110,15 +110,26 @@ export function ReactiveBottomSheet({
 
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientY);
+
+    // Stop propagation to prevent parent sheets from receiving the event
+    e.stopPropagation();
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
     if (touchStart === null) return;
     setTouchEnd(e.targetTouches[0].clientY);
+
+    // Stop propagation to prevent parent sheets from receiving the event
+    e.stopPropagation();
   };
 
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart || !touchEnd) {
+      // Reset state even if we didn't track the swipe
+      setTouchStart(null);
+      setTouchEnd(null);
+      return;
+    }
 
     const distance = touchStart - touchEnd;
     const isDownSwipe = distance < -minSwipeDistance;
@@ -130,6 +141,9 @@ export function ReactiveBottomSheet({
     // Reset state
     setTouchStart(null);
     setTouchEnd(null);
+
+    // Stop propagation to prevent parent sheets from receiving the event
+    e.stopPropagation();
   };
 
   return (
