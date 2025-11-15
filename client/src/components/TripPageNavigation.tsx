@@ -144,7 +144,7 @@ export function TripPageNavigation({
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleBack}
-            className="text-white hover:text-white/70 transition-colors"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center"
             aria-label="Back to home"
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
