@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Bell, Ship, WifiOff, X } from 'lucide-react';
+import { Bell, Ship, WifiOff, X, AlertTriangle, Download } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
@@ -34,16 +34,21 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
     isPWAMode,
     downloadProgress,
     isDownloading,
+    isCacheOutdated,
+    getTripStatus,
   } = useOfflineStorage();
 
   // Check if we should show the offline alert for this trip (show in any mode, not just PWA)
   const showOfflineAlert =
     tripId && tripSlug && !isOfflineEnabled(tripId) && !isAlertDismissed(tripId);
   const offlineEnabled = tripId ? isOfflineEnabled(tripId) : false;
+  const cacheOutdated = tripId ? isCacheOutdated(tripId) : false;
+  const tripStatus = tripId ? getTripStatus(tripId) : null;
 
   const handleOfflineToggle = async () => {
     if (!tripId || !tripSlug) return;
-    if (!offlineEnabled) {
+    // Download if not enabled OR if cache is outdated (re-download)
+    if (!offlineEnabled || cacheOutdated) {
       await enableOfflineForTrip(tripId, tripSlug);
     }
   };
@@ -235,6 +240,43 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
                   >
                     Download Now
                   </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Outdated Cache Alert - Show when offline is enabled but cache version is old */}
+      {offlineEnabled && cacheOutdated && !isDownloading && (
+        <div className="mb-4">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 p-2 bg-amber-500/20 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-base font-medium text-amber-400 mb-1">
+                  Offline Data Update Available
+                </h4>
+                <p className="text-sm text-white/70 mb-3">
+                  Your offline data is outdated. Re-download for improved offline support including
+                  better image caching, FAQs, and trip information.
+                </p>
+
+                <button
+                  onClick={handleOfflineToggle}
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Re-download Now
+                </button>
+
+                {tripStatus?.downloadedAt && (
+                  <p className="text-xs text-white/40 mt-2">
+                    Last downloaded:{' '}
+                    {formatDistanceToNow(new Date(tripStatus.downloadedAt), { addSuffix: true })}
+                  </p>
                 )}
               </div>
             </div>
