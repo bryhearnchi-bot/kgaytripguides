@@ -16,7 +16,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
 import { ReactiveBottomSheet } from '@/components/ui/ReactiveBottomSheet';
-import { dateOnly } from '@/lib/utils';
 
 // Helper function to format dateKey (YYYY-MM-DD) to readable format (Thu, Nov 15)
 function formatDateKey(dateKey: string): string {
@@ -24,7 +23,7 @@ function formatDateKey(dateKey: string): string {
   const [year, month, day] = dateKey.split('-').map(Number);
   if (!year || !month || !day) return dateKey;
 
-  const date = dateOnly(new Date(year, month - 1, day));
+  const date = new Date(year, month - 1, day);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = [
     'Jan',
