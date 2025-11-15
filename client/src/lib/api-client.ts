@@ -19,7 +19,7 @@ interface FetchOptions extends RequestInit {
  * @returns The fetch response
  */
 export async function apiClient(url: string, options: FetchOptions = {}): Promise<Response> {
-  const { requireAuth = true, headers = {}, ...restOptions } = options;
+  const { requireAuth = false, headers = {}, ...restOptions } = options;
 
   // Get the current session from Supabase
   const {

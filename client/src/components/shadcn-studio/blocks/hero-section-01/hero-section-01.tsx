@@ -311,7 +311,7 @@ const HeroSection = ({
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-3 px-4 text-center pb-6">
         {/* Mobile carousel/image display */}
-        <div className="relative w-full aspect-video overflow-hidden rounded-lg">
+        <div className="relative w-full aspect-video overflow-hidden rounded-xl">
           {isDragstarCruise
             ? /* Single rotating image for Drag Cruise - Mobile */
               dragstarImages.map((img, index) => (
@@ -355,7 +355,7 @@ const HeroSection = ({
                   key={img.url}
                   src={img.url}
                   alt={img.name}
-                  className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                  className="object-cover flex-shrink-0 mx-2 rounded-xl"
                   style={{
                     height: `${img.size}rem`,
                     width: `${img.size}rem`,
@@ -369,7 +369,7 @@ const HeroSection = ({
                   key={`${img.url}-duplicate`}
                   src={img.url}
                   alt={img.name}
-                  className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                  className="object-cover flex-shrink-0 mx-2 rounded-xl"
                   style={{
                     height: `${img.size}rem`,
                     width: `${img.size}rem`,
@@ -388,7 +388,7 @@ const HeroSection = ({
                     key={img}
                     src={img}
                     alt={`Destination ${index + 1}`}
-                    className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                    className="object-cover flex-shrink-0 mx-2 rounded-xl"
                     style={{
                       height: sizeVariant.height,
                       width: sizeVariant.width,
@@ -405,7 +405,7 @@ const HeroSection = ({
                     key={`${img}-duplicate`}
                     src={img}
                     alt={`Destination ${index + 1}`}
-                    className="object-cover flex-shrink-0 mx-2 rounded-lg"
+                    className="object-cover flex-shrink-0 mx-2 rounded-xl"
                     style={{
                       height: sizeVariant.height,
                       width: sizeVariant.width,

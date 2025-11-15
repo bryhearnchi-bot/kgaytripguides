@@ -3,7 +3,6 @@ import { Map } from 'lucide-react';
 import JobListingComponent, { type Job } from '@/components/smoothui/ui/JobListingComponent';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
-import { TabHeader } from '../shared/TabHeader';
 
 interface ItineraryTabProps {
   ITINERARY: any[];
@@ -142,7 +141,7 @@ export const ItineraryTab = memo(function ItineraryTab({
           }}
         />
       ),
-      job_description: stop.locationDescription || 'Description coming soon', // Location description for modal (always from location table)
+      job_description: stop.location?.description || 'Description coming soon', // Location description for modal (always from location table)
       itinerary_description: stop.description || undefined, // Itinerary-specific description for card (only if exists in itinerary table)
       salary: arriveDepart,
       location: '', // Not used anymore, arrive/depart combined in salary
@@ -156,26 +155,21 @@ export const ItineraryTab = memo(function ItineraryTab({
   });
 
   return (
-    <>
-      <div className="max-w-6xl mx-auto">
-        <TabHeader icon={Map} title="Itinerary" iconColor="text-emerald-400" />
-      </div>
-      <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
-        {filteredItinerary.length === 0 ? (
-          <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
-            <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No itinerary available</h3>
-            <p className="text-white/70">Itinerary information will be available soon.</p>
-          </div>
-        ) : (
-          <JobListingComponent
-            jobs={jobsData}
-            onViewEvents={onViewEvents}
-            scheduledDaily={scheduledDaily}
-            talent={talent}
-          />
-        )}
-      </div>
-    </>
+    <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
+      {filteredItinerary.length === 0 ? (
+        <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
+          <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No itinerary available</h3>
+          <p className="text-white/70">Itinerary information will be available soon.</p>
+        </div>
+      ) : (
+        <JobListingComponent
+          jobs={jobsData}
+          onViewEvents={onViewEvents}
+          scheduledDaily={scheduledDaily}
+          talent={talent}
+        />
+      )}
+    </div>
   );
 });

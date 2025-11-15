@@ -128,7 +128,7 @@ export const TalentTabNew = memo(function TalentTabNew({
   if (TALENT.length === 0) {
     return (
       <>
-        <div className="max-w-7xl mx-auto pt-6 pb-6">
+        <div className="max-w-7xl mx-auto pb-4">
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-400" />
             <h3 className="text-lg font-semibold text-white">Talent</h3>
@@ -148,7 +148,7 @@ export const TalentTabNew = memo(function TalentTabNew({
 
   return (
     <>
-      <div className="max-w-7xl mx-auto pt-6 pb-6">
+      <div className="max-w-7xl mx-auto pb-4">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-amber-400" />
           <h3 className="text-lg font-semibold text-white">Talent</h3>

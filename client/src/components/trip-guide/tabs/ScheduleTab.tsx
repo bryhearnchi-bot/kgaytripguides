@@ -179,7 +179,7 @@ export const ScheduleTab = memo(function ScheduleTab({
   return (
     <>
       {/* Header: Tab bar on left, filter on right */}
-      <div className="max-w-6xl mx-auto pt-6 pb-8">
+      <div className="max-w-6xl mx-auto pb-4">
         <div className="flex items-center justify-between gap-4">
           {/* Sub-tabs on the left */}
           <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">

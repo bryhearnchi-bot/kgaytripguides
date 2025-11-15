@@ -20,7 +20,6 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { cn, dateOnly } from '@/lib/utils';
 import { differenceInCalendarDays } from 'date-fns';
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
-import { TabHeader } from '../shared/TabHeader';
 
 interface OverviewTabProps {
   tripData: any;
@@ -151,7 +150,10 @@ export const OverviewTab = memo(function OverviewTab({
 
       {/* Book Button - Below carousel, before Overview header */}
       {showBookButton && (
-        <div className="max-w-6xl mx-auto px-4 mb-3 md:mt-3 flex justify-center">
+        <div
+          className="max-w-6xl mx-auto px-4 flex justify-center -mt-3 lg:-mt-2"
+          style={{ marginBottom: '14px' }}
+        >
           <button
             onClick={() =>
               hasBookingUrl &&
@@ -164,7 +166,7 @@ export const OverviewTab = memo(function OverviewTab({
                 : 'bg-orange-500/20 text-orange-300/60 border border-orange-500/20 cursor-not-allowed'
             }`}
             style={{
-              padding: '8px 16px',
+              padding: '4px 16px',
               minHeight: 'auto',
               height: 'auto',
               lineHeight: '1.2',
@@ -181,11 +183,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto">
-        <TabHeader icon={LayoutDashboard} title="Overview" iconColor="text-blue-400" />
-      </div>
-
-      <div className="max-w-6xl mx-auto space-y-4">
+      <div className={`max-w-6xl mx-auto space-y-4 ${showBookButton ? '' : 'mt-4'}`}>
         {/* Desktop: 3-column grid, Mobile: stack with custom order */}
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
           {/* Left Column Container - Desktop only (2 columns wide) */}

@@ -807,11 +807,14 @@ export function registerTripRoutes(app: Express) {
         .order('start_date', { ascending: true }); // Order by earliest first for featured trip selection
 
       if (error) {
-        logger.error('Error fetching trips:', error, {
+        logger.error('Error fetching trips:', {
+          error: error,
+          errorMessage: error.message,
+          errorHint: error.hint,
           method: req.method,
           path: req.path,
         });
-        throw ApiError.internal('Failed to fetch trips');
+        throw ApiError.internal(`Failed to fetch trips: ${error.message || 'Unknown error'}`);
       }
 
       // Transform trips and flatten ship/resort/charter data

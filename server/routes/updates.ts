@@ -86,11 +86,15 @@ export function registerUpdateRoutes(app: Express) {
 
       if (updatesError) {
         logger.error('Error fetching all updates:', {
-          error: JSON.stringify(updatesError),
+          error: updatesError,
+          errorMessage: updatesError.message,
+          errorHint: updatesError.hint,
           method: req.method,
           path: req.path,
         });
-        throw ApiError.internal('Failed to fetch updates');
+        throw ApiError.internal(
+          `Failed to fetch updates: ${updatesError.message || 'Unknown error'}`
+        );
       }
 
       if (!updates || updates.length === 0) {
@@ -153,15 +157,15 @@ export function registerUpdateRoutes(app: Express) {
 
       if (updatesError) {
         logger.error('Error fetching homepage updates:', {
-          error: JSON.stringify(updatesError),
+          error: updatesError,
           errorMessage: updatesError.message,
-          errorCode: updatesError.code,
-          errorDetails: updatesError.details,
           errorHint: updatesError.hint,
           method: req.method,
           path: req.path,
         });
-        throw ApiError.internal('Failed to fetch homepage updates');
+        throw ApiError.internal(
+          `Failed to fetch homepage updates: ${updatesError.message || 'Unknown error'}`
+        );
       }
 
       if (!updates || updates.length === 0) {

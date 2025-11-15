@@ -410,7 +410,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
 
   return (
     <>
-      <div className="max-w-6xl mx-auto pt-6 pb-2">
+      <div className="max-w-6xl mx-auto pb-2">
         <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-cyan-400" />
           <h3 className="text-lg font-semibold text-white">Information</h3>
