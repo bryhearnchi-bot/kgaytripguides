@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Bell, Ship, WifiOff, X, AlertTriangle, Download } from 'lucide-react';
+import { Bell, Ship, WifiOff, X, AlertTriangle, Download, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
@@ -215,8 +215,11 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-base font-medium text-white mb-1">Download for Offline</h4>
-                <p className="text-sm text-white/70 mb-3">
+                <p className="text-sm text-white/70 mb-2">
                   Save this trip guide for offline viewing. Access all content without internet.
+                </p>
+                <p className="text-xs text-amber-400/80 mb-3">
+                  Estimated download: 15-30 MB (includes app, images, and trip data)
                 </p>
 
                 {isDownloading ? (
@@ -241,6 +244,41 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
                     Download Now
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offline Ready - Show when successfully downloaded and cache is current */}
+      {offlineEnabled && !cacheOutdated && !isDownloading && tripStatus && (
+        <div className="mb-4">
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 p-2 bg-green-500/20 rounded-lg">
+                <Check className="w-5 h-5 text-green-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-base font-medium text-green-400 mb-1">Offline Ready</h4>
+                <p className="text-sm text-white/70 mb-2">
+                  This trip guide is available offline. You can access all content without internet.
+                </p>
+                <div className="flex flex-wrap gap-3 text-xs text-white/50">
+                  {tripStatus.size && (
+                    <span>
+                      Size:{' '}
+                      {tripStatus.size > 1024 * 1024
+                        ? `${(tripStatus.size / (1024 * 1024)).toFixed(1)} MB`
+                        : `${(tripStatus.size / 1024).toFixed(0)} KB`}
+                    </span>
+                  )}
+                  {tripStatus.downloadedAt && (
+                    <span>
+                      Downloaded:{' '}
+                      {formatDistanceToNow(new Date(tripStatus.downloadedAt), { addSuffix: true })}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
