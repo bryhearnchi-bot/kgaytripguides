@@ -1,5 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Bell, Ship, WifiOff, X, AlertTriangle, Download, Check } from 'lucide-react';
+import {
+  Bell,
+  Ship,
+  WifiOff,
+  X,
+  AlertTriangle,
+  Download,
+  Check,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
@@ -29,6 +39,7 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
   const {
     isOfflineEnabled,
     enableOfflineForTrip,
+    disableOfflineForTrip,
     isAlertDismissed,
     dismissAlert,
     isPWAMode,
@@ -51,6 +62,16 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
     if (!offlineEnabled || cacheOutdated) {
       await enableOfflineForTrip(tripId, tripSlug);
     }
+  };
+
+  const handleRedownload = async () => {
+    if (!tripId || !tripSlug) return;
+    await enableOfflineForTrip(tripId, tripSlug);
+  };
+
+  const handleDeleteOfflineData = async () => {
+    if (!tripId) return;
+    await disableOfflineForTrip(tripId);
   };
 
   const handleDismissOfflineAlert = () => {
@@ -263,7 +284,7 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
                 <p className="text-sm text-white/70 mb-2">
                   This trip guide is available offline. You can access all content without internet.
                 </p>
-                <div className="flex flex-wrap gap-3 text-xs text-white/50">
+                <div className="flex flex-wrap gap-3 text-xs text-white/50 mb-3">
                   {tripStatus.size && (
                     <span>
                       Size:{' '}
@@ -278,6 +299,22 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
                       {formatDistanceToNow(new Date(tripStatus.downloadedAt), { addSuffix: true })}
                     </span>
                   )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleRedownload}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/80 text-xs font-medium rounded-lg transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Re-download
+                  </button>
+                  <button
+                    onClick={handleDeleteOfflineData}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
