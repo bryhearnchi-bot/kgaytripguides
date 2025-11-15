@@ -274,26 +274,22 @@ function App() {
       .offline-indicator {
         display: none;
         position: fixed;
-        bottom: calc(70px + env(safe-area-inset-bottom));
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(245, 158, 11, 0.95);
-        color: white;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        right: 12px;
+        background: rgba(100, 116, 139, 0.9);
+        color: rgba(255, 255, 255, 0.8);
         text-align: center;
-        padding: 6px 12px;
-        font-size: 12px;
+        padding: 4px 10px;
+        font-size: 11px;
         font-weight: 500;
         z-index: 9999;
-        border-radius: 20px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
         align-items: center;
-        gap: 8px;
-        max-width: 200px;
+        gap: 6px;
         width: auto;
         height: auto;
-        min-height: unset;
-        max-height: 32px;
       }
       .offline-indicator.hidden {
         display: none !important;
