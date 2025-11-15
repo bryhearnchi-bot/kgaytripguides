@@ -269,26 +269,31 @@ function App() {
     const offlineStyles = document.createElement('style');
     offlineStyles.textContent = `
       .offline .offline-indicator {
-        display: flex !important;
+        display: inline-flex !important;
       }
       .offline-indicator {
         display: none;
         position: fixed;
-        bottom: calc(60px + env(safe-area-inset-bottom));
+        bottom: calc(70px + env(safe-area-inset-bottom));
         left: 50%;
         transform: translateX(-50%);
         background: rgba(245, 158, 11, 0.95);
         color: white;
         text-align: center;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
+        padding: 6px 12px;
+        font-size: 12px;
         font-weight: 500;
         z-index: 9999;
-        border-radius: 9999px;
+        border-radius: 20px;
         backdrop-filter: blur(8px);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         align-items: center;
-        gap: 0.5rem;
+        gap: 8px;
+        max-width: 200px;
+        width: auto;
+        height: auto;
+        min-height: unset;
+        max-height: 32px;
       }
       .offline-indicator.hidden {
         display: none !important;
