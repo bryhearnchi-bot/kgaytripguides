@@ -13,6 +13,7 @@ import {
   Star,
   Wifi,
   WifiOff,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,10 +74,14 @@ export default function Settings({
     isPWAMode,
     downloadProgress,
     isDownloading,
+    isCacheOutdated,
+    getTripStatus,
   } = useOfflineStorage();
 
   // Check if offline is enabled for current trip
   const offlineEnabled = tripId ? isOfflineEnabled(tripId) : false;
+  const cacheOutdated = tripId ? isCacheOutdated(tripId) : false;
+  const tripStatus = tripId ? getTripStatus(tripId) : null;
 
   // Get the first name for display
   const displayName = profile?.name?.first || user?.email?.split('@')[0] || 'User';
@@ -338,8 +343,33 @@ export default function Settings({
         {/* Offline Access - Download button for trip pages */}
         {tripId && tripSlug && (
           <div className="w-full flex flex-col gap-2 p-2.5 rounded-lg">
-            {offlineEnabled && !isDownloading ? (
-              // Already downloaded - show confirmation
+            {offlineEnabled && !isDownloading && cacheOutdated ? (
+              // Cache outdated - show update warning
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-amber-400">Update Available</span>
+                    <span className="text-[10px] text-white/60">
+                      Your offline data is outdated. Re-download for improved offline support.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleOfflineToggle}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 transition-colors"
+                >
+                  <Download className="h-4 w-4 text-amber-400" />
+                  <span className="text-sm font-medium text-amber-400">Re-download Now</span>
+                </button>
+                {tripStatus?.downloadedAt && (
+                  <span className="text-[9px] text-white/40 text-center">
+                    Last downloaded: {format(new Date(tripStatus.downloadedAt), 'MMM d, yyyy')}
+                  </span>
+                )}
+              </div>
+            ) : offlineEnabled && !isDownloading ? (
+              // Already downloaded and up to date - show confirmation
               <div className="flex items-center gap-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
                 <WifiOff className="h-5 w-5 text-green-400 flex-shrink-0" />
                 <div className="flex flex-col">

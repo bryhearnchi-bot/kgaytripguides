@@ -7,6 +7,10 @@ import React, {
   ReactNode,
 } from 'react';
 
+// Cache schema version - increment this when the offline caching logic changes
+// This triggers a re-download notification for users with older cached data
+const OFFLINE_CACHE_VERSION = 2; // v2: Added complete endpoint, fixed API patterns, enhanced image caching
+
 interface OfflineTripStatus {
   enabled: boolean;
   downloadedAt?: string;
@@ -14,6 +18,7 @@ interface OfflineTripStatus {
   downloading?: boolean;
   progress?: number; // 0-100
   error?: string;
+  cacheVersion?: number; // Track which version of caching logic was used
 }
 
 interface OfflineStorageContextType {
@@ -41,6 +46,12 @@ interface OfflineStorageContextType {
   // Get download progress
   downloadProgress: number;
   isDownloading: boolean;
+
+  // Check if cache needs to be updated (outdated version)
+  isCacheOutdated: (tripId: number) => boolean;
+
+  // Get the current cache version
+  currentCacheVersion: number;
 }
 
 const OfflineStorageContext = createContext<OfflineStorageContextType | undefined>(undefined);
@@ -128,6 +139,18 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
       return newSet;
     });
   }, []);
+
+  const isCacheOutdated = useCallback(
+    (tripId: number) => {
+      const status = tripStatuses[tripId];
+      if (!status?.enabled) return false;
+
+      // If no version is stored, it's from before versioning was added (v1)
+      const cachedVersion = status.cacheVersion || 1;
+      return cachedVersion < OFFLINE_CACHE_VERSION;
+    },
+    [tripStatuses]
+  );
 
   // Download all trip data and images for offline access
   const downloadTripData = async (tripId: number, tripSlug: string): Promise<number> => {
@@ -334,6 +357,7 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
           size,
           downloading: false,
           progress: 100,
+          cacheVersion: OFFLINE_CACHE_VERSION,
         },
       }));
 
@@ -386,6 +410,8 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
     isPWAMode,
     downloadProgress,
     isDownloading,
+    isCacheOutdated,
+    currentCacheVersion: OFFLINE_CACHE_VERSION,
   };
 
   return <OfflineStorageContext.Provider value={value}>{children}</OfflineStorageContext.Provider>;

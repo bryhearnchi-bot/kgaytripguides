@@ -111,6 +111,15 @@ export function TripPageNavigation({
         });
       }
     } catch (error) {
+      // Check if user just cancelled the share dialog - this is not an error
+      if (
+        error instanceof Error &&
+        (error.name === 'AbortError' || error.message.includes('cancel'))
+      ) {
+        // User cancelled share dialog, that's fine - do nothing
+        return;
+      }
+
       // If everything fails, try one more time with clipboard
       try {
         await navigator.clipboard.writeText(tripUrl);
