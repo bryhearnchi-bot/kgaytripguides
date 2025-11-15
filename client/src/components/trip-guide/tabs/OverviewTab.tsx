@@ -1,21 +1,5 @@
 import React, { memo, useState } from 'react';
-import {
-  Info,
-  Ship,
-  MapPin,
-  Calendar,
-  Users,
-  Bell,
-  Anchor,
-  Activity,
-  Utensils,
-  Sparkles,
-  LayoutDashboard,
-  Map,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { Info, Ship, Activity, Utensils, Sparkles, Map } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
 import { cn, dateOnly } from '@/lib/utils';
 import { differenceInCalendarDays } from 'date-fns';
@@ -279,117 +263,112 @@ export const OverviewTab = memo(function OverviewTab({
             </div>
 
             {/* Ship Details - Desktop (collapsible) */}
-            <div className="bg-white/5 border border-white/20 rounded-xl shadow-lg p-4 md:p-6">
-              {/* Ship Header */}
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="bg-purple-500/30 p-1 rounded">
-                  <Ship className="w-3 h-3 text-purple-100" />
+            <div className="bg-white/5 border border-white/20 rounded-xl shadow-lg overflow-hidden">
+              <div className="p-4 md:p-6">
+                {/* Ship Header */}
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="bg-purple-500/30 p-1 rounded">
+                    <Ship className="w-3 h-3 text-purple-100" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white/90">
+                    {ship?.name || tripData?.trip?.shipName || 'Ship'}
+                  </h3>
                 </div>
-                <h3 className="text-sm font-bold text-white/90">
-                  {ship?.name || tripData?.trip?.shipName || 'Ship'}
-                </h3>
-              </div>
 
-              {/* Ship Content */}
-              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                {/* Ship Image - Always visible */}
-                {shipInfo?.imageUrl && (
-                  <div className="flex-shrink-0 w-full md:w-56 flex justify-center md:justify-end md:order-2">
-                    <img
-                      src={shipInfo.imageUrl}
-                      alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
-                      className="w-full md:w-56 h-48 md:h-36 object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
+                {/* Ship Content */}
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                  {/* Ship Image - Always visible */}
+                  {shipInfo?.imageUrl && (
+                    <div className="flex-shrink-0 w-full md:w-56 flex justify-center md:justify-end md:order-2">
+                      <img
+                        src={shipInfo.imageUrl}
+                        alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
+                        className="w-full md:w-56 h-48 md:h-36 object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
 
-                {/* Ship Info Section - Always visible on mobile */}
-                <div className="flex-1 md:order-1">
-                  {/* Ship Stats Grid - Always visible */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                    <div>
-                      <p className="text-xs text-white/60">Cruise Line</p>
-                      <p className="text-xs text-white/90">
-                        {ship?.cruiseLineName || tripData?.trip?.cruiseLine || 'Virgin Voyages'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-white/60">Capacity</p>
-                      <p className="text-xs text-white/90">
-                        {shipInfo?.capacity || '2,770 guests'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-white/60">Decks</p>
-                      <p className="text-xs text-white/90">{shipInfo?.decks || '17 (14 guest)'}</p>
+                  {/* Ship Info Section - Always visible on mobile */}
+                  <div className="flex-1 md:order-1">
+                    {/* Ship Stats Grid - Always visible */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                      <div>
+                        <p className="text-xs text-white/60">Cruise Line</p>
+                        <p className="text-xs text-white/90">
+                          {ship?.cruiseLineName || tripData?.trip?.cruiseLine || 'Virgin Voyages'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/60">Capacity</p>
+                        <p className="text-xs text-white/90">
+                          {shipInfo?.capacity || '2,770 guests'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/60">Decks</p>
+                        <p className="text-xs text-white/90">
+                          {shipInfo?.decks || '17 (14 guest)'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Collapsible content on mobile, always visible on desktop */}
+                <div
+                  className={cn(
+                    'lg:block', // Always visible on desktop
+                    isShipExpanded ? 'block' : 'hidden' // Toggle on mobile
+                  )}
+                >
+                  {/* Restaurants */}
+                  {shipInfo?.restaurants && shipInfo.restaurants.length > 0 && (
+                    <div className="border-t border-white/10 pt-4 pb-4 mt-4">
+                      <div className="flex items-center space-x-1 mb-3">
+                        <Utensils className="w-3 h-3 text-white/60" />
+                        <p className="text-xs font-semibold text-white/80">Dining Venues</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
+                        {shipInfo.restaurants.map((restaurant, idx) => (
+                          <p key={idx} className="text-xs text-white/70">
+                            • {restaurant.name}
+                            {restaurant.venueType && (
+                              <span className="text-white/50"> ({restaurant.venueType})</span>
+                            )}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Amenities */}
+                  {shipInfo?.amenities && shipInfo.amenities.length > 0 && (
+                    <div className="border-t border-white/10 pt-4 pb-2">
+                      <div className="flex items-center space-x-1 mb-3">
+                        <Sparkles className="w-3 h-3 text-white/60" />
+                        <p className="text-xs font-semibold text-white/80">Amenities</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
+                        {shipInfo.amenities.map((amenity, idx) => (
+                          <p key={idx} className="text-xs text-white/70">
+                            • {amenity}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Collapsible content on mobile, always visible on desktop */}
-              <div
-                className={cn(
-                  'lg:block', // Always visible on desktop
-                  isShipExpanded ? 'block' : 'hidden' // Toggle on mobile
-                )}
-              >
-                {/* Restaurants */}
-                {shipInfo?.restaurants && shipInfo.restaurants.length > 0 && (
-                  <div className="border-t border-white/10 pt-4 pb-4 mt-4">
-                    <div className="flex items-center space-x-1 mb-3">
-                      <Utensils className="w-3 h-3 text-white/60" />
-                      <p className="text-xs font-semibold text-white/80">Dining Venues</p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
-                      {shipInfo.restaurants.map((restaurant, idx) => (
-                        <p key={idx} className="text-xs text-white/70">
-                          • {restaurant.name}
-                          {restaurant.venueType && (
-                            <span className="text-white/50"> ({restaurant.venueType})</span>
-                          )}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Amenities */}
-                {shipInfo?.amenities && shipInfo.amenities.length > 0 && (
-                  <div className="border-t border-white/10 pt-4 pb-2">
-                    <div className="flex items-center space-x-1 mb-3">
-                      <Sparkles className="w-3 h-3 text-white/60" />
-                      <p className="text-xs font-semibold text-white/80">Amenities</p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
-                      {shipInfo.amenities.map((amenity, idx) => (
-                        <p key={idx} className="text-xs text-white/70">
-                          • {amenity}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Mobile-only collapse button - Bottom right */}
-              <div className="lg:hidden flex justify-end mt-4">
+              {/* Bottom Action Bar - Mobile only */}
+              <div className="lg:hidden bg-white/5 border-t border-white/10 px-3 py-1.5">
                 <button
                   onClick={toggleShipInfo}
-                  className="flex items-center gap-1 text-xs text-white/70 hover:text-white/90 transition-colors px-3 py-1.5 rounded-md hover:bg-white/5 border border-white/20"
+                  className="w-full flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
                 >
-                  {isShipExpanded ? (
-                    <>
-                      Less Info
-                      <ChevronUp className="w-3 h-3" />
-                    </>
-                  ) : (
-                    <>
-                      More Info
-                      <ChevronDown className="w-3 h-3" />
-                    </>
-                  )}
+                  <Ship className="w-3.5 h-3.5" />
+                  {isShipExpanded ? 'Less Ship Information' : 'Additional Ship Information'}
                 </button>
               </div>
             </div>
@@ -535,95 +514,91 @@ export const OverviewTab = memo(function OverviewTab({
 
           {/* 4. Ship Details - Mobile */}
           {isCruise && (
-            <div className="lg:hidden bg-white/5 border border-white/20 rounded-xl shadow-lg p-4 order-4">
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="bg-purple-500/30 p-1 rounded">
-                  <Ship className="w-3 h-3 text-purple-100" />
+            <div className="lg:hidden bg-white/5 border border-white/20 rounded-xl shadow-lg overflow-hidden order-4">
+              <div className="p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="bg-purple-500/30 p-1 rounded">
+                    <Ship className="w-3 h-3 text-purple-100" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white/90">
+                    {ship?.name || tripData?.trip?.shipName || 'Ship'}
+                  </h3>
                 </div>
-                <h3 className="text-sm font-bold text-white/90">
-                  {ship?.name || tripData?.trip?.shipName || 'Ship'}
-                </h3>
-              </div>
-              <div className="flex flex-col gap-4">
-                {shipInfo?.imageUrl && (
-                  <div className="flex-shrink-0 w-full flex justify-center">
-                    <img
-                      src={shipInfo.imageUrl}
-                      alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
-                      className="w-full h-48 object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  <div>
-                    <p className="text-xs text-white/60">Cruise Line</p>
-                    <p className="text-xs text-white/90">
-                      {ship?.cruiseLineName || tripData?.trip?.cruiseLine || 'Virgin Voyages'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-white/60">Capacity</p>
-                    <p className="text-xs text-white/90">{shipInfo?.capacity || '2,770 guests'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-white/60">Decks</p>
-                    <p className="text-xs text-white/90">{shipInfo?.decks || '17 (14 guest)'}</p>
-                  </div>
-                </div>
-                <div className={cn(isShipExpanded ? 'block' : 'hidden')}>
-                  {shipInfo?.restaurants && shipInfo.restaurants.length > 0 && (
-                    <div className="border-t border-white/10 pt-4 pb-4">
-                      <div className="flex items-center space-x-1 mb-3">
-                        <Utensils className="w-3 h-3 text-white/60" />
-                        <p className="text-xs font-semibold text-white/80">Dining Venues</p>
-                      </div>
-                      <div className="grid grid-cols-1 gap-y-1">
-                        {shipInfo.restaurants.map((restaurant, idx) => (
-                          <p key={idx} className="text-xs text-white/70">
-                            • {restaurant.name}
-                            {restaurant.venueType && (
-                              <span className="text-white/50"> ({restaurant.venueType})</span>
-                            )}
-                          </p>
-                        ))}
-                      </div>
+                <div className="flex flex-col gap-4">
+                  {shipInfo?.imageUrl && (
+                    <div className="flex-shrink-0 w-full flex justify-center">
+                      <img
+                        src={shipInfo.imageUrl}
+                        alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
+                        className="w-full h-48 object-cover"
+                        loading="lazy"
+                      />
                     </div>
                   )}
-                  {shipInfo?.amenities && shipInfo.amenities.length > 0 && (
-                    <div className="border-t border-white/10 pt-4 pb-2">
-                      <div className="flex items-center space-x-1 mb-3">
-                        <Sparkles className="w-3 h-3 text-white/60" />
-                        <p className="text-xs font-semibold text-white/80">Amenities</p>
-                      </div>
-                      <div className="grid grid-cols-1 gap-y-1">
-                        {shipInfo.amenities.map((amenity, idx) => (
-                          <p key={idx} className="text-xs text-white/70">
-                            • {amenity}
-                          </p>
-                        ))}
-                      </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-xs text-white/60">Cruise Line</p>
+                      <p className="text-xs text-white/90">
+                        {ship?.cruiseLineName || tripData?.trip?.cruiseLine || 'Virgin Voyages'}
+                      </p>
                     </div>
-                  )}
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    onClick={toggleShipInfo}
-                    className="flex items-center gap-1 text-xs text-white/70 hover:text-white/90 transition-colors px-3 py-1.5 rounded-md hover:bg-white/5 border border-white/20"
-                  >
-                    {isShipExpanded ? (
-                      <>
-                        Less Info
-                        <ChevronUp className="w-3 h-3" />
-                      </>
-                    ) : (
-                      <>
-                        More Info
-                        <ChevronDown className="w-3 h-3" />
-                      </>
+                    <div>
+                      <p className="text-xs text-white/60">Capacity</p>
+                      <p className="text-xs text-white/90">
+                        {shipInfo?.capacity || '2,770 guests'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60">Decks</p>
+                      <p className="text-xs text-white/90">{shipInfo?.decks || '17 (14 guest)'}</p>
+                    </div>
+                  </div>
+                  <div className={cn(isShipExpanded ? 'block' : 'hidden')}>
+                    {shipInfo?.restaurants && shipInfo.restaurants.length > 0 && (
+                      <div className="border-t border-white/10 pt-4 pb-4">
+                        <div className="flex items-center space-x-1 mb-3">
+                          <Utensils className="w-3 h-3 text-white/60" />
+                          <p className="text-xs font-semibold text-white/80">Dining Venues</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-y-1">
+                          {shipInfo.restaurants.map((restaurant, idx) => (
+                            <p key={idx} className="text-xs text-white/70">
+                              • {restaurant.name}
+                              {restaurant.venueType && (
+                                <span className="text-white/50"> ({restaurant.venueType})</span>
+                              )}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </button>
+                    {shipInfo?.amenities && shipInfo.amenities.length > 0 && (
+                      <div className="border-t border-white/10 pt-4 pb-2">
+                        <div className="flex items-center space-x-1 mb-3">
+                          <Sparkles className="w-3 h-3 text-white/60" />
+                          <p className="text-xs font-semibold text-white/80">Amenities</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-y-1">
+                          {shipInfo.amenities.map((amenity, idx) => (
+                            <p key={idx} className="text-xs text-white/70">
+                              • {amenity}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
+              {/* Bottom Action Bar */}
+              <div className="bg-white/5 border-t border-white/10 px-3 py-1.5">
+                <button
+                  onClick={toggleShipInfo}
+                  className="w-full flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
+                >
+                  <Ship className="w-3.5 h-3.5" />
+                  {isShipExpanded ? 'Less Ship Information' : 'Additional Ship Information'}
+                </button>
               </div>
             </div>
           )}

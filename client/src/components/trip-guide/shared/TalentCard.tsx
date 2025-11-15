@@ -181,7 +181,7 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
   }, [scheduledDaily, itinerary, talent.name]);
 
   const cardClassName =
-    'group relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/15 transition-all duration-300';
+    'group relative bg-white/5 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300';
 
   const cardContent = (
     <>

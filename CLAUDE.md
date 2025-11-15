@@ -168,6 +168,31 @@ Events are rendered in TWO separate places in the codebase. When making changes 
 
 **Current state:** Both locations show only venue badge (cyan). Artist and party theme badges removed from both (as of Nov 2025).
 
+**Expandable Card Pattern - Ship Info:**
+
+The Ship Info card on the Overview tab uses an expandable pattern with a button bar:
+
+- **Location:** `/client/src/components/trip-guide/tabs/OverviewTab.tsx` (search for "Ship Information")
+- **State management:** Uses `isShipExpanded` boolean state with toggle
+- **Button bar pattern:** Same as other cards - `bg-white/5 border-t border-white/10` container, button with `bg-white/5 hover:bg-white/10`
+- **Button text:** Toggles between "Additional Ship Information" and "Less Ship Information"
+- **Mobile only:** Hidden on desktop (`lg:hidden`)
+
+This pattern can be reused for other expandable cards. The card uses:
+
+```tsx
+<div className="bg-white/5 border border-white/20 rounded-xl shadow-lg overflow-hidden">
+  <div className="p-4 md:p-6">{/* Card content */}</div>
+  {/* Bottom Action Bar - Mobile only */}
+  <div className="lg:hidden bg-white/5 border-t border-white/10 px-3 py-1.5">
+    <button className="w-full flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all">
+      <Icon className="w-3.5 h-3.5" />
+      {isExpanded ? 'Less Information' : 'Additional Information'}
+    </button>
+  </div>
+</div>
+```
+
 **Trip Guide Tab Components:**
 
 Active tabs (in `/client/src/components/trip-guide/tabs/`):
