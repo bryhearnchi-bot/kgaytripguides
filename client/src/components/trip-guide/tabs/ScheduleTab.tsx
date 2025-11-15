@@ -1,5 +1,14 @@
-import React, { memo, useCallback, useState, useMemo, useEffect } from 'react';
-import { CalendarDays, ChevronDown, ChevronUp, MapPin, PartyPopper, Filter } from 'lucide-react';
+import React, { memo, useCallback, useState, useMemo, useEffect, useRef } from 'react';
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  PartyPopper,
+  Filter,
+  Info,
+  Shirt,
+} from 'lucide-react';
 import { EventCard } from '../shared/EventCard';
 import { PartyCard } from '../shared/PartyCard';
 import { isDateInPast } from '../utils/dateHelpers';
@@ -14,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface ScheduleTabProps {
   SCHEDULED_DAILY: any[];
@@ -50,6 +60,14 @@ export const ScheduleTab = memo(function ScheduleTab({
   const [isLoadingThemes, setIsLoadingThemes] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('All Dates');
   const [selectedPartyDate, setSelectedPartyDate] = useState<string>('All Dates');
+  const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const placeholderRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const [selectedParty, setSelectedParty] = useState<any | null>(null);
+  const [showInfoSheet, setShowInfoSheet] = useState(false);
+  const [showCostumeSheet, setShowCostumeSheet] = useState(false);
 
   // Scroll to top when sub-tab changes
   useEffect(() => {
@@ -57,7 +75,72 @@ export const ScheduleTab = memo(function ScheduleTab({
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    // Reset sticky state when changing tabs
+    setIsHeaderSticky(false);
   }, [subTab]);
+
+  // Measure header height for placeholder
+  useEffect(() => {
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      setHeaderHeight(height);
+    }
+  }, [subTab]);
+
+  // Handle sticky header on scroll
+  useEffect(() => {
+    // Find the actual scrolling container (could be window or a parent element)
+    const findScrollContainer = () => {
+      let element = placeholderRef.current?.parentElement;
+      while (element) {
+        const style = window.getComputedStyle(element);
+        if (
+          style.overflow === 'auto' ||
+          style.overflow === 'scroll' ||
+          style.overflowY === 'auto' ||
+          style.overflowY === 'scroll'
+        ) {
+          return element;
+        }
+        element = element.parentElement;
+      }
+      return null;
+    };
+
+    scrollContainerRef.current = findScrollContainer();
+
+    const handleScroll = () => {
+      if (!placeholderRef.current) return;
+
+      const placeholderRect = placeholderRef.current.getBoundingClientRect();
+      // When the placeholder's top goes above the viewport (or near top), make header sticky
+      const shouldBeSticky = placeholderRect.top <= 0;
+
+      if (shouldBeSticky !== isHeaderSticky) {
+        setIsHeaderSticky(shouldBeSticky);
+      }
+    };
+
+    // Listen on both window and any scroll container
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.addEventListener('scroll', handleScroll, { passive: true });
+    }
+
+    // Also listen for touchmove as backup for mobile
+    window.addEventListener('touchmove', handleScroll, { passive: true });
+
+    // Initial check
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchmove', handleScroll);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [isHeaderSticky]);
 
   // Filter and organize party events by date
   const partyEventsByDate = useMemo(() => {
@@ -177,126 +260,141 @@ export const ScheduleTab = memo(function ScheduleTab({
   }, [partyEventsByDate]);
 
   return (
-    <>
-      {/* Header: Tab bar on left, filter on right */}
-      <div className="max-w-6xl mx-auto pb-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Sub-tabs on the left */}
-          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
-            <button
-              onClick={() => setSubTab('schedule')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                subTab === 'schedule'
-                  ? 'bg-white/20 text-white'
-                  : 'text-white/60 hover:text-white/80'
-              }`}
-            >
-              <CalendarDays className="w-3.5 h-3.5" />
-              Schedule
-            </button>
-            <button
-              onClick={() => setSubTab('parties')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                subTab === 'parties'
-                  ? 'bg-pink-500/30 text-white'
-                  : 'text-pink-300 hover:text-pink-200'
-              }`}
-            >
-              <PartyPopper className="w-3.5 h-3.5" />
-              Parties
-            </button>
-          </div>
+    <div className="relative">
+      {/* Placeholder to maintain space when header becomes fixed */}
+      <div
+        ref={placeholderRef}
+        className="relative"
+        style={{ minHeight: isHeaderSticky ? headerHeight : 'auto' }}
+      >
+        {/* Header: Tab bar on left, filter on right - becomes fixed when scrolled */}
+        <div
+          ref={headerRef}
+          className={`pb-4 pt-2 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 z-50 px-4' : ''}`}
+        >
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between gap-4">
+              {/* Sub-tabs on the left */}
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
+                <button
+                  onClick={() => setSubTab('schedule')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    subTab === 'schedule'
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/60 hover:text-white/80'
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  Schedule
+                </button>
+                <button
+                  onClick={() => setSubTab('parties')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    subTab === 'parties'
+                      ? 'bg-pink-500/30 text-white'
+                      : 'text-pink-300 hover:text-pink-200'
+                  }`}
+                >
+                  <PartyPopper className="w-3.5 h-3.5" />
+                  Parties
+                </button>
+              </div>
 
-          {/* Date filter on the right */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
-                <Filter className="w-3 h-3" />
-                <span>
-                  {subTab === 'schedule'
-                    ? selectedDate === 'All Dates'
-                      ? 'Select Date'
-                      : dateOptions.find(opt => opt.key === selectedDate)?.label || selectedDate
-                    : selectedPartyDate === 'All Dates'
-                      ? 'Select Date'
-                      : partyDateOptions.find(opt => opt.key === selectedPartyDate)?.label ||
-                        selectedPartyDate}
-                </span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#002147] border-white/20 min-w-[280px]">
-              {subTab === 'schedule' ? (
-                <>
-                  <DropdownMenuItem
-                    onClick={() => setSelectedDate('All Dates')}
-                    className={`cursor-pointer text-white hover:bg-white/10 ${
-                      selectedDate === 'All Dates' ? 'bg-white/20' : ''
-                    }`}
-                  >
-                    <CalendarDays className="w-4 h-4 mr-2" />
-                    All Dates
-                  </DropdownMenuItem>
-                  {dateOptions.map(option => {
-                    const isActive = selectedDate === option.key;
-                    return (
+              {/* Date filter on the right */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
+                    <Filter className="w-3 h-3" />
+                    <span>
+                      {subTab === 'schedule'
+                        ? selectedDate === 'All Dates'
+                          ? 'Select Date'
+                          : dateOptions.find(opt => opt.key === selectedDate)?.label || selectedDate
+                        : selectedPartyDate === 'All Dates'
+                          ? 'Select Date'
+                          : partyDateOptions.find(opt => opt.key === selectedPartyDate)?.label ||
+                            selectedPartyDate}
+                    </span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-[#002147] border-white/20 min-w-[280px]"
+                >
+                  {subTab === 'schedule' ? (
+                    <>
                       <DropdownMenuItem
-                        key={option.key}
-                        onClick={() => setSelectedDate(option.key)}
+                        onClick={() => setSelectedDate('All Dates')}
                         className={`cursor-pointer text-white hover:bg-white/10 ${
-                          isActive ? 'bg-white/20' : ''
+                          selectedDate === 'All Dates' ? 'bg-white/20' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{option.label}</span>
-                          {option.port && (
-                            <>
-                              <span className="text-white/40">•</span>
-                              <span className="text-white/70">{option.port}</span>
-                            </>
-                          )}
-                        </div>
+                        <CalendarDays className="w-4 h-4 mr-2" />
+                        All Dates
                       </DropdownMenuItem>
-                    );
-                  })}
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem
-                    onClick={() => setSelectedPartyDate('All Dates')}
-                    className={`cursor-pointer text-white hover:bg-white/10 ${
-                      selectedPartyDate === 'All Dates' ? 'bg-white/20' : ''
-                    }`}
-                  >
-                    <CalendarDays className="w-4 h-4 mr-2" />
-                    All Dates
-                  </DropdownMenuItem>
-                  {partyDateOptions.map(option => {
-                    const isActive = selectedPartyDate === option.key;
-                    return (
+                      {dateOptions.map(option => {
+                        const isActive = selectedDate === option.key;
+                        return (
+                          <DropdownMenuItem
+                            key={option.key}
+                            onClick={() => setSelectedDate(option.key)}
+                            className={`cursor-pointer text-white hover:bg-white/10 ${
+                              isActive ? 'bg-white/20' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{option.label}</span>
+                              {option.port && (
+                                <>
+                                  <span className="text-white/40">•</span>
+                                  <span className="text-white/70">{option.port}</span>
+                                </>
+                              )}
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <>
                       <DropdownMenuItem
-                        key={option.key}
-                        onClick={() => setSelectedPartyDate(option.key)}
+                        onClick={() => setSelectedPartyDate('All Dates')}
                         className={`cursor-pointer text-white hover:bg-white/10 ${
-                          isActive ? 'bg-white/20' : ''
+                          selectedPartyDate === 'All Dates' ? 'bg-white/20' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{option.label}</span>
-                          {option.port && (
-                            <>
-                              <span className="text-white/40">•</span>
-                              <span className="text-white/70">{option.port}</span>
-                            </>
-                          )}
-                        </div>
+                        <CalendarDays className="w-4 h-4 mr-2" />
+                        All Dates
                       </DropdownMenuItem>
-                    );
-                  })}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                      {partyDateOptions.map(option => {
+                        const isActive = selectedPartyDate === option.key;
+                        return (
+                          <DropdownMenuItem
+                            key={option.key}
+                            onClick={() => setSelectedPartyDate(option.key)}
+                            className={`cursor-pointer text-white hover:bg-white/10 ${
+                              isActive ? 'bg-white/20' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{option.label}</span>
+                              {option.port && (
+                                <>
+                                  <span className="text-white/40">•</span>
+                                  <span className="text-white/70">{option.port}</span>
+                                </>
+                              )}
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -347,6 +445,7 @@ export const ScheduleTab = memo(function ScheduleTab({
                             onPartyThemeClick={onPartyThemeClick}
                             allSchedule={SCHEDULED_DAILY}
                             itinerary={ITINERARY}
+                            allTalent={TALENT}
                           />
                         ))}
                       </div>
@@ -376,21 +475,42 @@ export const ScheduleTab = memo(function ScheduleTab({
                       {organizedPartyThemes
                         .filter(theme => theme.partyType === 'T-Dance')
                         .map(theme => (
-                          <div
-                            key={theme.id}
-                            className="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20 hover:border-white/40 transition-all cursor-pointer"
-                          >
-                            {theme.imageUrl && (
-                              <img
-                                src={theme.imageUrl}
-                                alt={theme.name}
-                                className="w-full h-48 object-cover"
-                                loading="lazy"
-                              />
-                            )}
-                            <div className="p-4">
-                              <h4 className="text-lg font-bold text-white mb-2">{theme.name}</h4>
-                              <p className="text-sm text-white/70">{theme.shortDescription}</p>
+                          <div key={theme.id}>
+                            {/* Party Image Container */}
+                            <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-200 overflow-hidden">
+                              {theme.imageUrl && (
+                                <img
+                                  src={theme.imageUrl}
+                                  alt={theme.name}
+                                  className="w-full h-48 object-cover"
+                                  loading="lazy"
+                                />
+                              )}
+                            </div>
+                            {/* Buttons - No background, sitting on page */}
+                            <div className="px-3 py-1.5">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedParty(theme);
+                                    setShowInfoSheet(true);
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
+                                >
+                                  <Info className="w-3.5 h-3.5" />
+                                  Party Info
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedParty(theme);
+                                    setShowCostumeSheet(true);
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
+                                >
+                                  <Shirt className="w-3.5 h-3.5" />
+                                  Costume Ideas
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -406,21 +526,42 @@ export const ScheduleTab = memo(function ScheduleTab({
                       {organizedPartyThemes
                         .filter(theme => theme.partyType === 'Night Party')
                         .map(theme => (
-                          <div
-                            key={theme.id}
-                            className="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20 hover:border-white/40 transition-all cursor-pointer"
-                          >
-                            {theme.imageUrl && (
-                              <img
-                                src={theme.imageUrl}
-                                alt={theme.name}
-                                className="w-full h-48 object-cover"
-                                loading="lazy"
-                              />
-                            )}
-                            <div className="p-4">
-                              <h4 className="text-lg font-bold text-white mb-2">{theme.name}</h4>
-                              <p className="text-sm text-white/70">{theme.shortDescription}</p>
+                          <div key={theme.id}>
+                            {/* Party Image Container */}
+                            <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-200 overflow-hidden">
+                              {theme.imageUrl && (
+                                <img
+                                  src={theme.imageUrl}
+                                  alt={theme.name}
+                                  className="w-full h-48 object-cover"
+                                  loading="lazy"
+                                />
+                              )}
+                            </div>
+                            {/* Buttons - No background, sitting on page */}
+                            <div className="px-3 py-1.5">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedParty(theme);
+                                    setShowInfoSheet(true);
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
+                                >
+                                  <Info className="w-3.5 h-3.5" />
+                                  Party Info
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedParty(theme);
+                                    setShowCostumeSheet(true);
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
+                                >
+                                  <Shirt className="w-3.5 h-3.5" />
+                                  Costume Ideas
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -476,6 +617,57 @@ export const ScheduleTab = memo(function ScheduleTab({
           )}
         </div>
       )}
-    </>
+
+      {/* Party Info Sheet */}
+      <Sheet open={showInfoSheet} onOpenChange={setShowInfoSheet}>
+        <SheetContent
+          side="bottom"
+          className="bg-[#002147] border-white/10 text-white h-[70vh] rounded-t-2xl"
+        >
+          <SheetHeader className="pb-4 border-b border-white/10">
+            <SheetTitle className="text-white text-xl font-bold">{selectedParty?.name}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4 overflow-y-auto max-h-[calc(70vh-120px)]">
+            {selectedParty?.shortDescription && (
+              <p className="text-white/90 text-base leading-relaxed">
+                {selectedParty.shortDescription}
+              </p>
+            )}
+            {selectedParty?.longDescription && (
+              <p className="text-white/80 text-sm leading-relaxed">
+                {selectedParty.longDescription}
+              </p>
+            )}
+            {!selectedParty?.shortDescription && !selectedParty?.longDescription && (
+              <p className="text-white/60 text-center py-8">No party information available yet.</p>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Costume Ideas Sheet */}
+      <Sheet open={showCostumeSheet} onOpenChange={setShowCostumeSheet}>
+        <SheetContent
+          side="bottom"
+          className="bg-[#002147] border-white/10 text-white h-[70vh] rounded-t-2xl"
+        >
+          <SheetHeader className="pb-4 border-b border-white/10">
+            <SheetTitle className="text-white text-xl font-bold flex items-center gap-2">
+              <Shirt className="w-5 h-5 text-pink-300" />
+              Costume Ideas for {selectedParty?.name}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4 overflow-y-auto max-h-[calc(70vh-120px)]">
+            {selectedParty?.costumeIdeas ? (
+              <p className="text-white/90 text-base leading-relaxed">
+                {selectedParty.costumeIdeas}
+              </p>
+            ) : (
+              <p className="text-white/60 text-center py-8">No costume ideas available yet.</p>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 });

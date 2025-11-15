@@ -1,7 +1,9 @@
-import React, { memo, useMemo } from 'react';
-import { Clock, MapPin, Sparkles } from 'lucide-react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
+import { Info, Shirt, Clock, MapPin } from 'lucide-react';
 import type { DailyEvent, PartyTheme } from '@/data/trip-data';
 import { formatTime } from '@/lib/timeFormat';
+import { ReactiveBottomSheet } from '@/components/ui/ReactiveBottomSheet';
+import { useTimeFormat } from '@/contexts/TimeFormatContext';
 
 interface PartyCardProps {
   event: DailyEvent;
@@ -13,9 +15,35 @@ interface PartyCardProps {
 export const PartyCard = memo<PartyCardProps>(function PartyCard({
   event,
   partyTheme,
-  timeFormat,
+  timeFormat: propTimeFormat,
   onPartyClick,
 }) {
+  const { timeFormat: contextTimeFormat } = useTimeFormat();
+  const [showInfoSheet, setShowInfoSheet] = useState(false);
+  const [showCostumeSheet, setShowCostumeSheet] = useState(false);
+
+  // Use prop timeFormat if provided, otherwise use context
+  const timeFormat = propTimeFormat || contextTimeFormat;
+
+  // Lock body scroll when modals are open
+  useEffect(() => {
+    if (showInfoSheet || showCostumeSheet) {
+      const scrollY = window.scrollY;
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showInfoSheet, showCostumeSheet]);
+
   // Memoize image URL computation
   const imageUrl = useMemo(
     () =>
@@ -28,16 +56,14 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
   const formattedTime = useMemo(() => formatTime(event.time, timeFormat), [event.time, timeFormat]);
 
   return (
-    <div className="group relative bg-white/10 border border-white/20 rounded-xl overflow-hidden transition-colors duration-200 h-full">
-      {/* Desktop: Side-by-side, Mobile: Stacked - Fixed height to match all cards */}
-      <div className="flex flex-col sm:flex-row h-full sm:h-[240px]">
-        {/* Left/Top: Party Image with overlay info */}
-        <div className="relative w-full sm:w-1/2 h-48 sm:h-full flex-shrink-0">
-          {/* Party Image */}
+    <>
+      <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-200 overflow-hidden">
+        {/* Party Image */}
+        <div className="relative">
           <img
             src={imageUrl}
             alt={event.title}
-            className="w-full h-full object-cover"
+            className="w-full h-48 object-cover"
             loading="lazy"
             decoding="async"
             onError={e => {
@@ -46,64 +72,112 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
             }}
           />
 
-          {/* Sparkle Icon - Top Right */}
-          <div className="absolute top-3 right-3 bg-pink-500/40 rounded-full p-1.5 border border-pink-400/50 z-20">
-            <Sparkles className="w-3.5 h-3.5 text-pink-200" />
-          </div>
-
           {/* Party Info Overlay - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 z-20 bg-gradient-to-t from-black/90 to-transparent">
-            {/* Party Name */}
-            <h3 className="text-white font-bold text-base sm:text-lg mb-2 line-clamp-2">
-              {event.title}
-            </h3>
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+            {/* Party Name Badge */}
+            <div className="mb-2">
+              <span className="inline-block px-3 py-1 rounded-full bg-[#002147]/80 text-white font-bold text-sm line-clamp-1">
+                {event.title}
+              </span>
+            </div>
 
-            {/* Time and Location Badges - Side by Side */}
+            {/* Time and Location Badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/50 border border-blue-400/50">
                 <Clock className="w-2.5 h-2.5 text-white" />
                 <span className="text-white text-[10px] font-semibold">{formattedTime}</span>
               </div>
 
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/50 border border-cyan-400/50">
-                <MapPin className="w-2.5 h-2.5 text-white" />
-                <span className="text-white text-[10px] font-medium truncate max-w-[120px]">
-                  {event.venue}
-                </span>
-              </div>
+              {event.venue && (
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/50 border border-cyan-400/50">
+                  <MapPin className="w-2.5 h-2.5 text-white" />
+                  <span className="text-white text-[10px] font-medium truncate max-w-[120px]">
+                    {event.venue}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right/Bottom: Content Details */}
-        <div className="flex-1 p-4 sm:p-5 md:p-6 flex flex-col min-w-0 bg-black/20">
-          <div className="flex-1 min-w-0 space-y-3">
-            {/* Description */}
-            {(partyTheme?.desc || partyTheme?.longDescription) && (
-              <div>
-                <p className="text-white/90 text-xs leading-relaxed line-clamp-4">
-                  {partyTheme.desc || partyTheme.longDescription}
-                </p>
-              </div>
-            )}
-
-            {/* Costume Ideas */}
-            {partyTheme?.costumeIdeas && (
-              <div className="pt-2 border-t border-white/20">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-pink-300" />
-                  <h4 className="text-xs font-bold text-pink-300 uppercase tracking-wide">
-                    Costume Ideas
-                  </h4>
-                </div>
-                <p className="text-white/90 text-xs leading-relaxed line-clamp-4">
-                  {partyTheme.costumeIdeas}
-                </p>
-              </div>
-            )}
+        {/* Bottom Action Bar */}
+        <div className="bg-white/5 border-t border-white/10 px-3 py-1.5">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowInfoSheet(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
+            >
+              <Info className="w-3.5 h-3.5" />
+              Party Info
+            </button>
+            <button
+              onClick={() => setShowCostumeSheet(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
+            >
+              <Shirt className="w-3.5 h-3.5" />
+              Costume Ideas
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Party Info Sheet */}
+      <ReactiveBottomSheet
+        open={showInfoSheet}
+        onOpenChange={setShowInfoSheet}
+        title={event.title}
+        icon={Info}
+      >
+        <div className="space-y-4">
+          {/* Party Hero Image */}
+          <div className="w-full">
+            <img
+              src={imageUrl}
+              alt={event.title}
+              className="w-full aspect-video object-cover rounded-xl border-2 border-blue-400/30 shadow-lg"
+              loading="lazy"
+            />
+          </div>
+
+          {partyTheme?.shortDescription && (
+            <p className="text-white/90 text-sm leading-relaxed">{partyTheme.shortDescription}</p>
+          )}
+          {(partyTheme?.desc || partyTheme?.longDescription) && (
+            <p className="text-white/80 text-sm leading-relaxed">
+              {partyTheme.desc || partyTheme.longDescription}
+            </p>
+          )}
+          {!partyTheme?.shortDescription && !partyTheme?.desc && !partyTheme?.longDescription && (
+            <p className="text-white/60 text-sm italic">No party information available yet.</p>
+          )}
+        </div>
+      </ReactiveBottomSheet>
+
+      {/* Costume Ideas Sheet */}
+      <ReactiveBottomSheet
+        open={showCostumeSheet}
+        onOpenChange={setShowCostumeSheet}
+        title="Costume Ideas"
+        icon={Shirt}
+      >
+        <div className="space-y-4">
+          {/* Party Hero Image */}
+          <div className="w-full">
+            <img
+              src={imageUrl}
+              alt={event.title}
+              className="w-full aspect-video object-cover rounded-xl border-2 border-pink-400/30 shadow-lg"
+              loading="lazy"
+            />
+          </div>
+
+          {partyTheme?.costumeIdeas ? (
+            <p className="text-white/80 text-sm leading-relaxed">{partyTheme.costumeIdeas}</p>
+          ) : (
+            <p className="text-white/60 text-sm italic">No costume ideas available yet.</p>
+          )}
+        </div>
+      </ReactiveBottomSheet>
+    </>
   );
 });

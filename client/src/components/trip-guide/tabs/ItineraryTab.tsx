@@ -141,7 +141,7 @@ export const ItineraryTab = memo(function ItineraryTab({
           }}
         />
       ),
-      job_description: stop.location?.description || 'Description coming soon', // Location description for modal (always from location table)
+      job_description: stop.locationDescription || 'Description coming soon', // Location description for modal (always from location table)
       itinerary_description: stop.description || undefined, // Itinerary-specific description for card (only if exists in itinerary table)
       salary: arriveDepart,
       location: '', // Not used anymore, arrive/depart combined in salary

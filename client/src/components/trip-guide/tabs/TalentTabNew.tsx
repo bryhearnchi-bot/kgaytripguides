@@ -29,6 +29,7 @@ interface TalentTabProps {
   TALENT: Talent[];
   SCHEDULED_DAILY: Array<{
     key: string;
+    date?: string;
     items: Array<{
       time: string;
       title: string;
@@ -37,12 +38,18 @@ interface TalentTabProps {
       date?: string;
     }>;
   }>;
+  ITINERARY?: Array<{
+    key: string;
+    date?: string;
+    port?: string;
+  }>;
   onTalentClick: (name: string) => void;
 }
 
 export const TalentTabNew = memo(function TalentTabNew({
   TALENT,
   SCHEDULED_DAILY,
+  ITINERARY = [],
   onTalentClick,
 }: TalentTabProps) {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
@@ -228,6 +235,8 @@ export const TalentTabNew = memo(function TalentTabNew({
                         categoryIcon={getTalentIcon(talent.cat)}
                         useYellowBadge={useYellowBadge}
                         disableAnimation={true}
+                        scheduledDaily={SCHEDULED_DAILY}
+                        itinerary={ITINERARY}
                       />
                     </div>
                   </motion.div>

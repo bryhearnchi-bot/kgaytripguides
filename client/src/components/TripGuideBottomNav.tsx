@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useRef } from 'react';
 import {
   Map,
   CalendarDays,
@@ -21,64 +21,13 @@ interface TripGuideBottomNavProps {
 export function TripGuideBottomNav({ activeTab, onTabChange, isCruise }: TripGuideBottomNavProps) {
   const { user } = useSupabaseAuthContext();
   const navRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const ticking = useRef(false);
-
-  // Handle scroll to show/hide navigation
-  const handleScroll = useCallback(() => {
-    const currentScrollY = window.scrollY;
-
-    if (!ticking.current) {
-      window.requestAnimationFrame(() => {
-        // Prevent hiding during iOS Safari bounce (negative scroll)
-        if (currentScrollY < 0) {
-          ticking.current = false;
-          return;
-        }
-
-        // Only hide if scrolled more than 10px
-        if (currentScrollY < 10) {
-          setIsVisible(true);
-        } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-          // Scrolling down - require more scroll distance to hide
-          setIsVisible(false);
-        } else if (currentScrollY < lastScrollY.current) {
-          // Scrolling up
-          setIsVisible(true);
-        }
-
-        lastScrollY.current = currentScrollY;
-        ticking.current = false;
-      });
-
-      ticking.current = true;
-    }
-  }, []);
-
-  useEffect(() => {
-    // Reset visibility when component mounts
-    setIsVisible(true);
-    lastScrollY.current = window.scrollY;
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [handleScroll]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[10001] xl:hidden">
       <nav
         ref={navRef}
-        className={cn(
-          'bg-white/30 backdrop-blur-lg border-t border-white/30 transition-transform duration-300 ease-in-out',
-          !isVisible && 'translate-y-full'
-        )}
+        className="bg-white/30 backdrop-blur-lg border-t border-white/30"
         style={{
-          transform: isVisible ? 'translate3d(0, 0, 0)' : 'translate3d(0, 100%, 0)',
-          willChange: 'transform',
           paddingBottom: 'var(--nav-bottom-padding, 0px)',
         }}
       >

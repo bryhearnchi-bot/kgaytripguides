@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, type JSX } from 'react';
 import type { SVGProps } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useOnClickOutside } from 'usehooks-ts';
+import { EventCard } from '@/components/trip-guide/shared/EventCard';
 import {
   Circle,
   MapPin,
@@ -15,7 +16,9 @@ import {
   X,
   ChevronRight,
   CalendarDays,
+  Map,
 } from 'lucide-react';
+import { ReactiveBottomSheet } from '@/components/ui/ReactiveBottomSheet';
 
 export interface LocationAttraction {
   id: number;
@@ -164,7 +167,6 @@ export default function JobListingComponent({
   talent,
 }: JobListingComponentProps) {
   const [activeItem, setActiveItem] = useState<Job | null>(null);
-  const [showEventsSlideUp, setShowEventsSlideUp] = useState(false);
   const [showTalentDetail, setShowTalentDetail] = useState(false);
   const [showPartyThemeDetail, setShowPartyThemeDetail] = useState(false);
   const [showEventDescriptionModal, setShowEventDescriptionModal] = useState(false);
@@ -174,31 +176,18 @@ export default function JobListingComponent({
   const [showViewTypeModal, setShowViewTypeModal] = useState(false);
   const [showArtistSelectModal, setShowArtistSelectModal] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
+  // New fly-up states
+  const [showInfoSheet, setShowInfoSheet] = useState(false);
+  const [showEventsSheet, setShowEventsSheet] = useState(false);
+  const [showEventDetailSheet, setShowEventDetailSheet] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedEventForDetail, setSelectedEventForDetail] = useState<any>(null);
   const ref = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-  const slideUpRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
 
   // Close itinerary card only if no other modals are open
   useOnClickOutside(ref, () => {
-    if (
-      !showEventsSlideUp &&
-      !showTalentDetail &&
-      !showPartyThemeDetail &&
-      !showEventDescriptionModal
-    ) {
+    if (!showTalentDetail && !showPartyThemeDetail && !showEventDescriptionModal) {
       setActiveItem(null);
-    }
-  });
-
-  // Close events panel only if talent/party theme/event description detail is not showing
-  useOnClickOutside(slideUpRef, () => {
-    if (
-      showEventsSlideUp &&
-      !showTalentDetail &&
-      !showPartyThemeDetail &&
-      !showEventDescriptionModal
-    ) {
-      setShowEventsSlideUp(false);
-      setDayEvents([]);
     }
   });
 
@@ -287,9 +276,6 @@ export default function JobListingComponent({
         } else if (showTalentDetail) {
           setShowTalentDetail(false);
           setSelectedTalent(null);
-        } else if (showEventsSlideUp) {
-          setShowEventsSlideUp(false);
-          setDayEvents([]);
         } else if (activeItem) {
           setActiveItem(null);
         }
@@ -304,7 +290,6 @@ export default function JobListingComponent({
     showEventDescriptionModal,
     showPartyThemeDetail,
     showTalentDetail,
-    showEventsSlideUp,
     activeItem,
   ]);
 
@@ -319,7 +304,7 @@ export default function JobListingComponent({
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             onClick={() => {
               // Only close if no modals are open
-              if (!showEventsSlideUp && !showTalentDetail) {
+              if (!showTalentDetail) {
                 setActiveItem(null);
               }
             }}
@@ -334,11 +319,7 @@ export default function JobListingComponent({
               ref={ref}
               layoutId={`workItem-${activeItem.job_time}`}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{
-                opacity: showEventsSlideUp ? 0 : 1,
-                scale: showEventsSlideUp ? 0.95 : 1,
-                y: showEventsSlideUp ? -100 : 0,
-              }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               style={{ borderRadius: 16 }}
@@ -350,8 +331,6 @@ export default function JobListingComponent({
                   e.stopPropagation();
                   setShowTalentDetail(false);
                   setSelectedTalent(null);
-                  setShowEventsSlideUp(false);
-                  setDayEvents([]);
                   setActiveItem(null);
                 }}
                 className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all hover:scale-110"
@@ -460,606 +439,8 @@ export default function JobListingComponent({
                     </ul>
                   </div>
                 )}
-
-                {/* View Events Button */}
-                {onViewEvents && (
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      // Find events for this day
-                      const events = scheduledDaily?.find(day => day.key === activeItem.job_time);
-                      setDayEvents(events?.items || []);
-                      setShowEventsSlideUp(true);
-                    }}
-                    className="w-full mt-4 px-4 py-2.5 bg-cyan-500/20 hover:bg-cyan-400/30 backdrop-blur-md border border-white/10 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    View Events for This Day
-                  </button>
-                )}
               </motion.div>
             </motion.div>
-
-            {/* Events Modal - Mobile: full-width from bottom, Desktop: centered */}
-            <AnimatePresence>
-              {showEventsSlideUp && activeItem && (
-                <div className="pointer-events-none fixed inset-0 z-[55] md:grid md:place-items-center md:p-4">
-                  <motion.div
-                    ref={slideUpRef}
-                    initial={{ y: '100%', opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: '100%', opacity: 0 }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                    className="pointer-events-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border border-white/20 shadow-2xl overflow-hidden flex flex-col z-[60] fixed bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh] md:relative md:rounded-2xl md:w-full md:max-w-3xl md:max-h-[85vh]"
-                    style={{ touchAction: 'pan-y' }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {/* Sticky Header */}
-                    <div className="sticky top-0 z-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl border-b border-white/20 p-6 pb-4 flex-shrink-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white font-bold text-lg">
-                          Events for {activeItem.title}
-                        </h3>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            setShowEventsSlideUp(false);
-                            setDayEvents([]);
-                          }}
-                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all hover:scale-110"
-                          aria-label="Close Events"
-                        >
-                          <X className="w-4 h-4 text-white" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Scrollable Events List */}
-                    <div className="p-6 pt-4 overflow-y-auto flex-1">
-                      {dayEvents.length > 0 ? (
-                        <div className="space-y-3">
-                          {dayEvents.map((event, idx) => {
-                            // Get event image or fallback to first artist's image
-                            const eventImage = event.imageUrl || event.talent?.[0]?.profileImageUrl;
-
-                            return (
-                              <div
-                                key={idx}
-                                onClick={() => handleEventCardClick(event)}
-                                className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 cursor-pointer hover:bg-white/15 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
-                              >
-                                <div className="flex gap-4">
-                                  {/* Event/Artist Image - Larger Square */}
-                                  {eventImage && (
-                                    <div className="flex-shrink-0">
-                                      <img
-                                        src={eventImage}
-                                        alt={event.title}
-                                        className="w-24 h-24 object-cover rounded-lg border border-white/20 shadow-md"
-                                      />
-                                    </div>
-                                  )}
-
-                                  {/* Event Details */}
-                                  <div className="flex-1 flex flex-col gap-2.5 min-w-0">
-                                    {/* Desktop/Tablet: Time • Event Name on one line */}
-                                    <div className="hidden md:flex items-center gap-2">
-                                      <span className="text-ocean-200 text-sm font-semibold">
-                                        {event.time}
-                                      </span>
-                                      <Circle className="w-1.5 h-1.5 fill-current text-ocean-300" />
-                                      <span className="text-white font-bold text-base">
-                                        {event.title}
-                                      </span>
-                                    </div>
-
-                                    {/* Mobile: Time on separate line */}
-                                    <div className="md:hidden">
-                                      <span className="text-ocean-200 text-sm font-semibold">
-                                        {event.time}
-                                      </span>
-                                    </div>
-
-                                    {/* Mobile: Event Name on separate line */}
-                                    <div className="md:hidden">
-                                      <span className="text-white font-bold text-base">
-                                        {event.title}
-                                      </span>
-                                    </div>
-
-                                    {/* Venue/Location - separate line for both */}
-                                    <div className="flex items-center gap-2">
-                                      <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-medium border border-cyan-400/30">
-                                        {event.venue || 'TBD'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-ocean-200 text-center py-8">
-                          No events scheduled for this day
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Talent Detail Slide-In - slides over ENTIRE events card including header */}
-                    <AnimatePresence>
-                      {showTalentDetail && selectedTalent && (
-                        <motion.div
-                          initial={{ x: '100%' }}
-                          animate={{ x: 0 }}
-                          exit={{ x: '100%' }}
-                          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                          className="absolute inset-0 z-[70] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl overflow-y-auto rounded-t-2xl md:rounded-2xl"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <div className="p-6">
-                            <div className="text-white">
-                              {/* Circular Back Button */}
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setShowTalentDetail(false);
-                                  setSelectedTalent(null);
-                                }}
-                                className="w-10 h-10 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 flex items-center justify-center mb-4 transition-all hover:scale-110"
-                                aria-label="Back to Events"
-                              >
-                                <span className="text-purple-200 text-xl">←</span>
-                              </button>
-
-                              {/* Mobile: Full Width Image, Desktop: Wrapped Layout */}
-                              <div className="flex flex-col md:flex-row-reverse gap-6 mb-6">
-                                {/* Profile Image - Perfect Square */}
-                                {selectedTalent.profileImageUrl && (
-                                  <div className="w-full md:w-64 md:flex-shrink-0">
-                                    <img
-                                      src={selectedTalent.profileImageUrl}
-                                      alt={selectedTalent.name}
-                                      className="w-full aspect-square object-cover rounded-xl border-2 border-purple-400/30 shadow-lg"
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Artist Info */}
-                                <div className="flex-1">
-                                  {/* Artist Name */}
-                                  <h2 className="text-2xl font-bold mb-2">{selectedTalent.name}</h2>
-
-                                  {/* Known For */}
-                                  {selectedTalent.knownFor && (
-                                    <p className="text-purple-200 text-sm mb-4">
-                                      {selectedTalent.knownFor}
-                                    </p>
-                                  )}
-
-                                  {/* Bio */}
-                                  {selectedTalent.bio && (
-                                    <div className="mb-4">
-                                      <p className="text-purple-50 text-sm leading-relaxed">
-                                        {selectedTalent.bio}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {/* Social Links - Under Bio */}
-                                  {selectedTalent.socialLinks &&
-                                    Object.keys(selectedTalent.socialLinks).length > 0 && (
-                                      <div className="flex flex-wrap gap-2">
-                                        {Object.entries(selectedTalent.socialLinks).map(
-                                          ([platform, url]: [string, any]) => {
-                                            const platformLower = platform.toLowerCase();
-                                            let Icon = Globe; // Default icon
-
-                                            if (platformLower.includes('instagram'))
-                                              Icon = Instagram;
-                                            else if (
-                                              platformLower.includes('twitter') ||
-                                              platformLower.includes('x')
-                                            )
-                                              Icon = Twitter;
-                                            else if (platformLower.includes('facebook'))
-                                              Icon = Facebook;
-                                            else if (platformLower.includes('youtube'))
-                                              Icon = Youtube;
-                                            else if (
-                                              platformLower.includes('spotify') ||
-                                              platformLower.includes('music')
-                                            )
-                                              Icon = Music;
-
-                                            return (
-                                              <a
-                                                key={platform}
-                                                href={url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 rounded-lg border border-purple-400/30 transition-all hover:scale-110"
-                                                title={platform}
-                                              >
-                                                <Icon className="w-4 h-4" />
-                                              </a>
-                                            );
-                                          }
-                                        )}
-                                      </div>
-                                    )}
-                                </div>
-                              </div>
-
-                              {/* Performances */}
-                              <div className="mb-6">
-                                <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-4">
-                                  Performances
-                                </h3>
-                                <div className="space-y-3">
-                                  {scheduledDaily?.map(day => {
-                                    const talentEvents = day.items.filter((event: any) =>
-                                      event.talent?.some((t: any) => t.id === selectedTalent.id)
-                                    );
-
-                                    if (talentEvents.length === 0) return null;
-
-                                    // Find the corresponding itinerary entry to get the formatted date
-                                    const itineraryEntry = jobs.find(
-                                      job => job.job_time === day.key
-                                    );
-                                    const dateDisplay = itineraryEntry?.title || day.key;
-
-                                    return (
-                                      <div key={day.key} className="space-y-3">
-                                        {talentEvents.map((event: any, eventIdx: number) => (
-                                          <div
-                                            key={eventIdx}
-                                            className="bg-purple-500/10 backdrop-blur-md rounded-lg p-4 border border-purple-400/20"
-                                          >
-                                            <div className="flex flex-col gap-2">
-                                              {/* Line 1: Date • Time */}
-                                              <div className="flex items-center gap-2">
-                                                <span className="text-purple-200 font-medium text-sm">
-                                                  {dateDisplay}
-                                                </span>
-                                                <Circle className="w-1.5 h-1.5 fill-current text-purple-400" />
-                                                <span className="text-white font-semibold text-sm">
-                                                  {event.time}
-                                                </span>
-                                              </div>
-                                              {/* Line 2: Venue */}
-                                              {event.venue && (
-                                                <div className="text-purple-100 text-sm">
-                                                  {event.venue}
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Party Theme Detail Slide-In - slides over ENTIRE events card including header */}
-                    <AnimatePresence>
-                      {showPartyThemeDetail && selectedPartyTheme && (
-                        <motion.div
-                          initial={{ x: '100%' }}
-                          animate={{ x: 0 }}
-                          exit={{ x: '100%' }}
-                          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                          className="absolute inset-0 z-[70] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-3xl overflow-y-auto rounded-t-2xl md:rounded-2xl"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <div className="p-6">
-                            <div className="text-white">
-                              {/* Circular Back Button */}
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setShowPartyThemeDetail(false);
-                                  setSelectedPartyTheme(null);
-                                }}
-                                className="w-10 h-10 rounded-full bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 flex items-center justify-center mb-4 transition-all hover:scale-110"
-                                aria-label="Back to Events"
-                              >
-                                <span className="text-blue-200 text-xl">←</span>
-                              </button>
-
-                              {/* Mobile: Full Width Image, Desktop: Wrapped Layout */}
-                              <div className="flex flex-col md:flex-row-reverse gap-6 mb-6">
-                                {/* Party Theme Image - Perfect Square */}
-                                {selectedPartyTheme.imageUrl && (
-                                  <div className="w-full md:w-64 md:flex-shrink-0">
-                                    <img
-                                      src={selectedPartyTheme.imageUrl}
-                                      alt={selectedPartyTheme.name}
-                                      className="w-full aspect-square object-cover rounded-xl border-2 border-blue-400/30 shadow-lg"
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Party Theme Info */}
-                                <div className="flex-1">
-                                  {/* Party Theme Name */}
-                                  <h2 className="text-2xl font-bold mb-2">
-                                    {selectedPartyTheme.name}
-                                  </h2>
-
-                                  {/* Long Description */}
-                                  {selectedPartyTheme.longDescription && (
-                                    <div className="mb-4">
-                                      <p className="text-blue-50 text-sm leading-relaxed">
-                                        {selectedPartyTheme.longDescription}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {/* Costume Ideas */}
-                                  {selectedPartyTheme.costumeIdeas && (
-                                    <div className="mb-4">
-                                      <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
-                                        Costume Ideas
-                                      </h3>
-                                      <div className="bg-blue-500/10 backdrop-blur-md rounded-lg p-4 border border-blue-400/20">
-                                        <p className="text-blue-100 text-sm leading-relaxed">
-                                          {selectedPartyTheme.costumeIdeas}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* View Type Selection Modal (Artist vs Party Theme) */}
-                    <AnimatePresence>
-                      {showViewTypeModal && currentEvent && (
-                        <div
-                          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                          onClick={() => {
-                            setShowViewTypeModal(false);
-                            setCurrentEvent(null);
-                          }}
-                        >
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-xl font-bold text-white">
-                                What would you like to view?
-                              </h3>
-                              <button
-                                onClick={() => {
-                                  setShowViewTypeModal(false);
-                                  setCurrentEvent(null);
-                                }}
-                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all"
-                              >
-                                <X className="w-4 h-4 text-white" />
-                              </button>
-                            </div>
-
-                            <div className="space-y-3">
-                              {/* Party Theme Option */}
-                              {currentEvent.partyTheme && (
-                                <button
-                                  onClick={handleViewPartyTheme}
-                                  className="w-full p-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-xl transition-all text-left group"
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <p className="text-xs text-blue-300 font-medium mb-1">
-                                        Party Theme
-                                      </p>
-                                      <p className="text-white font-bold">
-                                        {currentEvent.partyTheme.name}
-                                      </p>
-                                    </div>
-                                    <span className="text-blue-300 group-hover:translate-x-1 transition-transform text-xl">
-                                      →
-                                    </span>
-                                  </div>
-                                </button>
-                              )}
-
-                              {/* Artists Option */}
-                              {currentEvent.talent && currentEvent.talent.length > 0 && (
-                                <button
-                                  onClick={handleViewArtists}
-                                  className="w-full p-4 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 rounded-xl transition-all text-left group"
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <p className="text-xs text-purple-300 font-medium mb-1">
-                                        {currentEvent.talent.length === 1 ? 'Artist' : 'Artists'}
-                                      </p>
-                                      <p className="text-white font-bold">
-                                        {currentEvent.talent.length === 1
-                                          ? currentEvent.talent[0].name
-                                          : `${currentEvent.talent.length} Artists`}
-                                      </p>
-                                    </div>
-                                    <span className="text-purple-300 group-hover:translate-x-1 transition-transform text-xl">
-                                      →
-                                    </span>
-                                  </div>
-                                </button>
-                              )}
-                            </div>
-                          </motion.div>
-                        </div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Artist Selection Modal */}
-                    <AnimatePresence>
-                      {showArtistSelectModal &&
-                        currentEvent?.talent &&
-                        currentEvent.talent.length > 1 && (
-                          <div
-                            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                            onClick={() => {
-                              setShowArtistSelectModal(false);
-                              setCurrentEvent(null);
-                            }}
-                          >
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              transition={{ duration: 0.2 }}
-                              onClick={e => e.stopPropagation()}
-                              className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
-                            >
-                              <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-bold text-white">Select an Artist</h3>
-                                <button
-                                  onClick={() => {
-                                    setShowArtistSelectModal(false);
-                                    setCurrentEvent(null);
-                                  }}
-                                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all"
-                                >
-                                  <X className="w-4 h-4 text-white" />
-                                </button>
-                              </div>
-
-                              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                                {currentEvent.talent.map((artist: any, idx: number) => (
-                                  <button
-                                    key={idx}
-                                    onClick={() => handleArtistSelect(artist)}
-                                    className="w-full p-4 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 rounded-xl transition-all text-left group"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      {artist.profileImageUrl && (
-                                        <img
-                                          src={artist.profileImageUrl}
-                                          alt={artist.name}
-                                          className="w-12 h-12 rounded-lg object-cover border border-purple-400/30"
-                                        />
-                                      )}
-                                      <div className="flex-1">
-                                        <p className="text-white font-bold">{artist.name}</p>
-                                      </div>
-                                      <span className="text-purple-300 group-hover:translate-x-1 transition-transform text-xl">
-                                        →
-                                      </span>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            </motion.div>
-                          </div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Event Description Modal (for events without artist or party theme) */}
-                    <AnimatePresence>
-                      {showEventDescriptionModal && currentEvent && (
-                        <div
-                          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
-                          onClick={() => {
-                            setShowEventDescriptionModal(false);
-                            setCurrentEvent(null);
-                          }}
-                        >
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl my-auto"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="sr-only">{currentEvent.title}</h3>
-                              <button
-                                onClick={() => {
-                                  setShowEventDescriptionModal(false);
-                                  setCurrentEvent(null);
-                                }}
-                                className="min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all flex-shrink-0 ml-auto"
-                                aria-label="Close modal"
-                              >
-                                <X className="w-5 h-5 text-white" />
-                              </button>
-                            </div>
-
-                            <div className="space-y-6">
-                              {/* Event Info */}
-                              <div className="flex flex-col md:flex-row-reverse gap-6">
-                                {/* Event Image - Perfect Square */}
-                                {(currentEvent.imageUrl ||
-                                  currentEvent.talent?.[0]?.profileImageUrl) && (
-                                  <div className="w-full md:w-64 md:flex-shrink-0">
-                                    <img
-                                      src={
-                                        currentEvent.imageUrl ||
-                                        currentEvent.talent[0].profileImageUrl
-                                      }
-                                      alt={currentEvent.title}
-                                      className="w-full aspect-square object-cover rounded-xl border-2 border-cyan-400/30 shadow-lg"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Event Details */}
-                                <div className="flex-1">
-                                  {/* Event Name */}
-                                  <h2 className="text-2xl font-bold mb-4 text-white">
-                                    {currentEvent.title}
-                                  </h2>
-
-                                  {/* Time and Venue */}
-                                  <div className="mb-4 flex flex-wrap gap-2">
-                                    <span className="px-3 py-1.5 rounded-full bg-ocean-500/20 text-ocean-200 text-sm font-medium border border-ocean-400/30">
-                                      {currentEvent.time}
-                                    </span>
-                                    {currentEvent.venue && (
-                                      <span className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-200 text-sm font-medium border border-cyan-400/30">
-                                        {currentEvent.venue}
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Description */}
-                                  {currentEvent.description && (
-                                    <div className="mb-6">
-                                      <p className="text-blue-50 text-sm leading-relaxed">
-                                        {currentEvent.description}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        </div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
           </div>
         )}
       </AnimatePresence>
@@ -1119,11 +500,7 @@ export default function JobListingComponent({
                   layoutId={
                     activeItem?.job_time === role.job_time ? undefined : `workItem-${role.job_time}`
                   }
-                  className={`bg-white/5 rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-lg overflow-hidden w-full ${!showDateHeader ? 'mt-1' : ''}`}
-                  onClick={() => {
-                    setActiveItem(role);
-                    if (onJobClick) onJobClick(role);
-                  }}
+                  className={`bg-white/5 rounded-xl border border-white/20 transition-all duration-200 overflow-hidden w-full ${!showDateHeader ? 'mt-1' : ''}`}
                   style={{ opacity: activeItem?.job_time === role.job_time ? 0 : 1 }}
                 >
                   <div className="flex h-32">
@@ -1137,7 +514,7 @@ export default function JobListingComponent({
                     >
                       {role.logo}
                     </motion.div>
-                    <div className="flex-1 flex flex-col justify-between min-w-0 py-2 pl-4 pr-2">
+                    <div className="flex-1 flex flex-col justify-center min-w-0 p-4">
                       <div className="space-y-1">
                         {/* Port/Location Name - cleaned up without suffixes */}
                         <div>
@@ -1199,28 +576,38 @@ export default function JobListingComponent({
                           </motion.div>
                         )}
                       </div>
+                    </div>
+                  </div>
 
-                      {/* Action Buttons - Always at bottom */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            // Info button action - to be implemented
-                          }}
-                          className="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all"
-                        >
-                          Info
-                        </button>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            // Events button action - to be implemented
-                          }}
-                          className="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all"
-                        >
-                          Events
-                        </button>
-                      </div>
+                  {/* Bottom Action Bar */}
+                  <div className="bg-white/5 border-t border-white/10 px-3 py-1.5">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedJob(role);
+                          setShowInfoSheet(true);
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
+                      >
+                        <Map className="w-3.5 h-3.5" />
+                        Info
+                      </button>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedJob(role);
+                          // Find events for this day - extract date from job_time (format: YYYY-MM-DD-locId-index)
+                          const dateKey = role.job_time.split('-').slice(0, 3).join('-');
+                          const events = scheduledDaily?.find(day => day.key === dateKey);
+                          setDayEvents(events?.items || []);
+                          setShowEventsSheet(true);
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
+                      >
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        Events
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -1229,6 +616,147 @@ export default function JobListingComponent({
           })}
         </div>
       </div>
+
+      {/* Port Info Sheet */}
+      <ReactiveBottomSheet
+        open={showInfoSheet}
+        onOpenChange={open => {
+          setShowInfoSheet(open);
+          if (!open) setSelectedJob(null);
+        }}
+        title={
+          selectedJob
+            ? selectedJob.company.replace(
+                / - (Embarkation|Disembarkation|Overnight|Overnight Full Day)/g,
+                ''
+              )
+            : 'Port Information'
+        }
+        subtitle={selectedJob?.title}
+        icon={MapPin}
+      >
+        {selectedJob && (
+          <div className="space-y-4">
+            {/* Description */}
+            {selectedJob.job_description && (
+              <div>
+                <h4 className="text-white/80 text-xs font-semibold uppercase tracking-wide mb-2">
+                  About This Port
+                </h4>
+                <p className="text-white/70 text-sm leading-relaxed">
+                  {selectedJob.job_description}
+                </p>
+              </div>
+            )}
+
+            {/* Location Attractions */}
+            {selectedJob.attractions && selectedJob.attractions.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-ocean-300" />
+                  <h4 className="text-white font-bold text-sm uppercase tracking-wide">
+                    Top Attractions
+                  </h4>
+                </div>
+                <ul className="space-y-1.5 text-white/90 text-sm">
+                  {selectedJob.attractions.slice(0, 3).map(attraction => (
+                    <li key={attraction.id} className="flex items-center gap-2">
+                      <span className="text-ocean-300 text-lg leading-none">•</span>
+                      <span>{attraction.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* LGBT Venues */}
+            {selectedJob.lgbtVenues && selectedJob.lgbtVenues.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base leading-none">🏳️‍🌈</span>
+                  <h4 className="text-white font-bold text-sm uppercase tracking-wide">
+                    LGBT+ Venues
+                  </h4>
+                </div>
+                <ul className="space-y-1.5 text-white/90 text-sm">
+                  {selectedJob.lgbtVenues.slice(0, 3).map(venue => (
+                    <li key={venue.id} className="flex items-center gap-2">
+                      <span className="text-purple-300 text-lg leading-none">•</span>
+                      <span>{venue.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </ReactiveBottomSheet>
+
+      {/* Events Sheet */}
+      <ReactiveBottomSheet
+        open={showEventsSheet}
+        onOpenChange={open => {
+          setShowEventsSheet(open);
+          if (!open) {
+            setSelectedJob(null);
+            setDayEvents([]);
+          }
+        }}
+        title={selectedJob ? `Events for ${selectedJob.title}` : 'Events'}
+      >
+        <div className="space-y-3">
+          {dayEvents.length > 0 ? (
+            dayEvents.map((event, idx) => (
+              <EventCard key={idx} event={event} allSchedule={scheduledDaily} allTalent={talent} />
+            ))
+          ) : (
+            <p className="text-white/60 text-center py-8">No events scheduled for this day</p>
+          )}
+        </div>
+      </ReactiveBottomSheet>
+
+      {/* Event Detail Sheet */}
+      <ReactiveBottomSheet
+        open={showEventDetailSheet}
+        onOpenChange={open => {
+          setShowEventDetailSheet(open);
+          if (!open) setSelectedEventForDetail(null);
+        }}
+        title={selectedEventForDetail?.title || 'Event Details'}
+      >
+        {selectedEventForDetail && (
+          <div className="space-y-4">
+            {/* Event Image */}
+            {selectedEventForDetail.imageUrl && (
+              <img
+                src={selectedEventForDetail.imageUrl}
+                alt={selectedEventForDetail.title}
+                className="w-full aspect-video object-cover rounded-lg"
+                loading="lazy"
+              />
+            )}
+
+            {/* Time and Venue */}
+            <div className="flex flex-wrap gap-2">
+              <span className="px-3 py-1.5 rounded-full bg-ocean-500/20 text-ocean-200 text-sm font-medium border border-ocean-400/30">
+                {selectedEventForDetail.time}
+              </span>
+              {selectedEventForDetail.venue && (
+                <span className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-200 text-sm font-medium border border-cyan-400/30">
+                  {selectedEventForDetail.venue}
+                </span>
+              )}
+            </div>
+
+            {/* Description */}
+            {selectedEventForDetail.description && (
+              <p className="text-white/80 text-sm leading-relaxed">
+                {selectedEventForDetail.description}
+              </p>
+            )}
+          </div>
+        )}
+      </ReactiveBottomSheet>
     </>
   );
 }

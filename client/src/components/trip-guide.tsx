@@ -44,6 +44,7 @@ import { ItineraryTab } from './trip-guide/tabs/ItineraryTab';
 import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
+import { BackToTopButton } from '@/components/ui/BackToTopButton';
 import Settings from '@/pages/settings';
 
 interface TripGuideProps {
@@ -463,11 +464,8 @@ export default function TripGuide({
         className="relative z-10"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
       >
-        {/* Sticky Trip Header - Always visible below navigation bar */}
-        <div
-          className="sticky z-30 pt-4 pb-0"
-          style={{ top: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
-        >
+        {/* Trip Header */}
+        <div className="pt-4 pb-0">
           <div className="mx-auto max-w-3xl px-4 text-center">
             {/* Trip Name */}
             <h1 className="text-2xl leading-tight font-bold text-white flex items-end justify-center gap-3 flex-wrap sm:text-3xl lg:text-4xl">
@@ -723,6 +721,7 @@ export default function TripGuide({
               <TalentTab
                 TALENT={TALENT as any}
                 SCHEDULED_DAILY={SCHEDULED_DAILY}
+                ITINERARY={ITINERARY}
                 onTalentClick={handleTalentClick}
               />
             </TabsContent>
@@ -733,6 +732,9 @@ export default function TripGuide({
           </Tabs>
         </StandardizedContentLayout>
       </div>
+
+      {/* Back to Top Button */}
+      <BackToTopButton threshold={400} />
 
       {/* Modals */}
       <TalentModal
