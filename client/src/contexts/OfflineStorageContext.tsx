@@ -220,6 +220,7 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
       `/api/trip-info-sections/trip/${tripId}/all`, // Info sections (used by InfoTab)
       `/api/faqs/trip/${tripId}`, // FAQs (used by InfoTab)
       '/api/trips', // Landing page trip list
+      '/api/updates/homepage?limit=3', // Landing page updates section
     ];
 
     const imageUrls: string[] = [];
