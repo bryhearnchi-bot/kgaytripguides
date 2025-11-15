@@ -269,20 +269,47 @@ function App() {
     const offlineStyles = document.createElement('style');
     offlineStyles.textContent = `
       .offline .offline-indicator {
-        display: block !important;
+        display: flex !important;
       }
       .offline-indicator {
         display: none;
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: #f59e0b;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(245, 158, 11, 0.95);
         color: white;
         text-align: center;
-        padding: 0.5rem;
-        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
         z-index: 9999;
+        border-radius: 9999px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .offline-indicator.hidden {
+        display: none !important;
+      }
+      .offline-indicator-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+        padding: 0;
+      }
+      .offline-indicator-close:hover {
+        background: rgba(255, 255, 255, 0.3);
       }
     `;
     document.head.appendChild(offlineStyles);
@@ -290,8 +317,26 @@ function App() {
     // Add offline indicator to DOM
     const indicator = document.createElement('div');
     indicator.className = 'offline-indicator';
-    indicator.textContent = 'You are offline. Some features may be limited.';
+    indicator.id = 'offline-indicator';
+
+    const text = document.createElement('span');
+    text.textContent = 'You are offline';
+    indicator.appendChild(text);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'offline-indicator-close';
+    closeBtn.textContent = '×';
+    closeBtn.onclick = () => {
+      indicator.classList.add('hidden');
+    };
+    indicator.appendChild(closeBtn);
+
     document.body.appendChild(indicator);
+
+    // Show indicator again when going offline (if it was closed)
+    window.addEventListener('offline', () => {
+      indicator.classList.remove('hidden');
+    });
 
     return () => {
       if (offlineStyles.parentNode) {

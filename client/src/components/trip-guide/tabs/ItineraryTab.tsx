@@ -128,9 +128,8 @@ export const ItineraryTab = memo(function ItineraryTab({
       logo: (
         <img
           src={
-            stop.imageUrl
-              ? `${stop.imageUrl}?t=${Date.now()}`
-              : 'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'
+            stop.imageUrl ||
+            'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'
           }
           alt={stop.port}
           className="w-full h-full object-cover rounded-l-xl"

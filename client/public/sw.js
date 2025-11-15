@@ -1,8 +1,12 @@
-const CACHE_NAME = 'k-gay-travel-guide-v3';
-const STATIC_CACHE = 'static-v4';
-const API_CACHE = 'api-v4';
-const IMAGE_CACHE = 'images-v3';
+const CACHE_NAME = 'k-gay-travel-guide-v5';
+const STATIC_CACHE = 'static-v6';
+const API_CACHE = 'api-v6';
+const IMAGE_CACHE = 'images-v5';
 const FONT_CACHE = 'fonts-v3';
+
+// Maximum items in each cache to prevent unbounded growth
+const MAX_API_CACHE_ITEMS = 100;
+const MAX_IMAGE_CACHE_ITEMS = 500;
 
 // Assets to cache on install
 // CRITICAL: Never cache '/' or '/index.html' to prevent stale theme-color meta tags
@@ -16,6 +20,9 @@ const STATIC_ASSETS = [
   // Add other critical assets as they're built
 ];
 
+// Critical API endpoints to cache on install for PWA offline access
+const CRITICAL_API_ENDPOINTS = ['/api/trips']; // Landing page data
+
 // Install event - cache static assets
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -24,6 +31,25 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('Service Worker: Caching static assets');
         return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        // Also cache critical API endpoints for PWA offline access
+        console.log('Service Worker: Caching critical API endpoints');
+        return caches.open(API_CACHE).then(apiCache => {
+          return Promise.allSettled(
+            CRITICAL_API_ENDPOINTS.map(endpoint =>
+              fetch(endpoint)
+                .then(response => {
+                  if (response.ok) {
+                    return apiCache.put(endpoint, response);
+                  }
+                })
+                .catch(err => {
+                  console.warn('Service Worker: Failed to cache critical endpoint', endpoint, err);
+                })
+            )
+          );
+        });
       })
       .then(() => {
         console.log('Service Worker: Skip waiting');
@@ -79,7 +105,8 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/api/')) {
     // Only intercept if same origin
     if (url.origin === self.location.origin) {
-      event.respondWith(networkFirst(request, API_CACHE));
+      // Use progressive caching - cache all API responses automatically
+      event.respondWith(networkFirstWithProgressiveCaching(request, API_CACHE));
     }
     return;
   }
@@ -131,14 +158,40 @@ self.addEventListener('fetch', event => {
   event.respondWith(networkFirst(request, CACHE_NAME));
 });
 
-// Network-first strategy (good for API calls)
-async function networkFirst(request, cacheName) {
+// Network-first strategy with progressive caching (good for API calls)
+// This caches ALL API responses automatically as users navigate
+async function networkFirstWithProgressiveCaching(request, cacheName) {
   try {
     const networkResponse = await fetch(request);
 
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
+
+      // Enforce cache size limit to prevent unbounded growth
+      const keys = await cache.keys();
+      if (keys.length >= MAX_API_CACHE_ITEMS) {
+        // Remove oldest 10% of items
+        const itemsToRemove = Math.floor(keys.length * 0.1);
+        for (let i = 0; i < itemsToRemove; i++) {
+          await cache.delete(keys[i]);
+        }
+      }
+
+      // Cache the response for future offline use
       cache.put(request, networkResponse.clone());
+
+      // Progressive caching: Also cache related trip data in trip-specific caches
+      // Extract trip ID from URL if present
+      const url = new URL(request.url);
+      const tripIdMatch = url.pathname.match(/\/trips\/(\d+)\/|\/trip\/(\d+)/);
+      if (tripIdMatch) {
+        const tripId = tripIdMatch[1] || tripIdMatch[2];
+        const tripCacheName = `trip-${tripId}-offline`;
+        const tripCache = await caches.open(tripCacheName);
+        // Store in trip-specific cache for better offline organization
+        tripCache.put(request, networkResponse.clone());
+      }
+
       return networkResponse;
     }
 
@@ -184,6 +237,11 @@ async function networkFirst(request, cacheName) {
   }
 }
 
+// Legacy network-first strategy (kept for backwards compatibility)
+async function networkFirst(request, cacheName) {
+  return networkFirstWithProgressiveCaching(request, cacheName);
+}
+
 // Cache-first strategy (good for images and assets that don't change)
 async function cacheFirst(request, cacheName) {
   const cachedResponse = await caches.match(request);
@@ -208,10 +266,32 @@ async function cacheFirst(request, cacheName) {
   }
 
   try {
-    const networkResponse = await fetch(request);
+    // Use appropriate fetch options for cross-origin requests
+    const fetchOptions = {};
+    const url = new URL(request.url);
+    const isCrossOrigin = url.origin !== self.location.origin;
 
-    if (networkResponse.ok) {
-      const cache = await caches.open(cacheName);
+    if (isCrossOrigin && request.destination === 'image') {
+      fetchOptions.mode = 'cors';
+      fetchOptions.credentials = 'omit';
+    }
+
+    const networkResponse = await fetch(request, fetchOptions);
+
+    // Cache successful responses (including opaque responses for cross-origin)
+    if (networkResponse.ok || networkResponse.type === 'opaque') {
+      const cache = await caches.open(IMAGE_CACHE);
+
+      // Enforce cache size limit to prevent unbounded growth
+      const keys = await cache.keys();
+      if (keys.length >= MAX_IMAGE_CACHE_ITEMS) {
+        // Remove oldest 10% of items
+        const itemsToRemove = Math.floor(keys.length * 0.1);
+        for (let i = 0; i < itemsToRemove; i++) {
+          await cache.delete(keys[i]);
+        }
+      }
+
       cache.put(request, networkResponse.clone());
     }
 

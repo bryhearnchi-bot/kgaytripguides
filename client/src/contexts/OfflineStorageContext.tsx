@@ -9,7 +9,7 @@ import React, {
 
 // Cache schema version - increment this when the offline caching logic changes
 // This triggers a re-download notification for users with older cached data
-const OFFLINE_CACHE_VERSION = 2; // v2: Added complete endpoint, fixed API patterns, enhanced image caching
+const OFFLINE_CACHE_VERSION = 3; // v3: Progressive caching, landing page cache, removed cache busters from images
 
 interface OfflineTripStatus {
   enabled: boolean;

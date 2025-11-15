@@ -58,14 +58,18 @@ if (isNative) {
       });
 
       // Handle offline/online status
+      // Uses CSS class for the subtle bottom indicator (managed in App.tsx)
+      // No intrusive toasts - just class toggle for indicator visibility
       window.addEventListener('online', () => {
         document.body.classList.remove('offline');
-        showToast('Back online!', 'success');
+        // Optionally show a brief success toast, but keep it non-intrusive
+        // showToast('Back online!', 'success');
       });
 
       window.addEventListener('offline', () => {
         document.body.classList.add('offline');
-        showToast('You are now offline. Some features may be limited.', 'warning');
+        // Offline indicator is shown via CSS in App.tsx
+        // No intrusive toast needed
       });
     } catch (error) {}
   });
