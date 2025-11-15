@@ -140,11 +140,28 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request, {
         cache: 'no-store', // Force fresh fetch, bypass HTTP cache
-      }).catch(() => {
-        // Fallback to cached response only if offline
+      }).catch(async () => {
+        // Network failed - try to serve cached app shell from trip offline caches
+        // This allows the SPA to load even when offline
+        const cacheNames = await caches.keys();
+        const tripCaches = cacheNames.filter(
+          name => name.startsWith('trip-') && name.endsWith('-offline')
+        );
+
+        // Try to find the cached root HTML (app shell) in any trip cache
+        for (const cacheName of tripCaches) {
+          const tripCache = await caches.open(cacheName);
+          const cachedHtml = await tripCache.match('/');
+          if (cachedHtml) {
+            console.log('[ServiceWorker] Serving cached app shell from:', cacheName);
+            return cachedHtml;
+          }
+        }
+
+        // No cached app shell found, fall back to generic offline response
         return (
           caches.match(request) ||
-          new Response('Offline', {
+          new Response('Offline - No cached content available', {
             status: 503,
             headers: new Headers({ 'Content-Type': 'text/html' }),
           })

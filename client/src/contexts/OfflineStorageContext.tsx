@@ -9,7 +9,7 @@ import React, {
 
 // Cache schema version - increment this when the offline caching logic changes
 // This triggers a re-download notification for users with older cached data
-const OFFLINE_CACHE_VERSION = 3; // v3: Progressive caching, landing page cache, removed cache busters from images
+const OFFLINE_CACHE_VERSION = 4; // v4: Cache app shell for true offline access
 
 interface OfflineTripStatus {
   enabled: boolean;
@@ -157,6 +157,58 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
     let totalSize = 0;
     const cache = await caches.open(`trip-${tripId}-offline`);
 
+    // CRITICAL: Cache the app shell first so the app can run offline
+    // This includes the main HTML and all JavaScript/CSS bundles
+    const appShellUrls = [
+      '/', // Main HTML page (SPA entry point)
+      '/manifest.json',
+    ];
+
+    // Cache app shell resources
+    for (const url of appShellUrls) {
+      try {
+        const response = await fetch(url, { cache: 'reload' });
+        if (response.ok) {
+          const clonedResponse = response.clone();
+          await cache.put(url, clonedResponse);
+          const blob = await response.blob();
+          totalSize += blob.size;
+        }
+      } catch {
+        // Continue if some resources fail
+      }
+    }
+
+    // Cache all JavaScript and CSS bundles from the current page
+    // These are the compiled assets that make the SPA work
+    const scripts = Array.from(document.querySelectorAll('script[src]')).map(
+      s => (s as HTMLScriptElement).src
+    );
+    const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(
+      l => (l as HTMLLinkElement).href
+    );
+    const modulePreloads = Array.from(document.querySelectorAll('link[rel="modulepreload"]')).map(
+      l => (l as HTMLLinkElement).href
+    );
+
+    const assetUrls = [...scripts, ...stylesheets, ...modulePreloads].filter(
+      url => url && url.startsWith(window.location.origin)
+    );
+
+    for (const assetUrl of assetUrls) {
+      try {
+        const response = await fetch(assetUrl);
+        if (response.ok) {
+          const clonedResponse = response.clone();
+          await cache.put(assetUrl, clonedResponse);
+          const blob = await response.blob();
+          totalSize += blob.size;
+        }
+      } catch {
+        // Continue if asset fetch fails
+      }
+    }
+
     // List of API endpoints to cache (using correct endpoint patterns)
     // Cache BOTH the complete endpoint (used by main trip page) AND individual endpoints (used by some components)
     const apiEndpoints = [
@@ -167,6 +219,7 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
       `/api/trips/${tripId}/talent`, // Individual endpoint for components
       `/api/trip-info-sections/trip/${tripId}/all`, // Info sections (used by InfoTab)
       `/api/faqs/trip/${tripId}`, // FAQs (used by InfoTab)
+      '/api/trips', // Landing page trip list
     ];
 
     const imageUrls: string[] = [];
@@ -288,6 +341,17 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
                 }
               );
             }
+          }
+
+          // Cache landing page trip images
+          if (endpoint === '/api/trips' && Array.isArray(data)) {
+            data.forEach(
+              (trip: { heroImageUrl?: string; charterCompanyLogo?: string; mapUrl?: string }) => {
+                if (trip.heroImageUrl) imageUrls.push(trip.heroImageUrl);
+                if (trip.charterCompanyLogo) imageUrls.push(trip.charterCompanyLogo);
+                if (trip.mapUrl) imageUrls.push(trip.mapUrl);
+              }
+            );
           }
         }
         completedRequests++;
