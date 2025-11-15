@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext';
 import { TimeFormatProvider } from '@/contexts/TimeFormatContext';
 import { UpdateProvider } from '@/context/UpdateContext';
+import { OfflineStorageProvider } from '@/contexts/OfflineStorageContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NavigationBanner from '@/components/navigation-banner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -307,11 +308,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <SupabaseAuthProvider>
           <TimeFormatProvider>
-            <UpdateProvider>
-              <TooltipProvider>
-                <AppContent />
-              </TooltipProvider>
-            </UpdateProvider>
+            <OfflineStorageProvider>
+              <UpdateProvider>
+                <TooltipProvider>
+                  <AppContent />
+                </TooltipProvider>
+              </UpdateProvider>
+            </OfflineStorageProvider>
           </TimeFormatProvider>
         </SupabaseAuthProvider>
       </QueryClientProvider>

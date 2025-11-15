@@ -255,7 +255,11 @@ export default function TripPage() {
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative h-full overflow-y-auto pt-4">
             <div className="[&>div]:pt-0 [&>div]:min-h-0">
-              <Settings onNavigate={handleNavigateFromSheet} />
+              <Settings
+                onNavigate={handleNavigateFromSheet}
+                tripId={tripData?.trip?.id}
+                tripSlug={slug}
+              />
             </div>
           </div>
         </SheetContent>

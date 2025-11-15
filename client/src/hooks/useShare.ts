@@ -56,38 +56,33 @@ export function useShare() {
     text: string;
     url: string;
     dialogTitle?: string;
-  }) => {
+  }): Promise<{ method: 'share' | 'clipboard' }> => {
     if (isNative) {
-      try {
-        await Share.share({
+      await Share.share({
+        title: options.title,
+        text: options.text,
+        url: options.url,
+        dialogTitle: options.dialogTitle || 'Share',
+      });
+      return { method: 'share' };
+    } else {
+      // Web Share API - only works on HTTPS or localhost
+      const isSecureContext =
+        window.location.protocol === 'https:' ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+
+      if (navigator.share && isSecureContext) {
+        await navigator.share({
           title: options.title,
           text: options.text,
           url: options.url,
-          dialogTitle: options.dialogTitle || 'Share',
         });
-      } catch (error) {
-        console.error('Share failed:', error);
-      }
-    } else {
-      // Web Share API fallback
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: options.title,
-            text: options.text,
-            url: options.url,
-          });
-        } catch (error) {
-          console.error('Web share failed:', error);
-        }
+        return { method: 'share' };
       } else {
         // Copy to clipboard fallback
-        try {
-          await navigator.clipboard.writeText(options.url);
-          alert('Link copied to clipboard!');
-        } catch (error) {
-          console.error('Clipboard copy failed:', error);
-        }
+        await navigator.clipboard.writeText(options.url);
+        return { method: 'clipboard' };
       }
     }
   };

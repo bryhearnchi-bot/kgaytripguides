@@ -9,6 +9,7 @@ import { useShare } from '@/hooks/useShare';
 import { useToast } from '@/hooks/use-toast';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
 import { FlyUpSheet } from '@/components/FlyUpSheet';
+import { AboutKGayModal } from '@/components/AboutKGayModal';
 import Alerts from '@/pages/alerts';
 import Settings from '@/pages/settings';
 
@@ -18,6 +19,7 @@ export default function NavigationBanner() {
   const { updateAvailable, isChecking, checkForUpdates, applyUpdate } = useUpdate();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const { shareContent } = useShare();
   const { toast } = useToast();
   const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts();
@@ -104,12 +106,18 @@ export default function NavigationBanner() {
       <div className="text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-[#002147]/90 backdrop-blur-lg">
         <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/" className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setAboutModalOpen(true)}
+              className="flex-shrink-0 focus:outline-none"
+              aria-label="About KGay Travel"
+            >
               <img
                 src="/logos/kgay-logo.jpg"
                 alt="KGay Travel"
-                className="h-6 sm:h-8 w-auto hover:opacity-90 transition"
+                className="h-6 sm:h-8 w-auto hover:opacity-90 transition cursor-pointer"
               />
+            </button>
+            <Link href="/" className="flex items-center">
               <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
                 KGay Travel Guides
               </span>
@@ -276,6 +284,9 @@ export default function NavigationBanner() {
       >
         <Settings onNavigate={handleNavigateFromSheet} />
       </FlyUpSheet>
+
+      {/* About KGay Modal */}
+      <AboutKGayModal open={aboutModalOpen} onOpenChange={setAboutModalOpen} />
     </>
   );
 }

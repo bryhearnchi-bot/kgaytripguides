@@ -96,14 +96,22 @@ export function TripPageNavigation({
     const tripUrl = `${window.location.origin}/trip/${tripSlug}`;
 
     try {
-      await shareContent({
+      const result = await shareContent({
         title: tripName,
         text: `Check out this amazing LGBTQ+ travel guide: ${tripName}`,
         url: tripUrl,
         dialogTitle: `Share ${tripName}`,
       });
+
+      // Show toast if clipboard was used (not native share dialog)
+      if (result.method === 'clipboard') {
+        toast({
+          title: 'Link copied!',
+          description: 'Trip guide link copied to clipboard',
+        });
+      }
     } catch (error) {
-      // If share fails, copy to clipboard
+      // If everything fails, try one more time with clipboard
       try {
         await navigator.clipboard.writeText(tripUrl);
         toast({
@@ -111,7 +119,11 @@ export function TripPageNavigation({
           description: 'Trip guide link copied to clipboard',
         });
       } catch (clipboardError) {
-        console.error('Failed to share or copy:', error, clipboardError);
+        toast({
+          title: 'Share failed',
+          description: 'Unable to share or copy link. Please copy the URL manually.',
+          variant: 'destructive',
+        });
       }
     }
   };
@@ -360,6 +372,8 @@ export function TripPageNavigation({
           showEditTrip={canEditTrip}
           onEditTrip={handleEditTrip}
           onNavigate={handleNavigateFromSheet}
+          tripId={tripId ?? undefined}
+          tripSlug={tripSlug ?? undefined}
         />
       </FlyUpSheet>
 

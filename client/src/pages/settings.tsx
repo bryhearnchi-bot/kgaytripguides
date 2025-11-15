@@ -11,23 +11,20 @@ import {
   Share,
   RefreshCw,
   Star,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { AboutKGayModal } from '@/components/AboutKGayModal';
+import { FlyUpSheet } from '@/components/FlyUpSheet';
 import { cn } from '@/lib/utils';
 import { useUpdate } from '@/context/UpdateContext';
+import { useOfflineStorage } from '@/contexts/OfflineStorageContext';
 import { format } from 'date-fns';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -37,9 +34,19 @@ interface BeforeInstallPromptEvent extends Event {
 
 interface SettingsProps {
   onNavigate?: (path: string) => void;
+  tripId?: number;
+  tripSlug?: string;
+  showEditTrip?: boolean;
+  onEditTrip?: () => void;
 }
 
-export default function Settings({ onNavigate }: SettingsProps = {}) {
+export default function Settings({
+  onNavigate,
+  tripId,
+  tripSlug,
+  showEditTrip,
+  onEditTrip,
+}: SettingsProps = {}) {
   const [, setLocation] = useLocation();
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
@@ -58,6 +65,18 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
     forceRefresh,
     applyUpdate,
   } = useUpdate();
+
+  const {
+    isOfflineEnabled,
+    enableOfflineForTrip,
+    disableOfflineForTrip,
+    isPWAMode,
+    downloadProgress,
+    isDownloading,
+  } = useOfflineStorage();
+
+  // Check if offline is enabled for current trip
+  const offlineEnabled = tripId ? isOfflineEnabled(tripId) : false;
 
   // Get the first name for display
   const displayName = profile?.name?.first || user?.email?.split('@')[0] || 'User';
@@ -149,6 +168,16 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
 
   const handleTimeFormatToggle = () => {
     toggleTimeFormat();
+  };
+
+  const handleOfflineToggle = async () => {
+    if (!tripId || !tripSlug) return;
+
+    if (offlineEnabled) {
+      await disableOfflineForTrip(tripId);
+    } else {
+      await enableOfflineForTrip(tripId, tripSlug);
+    }
   };
 
   const handleRefreshClick = async () => {
@@ -278,34 +307,82 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
         )}
 
         {/* Time Format Toggle */}
-        <button
-          onClick={handleTimeFormatToggle}
-          className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-white/10 transition-colors"
-        >
+        <div className="w-full flex items-center justify-between p-2.5 rounded-lg">
           <div className="flex items-center gap-3">
             <Clock className="h-5 w-5 text-ocean-300" />
             <span className="text-sm font-medium">Time Format</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-white/60">
-              {timeFormat === '24h' ? '24H' : 'AM/PM'}
-            </span>
-            {/* Toggle Switch */}
-            <div
+          {/* Segmented Control */}
+          <div className="flex items-center bg-white/10 rounded-full p-0.5">
+            <button
+              onClick={() => timeFormat !== '12h' && handleTimeFormatToggle()}
               className={cn(
-                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                timeFormat === '24h' ? 'bg-ocean-500' : 'bg-white/40'
+                'px-3 py-1 text-xs font-medium rounded-full transition-all',
+                timeFormat === '12h' ? 'bg-ocean-500 text-white' : 'text-white/60 hover:text-white'
               )}
             >
-              <span
-                className={cn(
-                  'inline-block h-4 w-4 transform rounded-full transition-transform bg-white shadow-sm',
-                  timeFormat === '24h' ? 'translate-x-5' : 'translate-x-0.5'
-                )}
-              />
-            </div>
+              AM/PM
+            </button>
+            <button
+              onClick={() => timeFormat !== '24h' && handleTimeFormatToggle()}
+              className={cn(
+                'px-3 py-1 text-xs font-medium rounded-full transition-all',
+                timeFormat === '24h' ? 'bg-ocean-500 text-white' : 'text-white/60 hover:text-white'
+              )}
+            >
+              24H
+            </button>
           </div>
-        </button>
+        </div>
+
+        {/* Offline Access - Download button for trip pages */}
+        {tripId && tripSlug && (
+          <div className="w-full flex flex-col gap-2 p-2.5 rounded-lg">
+            {offlineEnabled && !isDownloading ? (
+              // Already downloaded - show confirmation
+              <div className="flex items-center gap-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <WifiOff className="h-5 w-5 text-green-400 flex-shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-green-400">Offline Access Enabled</span>
+                  <span className="text-[10px] text-white/60">
+                    Trip data downloaded for offline viewing
+                  </span>
+                </div>
+              </div>
+            ) : isDownloading ? (
+              // Downloading - show progress
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <Download className="h-5 w-5 text-cyan-400 animate-bounce" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Downloading Trip Data...</span>
+                    <span className="text-[10px] text-cyan-400">{downloadProgress}% complete</span>
+                  </div>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-cyan-400 h-full transition-all duration-300 ease-out"
+                    style={{ width: `${downloadProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Not downloaded - show download button
+              <button
+                onClick={handleOfflineToggle}
+                className="w-full flex items-center gap-3 p-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 transition-colors text-left"
+              >
+                <Download className="h-5 w-5 text-amber-400" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-amber-400">Download for Offline</span>
+                  <span className="text-[10px] text-white/60">
+                    Save trip data for offline viewing
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
+        )}
 
         <Separator className="bg-white/10" />
 
@@ -396,98 +473,96 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
         {/* About KGAY Travel Modal */}
         <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
 
-        {/* iOS Instructions Dialog */}
-        <Dialog open={showIOSInstructions} onOpenChange={setShowIOSInstructions}>
-          <DialogContent className="sm:max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-white/20 text-white">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <Download className="h-6 w-6 text-blue-400" />
-                </div>
-                Add to Home Screen
-              </DialogTitle>
-              <DialogDescription className="text-white/60 text-base">
-                Install this app for quick access and offline support
-              </DialogDescription>
-            </DialogHeader>
+        {/* iOS Instructions Fly-Up Sheet */}
+        <FlyUpSheet
+          open={showIOSInstructions}
+          onOpenChange={setShowIOSInstructions}
+          icon={Download}
+          iconColor="text-blue-400"
+          title="Add to Home Screen"
+          accessibleTitle="Add to Home Screen"
+          accessibleDescription="Install this app for quick access and offline support"
+        >
+          <div className="space-y-5">
+            <p className="text-sm text-white/70 -mt-2">
+              Install this app for quick access and offline support
+            </p>
 
-            <div className="space-y-5 py-6">
-              {/* Step 1 - With animated icon */}
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
-                  1
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-base leading-relaxed">
-                    Tap the{' '}
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-500/20 mx-1 animate-pulse">
-                      <Share className="h-4 w-4 text-blue-400" />
-                    </span>{' '}
-                    <strong className="text-blue-400">Share</strong> button
+            {/* Step 1 - With animated icon */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
+                1
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-base leading-relaxed">
+                  Tap the{' '}
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-500/20 mx-1 animate-pulse">
+                    <Share className="h-4 w-4 text-blue-400" />
+                  </span>{' '}
+                  <strong className="text-blue-400">Share</strong> button
+                </p>
+                <p className="text-sm text-white/50 mt-1">Located at the bottom of Safari</p>
+              </div>
+            </div>
+
+            {/* Visual separator */}
+            <div className="flex items-center gap-2 px-12">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-white/30">↓</div>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            </div>
+
+            {/* Step 2 - With icon */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
+                2
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-base leading-relaxed">
+                  Scroll down and tap{' '}
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-500/20 mx-1">
+                    <Plus className="h-4 w-4 text-blue-400" />
+                  </span>{' '}
+                  <strong className="text-blue-400">Add to Home Screen</strong>
+                </p>
+                <p className="text-sm text-white/50 mt-1">You may need to scroll to find it</p>
+              </div>
+            </div>
+
+            {/* Visual separator */}
+            <div className="flex items-center gap-2 px-12">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-white/30">↓</div>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
+                3
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-base leading-relaxed">
+                  Tap <strong className="text-blue-400">Add</strong>
+                </p>
+                <p className="text-sm text-white/50 mt-1">In the top right corner</p>
+              </div>
+            </div>
+
+            {/* Benefits card */}
+            <div className="mt-4 p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">✨</div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-300 mb-1">Quick Access</p>
+                  <p className="text-xs text-white/70 leading-relaxed">
+                    Launch instantly from your home screen. Works offline and loads faster!
                   </p>
-                  <p className="text-sm text-white/50 mt-1">Located at the bottom of Safari</p>
-                </div>
-              </div>
-
-              {/* Visual separator */}
-              <div className="flex items-center gap-2 px-12">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                <div className="text-white/30">↓</div>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-              </div>
-
-              {/* Step 2 - With icon */}
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
-                  2
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-base leading-relaxed">
-                    Scroll down and tap{' '}
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-500/20 mx-1">
-                      <Plus className="h-4 w-4 text-blue-400" />
-                    </span>{' '}
-                    <strong className="text-blue-400">Add to Home Screen</strong>
-                  </p>
-                  <p className="text-sm text-white/50 mt-1">You may need to scroll to find it</p>
-                </div>
-              </div>
-
-              {/* Visual separator */}
-              <div className="flex items-center gap-2 px-12">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                <div className="text-white/30">↓</div>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-base font-bold shadow-lg">
-                  3
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-base leading-relaxed">
-                    Tap <strong className="text-blue-400">Add</strong>
-                  </p>
-                  <p className="text-sm text-white/50 mt-1">In the top right corner</p>
-                </div>
-              </div>
-
-              {/* Benefits card */}
-              <div className="mt-6 p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">✨</div>
-                  <div>
-                    <p className="text-sm font-semibold text-blue-300 mb-1">Quick Access</p>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      Launch instantly from your home screen. Works offline and loads faster!
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-2">
               <Button
                 onClick={() => setShowIOSInstructions(false)}
                 className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-lg"
@@ -495,8 +570,8 @@ export default function Settings({ onNavigate }: SettingsProps = {}) {
                 Got it, thanks!
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </FlyUpSheet>
       </div>
     </>
   );

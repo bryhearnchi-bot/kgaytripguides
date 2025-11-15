@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Bell, Ship } from 'lucide-react';
+import { Bell, Ship, WifiOff, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api-client';
+import { useOfflineStorage } from '@/contexts/OfflineStorageContext';
+import { cn } from '@/lib/utils';
 import type { Update } from '@/types/trip-info';
 
 interface UpdateWithTrip extends Update {
@@ -24,6 +26,33 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
   const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useSupabaseAuthContext();
+  const {
+    isOfflineEnabled,
+    enableOfflineForTrip,
+    isAlertDismissed,
+    dismissAlert,
+    isPWAMode,
+    downloadProgress,
+    isDownloading,
+  } = useOfflineStorage();
+
+  // Check if we should show the offline alert for this trip (show in any mode, not just PWA)
+  const showOfflineAlert =
+    tripId && tripSlug && !isOfflineEnabled(tripId) && !isAlertDismissed(tripId);
+  const offlineEnabled = tripId ? isOfflineEnabled(tripId) : false;
+
+  const handleOfflineToggle = async () => {
+    if (!tripId || !tripSlug) return;
+    if (!offlineEnabled) {
+      await enableOfflineForTrip(tripId, tripSlug);
+    }
+  };
+
+  const handleDismissOfflineAlert = () => {
+    if (tripId) {
+      dismissAlert(tripId);
+    }
+  };
 
   // Fetch updates - either for specific trip or all trips
   const fetchUpdates = useCallback(async () => {
@@ -162,68 +191,117 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
 
   return (
     <>
-      {isLoading ? (
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/40 mx-auto mb-4"></div>
-            <p className="text-sm text-white/40">Loading alerts...</p>
-          </div>
-        ) : updates.length === 0 ? (
-          <div className="text-center py-16">
-            <Bell className="w-20 h-20 text-white/20 mx-auto mb-6" />
-            <h3 className="text-xl font-medium text-white/60 mb-3">No updates yet</h3>
-            <p className="text-sm text-white/40">You'll see trip announcements and news here</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {groupedUpdates.map((group, groupIndex) => (
-              <div key={`${group.tripId}-${groupIndex}`} className="space-y-3">
-                {/* Trip Header - only show if not filtered by trip */}
-                {!tripSlug && !tripId && (
-                  <div className="flex items-center gap-2 px-2">
-                    <Ship className="w-5 h-5 text-ocean-400 flex-shrink-0" />
-                    <h3 className="text-base font-semibold text-white flex-1 min-w-0 truncate">
-                      {group.tripName}
-                    </h3>
-                  </div>
-                )}
+      {/* Persistent Offline Alert - Show when not enabled */}
+      {showOfflineAlert && (
+        <div className="mb-4">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 relative">
+            {/* Dismiss button */}
+            <button
+              onClick={handleDismissOfflineAlert}
+              className="absolute top-2 right-2 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+              aria-label="Dismiss offline alert"
+            >
+              <X className="w-4 h-4 text-white/60" />
+            </button>
 
-                {/* Updates in this group */}
-                {group.updates.map(update => (
-                  <div
-                    key={update.id}
-                    onClick={() => handleUpdateClick(update)}
-                    className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg p-4 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="text-base font-medium text-white group-hover:text-amber-300 transition-colors">
-                            {update.custom_title || update.title}
-                          </h4>
-                          {isUnread(update) && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-red-500/20 text-red-300 border border-red-500/30 backdrop-blur-sm">
-                              unread
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-white/70 leading-relaxed">
-                          {update.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center justify-end">
-                      <span className="text-xs text-white/50">
-                        {formatDistanceToNow(new Date(update.created_at), {
-                          addSuffix: true,
-                        })}
-                      </span>
+            <div className="flex items-start gap-3 pr-8">
+              <div className="flex-shrink-0 p-2 bg-amber-500/20 rounded-lg">
+                <WifiOff className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-base font-medium text-white mb-1">Download for Offline</h4>
+                <p className="text-sm text-white/70 mb-3">
+                  Save this trip guide for offline viewing. Access all content without internet.
+                </p>
+
+                {isDownloading ? (
+                  // Show progress
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm text-amber-400 font-medium">
+                      Downloading... {downloadProgress}%
+                    </span>
+                    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-amber-400 h-full transition-all duration-300 ease-out"
+                        style={{ width: `${downloadProgress}%` }}
+                      />
                     </div>
                   </div>
-                ))}
+                ) : (
+                  // Download button
+                  <button
+                    onClick={handleOfflineToggle}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Download Now
+                  </button>
+                )}
               </div>
-            ))}
+            </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/40 mx-auto mb-4"></div>
+          <p className="text-sm text-white/40">Loading alerts...</p>
+        </div>
+      ) : updates.length === 0 && !showOfflineAlert ? (
+        <div className="text-center py-16">
+          <Bell className="w-20 h-20 text-white/20 mx-auto mb-6" />
+          <h3 className="text-xl font-medium text-white/60 mb-3">No updates yet</h3>
+          <p className="text-sm text-white/40">You'll see trip announcements and news here</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {groupedUpdates.map((group, groupIndex) => (
+            <div key={`${group.tripId}-${groupIndex}`} className="space-y-3">
+              {/* Trip Header - only show if not filtered by trip */}
+              {!tripSlug && !tripId && (
+                <div className="flex items-center gap-2 px-2">
+                  <Ship className="w-5 h-5 text-ocean-400 flex-shrink-0" />
+                  <h3 className="text-base font-semibold text-white flex-1 min-w-0 truncate">
+                    {group.tripName}
+                  </h3>
+                </div>
+              )}
+
+              {/* Updates in this group */}
+              {group.updates.map(update => (
+                <div
+                  key={update.id}
+                  onClick={() => handleUpdateClick(update)}
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg p-4 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="text-base font-medium text-white group-hover:text-amber-300 transition-colors">
+                          {update.custom_title || update.title}
+                        </h4>
+                        {isUnread(update) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-red-500/20 text-red-300 border border-red-500/30 backdrop-blur-sm">
+                            unread
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-white/70 leading-relaxed">{update.description}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-end">
+                    <span className="text-xs text-white/50">
+                      {formatDistanceToNow(new Date(update.created_at), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }
