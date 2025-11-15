@@ -13,6 +13,8 @@ import {
   Home,
   Bookmark,
   Info,
+  Download,
+  X,
 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useState, useEffect } from 'react';
@@ -290,6 +292,25 @@ export default function LandingPage() {
   }, []);
 
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
+  const [showPWAWelcome, setShowPWAWelcome] = useState(false);
+
+  // Check if this is first PWA launch and show welcome message
+  useEffect(() => {
+    const isPWA =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+
+    const hasSeenWelcome = localStorage.getItem('pwa-welcome-seen');
+
+    if (isPWA && !hasSeenWelcome) {
+      setShowPWAWelcome(true);
+    }
+  }, []);
+
+  const dismissPWAWelcome = () => {
+    setShowPWAWelcome(false);
+    localStorage.setItem('pwa-welcome-seen', 'true');
+  };
 
   // Save scroll position when navigating away, restore when coming back
   useEffect(() => {
@@ -409,10 +430,49 @@ export default function LandingPage() {
       <div className="min-h-screen w-full">
         {/* Content Layer */}
         <div className="relative z-10">
+          {/* PWA Welcome Alert - First time PWA users */}
+          {showPWAWelcome && (
+            <div
+              className="px-4 sm:px-6 lg:px-8"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 4.5rem)' }}
+            >
+              <div className="max-w-3xl mx-auto mb-4">
+                <div className="bg-blue-500/20 border border-blue-400/30 rounded-xl p-4 relative">
+                  <button
+                    onClick={dismissPWAWelcome}
+                    className="absolute top-3 right-3 p-1 rounded-full hover:bg-white/10 transition-colors"
+                    aria-label="Dismiss"
+                  >
+                    <X className="w-4 h-4 text-white/60" />
+                  </button>
+
+                  <div className="flex items-start gap-3 pr-6">
+                    <div className="flex-shrink-0 p-2 bg-blue-500/30 rounded-lg">
+                      <Download className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-blue-400 mb-1">
+                        Welcome to your Trip Guide App!
+                      </h3>
+                      <p className="text-sm text-white/80 leading-relaxed">
+                        This app works offline! To save a trip guide for offline access, open the
+                        trip you want, tap the{' '}
+                        <span className="font-medium text-amber-400">bell icon</span> in the top
+                        menu, and click <span className="font-medium">Download Now</span>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Floating Hero Section */}
           <section
-            className="pb-1.5 px-4 sm:px-6 lg:px-8"
-            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 5rem)' }}
+            className={`pb-1.5 px-4 sm:px-6 lg:px-8 ${showPWAWelcome ? '' : ''}`}
+            style={{
+              paddingTop: showPWAWelcome ? '1rem' : 'calc(env(safe-area-inset-top) + 5rem)',
+            }}
           >
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-[21px]">
