@@ -362,7 +362,9 @@ export default function LandingPage() {
       }));
     },
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchOnWindowFocus: !isOffline, // Don't refetch when offline
+    retry: isOffline ? 0 : 3, // Don't retry when offline
+    networkMode: 'offlineFirst', // Use cached data when offline
   });
 
   // Fetch homepage updates
@@ -413,6 +415,30 @@ export default function LandingPage() {
   }
 
   if (error) {
+    // If offline and error occurred, show offline-specific message
+    if (isOffline) {
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="text-center text-white max-w-md">
+            <WifiOff className="h-16 w-16 mx-auto mb-4 text-amber-400" />
+            <h2 className="text-2xl font-bold mb-2">You're Offline</h2>
+            <p className="text-lg mb-4">
+              Trip list not available offline. Your downloaded guides are still accessible from the
+              Settings page.
+            </p>
+            <Button
+              onClick={() => {
+                window.location.href = '/settings';
+              }}
+              className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
+            >
+              Go to Settings
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-white">
