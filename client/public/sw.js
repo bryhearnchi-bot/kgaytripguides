@@ -1,69 +1,44 @@
-const CACHE_NAME = 'k-gay-travel-guide-v5';
-const STATIC_CACHE = 'static-v6';
-const API_CACHE = 'api-v6';
-const IMAGE_CACHE = 'images-v5';
-const FONT_CACHE = 'fonts-v3';
+// Service Worker for KGay Travel Guides
+// Version will be injected during build
+const CACHE_VERSION = self.__BUILD_TIMESTAMP__ || Date.now();
+const CACHE_NAME = `kgay-guides-v${CACHE_VERSION}`;
+const API_CACHE_NAME = `kgay-api-v${CACHE_VERSION}`;
+const OFFLINE_URL = '/offline.html';
 
-// Maximum items in each cache to prevent unbounded growth
-const MAX_API_CACHE_ITEMS = 100;
-const MAX_IMAGE_CACHE_ITEMS = 500;
-
-// Assets to cache on install
-// CRITICAL: Never cache '/' or '/index.html' to prevent stale theme-color meta tags
+// Files to cache for offline functionality
+// CRITICAL: Never cache root '/' HTML to prevent stale theme-color meta tags
 // Safari iOS needs fresh HTML to read theme-color for address bar
-const STATIC_ASSETS = [
-  '/manifest.json',
-  '/images/icons/icon-192x192.png',
-  '/images/icons/icon-512x512.png',
-  // Critical fonts
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  // Add other critical assets as they're built
-];
+const STATIC_CACHE_URLS = ['/offline.html', '/manifest.json'];
 
-// Critical API endpoints to cache on install for PWA offline access
-const CRITICAL_API_ENDPOINTS = ['/api/trips']; // Landing page data
+// Dynamic cache settings
+const MAX_API_CACHE_ITEMS = 50;
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
-// Install event - cache static assets
+// Install event - cache static resources
 self.addEventListener('install', event => {
+  console.log('[ServiceWorker] Installing version:', CACHE_VERSION);
+
   event.waitUntil(
     caches
-      .open(STATIC_CACHE)
+      .open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker: Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => {
-        // Also cache critical API endpoints for PWA offline access
-        console.log('Service Worker: Caching critical API endpoints');
-        return caches.open(API_CACHE).then(apiCache => {
-          return Promise.allSettled(
-            CRITICAL_API_ENDPOINTS.map(endpoint =>
-              fetch(endpoint)
-                .then(response => {
-                  if (response.ok) {
-                    return apiCache.put(endpoint, response);
-                  }
-                })
-                .catch(err => {
-                  console.warn('Service Worker: Failed to cache critical endpoint', endpoint, err);
-                })
-            )
-          );
+        console.log('[ServiceWorker] Caching static resources');
+        return cache.addAll(STATIC_CACHE_URLS).catch(error => {
+          console.error('[ServiceWorker] Failed to cache some resources:', error);
+          // Continue even if some resources fail
+          return Promise.resolve();
         });
       })
       .then(() => {
-        console.log('Service Worker: Skip waiting');
+        console.log('[ServiceWorker] Skip waiting');
         return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('Service Worker: Install failed', error);
       })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  const currentCaches = [STATIC_CACHE, API_CACHE, CACHE_NAME, IMAGE_CACHE, FONT_CACHE];
+  console.log('[ServiceWorker] Activating version:', CACHE_VERSION);
 
   event.waitUntil(
     caches
@@ -71,177 +46,278 @@ self.addEventListener('activate', event => {
       .then(cacheNames => {
         return Promise.all(
           cacheNames.map(cacheName => {
-            if (!currentCaches.includes(cacheName)) {
-              console.log('Service Worker: Deleting old cache', cacheName);
+            // Delete all old caches except current version
+            if (
+              cacheName.startsWith('kgay-') &&
+              cacheName !== CACHE_NAME &&
+              cacheName !== API_CACHE_NAME
+            ) {
+              console.log('[ServiceWorker] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('Service Worker: Claiming clients');
+        console.log('[ServiceWorker] Claiming clients');
         return self.clients.claim();
       })
   );
 });
 
-// Fetch event - implement caching strategy
+// Fetch event - implement caching strategies
 self.addEventListener('fetch', event => {
-  const { request } = event;
+  const request = event.request;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
-    return;
-  }
-
-  // Skip broken Unsplash URLs
-  if (url.hostname === 'images.unsplash.com') {
-    return;
-  }
-
-  // Handle API requests with network-first strategy
-  // Skip cross-origin API requests (for Capacitor development)
-  if (url.pathname.startsWith('/api/')) {
-    // Only intercept if same origin
-    if (url.origin === self.location.origin) {
-      // Use progressive caching - cache all API responses automatically
-      event.respondWith(networkFirstWithProgressiveCaching(request, API_CACHE));
-    }
-    return;
-  }
-
-  // Handle image requests with cache-first strategy
-  if (
-    request.destination === 'image' ||
-    url.pathname.includes('/images/') ||
-    url.hostname.includes('supabase.co') ||
-    url.hostname.includes('kgaytravel.com') ||
-    url.hostname.includes('freepik.com')
-  ) {
-    event.respondWith(cacheFirst(request, CACHE_NAME));
-    return;
-  }
-
-  // Handle static assets with stale-while-revalidate
-  // CRITICAL: Never cache '/' (root HTML) - Safari iOS needs fresh HTML for theme-color meta tag
-  if (
-    url.pathname.includes('/assets/') ||
-    url.pathname.includes('.js') ||
-    url.pathname.includes('.css')
-  ) {
-    event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
-    return;
-  }
-
-  // Handle navigation requests (HTML pages) - always fetch fresh
-  // This ensures Safari iOS gets latest theme-color meta tags
-  if (request.mode === 'navigate' || request.destination === 'document') {
+  // Handle navigation requests
+  // CRITICAL iOS PWA Fix: Use network-first with proper headers to maintain PWA context
+  // This prevents iOS from showing browser chrome during in-app navigation
+  if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request, {
-        cache: 'no-store', // Force fresh fetch, bypass HTTP cache
-      }).catch(async () => {
-        // Network failed - try to serve cached app shell from trip offline caches
-        // This allows the SPA to load even when offline
-        const cacheNames = await caches.keys();
-        const tripCaches = cacheNames.filter(
-          name => name.startsWith('trip-') && name.endsWith('-offline')
-        );
-
-        // Try to find the cached root HTML (app shell) in any trip cache
-        for (const cacheName of tripCaches) {
-          const tripCache = await caches.open(cacheName);
-          const cachedHtml = await tripCache.match('/');
-          if (cachedHtml) {
-            console.log('[ServiceWorker] Serving cached app shell from:', cacheName);
-            return cachedHtml;
-          }
-        }
-
-        // No cached app shell found, fall back to generic offline response
-        return (
-          caches.match(request) ||
-          new Response('Offline - No cached content available', {
-            status: 503,
-            headers: new Headers({ 'Content-Type': 'text/html' }),
-          })
-        );
+        cache: 'no-store', // Force fresh fetch for meta tags
+        credentials: 'same-origin',
+        redirect: 'manual', // Handle redirects manually to maintain PWA context
       })
+        .then(response => {
+          // Handle manual redirects while staying in PWA
+          if (
+            response.type === 'opaqueredirect' ||
+            (response.status >= 300 && response.status < 400)
+          ) {
+            const location = response.headers.get('Location');
+            if (location) {
+              return fetch(location, {
+                cache: 'no-store',
+                credentials: 'same-origin',
+              });
+            }
+          }
+          return response;
+        })
+        .catch(async () => {
+          // Network failed - try to serve cached app shell from trip offline caches
+          // This allows the SPA to load even when offline
+          const cacheNames = await caches.keys();
+          const tripCaches = cacheNames.filter(
+            name => name.startsWith('trip-') && name.endsWith('-offline')
+          );
+
+          // Try to find the cached root HTML (app shell) in any trip cache
+          for (const cacheName of tripCaches) {
+            const tripCache = await caches.open(cacheName);
+            const cachedHtml = await tripCache.match('/');
+            if (cachedHtml) {
+              console.log('[ServiceWorker] Serving cached app shell from:', cacheName);
+              return cachedHtml;
+            }
+          }
+
+          // No cached app shell found, fall back to offline page
+          return caches
+            .open(CACHE_NAME)
+            .then(cache => cache.match(OFFLINE_URL))
+            .then(response => {
+              // If offline page not found, return a basic offline response
+              if (!response) {
+                return new Response(
+                  '<html><body><h1>Offline</h1><p>Please check your internet connection.</p></body></html>',
+                  {
+                    status: 503,
+                    statusText: 'Service Unavailable',
+                    headers: {
+                      'Content-Type': 'text/html',
+                    },
+                  }
+                );
+              }
+              return response;
+            });
+        })
     );
     return;
   }
 
-  // Default strategy for other requests
-  event.respondWith(networkFirst(request, CACHE_NAME));
-});
+  // Handle API requests
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(handleApiRequest(request));
+    return;
+  }
 
-// Network-first strategy with progressive caching (good for API calls)
-// This caches ALL API responses automatically as users navigate
-async function networkFirstWithProgressiveCaching(request, cacheName) {
-  try {
-    const networkResponse = await fetch(request);
+  // Handle static resources
+  event.respondWith(
+    caches.match(request).then(async response => {
+      if (response) {
+        return response;
+      }
 
-    if (networkResponse.ok) {
-      const cache = await caches.open(cacheName);
+      // Check trip-specific offline caches for images and other static resources
+      const cacheNames = await caches.keys();
+      const tripCaches = cacheNames.filter(
+        name => name.startsWith('trip-') && name.endsWith('-offline')
+      );
 
-      // Enforce cache size limit to prevent unbounded growth
-      const keys = await cache.keys();
-      if (keys.length >= MAX_API_CACHE_ITEMS) {
-        // Remove oldest 10% of items
-        const itemsToRemove = Math.floor(keys.length * 0.1);
-        for (let i = 0; i < itemsToRemove; i++) {
-          await cache.delete(keys[i]);
+      for (const cacheName of tripCaches) {
+        const tripCache = await caches.open(cacheName);
+        const tripCachedResponse = await tripCache.match(request);
+        if (tripCachedResponse) {
+          console.log(
+            '[ServiceWorker] Found static resource in trip offline cache:',
+            cacheName,
+            request.url
+          );
+          return tripCachedResponse;
         }
       }
 
-      // Cache the response for future offline use
-      cache.put(request, networkResponse.clone());
+      return fetch(request)
+        .then(response => {
+          // Don't cache non-successful responses
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
 
-      // Progressive caching: Also cache related trip data in trip-specific caches
-      // Extract trip ID from URL if present
-      const url = new URL(request.url);
-      const tripIdMatch = url.pathname.match(/\/trips\/(\d+)\/|\/trip\/(\d+)/);
-      if (tripIdMatch) {
-        const tripId = tripIdMatch[1] || tripIdMatch[2];
-        const tripCacheName = `trip-${tripId}-offline`;
-        const tripCache = await caches.open(tripCacheName);
-        // Store in trip-specific cache for better offline organization
-        tripCache.put(request, networkResponse.clone());
+          // Cache successful responses
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(request, responseToCache);
+          });
+
+          return response;
+        })
+        .catch(async error => {
+          // Network error - check trip offline caches one more time (in case we missed it)
+          for (const cacheName of tripCaches) {
+            const tripCache = await caches.open(cacheName);
+            const tripCachedResponse = await tripCache.match(request);
+            if (tripCachedResponse) {
+              console.log(
+                '[ServiceWorker] Found static resource in trip offline cache (fallback):',
+                cacheName,
+                request.url
+              );
+              return tripCachedResponse;
+            }
+          }
+
+          console.error('[ServiceWorker] Fetch failed:', error);
+          return new Response('Network error occurred', {
+            status: 408,
+            statusText: 'Request Timeout',
+            headers: {
+              'Content-Type': 'text/plain',
+            },
+          });
+        });
+    })
+  );
+});
+
+// Handle API requests with network-first strategy
+async function handleApiRequest(request) {
+  try {
+    // Try network first
+    const response = await fetch(request);
+
+    // Cache successful GET requests
+    if (request.method === 'GET' && response.status === 200) {
+      const cache = await caches.open(API_CACHE_NAME);
+
+      // Implement cache size limit
+      const keys = await cache.keys();
+      if (keys.length >= MAX_API_CACHE_ITEMS) {
+        await cache.delete(keys[0]);
       }
 
-      return networkResponse;
+      cache.put(request, response.clone());
     }
 
-    // If network fails, try cache
-    return (await caches.match(request)) || networkResponse;
+    return response;
   } catch (error) {
-    // Network failed, try cache
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      console.log('[ServiceWorker] Found in general cache:', request.url);
-      return cachedResponse;
-    }
+    // Network failed, try cache for GET requests
+    if (request.method === 'GET') {
+      const requestUrl = request.url;
+      const url = new URL(requestUrl);
+      const pathname = url.pathname;
 
-    // Check trip-specific offline caches
-    // These are created by OfflineStorageContext when user enables offline mode
-    // IMPORTANT: Check ALL trip caches for ANY API request (including /api/trips for landing page)
-    const cacheNames = await caches.keys();
-    const tripCaches = cacheNames.filter(
-      name => name.startsWith('trip-') && name.endsWith('-offline')
-    );
+      console.log('[ServiceWorker] Network failed, searching cache for:', requestUrl);
 
-    for (const tripCacheName of tripCaches) {
-      const tripCache = await caches.open(tripCacheName);
-      const tripCachedResponse = await tripCache.match(request);
-      if (tripCachedResponse) {
-        console.log('[ServiceWorker] Found in trip offline cache:', tripCacheName, request.url);
-        return tripCachedResponse;
+      // First try the general API cache
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        console.log('[ServiceWorker] Found in general API cache');
+        return cachedResponse;
       }
+
+      // Then check trip-specific offline caches
+      // These are created by OfflineStorageContext when user enables offline mode
+      const cacheNames = await caches.keys();
+      const tripCaches = cacheNames.filter(
+        name => name.startsWith('trip-') && name.endsWith('-offline')
+      );
+
+      console.log('[ServiceWorker] Checking trip caches:', tripCaches);
+
+      for (const cacheName of tripCaches) {
+        const tripCache = await caches.open(cacheName);
+
+        // Try multiple matching strategies
+        // 1. Match with full Request object
+        let tripCachedResponse = await tripCache.match(request);
+        if (tripCachedResponse) {
+          console.log(
+            '[ServiceWorker] Found in trip offline cache (request match):',
+            cacheName,
+            requestUrl
+          );
+          return tripCachedResponse;
+        }
+
+        // 2. Match with URL string
+        tripCachedResponse = await tripCache.match(requestUrl);
+        if (tripCachedResponse) {
+          console.log(
+            '[ServiceWorker] Found in trip offline cache (url match):',
+            cacheName,
+            requestUrl
+          );
+          return tripCachedResponse;
+        }
+
+        // 3. Match with pathname only (in case origin differs)
+        tripCachedResponse = await tripCache.match(pathname);
+        if (tripCachedResponse) {
+          console.log(
+            '[ServiceWorker] Found in trip offline cache (pathname match):',
+            cacheName,
+            pathname
+          );
+          return tripCachedResponse;
+        }
+
+        // 4. Try to find any matching key by iterating cache keys
+        const keys = await tripCache.keys();
+        for (const key of keys) {
+          const keyUrl = new URL(key.url);
+          if (keyUrl.pathname === pathname) {
+            tripCachedResponse = await tripCache.match(key);
+            if (tripCachedResponse) {
+              console.log(
+                '[ServiceWorker] Found in trip offline cache (key iteration):',
+                cacheName,
+                key.url
+              );
+              return tripCachedResponse;
+            }
+          }
+        }
+      }
+
+      console.log('[ServiceWorker] API request not found in any cache:', requestUrl);
     }
 
-    console.log('[ServiceWorker] No cached response found for:', request.url);
-
-    // Return offline fallback
+    // Return offline response for failed requests
     return new Response(
       JSON.stringify({
         error: 'Network unavailable',
@@ -250,132 +326,110 @@ async function networkFirstWithProgressiveCaching(request, cacheName) {
       {
         status: 503,
         statusText: 'Service Unavailable',
-        headers: new Headers({
+        headers: {
           'Content-Type': 'application/json',
-        }),
+        },
       }
     );
   }
 }
 
-// Legacy network-first strategy (kept for backwards compatibility)
-async function networkFirst(request, cacheName) {
-  return networkFirstWithProgressiveCaching(request, cacheName);
-}
-
-// Cache-first strategy (good for images and assets that don't change)
-async function cacheFirst(request, cacheName) {
-  const cachedResponse = await caches.match(request);
-
-  if (cachedResponse) {
-    return cachedResponse;
+// Background sync for offline actions
+self.addEventListener('sync', event => {
+  if (event.tag === 'background-sync') {
+    event.waitUntil(doBackgroundSync());
   }
+});
 
-  // Check trip-specific offline caches for images
-  const cacheNames = await caches.keys();
-  const tripCaches = cacheNames.filter(
-    name => name.startsWith('trip-') && name.endsWith('-offline')
-  );
-
-  for (const tripCacheName of tripCaches) {
-    const tripCache = await caches.open(tripCacheName);
-    const tripCachedResponse = await tripCache.match(request);
-    if (tripCachedResponse) {
-      console.log('[ServiceWorker] Found image in trip offline cache:', tripCacheName, request.url);
-      return tripCachedResponse;
-    }
-  }
-
+async function doBackgroundSync() {
+  // Handle queued actions when back online
   try {
-    // Use appropriate fetch options for cross-origin requests
-    const fetchOptions = {};
-    const url = new URL(request.url);
-    const isCrossOrigin = url.origin !== self.location.origin;
+    const offlineActions = await getOfflineActions();
 
-    if (isCrossOrigin && request.destination === 'image') {
-      fetchOptions.mode = 'cors';
-      fetchOptions.credentials = 'omit';
-    }
-
-    const networkResponse = await fetch(request, fetchOptions);
-
-    // Cache successful responses (including opaque responses for cross-origin)
-    if (networkResponse.ok || networkResponse.type === 'opaque') {
-      const cache = await caches.open(IMAGE_CACHE);
-
-      // Enforce cache size limit to prevent unbounded growth
-      const keys = await cache.keys();
-      if (keys.length >= MAX_IMAGE_CACHE_ITEMS) {
-        // Remove oldest 10% of items
-        const itemsToRemove = Math.floor(keys.length * 0.1);
-        for (let i = 0; i < itemsToRemove; i++) {
-          await cache.delete(keys[i]);
-        }
+    for (const action of offlineActions) {
+      try {
+        await replayAction(action);
+        await removeOfflineAction(action.id);
+      } catch (error) {
+        console.log('Failed to replay action:', error);
       }
-
-      cache.put(request, networkResponse.clone());
     }
-
-    return networkResponse;
   } catch (error) {
-    // Return a placeholder image for failed image requests
-    if (request.destination === 'image') {
-      return new Response(
-        `<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="200" height="200" fill="#F3F4F6"/>
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M100 90C105.523 90 110 94.4772 110 100C110 105.523 105.523 110 100 110C94.4772 110 90 105.523 90 100C90 94.4772 94.4772 90 100 90Z" fill="#D1D5DB"/>
-        </svg>`,
-        {
-          status: 200,
-          headers: new Headers({
-            'Content-Type': 'image/svg+xml',
-          }),
-        }
-      );
-    }
-
-    throw error;
+    console.log('Background sync failed:', error);
   }
 }
 
-// Stale-while-revalidate strategy (good for frequently updated content)
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cachedResponse = await cache.match(request);
+// Push notification handling
+self.addEventListener('push', event => {
+  if (!event.data) return;
 
-  const fetchPromise = fetch(request)
-    .then(networkResponse => {
-      if (networkResponse.ok) {
-        cache.put(request, networkResponse.clone());
-      }
-      return networkResponse;
-    })
-    .catch(() => cachedResponse);
+  const data = event.data.json();
+  const options = {
+    body: data.body,
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
+    vibrate: [200, 100, 200],
+    data: data.data,
+    actions: data.actions || [],
+    requireInteraction: data.requireInteraction || false,
+  };
 
-  return cachedResponse || fetchPromise;
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+// Notification click handling
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/admin';
+
+  event.waitUntil(
+    clients
+      .matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      .then(clientList => {
+        // Try to focus existing window
+        for (const client of clientList) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+
+        // Open new window
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Utility functions for offline storage
+async function getOfflineActions() {
+  // Implement offline action queue storage
+  // This would typically use IndexedDB
+  return [];
 }
 
-// Listen for message from main thread
+async function removeOfflineAction(id) {
+  // Remove action from offline queue
+}
+
+async function replayAction(action) {
+  // Replay the stored action
+  return fetch(action.url, {
+    method: action.method,
+    headers: action.headers,
+    body: action.body,
+  });
+}
+
+// Update notification
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_NAME });
-  }
 });
 
-// Background sync for offline actions (if supported)
-if ('sync' in self.registration) {
-  self.addEventListener('sync', event => {
-    if (event.tag === 'background-sync') {
-      event.waitUntil(doBackgroundSync());
-    }
-  });
-}
-
-async function doBackgroundSync() {
-  // Handle background sync tasks
-  console.log('Service Worker: Background sync triggered');
-}
+console.log('Service Worker loaded successfully');

@@ -3,6 +3,7 @@ import { Switch, Route, Redirect, useLocation } from 'wouter';
 import { queryClient } from './lib/queryClient';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext';
 import { TimeFormatProvider } from '@/contexts/TimeFormatContext';
@@ -265,86 +266,43 @@ function App() {
       history.scrollRestoration = 'manual';
     }
 
-    // Add offline styles
-    const offlineStyles = document.createElement('style');
-    offlineStyles.textContent = `
-      .offline .offline-indicator {
-        display: inline-flex !important;
-      }
-      .offline-indicator {
-        display: none;
-        position: fixed;
-        bottom: calc(60px + env(safe-area-inset-bottom));
-        right: 12px;
-        background: rgba(100, 116, 139, 0.9);
-        color: rgba(255, 255, 255, 0.8);
-        text-align: center;
-        padding: 4px 10px;
-        font-size: 11px;
-        font-weight: 500;
-        z-index: 9999;
-        border-radius: 12px;
-        backdrop-filter: blur(4px);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-        align-items: center;
-        gap: 6px;
-        width: auto;
-        height: auto;
-      }
-      .offline-indicator.hidden {
-        display: none !important;
-      }
-      .offline-indicator-close {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        line-height: 1;
-        padding: 0;
-      }
-      .offline-indicator-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
-    `;
-    document.head.appendChild(offlineStyles);
+    // Handle offline/online status with Sonner toasts
+    let offlineToastId: string | number | undefined;
 
-    // Add offline indicator to DOM
-    const indicator = document.createElement('div');
-    indicator.className = 'offline-indicator';
-    indicator.id = 'offline-indicator';
-
-    const text = document.createElement('span');
-    text.textContent = 'You are offline';
-    indicator.appendChild(text);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'offline-indicator-close';
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => {
-      indicator.classList.add('hidden');
+    const handleOffline = () => {
+      // Show persistent offline toast using Sonner
+      offlineToastId = toast.warning('You are offline', {
+        description: 'Some features may be unavailable',
+        duration: Infinity, // Persistent until dismissed or online
+        id: 'offline-status', // Unique ID to prevent duplicates
+      });
     };
-    indicator.appendChild(closeBtn);
 
-    document.body.appendChild(indicator);
+    const handleOnline = () => {
+      // Dismiss the offline toast
+      if (offlineToastId) {
+        toast.dismiss(offlineToastId);
+      }
+      // Show brief online notification
+      toast.success('Back online', {
+        description: 'All features restored',
+        duration: 3000,
+      });
+    };
 
-    // Show indicator again when going offline (if it was closed)
-    window.addEventListener('offline', () => {
-      indicator.classList.remove('hidden');
-    });
+    // Check initial state
+    if (!navigator.onLine) {
+      handleOffline();
+    }
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
 
     return () => {
-      if (offlineStyles.parentNode) {
-        offlineStyles.parentNode.removeChild(offlineStyles);
-      }
-      if (indicator.parentNode) {
-        indicator.parentNode.removeChild(indicator);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+      if (offlineToastId) {
+        toast.dismiss(offlineToastId);
       }
     };
   }, []);

@@ -241,6 +241,75 @@ export default function Settings({
     return formatTimestamp(date);
   };
 
+  // Debug function to show cache contents
+  const [showCacheDebug, setShowCacheDebug] = useState(false);
+  const [cacheDebugInfo, setCacheDebugInfo] = useState<string>('');
+
+  const handleDebugCache = async () => {
+    if (!tripId || !tripSlug) {
+      setCacheDebugInfo('No trip ID or slug available');
+      setShowCacheDebug(true);
+      return;
+    }
+
+    try {
+      const info: string[] = [];
+      info.push(`Trip ID: ${tripId}`);
+      info.push(`Trip Slug: ${tripSlug}`);
+      info.push(`Offline Enabled: ${offlineEnabled}`);
+      info.push('');
+
+      // List all caches
+      const cacheNames = await caches.keys();
+      info.push('Available Caches:');
+      cacheNames.forEach(name => info.push(`  - ${name}`));
+      info.push('');
+
+      // Check trip-specific cache
+      const tripCacheName = `trip-${tripId}-offline`;
+      if (cacheNames.includes(tripCacheName)) {
+        const tripCache = await caches.open(tripCacheName);
+        const keys = await tripCache.keys();
+        info.push(`Cache "${tripCacheName}" contents (${keys.length} items):`);
+
+        for (const key of keys) {
+          const url = new URL(key.url);
+          info.push(`  - ${url.pathname}`);
+        }
+        info.push('');
+
+        // Check specifically for the complete endpoint
+        const completeUrl = `/api/trips/${tripSlug}/complete`;
+        info.push(`Looking for: ${completeUrl}`);
+
+        // Try to match
+        const match1 = await tripCache.match(completeUrl);
+        info.push(`  Direct path match: ${match1 ? 'FOUND' : 'NOT FOUND'}`);
+
+        const fullUrl = new URL(completeUrl, window.location.origin).href;
+        info.push(`  Full URL (${fullUrl}):`);
+        const match2 = await tripCache.match(fullUrl);
+        info.push(`    Match: ${match2 ? 'FOUND' : 'NOT FOUND'}`);
+
+        // Check if any key matches the pathname
+        const matchingKeys = keys.filter(k => {
+          const keyUrl = new URL(k.url);
+          return keyUrl.pathname === completeUrl;
+        });
+        info.push(`  Keys matching pathname: ${matchingKeys.length}`);
+        matchingKeys.forEach(k => info.push(`    - ${k.url}`));
+      } else {
+        info.push(`Cache "${tripCacheName}" NOT FOUND`);
+      }
+
+      setCacheDebugInfo(info.join('\n'));
+      setShowCacheDebug(true);
+    } catch (error) {
+      setCacheDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowCacheDebug(true);
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col gap-3">
@@ -413,6 +482,13 @@ export default function Settings({
                     <span className="text-xs font-medium text-red-400">Delete</span>
                   </button>
                 </div>
+                <button
+                  onClick={handleDebugCache}
+                  className="w-full flex items-center justify-center gap-1.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                >
+                  <Info className="h-3 w-3 text-white/50" />
+                  <span className="text-[10px] font-medium text-white/50">Debug Cache</span>
+                </button>
               </div>
             ) : isDownloading ? (
               // Downloading - show progress
@@ -633,6 +709,32 @@ export default function Settings({
                 className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-lg"
               >
                 Got it, thanks!
+              </Button>
+            </div>
+          </div>
+        </FlyUpSheet>
+
+        {/* Cache Debug Modal */}
+        <FlyUpSheet
+          open={showCacheDebug}
+          onOpenChange={setShowCacheDebug}
+          icon={Info}
+          iconColor="text-gray-400"
+          title="Cache Debug Info"
+          accessibleTitle="Cache Debug Info"
+          accessibleDescription="Technical information about offline cache"
+        >
+          <div className="space-y-4">
+            <pre className="text-[10px] text-white/80 bg-black/30 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono">
+              {cacheDebugInfo}
+            </pre>
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setShowCacheDebug(false)}
+                variant="outline"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                Close
               </Button>
             </div>
           </div>
