@@ -20,7 +20,6 @@ import type { IMPORTANT_INFO } from '@/data/trip-data';
 import { InfoSectionsBentoGrid } from '../info-sections/InfoSectionsBentoGrid';
 import { TabHeader } from '../shared/TabHeader';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
 import {
   Accordion,
   AccordionContent,
@@ -93,7 +92,9 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
     queryKey: ['trip-faqs', tripId],
     queryFn: async () => {
       if (!tripId) return [];
-      const response = await api.get(`/api/faqs/trip/${tripId}`);
+      // Use fetch() directly for offline cache compatibility
+      // api.get() adds credentials: 'include' which prevents cache matching
+      const response = await fetch(`/api/faqs/trip/${tripId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch FAQs');
       }

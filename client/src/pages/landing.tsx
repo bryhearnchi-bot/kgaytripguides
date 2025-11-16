@@ -356,6 +356,10 @@ export default function LandingPage() {
         throw new Error('Failed to fetch trips');
       }
       const data = await response.json();
+      // Defensive check - ensure data is an array
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format');
+      }
       return data.map((trip: Trip) => ({
         ...trip,
         status: getTripStatus(trip.startDate, trip.endDate),
@@ -365,6 +369,7 @@ export default function LandingPage() {
     refetchOnWindowFocus: !isOffline, // Don't refetch when offline
     retry: isOffline ? 0 : 3, // Don't retry when offline
     networkMode: 'offlineFirst', // Use cached data when offline
+    throwOnError: false, // Prevent errors from propagating to ErrorBoundary
   });
 
   // Fetch homepage updates
@@ -377,10 +382,17 @@ export default function LandingPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch updates');
       }
-      return response.json();
+      const data = await response.json();
+      // Defensive check - ensure data is an array
+      if (!Array.isArray(data)) {
+        return []; // Return empty array if invalid response
+      }
+      return data;
     },
     staleTime: 1 * 60 * 1000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: !isOffline, // Don't refetch when offline
+    retry: isOffline ? 0 : 3, // Don't retry when offline
+    throwOnError: false, // Prevent errors from propagating to ErrorBoundary
   });
 
   const hasCurrent = trips?.some(trip => trip.status === 'current') || false;
