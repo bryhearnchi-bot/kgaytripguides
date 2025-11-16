@@ -367,6 +367,9 @@ export const EventCard = memo<EventCardProps>(function EventCard({
             <button
               onClick={e => {
                 e.stopPropagation();
+                e.preventDefault();
+                // Blur button to prevent focus-related scroll
+                (e.target as HTMLButtonElement).blur();
                 setShowEventInfoSlideUp(true);
               }}
               className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
@@ -379,6 +382,9 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                 <button
                   onClick={e => {
                     e.stopPropagation();
+                    e.preventDefault();
+                    // Blur button to prevent focus-related scroll
+                    (e.target as HTMLButtonElement).blur();
                     setShowArtistInfoSlideUp(true);
                   }}
                   className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
@@ -389,6 +395,9 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                 <button
                   onClick={e => {
                     e.stopPropagation();
+                    e.preventDefault();
+                    // Blur button to prevent focus-related scroll
+                    (e.target as HTMLButtonElement).blur();
                     setShowArtistScheduleSlideUp(true);
                   }}
                   className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
