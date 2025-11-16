@@ -80,15 +80,8 @@ export const OverviewTab = memo(function OverviewTab({
         stop.port.toLowerCase().includes('sea day') ||
         stop.port.toLowerCase().includes('at sea')
     ).length,
-    // Count total events from schedule (excluding parties)
-    totalEvents: DAILY.reduce(
-      (acc, day) =>
-        acc +
-        (day.items?.filter(
-          (item: any) => !item.type?.toLowerCase().includes('party') && !item.partyThemeId
-        ).length || 0),
-      0
-    ),
+    // Count total events from schedule (all events)
+    totalEvents: DAILY.reduce((acc, day) => acc + (day.items?.length || 0), 0),
     // Count party themes (from PARTY_THEMES array)
     totalParties: PARTY_THEMES.length,
     // Count talent/performers
