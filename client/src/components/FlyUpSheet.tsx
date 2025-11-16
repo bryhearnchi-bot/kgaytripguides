@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { LucideIcon } from 'lucide-react';
 import {
   Sheet,
@@ -68,8 +68,26 @@ export function FlyUpSheet({
   const [sheetTouchStart, setSheetTouchStart] = useState<number | null>(null);
   const [sheetTouchEnd, setSheetTouchEnd] = useState<number | null>(null);
 
+  // Preserve scroll position
+  const scrollPositionRef = useRef<number>(0);
+
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+
+  // Preserve scroll position when sheet opens/closes
+  useEffect(() => {
+    if (open) {
+      // Save current scroll position before sheet opens
+      scrollPositionRef.current = window.scrollY;
+    } else {
+      // Restore scroll position after sheet closes
+      // Use setTimeout to ensure it happens after Radix cleans up
+      const savedPosition = scrollPositionRef.current;
+      setTimeout(() => {
+        window.scrollTo(0, savedPosition);
+      }, 0);
+    }
+  }, [open]);
 
   // Handle sheet close with optional callback
   const handleOpenChange = (isOpen: boolean) => {
@@ -120,7 +138,11 @@ export function FlyUpSheet({
         <SheetContent
           side="bottom"
           className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden"
-          style={{ backgroundColor: 'rgba(0, 33, 71, 1)', backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' }}
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
           onTouchStart={onSheetTouchStart}
           onTouchMove={onSheetTouchMove}
           onTouchEnd={onSheetTouchEnd}
