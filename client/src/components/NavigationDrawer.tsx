@@ -22,6 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetPortal,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
@@ -286,14 +293,14 @@ export default function NavigationDrawer({
                 </>
               ) : (
                 <>
-                  {/* Login Button - When Logged Out (at top where profile would be) */}
-                  <button
+                  {/* Login Button - Temporarily Disabled */}
+                  {/* <button
                     onClick={() => handleNavigate('/admin')}
                     className="w-full flex items-center gap-3 p-3.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-left"
                   >
                     <User className="h-5 w-5 text-white" />
                     <span className="text-sm font-medium">Login</span>
-                  </button>
+                  </button> */}
 
                   {/* Last Updated - When Logged Out */}
                   <div className="flex items-center justify-center text-xs text-white/50 py-1">

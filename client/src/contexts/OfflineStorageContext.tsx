@@ -362,8 +362,9 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
         setDownloadProgress(
           Math.round((completedRequests / (totalRequests + imageUrls.length)) * 100)
         );
-      } catch {
+      } catch (error) {
         // Continue with other endpoints if one fails
+        console.error('[OfflineStorage] Error fetching endpoint:', endpoint, error);
         completedRequests++;
       }
     }

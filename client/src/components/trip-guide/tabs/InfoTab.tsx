@@ -98,10 +98,13 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
       if (!response.ok) {
         throw new Error('Failed to fetch FAQs');
       }
-      return response.json();
+      const data = await response.json();
+      return data;
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!tripId,
+    networkMode: 'offlineFirst', // Allow cached responses when offline
+    retry: 1, // Only retry once for offline scenarios
   });
 
   // Fetch Info Sections
@@ -117,10 +120,13 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
       if (!response.ok) {
         throw new Error('Failed to fetch trip info sections');
       }
-      return response.json();
+      const data = await response.json();
+      return data;
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!tripId,
+    networkMode: 'offlineFirst', // Allow cached responses when offline
+    retry: 1, // Only retry once for offline scenarios
   });
 
   // Sort info sections
