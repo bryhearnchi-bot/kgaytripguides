@@ -428,7 +428,9 @@ export default function LandingPage() {
 
   if (error) {
     // If offline and error occurred, show offline-specific message
-    if (isOffline) {
+    // Check both React state and navigator.onLine for reliability
+    const currentlyOffline = isOffline || !navigator.onLine;
+    if (currentlyOffline) {
       return (
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center text-white max-w-md">
