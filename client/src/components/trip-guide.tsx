@@ -17,6 +17,7 @@ import {
   Share2,
   User as UserIcon,
   Edit,
+  AlertCircle,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -521,6 +522,12 @@ export default function TripGuide({
             {tripDates && (
               <p className="text-white/60 text-xs font-medium mt-2 sm:text-sm">{tripDates}</p>
             )}
+
+            {/* Pre-embarkation Disclaimer */}
+            <div className="flex items-center justify-center gap-1.5 text-amber-300/70 text-[10px] mt-2">
+              <AlertCircle className="w-3 h-3 flex-shrink-0" />
+              <p>Pre-embarkation info only. Check your cruise line app for latest updates.</p>
+            </div>
           </div>
         </div>
 
