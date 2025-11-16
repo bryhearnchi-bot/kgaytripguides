@@ -270,10 +270,10 @@ function App() {
     let offlineToastId: string | number | undefined;
 
     const handleOffline = () => {
-      // Show persistent offline toast using Sonner
+      // Show offline toast using Sonner
       offlineToastId = toast.warning('You are offline', {
         description: 'Some features may be unavailable',
-        duration: Infinity, // Persistent until dismissed or online
+        duration: 5000, // Show for 5 seconds
         id: 'offline-status', // Unique ID to prevent duplicates
       });
     };
