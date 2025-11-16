@@ -45,8 +45,13 @@ export async function apiClient(url: string, options: FetchOptions = {}): Promis
     requestHeaders['Authorization'] = `Bearer ${session.access_token}`;
   }
 
-  // Make the request with full API URL
-  return fetch(getApiUrl(url), {
+  // When offline, keep /api/... requests on the current origin so the service worker
+  // and offline caches can satisfy them. When online, respect API_BASE_URL.
+  const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+  const targetUrl = isOffline ? url : getApiUrl(url);
+
+  // Make the request with the appropriate URL
+  return fetch(targetUrl, {
     ...restOptions,
     headers: requestHeaders,
     credentials: 'include', // Include cookies for backward compatibility

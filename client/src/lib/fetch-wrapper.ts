@@ -9,18 +9,30 @@ import { getApiUrl } from './api-config';
 const originalFetch = window.fetch;
 
 /**
- * Custom fetch that handles relative URLs
+ * Custom fetch that handles relative URLs.
+ *
+ * ONLINE:
+ *   - `/api/...` → `API_BASE_URL + path` (remote API host when configured)
+ *
+ * OFFLINE:
+ *   - `/api/...` stays on the current origin so the service worker and
+ *     trip-specific offline caches can satisfy requests.
+ *   - This is critical for PWA offline mode when VITE_API_URL points
+ *     at a different host that isn't available offline.
  */
 export const customFetch: typeof fetch = (input, init?) => {
-  // If input is a string and starts with /api/, convert to full URL
+  const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+  // If input is a string and starts with /api/, optionally convert to full URL
   if (typeof input === 'string' && input.startsWith('/api')) {
-    return originalFetch(getApiUrl(input), init);
+    const url = isOffline ? input : getApiUrl(input);
+    return originalFetch(url, init);
   }
 
   // If input is a Request object with a relative URL
   if (input instanceof Request && input.url.startsWith('/api')) {
-    const fullUrl = getApiUrl(input.url);
-    const newRequest = new Request(fullUrl, input);
+    const targetUrl = isOffline ? input.url : getApiUrl(input.url);
+    const newRequest = new Request(targetUrl, input);
     return originalFetch(newRequest, init);
   }
 
