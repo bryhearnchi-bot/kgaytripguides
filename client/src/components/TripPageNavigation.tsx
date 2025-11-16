@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Share2,
@@ -72,6 +72,26 @@ export function TripPageNavigation({
 
   // Get offline storage status for this trip
   const { isOfflineEnabled, isCacheOutdated, isAlertDismissed } = useOfflineStorage();
+
+  // Track online/offline state so we can adjust behavior in PWA mode
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const isOfflinePWA = isPWA() && isOffline;
 
   // Check if bell should be yellow (offline not enabled or cache outdated)
   const shouldHighlightBell =
@@ -158,6 +178,14 @@ export function TripPageNavigation({
   };
 
   const handleNavigateFromSheet = (path: string) => {
+    // In offline PWA mode, prevent navigation away from the trip page
+    if (isOfflinePWA) {
+      toast.info('Offline mode', {
+        description: 'Navigation is disabled while using the app offline.',
+      });
+      return;
+    }
+
     // Close the Sheet first
     setSettingsOpen(false);
     // Then navigate after a brief delay to allow Sheet to close
@@ -171,13 +199,16 @@ export function TripPageNavigation({
       <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
         {/* Left side - Back button + Logo/Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={handleBack}
-            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center"
-            aria-label="Back to home"
-          >
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
+          {/* Back button - hidden when offline in PWA mode to keep users on the trip */}
+          {!isOfflinePWA && (
+            <button
+              onClick={handleBack}
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center"
+              aria-label="Back to home"
+            >
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          )}
 
           {/* Logo and badge - Always on left side */}
           <div className="flex items-center gap-2 sm:gap-3">

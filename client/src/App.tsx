@@ -21,6 +21,7 @@ import {
   ensureThemeMetaTags,
   setupNavigationHandlers,
   setupPWANavigationInterceptor,
+  isPWA,
 } from '@/lib/capacitor';
 
 // Lazy load all route components for code splitting
@@ -225,9 +226,72 @@ function Router() {
 
 // Wrapper component to conditionally show NavigationBanner
 function AppContent() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const isTripPage = location.startsWith('/trip/');
   const isLandingPage = location === '/';
+
+  // In offline PWA mode, treat the "home" of the app as the best trip (current or next upcoming).
+  // When the app opens on "/" or any non-trip route while offline in PWA, automatically redirect
+  // to the most relevant trip guide if we have trip data cached.
+  useEffect(() => {
+    if (!isPWA()) return;
+    if (typeof navigator === 'undefined' || navigator.onLine) return;
+
+    // Don't redirect if we're already on a trip page
+    if (location.startsWith('/trip/')) return;
+
+    // Avoid multiple redirects in a single session
+    const redirectKey = 'offline-trip-redirect-done';
+    if (sessionStorage.getItem(redirectKey) === '1') return;
+    sessionStorage.setItem(redirectKey, '1');
+
+    const loadAndRedirect = async () => {
+      try {
+        const response = await fetch('/api/trips');
+        if (!response.ok) return;
+
+        const trips: any[] = await response.json();
+        if (!Array.isArray(trips) || trips.length === 0) return;
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const classifyTrip = (trip: any): 'upcoming' | 'current' | 'past' => {
+          const start = new Date(trip.startDate);
+          const end = new Date(trip.endDate);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+
+          if (now < start) return 'upcoming';
+          if (now > end) return 'past';
+          return 'current';
+        };
+
+        const currentTrips = trips.filter(trip => classifyTrip(trip) === 'current');
+        const upcomingTrips = trips.filter(trip => classifyTrip(trip) === 'upcoming');
+
+        const sortByStart = (a: any, b: any) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+
+        let bestTrip: any | null = null;
+        if (currentTrips.length > 0) {
+          currentTrips.sort(sortByStart);
+          bestTrip = currentTrips[0];
+        } else if (upcomingTrips.length > 0) {
+          upcomingTrips.sort(sortByStart);
+          bestTrip = upcomingTrips[0];
+        }
+
+        if (bestTrip?.slug) {
+          setLocation(`/trip/${bestTrip.slug}?pwa=true`);
+        }
+      } catch {
+        // If anything fails (no cache, parse error, etc.), silently stay on the current route.
+      }
+    };
+
+    void loadAndRedirect();
+  }, [location, setLocation]);
 
   return (
     <div className="relative z-10">
