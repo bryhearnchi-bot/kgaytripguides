@@ -41,7 +41,9 @@ export async function apiClient(url: string, options: FetchOptions = {}): Promis
   }
 
   // Add Authorization header if we have a session
-  if (requireAuth && session?.access_token) {
+  // Automatically require auth for admin endpoints, or if explicitly requested
+  const isAdminEndpoint = url.includes('/api/admin/');
+  if ((requireAuth || isAdminEndpoint) && session?.access_token) {
     requestHeaders['Authorization'] = `Bearer ${session.access_token}`;
   }
 

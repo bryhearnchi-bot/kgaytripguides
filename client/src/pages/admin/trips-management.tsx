@@ -170,7 +170,7 @@ export default function TripsManagement() {
   } = useQuery<Trip[]>({
     queryKey: ['admin-trips'],
     queryFn: async () => {
-      const response = await api.get('/api/admin/trips');
+      const response = await api.get('/api/admin/trips', { requireAuth: true });
       if (!response.ok) {
         throw new Error('Failed to fetch trips');
       }
@@ -826,8 +826,8 @@ export default function TripsManagement() {
                   // Fetch events and talent for this trip
                   try {
                     const [eventsResponse, talentResponse] = await Promise.all([
-                      api.get(`/api/admin/trips/${trip.id}/events`),
-                      api.get(`/api/admin/trips/${trip.id}/talent`),
+                      api.get(`/api/admin/trips/${trip.id}/events`, { requireAuth: true }),
+                      api.get(`/api/admin/trips/${trip.id}/talent`, { requireAuth: true }),
                     ]);
 
                     const events = await eventsResponse.json();

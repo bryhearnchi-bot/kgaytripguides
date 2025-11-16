@@ -214,9 +214,10 @@ export function registerTripRoutes(app: Express) {
       const supabaseAdmin = getSupabaseAdmin();
 
       // Build the query - include trip_status join to get status string
+      // Using LEFT JOIN (!left) instead of INNER JOIN (!inner) to include trips without valid trip_status_id
       let query = supabaseAdmin
         .from('trips')
-        .select('*, trip_status!inner(status)', { count: 'exact' })
+        .select('*, trip_status!left(status)', { count: 'exact' })
         .order('start_date', { ascending: true }); // Order by start date (earliest first)
 
       // Apply filters

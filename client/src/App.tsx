@@ -229,6 +229,7 @@ function AppContent() {
   const [location, setLocation] = useLocation();
   const isTripPage = location.startsWith('/trip/');
   const isLandingPage = location === '/';
+  const isAdminPage = location.startsWith('/admin/');
 
   // In offline PWA mode, treat the "home" of the app as the best trip (current or next upcoming).
   // When the app opens on "/" or any non-trip route while offline in PWA, automatically redirect
@@ -301,8 +302,8 @@ function AppContent() {
         <Toaster />
         <Router />
       </div>
-      {/* Hide BottomNavigation on trip pages and landing page */}
-      {!isTripPage && !isLandingPage && <BottomNavigation />}
+      {/* Hide BottomNavigation on trip pages, landing page, and admin pages */}
+      {!isTripPage && !isLandingPage && !isAdminPage && <BottomNavigation />}
       <BottomSafeArea />
     </div>
   );
