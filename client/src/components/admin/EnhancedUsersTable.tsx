@@ -241,115 +241,133 @@ export function EnhancedUsersTable({
     );
   }
 
-  // Mobile Card Layout (unchanged)
+  // Mobile Card Layout - matching trips management style
   if (isMobile) {
+    const imageColumn = columns.find(col => col.key === 'image');
+    const firstNameColumn = columns.find(col => col.key === 'first_name');
+    const lastNameColumn = columns.find(col => col.key === 'last_name');
+    const emailColumn = columns.find(col => col.key === 'email');
+    const statusColumn = columns.find(col => col.key === 'is_active' || col.key === 'status');
+    const roleColumn = columns.find(col => col.key === 'role');
+
     return (
       <div className={`space-y-3 ${className}`}>
         {sortedData.map(row => {
           const rowKey = row[keyField];
-          const isExpanded = expandedRows.has(rowKey);
+
+          // Build full name from row data directly
+          const firstName = row.name?.first || '';
+          const lastName = row.name?.last || '';
+          const fullName = `${firstName} ${lastName}`.trim() || row.email || 'No Name';
+
+          // Get role for badge
+          const userRole = row.role || 'viewer';
+          const getRoleBadgeColor = (role: string) => {
+            switch (role) {
+              case 'super_admin':
+                return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+              case 'content_manager':
+                return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+              case 'viewer':
+              default:
+                return 'bg-white/10 text-white/70 border-white/20';
+            }
+          };
+          const getRoleLabel = (role: string) => {
+            switch (role) {
+              case 'super_admin':
+                return 'Super Admin';
+              case 'content_manager':
+                return 'Content Manager';
+              case 'viewer':
+              default:
+                return 'Viewer';
+            }
+          };
 
           return (
             <Card
               key={rowKey}
-              className="border border-white/10 bg-white/5/80 backdrop-blur overflow-hidden"
+              className="border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden"
             >
               <CardContent className="p-0">
                 <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-2">
-                      {mobileVisibleColumns.map(column => (
-                        <div key={column.key} className="flex justify-between items-start gap-2">
-                          <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                            {column.label}:
-                          </span>
-                          <div className="text-sm text-white text-right flex-1 min-w-0">
-                            {renderCellValue(column, row)}
-                          </div>
+                  <div className="flex items-center gap-3">
+                    {/* Image on the left */}
+                    {imageColumn && (
+                      <div className="flex-shrink-0">{renderCellValue(imageColumn, row)}</div>
+                    )}
+
+                    {/* Name, Email, Role Badge, and Status in the middle */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white font-medium">{fullName}</div>
+                      {emailColumn && (
+                        <div className="mt-1 text-xs text-white/70">
+                          {renderCellValue(emailColumn, row)}
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {hiddenColumns.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => toggleRowExpansion(rowKey)}
-                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
-                          title={isExpanded ? 'Collapse' : 'Expand'}
+                      )}
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        {/* Role Badge */}
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${getRoleBadgeColor(userRole)}`}
                         >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-
-                      {actions.length > 0 && (
-                        <DropdownMenu modal={false}>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
-                            {actions
-                              .filter(action => !action.hidden?.(row))
-                              .map((action, index) => (
-                                <DropdownMenuItem
-                                  key={index}
-                                  onSelect={e => {
-                                    e.preventDefault();
-                                    action.onClick(row);
-                                  }}
-                                  disabled={action.disabled?.(row)}
-                                  className={`text-white hover:bg-white/10 ${
-                                    action.variant === 'destructive'
-                                      ? 'text-red-400 hover:text-red-300'
-                                      : ''
-                                  } ${
-                                    action.variant === 'warning'
-                                      ? 'text-yellow-400 hover:text-yellow-300'
-                                      : ''
-                                  } ${
-                                    action.variant === 'success'
-                                      ? 'text-green-400 hover:text-green-300'
-                                      : ''
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {action.icon}
-                                    {action.label}
-                                  </div>
-                                </DropdownMenuItem>
-                              ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                          {getRoleLabel(userRole)}
+                        </span>
+                        {/* Status Badge */}
+                        {statusColumn && (
+                          <div className="text-xs">{renderCellValue(statusColumn, row)}</div>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Three-dot menu on the right */}
+                    {actions.length > 0 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-white/15 backdrop-blur-xl border-white/10"
+                        >
+                          {actions
+                            .filter(action => !action.hidden?.(row))
+                            .map((action, index) => (
+                              <DropdownMenuItem
+                                key={index}
+                                onClick={() => action.onClick(row)}
+                                disabled={action.disabled?.(row)}
+                                className={`text-white hover:bg-white/10 focus:bg-white/10 transition-colors ${
+                                  action.variant === 'destructive'
+                                    ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10'
+                                    : ''
+                                } ${
+                                  action.variant === 'warning'
+                                    ? 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10'
+                                    : ''
+                                } ${
+                                  action.variant === 'success'
+                                    ? 'text-green-400 hover:text-green-300 hover:bg-green-400/10'
+                                    : ''
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {action.icon}
+                                  {action.label}
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
-
-                {isExpanded && hiddenColumns.length > 0 && (
-                  <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
-                    {hiddenColumns.map(column => (
-                      <div key={column.key} className="flex justify-between items-start gap-2">
-                        <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                          {column.label}:
-                        </span>
-                        <div className="text-sm text-white text-right flex-1 min-w-0">
-                          {renderCellValue(column, row)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           );

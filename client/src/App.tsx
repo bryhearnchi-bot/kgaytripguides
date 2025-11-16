@@ -54,6 +54,7 @@ const AdminProfile = lazy(() => import('@/pages/admin/profile'));
 const TripDetail = lazy(() => import('@/pages/admin/trip-detail'));
 const TripsManagement = lazy(() => import('@/pages/admin/trips-management'));
 const InvitationsManagement = lazy(() => import('@/pages/admin/invitations'));
+const ComponentsPage = lazy(() => import('@/pages/admin/components'));
 
 // Loading fallback component
 function PageLoader() {
@@ -214,6 +215,16 @@ function Router() {
             <ProtectedRoute>
               <AdminLayout>
                 <TripDetail />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/components"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <ComponentsPage />
               </AdminLayout>
             </ProtectedRoute>
           )}

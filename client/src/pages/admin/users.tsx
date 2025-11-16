@@ -125,6 +125,7 @@ export default function UsersManagement() {
   const queryClient = useQueryClient();
   const { profile, session } = useSupabaseAuthContext();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
@@ -409,36 +410,85 @@ export default function UsersManagement() {
     return roleData?.label || role;
   };
 
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'super_admin':
+        return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+      case 'content_manager':
+        return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+      case 'viewer':
+      default:
+        return 'bg-white/10 text-white/70 border-white/20';
+    }
+  };
+
   // Show skeleton while loading initial data
   if (isLoading && users.length === 0) {
     return <AdminTableSkeleton rows={5} />;
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <Users className="h-6 w-6" />
-              User Management
-            </h1>
-            <p className="text-sm text-white/60">Manage user accounts across Atlantis sailings.</p>
-          </div>
-          <div className="relative w-full md:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <Input
-              placeholder="Search users by name, email, or role"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="h-11 rounded-full border-white/10 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus:border-[#22d3ee]/70"
-            />
+    <div className="space-y-4">
+      {/* Header Section - Matching trips management style */}
+      <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6" />
+            User Management
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSearch(!showSearch)}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Search users"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+            {canManageUsers && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setEditingUser(null);
+                  resetForm();
+                  handleModalOpenChange(true);
+                }}
+                className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+                aria-label="Add new user"
+                title="Add New User"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
-      </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 shadow-2xl shadow-black/40 backdrop-blur">
-        <header className="flex flex-col gap-2 border-b border-white/10 pl-6 pr-3 py-3 md:flex-row md:items-center md:justify-between">
+        {/* Search Bar - shown when search button is clicked */}
+        {showSearch && (
+          <div className="relative px-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search users by name, email, or role"
+              className="h-11 rounded-full border-white/5 bg-white/10 pl-10 text-sm text-white placeholder:text-white/50 focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 focus-visible:ring-offset-0 focus:border-white/20 focus:ring-1 focus:ring-white/10 focus:ring-offset-0 transition-all"
+              autoFocus
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Mobile header */}
+      <div className="sm:hidden px-1 mb-4">
+        <h2 className="text-lg font-semibold text-white">All Users</h2>
+      </div>
+
+      <section className="relative sm:rounded-2xl sm:border sm:border-white/10 sm:bg-white/5 sm:shadow-2xl sm:shadow-black/40 sm:backdrop-blur">
+        <header className="hidden sm:flex flex-col gap-2 border-b border-white/10 px-3 sm:pl-6 sm:pr-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">All Users</h2>
           </div>
@@ -460,7 +510,7 @@ export default function UsersManagement() {
         </header>
 
         {!canManageUsers ? (
-          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 px-3 sm:px-6 py-10 sm:py-14 text-white/60 text-center">
             <Users className="h-10 w-10 text-white/30" />
             <p className="text-sm font-medium text-white">Insufficient permissions</p>
             <p className="text-xs text-white/60">
@@ -468,7 +518,7 @@ export default function UsersManagement() {
             </p>
           </div>
         ) : loadError ? (
-          <div className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center text-white/70">
+          <div className="flex flex-col items-center justify-center gap-4 px-3 sm:px-6 py-10 sm:py-14 text-center text-white/70">
             <Users className="h-10 w-10 text-white/30" />
             <div className="space-y-2">
               <p className="text-sm font-medium text-white">Unable to load users</p>
@@ -484,7 +534,7 @@ export default function UsersManagement() {
             </Button>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+          <div className="flex flex-col items-center justify-center gap-3 px-3 sm:px-6 py-10 sm:py-14 text-white/60">
             <Users className="h-10 w-10 text-white/30" />
             <p className="text-sm">
               {searchTerm
@@ -584,7 +634,9 @@ export default function UsersManagement() {
                 sortable: true,
                 minWidth: 150,
                 render: (value: string) => (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${getRoleBadgeColor(value)}`}
+                  >
                     {getRoleIcon(value)}
                     <span>{getRoleLabel(value)}</span>
                   </span>
@@ -648,7 +700,7 @@ export default function UsersManagement() {
         )}
 
         {filteredUsers.length > 0 && (
-          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+          <footer className="flex items-center justify-between sm:border-t sm:border-white/10 px-3 sm:px-6 py-3 sm:py-4">
             <div className="text-xs text-white/50">
               Showing {filteredUsers.length} of {users.length} users
             </div>
