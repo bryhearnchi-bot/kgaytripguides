@@ -64,11 +64,15 @@ function TripCard({ trip }: { trip: Trip }) {
   const showBookButton = daysUntilStart >= 10;
 
   const handleCardClick = () => {
-    // In PWA mode, use window.location to maintain PWA context
-    if (
+    const isPWAMode =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true
-    ) {
+      (window.navigator as any).standalone === true;
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+    // When ONLINE inside a PWA, use window.location to maintain iOS PWA context.
+    // When OFFLINE, avoid full page navigations and use SPA routing so we can rely
+    // on locally cached data and the service worker.
+    if (isPWAMode && !isOffline) {
       window.location.href = `/trip/${trip.slug}?pwa=true`;
     } else {
       setLocation(`/trip/${trip.slug}`);

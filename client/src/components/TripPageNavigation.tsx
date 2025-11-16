@@ -84,15 +84,20 @@ export function TripPageNavigation({
   const handleBack = () => {
     haptics.light();
 
-    // In PWA mode, use window.location to ensure iOS maintains PWA context
-    if (isPWA()) {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+    // In PWA mode while ONLINE, use window.location to ensure iOS maintains PWA context.
+    // When OFFLINE, avoid full-page navigations and use SPA routing so we can rely
+    // entirely on local data and the service worker cache.
+    if (isPWA() && !isOffline) {
       // Use window.location.href to force a full navigation that iOS recognizes
-      // This prevents iOS from showing browser chrome
+      // This prevents iOS from showing browser chrome when the network is available
       window.location.href = '/?pwa=true';
       return;
     }
 
-    // Non-PWA: use wouter for normal navigation
+    // When not in PWA mode or when offline, use wouter for normal navigation
+    // to keep everything inside the already-loaded SPA.
     setLocation('/');
   };
 

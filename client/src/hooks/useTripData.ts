@@ -450,11 +450,47 @@ export function useTripData(slug: string = getTripSlug()) {
   return useQuery({
     queryKey: ['trip', slug],
     queryFn: async () => {
-      const response = await fetch(getApiUrl(`/api/trips/${slug}/complete`));
-      if (!response.ok) {
-        throw new Error(`Failed to fetch trip data: ${response.statusText}`);
+      const path = `/api/trips/${slug}/complete`;
+
+      // Primary URL respects API_BASE_URL (for server/API deployments)
+      const primaryUrl = getApiUrl(path);
+
+      // Helper to fetch and validate a given URL
+      const fetchTrip = async (url: string) => {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch trip data: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      };
+
+      try {
+        // Try primary URL first (may be absolute if VITE_API_URL is set)
+        return await fetchTrip(primaryUrl);
+      } catch (primaryError) {
+        // If we're offline or the primary host is unavailable, fall back to a
+        // relative URL so the service worker + offline trip cache can serve data.
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+        // Only attempt a fallback when offline or when the primary fetch failed
+        // before receiving a valid response (network error, CORS, etc.).
+        try {
+          // Relative path stays on the PWA origin, which is what OfflineStorageContext caches.
+          return await fetchTrip(path);
+        } catch (fallbackError) {
+          // Surface the original error message when possible to aid debugging.
+          const originalMessage =
+            primaryError instanceof Error ? primaryError.message : String(primaryError);
+          const fallbackMessage =
+            fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+
+          throw new Error(
+            isOffline
+              ? `Failed to fetch trip data while offline. Primary: ${originalMessage}. Fallback: ${fallbackMessage}`
+              : `Failed to fetch trip data. Primary: ${originalMessage}. Fallback: ${fallbackMessage}`
+          );
+        }
       }
-      return response.json();
     },
     staleTime: 0, // Force immediate refetch for debugging
     refetchOnWindowFocus: false,
