@@ -221,6 +221,7 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
       `/api/faqs/trip/${tripId}`, // FAQs (used by InfoTab)
       '/api/trips', // Landing page trip list
       '/api/updates/homepage?limit=3', // Landing page updates section
+      '/api/updates/all', // Global alerts/unread counts (NavigationBanner, etc.)
     ];
 
     const imageUrls: string[] = [];
