@@ -15,6 +15,7 @@ import {
   Info,
   Download,
   X,
+  WifiOff,
 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useState, useEffect } from 'react';
@@ -28,6 +29,7 @@ import { isNative } from '@/lib/capacitor';
 import { useHomeMetadata } from '@/hooks/useHomeMetadata';
 import type { Update, UpdateType } from '@/types/trip-info';
 import { useLocation } from 'wouter';
+import { useOfflineStorage } from '@/contexts/OfflineStorageContext';
 
 interface Trip {
   id: number;
@@ -293,6 +295,22 @@ export default function LandingPage() {
 
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'current' | 'past'>('upcoming');
   const [showPWAWelcome, setShowPWAWelcome] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const { isOfflineEnabled } = useOfflineStorage();
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Check if this is first PWA launch and show welcome message
   useEffect(() => {
@@ -366,6 +384,16 @@ export default function LandingPage() {
   const hasCurrent = trips?.some(trip => trip.status === 'current') || false;
   const [hasSetDefault, setHasSetDefault] = useState(false);
 
+  // Filter trips based on offline status - only show downloaded trips when offline
+  // Must be before any early returns to satisfy React hooks rules
+  const availableTrips = React.useMemo(() => {
+    if (!trips) return [];
+    if (!isOffline) return trips;
+
+    // When offline, only show trips that have been downloaded for offline access
+    return trips.filter(trip => isOfflineEnabled(trip.id));
+  }, [trips, isOffline, isOfflineEnabled]);
+
   React.useEffect(() => {
     if (trips && !hasSetDefault) {
       setActiveFilter('upcoming');
@@ -402,13 +430,13 @@ export default function LandingPage() {
     );
   }
 
-  const filteredTrips = trips?.filter(trip => trip.status === activeFilter) || [];
+  const filteredTrips = availableTrips?.filter(trip => trip.status === activeFilter) || [];
 
-  const groupedTrips = trips
+  const groupedTrips = availableTrips
     ? {
-        current: trips.filter(trip => trip.status === 'current'),
-        upcoming: trips.filter(trip => trip.status === 'upcoming'),
-        past: trips.filter(trip => trip.status === 'past'),
+        current: availableTrips.filter(trip => trip.status === 'current'),
+        upcoming: availableTrips.filter(trip => trip.status === 'upcoming'),
+        past: availableTrips.filter(trip => trip.status === 'past'),
       }
     : { current: [], upcoming: [], past: [] };
 
@@ -467,11 +495,46 @@ export default function LandingPage() {
             </div>
           )}
 
+          {/* Offline Mode Indicator */}
+          {isOffline && (
+            <div
+              className="px-4 sm:px-6 lg:px-8"
+              style={{
+                paddingTop: showPWAWelcome ? '0' : 'calc(env(safe-area-inset-top) + 4.5rem)',
+              }}
+            >
+              <div className="max-w-3xl mx-auto mb-4">
+                <div className="bg-amber-500/20 border border-amber-400/30 rounded-xl p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 p-1.5 bg-amber-500/30 rounded-lg">
+                      <WifiOff className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-white/90">
+                        <span className="font-semibold text-amber-400">Offline Mode</span>
+                        {availableTrips.length > 0 ? (
+                          <span>
+                            {' '}
+                            — Showing {availableTrips.length} downloaded{' '}
+                            {availableTrips.length === 1 ? 'guide' : 'guides'}
+                          </span>
+                        ) : (
+                          <span> — No guides downloaded for offline access</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Floating Hero Section */}
           <section
             className={`pb-1.5 px-4 sm:px-6 lg:px-8 ${showPWAWelcome ? '' : ''}`}
             style={{
-              paddingTop: showPWAWelcome ? '1rem' : 'calc(env(safe-area-inset-top) + 5rem)',
+              paddingTop:
+                showPWAWelcome || isOffline ? '1rem' : 'calc(env(safe-area-inset-top) + 5rem)',
             }}
           >
             <div className="max-w-7xl mx-auto">
