@@ -118,10 +118,10 @@ export default function LocationManagement({
   // Delete location mutation
   const deleteLocationMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/locations/${id}`);
+      const response = await api.delete(`/api/locations/${id}`, { requireAuth: true });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete location');
+        throw new Error(error.error?.message || error.error || 'Failed to delete location');
       }
     },
     onSuccess: () => {

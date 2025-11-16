@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { EnhancedUsersTable } from '@/components/admin/EnhancedUsersTable';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -361,7 +361,10 @@ export default function UsersManagement() {
       marketing_emails: user.marketing_emails || false,
       trip_updates_opt_in: user.trip_updates_opt_in || false,
     });
-    setShowAddModal(true);
+    // Delay opening the modal slightly to ensure dropdown menu has closed
+    setTimeout(() => {
+      setShowAddModal(true);
+    }, 100);
   };
 
   const handleDelete = (id: string) => {
@@ -428,7 +431,7 @@ export default function UsersManagement() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Header Section - Matching trips management style */}
       <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
         <div className="flex items-center justify-between px-1">
@@ -708,8 +711,8 @@ export default function UsersManagement() {
         )}
       </section>
 
-      {/* Add/Edit Modal */}
-      <AdminFormModal
+      {/* Add/Edit Bottom Sheet */}
+      <AdminBottomSheet
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingUser ? 'Edit User' : 'Add New User'}
@@ -721,12 +724,8 @@ export default function UsersManagement() {
           loading: editingUser ? updateUserMutation.isPending : createUserMutation.isPending,
           loadingLabel: editingUser ? 'Saving...' : 'Creating...',
         }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () => handleModalOpenChange(false),
-        }}
-        maxWidthClassName="max-w-4xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        maxHeight="85vh"
       >
         {/* Basic Information */}
         <div className="space-y-4">
@@ -739,6 +738,7 @@ export default function UsersManagement() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               placeholder="user@example.com"
@@ -751,6 +751,7 @@ export default function UsersManagement() {
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
+              autoComplete="username"
               value={formData.username}
               onChange={e => setFormData({ ...formData, username: e.target.value })}
               placeholder="Optional unique username"
@@ -763,6 +764,7 @@ export default function UsersManagement() {
               <Label htmlFor="firstName">First Name *</Label>
               <Input
                 id="firstName"
+                autoComplete="given-name"
                 value={formData.firstName}
                 onChange={e => setFormData({ ...formData, firstName: e.target.value })}
                 placeholder="John"
@@ -775,6 +777,7 @@ export default function UsersManagement() {
               <Label htmlFor="lastName">Last Name *</Label>
               <Input
                 id="lastName"
+                autoComplete="family-name"
                 value={formData.lastName}
                 onChange={e => setFormData({ ...formData, lastName: e.target.value })}
                 placeholder="Doe"
@@ -789,6 +792,7 @@ export default function UsersManagement() {
             <Input
               id="phone_number"
               type="tel"
+              autoComplete="tel"
               value={formData.phone_number}
               onChange={e => setFormData({ ...formData, phone_number: e.target.value })}
               placeholder="(555) 123-4567"
@@ -801,6 +805,7 @@ export default function UsersManagement() {
             <Input
               id="password"
               type="password"
+              autoComplete={editingUser ? 'new-password' : 'new-password'}
               value={formData.password}
               onChange={e => setFormData({ ...formData, password: e.target.value })}
               placeholder={editingUser ? 'Leave blank to keep current' : 'Enter password'}
@@ -871,6 +876,7 @@ export default function UsersManagement() {
             <Input
               id="website"
               type="url"
+              autoComplete="url"
               value={formData.website}
               onChange={e => setFormData({ ...formData, website: e.target.value })}
               placeholder="https://example.com"
@@ -1023,7 +1029,7 @@ export default function UsersManagement() {
             </div>
           )}
         </div>
-      </AdminFormModal>
+      </AdminBottomSheet>
     </div>
   );
 }

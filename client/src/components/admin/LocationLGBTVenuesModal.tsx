@@ -108,10 +108,13 @@ export function LocationLGBTVenuesModal({
     }
 
     try {
-      const response = await api.delete(`/api/locations/${locationId}/lgbt-venues/${venue.id}`);
+      const response = await api.delete(`/api/locations/${locationId}/lgbt-venues/${venue.id}`, {
+        requireAuth: true,
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to delete LGBT venue');
+        const error = await response.json();
+        throw new Error(error.error?.message || error.error || 'Failed to delete LGBT venue');
       }
 
       toast.success('Success', {

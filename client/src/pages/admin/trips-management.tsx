@@ -559,7 +559,7 @@ export default function TripsManagement() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Header Section - Sticky with Safari fix */}
       <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
         <div className="flex items-center justify-between px-1">

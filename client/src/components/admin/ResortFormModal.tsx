@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { AdminFormModal } from './AdminFormModal';
+import { AdminBottomSheet } from './AdminBottomSheet';
 import { AmenitySelector } from './AmenitySelector';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -162,7 +162,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   const loadResortRelations = async (resortId: number) => {
     try {
       const [amenitiesResponse, venuesResponse] = await Promise.all([
-        api.get(`/api/resorts/${resortId}/amenities`),
+        api.get(`/api/resorts/${resortId}/amenities`, { requireAuth: true }),
         api.get(`/api/admin/resorts/${resortId}/venues`),
       ]);
 
@@ -217,11 +217,13 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
 
       let resortResponse;
       if (isEditing && resort) {
-        // Update existing resort
-        resortResponse = await api.put(`/api/resorts/${resort.id}`, resortData);
+        // Update existing resort - requireAuth ensures Authorization header is sent
+        resortResponse = await api.put(`/api/resorts/${resort.id}`, resortData, {
+          requireAuth: true,
+        });
       } else {
-        // Create new resort
-        resortResponse = await api.post('/api/resorts', resortData);
+        // Create new resort - requireAuth ensures Authorization header is sent
+        resortResponse = await api.post('/api/resorts', resortData, { requireAuth: true });
       }
 
       if (!resortResponse.ok) {
@@ -231,8 +233,8 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
       const savedResort = await resortResponse.json();
       const resortId = savedResort.id;
 
-      // Update resort amenities
-      await api.put(`/api/resorts/${resortId}/amenities`, { amenityIds });
+      // Update resort amenities - requireAuth ensures Authorization header is sent
+      await api.put(`/api/resorts/${resortId}/amenities`, { amenityIds }, { requireAuth: true });
 
       // If we have pending venues (for new resorts), save them now
       if (!isEditing && pendingVenues.length > 0) {
@@ -255,7 +257,7 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
   };
 
   return (
-    <AdminFormModal
+    <AdminBottomSheet
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title={isEditing ? 'Edit Resort' : 'Add New Resort'}
@@ -272,12 +274,8 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
         loading,
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
       }}
-      secondaryAction={{
-        label: 'Cancel',
-        onClick: () => onOpenChange(false),
-        variant: 'outline',
-      }}
-      maxWidthClassName="max-w-6xl"
+      contentClassName="py-4"
+      maxHeight="85vh"
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Basic Information */}
@@ -545,6 +543,6 @@ export function ResortFormModal({ isOpen, onOpenChange, resort, onSuccess }: Res
           }
         }}
       />
-    </AdminFormModal>
+    </AdminBottomSheet>
   );
 }

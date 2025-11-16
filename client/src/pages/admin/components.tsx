@@ -36,7 +36,7 @@ export default function ComponentsPage() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Header and Dropdown on same line */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white">Trip Components</h1>

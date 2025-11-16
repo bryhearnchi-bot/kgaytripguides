@@ -187,9 +187,8 @@ export async function uploadToSupabase(
   }
 
   // Get public URL
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(bucket).getPublicUrl(fullPath);
+  // getPublicUrl returns an object with a publicUrl property directly
+  const { publicUrl } = supabase.storage.from(bucket).getPublicUrl(fullPath);
 
   return publicUrl;
 }
@@ -203,18 +202,25 @@ export async function downloadImageFromUrl(
   try {
     // Validate URL
     if (!isValidImageUrl(url)) {
-      throw new Error('Invalid image URL');
+      throw new Error('Invalid image URL. Please provide a valid HTTP/HTTPS URL.');
     }
 
     // Fetch image from URL
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch image from URL: ${response.statusText} (${response.status})`
+      );
     }
 
     // Get image buffer and content type
     const buffer = Buffer.from(await response.arrayBuffer());
     const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    // Validate that the content is actually an image
+    if (!contentType.startsWith('image/')) {
+      throw new Error(`The URL does not point to a valid image. Content type: ${contentType}`);
+    }
 
     // Create a mock Express.Multer.File object
     const file: Express.Multer.File = {

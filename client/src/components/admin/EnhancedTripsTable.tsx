@@ -325,7 +325,7 @@ export function EnhancedTripsTable({
           return (
             <Card
               key={rowKey}
-              className="border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden"
+              className="border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
             >
               <CardContent className="p-0">
                 <div className="p-4">

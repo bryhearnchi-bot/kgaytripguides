@@ -123,7 +123,8 @@ export default function SingleSelectWithCreate({
             'p-0 w-[var(--radix-popover-trigger-width)]',
             'bg-[#0f172a] border-white/10 shadow-2xl'
           )}
-          container={container}
+          container={container || (typeof document !== 'undefined' ? document.body : undefined)}
+          onOpenAutoFocus={e => e.preventDefault()}
         >
           <Command className="bg-transparent">
             {showSearch && (

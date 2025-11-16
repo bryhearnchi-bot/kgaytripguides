@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { AdminFormModal } from './AdminFormModal';
+import { AdminBottomSheet } from './AdminBottomSheet';
 import { AmenitySelector } from './AmenitySelector';
 import { CruiseLineSelector } from './CruiseLineSelector';
 import { Input } from '@/components/ui/input';
@@ -124,7 +124,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       }
 
       const [amenitiesResponse, venuesResponse] = await Promise.all([
-        api.get(`/api/ships/${shipId}/amenities`),
+        api.get(`/api/ships/${shipId}/amenities`, { requireAuth: true }),
         api.get(`/api/admin/ships/${shipId}/venues`),
       ]);
 
@@ -172,11 +172,11 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
 
       let shipResponse;
       if (isEditing && ship) {
-        // Update existing ship
-        shipResponse = await api.put(`/api/ships/${ship.id}`, shipData);
+        // Update existing ship - requireAuth ensures Authorization header is sent
+        shipResponse = await api.put(`/api/ships/${ship.id}`, shipData, { requireAuth: true });
       } else {
-        // Create new ship
-        shipResponse = await api.post('/api/ships', shipData);
+        // Create new ship - requireAuth ensures Authorization header is sent
+        shipResponse = await api.post('/api/ships', shipData, { requireAuth: true });
       }
 
       if (!shipResponse.ok) {
@@ -186,8 +186,12 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       const savedShip = await shipResponse.json();
       const shipId = savedShip.id;
 
-      // Update ship amenities
-      const amenitiesResponse = await api.put(`/api/ships/${shipId}/amenities`, { amenityIds });
+      // Update ship amenities - requireAuth ensures Authorization header is sent
+      const amenitiesResponse = await api.put(
+        `/api/ships/${shipId}/amenities`,
+        { amenityIds },
+        { requireAuth: true }
+      );
 
       if (!amenitiesResponse.ok) {
         const errorData = await amenitiesResponse.json().catch(() => ({}));
@@ -219,7 +223,7 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
   };
 
   return (
-    <AdminFormModal
+    <AdminBottomSheet
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title={isEditing ? 'Edit Ship' : 'Add New Ship'}
@@ -237,8 +241,8 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         loadingLabel: isEditing ? 'Updating...' : 'Creating...',
         disabled: !formData.name.trim() || !formData.cruiseLineId,
       }}
-      maxWidthClassName="max-w-4xl"
       contentClassName="py-4"
+      maxHeight="85vh"
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Basic Information */}
@@ -477,6 +481,6 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
           }
         }}
       />
-    </AdminFormModal>
+    </AdminBottomSheet>
   );
 }

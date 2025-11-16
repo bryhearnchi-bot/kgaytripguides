@@ -38,9 +38,14 @@ export function AdminBottomNavigation() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
-      <nav className="bg-white/30 backdrop-blur-lg border-t border-white/30">
-        <div className="flex items-center justify-around max-w-2xl mx-auto px-2 pt-1.5">
+    <div className="fixed bottom-0 left-0 right-0 z-[10001] xl:hidden">
+      <nav
+        className="bg-white/30 backdrop-blur-lg border-t border-white/30"
+        style={{
+          paddingBottom: 'var(--nav-bottom-padding, 0px)',
+        }}
+      >
+        <div className="flex items-center max-w-2xl mx-auto pt-1.5 px-3">
           {navItems.map(item => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -49,8 +54,8 @@ export function AdminBottomNavigation() {
                 key={item.id}
                 onClick={() => setLocation(item.path)}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg transition-all duration-200 min-w-[60px]',
-                  active ? 'text-blue-900 bg-white/40' : 'text-black'
+                  'flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 flex-1 -mt-1.5 pt-2.5 rounded-b-md',
+                  active ? 'text-blue-900 bg-white/40' : 'text-black opacity-60 hover:opacity-100'
                 )}
               >
                 <Icon className="w-[24px] h-[24px]" strokeWidth={2} />

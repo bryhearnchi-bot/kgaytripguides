@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api, apiClient } from '@/lib/api-client';
+import { toast } from 'sonner';
 
 export interface ImageUploadState {
   isUploading: boolean;
@@ -55,11 +56,19 @@ export function useImageUpload() {
       ];
 
       if (file.size > maxSize) {
-        throw new Error('File size must be less than 5MB');
+        const errorMessage = 'File size must be less than 5MB';
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
 
       if (!allowedTypes.includes(file.type)) {
-        throw new Error('Only JPEG, PNG, WebP, GIF, and AVIF images are allowed');
+        const errorMessage = 'Only JPEG, PNG, WebP, GIF, and AVIF images are allowed';
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
 
       // Create FormData
@@ -69,16 +78,28 @@ export function useImageUpload() {
       setState(prev => ({ ...prev, progress: 25 }));
 
       // Upload to backend using api client for proper authentication
+      // Note: FormData doesn't need Content-Type header, browser sets it automatically with boundary
       const response = await apiClient(`/api/images/upload/${imageType}`, {
         method: 'POST',
         body: formData,
+        requireAuth: true,
       });
 
       setState(prev => ({ ...prev, progress: 75 }));
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload image');
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: { message: 'Failed to upload image' } }));
+        const errorMessage =
+          errorData.error?.message ||
+          errorData.message ||
+          errorData.error ||
+          'Failed to upload image';
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -96,6 +117,20 @@ export function useImageUpload() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
       setState({ isUploading: false, error: errorMessage, progress: 0 });
+      // Toast notification is already shown for validation and API errors above
+      // Only show toast if it hasn't been shown yet
+      if (
+        !(
+          error instanceof Error &&
+          (error.message.includes('Failed to upload image') ||
+            error.message.includes('File size') ||
+            error.message.includes('Only JPEG'))
+        )
+      ) {
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+      }
       throw error;
     }
   };
@@ -112,23 +147,41 @@ export function useImageUpload() {
       try {
         new URL(url);
       } catch {
-        throw new Error('Please enter a valid URL');
+        const errorMessage = 'Please enter a valid URL';
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
 
       setState(prev => ({ ...prev, progress: 25 }));
 
       // Send to backend for download and upload
-      const response = await api.post('/api/images/download-from-url', {
-        url,
-        type: imageType,
-        name,
-      });
+      const response = await api.post(
+        '/api/images/download-from-url',
+        {
+          url,
+          type: imageType,
+          name,
+        },
+        { requireAuth: true }
+      );
 
       setState(prev => ({ ...prev, progress: 75 }));
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to download and upload image');
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: { message: 'Failed to download and upload image' } }));
+        const errorMessage =
+          errorData.error?.message ||
+          errorData.message ||
+          errorData.error ||
+          'Failed to download and upload image';
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -146,6 +199,19 @@ export function useImageUpload() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to download image';
       setState({ isUploading: false, error: errorMessage, progress: 0 });
+      // Toast notification is already shown for validation and API errors above
+      // Only show toast if it hasn't been shown yet
+      if (
+        !(
+          error instanceof Error &&
+          (error.message.includes('Failed to download') ||
+            error.message.includes('Please enter a valid URL'))
+        )
+      ) {
+        toast.error('Upload Failed', {
+          description: errorMessage,
+        });
+      }
       throw error;
     }
   };

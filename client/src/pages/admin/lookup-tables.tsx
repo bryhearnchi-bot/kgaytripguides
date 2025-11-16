@@ -4,10 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { EnhancedLookupTablesTable } from '@/components/admin/EnhancedLookupTablesTable';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { Search, PlusSquare, Edit, Building2 } from 'lucide-react';
+import { api } from '@/lib/api-client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Search, Plus, Edit2, ChevronDown, Filter, Building2 } from 'lucide-react';
 
 // Table configuration matching backend
 const TABLES = {
@@ -115,18 +123,7 @@ export default function AdminLookupTables() {
   // Create item mutation
   const createItemMutation = useMutation({
     mutationFn: async (data: TableFormData) => {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-      const response = await fetch(`/api/admin/lookup-tables/${activeTable}`, {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
+      const response = await api.post(`/api/admin/lookup-tables/${activeTable}`, data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create item');
@@ -152,18 +149,10 @@ export default function AdminLookupTables() {
   // Update item mutation
   const updateItemMutation = useMutation({
     mutationFn: async (data: TableFormData) => {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-      const response = await fetch(`/api/admin/lookup-tables/${activeTable}/${editingItem!.id}`, {
-        method: 'PUT',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
+      const response = await api.put(
+        `/api/admin/lookup-tables/${activeTable}/${editingItem!.id}`,
+        data
+      );
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to update item');
@@ -232,113 +221,122 @@ export default function AdminLookupTables() {
   const items = tableData?.items || [];
   const currentConfig = TABLES[activeTable];
 
+  // Get icon for current table
+  const getTableIcon = (tableKey: TableKey) => {
+    switch (tableKey) {
+      case 'venue-types':
+      case 'location-types':
+        return <Building2 className="h-4 w-4" />;
+      default:
+        return <Search className="h-4 w-4" />;
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <Search className="h-6 w-6" />
-              Lookup Tables
-            </h1>
-            <p className="text-sm text-white/60">
-              Manage dropdown options and lookup data used throughout the application.
-            </p>
+    <div className="space-y-4">
+      {/* Header Section - Sticky with Safari fix */}
+      <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-white">
+            <Search className="h-5 w-5 sm:h-6 sm:w-6" />
+            Lookup Tables
+          </h1>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
+                  <Filter className="w-3 h-3" />
+                  <span>{currentConfig.displayName}</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-[#002147] border-white/20 min-w-[280px]"
+              >
+                {Object.entries(TABLES).map(([key, config]) => {
+                  const tableKey = key as TableKey;
+                  const isActive = activeTable === tableKey;
+                  const count = counts[key] || 0;
+                  const Icon = getTableIcon(tableKey);
+
+                  return (
+                    <DropdownMenuItem
+                      key={key}
+                      onClick={() => setActiveTable(tableKey)}
+                      className={`cursor-pointer text-white hover:bg-white/10 ${
+                        isActive ? 'bg-white/20' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full gap-3">
+                        <div className="flex items-center gap-2">
+                          {Icon}
+                          <span className="font-medium">{config.displayName}</span>
+                        </div>
+                        <span className="text-xs text-white/60">{count}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleAdd}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Add new item"
+              title={`Add ${currentConfig.displayName.slice(0, -1)}`}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Filter/Table Selection Section */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-lg backdrop-blur">
-        <div className="flex flex-wrap items-center gap-3">
-          {Object.entries(TABLES).map(([key, config]) => {
-            const tableKey = key as TableKey;
-            const isActive = activeTable === tableKey;
-            const count = counts[key] || 0;
+      {/* Subheader - Non-sticky, scrolls with content */}
+      <div className="sm:hidden px-1">
+        <h2 className="text-lg font-semibold text-white">All {currentConfig.displayName}</h2>
+      </div>
 
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTable(tableKey)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-600/50'
-                }`}
-              >
-                {config.displayName}
-                <span
-                  className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                    isActive ? 'bg-white/20' : 'bg-slate-600'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Table Section */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 shadow-lg backdrop-blur">
-        <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h2 className="text-lg font-semibold text-white">All {currentConfig.displayName}</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleAdd}
-            className="h-4 w-4 rounded-xl border border-white/15 bg-blue-500/10 text-white/80 hover:bg-blue-500/15"
-            title={`Add ${currentConfig.displayName.slice(0, -1)}`}
-          >
-            <PlusSquare className="h-5 w-5 text-blue-400/80" />
-          </Button>
+      <section className="relative sm:rounded-2xl sm:border sm:border-white/10 sm:bg-white/5 sm:shadow-2xl sm:shadow-black/40 sm:backdrop-blur">
+        <header className="hidden sm:flex flex-col gap-2 border-b border-white/10 px-3 sm:pl-6 sm:pr-3 py-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">All {currentConfig.displayName}</h2>
+          </div>
         </header>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                {activeTable === 'charter-companies' && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider w-24">
-                    Logo
-                  </th>
-                )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-white/40 uppercase tracking-wider w-20">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={activeTable === 'charter-companies' ? 3 : 2}
-                    className="px-6 py-8 text-center text-white/60"
-                  >
-                    Loading...
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={activeTable === 'charter-companies' ? 3 : 2}
-                    className="px-6 py-8 text-center text-white/60"
-                  >
-                    No {currentConfig.displayName.toLowerCase()} found
-                  </td>
-                </tr>
-              ) : (
-                items.map((item: TableItem) => (
-                  <tr key={item.id} className="hover:bg-white/5">
-                    {activeTable === 'charter-companies' && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center justify-start">
-                          <div className="h-12 w-12 rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-white/10 flex items-center justify-center">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-white/60">
+            <Search className="h-10 w-10 text-white/30" />
+            <p className="text-sm">No {currentConfig.displayName.toLowerCase()} found</p>
+            <Button
+              onClick={handleAdd}
+              className="rounded-full bg-gradient-to-r from-[#22d3ee] to-[#2563eb] px-4 py-2 text-sm text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create First {currentConfig.displayName.slice(0, -1)}
+            </Button>
+          </div>
+        ) : (
+          <EnhancedLookupTablesTable
+            data={items}
+            columns={[
+              ...(activeTable === 'charter-companies'
+                ? [
+                    {
+                      key: 'logo',
+                      label: '',
+                      priority: 'high' as const,
+                      sortable: false,
+                      resizable: false,
+                      width: 80,
+                      minWidth: 80,
+                      maxWidth: 80,
+                      render: (_value, item) => (
+                        <div className="flex items-center justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-white/10">
                             {item.logo_url ? (
                               <img
                                 src={item.logo_url}
@@ -350,40 +348,44 @@ export default function AdminLookupTables() {
                             )}
                           </div>
                         </div>
-                      </td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                      {item[currentConfig.nameField]}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(item)}
-                        className="h-4 w-4 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
-                        title="Edit"
-                      >
-                        <Edit className="h-4 w-4 text-white/80" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      ),
+                    },
+                  ]
+                : []),
+              {
+                key: currentConfig.nameField,
+                label: 'Name',
+                priority: 'high' as const,
+                sortable: true,
+                minWidth: 200,
+                render: value => <span className="text-white">{value}</span>,
+              },
+            ]}
+            actions={[
+              {
+                label: `Edit ${currentConfig.displayName.slice(0, -1)}`,
+                icon: <Edit2 className="h-4 w-4" />,
+                onClick: handleEdit,
+              },
+            ]}
+            keyField="id"
+            isLoading={isLoading}
+            emptyMessage={`No ${currentConfig.displayName.toLowerCase()} found`}
+            nameField={currentConfig.nameField}
+          />
+        )}
 
         {items.length > 0 && (
-          <footer className="border-t border-white/10 px-6 py-3">
-            <p className="text-xs text-white/50">
+          <footer className="border-t border-white/10 px-6 py-4">
+            <div className="text-xs text-white/50">
               Showing {items.length} of {items.length} {currentConfig.displayName.toLowerCase()}
-            </p>
+            </div>
           </footer>
         )}
       </section>
 
-      {/* Add/Edit Modal */}
-      <AdminFormModal
+      {/* Add/Edit Bottom Sheet */}
+      <AdminBottomSheet
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={
@@ -398,10 +400,6 @@ export default function AdminLookupTables() {
           label: editingItem ? 'Save Changes' : `Create ${currentConfig.displayName.slice(0, -1)}`,
           loading: editingItem ? updateItemMutation.isPending : createItemMutation.isPending,
           loadingLabel: editingItem ? 'Saving...' : 'Creating...',
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () => handleModalOpenChange(false),
         }}
       >
         <div className="space-y-4">
@@ -432,7 +430,7 @@ export default function AdminLookupTables() {
             </div>
           )}
         </div>
-      </AdminFormModal>
+      </AdminBottomSheet>
     </div>
   );
 }

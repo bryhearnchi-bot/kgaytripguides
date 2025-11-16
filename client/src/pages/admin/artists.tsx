@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { api } from '@/lib/api-client';
 import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Music, Mic, Filter } from 'lucide-react';
+import { NoImageFilterButton } from '@/components/admin/NoImageFilterButton';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
@@ -48,6 +49,7 @@ export default function ArtistsManagement() {
   const queryClient = useQueryClient();
   const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNoImageFilter, setShowNoImageFilter] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingArtist, setEditingArtist] = useState<Talent | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -90,7 +92,7 @@ export default function ArtistsManagement() {
   // Create artist mutation
   const createArtistMutation = useMutation({
     mutationFn: async (data: Talent) => {
-      const response = await api.post('/api/talent', data);
+      const response = await api.post('/api/talent', data, { requireAuth: true });
       if (!response.ok) throw new Error('Failed to create artist');
       return response.json();
     },
@@ -112,7 +114,7 @@ export default function ArtistsManagement() {
   // Update artist mutation
   const updateArtistMutation = useMutation({
     mutationFn: async (data: Talent) => {
-      const response = await api.put(`/api/talent/${data.id}`, data);
+      const response = await api.put(`/api/talent/${data.id}`, data, { requireAuth: true });
       if (!response.ok) throw new Error('Failed to update artist');
       return response.json();
     },
@@ -135,7 +137,7 @@ export default function ArtistsManagement() {
   // Delete artist mutation
   const deleteArtistMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/talent/${id}`);
+      const response = await api.delete(`/api/talent/${id}`, { requireAuth: true });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete artist');
@@ -159,7 +161,11 @@ export default function ArtistsManagement() {
   // Create talent category mutation
   const createCategoryMutation = useMutation({
     mutationFn: async (categoryName: string) => {
-      const response = await api.post('/api/talent-categories', { category: categoryName });
+      const response = await api.post(
+        '/api/talent-categories',
+        { category: categoryName },
+        { requireAuth: true }
+      );
       if (!response.ok) throw new Error('Failed to create talent category');
       return response.json();
     },
@@ -240,7 +246,11 @@ export default function ArtistsManagement() {
     const matchesCategory =
       selectedCategory === null || artist.talentCategoryId === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    // No image filter
+    const matchesImageFilter =
+      !showNoImageFilter || !artist.profileImageUrl || artist.profileImageUrl === '';
+
+    return matchesSearch && matchesCategory && matchesImageFilter;
   });
 
   // Reset to page 1 when search term changes
@@ -396,6 +406,19 @@ export default function ArtistsManagement() {
             />
           </div>
         )}
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-2 px-1">
+          <NoImageFilterButton
+            items={artists}
+            imageField="profileImageUrl"
+            isActive={showNoImageFilter}
+            onToggle={active => {
+              setShowNoImageFilter(active);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* Subheader - Non-sticky, scrolls with content */}
@@ -591,8 +614,8 @@ export default function ArtistsManagement() {
         )}
       </section>
 
-      {/* Add/Edit Modal */}
-      <AdminFormModal
+      {/* Add/Edit Bottom Sheet */}
+      <AdminBottomSheet
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingArtist ? 'Edit Artist' : 'Add New Artist'}
@@ -604,12 +627,8 @@ export default function ArtistsManagement() {
           loading: editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending,
           loadingLabel: editingArtist ? 'Saving...' : 'Creating...',
         }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () => handleModalOpenChange(false),
-        }}
-        maxWidthClassName="max-w-3xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        maxHeight="85vh"
       >
         {/* Basic Information */}
         <div className="space-y-2">
@@ -698,7 +717,7 @@ export default function ArtistsManagement() {
             }
           />
         </div>
-      </AdminFormModal>
+      </AdminBottomSheet>
     </div>
   );
 }

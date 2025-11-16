@@ -169,7 +169,7 @@ export function LocationSearchBar({
               }}
               disabled={disabled}
               required={required}
-              className="pr-20 bg-white/5 border-white/10 text-white placeholder:text-white/50"
+              className="pr-20 bg-white/5 border-white/10 text-white placeholder:text-white/50 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none h-11 min-h-[44px]"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {inputValue && (
@@ -196,6 +196,7 @@ export function LocationSearchBar({
           <PopoverContent
             className="w-[var(--radix-popover-trigger-width)] p-0 bg-white/5/95 border-white/10 backdrop-blur"
             align="start"
+            container={typeof document !== 'undefined' ? document.body : undefined}
             onOpenAutoFocus={e => e.preventDefault()}
             onCloseAutoFocus={e => e.preventDefault()}
           >

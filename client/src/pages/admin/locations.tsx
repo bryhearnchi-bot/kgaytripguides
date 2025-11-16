@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { EnhancedLocationsTable } from '@/components/admin/EnhancedLocationsTable';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { api } from '@/lib/api-client';
 import { MapPin, Plus, PlusSquare, Edit2, Trash2, Search, Globe } from 'lucide-react';
+import { NoImageFilterButton } from '@/components/admin/NoImageFilterButton';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
@@ -33,6 +34,7 @@ interface Location {
 export default function LocationsManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNoImageFilter, setShowNoImageFilter] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [showAttractionsModal, setShowAttractionsModal] = useState(false);
@@ -71,7 +73,7 @@ export default function LocationsManagement() {
   // Create location mutation
   const createLocationMutation = useMutation({
     mutationFn: async (data: Location) => {
-      const response = await api.post('/api/locations', data);
+      const response = await api.post('/api/locations', data, { requireAuth: true });
       if (!response.ok) throw new Error('Failed to create location');
       return response.json();
     },
@@ -97,7 +99,7 @@ export default function LocationsManagement() {
   // Update location mutation
   const updateLocationMutation = useMutation({
     mutationFn: async (data: Location) => {
-      const response = await api.put(`/api/locations/${data.id}`, data);
+      const response = await api.put(`/api/locations/${data.id}`, data, { requireAuth: true });
       if (!response.ok) throw new Error('Failed to update location');
       return response.json();
     },
@@ -120,7 +122,7 @@ export default function LocationsManagement() {
   // Delete location mutation
   const deleteLocationMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/locations/${id}`);
+      const response = await api.delete(`/api/locations/${id}`, { requireAuth: true });
       if (!response.ok) throw new Error('Failed to delete location');
     },
     onSuccess: () => {
@@ -168,12 +170,17 @@ export default function LocationsManagement() {
     });
   };
 
-  const filteredLocations = locations.filter(
-    location =>
+  const filteredLocations = locations.filter(location => {
+    const matchesSearch =
       location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       location.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      location.country.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      location.country.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // No image filter
+    const matchesImageFilter = !showNoImageFilter || !location.imageUrl || location.imageUrl === '';
+
+    return matchesSearch && matchesImageFilter;
+  });
 
   // Reset to page 1 when search term changes
   const handleSearchChange = (value: string) => {
@@ -243,6 +250,19 @@ export default function LocationsManagement() {
             />
           </div>
         )}
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-2 px-1">
+          <NoImageFilterButton
+            items={locations}
+            imageField="imageUrl"
+            isActive={showNoImageFilter}
+            onToggle={active => {
+              setShowNoImageFilter(active);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* Subheader - Non-sticky, scrolls with content */}
@@ -435,8 +455,8 @@ export default function LocationsManagement() {
         )}
       </section>
 
-      {/* Location Form Modal */}
-      <AdminFormModal
+      {/* Location Form Bottom Sheet */}
+      <AdminBottomSheet
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingLocation ? 'Edit Location' : 'Add New Location'}
@@ -462,12 +482,8 @@ export default function LocationsManagement() {
                 loadingLabel: 'Creating...',
               }
         }
-        secondaryAction={{
-          label: editingLocation?.id ? 'Done' : 'Cancel',
-          onClick: () => handleModalOpenChange(false),
-        }}
         contentClassName="grid gap-4"
-        maxWidthClassName="max-w-2xl"
+        maxHeight="85vh"
       >
         <div className="space-y-2">
           <Label htmlFor="name" className="text-white/80">
@@ -613,7 +629,7 @@ export default function LocationsManagement() {
             )}
           </div>
         </>
-      </AdminFormModal>
+      </AdminBottomSheet>
 
       {/* Attractions Modal */}
       {editingLocation && editingLocation.id && (

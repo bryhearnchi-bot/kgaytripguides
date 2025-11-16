@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api-client';
 import { Palette, Plus, PlusSquare, Edit2, Trash2, Search, Sparkles } from 'lucide-react';
+import { NoImageFilterButton } from '@/components/admin/NoImageFilterButton';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
 
@@ -30,6 +31,7 @@ export default function ThemesManagement() {
   const queryClient = useQueryClient();
   const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNoImageFilter, setShowNoImageFilter] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTheme, setEditingTheme] = useState<PartyTheme | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -52,7 +54,7 @@ export default function ThemesManagement() {
   } = useQuery<PartyTheme[]>({
     queryKey: ['party-themes'],
     queryFn: async () => {
-      const response = await api.get('/api/party-themes');
+      const response = await api.get('/api/admin/party-themes');
       if (!response.ok) throw new Error('Failed to fetch themes');
       return response.json();
     },
@@ -63,7 +65,7 @@ export default function ThemesManagement() {
   // Create theme mutation
   const createThemeMutation = useMutation({
     mutationFn: async (data: PartyTheme) => {
-      const response = await api.post('/api/party-themes', data);
+      const response = await api.post('/api/admin/party-themes', data);
       if (!response.ok) throw new Error('Failed to create theme');
       return response.json();
     },
@@ -85,7 +87,7 @@ export default function ThemesManagement() {
   // Update theme mutation
   const updateThemeMutation = useMutation({
     mutationFn: async (data: PartyTheme) => {
-      const response = await api.put(`/api/party-themes/${data.id}`, data);
+      const response = await api.put(`/api/admin/party-themes/${data.id}`, data);
       if (!response.ok) throw new Error('Failed to update theme');
       return response.json();
     },
@@ -107,7 +109,7 @@ export default function ThemesManagement() {
   // Delete theme mutation
   const deleteThemeMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/party-themes/${id}`);
+      const response = await api.delete(`/api/admin/party-themes/${id}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete theme');
@@ -168,13 +170,18 @@ export default function ThemesManagement() {
     }
   };
 
-  const filteredThemes = themes.filter(
-    theme =>
+  const filteredThemes = themes.filter(theme => {
+    const matchesSearch =
       theme.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       theme.longDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       theme.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      theme.costumeIdeas?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      theme.costumeIdeas?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // No image filter
+    const matchesImageFilter = !showNoImageFilter || !theme.imageUrl || theme.imageUrl === '';
+
+    return matchesSearch && matchesImageFilter;
+  });
 
   // Reset to page 1 when search term changes
   const handleSearchChange = (value: string) => {
@@ -253,6 +260,19 @@ export default function ThemesManagement() {
             />
           </div>
         )}
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-2 px-1">
+          <NoImageFilterButton
+            items={themes}
+            imageField="imageUrl"
+            isActive={showNoImageFilter}
+            onToggle={active => {
+              setShowNoImageFilter(active);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* Subheader - Non-sticky, scrolls with content */}
@@ -440,8 +460,8 @@ export default function ThemesManagement() {
         )}
       </section>
 
-      {/* Add/Edit Modal */}
-      <AdminFormModal
+      {/* Add/Edit Bottom Sheet */}
+      <AdminBottomSheet
         isOpen={showAddModal}
         onOpenChange={handleModalOpenChange}
         title={editingTheme ? 'Edit Party Theme' : 'Add New Party Theme'}
@@ -453,12 +473,8 @@ export default function ThemesManagement() {
           loading: editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending,
           loadingLabel: editingTheme ? 'Saving...' : 'Creating...',
         }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () => handleModalOpenChange(false),
-        }}
-        maxWidthClassName="max-w-3xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        maxHeight="85vh"
       >
         {/* Theme Name - spans full width */}
         <div className="lg:col-span-2 space-y-2">
@@ -528,7 +544,7 @@ export default function ThemesManagement() {
             placeholder="https://www.amazon.com/shop/..."
           />
         </div>
-      </AdminFormModal>
+      </AdminBottomSheet>
     </div>
   );
 }

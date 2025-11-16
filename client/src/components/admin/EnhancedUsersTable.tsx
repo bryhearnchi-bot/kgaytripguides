@@ -288,7 +288,7 @@ export function EnhancedUsersTable({
           return (
             <Card
               key={rowKey}
-              className="border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden"
+              className="border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
             >
               <CardContent className="p-0">
                 <div className="p-4">
@@ -490,7 +490,11 @@ export function EnhancedUsersTable({
                                 key={index}
                                 onSelect={e => {
                                   e.preventDefault();
-                                  action.onClick(row);
+                                  e.stopPropagation();
+                                  // Close dropdown first, then trigger action
+                                  setTimeout(() => {
+                                    action.onClick(row);
+                                  }, 0);
                                 }}
                                 disabled={action.disabled?.(row)}
                                 className={`text-white hover:bg-white/10 ${

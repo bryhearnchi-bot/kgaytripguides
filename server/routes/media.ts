@@ -59,13 +59,30 @@ export function registerMediaRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { url, type = 'general', name = 'image' } = req.body;
 
-      if (!url || !isValidImageUrl(url)) {
-        throw ApiError.badRequest('Invalid image URL');
+      if (!url) {
+        throw ApiError.badRequest('Image URL is required');
       }
 
-      // Download and upload to Supabase Storage
-      const publicUrl = await downloadImageFromUrl(url, type, name);
-      return res.json({ url: publicUrl });
+      if (!isValidImageUrl(url)) {
+        throw ApiError.badRequest('Invalid image URL. Please provide a valid HTTP/HTTPS URL.');
+      }
+
+      try {
+        // Download and upload to Supabase Storage
+        const publicUrl = await downloadImageFromUrl(url, type, name);
+        return res.json({ url: publicUrl });
+      } catch (error: unknown) {
+        logger.error('Error downloading image from URL', {
+          error: error instanceof Error ? error.message : String(error),
+          url,
+          type,
+          name,
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error instanceof Error
+          ? ApiError.internal(`Failed to download and upload image: ${error.message}`)
+          : ApiError.internal('Failed to download and upload image');
+      }
     })
   );
 

@@ -25,6 +25,7 @@ import {
   Anchor,
   Filter,
 } from 'lucide-react';
+import { NoImageFilterButton } from '@/components/admin/NoImageFilterButton';
 
 interface Ship {
   id?: number;
@@ -43,6 +44,7 @@ export default function ShipsManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [cruiseLineFilter, setCruiseLineFilter] = useState<string>('all');
+  const [showNoImageFilter, setShowNoImageFilter] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingShip, setEditingShip] = useState<Ship | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -69,10 +71,10 @@ export default function ShipsManagement() {
   // Delete ship mutation
   const deleteShipMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/ships/${id}`);
+      const response = await api.delete(`/api/ships/${id}`, { requireAuth: true });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete ship');
+        throw new Error(error.error?.message || error.error || 'Failed to delete ship');
       }
     },
     onSuccess: () => {
@@ -101,8 +103,12 @@ export default function ShipsManagement() {
     }
   };
 
-  const handleModalSuccess = () => {
+  const handleModalSuccess = (savedShip?: any) => {
     queryClient.invalidateQueries({ queryKey: ['ships'] });
+    const wasEditing = !!editingShip;
+    toast.success('Success', {
+      description: wasEditing ? 'Ship updated successfully' : 'Ship created successfully',
+    });
     setShowAddModal(false);
     setEditingShip(null);
   };
@@ -143,9 +149,12 @@ export default function ShipsManagement() {
       const matchesCruiseLine =
         cruiseLineFilter === 'all' || ship.cruiseLineName === cruiseLineFilter;
 
-      return matchesSearch && matchesCruiseLine;
+      // No image filter
+      const matchesImageFilter = !showNoImageFilter || !ship.imageUrl || ship.imageUrl === '';
+
+      return matchesSearch && matchesCruiseLine && matchesImageFilter;
     });
-  }, [ships, searchTerm, cruiseLineFilter]);
+  }, [ships, searchTerm, cruiseLineFilter, showNoImageFilter]);
 
   // Reset to page 1 when search term or filter changes
   const handleSearchChange = (value: string) => {
@@ -260,6 +269,19 @@ export default function ShipsManagement() {
             />
           </div>
         )}
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-2 px-1">
+          <NoImageFilterButton
+            items={ships}
+            imageField="imageUrl"
+            isActive={showNoImageFilter}
+            onToggle={active => {
+              setShowNoImageFilter(active);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* Subheader - Non-sticky, scrolls with content */}

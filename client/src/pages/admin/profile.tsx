@@ -254,27 +254,49 @@ export default function AdminProfile() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Account Management</p>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold text-white">
-              <Shield className="h-6 w-6" />
-              Profile
-            </h1>
-            <p className="text-sm text-white/60">
-              Manage your account information and preferences.
-            </p>
+    <div className="space-y-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      {/* Header Section - Sticky with Safari fix */}
+      <div className="safari-sticky-header sticky top-16 z-20 pb-[0.85rem] space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h1 className="flex items-center gap-2 text-xl font-semibold text-white">
+            <Shield className="h-5 w-5" />
+            Profile
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                // TODO: Implement change password functionality
+                toast.info('Change password feature coming soon');
+              }}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Change Password"
+              title="Change Password"
+            >
+              <Shield className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsEditing(!isEditing)}
+              className="h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/15"
+              aria-label={isEditing ? 'View Profile' : 'Edit Profile'}
+              title={isEditing ? 'View Profile' : 'Edit Profile'}
+            >
+              {isEditing ? <Eye className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-4">
         {/* Sidebar */}
-        <div className="w-80 space-y-6">
+        <div className="w-full space-y-4">
           {/* Profile Card */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-xl">
+          <div className="border border-white/10 bg-white/5 backdrop-blur-xl rounded-xl p-4 shadow-lg">
             <div className="text-center">
               <div className="relative inline-block">
                 <div className="w-24 h-24 mx-auto rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
@@ -300,25 +322,25 @@ export default function AdminProfile() {
                   <Camera className="w-4 h-4" />
                 </button>
               </div>
-              <h2 className="mt-4 text-lg font-semibold text-white">
+              <h2 className="mt-3 text-base font-semibold text-white">
                 {profile.name?.first && profile.name?.last
                   ? `${profile.name.first} ${profile.name.last}`
                   : 'No Name Set'}
               </h2>
-              <p className="text-slate-300 text-sm">{profile.email}</p>
-              <div className="mt-3 flex justify-center">
-                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-medium rounded-full border border-emerald-500/30">
+              <p className="text-white/70 text-xs mt-1">{profile.email}</p>
+              <div className="mt-2 flex justify-center">
+                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-medium rounded-full border border-emerald-500/30">
                   {profile.role === 'super_admin' ? 'Super Admin' : profile.role}
                 </span>
               </div>
             </div>
 
             {/* Contact Info Display */}
-            <div className="mt-6 space-y-3">
+            <div className="mt-4 space-y-2">
               {profile.phoneNumber && (
-                <div className="flex items-center gap-3 text-sm text-slate-300">
-                  <Phone className="w-4 h-4 text-blue-400" />
-                  {profile.phoneNumber}
+                <div className="flex items-center gap-2 text-xs text-white/70">
+                  <Phone className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  <span className="truncate">{profile.phoneNumber}</span>
                 </div>
               )}
               {(profile.location_text ||
@@ -328,21 +350,27 @@ export default function AdminProfile() {
                 profile.location?.city ||
                 profile.location?.state ||
                 profile.location?.country) && (
-                <div className="flex items-center gap-3 text-sm text-slate-300">
-                  <MapPin className="w-4 h-4 text-blue-400" />
-                  {profile.location_text ||
-                    [profile.city, profile.state_province, profile.country]
-                      .filter(Boolean)
-                      .join(', ') ||
-                    [profile.location?.city, profile.location?.state, profile.location?.country]
-                      .filter(Boolean)
-                      .join(', ')}
+                <div className="flex items-center gap-2 text-xs text-white/70">
+                  <MapPin className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  <span className="truncate">
+                    {profile.location_text ||
+                      [profile.city, profile.state_province, profile.country]
+                        .filter(Boolean)
+                        .join(', ') ||
+                      [profile.location?.city, profile.location?.state, profile.location?.country]
+                        .filter(Boolean)
+                        .join(', ')}
+                  </span>
                 </div>
               )}
-              <div className="flex items-center gap-3 text-sm text-slate-300">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                Joined{' '}
-                {profile.created_at ? format(dateOnly(profile.created_at), 'MMM yyyy') : 'Unknown'}
+              <div className="flex items-center gap-2 text-xs text-white/70">
+                <Calendar className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                <span>
+                  Joined{' '}
+                  {profile.created_at
+                    ? format(dateOnly(profile.created_at), 'MMM yyyy')
+                    : 'Unknown'}
+                </span>
               </div>
             </div>
 
@@ -352,16 +380,16 @@ export default function AdminProfile() {
                 (profile.socialLinks as ProfileSocialLinks)?.twitter ||
                 (profile.socialLinks as ProfileSocialLinks)?.facebook ||
                 (profile.socialLinks as ProfileSocialLinks)?.telegram) && (
-                <div className="mt-4 pt-4 border-t border-slate-600/50">
+                <div className="mt-4 pt-4 border-t border-white/10">
                   <div className="flex justify-center gap-3">
                     {(profile.socialLinks as ProfileSocialLinks).instagram && (
                       <a
                         href={`https://instagram.com/${(profile.socialLinks as ProfileSocialLinks).instagram!.replace('@', '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-pink-400 transition-colors"
+                        className="text-white/60 hover:text-pink-400 transition-colors"
                       >
-                        <Instagram className="w-5 h-5" />
+                        <Instagram className="w-4 h-4" />
                       </a>
                     )}
                     {(profile.socialLinks as ProfileSocialLinks).twitter && (
@@ -369,9 +397,9 @@ export default function AdminProfile() {
                         href={`https://twitter.com/${(profile.socialLinks as ProfileSocialLinks).twitter!.replace('@', '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-sky-400 transition-colors"
+                        className="text-white/60 hover:text-sky-400 transition-colors"
                       >
-                        <Twitter className="w-5 h-5" />
+                        <Twitter className="w-4 h-4" />
                       </a>
                     )}
                     {(profile.socialLinks as ProfileSocialLinks).facebook && (
@@ -379,9 +407,9 @@ export default function AdminProfile() {
                         href={(profile.socialLinks as ProfileSocialLinks).facebook}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-blue-400 transition-colors"
+                        className="text-white/60 hover:text-blue-400 transition-colors"
                       >
-                        <Facebook className="w-5 h-5" />
+                        <Facebook className="w-4 h-4" />
                       </a>
                     )}
                     {(profile.socialLinks as ProfileSocialLinks).telegram && (
@@ -389,107 +417,89 @@ export default function AdminProfile() {
                         href={`https://t.me/${(profile.socialLinks as ProfileSocialLinks).telegram!.replace('@', '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-blue-400 transition-colors"
+                        className="text-white/60 hover:text-blue-400 transition-colors"
                       >
-                        <Send className="w-5 h-5" />
+                        <Send className="w-4 h-4" />
                       </a>
                     )}
                   </div>
                 </div>
               )}
           </div>
-
-          {/* Quick Actions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 shadow-xl">
-            <h3 className="text-sm font-semibold text-white mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-md transition-colors flex items-center gap-2"
-              >
-                {isEditing ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-                {isEditing ? 'View Profile' : 'Edit Profile'}
-              </button>
-              <button className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-md transition-colors flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Change Password
-              </button>
-              <button className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-md transition-colors flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Download Data
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Main Content */}
         <div className="flex-1">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8 shadow-xl">
+          <div className="border border-white/10 bg-white/5 backdrop-blur-xl rounded-xl p-4 shadow-lg">
             {/* Edit Mode Action Buttons */}
             {isEditing && (
-              <div className="flex justify-end gap-2 mb-8">
+              <div className="flex justify-end gap-2 mb-6">
                 <Button
                   onClick={handleCancel}
-                  className="bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
+                  aria-label="Cancel"
                 >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
+                  <X className="w-4 h-4" />
                 </Button>
                 <Button
                   onClick={handleSave}
                   disabled={updateProfile.isPending}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors"
+                  aria-label="Save changes"
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
+                  <Save className="w-4 h-4" />
                 </Button>
               </div>
             )}
 
             {/* Content */}
             {isEditing ? (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                  <h3 className="text-base font-semibold text-white mb-3 pb-2 border-b border-white/10">
                     Basic Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                      <Label className="text-xs font-medium text-white/70 block mb-2">
                         First Name
                       </Label>
                       <Input
                         type="text"
                         value={formData.name.first}
                         onChange={e => updateNestedFormData('name', 'first', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                      <Label className="text-xs font-medium text-white/70 block mb-2">
                         Last Name
                       </Label>
                       <Input
                         type="text"
                         value={formData.name.last}
                         onChange={e => updateNestedFormData('name', 'last', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                      <Label className="text-xs font-medium text-white/70 block mb-2">
                         Email Address
                       </Label>
                       <Input
                         type="email"
                         value={formData.email}
                         onChange={e => updateFormData('email', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">
+                      <Label className="text-xs font-medium text-white/70 block mb-2">
                         Username
                       </Label>
                       <Input
@@ -497,7 +507,7 @@ export default function AdminProfile() {
                         value={formData.username}
                         onChange={e => updateFormData('username', e.target.value)}
                         placeholder="Choose a username"
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                       />
                     </div>
                   </div>
@@ -505,17 +515,17 @@ export default function AdminProfile() {
 
                 {/* Location & Contact */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                  <h3 className="text-base font-semibold text-white mb-3 pb-2 border-b border-white/10">
                     Location & Contact
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2">Phone</Label>
+                      <Label className="text-xs font-medium text-white/70 block mb-2">Phone</Label>
                       <Input
                         type="tel"
                         value={formData.phoneNumber}
                         onChange={e => updateFormData('phoneNumber', e.target.value)}
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
@@ -545,17 +555,17 @@ export default function AdminProfile() {
 
                 {/* Social Links */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                  <h3 className="text-base font-semibold text-white mb-3 pb-2 border-b border-white/10">
                     Social Media
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2 flex items-center gap-2">
-                        <Instagram className="w-4 h-4 text-pink-400" />
+                      <Label className="text-xs font-medium text-white/70 block mb-2 flex items-center gap-2">
+                        <Instagram className="w-3.5 h-3.5 text-pink-400" />
                         Instagram
                       </Label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">
+                        <span className="inline-flex items-center px-3 bg-white/10 border border-r-0 border-white/10 rounded-l-lg text-white/70 text-sm">
                           @
                         </span>
                         <Input
@@ -565,17 +575,17 @@ export default function AdminProfile() {
                             updateNestedFormData('socialLinks', 'instagram', e.target.value)
                           }
                           placeholder="username"
-                          className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500 rounded-l-none"
+                          className="h-11 rounded-l-none rounded-r-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                         />
                       </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2 flex items-center gap-2">
-                        <Twitter className="w-4 h-4 text-sky-400" />
+                      <Label className="text-xs font-medium text-white/70 block mb-2 flex items-center gap-2">
+                        <Twitter className="w-3.5 h-3.5 text-sky-400" />
                         Twitter/X
                       </Label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">
+                        <span className="inline-flex items-center px-3 bg-white/10 border border-r-0 border-white/10 rounded-l-lg text-white/70 text-sm">
                           @
                         </span>
                         <Input
@@ -585,13 +595,13 @@ export default function AdminProfile() {
                             updateNestedFormData('socialLinks', 'twitter', e.target.value)
                           }
                           placeholder="username"
-                          className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500 rounded-l-none"
+                          className="h-11 rounded-l-none rounded-r-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                         />
                       </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2 flex items-center gap-2">
-                        <Facebook className="w-4 h-4 text-blue-400" />
+                      <Label className="text-xs font-medium text-white/70 block mb-2 flex items-center gap-2">
+                        <Facebook className="w-3.5 h-3.5 text-blue-400" />
                         Facebook
                       </Label>
                       <Input
@@ -601,16 +611,16 @@ export default function AdminProfile() {
                           updateNestedFormData('socialLinks', 'facebook', e.target.value)
                         }
                         placeholder="facebook.com/username"
-                        className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-slate-300 block mb-2 flex items-center gap-2">
-                        <Send className="w-4 h-4 text-blue-400" />
+                      <Label className="text-xs font-medium text-white/70 block mb-2 flex items-center gap-2">
+                        <Send className="w-3.5 h-3.5 text-blue-400" />
                         Telegram
                       </Label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 bg-slate-700/50 border border-r-0 border-slate-600 rounded-l-lg text-slate-300">
+                        <span className="inline-flex items-center px-3 bg-white/10 border border-r-0 border-white/10 rounded-l-lg text-white/70 text-sm">
                           @
                         </span>
                         <Input
@@ -620,7 +630,7 @@ export default function AdminProfile() {
                             updateNestedFormData('socialLinks', 'telegram', e.target.value)
                           }
                           placeholder="username"
-                          className="bg-slate-800/50 border-slate-600 text-white focus:ring-blue-500 focus:border-blue-500 rounded-l-none"
+                          className="h-11 rounded-l-none rounded-r-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[44px]"
                         />
                       </div>
                     </div>
@@ -629,17 +639,17 @@ export default function AdminProfile() {
 
                 {/* Bio */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                  <h3 className="text-base font-semibold text-white mb-3 pb-2 border-b border-white/10">
                     About You
                   </h3>
                   <div>
-                    <Label className="text-sm font-medium text-slate-300 block mb-2">Bio</Label>
+                    <Label className="text-xs font-medium text-white/70 block mb-2">Bio</Label>
                     <Textarea
                       rows={4}
                       value={formData.bio}
                       onChange={e => updateFormData('bio', e.target.value)}
                       placeholder="Tell us about yourself..."
-                      className="bg-slate-800/50 border-slate-600 text-white resize-none focus:ring-blue-500 focus:border-blue-500"
+                      className="rounded-lg border-white/10 bg-white/5 text-white placeholder:text-white/40 resize-none focus:border-white/20 focus:ring-0 focus:ring-offset-0 focus:shadow-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-white/20 focus-visible:outline-none min-h-[88px]"
                     />
                   </div>
                 </div>
@@ -647,12 +657,12 @@ export default function AdminProfile() {
             ) : (
               // View Mode - Only Bio
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4 pb-2 border-b border-slate-600/50">
+                <h3 className="text-base font-semibold text-white mb-3 pb-2 border-b border-white/10">
                   About You
                 </h3>
-                <div className="text-white leading-relaxed">
+                <div className="text-white/90 text-sm leading-relaxed">
                   {profile.bio || (
-                    <span className="text-slate-400 italic">
+                    <span className="text-white/50 italic">
                       No bio added yet. Click "Edit Profile" to add information about yourself.
                     </span>
                   )}

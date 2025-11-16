@@ -18,6 +18,7 @@ import {
   MapPin,
   Hotel,
 } from 'lucide-react';
+import { NoImageFilterButton } from '@/components/admin/NoImageFilterButton';
 
 interface Resort {
   id?: number;
@@ -43,6 +44,7 @@ interface Resort {
 export default function ResortsManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNoImageFilter, setShowNoImageFilter] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingResort, setEditingResort] = useState<Resort | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -69,10 +71,10 @@ export default function ResortsManagement() {
   // Delete resort mutation
   const deleteResortMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/api/resorts/${id}`);
+      const response = await api.delete(`/api/resorts/${id}`, { requireAuth: true });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete resort');
+        throw new Error(error.error?.message || error.error || 'Failed to delete resort');
       }
     },
     onSuccess: () => {
@@ -109,12 +111,16 @@ export default function ResortsManagement() {
 
   const filteredResorts = resorts.filter(resort => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       resort.name.toLowerCase().includes(searchLower) ||
       resort.location.toLowerCase().includes(searchLower) ||
       resort.city?.toLowerCase().includes(searchLower) ||
-      resort.country?.toLowerCase().includes(searchLower)
-    );
+      resort.country?.toLowerCase().includes(searchLower);
+
+    // No image filter
+    const matchesImageFilter = !showNoImageFilter || !resort.imageUrl || resort.imageUrl === '';
+
+    return matchesSearch && matchesImageFilter;
   });
 
   // Reset to page 1 when search term changes
@@ -184,6 +190,19 @@ export default function ResortsManagement() {
             />
           </div>
         )}
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-2 px-1">
+          <NoImageFilterButton
+            items={resorts}
+            imageField="imageUrl"
+            isActive={showNoImageFilter}
+            onToggle={active => {
+              setShowNoImageFilter(active);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* Subheader - Non-sticky, scrolls with content */}
