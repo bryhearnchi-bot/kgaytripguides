@@ -96,10 +96,8 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   const checkForUpdates = async () => {
     if (isChecking || !navigator.onLine) {
       if (!navigator.onLine) {
-        toast({
-          title: 'Offline',
+        toast.error('Offline', {
           description: 'Cannot check for updates while offline',
-          variant: 'destructive',
           duration: 3000,
         });
       }
@@ -118,18 +116,15 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
 
       // Show feedback based on result
       if (!swState.updateAvailable && !updateAvailable) {
-        toast({
-          title: 'Up to date',
+        toast.success('Up to date', {
           description: 'You have the latest version',
           duration: 3000,
         });
       }
     } catch (error) {
       console.error('Manual update check failed:', error);
-      toast({
-        title: 'Check failed',
+      toast.error('Check failed', {
         description: 'Could not check for updates',
-        variant: 'destructive',
         duration: 3000,
       });
     } finally {
@@ -166,8 +161,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
         await Promise.all(registrations.map(reg => reg.unregister()));
       }
 
-      toast({
-        title: 'Refreshing app...',
+      toast.info('Refreshing app...', {
         description: 'Downloading latest version',
         duration: 2000,
       });
@@ -179,10 +173,8 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Force refresh failed:', error);
       setIsChecking(false);
-      toast({
-        title: 'Refresh failed',
+      toast.error('Refresh failed', {
         description: 'Please try again',
-        variant: 'destructive',
         duration: 3000,
       });
     }
@@ -207,8 +199,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
     if (timeSinceUpdate > AUTO_REFRESH_THRESHOLD) {
       setHasAutoRefreshed(true);
 
-      toast({
-        title: 'Updating app...',
+      toast.info('Updating app...', {
         description: 'Downloading latest version',
         duration: 3000,
       });
@@ -240,7 +231,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
         }
       }, 1000);
     }
-  }, [lastUpdated, hasAutoRefreshed, toast]);
+  }, [lastUpdated, hasAutoRefreshed]);
 
   // Clean up auto-update timeout on unmount
   useEffect(() => {
