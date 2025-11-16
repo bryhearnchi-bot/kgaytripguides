@@ -275,6 +275,8 @@ function App() {
         description: 'Some features may be unavailable',
         duration: 5000, // Show for 5 seconds
         id: 'offline-status', // Unique ID to prevent duplicates
+        dismissible: true, // Allow user to close it
+        closeButton: true, // Show close button
       });
     };
 
