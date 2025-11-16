@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface UpdateContextType {
   lastUpdated: Date;
@@ -25,7 +25,6 @@ const AUTO_REFRESH_THRESHOLD = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export function UpdateProvider({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const { toast } = useToast();
   const [lastUpdated, setLastUpdated] = useState<Date>(() => {
     const stored = localStorage.getItem(LAST_UPDATED_KEY);
     return stored ? new Date(stored) : new Date();
@@ -52,8 +51,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
     }
 
     // Show toast notification
-    toast({
-      title: '✨ New version ready',
+    toast.info('New version ready', {
       description: 'The app will update in 30 seconds',
       duration: 4000,
     });
@@ -64,7 +62,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
     }, AUTO_UPDATE_DELAY);
 
     setAutoUpdateTimeout(timeout);
-  }, [isAdminRoute, toast]);
+  }, [isAdminRoute]);
 
   // Initialize service worker with callbacks
   const swState = useServiceWorker({

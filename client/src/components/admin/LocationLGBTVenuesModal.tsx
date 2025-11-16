@@ -12,7 +12,7 @@ import {
 import { Edit2, Trash2, Plus } from 'lucide-react';
 import { EnhancedLocationsTable } from '@/components/admin/EnhancedLocationsTable';
 import { api } from '@/lib/api-client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface LGBTVenue {
   id: number;
@@ -53,7 +53,6 @@ export function LocationLGBTVenuesModal({
   locationName,
   onSuccess,
 }: LocationLGBTVenuesModalProps) {
-  const { toast } = useToast();
   const [venues, setVenues] = useState<LGBTVenue[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -82,10 +81,8 @@ export function LocationLGBTVenuesModal({
         setVenues(data);
       }
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load LGBT venues',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -117,18 +114,15 @@ export function LocationLGBTVenuesModal({
         throw new Error('Failed to delete LGBT venue');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'LGBT venue deleted successfully',
       });
 
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete LGBT venue',
-        variant: 'destructive',
       });
     }
   };
@@ -161,10 +155,8 @@ export function LocationLGBTVenuesModal({
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Venue name is required',
-        variant: 'destructive',
       });
       return;
     }
@@ -191,8 +183,7 @@ export function LocationLGBTVenuesModal({
         throw new Error(`Failed to ${editingId ? 'update' : 'create'} LGBT venue`);
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: `LGBT venue ${editingId ? 'updated' : 'created'} successfully`,
       });
 
@@ -200,10 +191,8 @@ export function LocationLGBTVenuesModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: `Failed to ${editingId ? 'update' : 'create'} LGBT venue`,
-        variant: 'destructive',
       });
     }
   };

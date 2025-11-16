@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import {
   Plus,
@@ -220,7 +220,6 @@ function LibrarySectionItem({
 }
 
 export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdatesTabProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -283,8 +282,7 @@ export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdates
       queryClient.invalidateQueries({ queryKey: ['trip-info-sections'] });
       setShowCreateForm(false);
       setNewSectionData({ title: '', content: '', section_type: 'general' });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Section created successfully',
       });
       // Auto-assign if trip-specific
@@ -297,10 +295,8 @@ export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdates
       }
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create section',
-        variant: 'destructive',
       });
     },
   });
@@ -315,16 +311,13 @@ export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdates
     onSuccess: () => {
       refetchAssigned();
       onDataChange();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Section added to trip',
       });
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to assign section',
-        variant: 'destructive',
       });
     },
   });
@@ -338,16 +331,13 @@ export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdates
     onSuccess: () => {
       refetchAssigned();
       onDataChange();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Section removed from trip',
       });
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to remove section',
-        variant: 'destructive',
       });
     },
   });
@@ -372,10 +362,8 @@ export default function InfoAndUpdatesTab({ trip, onDataChange }: InfoAndUpdates
       onDataChange();
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update section order',
-        variant: 'destructive',
       });
     },
   });

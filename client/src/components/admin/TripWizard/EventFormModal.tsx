@@ -22,7 +22,7 @@ import { VenueDropdown } from './VenueDropdown';
 import { TalentSelector } from './TalentSelector';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { api } from '@/lib/api-client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const eventSchema = z.object({
@@ -183,10 +183,8 @@ export function EventFormModal({
       const data = await response.json();
       setEventTypes(data);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load event types',
-        variant: 'destructive',
       });
     } finally {
       setLoadingEventTypes(false);
@@ -200,10 +198,8 @@ export function EventFormModal({
       const data = await response.json();
       setPartyThemes(data);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load party themes',
-        variant: 'destructive',
       });
     } finally {
       setLoadingPartyThemes(false);
@@ -225,16 +221,12 @@ export function EventFormModal({
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
-        toast({
-          title: 'Validation Error',
+        toast.error('Validation Error', {
           description: firstError?.message || 'Validation failed',
-          variant: 'destructive',
         });
       } else {
-        toast({
-          title: 'Error',
+        toast.error('Error', {
           description: 'Failed to save event',
-          variant: 'destructive',
         });
       }
     } finally {

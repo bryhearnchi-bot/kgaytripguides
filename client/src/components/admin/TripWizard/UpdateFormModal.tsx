@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { SimpleSelector } from '@/components/admin/SimpleSelector';
 import type { SimpleSelectorOption } from '@/components/admin/SimpleSelector';
 import { api } from '@/lib/api-client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import type { Update, UpdateType, LinkSection } from '@/types/trip-info';
 import {
   Sparkles,
@@ -120,8 +120,7 @@ export function UpdateFormModal({
         const response = await api.put(`/api/updates/${editingUpdate.id}`, updateData);
         if (!response.ok) throw new Error('Failed to update');
 
-        toast({
-          title: 'Success',
+        toast.success('Success', {
           description: 'Update saved successfully',
         });
       } else {
@@ -129,18 +128,15 @@ export function UpdateFormModal({
         const response = await api.post(`/api/trips/${tripId}/updates`, updateData);
         if (!response.ok) throw new Error('Failed to create update');
 
-        toast({
-          title: 'Success',
+        toast.success('Success', {
           description: 'Update created successfully',
         });
       }
 
       onSave();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to save update',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);

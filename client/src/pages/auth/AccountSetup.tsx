@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import {
   Mail,
@@ -28,19 +28,21 @@ import {
 } from 'lucide-react';
 
 // Validation schemas for each step
-const passwordSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const passwordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number')
+      .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
@@ -71,7 +73,6 @@ interface InvitationData {
 export default function AccountSetup() {
   const { token } = useParams<{ token: string }>();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const { signUp } = useSupabaseAuth();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -136,10 +137,8 @@ export default function AccountSetup() {
         setVerificationError(
           error instanceof Error ? error.message : 'Failed to verify invitation'
         );
-        toast({
-          title: 'Verification Failed',
+        toast.error('Verification Failed', {
           description: 'This invitation link is invalid or has expired.',
-          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
@@ -201,18 +200,15 @@ export default function AccountSetup() {
         throw new Error('Failed to complete account setup');
       }
 
-      toast({
-        title: 'Account Created!',
+      toast.success('Account Created!', {
         description: 'Your account has been successfully created. Welcome aboard!',
       });
 
       // Redirect to trips or login
       setLocation('/admin/trips');
     } catch (error) {
-      toast({
-        title: 'Setup Failed',
+      toast.error('Setup Failed', {
         description: error instanceof Error ? error.message : 'Failed to create account',
-        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -323,9 +319,7 @@ export default function AccountSetup() {
                     <Check className="h-5 w-5 text-green-600" />
                     <span className="font-medium text-green-900">Email Verified</span>
                   </div>
-                  <p className="text-green-800">
-                    Your invitation has been successfully verified.
-                  </p>
+                  <p className="text-green-800">Your invitation has been successfully verified.</p>
                 </div>
 
                 <div className="space-y-3">
@@ -404,7 +398,10 @@ export default function AccountSetup() {
                   </div>
                   {passwordForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-red-600">
-                      {String(passwordForm.formState.errors.confirmPassword.message || 'Passwords must match')}
+                      {String(
+                        passwordForm.formState.errors.confirmPassword.message ||
+                          'Passwords must match'
+                      )}
                     </p>
                   )}
                 </div>
@@ -413,7 +410,7 @@ export default function AccountSetup() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Password Strength</p>
                   <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((level) => (
+                    {[1, 2, 3, 4, 5].map(level => (
                       <div
                         key={level}
                         className={`flex-1 h-2 rounded ${
@@ -421,8 +418,8 @@ export default function AccountSetup() {
                             ? passwordStrength <= 2
                               ? 'bg-red-500'
                               : passwordStrength <= 3
-                              ? 'bg-yellow-500'
-                              : 'bg-green-500'
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
                             : 'bg-gray-200'
                         }`}
                       />

@@ -12,7 +12,7 @@ import {
 import { Edit2, Trash2, Plus } from 'lucide-react';
 import { EnhancedLocationsTable } from '@/components/admin/EnhancedLocationsTable';
 import { api } from '@/lib/api-client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Attraction {
   id: number;
@@ -49,7 +49,6 @@ export function LocationAttractionsModal({
   locationName,
   onSuccess,
 }: LocationAttractionsModalProps) {
-  const { toast } = useToast();
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -77,10 +76,8 @@ export function LocationAttractionsModal({
         setAttractions(data);
       }
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load attractions',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -113,18 +110,15 @@ export function LocationAttractionsModal({
         throw new Error('Failed to delete attraction');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Attraction deleted successfully',
       });
 
       fetchAttractions();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete attraction',
-        variant: 'destructive',
       });
     }
   };
@@ -155,10 +149,8 @@ export function LocationAttractionsModal({
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Attraction name is required',
-        variant: 'destructive',
       });
       return;
     }
@@ -184,8 +176,7 @@ export function LocationAttractionsModal({
         throw new Error(`Failed to ${editingId ? 'update' : 'create'} attraction`);
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: `Attraction ${editingId ? 'updated' : 'created'} successfully`,
       });
 
@@ -193,10 +184,8 @@ export function LocationAttractionsModal({
       fetchAttractions();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: `Failed to ${editingId ? 'update' : 'create'} attraction`,
-        variant: 'destructive',
       });
     }
   };

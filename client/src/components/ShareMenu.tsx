@@ -3,7 +3,7 @@ import { Share2, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useShare } from '@/hooks/useShare';
 import { isNative } from '@/lib/capacitor';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface ShareMenuProps {
   tripSlug: string;
@@ -22,7 +22,6 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { shareTrip } = useShare();
-  const { toast } = useToast();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -68,8 +67,7 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url);
         setCopied(true);
-        toast({
-          title: 'Link copied!',
+        toast.success('Link copied!', {
           description: 'Trip link copied to clipboard',
         });
         setTimeout(() => {

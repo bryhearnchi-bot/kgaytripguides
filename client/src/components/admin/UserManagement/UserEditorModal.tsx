@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { addCsrfToken } from '@/utils/csrf';
 import { supabase } from '@/lib/supabase';
 import {
@@ -40,7 +40,7 @@ import {
   Image,
   Clock,
   Activity,
-  Eye
+  Eye,
 } from 'lucide-react';
 
 const userSchema = z.object({
@@ -81,7 +81,6 @@ interface UserEditorModalProps {
 }
 
 export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModalProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
@@ -161,7 +160,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
         body: JSON.stringify({
           email: data.email,
@@ -207,17 +206,14 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: 'User created',
+      toast.success('User created', {
         description: 'The new user has been successfully created.',
       });
       onClose();
     },
     onError: (error: any) => {
-      toast({
-        title: 'Creation failed',
+      toast.error('Creation failed', {
         description: error.message || 'Failed to create user',
-        variant: 'destructive',
       });
     },
   });
@@ -225,7 +221,9 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
   const updateUser = useMutation({
     mutationFn: async (data: UserFormData) => {
       // Get authentication token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -233,7 +231,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
       // Update profile via backend API with CSRF protection
       const headers = await addCsrfToken({
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        Authorization: `Bearer ${session.access_token}`,
       });
 
       const profileResponse = await fetch(`/api/admin/users/${user.id}/profile`, {
@@ -271,7 +269,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
           },
           trip_updates_opt_in: data.cruise_notifications,
           marketing_emails: data.marketing_emails,
-        })
+        }),
       });
 
       if (!profileResponse.ok) {
@@ -281,26 +279,22 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
 
       // Update password if provided (still using Supabase admin for this)
       if (data.password) {
-        const { error: passwordError } = await supabase.auth.admin.updateUserById(
-          user.id,
-          { password: data.password }
-        );
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(user.id, {
+          password: data.password,
+        });
         if (passwordError) throw passwordError;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: 'User updated',
+      toast.success('User updated', {
         description: 'User information has been successfully updated.',
       });
       onClose();
     },
     onError: (error: any) => {
-      toast({
-        title: 'Update failed',
+      toast.error('Update failed', {
         description: error.message || 'Failed to update user',
-        variant: 'destructive',
       });
     },
   });
@@ -310,10 +304,8 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
     try {
       if (mode === 'add') {
         if (!data.password) {
-          toast({
-            title: 'Password required',
+          toast.error('Password required', {
             description: 'Please provide a password for the new user',
-            variant: 'destructive',
           });
           setLoading(false);
           return;
@@ -452,11 +444,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     <Phone className="inline w-4 h-4 mr-1" />
                     Phone Number
                   </Label>
-                  <Input
-                    id="phone_number"
-                    type="tel"
-                    {...register('phone_number')}
-                  />
+                  <Input id="phone_number" type="tel" {...register('phone_number')} />
                 </div>
 
                 {(mode === 'add' || mode === 'edit') && (
@@ -522,7 +510,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                   <Switch
                     id="is_active"
                     checked={watch('is_active')}
-                    onCheckedChange={(checked) => setValue('is_active', checked)}
+                    onCheckedChange={checked => setValue('is_active', checked)}
                   />
                   <Label htmlFor="is_active" className="flex items-center">
                     <Activity className="inline w-4 h-4 mr-1" />
@@ -586,9 +574,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     placeholder="Tell us about this user..."
                     className={errors.bio ? 'border-red-500' : ''}
                   />
-                  {errors.bio && (
-                    <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>
-                  )}
+                  {errors.bio && <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>}
                 </div>
               </div>
             </TabsContent>
@@ -664,11 +650,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     <Globe className="inline w-4 h-4 mr-1" />
                     LinkedIn
                   </Label>
-                  <Input
-                    id="linkedin"
-                    {...register('linkedin')}
-                    placeholder="Profile URL"
-                  />
+                  <Input id="linkedin" {...register('linkedin')} placeholder="Profile URL" />
                 </div>
 
                 <div>
@@ -676,11 +658,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     <Globe className="inline w-4 h-4 mr-1" />
                     TikTok
                   </Label>
-                  <Input
-                    id="tiktok"
-                    {...register('tiktok')}
-                    placeholder="@username or full URL"
-                  />
+                  <Input id="tiktok" {...register('tiktok')} placeholder="@username or full URL" />
                 </div>
               </div>
             </TabsContent>
@@ -690,7 +668,8 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                 <div className="bg-amber-50 p-3 rounded-lg">
                   <div className="flex items-center text-sm text-amber-700">
                     <Eye className="w-4 h-4 mr-2" />
-                    Communication preferences are set by the user during invitation and account setup
+                    Communication preferences are set by the user during invitation and account
+                    setup
                   </div>
                 </div>
 
@@ -704,11 +683,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                       Receive updates via email - controlled by user
                     </p>
                   </div>
-                  <Switch
-                    id="email_updates"
-                    checked={watch('email_updates')}
-                    disabled
-                  />
+                  <Switch id="email_updates" checked={watch('email_updates')} disabled />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -721,11 +696,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                       Receive SMS notifications - controlled by user
                     </p>
                   </div>
-                  <Switch
-                    id="text_messages"
-                    checked={watch('text_messages')}
-                    disabled
-                  />
+                  <Switch id="text_messages" checked={watch('text_messages')} disabled />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -758,7 +729,7 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                   <Switch
                     id="marketing_emails"
                     checked={watch('marketing_emails')}
-                    onCheckedChange={(checked) => setValue('marketing_emails', checked)}
+                    onCheckedChange={checked => setValue('marketing_emails', checked)}
                   />
                 </div>
               </div>

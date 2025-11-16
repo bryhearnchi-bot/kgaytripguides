@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import {
   Search,
@@ -46,7 +46,7 @@ import {
   Users,
   AlertCircle,
   UserPlus,
-  Edit
+  Edit,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { UserEditorModal } from './UserEditorModal';
@@ -68,7 +68,6 @@ interface UserData {
 }
 
 export function EnhancedUserList() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -83,7 +82,12 @@ export function EnhancedUserList() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   // Fetch users with filters
-  const { data: users, isLoading, error, refetch } = useQuery({
+  const {
+    data: users,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['admin-users', searchTerm, roleFilter, statusFilter, page],
     queryFn: async () => {
       const session = await supabase.auth.getSession();
@@ -106,7 +110,7 @@ export function EnhancedUserList() {
 
       const response = await fetch(`/api/auth/users?${params}`, {
         headers: {
-          'Authorization': `Bearer ${session.data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session?.access_token}`,
         },
       });
 
@@ -127,7 +131,7 @@ export function EnhancedUserList() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session?.access_token}`,
         },
         body: JSON.stringify({ role }),
       });
@@ -138,16 +142,13 @@ export function EnhancedUserList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: 'Role updated',
+      toast.success('Role updated', {
         description: 'User role has been successfully updated.',
       });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Update failed',
+      toast.error('Update failed', {
         description: error.message || 'Failed to update user role',
-        variant: 'destructive',
       });
     },
   });
@@ -160,7 +161,7 @@ export function EnhancedUserList() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session?.access_token}`,
         },
         body: JSON.stringify({ accountStatus: status }),
       });
@@ -171,16 +172,13 @@ export function EnhancedUserList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: 'Status updated',
+      toast.success('Status updated', {
         description: 'Account status has been successfully updated.',
       });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Update failed',
+      toast.error('Update failed', {
         description: error.message || 'Failed to update account status',
-        variant: 'destructive',
       });
     },
   });
@@ -188,10 +186,8 @@ export function EnhancedUserList() {
   // Bulk operations
   const handleBulkOperation = async (operation: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUsers.length === 0) {
-      toast({
-        title: 'No users selected',
+      toast.error('No users selected', {
         description: 'Please select users to perform this operation.',
-        variant: 'destructive',
       });
       return;
     }
@@ -201,7 +197,7 @@ export function EnhancedUserList() {
       const statusMap = {
         activate: 'active',
         deactivate: 'suspended',
-        delete: 'deleted'
+        delete: 'deleted',
       };
 
       // Process each user individually using our API
@@ -210,7 +206,7 @@ export function EnhancedUserList() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.data.session?.access_token}`,
+            Authorization: `Bearer ${session.data.session?.access_token}`,
           },
           body: JSON.stringify({ accountStatus: statusMap[operation] }),
         })
@@ -227,15 +223,12 @@ export function EnhancedUserList() {
 
       setSelectedUsers([]);
       refetch();
-      toast({
-        title: 'Operation completed',
+      toast.success('Operation completed', {
         description: `Successfully ${operation}d ${selectedUsers.length} user(s).`,
       });
     } catch (error: any) {
-      toast({
-        title: 'Operation failed',
+      toast.error('Operation failed', {
         description: error.message || 'Failed to complete operation',
-        variant: 'destructive',
       });
     }
   };
@@ -246,7 +239,7 @@ export function EnhancedUserList() {
       const session = await supabase.auth.getSession();
       const response = await fetch('/api/auth/users?format=csv', {
         headers: {
-          'Authorization': `Bearer ${session.data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session?.access_token}`,
         },
       });
 
@@ -263,15 +256,12 @@ export function EnhancedUserList() {
       a.click();
       URL.revokeObjectURL(url);
 
-      toast({
-        title: 'Export successful',
+      toast.success('Export successful', {
         description: 'User data has been exported.',
       });
     } catch (error: any) {
-      toast({
-        title: 'Export failed',
+      toast.error('Export failed', {
         description: error.message || 'Failed to export users',
-        variant: 'destructive',
       });
     }
   };
@@ -328,22 +318,12 @@ export function EnhancedUserList() {
             User Management
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="outline">
-              {users?.total || 0} total users
-            </Badge>
-            <Button
-              onClick={openInviteModal}
-              className="bg-blue-600 hover:bg-blue-700"
-              size="sm"
-            >
+            <Badge variant="outline">{users?.total || 0} total users</Badge>
+            <Button onClick={openInviteModal} className="bg-blue-600 hover:bg-blue-700" size="sm">
               <UserPlus className="h-4 w-4 mr-2" />
               Add User
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportUsers}
-            >
+            <Button variant="outline" size="sm" onClick={exportUsers}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -358,7 +338,7 @@ export function EnhancedUserList() {
             <Input
               placeholder="Search by name or email..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -390,31 +370,17 @@ export function EnhancedUserList() {
         {/* Bulk Operations */}
         {selectedUsers.length > 0 && (
           <div className="mb-4 p-4 bg-blue-50 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-blue-700">
-              {selectedUsers.length} user(s) selected
-            </span>
+            <span className="text-sm text-blue-700">{selectedUsers.length} user(s) selected</span>
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleBulkOperation('activate')}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleBulkOperation('activate')}>
                 <UserCheck className="h-4 w-4 mr-1" />
                 Activate
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleBulkOperation('deactivate')}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleBulkOperation('deactivate')}>
                 <UserX className="h-4 w-4 mr-1" />
                 Deactivate
               </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleBulkOperation('delete')}
-              >
+              <Button size="sm" variant="destructive" onClick={() => handleBulkOperation('delete')}>
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
               </Button>
@@ -431,7 +397,7 @@ export function EnhancedUserList() {
                   <input
                     type="checkbox"
                     checked={selectedUsers.length === users?.users.length}
-                    onChange={(e) => {
+                    onChange={e => {
                       if (e.target.checked) {
                         setSelectedUsers(users?.users.map(u => u.id) || []);
                       } else {
@@ -473,13 +439,13 @@ export function EnhancedUserList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                users?.users.map((user) => (
+                users?.users.map(user => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(user.id)}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (e.target.checked) {
                             setSelectedUsers([...selectedUsers, user.id]);
                           } else {
@@ -501,16 +467,22 @@ export function EnhancedUserList() {
                           <div className="flex items-center gap-1">
                             <span className="text-sm">{user.phone_number}</span>
                             {user.phone_verified && (
-                              <Badge variant="outline" className="text-xs">Verified</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Verified
+                              </Badge>
                             )}
                           </div>
                         )}
                         <div className="flex items-center gap-1">
                           {user.communication_preferences?.email && (
-                            <Badge variant="secondary" className="text-xs">Email</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              Email
+                            </Badge>
                           )}
                           {user.communication_preferences?.sms && (
-                            <Badge variant="secondary" className="text-xs">SMS</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              SMS
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -518,7 +490,7 @@ export function EnhancedUserList() {
                     <TableCell>
                       <Select
                         value={user.role}
-                        onValueChange={(value) =>
+                        onValueChange={value =>
                           updateRoleMutation.mutate({ userId: user.id, role: value })
                         }
                       >
@@ -544,9 +516,7 @@ export function EnhancedUserList() {
                         {user.account_status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {format(new Date(user.created_at), 'MMM d, yyyy')}
-                    </TableCell>
+                    <TableCell>{format(new Date(user.created_at), 'MMM d, yyyy')}</TableCell>
                     <TableCell>
                       {user.last_active
                         ? format(new Date(user.last_active), 'MMM d, h:mm a')
@@ -579,7 +549,7 @@ export function EnhancedUserList() {
                             onClick={() =>
                               updateStatusMutation.mutate({
                                 userId: user.id,
-                                status: user.account_status === 'active' ? 'suspended' : 'active'
+                                status: user.account_status === 'active' ? 'suspended' : 'active',
                               })
                             }
                           >
@@ -613,7 +583,8 @@ export function EnhancedUserList() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-gray-700">
-              Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, users?.total || 0)} of {users?.total || 0} users
+              Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, users?.total || 0)}{' '}
+              of {users?.total || 0} users
             </p>
             <div className="flex gap-2">
               <Button

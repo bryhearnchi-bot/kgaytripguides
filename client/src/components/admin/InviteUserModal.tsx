@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Mail, User, Shield, Edit, Eye, Loader2 } from 'lucide-react';
 import { addCsrfToken } from '@/utils/csrf';
 import { supabase } from '@/lib/supabase';
@@ -64,7 +64,6 @@ const roleOptions = [
 
 export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const {
     register,
@@ -88,7 +87,9 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
 
     try {
       // Get authentication token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -96,7 +97,7 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
       // Add both authentication and CSRF headers
       const headers = await addCsrfToken({
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        Authorization: `Bearer ${session.access_token}`,
       });
 
       // Send the invitation with proper authentication and CSRF protection
@@ -116,20 +117,16 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
         throw new Error(error.message || 'Failed to send invitation');
       }
 
-      toast({
-        title: 'Invitation sent!',
+      toast.success('Invitation sent!', {
         description: `An invitation has been sent to ${data.email}`,
-        variant: 'default',
       });
 
       reset();
       onSuccess?.();
       onClose();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to send invitation',
-        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -145,9 +142,7 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md bg-gradient-to-b from-white to-blue-50/50">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-900">
-            Invite New User
-          </DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-gray-900">Invite New User</DialogTitle>
           <DialogDescription className="text-gray-600">
             Send an invitation email for a new user to join your organization
           </DialogDescription>
@@ -192,9 +187,7 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                 disabled={isLoading}
               />
             </div>
-            {errors.email && (
-              <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
           </div>
 
           {/* Role Field (Required) */}
@@ -204,14 +197,14 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
             </Label>
             <Select
               value={selectedRole}
-              onValueChange={(value) => setValue('role', value as InviteUserFormData['role'])}
+              onValueChange={value => setValue('role', value as InviteUserFormData['role'])}
               disabled={isLoading}
             >
               <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                {roleOptions.map((option) => {
+                {roleOptions.map(option => {
                   const Icon = option.icon;
                   return (
                     <SelectItem key={option.value} value={option.value}>
@@ -227,9 +220,7 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                 })}
               </SelectContent>
             </Select>
-            {errors.role && (
-              <p className="text-sm text-red-600 mt-1">{errors.role.message}</p>
-            )}
+            {errors.role && <p className="text-sm text-red-600 mt-1">{errors.role.message}</p>}
           </div>
 
           {/* Role Preview */}

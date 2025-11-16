@@ -3,7 +3,7 @@ import { useTripWizard } from '@/contexts/TripWizardContext';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   CheckCircle2,
   Edit2,
@@ -35,7 +35,6 @@ import { EditCruiseItineraryModal } from './modals/EditCruiseItineraryModal';
 export function CompletionPage() {
   const { state } = useTripWizard();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [showBasicInfoModal, setShowBasicInfoModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showVenuesModal, setShowVenuesModal] = useState(false);
@@ -50,41 +49,33 @@ export function CompletionPage() {
 
       // Validate required fields with detailed error messages
       if (!state.tripData.name || !state.tripData.charterCompanyId || !state.tripData.tripTypeId) {
-        toast({
-          title: 'Missing Required Information',
+        toast.error('Missing Required Information', {
           description:
             'Please complete all required fields: Trip Name, Charter Company, and Trip Type.',
-          variant: 'destructive',
         });
         setSaving(false);
         return;
       }
 
       if (!state.tripData.startDate || !state.tripData.endDate) {
-        toast({
-          title: 'Missing Trip Dates',
+        toast.error('Missing Trip Dates', {
           description: 'Please provide both start and end dates for the trip.',
-          variant: 'destructive',
         });
         setSaving(false);
         return;
       }
 
       if (state.tripType === 'resort' && !state.resortData?.name) {
-        toast({
-          title: 'Missing Resort Information',
+        toast.error('Missing Resort Information', {
           description: 'Please complete the resort details before saving.',
-          variant: 'destructive',
         });
         setSaving(false);
         return;
       }
 
       if (state.tripType === 'cruise' && !state.shipData?.name) {
-        toast({
-          title: 'Missing Ship Information',
+        toast.error('Missing Ship Information', {
           description: 'Please complete the ship details before saving.',
-          variant: 'destructive',
         });
         setSaving(false);
         return;
@@ -197,18 +188,15 @@ export function CompletionPage() {
       await queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
 
       // Show success toast
-      toast({
-        title: 'Trip Saved for Preview!',
+      toast.success('Trip Saved for Preview!', {
         description: `${state.tripData.name} has been saved and is ready to preview.`,
       });
     } catch (error) {
       // Enhanced error messaging
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
 
-      toast({
-        title: 'Failed to Save Trip',
+      toast.error('Failed to Save Trip', {
         description: errorMessage,
-        variant: 'destructive',
       });
     } finally {
       setSaving(false);

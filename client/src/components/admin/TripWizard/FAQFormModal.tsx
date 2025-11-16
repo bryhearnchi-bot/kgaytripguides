@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
 import { api } from '@/lib/api-client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import type { FAQ } from '@/types/trip-info';
 import { Lock, Globe, FileText } from 'lucide-react';
 
@@ -51,8 +51,7 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
         const response = await api.put(`/api/faqs/${editingFaq.id}`, formData);
         if (!response.ok) throw new Error('Failed to update FAQ');
 
-        toast({
-          title: 'Success',
+        toast.success('Success', {
           description: 'FAQ updated successfully',
         });
       } else {
@@ -69,18 +68,15 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
         });
         if (!assignResponse.ok) throw new Error('Failed to assign FAQ to trip');
 
-        toast({
-          title: 'Success',
+        toast.success('Success', {
           description: 'FAQ created and added to trip',
         });
       }
 
       onSave();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to save FAQ',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);

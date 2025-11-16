@@ -14,6 +14,7 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -369,14 +370,48 @@ export default function Settings({
                 )}
               </div>
             ) : offlineEnabled && !isDownloading ? (
-              // Already downloaded and up to date - show confirmation
-              <div className="flex items-center gap-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <WifiOff className="h-5 w-5 text-green-400 flex-shrink-0" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-green-400">Offline Access Enabled</span>
-                  <span className="text-[10px] text-white/60">
-                    Trip data downloaded for offline viewing
+              // Already downloaded and up to date - show confirmation with action buttons
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <WifiOff className="h-5 w-5 text-green-400 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-green-400">
+                      Offline Access Enabled
+                    </span>
+                    <span className="text-[10px] text-white/60">
+                      Trip data downloaded for offline viewing
+                    </span>
+                  </div>
+                </div>
+                {tripStatus?.downloadedAt && (
+                  <span className="text-[9px] text-white/40 text-center">
+                    Downloaded: {format(new Date(tripStatus.downloadedAt), 'MMM d, yyyy')}
+                    {tripStatus?.size && (
+                      <>
+                        {' '}
+                        •{' '}
+                        {tripStatus.size > 1024 * 1024
+                          ? `${(tripStatus.size / (1024 * 1024)).toFixed(1)} MB`
+                          : `${(tripStatus.size / 1024).toFixed(0)} KB`}
+                      </>
+                    )}
                   </span>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleOfflineToggle}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-colors"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 text-white/80" />
+                    <span className="text-xs font-medium text-white/80">Re-download</span>
+                  </button>
+                  <button
+                    onClick={() => disableOfflineForTrip(tripId)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                    <span className="text-xs font-medium text-red-400">Delete</span>
+                  </button>
                 </div>
               </div>
             ) : isDownloading ? (

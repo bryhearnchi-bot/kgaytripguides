@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { EnhancedShipsTable } from '@/components/admin/EnhancedShipsTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
@@ -40,7 +40,6 @@ interface Ship {
 }
 
 export default function ShipsManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [cruiseLineFilter, setCruiseLineFilter] = useState<string>('all');
@@ -78,18 +77,15 @@ export default function ShipsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ships'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Ship deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message.includes('Cannot delete')
           ? 'This ship is assigned to cruises and cannot be deleted'
           : 'Failed to delete ship',
-        variant: 'destructive',
       });
     },
   });

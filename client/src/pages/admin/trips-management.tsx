@@ -47,7 +47,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { CategoryChip } from '@/components/admin/CategoryChip';
 import { PageStats } from '@/components/admin/PageStats';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { dateOnly } from '@/lib/utils';
 import {
   Activity,
@@ -136,7 +136,6 @@ interface GroupedTrips {
 
 export default function TripsManagement() {
   const [, navigate] = useLocation();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { profile } = useSupabaseAuthContext();
 
@@ -206,17 +205,14 @@ export default function TripsManagement() {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: 'Trip archived',
+      toast.success('Trip archived', {
         description: 'The voyage has been moved to archives.',
       });
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
     },
     onError: () => {
-      toast({
-        title: 'Archive failed',
+      toast.error('Archive failed', {
         description: 'We could not archive this trip. Please try again.',
-        variant: 'destructive',
       });
     },
   });
@@ -232,17 +228,14 @@ export default function TripsManagement() {
       }
     },
     onSuccess: () => {
-      toast({
-        title: 'Trip deleted',
+      toast.success('Trip deleted', {
         description: 'The voyage has been removed from the roster.',
       });
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
     },
     onError: () => {
-      toast({
-        title: 'Delete failed',
+      toast.error('Delete failed', {
         description: 'This trip could not be deleted.',
-        variant: 'destructive',
       });
     },
     onSettled: () => {
@@ -267,8 +260,7 @@ export default function TripsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: 'URL slug updated',
+      toast.success('URL slug updated', {
         description: 'The trip URL has been successfully updated.',
       });
       setSlugEditModalOpen(false);
@@ -276,10 +268,8 @@ export default function TripsManagement() {
       setNewSlug('');
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Failed to update slug',
+      toast.error('Failed to update slug', {
         description: error.message || 'An error occurred while updating the slug',
-        variant: 'destructive',
       });
     },
   });
@@ -297,16 +287,13 @@ export default function TripsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: 'Trip approved',
+      toast.success('Trip approved', {
         description: 'The trip is now live on the site.',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Approval failed',
+      toast.error('Approval failed', {
         description: error.message || 'Failed to approve the trip',
-        variant: 'destructive',
       });
     },
   });
@@ -324,16 +311,13 @@ export default function TripsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: 'Trip activated',
+      toast.success('Trip activated', {
         description: 'The trip is now visible on the site.',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Activation failed',
+      toast.error('Activation failed', {
         description: error.message || 'Failed to activate the trip',
-        variant: 'destructive',
       });
     },
   });
@@ -351,16 +335,13 @@ export default function TripsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: 'Trip deactivated',
+      toast.success('Trip deactivated', {
         description: 'The trip is no longer visible on the site.',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Deactivation failed',
+      toast.error('Deactivation failed', {
         description: error.message || 'Failed to deactivate the trip',
-        variant: 'destructive',
       });
     },
   });
@@ -378,17 +359,14 @@ export default function TripsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: 'Trip moved to preview',
+      toast.success('Trip moved to preview', {
         description:
           'The trip is now in preview mode. You can view it via the slug and make edits before republishing.',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Move to preview failed',
+      toast.error('Move to preview failed', {
         description: error.message || 'Failed to move the trip to preview',
-        variant: 'destructive',
       });
     },
   });
@@ -415,16 +393,13 @@ export default function TripsManagement() {
       document.body.removeChild(anchor);
     },
     onSuccess: () => {
-      toast({
-        title: 'Export complete',
+      toast.success('Export complete', {
         description: 'Trip details downloaded as JSON.',
       });
     },
     onError: () => {
-      toast({
-        title: 'Export failed',
+      toast.error('Export failed', {
         description: "We couldn't export this trip.",
-        variant: 'destructive',
       });
     },
   });
@@ -865,10 +840,8 @@ export default function TripsManagement() {
                     });
                     setEditTripModalOpen(true);
                   } catch (error) {
-                    toast({
-                      title: 'Error',
+                    toast.error('Error', {
                       description: 'Failed to load trip data',
-                      variant: 'destructive',
                     });
                   }
                 },

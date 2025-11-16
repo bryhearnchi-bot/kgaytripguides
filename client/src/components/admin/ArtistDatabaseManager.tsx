@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
-import { useToast } from '../../hooks/use-toast';
+import { toast } from 'sonner';
 import { ImageUpload } from './ImageUpload';
 import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
 import { supabase } from '../../lib/supabase';
@@ -26,13 +26,12 @@ interface ArtistDatabaseManagerProps {
 export default function ArtistDatabaseManager({
   onSelectArtist,
   showSelectMode = false,
-  allowInlineCreate = false
+  allowInlineCreate = false,
 }: ArtistDatabaseManagerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
   const [selectedPerformanceType, setSelectedPerformanceType] = useState<string>('');
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useSupabaseAuth();
 
@@ -41,10 +40,12 @@ export default function ArtistDatabaseManager({
     queryKey: ['talent-categories'],
     queryFn: async () => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -71,10 +72,12 @@ export default function ArtistDatabaseManager({
       if (selectedPerformanceType) params.append('type', selectedPerformanceType);
 
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -93,7 +96,9 @@ export default function ArtistDatabaseManager({
   const createMutation = useMutation({
     mutationFn: async (artistData: Partial<Artist>) => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -102,7 +107,7 @@ export default function ArtistDatabaseManager({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         credentials: 'include',
         body: JSON.stringify(artistData),
@@ -113,24 +118,21 @@ export default function ArtistDatabaseManager({
       }
       return response.json();
     },
-    onSuccess: (newArtist) => {
+    onSuccess: newArtist => {
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       setShowCreateDialog(false);
-      toast({
-        title: "Artist Added",
+      toast.success('Artist Added', {
         description: `${newArtist.name} has been added to the artist database.`,
       });
-      
+
       // If in select mode, automatically select the newly created artist
       if (showSelectMode && onSelectArtist) {
         onSelectArtist(newArtist);
       }
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create artist.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Failed to create artist.',
       });
     },
   });
@@ -139,7 +141,9 @@ export default function ArtistDatabaseManager({
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...artistData }: Partial<Artist> & { id: number }) => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -148,7 +152,7 @@ export default function ArtistDatabaseManager({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         credentials: 'include',
         body: JSON.stringify(artistData),
@@ -162,16 +166,13 @@ export default function ArtistDatabaseManager({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       setEditingArtist(null);
-      toast({
-        title: "Artist Updated",
-        description: "Artist information has been updated successfully.",
+      toast.success('Artist Updated', {
+        description: 'Artist information has been updated successfully.',
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update artist.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Failed to update artist.',
       });
     },
   });
@@ -180,7 +181,9 @@ export default function ArtistDatabaseManager({
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -188,7 +191,7 @@ export default function ArtistDatabaseManager({
       const response = await fetch(`/api/talent/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         credentials: 'include',
       });
@@ -202,16 +205,13 @@ export default function ArtistDatabaseManager({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artists'] });
-      toast({
-        title: "Artist Removed",
-        description: "Artist has been removed from the database.",
+      toast.success('Artist Removed', {
+        description: 'Artist has been removed from the database.',
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete artist.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Failed to delete artist.',
       });
     },
   });
@@ -222,13 +222,13 @@ export default function ArtistDatabaseManager({
     if (data.twitter) socialLinks.twitter = data.twitter;
 
     // Find the category ID from the category name
-    const categoryObj = talentCategories.find((cat: TalentCategory) => cat.category === data.category);
+    const categoryObj = talentCategories.find(
+      (cat: TalentCategory) => cat.category === data.category
+    );
 
     if (!categoryObj?.id) {
-      toast({
-        title: "Error",
-        description: "Please select a valid category.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Please select a valid category.',
       });
       return;
     }
@@ -251,13 +251,13 @@ export default function ArtistDatabaseManager({
     if (data.twitter) socialLinks.twitter = data.twitter;
 
     // Find the category ID from the category name
-    const categoryObj = talentCategories.find((cat: TalentCategory) => cat.category === data.category);
+    const categoryObj = talentCategories.find(
+      (cat: TalentCategory) => cat.category === data.category
+    );
 
     if (!categoryObj?.id) {
-      toast({
-        title: "Error",
-        description: "Please select a valid category.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Please select a valid category.',
       });
       return;
     }
@@ -323,18 +323,20 @@ export default function ArtistDatabaseManager({
           <Input
             placeholder="Search artists by name, stage name, or bio..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
         <select
           value={selectedPerformanceType}
-          onChange={(e) => setSelectedPerformanceType(e.target.value)}
+          onChange={e => setSelectedPerformanceType(e.target.value)}
           className="px-3 py-2 border border-gray-200 rounded-md bg-white"
         >
           <option value="">All Performance Types</option>
           {performanceTypes.map((type: string) => (
-            <option key={type} value={type}>{type}</option>
+            <option key={type} value={type}>
+              {type}
+            </option>
           ))}
         </select>
       </div>
@@ -349,7 +351,11 @@ export default function ArtistDatabaseManager({
                   <Avatar className="w-12 h-12">
                     <AvatarImage src={artist.profileImageUrl || undefined} alt={artist.name} />
                     <AvatarFallback>
-                      {artist.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      {artist.name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -361,18 +367,11 @@ export default function ArtistDatabaseManager({
                 </div>
                 <div className="flex gap-1">
                   {showSelectMode && onSelectArtist && (
-                    <Button
-                      size="sm"
-                      onClick={() => onSelectArtist(artist)}
-                    >
+                    <Button size="sm" onClick={() => onSelectArtist(artist)}>
                       Select
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditingArtist(artist)}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => setEditingArtist(artist)}>
                     <Edit2 className="w-4 h-4" />
                   </Button>
                   <Button
@@ -393,11 +392,7 @@ export default function ArtistDatabaseManager({
                 </div>
               )}
 
-              {artist.bio && (
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {artist.bio}
-                </p>
-              )}
+              {artist.bio && <p className="text-sm text-gray-600 line-clamp-2">{artist.bio}</p>}
 
               {artist.knownFor && (
                 <div className="text-sm text-gray-500">
@@ -405,15 +400,16 @@ export default function ArtistDatabaseManager({
                 </div>
               )}
 
-              {(artist.socialLinks && Object.keys(artist.socialLinks).length > 0) || artist.website && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <ExternalLink className="w-4 h-4" />
-                  <span>
-                    {artist.socialLinks ? Object.keys(artist.socialLinks).length : 0}
-                    {artist.website ? ' + website' : ''} social link(s)
-                  </span>
-                </div>
-              )}
+              {(artist.socialLinks && Object.keys(artist.socialLinks).length > 0) ||
+                (artist.website && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <ExternalLink className="w-4 h-4" />
+                    <span>
+                      {artist.socialLinks ? Object.keys(artist.socialLinks).length : 0}
+                      {artist.website ? ' + website' : ''} social link(s)
+                    </span>
+                  </div>
+                ))}
             </CardContent>
           </Card>
         ))}
@@ -424,8 +420,8 @@ export default function ArtistDatabaseManager({
           <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No artists found</h3>
           <p className="text-gray-600 mb-4">
-            {searchQuery || selectedPerformanceType 
-              ? 'No artists match your search criteria.' 
+            {searchQuery || selectedPerformanceType
+              ? 'No artists match your search criteria.'
               : 'Start building your artist database by adding performers.'}
           </p>
           {!searchQuery && !selectedPerformanceType && (
@@ -446,9 +442,7 @@ export default function ArtistDatabaseManager({
               <div className="text-sm text-gray-600">Total Artists</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-600">
-                {artists.length}
-              </div>
+              <div className="text-2xl font-bold text-green-600">{artists.length}</div>
               <div className="text-sm text-gray-600">Available</div>
             </div>
             <div>
@@ -459,7 +453,11 @@ export default function ArtistDatabaseManager({
             </div>
             <div>
               <div className="text-2xl font-bold text-orange-600">
-                {artists.filter((a: Artist) => a.socialLinks && Object.keys(a.socialLinks).length > 0).length}
+                {
+                  artists.filter(
+                    (a: Artist) => a.socialLinks && Object.keys(a.socialLinks).length > 0
+                  ).length
+                }
               </div>
               <div className="text-sm text-gray-600">With Social Links</div>
             </div>
@@ -492,7 +490,7 @@ function ArtistForm({
   artist,
   onSubmit,
   isLoading,
-  categories = []
+  categories = [],
 }: {
   artist?: Artist;
   onSubmit: (data: any) => void;
@@ -514,7 +512,7 @@ function ArtistForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const socialLinks: Record<string, string> = {};
     if (formData.instagram) socialLinks.instagram = formData.instagram;
     if (formData.twitter) socialLinks.twitter = formData.twitter;
@@ -539,17 +537,17 @@ function ArtistForm({
           <label className="text-sm font-medium">Full Name</label>
           <Input
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g., John Smith"
             required
           />
         </div>
-        
+
         <div className="space-y-2">
           <label className="text-sm font-medium">Known For</label>
           <Input
             value={formData.knownFor}
-            onChange={(e) => setFormData({ ...formData, knownFor: e.target.value })}
+            onChange={e => setFormData({ ...formData, knownFor: e.target.value })}
             placeholder="e.g., Energetic house sets, Broadway vocals"
           />
         </div>
@@ -561,7 +559,7 @@ function ArtistForm({
           className="w-full p-3 border border-gray-200 rounded-md resize-none"
           rows={3}
           value={formData.bio}
-          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+          onChange={e => setFormData({ ...formData, bio: e.target.value })}
           placeholder="Brief description of the artist's style, experience, and specialties..."
         />
       </div>
@@ -571,21 +569,23 @@ function ArtistForm({
           <label className="text-sm font-medium">Performance Category</label>
           <select
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            onChange={e => setFormData({ ...formData, category: e.target.value })}
             className="w-full p-3 border border-gray-200 rounded-md bg-white"
           >
             <option value="">Select Category</option>
             {performanceTypes.map((type: string) => (
-              <option key={type} value={type}>{type}</option>
+              <option key={type} value={type}>
+                {type}
+              </option>
             ))}
           </select>
         </div>
-        
+
         <div className="space-y-2">
           <ImageUpload
             imageType="talent"
             currentImageUrl={formData.profileImageUrl}
-            onImageChange={(imageUrl) => {
+            onImageChange={imageUrl => {
               setFormData(prev => ({ ...prev, profileImageUrl: imageUrl || '' }));
             }}
             label="Profile Image"
@@ -594,7 +594,6 @@ function ArtistForm({
         </div>
       </div>
 
-
       <div className="space-y-4">
         <h4 className="font-medium">Social Media Links</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -602,7 +601,7 @@ function ArtistForm({
             <label className="text-sm font-medium">Instagram</label>
             <Input
               value={formData.instagram}
-              onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+              onChange={e => setFormData({ ...formData, instagram: e.target.value })}
               placeholder="@username or full URL"
             />
           </div>
@@ -610,7 +609,7 @@ function ArtistForm({
             <label className="text-sm font-medium">Twitter</label>
             <Input
               value={formData.twitter}
-              onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+              onChange={e => setFormData({ ...formData, twitter: e.target.value })}
               placeholder="@username or full URL"
             />
           </div>
@@ -618,7 +617,7 @@ function ArtistForm({
             <label className="text-sm font-medium">Website</label>
             <Input
               value={formData.website}
-              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              onChange={e => setFormData({ ...formData, website: e.target.value })}
               placeholder="https://artist-website.com"
               type="url"
             />

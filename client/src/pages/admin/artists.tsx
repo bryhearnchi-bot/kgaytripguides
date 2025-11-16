@@ -4,7 +4,7 @@ import { EnhancedArtistsTable } from '@/components/admin/EnhancedArtistsTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
@@ -45,7 +45,6 @@ interface Talent {
 }
 
 export default function ArtistsManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,16 +98,13 @@ export default function ArtistsManagement() {
       queryClient.invalidateQueries({ queryKey: ['talent'] });
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Artist created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create artist',
-        variant: 'destructive',
       });
     },
   });
@@ -125,16 +121,13 @@ export default function ArtistsManagement() {
       setShowAddModal(false);
       setEditingArtist(null);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Artist updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update artist',
-        variant: 'destructive',
       });
     },
   });
@@ -150,18 +143,15 @@ export default function ArtistsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talent'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Artist deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message.includes('Cannot delete')
           ? 'This artist is assigned to events and cannot be deleted'
           : 'Failed to delete artist',
-        variant: 'destructive',
       });
     },
   });
@@ -177,16 +167,13 @@ export default function ArtistsManagement() {
       queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
       // Update form data to use the new category
       setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Talent category created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create talent category',
-        variant: 'destructive',
       });
     },
   });
@@ -203,19 +190,15 @@ export default function ArtistsManagement() {
 
     // Validate required fields
     if (!formData.name.trim()) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Artist name is required',
-        variant: 'destructive',
       });
       return;
     }
 
     if (!formData.talentCategoryId || formData.talentCategoryId === 0) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Please select a talent category',
-        variant: 'destructive',
       });
       return;
     }

@@ -8,11 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Ship, Save } from 'lucide-react';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ImageUpload } from './ImageUpload';
 
 const setupSchema = z.object({
@@ -35,11 +41,7 @@ interface TripDetailsTabProps {
   isEditing: boolean;
 }
 
-export default function TripDetailsTab({ 
-  trip, 
-  isEditing
-}: TripDetailsTabProps) {
-  const { toast } = useToast();
+export default function TripDetailsTab({ trip, isEditing }: TripDetailsTabProps) {
   const queryClient = useQueryClient();
 
   // Fetch trip types for dropdown
@@ -90,8 +92,16 @@ export default function TripDetailsTab({
         shipName: existingTrip.shipName || '',
         cruiseLine: existingTrip.cruiseLine || '',
         tripType: existingTrip.tripType || 'cruise',
-        startDate: existingTrip.startDate ? (existingTrip.startDate.includes('T') ? existingTrip.startDate.split('T')[0] : existingTrip.startDate) : '',
-        endDate: existingTrip.endDate ? (existingTrip.endDate.includes('T') ? existingTrip.endDate.split('T')[0] : existingTrip.endDate) : '',
+        startDate: existingTrip.startDate
+          ? existingTrip.startDate.includes('T')
+            ? existingTrip.startDate.split('T')[0]
+            : existingTrip.startDate
+          : '',
+        endDate: existingTrip.endDate
+          ? existingTrip.endDate.includes('T')
+            ? existingTrip.endDate.split('T')[0]
+            : existingTrip.endDate
+          : '',
         status: existingTrip.status || 'upcoming',
         description: existingTrip.description || '',
         heroImageUrl: existingTrip.heroImageUrl || '',
@@ -111,20 +121,17 @@ export default function TripDetailsTab({
       if (!response.ok) throw new Error('Failed to create trip');
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: "Trip created",
+      toast.success('Trip created', {
         description: `${data.name} has been created successfully.`,
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create trip. Please try again.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Failed to create trip. Please try again.',
       });
-    }
+    },
   });
 
   // Update trip mutation
@@ -142,18 +149,15 @@ export default function TripDetailsTab({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
       queryClient.invalidateQueries({ queryKey: ['trip', trip?.id] });
-      toast({
-        title: "Trip updated",
-        description: "Trip details have been updated successfully.",
+      toast.success('Trip updated', {
+        description: 'Trip details have been updated successfully.',
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update trip. Please try again.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Failed to update trip. Please try again.',
       });
-    }
+    },
   });
 
   const onSubmit = (data: SetupFormData) => {
@@ -212,26 +216,14 @@ export default function TripDetailsTab({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Trip Name *</Label>
-                <Input
-                  id="name"
-                  {...register('name')}
-                  placeholder="e.g., Greek Isles Adventure"
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-600">{errors.name.message}</p>
-                )}
+                <Input id="name" {...register('name')} placeholder="e.g., Greek Isles Adventure" />
+                {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="slug">URL Slug *</Label>
-                <Input
-                  id="slug"
-                  {...register('slug')}
-                  placeholder="e.g., greek-isles-2025"
-                />
-                {errors.slug && (
-                  <p className="text-sm text-red-600">{errors.slug.message}</p>
-                )}
+                <Input id="slug" {...register('slug')} placeholder="e.g., greek-isles-2025" />
+                {errors.slug && <p className="text-sm text-red-600">{errors.slug.message}</p>}
               </div>
             </div>
 
@@ -259,9 +251,9 @@ export default function TripDetailsTab({
 
               <div className="space-y-2">
                 <Label htmlFor="tripType">Trip Type</Label>
-                <Select 
-                  value={watch('tripType')} 
-                  onValueChange={(value) => setValue('tripType', value, { shouldDirty: true })}
+                <Select
+                  value={watch('tripType')}
+                  onValueChange={value => setValue('tripType', value, { shouldDirty: true })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select trip type" />
@@ -272,7 +264,9 @@ export default function TripDetailsTab({
                         <div className="flex items-center space-x-2">
                           <span>{type.label}</span>
                           {type.metadata?.description && (
-                            <span className="text-xs text-gray-500">({type.metadata.description})</span>
+                            <span className="text-xs text-gray-500">
+                              ({type.metadata.description})
+                            </span>
                           )}
                         </div>
                       </SelectItem>
@@ -285,11 +279,7 @@ export default function TripDetailsTab({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">Start Date *</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  {...register('startDate')}
-                />
+                <Input id="startDate" type="date" {...register('startDate')} />
                 {errors.startDate && (
                   <p className="text-sm text-red-600">{errors.startDate.message}</p>
                 )}
@@ -297,21 +287,15 @@ export default function TripDetailsTab({
 
               <div className="space-y-2">
                 <Label htmlFor="endDate">End Date *</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  {...register('endDate')}
-                />
-                {errors.endDate && (
-                  <p className="text-sm text-red-600">{errors.endDate.message}</p>
-                )}
+                <Input id="endDate" type="date" {...register('endDate')} />
+                {errors.endDate && <p className="text-sm text-red-600">{errors.endDate.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={watch('status')} 
-                  onValueChange={(value) => setValue('status', value as any)}
+                <Select
+                  value={watch('status')}
+                  onValueChange={value => setValue('status', value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -343,24 +327,23 @@ export default function TripDetailsTab({
             <ImageUpload
               imageType="cruise"
               currentImageUrl={watch('heroImageUrl') || ''}
-              onImageChange={(imageUrl) => {
+              onImageChange={imageUrl => {
                 setValue('heroImageUrl', imageUrl || '', { shouldDirty: true });
               }}
               label="Hero Image"
             />
 
             <div className="flex justify-end">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createTrip.isPending || updateTrip.isPending || !isDirty}
               >
                 <Save className="w-4 h-4 mr-2" />
-                {createTrip.isPending || updateTrip.isPending 
-                  ? 'Saving...' 
-                  : isEditing 
-                    ? 'Update Trip' 
-                    : 'Create Trip'
-                }
+                {createTrip.isPending || updateTrip.isPending
+                  ? 'Saving...'
+                  : isEditing
+                    ? 'Update Trip'
+                    : 'Create Trip'}
               </Button>
             </div>
           </form>
@@ -384,13 +367,17 @@ export default function TripDetailsTab({
               <div>
                 <p className="text-sm text-gray-600">Created</p>
                 <p className="font-medium">
-                  {existingTrip.createdAt ? format(new Date(existingTrip.createdAt), 'MMM dd, yyyy') : 'Unknown'}
+                  {existingTrip.createdAt
+                    ? format(new Date(existingTrip.createdAt), 'MMM dd, yyyy')
+                    : 'Unknown'}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Last Updated</p>
                 <p className="font-medium">
-                  {existingTrip.updatedAt ? format(new Date(existingTrip.updatedAt), 'MMM dd, yyyy') : 'Unknown'}
+                  {existingTrip.updatedAt
+                    ? format(new Date(existingTrip.updatedAt), 'MMM dd, yyyy')
+                    : 'Unknown'}
                 </p>
               </div>
             </div>

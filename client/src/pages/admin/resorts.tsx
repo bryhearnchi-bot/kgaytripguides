@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { EnhancedResortsTable } from '@/components/admin/EnhancedResortsTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ResortFormModal } from '@/components/admin/ResortFormModal';
@@ -41,7 +41,6 @@ interface Resort {
 }
 
 export default function ResortsManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -78,18 +77,15 @@ export default function ResortsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resorts'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Resort deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message.includes('Cannot delete')
           ? 'This resort is assigned to trips and cannot be deleted'
           : 'Failed to delete resort',
-        variant: 'destructive',
       });
     },
   });

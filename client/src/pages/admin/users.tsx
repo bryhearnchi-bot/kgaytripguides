@@ -4,7 +4,7 @@ import { EnhancedUsersTable } from '@/components/admin/EnhancedUsersTable';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
@@ -122,7 +122,6 @@ const ROLE_OPTIONS = [
 ];
 
 export default function UsersManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { profile, session } = useSupabaseAuthContext();
   const [searchTerm, setSearchTerm] = useState('');
@@ -190,16 +189,13 @@ export default function UsersManagement() {
       invalidateUsers();
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'User created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create user',
-        variant: 'destructive',
       });
     },
   });
@@ -219,16 +215,13 @@ export default function UsersManagement() {
       setEditingUser(null);
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'User updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update user',
-        variant: 'destructive',
       });
     },
   });
@@ -246,16 +239,13 @@ export default function UsersManagement() {
     onSuccess: result => {
       removeUserOptimistically(result.userId);
       invalidateUsers();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'User deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete user',
-        variant: 'destructive',
       });
     },
   });
@@ -277,18 +267,15 @@ export default function UsersManagement() {
         updateUserOptimistically(result.user.id, result.user);
       }
       invalidateUsers();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: result.user.is_active
           ? 'User activated successfully'
           : 'User deactivated successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message || 'Failed to update user status',
-        variant: 'destructive',
       });
     },
   });
@@ -378,10 +365,8 @@ export default function UsersManagement() {
 
   const handleDelete = (id: string) => {
     if (!canDeleteUsers) {
-      toast({
-        title: 'Not permitted',
+      toast.error('Not permitted', {
         description: 'You do not have permission to delete users.',
-        variant: 'destructive',
       });
       return;
     }

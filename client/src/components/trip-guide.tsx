@@ -25,7 +25,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { Talent } from '@/data/trip-data';
 import { useTripData, transformTripData } from '@/hooks/useTripData';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
@@ -62,7 +62,6 @@ export default function TripGuide({
   onTabChange: externalOnTabChange,
 }: TripGuideProps) {
   const { timeFormat } = useTimeFormat();
-  const { toast } = useToast();
   const { profile, user } = useSupabaseAuth();
   const haptics = useHaptics();
   const { updateAvailable } = useUpdate();
@@ -385,23 +384,20 @@ export default function TripGuide({
         throw new Error('Failed to approve trip');
       }
 
-      toast({
-        title: 'Trip Approved!',
+      toast.success('Trip Approved!', {
         description: 'This trip is now live on the site.',
       });
 
       // Refresh the page to show the updated status
       window.location.reload();
     } catch (error) {
-      toast({
-        title: 'Failed to Approve',
+      toast.error('Failed to Approve', {
         description: error instanceof Error ? error.message : 'An error occurred',
-        variant: 'destructive',
       });
     } finally {
       setIsApproving(false);
     }
-  }, [tripData?.trip?.id, toast]);
+  }, [tripData?.trip?.id]);
 
   const handleShareClick = useCallback(async () => {
     haptics.light();

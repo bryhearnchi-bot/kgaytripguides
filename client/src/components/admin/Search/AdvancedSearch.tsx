@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   Search,
   Filter,
@@ -352,7 +352,6 @@ export default function AdvancedSearch({
   initialFilters = [],
   recentSearches = [],
 }: AdvancedSearchProps) {
-  const { toast } = useToast();
   const [quickSearch, setQuickSearch] = useState('');
   const [filters, setFilters] = useState<SearchFilter[]>(initialFilters);
   const [sortBy, setSortBy] = useState<string>('');
@@ -442,15 +441,12 @@ export default function AdvancedSearch({
       setNewSearchCategory('');
       setIsPublic(false);
 
-      toast({
-        title: 'Search saved',
+      toast.success('Search saved', {
         description: 'Your search has been saved successfully.',
       });
     } catch (error) {
-      toast({
-        title: 'Save failed',
+      toast.error('Save failed', {
         description: 'Unable to save search. Please try again.',
-        variant: 'destructive',
       });
     }
   };
@@ -461,8 +457,7 @@ export default function AdvancedSearch({
     setSortDirection(search.sortDirection || 'asc');
     onLoadSavedSearch?.(search);
 
-    toast({
-      title: 'Search loaded',
+    toast.info('Search loaded', {
       description: `Loaded search: ${search.name}`,
     });
   };
@@ -472,15 +467,12 @@ export default function AdvancedSearch({
 
     try {
       await onExport(filters, format);
-      toast({
-        title: 'Export started',
+      toast.info('Export started', {
         description: `Exporting search results as ${format.toUpperCase()}.`,
       });
     } catch (error) {
-      toast({
-        title: 'Export failed',
+      toast.error('Export failed', {
         description: 'Unable to export results. Please try again.',
-        variant: 'destructive',
       });
     }
   };
@@ -703,8 +695,7 @@ export default function AdvancedSearch({
                             onDelete={() => onDeleteSavedSearch?.(search.id)}
                             onEdit={() => {
                               // TODO: Implement edit functionality
-                              toast({
-                                title: 'Edit saved search',
+                              toast.info('Edit saved search', {
                                 description: 'Edit functionality coming soon.',
                               });
                             }}

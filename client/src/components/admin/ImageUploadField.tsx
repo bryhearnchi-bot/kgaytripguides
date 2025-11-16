@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ImageUploadPopup } from './ImageUploadPopup';
 import { type ImageType, type ImageUploadResult } from '@/hooks/useImageUpload';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
 interface ImageUploadFieldProps {
@@ -32,7 +32,6 @@ export function ImageUploadField({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const { user, refreshProfile } = useSupabaseAuthContext();
-  const { toast } = useToast();
 
   const hasImage = value && value.trim() !== '';
 
@@ -81,15 +80,12 @@ export function ImageUploadField({
         // Refresh the profile data
         await refreshProfile();
 
-        toast({
-          title: 'Profile photo updated',
+        toast.success('Profile photo updated', {
           description: 'Your profile photo has been saved.',
         });
       } catch (error: any) {
-        toast({
-          title: 'Save failed',
+        toast.error('Save failed', {
           description: error.message || 'Failed to save profile image',
-          variant: 'destructive',
         });
       }
     }

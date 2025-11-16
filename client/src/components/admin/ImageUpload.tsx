@@ -4,7 +4,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Upload, Link, Trash2, Loader2 } from 'lucide-react';
-import { toast } from '../../hooks/use-toast';
+import { toast } from 'sonner';
 
 interface ImageUploadProps {
   imageType: 'talent' | 'event' | 'itinerary' | 'cruise';
@@ -32,20 +32,16 @@ export function ImageUpload({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Please select an image file',
-        variant: 'destructive',
       });
       return;
     }
 
     // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'File size must be less than 10MB',
-        variant: 'destructive',
       });
       return;
     }
@@ -70,8 +66,7 @@ export function ImageUpload({
 
       const result = await response.json();
       onImageChange(result.imageUrl);
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Image uploaded successfully',
       });
 
@@ -80,10 +75,8 @@ export function ImageUpload({
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to upload image',
-        variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
@@ -92,10 +85,8 @@ export function ImageUpload({
 
   const handleUrlDownload = async () => {
     if (!urlInput.trim()) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Please enter a valid URL',
-        variant: 'destructive',
       });
       return;
     }
@@ -123,16 +114,13 @@ export function ImageUpload({
 
       const result = await response.json();
       onImageChange(result.imageUrl);
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Image downloaded and saved successfully',
       });
       setUrlInput('');
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to download image',
-        variant: 'destructive',
       });
     } finally {
       setIsDownloading(false);
@@ -159,15 +147,12 @@ export function ImageUpload({
       }
 
       onImageChange(null);
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Image removed successfully',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to remove image',
-        variant: 'destructive',
       });
     }
   };

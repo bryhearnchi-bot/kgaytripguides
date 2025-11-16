@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -65,7 +65,6 @@ interface TableFormData {
 }
 
 export default function AdminLookupTables() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useSupabaseAuth();
   const [activeTable, setActiveTable] = useState<TableKey>('venue-types');
@@ -139,16 +138,13 @@ export default function AdminLookupTables() {
       queryClient.invalidateQueries({ queryKey: ['lookup-tables-counts'] });
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: `${TABLES[activeTable].displayName.slice(0, -1)} created successfully`,
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message,
-        variant: 'destructive',
       });
     },
   });
@@ -179,16 +175,13 @@ export default function AdminLookupTables() {
       setEditingItem(null);
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: `${TABLES[activeTable].displayName.slice(0, -1)} updated successfully`,
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message,
-        variant: 'destructive',
       });
     },
   });

@@ -14,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useShare } from '@/hooks/useShare';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useLocation } from 'wouter';
@@ -66,7 +66,6 @@ export function TripPageNavigation({
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const { shareContent } = useShare();
-  const { toast } = useToast();
 
   // Get unread alerts count for this specific trip
   const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts(tripSlug || undefined);
@@ -113,8 +112,7 @@ export function TripPageNavigation({
 
       // Show toast if clipboard was used (not native share dialog)
       if (result.method === 'clipboard') {
-        toast({
-          title: 'Link copied!',
+        toast.success('Link copied!', {
           description: 'Trip guide link copied to clipboard',
         });
       }
@@ -131,15 +129,12 @@ export function TripPageNavigation({
       // If everything fails, try one more time with clipboard
       try {
         await navigator.clipboard.writeText(tripUrl);
-        toast({
-          title: 'Link copied!',
+        toast.success('Link copied!', {
           description: 'Trip guide link copied to clipboard',
         });
       } catch (clipboardError) {
-        toast({
-          title: 'Share failed',
+        toast.error('Share failed', {
           description: 'Unable to share or copy link. Please copy the URL manually.',
-          variant: 'destructive',
         });
       }
     }

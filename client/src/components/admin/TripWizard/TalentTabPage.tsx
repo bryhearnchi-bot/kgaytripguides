@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
@@ -126,16 +126,13 @@ export function TalentTabPage() {
       setShowCreateModal(false);
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Artist created and added to trip',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create artist',
-        variant: 'destructive',
       });
     },
   });
@@ -153,16 +150,13 @@ export function TalentTabPage() {
       setShowEditModal(false);
       setEditingTalent(null);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Artist updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update artist',
-        variant: 'destructive',
       });
     },
   });
@@ -177,16 +171,13 @@ export function TalentTabPage() {
     onSuccess: newCategory => {
       queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
       setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Talent category created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create talent category',
-        variant: 'destructive',
       });
     },
   });
@@ -228,10 +219,8 @@ export function TalentTabPage() {
       const data = await response.json();
       setTripTalent(data);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load talent',
-        variant: 'destructive',
       });
     }
   };
@@ -241,19 +230,15 @@ export function TalentTabPage() {
 
     // Validate required fields
     if (!formData.name.trim()) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Artist name is required',
-        variant: 'destructive',
       });
       return;
     }
 
     if (!formData.talentCategoryId || formData.talentCategoryId === 0) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Please select a talent category',
-        variant: 'destructive',
       });
       return;
     }
@@ -299,18 +284,15 @@ export function TalentTabPage() {
         setOpenAccordionCategory(addedTalent.talentCategoryName);
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Talent added to trip',
       });
 
       setSelectedTalentId(null);
       setShowAddModal(false);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to add talent to trip',
-        variant: 'destructive',
       });
     }
   };
@@ -340,17 +322,14 @@ export function TalentTabPage() {
       // Refresh talent list from server to ensure state is in sync
       await fetchTripTalent();
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Talent removed from trip',
       });
 
       setTalentToRemove(null);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to remove talent from trip',
-        variant: 'destructive',
       });
     } finally {
       setRemovingTalentId(null);

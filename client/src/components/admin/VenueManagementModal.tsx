@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Edit2, Trash2, X, Check, Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Venue {
   id: number;
@@ -49,7 +49,6 @@ export function VenueManagementModal({
   onPendingVenuesChange,
   onSuccess,
 }: VenueManagementModalProps) {
-  const { toast } = useToast();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -88,10 +87,8 @@ export function VenueManagementModal({
         setVenues(data);
       }
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load venues',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -124,10 +121,8 @@ export function VenueManagementModal({
 
   const handleSaveEdit = async (venueId: number) => {
     if (!editForm.name.trim() || !editForm.venueTypeId) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Please fill in name and type',
-        variant: 'destructive',
       });
       return;
     }
@@ -158,8 +153,7 @@ export function VenueManagementModal({
       }
 
       setEditingId(null);
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue updated',
       });
       return;
@@ -179,8 +173,7 @@ export function VenueManagementModal({
         throw new Error('Failed to update venue');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue updated successfully',
       });
 
@@ -188,10 +181,8 @@ export function VenueManagementModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update venue',
-        variant: 'destructive',
       });
     }
   };
@@ -208,10 +199,8 @@ export function VenueManagementModal({
 
   const handleSaveNew = async () => {
     if (!newVenueForm.name.trim() || !newVenueForm.venueTypeId) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Please fill in name and type',
-        variant: 'destructive',
       });
       return;
     }
@@ -241,8 +230,7 @@ export function VenueManagementModal({
 
       setIsAddingNew(false);
       setNewVenueForm({ name: '', venueTypeId: '', description: '' });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue added (will be saved when you create the ship/resort)',
       });
       return;
@@ -262,8 +250,7 @@ export function VenueManagementModal({
         throw new Error(errorData?.error?.message || 'Failed to create venue');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue created successfully',
       });
 
@@ -272,10 +259,8 @@ export function VenueManagementModal({
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create venue',
-        variant: 'destructive',
       });
     }
   };
@@ -301,8 +286,7 @@ export function VenueManagementModal({
         );
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue removed',
       });
       return;
@@ -317,18 +301,15 @@ export function VenueManagementModal({
         throw new Error('Failed to delete venue');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue deleted successfully',
       });
 
       fetchVenues();
       if (onSuccess) onSuccess();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete venue',
-        variant: 'destructive',
       });
     }
   };

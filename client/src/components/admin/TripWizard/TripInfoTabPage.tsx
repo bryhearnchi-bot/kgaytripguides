@@ -25,7 +25,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { TripInfoSection } from '@/types/trip-info';
 import {
@@ -196,10 +196,8 @@ export function TripInfoTabPage() {
       const data = await response.json();
       setSections(data);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load trip info sections',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -241,17 +239,14 @@ export function TripInfoTabPage() {
 
       if (!response.ok) throw new Error('Failed to reorder sections');
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Sections reordered successfully',
       });
     } catch (error) {
       // Revert on error
       fetchSections();
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to reorder sections',
-        variant: 'destructive',
       });
     }
   };
@@ -268,10 +263,8 @@ export function TripInfoTabPage() {
 
   const handleDelete = async (section: TripInfoSection) => {
     if (section.section_type === 'always') {
-      toast({
-        title: 'Cannot Delete',
+      toast.error('Cannot Delete', {
         description: '"Always" sections cannot be removed from trips',
-        variant: 'destructive',
       });
       return;
     }
@@ -290,15 +283,12 @@ export function TripInfoTabPage() {
       // Refresh list
       await fetchSections();
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Section removed from trip',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to remove section',
-        variant: 'destructive',
       });
     }
   };

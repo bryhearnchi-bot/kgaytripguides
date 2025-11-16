@@ -11,16 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
   DialogDescription,
-  DialogClose
+  DialogClose,
 } from '@/components/ui/dialog';
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -28,17 +28,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Plus, 
-  Edit3, 
-  Trash2, 
+import {
+  Plus,
+  Edit3,
+  Trash2,
   Settings,
   Save,
   X,
@@ -49,9 +49,9 @@ import {
   EyeOff,
   Tag,
   AlertCircle,
-  Check
+  Check,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 
 const settingSchema = z.object({
@@ -78,26 +78,25 @@ interface Setting {
 }
 
 const CATEGORIES = [
-  { 
-    id: 'trip_types', 
-    name: 'Trip Types', 
-    description: 'Define different types of trips (cruise, hotel, flight, etc.)' 
+  {
+    id: 'trip_types',
+    name: 'Trip Types',
+    description: 'Define different types of trips (cruise, hotel, flight, etc.)',
   },
-  { 
-    id: 'event_types', 
-    name: 'Event Types', 
-    description: 'Define categories for events and entertainment' 
+  {
+    id: 'event_types',
+    name: 'Event Types',
+    description: 'Define categories for events and entertainment',
   },
-  { 
-    id: 'venue_types', 
-    name: 'Venue Types', 
-    description: 'Define different venue categories and locations' 
+  {
+    id: 'venue_types',
+    name: 'Venue Types',
+    description: 'Define different venue categories and locations',
   },
 ];
 
 export default function SettingsTab() {
   const { profile } = useSupabaseAuthContext();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('trip_types');
   const [editingDialogOpen, setEditingDialogOpen] = useState(false);
@@ -120,7 +119,11 @@ export default function SettingsTab() {
   });
 
   // Fetch settings for active category
-  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery<Setting[]>({
+  const {
+    data: settings,
+    isLoading: settingsLoading,
+    error: settingsError,
+  } = useQuery<Setting[]>({
     queryKey: ['settings', activeCategory],
     queryFn: async () => {
       const response = await fetch(`/api/settings/${activeCategory}`, {
@@ -153,7 +156,7 @@ export default function SettingsTab() {
         body: JSON.stringify({
           ...data,
           metadata: parsedMetadata,
-          orderIndex: (settings?.length || 0),
+          orderIndex: settings?.length || 0,
         }),
       });
       if (!response.ok) {
@@ -164,25 +167,22 @@ export default function SettingsTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', activeCategory] });
-      toast({
-        title: "Setting created",
-        description: "The setting has been created successfully.",
+      toast.success('Setting created', {
+        description: 'The setting has been created successfully.',
       });
       setEditingDialogOpen(false);
       reset();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create setting. Please try again.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: error.message || 'Failed to create setting. Please try again.',
       });
-    }
+    },
   });
 
   // Update setting mutation
   const updateSetting = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: Partial<SettingFormData> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<SettingFormData> }) => {
       const setting = settings?.find(s => s.id === id);
       if (!setting) throw new Error('Setting not found');
 
@@ -216,20 +216,17 @@ export default function SettingsTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', activeCategory] });
-      toast({
-        title: "Setting updated",
-        description: "The setting has been updated successfully.",
+      toast.success('Setting updated', {
+        description: 'The setting has been updated successfully.',
       });
       setEditingDialogOpen(false);
       reset();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update setting. Please try again.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: error.message || 'Failed to update setting. Please try again.',
       });
-    }
+    },
   });
 
   // Delete setting mutation
@@ -246,25 +243,22 @@ export default function SettingsTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', activeCategory] });
-      toast({
-        title: "Setting deleted",
-        description: "The setting has been deleted successfully.",
+      toast.success('Setting deleted', {
+        description: 'The setting has been deleted successfully.',
       });
       setDeleteDialogOpen(false);
       setDeletingSetting(null);
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete setting. Please try again.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: error.message || 'Failed to delete setting. Please try again.',
       });
-    }
+    },
   });
 
   // Toggle active status mutation
   const toggleActiveSetting = useMutation({
-    mutationFn: async ({ setting, isActive }: { setting: Setting, isActive: boolean }) => {
+    mutationFn: async ({ setting, isActive }: { setting: Setting; isActive: boolean }) => {
       const response = await fetch(`/api/settings/${activeCategory}/${setting.key}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -279,18 +273,15 @@ export default function SettingsTab() {
     },
     onSuccess: (_, { isActive }) => {
       queryClient.invalidateQueries({ queryKey: ['settings', activeCategory] });
-      toast({
-        title: `Setting ${isActive ? 'activated' : 'deactivated'}`,
+      toast.success(`Setting ${isActive ? 'activated' : 'deactivated'}`, {
         description: `The setting has been ${isActive ? 'activated' : 'deactivated'} successfully.`,
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update setting status.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: error.message || 'Failed to update setting status.',
       });
-    }
+    },
   });
 
   // Reorder settings mutation
@@ -310,18 +301,15 @@ export default function SettingsTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', activeCategory] });
-      toast({
-        title: "Settings reordered",
-        description: "The settings have been reordered successfully.",
+      toast.success('Settings reordered', {
+        description: 'The settings have been reordered successfully.',
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to reorder settings.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: error.message || 'Failed to reorder settings.',
       });
-    }
+    },
   });
 
   const openEditDialog = (setting?: Setting) => {
@@ -413,10 +401,10 @@ export default function SettingsTab() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-4">
-            {CATEGORIES.map((category) => (
+            {CATEGORIES.map(category => (
               <Button
                 key={category.id}
-                variant={activeCategory === category.id ? "default" : "outline"}
+                variant={activeCategory === category.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setActiveCategory(category.id)}
               >
@@ -425,7 +413,7 @@ export default function SettingsTab() {
               </Button>
             ))}
           </div>
-          
+
           <div className="text-sm text-gray-600">
             {CATEGORIES.find(c => c.id === activeCategory)?.description}
           </div>
@@ -522,21 +510,19 @@ export default function SettingsTab() {
                           </div>
                         )}
                         {setting.metadata && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Has metadata
-                          </div>
+                          <div className="text-xs text-gray-500 mt-1">Has metadata</div>
                         )}
                       </TableCell>
                       <TableCell>
                         {canEdit ? (
                           <Switch
                             checked={setting.isActive}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={checked =>
                               toggleActiveSetting.mutate({ setting, isActive: checked })
                             }
                           />
                         ) : (
-                          <Badge variant={setting.isActive ? "default" : "outline"}>
+                          <Badge variant={setting.isActive ? 'default' : 'outline'}>
                             {setting.isActive ? (
                               <>
                                 <Eye className="w-3 h-3 mr-1" />
@@ -569,7 +555,7 @@ export default function SettingsTab() {
                               </>
                             )}
                             {canDelete && (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-red-600"
                                 onClick={() => openDeleteDialog(setting)}
                               >
@@ -593,17 +579,14 @@ export default function SettingsTab() {
       <Dialog open={editingDialogOpen} onOpenChange={setEditingDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {editingSetting ? 'Edit Setting' : 'Add New Setting'}
-            </DialogTitle>
+            <DialogTitle>{editingSetting ? 'Edit Setting' : 'Add New Setting'}</DialogTitle>
             <DialogDescription>
-              {editingSetting 
-                ? 'Update the setting details below.' 
-                : `Add a new setting to the ${CATEGORIES.find(c => c.id === activeCategory)?.name} category.`
-              }
+              {editingSetting
+                ? 'Update the setting details below.'
+                : `Add a new setting to the ${CATEGORIES.find(c => c.id === activeCategory)?.name} category.`}
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="key">Key *</Label>
@@ -613,30 +596,18 @@ export default function SettingsTab() {
                 placeholder="e.g., cruise"
                 disabled={!!editingSetting} // Don't allow key changes when editing
               />
-              {errors.key && (
-                <p className="text-sm text-red-600">{errors.key.message}</p>
-              )}
+              {errors.key && <p className="text-sm text-red-600">{errors.key.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="label">Label *</Label>
-              <Input
-                id="label"
-                {...register('label')}
-                placeholder="e.g., Cruise"
-              />
-              {errors.label && (
-                <p className="text-sm text-red-600">{errors.label.message}</p>
-              )}
+              <Input id="label" {...register('label')} placeholder="e.g., Cruise" />
+              {errors.label && <p className="text-sm text-red-600">{errors.label.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="value">Value</Label>
-              <Input
-                id="value"
-                {...register('value')}
-                placeholder="Optional value"
-              />
+              <Input id="value" {...register('value')} placeholder="Optional value" />
             </div>
 
             <div className="space-y-2">
@@ -653,24 +624,19 @@ export default function SettingsTab() {
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditingDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setEditingDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createSetting.isPending || updateSetting.isPending || !isDirty}
               >
                 <Save className="w-4 h-4 mr-2" />
-                {createSetting.isPending || updateSetting.isPending 
-                  ? 'Saving...' 
-                  : editingSetting 
-                    ? 'Update Setting' 
-                    : 'Add Setting'
-                }
+                {createSetting.isPending || updateSetting.isPending
+                  ? 'Saving...'
+                  : editingSetting
+                    ? 'Update Setting'
+                    : 'Add Setting'}
               </Button>
             </DialogFooter>
           </form>
@@ -683,23 +649,16 @@ export default function SettingsTab() {
           <DialogHeader>
             <DialogTitle>Delete Setting</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the setting "{deletingSetting?.label}" ({deletingSetting?.key})?
-              This action cannot be undone.
+              Are you sure you want to delete the setting "{deletingSetting?.label}" (
+              {deletingSetting?.key})? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          
+
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteSetting.isPending}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteSetting.isPending}>
               {deleteSetting.isPending ? 'Deleting...' : 'Delete Setting'}
             </Button>
           </DialogFooter>

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { SocialAuthButtons } from './SocialAuthButtons';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -54,7 +54,6 @@ interface EnhancedSignUpFormProps {
 
 export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSignUpFormProps) {
   const { signUp } = useSupabaseAuthContext();
-  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -103,17 +102,14 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
         timestamp: new Date().toISOString(),
       };
 
-      toast({
-        title: 'Account created successfully!',
+      toast.success('Account created successfully!', {
         description: 'Please check your email to verify your account.',
       });
 
       onSuccess?.();
     } catch (error: any) {
-      toast({
-        title: 'Sign up failed',
+      toast.error('Sign up failed', {
         description: error.message || 'An error occurred during sign up',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);

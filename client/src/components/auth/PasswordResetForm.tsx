@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ArrowLeft, Mail } from 'lucide-react';
 
 const resetSchema = z.object({
@@ -21,7 +21,6 @@ interface PasswordResetFormProps {
 
 export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
   const { resetPassword } = useSupabaseAuthContext();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -38,15 +37,12 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
     try {
       await resetPassword(data.email);
       setSubmitted(true);
-      toast({
-        title: 'Password reset email sent',
+      toast.success('Password reset email sent', {
         description: 'Please check your email for instructions to reset your password.',
       });
     } catch (error: any) {
-      toast({
-        title: 'Password reset failed',
+      toast.error('Password reset failed', {
         description: error.message || 'Unable to send password reset email',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);

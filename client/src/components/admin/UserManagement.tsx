@@ -5,26 +5,54 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Shield, 
-  UserCheck, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Users,
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Shield,
+  UserCheck,
   UserX,
   Calendar,
   Mail,
   User,
-  X
+  X,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useSupabaseAuth } from '../../contexts/SupabaseAuthContext';
 import { supabase } from '../../lib/supabase';
@@ -52,7 +80,11 @@ interface CreateUserData {
 
 const USER_ROLES = [
   { value: 'viewer', label: 'Viewer', description: 'Read-only access' },
-  { value: 'content_manager', label: 'Content Manager', description: 'Can edit content and manage trips' },
+  {
+    value: 'content_manager',
+    label: 'Content Manager',
+    description: 'Can edit content and manage trips',
+  },
   { value: 'admin', label: 'Admin', description: 'Full system access' },
 ];
 
@@ -70,18 +102,23 @@ export default function UserManagement() {
     isActive: true,
   });
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { session } = useSupabaseAuth();
 
   // Fetch users
-  const { data: users, isLoading: usersLoading, error: usersError } = useQuery<User[]>({
+  const {
+    data: users,
+    isLoading: usersLoading,
+    error: usersError,
+  } = useQuery<User[]>({
     queryKey: ['admin-users'],
     queryFn: async () => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -102,7 +139,9 @@ export default function UserManagement() {
   const createUser = useMutation({
     mutationFn: async (userData: CreateUserData) => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -111,7 +150,7 @@ export default function UserManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          Authorization: `Bearer ${session.access_token}`,
         },
         credentials: 'include',
         body: JSON.stringify(userData),
@@ -124,26 +163,25 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: "User created",
-        description: "The user has been successfully created.",
+      toast.success('User created', {
+        description: 'The user has been successfully created.',
       });
       closeUserModal();
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
+      toast.error('Error', {
         description: error.message,
-        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update user mutation
   const updateUser = useMutation({
     mutationFn: async ({ id, userData }: { id: string; userData: Partial<CreateUserData> }) => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -152,7 +190,7 @@ export default function UserManagement() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          Authorization: `Bearer ${session.access_token}`,
         },
         credentials: 'include',
         body: JSON.stringify(userData),
@@ -165,26 +203,25 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: "User updated",
-        description: "The user has been successfully updated.",
+      toast.success('User updated', {
+        description: 'The user has been successfully updated.',
       });
       closeUserModal();
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
+      toast.error('Error', {
         description: error.message,
-        variant: "destructive",
       });
-    }
+    },
   });
 
   // Delete user mutation
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
       // Get fresh session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token');
       }
@@ -192,7 +229,7 @@ export default function UserManagement() {
       const response = await fetch(`/api/auth/users/${userId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          Authorization: `Bearer ${session.access_token}`,
         },
         credentials: 'include',
       });
@@ -203,19 +240,16 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast({
-        title: "User deleted",
-        description: "The user has been successfully deleted.",
+      toast.success('User deleted', {
+        description: 'The user has been successfully deleted.',
       });
       setDeleteUserId(null);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete user. Please try again.",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Failed to delete user. Please try again.',
       });
-    }
+    },
   });
 
   const openUserModal = (user?: User) => {
@@ -258,19 +292,15 @@ export default function UserManagement() {
 
   const handleSubmit = () => {
     if (!formData.username.trim()) {
-      toast({
-        title: "Error",
-        description: "Username is required",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Username is required',
       });
       return;
     }
 
     if (!editingUser && !formData.password.trim()) {
-      toast({
-        title: "Error",
-        description: "Password is required for new users",
-        variant: "destructive",
+      toast.error('Error', {
+        description: 'Password is required for new users',
       });
       return;
     }
@@ -283,12 +313,12 @@ export default function UserManagement() {
         role: formData.role,
         isActive: formData.isActive,
       };
-      
+
       // Only include password if it's provided
       if (formData.password.trim()) {
         updateData.password = formData.password;
       }
-      
+
       updateUser.mutate({ id: editingUser.id, userData: updateData });
     } else {
       createUser.mutate(formData);
@@ -307,10 +337,14 @@ export default function UserManagement() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'admin': return 'destructive';
-      case 'content_manager': return 'default';
-      case 'viewer': return 'secondary';
-      default: return 'secondary';
+      case 'admin':
+        return 'destructive';
+      case 'content_manager':
+        return 'default';
+      case 'viewer':
+        return 'secondary';
+      default:
+        return 'secondary';
     }
   };
 
@@ -319,11 +353,13 @@ export default function UserManagement() {
     return roleObj ? roleObj.label : role;
   };
 
-  const filteredUsers = users?.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredUsers =
+    users?.filter(
+      user =>
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   if (usersLoading) {
     return (
@@ -364,7 +400,7 @@ export default function UserManagement() {
             <Input
               placeholder="Search users by username, email, or name..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -378,9 +414,7 @@ export default function UserManagement() {
             <Users className="w-5 h-5 mr-2" />
             Users ({filteredUsers.length})
           </CardTitle>
-          <CardDescription>
-            Manage user accounts and permissions
-          </CardDescription>
+          <CardDescription>Manage user accounts and permissions</CardDescription>
         </CardHeader>
         <CardContent>
           {filteredUsers.length === 0 ? (
@@ -388,7 +422,9 @@ export default function UserManagement() {
               <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
               <p className="text-gray-500 mb-4">
-                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first user.'}
+                {searchTerm
+                  ? 'Try adjusting your search terms.'
+                  : 'Get started by creating your first user.'}
               </p>
               {!searchTerm && (
                 <Button onClick={() => openUserModal()}>
@@ -410,7 +446,7 @@ export default function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {filteredUsers.map(user => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
@@ -420,9 +456,7 @@ export default function UserManagement() {
                         <div>
                           <div className="font-medium">{user.name || user.username}</div>
                           <div className="text-sm text-gray-500">
-                            {user.name && user.name !== user.username && (
-                              <>@{user.username} • </>
-                            )}
+                            {user.name && user.name !== user.username && <>@{user.username} • </>}
                             {user.email && (
                               <span className="flex items-center">
                                 <Mail className="w-3 h-3 mr-1" />
@@ -466,11 +500,7 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openUserModal(user)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => openUserModal(user)}>
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
@@ -495,22 +525,20 @@ export default function UserManagement() {
       <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {editingUser ? 'Edit User' : 'Create New User'}
-            </DialogTitle>
+            <DialogTitle>{editingUser ? 'Edit User' : 'Create New User'}</DialogTitle>
             <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </DialogClose>
           </DialogHeader>
-          
+
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username *</Label>
               <Input
                 id="username"
                 value={formData.username}
-                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                onChange={e => setFormData(prev => ({ ...prev, username: e.target.value }))}
                 placeholder="Enter username"
               />
             </div>
@@ -521,7 +549,7 @@ export default function UserManagement() {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="Enter email address"
               />
             </div>
@@ -531,7 +559,7 @@ export default function UserManagement() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Enter full name"
               />
             </div>
@@ -544,7 +572,7 @@ export default function UserManagement() {
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                onChange={e => setFormData(prev => ({ ...prev, password: e.target.value }))}
                 placeholder={editingUser ? 'Enter new password' : 'Enter password'}
               />
             </div>
@@ -553,13 +581,13 @@ export default function UserManagement() {
               <Label htmlFor="role">Role</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+                onValueChange={value => setFormData(prev => ({ ...prev, role: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {USER_ROLES.map((role) => (
+                  {USER_ROLES.map(role => (
                     <SelectItem key={role.value} value={role.value}>
                       <div>
                         <div className="font-medium">{role.label}</div>
@@ -575,7 +603,7 @@ export default function UserManagement() {
               <Switch
                 id="isActive"
                 checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                onCheckedChange={checked => setFormData(prev => ({ ...prev, isActive: checked }))}
               />
               <Label htmlFor="isActive">Active user account</Label>
             </div>
@@ -584,7 +612,7 @@ export default function UserManagement() {
               <Button variant="outline" onClick={closeUserModal}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={createUser.isPending || updateUser.isPending}
               >
@@ -601,7 +629,8 @@ export default function UserManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone and will remove all associated data.
+              Are you sure you want to delete this user? This action cannot be undone and will
+              remove all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

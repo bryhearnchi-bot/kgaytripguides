@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api-client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 // Trip Wizard style guide for modal inputs
 const modalFieldStyles = `
@@ -149,10 +149,8 @@ export function TalentDropdown({
       setTalent(Array.isArray(data) ? data : []);
     } catch (error) {
       setTalent([]); // Set empty array on error
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load talent',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -172,10 +170,8 @@ export function TalentDropdown({
 
   const handleCreateTalent = async () => {
     if (!formData.name.trim() || !formData.talentCategoryId) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Name and talent category are required',
-        variant: 'destructive',
       });
       return;
     }
@@ -192,18 +188,15 @@ export function TalentDropdown({
       setTalent(prev => [...prev, newTalent]);
       onChange(newTalent.id);
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Talent created successfully',
       });
 
       setShowCreateModal(false);
       setFormData({ name: '', talentCategoryId: '', bio: '' });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create talent',
-        variant: 'destructive',
       });
     } finally {
       setCreating(false);

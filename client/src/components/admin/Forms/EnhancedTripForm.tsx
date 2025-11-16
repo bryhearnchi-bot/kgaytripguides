@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import FormValidator, { FormField, ValidationResult } from './FormValidator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -281,7 +281,6 @@ export default function EnhancedTripForm({
   onSubmit,
   onCancel,
 }: EnhancedTripFormProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [lastDraftSave, setLastDraftSave] = useState<Date | null>(null);
 
@@ -317,16 +316,13 @@ export default function EnhancedTripForm({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
-      toast({
-        title: isEditing ? 'Trip updated' : 'Trip created',
+      toast.success(isEditing ? 'Trip updated' : 'Trip created', {
         description: 'Your changes have been saved successfully.',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Save failed',
+      toast.error('Save failed', {
         description: error.message,
-        variant: 'destructive',
       });
     },
   });

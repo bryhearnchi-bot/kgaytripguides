@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { supabase } from '@/lib/supabase';
 import { ImageUploadPopup } from '@/components/admin/ImageUploadPopup';
@@ -81,7 +81,6 @@ export default function AdminProfile() {
     },
   });
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Initialize form data when profile loads
@@ -129,18 +128,15 @@ export default function AdminProfile() {
       // Update profile with new avatar URL
       await api.put('/api/admin/profile', { profile_image_url: result.url });
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Avatar updated successfully',
       });
 
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       setShowAvatarUploadPopup(false);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update avatar',
-        variant: 'destructive',
       });
     } finally {
       setIsUploadingAvatar(false);
@@ -160,8 +156,7 @@ export default function AdminProfile() {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Profile updated successfully',
       });
 
@@ -172,10 +167,8 @@ export default function AdminProfile() {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message || 'Failed to update profile',
-        variant: 'destructive',
       });
     },
   });

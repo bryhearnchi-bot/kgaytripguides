@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -25,9 +24,10 @@ import {
   FileText,
   Calendar,
   Plus,
-  X
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface TripWizardProps {
   isEditing?: boolean;
@@ -52,7 +52,6 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
   const [, navigate] = useLocation();
   const params = useParams();
   const tripId = params.id ? parseInt(params.id) : undefined;
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState('basic');
   const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
@@ -73,12 +72,12 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
     queryFn: async () => {
       if (!tripId) return null;
       const response = await fetch(`/api/trips/${tripId}`, {
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch trip');
       return response.json();
     },
-    enabled: isEditing && !!tripId
+    enabled: isEditing && !!tripId,
   });
 
   // Fetch ships
@@ -86,11 +85,11 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
     queryKey: ['ships'],
     queryFn: async () => {
       const response = await fetch('/api/ships', {
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch ships');
       return response.json();
-    }
+    },
   });
 
   // Fetch locations
@@ -98,11 +97,11 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
     queryKey: ['locations'],
     queryFn: async () => {
       const response = await fetch('/api/locations', {
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
-    }
+    },
   });
 
   // Fetch talent
@@ -110,11 +109,11 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
     queryKey: ['talent'],
     queryFn: async () => {
       const response = await fetch('/api/talent', {
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch talent');
       return response.json();
-    }
+    },
   });
 
   // Populate form with existing data
@@ -147,27 +146,24 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
         method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) throw new Error('Failed to save trip');
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: `Trip ${isEditing ? 'updated' : 'created'} successfully`,
       });
       navigate('/admin');
     },
-    onError: (error) => {
-      toast({
-        title: 'Error',
+    onError: error => {
+      toast.error('Error', {
         description: `Failed to ${isEditing ? 'update' : 'create'} trip`,
-        variant: 'destructive',
       });
-    }
+    },
   });
 
   const handleSubmit = () => {
@@ -175,7 +171,8 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
   };
 
   const generateSlug = (name: string) => {
-    return name.toLowerCase()
+    return name
+      .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
@@ -188,7 +185,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
         ...formData,
         shipId: ship.id,
         shipName: ship.name,
-        cruiseLine: ship.cruiseLine
+        cruiseLine: ship.cruiseLine,
       });
     }
   };
@@ -231,7 +228,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
       <div className="p-8">
         <Tabs value={currentTab} onValueChange={setCurrentTab}>
           <TabsList className="mb-6">
-            {tabs.map((tab) => (
+            {tabs.map(tab => (
               <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
                 {tab.icon}
                 {tab.label}
@@ -252,11 +249,11 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => {
+                      onChange={e => {
                         setFormData({
                           ...formData,
                           name: e.target.value,
-                          slug: generateSlug(e.target.value)
+                          slug: generateSlug(e.target.value),
                         });
                       }}
                       placeholder="e.g., Greek Isles Paradise 2025"
@@ -269,7 +266,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                     <Input
                       id="slug"
                       value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      onChange={e => setFormData({ ...formData, slug: e.target.value })}
                       placeholder="greek-isles-paradise-2025"
                     />
                   </div>
@@ -280,7 +277,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                       id="startDate"
                       type="date"
                       value={formData.startDate}
-                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                       required
                     />
                   </div>
@@ -291,7 +288,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                       id="endDate"
                       type="date"
                       value={formData.endDate}
-                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      onChange={e => setFormData({ ...formData, endDate: e.target.value })}
                       required
                     />
                   </div>
@@ -302,7 +299,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                   <Textarea
                     id="description"
                     value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
                     placeholder="Enter trip description..."
                   />
@@ -313,7 +310,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                   <Input
                     id="heroImage"
                     value={formData.heroImageUrl || ''}
-                    onChange={(e) => setFormData({ ...formData, heroImageUrl: e.target.value })}
+                    onChange={e => setFormData({ ...formData, heroImageUrl: e.target.value })}
                     placeholder="https://..."
                   />
                 </div>
@@ -330,10 +327,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="shipSelect">Select Ship</Label>
-                  <Select
-                    value={formData.shipId?.toString()}
-                    onValueChange={handleShipSelect}
-                  >
+                  <Select value={formData.shipId?.toString()} onValueChange={handleShipSelect}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose a ship" />
                     </SelectTrigger>
@@ -350,16 +344,17 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                 {formData.shipId && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <h4 className="font-semibold mb-2">Selected Ship Details</h4>
-                    <p><strong>Name:</strong> {formData.shipName}</p>
-                    <p><strong>Cruise Line:</strong> {formData.cruiseLine}</p>
+                    <p>
+                      <strong>Name:</strong> {formData.shipName}
+                    </p>
+                    <p>
+                      <strong>Cruise Line:</strong> {formData.cruiseLine}
+                    </p>
                   </div>
                 )}
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate('/admin/ships')}
-                  >
+                  <Button variant="outline" onClick={() => navigate('/admin/ships')}>
                     <Plus className="mr-2" size={16} />
                     Add New Ship
                   </Button>
@@ -386,11 +381,13 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                         <input
                           type="checkbox"
                           checked={selectedLocations.includes(location.id)}
-                          onChange={(e) => {
+                          onChange={e => {
                             if (e.target.checked) {
                               setSelectedLocations([...selectedLocations, location.id]);
                             } else {
-                              setSelectedLocations(selectedLocations.filter(id => id !== location.id));
+                              setSelectedLocations(
+                                selectedLocations.filter(id => id !== location.id)
+                              );
                             }
                           }}
                           className="mr-2"
@@ -425,7 +422,7 @@ export default function TripWizard({ isEditing = false }: TripWizardProps) {
                         <input
                           type="checkbox"
                           checked={selectedTalent.includes(artist.id)}
-                          onChange={(e) => {
+                          onChange={e => {
                             if (e.target.checked) {
                               setSelectedTalent([...selectedTalent, artist.id]);
                             } else {

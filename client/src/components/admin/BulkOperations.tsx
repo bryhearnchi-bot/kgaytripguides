@@ -6,10 +6,23 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   CheckSquare,
   Square,
@@ -118,25 +131,22 @@ const DataTable: React.FC<{
             <Checkbox
               checked={isAllSelected}
               onCheckedChange={handleSelectAll}
-              className={cn(isPartiallySelected && "data-[state=checked]:bg-orange-500")}
+              className={cn(isPartiallySelected && 'data-[state=checked]:bg-orange-500')}
               aria-label="Select all items"
             />
           </div>
-          {columns.map((column) => (
+          {columns.map(column => (
             <div
               key={column.key}
               className={cn(
-                "flex items-center gap-2 col-span-2",
-                column.sortable && "cursor-pointer hover:text-gray-900"
+                'flex items-center gap-2 col-span-2',
+                column.sortable && 'cursor-pointer hover:text-gray-900'
               )}
               onClick={() => column.sortable && onSort(column.key)}
             >
               <span>{column.label}</span>
               {column.sortable && sortConfig?.key === column.key && (
-                <span className={cn(
-                  "text-xs",
-                  sortConfig.direction === 'asc' ? 'rotate-180' : ''
-                )}>
+                <span className={cn('text-xs', sortConfig.direction === 'asc' ? 'rotate-180' : '')}>
                   ↓
                 </span>
               )}
@@ -148,12 +158,12 @@ const DataTable: React.FC<{
         {/* Filters Row */}
         <div className="grid grid-cols-12 gap-4 p-4 border-t border-gray-200 bg-white">
           <div></div> {/* Empty cell for checkbox column */}
-          {columns.map((column) => (
+          {columns.map(column => (
             <div key={`filter-${column.key}`} className="col-span-2">
               <Input
                 placeholder={`Filter ${column.label.toLowerCase()}...`}
                 value={filters[column.key] || ''}
-                onChange={(e) => onFilterChange(column.key, e.target.value)}
+                onChange={e => onFilterChange(column.key, e.target.value)}
                 className="h-8 text-xs"
               />
             </div>
@@ -164,12 +174,12 @@ const DataTable: React.FC<{
 
       {/* Table Body */}
       <div className="max-h-96 overflow-y-auto">
-        {items.map((item) => (
+        {items.map(item => (
           <div
             key={item.id}
             className={cn(
-              "grid grid-cols-12 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors",
-              selectedItems.has(item.id) && "bg-blue-50 border-blue-200"
+              'grid grid-cols-12 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors',
+              selectedItems.has(item.id) && 'bg-blue-50 border-blue-200'
             )}
           >
             <div className="flex items-center">
@@ -212,11 +222,7 @@ const DataTable: React.FC<{
             <span className="text-sm font-medium text-blue-900">
               {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onSelectionChange(new Set())}
-            >
+            <Button variant="outline" size="sm" onClick={() => onSelectionChange(new Set())}>
               Clear selection
             </Button>
           </div>
@@ -247,11 +253,21 @@ const BulkEditModal: React.FC<{
       { key: 'cruiseLine', label: 'Cruise Line', type: 'text' },
     ],
     talent: [
-      { key: 'category', label: 'Category', type: 'select', options: ['Drag', 'Comedy', 'Music', 'Broadway'] },
+      {
+        key: 'category',
+        label: 'Category',
+        type: 'select',
+        options: ['Drag', 'Comedy', 'Music', 'Broadway'],
+      },
       { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
     ],
     event: [
-      { key: 'type', label: 'Type', type: 'select', options: ['party', 'show', 'dining', 'lounge'] },
+      {
+        key: 'type',
+        label: 'Type',
+        type: 'select',
+        options: ['party', 'show', 'dining', 'lounge'],
+      },
       { key: 'venue', label: 'Venue', type: 'text' },
     ],
   };
@@ -264,24 +280,25 @@ const BulkEditModal: React.FC<{
         <DialogHeader>
           <DialogTitle>Bulk Edit {selectedCount} Items</DialogTitle>
           <DialogDescription>
-            Make changes that will be applied to all selected items. Only fields you modify will be updated.
+            Make changes that will be applied to all selected items. Only fields you modify will be
+            updated.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {fields.map((field) => (
+          {fields.map(field => (
             <div key={field.key} className="space-y-2">
               <Label htmlFor={field.key}>{field.label}</Label>
               {field.type === 'select' ? (
                 <Select
                   value={changes[field.key] || ''}
-                  onValueChange={(value) => setChanges(prev => ({ ...prev, [field.key]: value }))}
+                  onValueChange={value => setChanges(prev => ({ ...prev, [field.key]: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    {field.options?.map((option) => (
+                    {field.options?.map(option => (
                       <SelectItem key={option} value={option}>
                         {option}
                       </SelectItem>
@@ -292,7 +309,7 @@ const BulkEditModal: React.FC<{
                 <Input
                   id={field.key}
                   value={changes[field.key] || ''}
-                  onChange={(e) => setChanges(prev => ({ ...prev, [field.key]: e.target.value }))}
+                  onChange={e => setChanges(prev => ({ ...prev, [field.key]: e.target.value }))}
                   placeholder={`Enter ${field.label.toLowerCase()}`}
                 />
               )}
@@ -301,7 +318,9 @@ const BulkEditModal: React.FC<{
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button
             onClick={handleApply}
             disabled={Object.keys(changes).length === 0}
@@ -353,7 +372,7 @@ const ImportModal: React.FC<{
               id="file"
               type="file"
               accept=".csv,.xlsx,.xls"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={e => setFile(e.target.files?.[0] || null)}
             />
             {file && (
               <p className="text-sm text-gray-600">
@@ -369,7 +388,7 @@ const ImportModal: React.FC<{
                 <Checkbox
                   id="skipFirstRow"
                   checked={options.skipFirstRow}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setOptions(prev => ({ ...prev, skipFirstRow: !!checked }))
                   }
                 />
@@ -381,7 +400,7 @@ const ImportModal: React.FC<{
                 <Checkbox
                   id="updateExisting"
                   checked={options.updateExisting}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setOptions(prev => ({ ...prev, updateExisting: !!checked }))
                   }
                 />
@@ -393,7 +412,7 @@ const ImportModal: React.FC<{
                 <Checkbox
                   id="validateOnly"
                   checked={options.validateOnly}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setOptions(prev => ({ ...prev, validateOnly: !!checked }))
                   }
                 />
@@ -406,7 +425,9 @@ const ImportModal: React.FC<{
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button
             onClick={handleImport}
             disabled={!file}
@@ -427,7 +448,8 @@ const ProgressIndicator: React.FC<{
   onResume?: () => void;
   onCancel?: () => void;
 }> = ({ progress, onPause, onResume, onCancel }) => {
-  const percentage = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+  const percentage =
+    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
     <Card className="border-blue-200 bg-blue-50">
@@ -483,9 +505,7 @@ const ProgressIndicator: React.FC<{
         </div>
 
         {progress.currentItem && (
-          <p className="text-xs text-gray-500 mt-1">
-            Current: {progress.currentItem}
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Current: {progress.currentItem}</p>
         )}
 
         {progress.errors && progress.errors.length > 0 && (
@@ -493,11 +513,11 @@ const ProgressIndicator: React.FC<{
             <p className="font-medium text-red-900">Errors:</p>
             <ul className="list-disc list-inside text-red-700 text-xs mt-1">
               {progress.errors.slice(0, 3).map((error, index) => (
-                <li key={index}>{error.item}: {error.error}</li>
+                <li key={index}>
+                  {error.item}: {error.error}
+                </li>
               ))}
-              {progress.errors.length > 3 && (
-                <li>...and {progress.errors.length - 3} more</li>
-              )}
+              {progress.errors.length > 3 && <li>...and {progress.errors.length - 3} more</li>}
             </ul>
           </div>
         )}
@@ -521,9 +541,10 @@ export default function BulkOperations({
     { key: 'lastModified', label: 'Last Modified', sortable: true },
   ],
 }: BulkOperationsProps) {
-  const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
+    null
+  );
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -555,12 +576,10 @@ export default function BulkOperations({
         if (bValue === undefined) return sortConfig.direction === 'asc' ? -1 : 1;
 
         // Convert to strings for safe comparison if they're not primitive types
-        const aCompareValue = typeof aValue === 'string' || typeof aValue === 'number'
-          ? aValue
-          : String(aValue ?? '');
-        const bCompareValue = typeof bValue === 'string' || typeof bValue === 'number'
-          ? bValue
-          : String(bValue ?? '');
+        const aCompareValue =
+          typeof aValue === 'string' || typeof aValue === 'number' ? aValue : String(aValue ?? '');
+        const bCompareValue =
+          typeof bValue === 'string' || typeof bValue === 'number' ? bValue : String(bValue ?? '');
 
         if (aCompareValue < bCompareValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aCompareValue > bCompareValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -592,18 +611,17 @@ export default function BulkOperations({
 
     try {
       await onBulkEdit(selectedIds, changes);
-      setOperationProgress(prev => prev ? { ...prev, status: 'completed', completed: prev.total } : null);
+      setOperationProgress(prev =>
+        prev ? { ...prev, status: 'completed', completed: prev.total } : null
+      );
       setSelectedItems(new Set());
-      toast({
-        title: "Bulk edit completed",
+      toast.success('Bulk edit completed', {
         description: `Successfully updated ${selectedIds.length} items.`,
       });
     } catch (error) {
-      setOperationProgress(prev => prev ? { ...prev, status: 'failed' } : null);
-      toast({
-        title: "Bulk edit failed",
-        description: "Some items could not be updated. Please try again.",
-        variant: "destructive",
+      setOperationProgress(prev => (prev ? { ...prev, status: 'failed' } : null));
+      toast.error('Bulk edit failed', {
+        description: 'Some items could not be updated. Please try again.',
       });
     }
   };
@@ -612,7 +630,11 @@ export default function BulkOperations({
     if (!onBulkDelete) return;
 
     const selectedIds = Array.from(selectedItems);
-    if (!confirm(`Are you sure you want to delete ${selectedIds.length} items? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedIds.length} items? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -625,18 +647,17 @@ export default function BulkOperations({
 
     try {
       await onBulkDelete(selectedIds);
-      setOperationProgress(prev => prev ? { ...prev, status: 'completed', completed: prev.total } : null);
+      setOperationProgress(prev =>
+        prev ? { ...prev, status: 'completed', completed: prev.total } : null
+      );
       setSelectedItems(new Set());
-      toast({
-        title: "Bulk delete completed",
+      toast.success('Bulk delete completed', {
         description: `Successfully deleted ${selectedIds.length} items.`,
       });
     } catch (error) {
-      setOperationProgress(prev => prev ? { ...prev, status: 'failed' } : null);
-      toast({
-        title: "Bulk delete failed",
-        description: "Some items could not be deleted. Please try again.",
-        variant: "destructive",
+      setOperationProgress(prev => (prev ? { ...prev, status: 'failed' } : null));
+      toast.error('Bulk delete failed', {
+        description: 'Some items could not be deleted. Please try again.',
       });
     }
   };
@@ -647,15 +668,12 @@ export default function BulkOperations({
     const selectedIds = Array.from(selectedItems);
     try {
       await onExport(selectedIds, format);
-      toast({
-        title: "Export started",
+      toast.success('Export started', {
         description: `Exporting ${selectedIds.length} items as ${format.toUpperCase()}.`,
       });
     } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "Unable to export items. Please try again.",
-        variant: "destructive",
+      toast.error('Export failed', {
+        description: 'Unable to export items. Please try again.',
       });
     }
   };
@@ -665,15 +683,12 @@ export default function BulkOperations({
 
     try {
       await onImport(file, options);
-      toast({
-        title: "Import completed",
+      toast.success('Import completed', {
         description: `Successfully imported data from ${file.name}.`,
       });
     } catch (error) {
-      toast({
-        title: "Import failed",
-        description: "Unable to import file. Please check the format and try again.",
-        variant: "destructive",
+      toast.error('Import failed', {
+        description: 'Unable to import file. Please check the format and try again.',
       });
     }
   };

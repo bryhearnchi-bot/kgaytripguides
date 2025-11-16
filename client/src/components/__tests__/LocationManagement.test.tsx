@@ -15,16 +15,19 @@ import LocationManagement from '../admin/LocationManagement';
 vi.mock('../../contexts/SupabaseAuthContext', () => ({
   useSupabaseAuth: () => ({
     session: {
-      access_token: 'mock-token'
-    }
-  })
+      access_token: 'mock-token',
+    },
+  }),
 }));
 
-// Mock toast hook
-vi.mock('../../hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: vi.fn()
-  })
+// Mock Sonner toast
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
 }));
 
 const createWrapper = () => {
@@ -36,9 +39,7 @@ const createWrapper = () => {
   });
 
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 };
 
@@ -53,7 +54,7 @@ describe('LocationManagement', () => {
     // Default successful response
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([])
+      json: () => Promise.resolve([]),
     });
   });
 
@@ -78,13 +79,13 @@ describe('LocationManagement', () => {
         region: 'Mediterranean',
         port_type: 'port',
         coordinates: { lat: 36.3932, lng: 25.4615 },
-        description: 'Beautiful Greek island'
-      }
+        description: 'Beautiful Greek island',
+      },
     ];
 
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockLocations)
+      json: () => Promise.resolve(mockLocations),
     });
 
     const Wrapper = createWrapper();

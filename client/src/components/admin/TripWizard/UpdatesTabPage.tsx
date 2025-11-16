@@ -23,7 +23,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Update, UpdateType } from '@/types/trip-info';
 import {
@@ -242,10 +242,8 @@ export function UpdatesTabPage() {
       const data = await response.json();
       setUpdates(data);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load updates',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -284,17 +282,14 @@ export function UpdatesTabPage() {
 
       if (!response.ok) throw new Error('Failed to reorder updates');
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Updates reordered successfully',
       });
     } catch (error) {
       // Revert on error
       fetchUpdates();
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to reorder updates',
-        variant: 'destructive',
       });
     }
   };
@@ -321,15 +316,12 @@ export function UpdatesTabPage() {
       // Refresh list
       await fetchUpdates();
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Update deleted successfully',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete update',
-        variant: 'destructive',
       });
     }
   };

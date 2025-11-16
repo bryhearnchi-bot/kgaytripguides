@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Edit3, Trash2, Calendar, MapPin, Clock, Save, Search, Anchor } from 'lucide-react';
 import { format, parse } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ImageUpload } from './ImageUpload';
 import LocationManagement from './LocationManagement';
 import type { Location } from '../../types/api';
@@ -57,7 +57,6 @@ interface ItineraryTabProps {
 export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
   const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch existing itinerary data
@@ -115,13 +114,11 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
-      toast({ title: 'Success', description: 'Itinerary day added successfully' });
+      toast.success('Success', { description: 'Itinerary day added successfully' });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to add itinerary day. Please try again.',
-        variant: 'destructive',
       });
     },
   });
@@ -144,13 +141,11 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
-      toast({ title: 'Success', description: 'Itinerary day updated successfully' });
+      toast.success('Success', { description: 'Itinerary day updated successfully' });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update itinerary day. Please try again.',
-        variant: 'destructive',
       });
     },
   });
@@ -166,13 +161,11 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
-      toast({ title: 'Success', description: 'Itinerary day deleted successfully' });
+      toast.success('Success', { description: 'Itinerary day deleted successfully' });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete itinerary day. Please try again.',
-        variant: 'destructive',
       });
     },
   });

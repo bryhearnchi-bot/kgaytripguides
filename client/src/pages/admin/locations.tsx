@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { EnhancedLocationsTable } from '@/components/admin/EnhancedLocationsTable';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { api } from '@/lib/api-client';
@@ -31,7 +31,6 @@ interface Location {
 }
 
 export default function LocationsManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -84,16 +83,13 @@ export default function LocationsManagement() {
       setFormData(newLocation);
 
       // Keep modal open to allow adding attractions/venues
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Location created! You can now add attractions and venues.',
       });
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create location',
-        variant: 'destructive',
       });
     },
   });
@@ -110,16 +106,13 @@ export default function LocationsManagement() {
       setShowAddModal(false);
       setEditingLocation(null);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Location updated successfully',
       });
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update location',
-        variant: 'destructive',
       });
     },
   });
@@ -132,16 +125,13 @@ export default function LocationsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Location deleted successfully',
       });
     },
     onError: () => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete location',
-        variant: 'destructive',
       });
     },
   });

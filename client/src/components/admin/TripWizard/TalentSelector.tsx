@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 // Trip Wizard style guide for modal inputs
 const modalFieldStyles = `
@@ -186,10 +186,8 @@ export function TalentSelector({
 
   const handleCreateTalent = async () => {
     if (!formData.name.trim() || !formData.talentCategoryId) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Name and talent category are required',
-        variant: 'destructive',
       });
       return;
     }
@@ -226,8 +224,7 @@ export function TalentSelector({
       // Auto-select
       onSelectionChange([...selectedIds, newTalent.id]);
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Talent created and added to trip',
       });
 
@@ -244,10 +241,8 @@ export function TalentSelector({
         website: '',
       });
     } catch (err) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create talent',
-        variant: 'destructive',
       });
     } finally {
       setCreating(false);

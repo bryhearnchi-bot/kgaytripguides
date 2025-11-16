@@ -15,7 +15,7 @@ import { TripWizardProvider, useTripWizard } from '@/contexts/TripWizardContext'
 import { LocationsProvider } from '@/contexts/LocationsContext';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface EditTripModalProps {
   open: boolean;
@@ -27,7 +27,6 @@ interface EditTripModalProps {
 // Inner component that uses the TripWizard context
 function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripModalProps) {
   const [activeTab, setActiveTab] = useState('basic-info');
-  const { toast } = useToast();
   const hasInitialized = React.useRef(false);
 
   // Get context methods to populate data
@@ -264,8 +263,7 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
       }
 
       // Show success message
-      toast({
-        title: 'Trip Updated',
+      toast.success('Trip Updated', {
         description: 'Your changes have been saved.',
       });
 
@@ -277,10 +275,8 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         setTimeout(() => onSuccess(), 250);
       }
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to save trip changes.',
-        variant: 'destructive',
       });
     }
   };

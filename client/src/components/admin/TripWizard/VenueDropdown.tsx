@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api-client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 // Trip Wizard style guide for modal inputs
 const modalFieldStyles = `
@@ -178,10 +178,8 @@ export function VenueDropdown({
       setVenues(Array.isArray(data) ? data : []);
     } catch (error) {
       setVenues([]);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: `Failed to load ${tripType === 'cruise' ? 'ship' : 'resort'} venues`,
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -201,10 +199,8 @@ export function VenueDropdown({
 
   const handleCreateVenue = async () => {
     if (!formData.name.trim() || !formData.venueTypeId) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Name and venue type are required',
-        variant: 'destructive',
       });
       return;
     }
@@ -213,20 +209,16 @@ export function VenueDropdown({
     let endpoint: string;
     if (tripType === 'cruise') {
       if (!shipId) {
-        toast({
-          title: 'Error',
+        toast.error('Error', {
           description: 'Ship ID is required to create venue',
-          variant: 'destructive',
         });
         return;
       }
       endpoint = `/api/admin/ships/${shipId}/venues`;
     } else {
       if (!resortId) {
-        toast({
-          title: 'Error',
+        toast.error('Error', {
           description: 'Resort ID is required to create venue',
-          variant: 'destructive',
         });
         return;
       }
@@ -245,18 +237,15 @@ export function VenueDropdown({
       setVenues(prev => [...prev, newVenue]);
       onChange(newVenue.id);
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Venue created successfully',
       });
 
       setShowCreateModal(false);
       setFormData({ name: '', venueTypeId: '', description: '' });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create venue',
-        variant: 'destructive',
       });
     } finally {
       setCreating(false);

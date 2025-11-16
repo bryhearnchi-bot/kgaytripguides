@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { EventFormModal } from './EventFormModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import {
   Accordion,
@@ -92,15 +92,12 @@ export function EventsTabPage() {
         }
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Event deleted successfully',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete event',
-        variant: 'destructive',
       });
     }
   };
@@ -109,16 +106,14 @@ export function EventsTabPage() {
     try {
       if (event.id) {
         await updateEvent(event.id, event);
-        toast({
-          title: 'Success',
+        toast.success('Success', {
           description: 'Event updated successfully',
         });
       } else {
         await addEvent(event);
         // When adding a new event, auto-open the accordion for that date
         setOpenAccordionDate(event.date);
-        toast({
-          title: 'Success',
+        toast.success('Success', {
           description: 'Event created successfully',
         });
       }

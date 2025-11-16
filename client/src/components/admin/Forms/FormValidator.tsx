@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   AlertCircle,
   CheckCircle,
@@ -166,7 +166,6 @@ export default function FormValidator<T extends FieldValues>({
   title,
   description,
 }: FormValidatorProps<T>) {
-  const { toast } = useToast();
   const [fieldValidations, setFieldValidations] = useState<Record<string, ValidationResult[]>>({});
   const [isValidating, setIsValidating] = useState<Record<string, boolean>>({});
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
@@ -337,8 +336,7 @@ export default function FormValidator<T extends FieldValues>({
         await onDraftSave(watchedValues);
         setLastAutoSave(new Date());
         setIsDirty(false);
-        toast({
-          title: 'Draft saved',
+        toast('Draft saved', {
           description: 'Your changes have been automatically saved.',
           duration: 2000,
         });
@@ -352,15 +350,12 @@ export default function FormValidator<T extends FieldValues>({
     try {
       await onSubmit(data);
       setIsDirty(false);
-      toast({
-        title: 'Form submitted successfully',
+      toast.success('Form submitted successfully', {
         description: 'Your data has been saved.',
       });
     } catch (error) {
-      toast({
-        title: 'Submission failed',
+      toast.error('Submission failed', {
         description: 'Please check your inputs and try again.',
-        variant: 'destructive',
       });
     }
   };
@@ -372,15 +367,12 @@ export default function FormValidator<T extends FieldValues>({
       await onDraftSave(watchedValues);
       setLastAutoSave(new Date());
       setIsDirty(false);
-      toast({
-        title: 'Draft saved',
+      toast.success('Draft saved', {
         description: 'Your changes have been saved as a draft.',
       });
     } catch (error) {
-      toast({
-        title: 'Save failed',
+      toast.error('Save failed', {
         description: 'Unable to save draft. Please try again.',
-        variant: 'destructive',
       });
     }
   };

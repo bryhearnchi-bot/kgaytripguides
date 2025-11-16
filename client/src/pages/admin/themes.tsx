@@ -4,7 +4,7 @@ import { EnhancedThemesTable } from '@/components/admin/EnhancedThemesTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +27,6 @@ interface PartyTheme {
 }
 
 export default function ThemesManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const adminQueryOptions = useAdminQueryOptions();
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,16 +71,13 @@ export default function ThemesManagement() {
       queryClient.invalidateQueries({ queryKey: ['party-themes'] });
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Party theme created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create party theme',
-        variant: 'destructive',
       });
     },
   });
@@ -97,16 +93,13 @@ export default function ThemesManagement() {
       queryClient.invalidateQueries({ queryKey: ['party-themes'] });
       setEditingTheme(null);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Party theme updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update party theme',
-        variant: 'destructive',
       });
     },
   });
@@ -122,18 +115,15 @@ export default function ThemesManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['party-themes'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Party theme deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message.includes('Cannot delete')
           ? 'This theme is being used and cannot be deleted'
           : 'Failed to delete party theme',
-        variant: 'destructive',
       });
     },
   });

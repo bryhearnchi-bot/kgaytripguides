@@ -16,7 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   Ship,
   Save,
@@ -97,7 +97,6 @@ export default function TripDetail() {
   });
 
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Get trip ID from URL params
   const tripId = new URLSearchParams(window.location.search).get('id');
@@ -165,18 +164,15 @@ export default function TripDetail() {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Trip updated successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['admin-trip-detail', tripId] });
       setIsEditing(false);
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message || 'Failed to update trip',
-        variant: 'destructive',
       });
     },
   });
@@ -187,28 +183,22 @@ export default function TripDetail() {
 
   const handleSave = () => {
     if (!formData.name.trim()) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Trip name is required',
-        variant: 'destructive',
       });
       return;
     }
 
     if (!formData.startDate || !formData.endDate) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'Start and end dates are required',
-        variant: 'destructive',
       });
       return;
     }
 
     if (new Date(formData.startDate) >= new Date(formData.endDate)) {
-      toast({
-        title: 'Validation Error',
+      toast.error('Validation Error', {
         description: 'End date must be after start date',
-        variant: 'destructive',
       });
       return;
     }

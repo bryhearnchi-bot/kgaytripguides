@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 // CSRF token not needed with Bearer authentication
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,7 +61,6 @@ export function InvitationManagement() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const fetchInvitations = async () => {
     setIsLoading(true);
@@ -89,10 +88,8 @@ export function InvitationManagement() {
       // The API returns { success: true, invitations: [...] } format
       setInvitations(data.invitations || data || []);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load invitations',
-        variant: 'destructive',
       });
       setInvitations([]); // Set empty array on error
     } finally {
@@ -127,17 +124,14 @@ export function InvitationManagement() {
         throw new Error('Failed to delete invitation');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Invitation deleted successfully',
       });
 
       await fetchInvitations();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete invitation',
-        variant: 'destructive',
       });
     } finally {
       setDeleteId(null);
@@ -168,17 +162,14 @@ export function InvitationManagement() {
         throw new Error('Failed to resend invitation');
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Invitation resent successfully',
       });
 
       await fetchInvitations();
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to resend invitation',
-        variant: 'destructive',
       });
     } finally {
       setResendingId(null);
@@ -191,15 +182,12 @@ export function InvitationManagement() {
 
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      toast({
-        title: 'Copied',
+      toast.success('Copied', {
         description: 'Invitation link template copied (token not included for security)',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to copy link',
-        variant: 'destructive',
       });
     }
   };

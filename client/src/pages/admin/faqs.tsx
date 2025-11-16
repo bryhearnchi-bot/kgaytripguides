@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { api } from '@/lib/api-client';
 import {
@@ -41,7 +41,6 @@ interface FAQ {
 type SectionTypeFilter = 'all' | 'general' | 'always';
 
 export default function FAQsManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<SectionTypeFilter>('all');
@@ -78,16 +77,13 @@ export default function FAQsManagement() {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'FAQ created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create FAQ',
-        variant: 'destructive',
       });
     },
   });
@@ -104,16 +100,13 @@ export default function FAQsManagement() {
       setEditingFAQ(null);
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'FAQ updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update FAQ',
-        variant: 'destructive',
       });
     },
   });
@@ -129,16 +122,13 @@ export default function FAQsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'FAQ deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete FAQ',
-        variant: 'destructive',
       });
     },
   });

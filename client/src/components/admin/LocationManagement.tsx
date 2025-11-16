@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { useToast } from '../../hooks/use-toast';
+import { toast } from 'sonner';
 import { Textarea } from '../ui/textarea';
 import { ResponsiveAdminTable } from './ResponsiveAdminTable';
 import { StatusBadge } from './StatusBadge';
@@ -42,7 +42,6 @@ export default function LocationManagement({
   showSelectMode = false,
   onSelectLocation,
 }: LocationManagementProps = {}) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -83,16 +82,13 @@ export default function LocationManagement({
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Location created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create location',
-        variant: 'destructive',
       });
     },
   });
@@ -108,16 +104,13 @@ export default function LocationManagement({
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       setEditingLocation(null);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Location updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update location',
-        variant: 'destructive',
       });
     },
   });
@@ -133,18 +126,15 @@ export default function LocationManagement({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Location deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error.message.includes('Cannot delete')
           ? 'This location is used in trips and cannot be deleted'
           : 'Failed to delete location',
-        variant: 'destructive',
       });
     },
   });

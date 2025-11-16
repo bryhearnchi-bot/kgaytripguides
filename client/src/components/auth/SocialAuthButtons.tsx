@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface SocialAuthButtonsProps {
   mode: 'sign_in' | 'sign_up';
@@ -10,7 +10,6 @@ interface SocialAuthButtonsProps {
 
 export function SocialAuthButtons({ mode, onSuccess }: SocialAuthButtonsProps) {
   const { signInWithProvider } = useSupabaseAuthContext();
-  const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSocialAuth = async (provider: 'google' | 'facebook' | 'twitter') => {
@@ -19,12 +18,10 @@ export function SocialAuthButtons({ mode, onSuccess }: SocialAuthButtonsProps) {
       await signInWithProvider(provider);
       onSuccess?.();
     } catch (error: any) {
-      toast({
-        title: 'Authentication Failed',
+      toast.error('Authentication Failed', {
         description:
           error.message ||
           `Unable to ${mode === 'sign_in' ? 'sign in' : 'sign up'} with ${provider}`,
-        variant: 'destructive',
       });
     } finally {
       setLoading(null);

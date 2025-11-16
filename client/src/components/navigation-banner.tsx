@@ -6,7 +6,7 @@ import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useUpdate } from '@/context/UpdateContext';
 import { useState, useEffect } from 'react';
 import { useShare } from '@/hooks/useShare';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
 import { FlyUpSheet } from '@/components/FlyUpSheet';
 import { AboutKGayModal } from '@/components/AboutKGayModal';
@@ -21,7 +21,6 @@ export default function NavigationBanner() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const { shareContent } = useShare();
-  const { toast } = useToast();
   const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts();
 
   // Determine active tab based on current location
@@ -82,8 +81,7 @@ export default function NavigationBanner() {
       // If share fails, copy to clipboard
       try {
         await navigator.clipboard.writeText(siteUrl);
-        toast({
-          title: 'Link copied!',
+        toast.success('Link copied!', {
           description: 'App link copied to clipboard',
         });
       } catch (clipboardError) {

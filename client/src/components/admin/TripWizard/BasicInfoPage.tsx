@@ -9,7 +9,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ConfirmDeleteDaysDialog } from './ConfirmDeleteDaysDialog';
 import { api } from '@/lib/api-client';
 import { Ship, Calendar, Building2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface CharterCompany {
   id: number;
@@ -118,8 +118,7 @@ export function BasicInfoPage() {
         // Show toast notification if entries were synced
         if (syncResult && (state.scheduleEntries.length > 0 || state.itineraryEntries.length > 0)) {
           const pageName = state.tripType === 'resort' ? 'Schedule' : 'Itinerary';
-          toast({
-            title: 'Trip dates updated',
+          toast.info('Trip dates updated', {
             description: `Please review the ${pageName} page and Events tab to verify all entries.`,
             duration: 5000,
           });
@@ -170,8 +169,7 @@ export function BasicInfoPage() {
 
     // Show toast
     const pageName = state.tripType === 'resort' ? 'Schedule' : 'Itinerary';
-    toast({
-      title: 'Trip dates updated',
+    toast.info('Trip dates updated', {
       description: `Days deleted. Please review the ${pageName} page and Events tab to verify remaining entries.`,
       duration: 5000,
     });

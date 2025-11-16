@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { api } from '@/lib/api-client';
 import {
@@ -46,7 +46,6 @@ interface TripInfoSection {
 type SectionTypeFilter = 'all' | 'general' | 'trip_specific';
 
 export default function TripInfoSectionsManagement() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<SectionTypeFilter>('all');
@@ -84,16 +83,13 @@ export default function TripInfoSectionsManagement() {
       queryClient.invalidateQueries({ queryKey: ['trip-info-sections'] });
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Trip info section created successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create trip info section',
-        variant: 'destructive',
       });
     },
   });
@@ -110,16 +106,13 @@ export default function TripInfoSectionsManagement() {
       setEditingSection(null);
       setShowAddModal(false);
       resetForm();
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Trip info section updated successfully',
       });
     },
     onError: error => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to update trip info section',
-        variant: 'destructive',
       });
     },
   });
@@ -135,16 +128,13 @@ export default function TripInfoSectionsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-info-sections'] });
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Trip info section deleted successfully',
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete trip info section',
-        variant: 'destructive',
       });
     },
   });

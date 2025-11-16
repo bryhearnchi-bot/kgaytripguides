@@ -25,7 +25,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { FAQ } from '@/types/trip-info';
 import {
@@ -196,10 +196,8 @@ export function FAQTabPage() {
       const data = await response.json();
       setFaqs(data);
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load FAQs',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -241,17 +239,14 @@ export function FAQTabPage() {
 
       if (!response.ok) throw new Error('Failed to reorder FAQs');
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'FAQs reordered successfully',
       });
     } catch (error) {
       // Revert on error
       fetchFaqs();
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to reorder FAQs',
-        variant: 'destructive',
       });
     }
   };
@@ -268,10 +263,8 @@ export function FAQTabPage() {
 
   const handleDelete = async (faq: FAQ) => {
     if (faq.section_type === 'always') {
-      toast({
-        title: 'Cannot Delete',
+      toast.error('Cannot Delete', {
         description: '"Always" FAQs cannot be removed from trips',
-        variant: 'destructive',
       });
       return;
     }
@@ -290,15 +283,12 @@ export function FAQTabPage() {
       // Refresh list
       await fetchFaqs();
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'FAQ removed from trip',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to remove FAQ',
-        variant: 'destructive',
       });
     }
   };
