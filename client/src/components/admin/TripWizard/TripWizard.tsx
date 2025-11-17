@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTripWizard, TripWizardProvider } from '@/contexts/TripWizardContext';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { BuildMethodPage } from './BuildMethodPage';
 import { BasicInfoPage } from './BasicInfoPage';
 import { ResortDetailsPage } from './ResortDetailsPage';
@@ -13,22 +13,6 @@ import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-
-// Custom styles to remove the header border from trip wizard modal
-const tripWizardStyles = `
-  .trip-wizard-modal .px-7.py-4 {
-    border-bottom: none !important;
-    padding-bottom: 0.5rem !important;
-  }
-
-  .trip-wizard-modal .trip-wizard-body {
-    padding-top: 0.25rem !important;
-  }
-
-  .trip-wizard-modal .trip-wizard-progress {
-    margin-top: -0.125rem !important;
-  }
-`;
 
 interface TripWizardProps {
   isOpen: boolean;
@@ -381,98 +365,96 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
   const progress = ((state.currentPage + 1) / totalPages) * 100;
 
   return (
-    <>
-      <style>{tripWizardStyles}</style>
-      <AdminFormModal
-        isOpen={isOpen}
-        onOpenChange={handleClose}
-        title={getPageTitle()}
-        description={getPageDescription()}
-        icon={<Sparkles className="h-5 w-5 text-cyan-400" />}
-        maxWidthClassName="trip-wizard-modal max-w-4xl"
-        contentClassName="trip-wizard-body pb-6 overflow-visible"
-      >
-        {/* Progress Bar */}
-        <div className="mb-7 trip-wizard-progress">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-medium text-white/60">
-              Step {state.currentPage + 1} of {totalPages}
-            </span>
-            <span className="text-xs font-medium text-white/60">
-              {Math.round(progress)}% Complete
-            </span>
-          </div>
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+    <AdminBottomSheet
+      isOpen={isOpen}
+      onOpenChange={handleClose}
+      title={getPageTitle()}
+      description={getPageDescription()}
+      icon={<Sparkles className="h-5 w-5 text-cyan-400" />}
+      contentClassName="pb-6 overflow-visible"
+      className="max-w-4xl"
+      maxHeight="85vh"
+    >
+      {/* Progress Bar */}
+      <div className="mb-7">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-medium text-white/60">
+            Step {state.currentPage + 1} of {totalPages}
+          </span>
+          <span className="text-xs font-medium text-white/60">
+            {Math.round(progress)}% Complete
+          </span>
         </div>
+        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
 
-        {/* Page Content */}
-        <div>{renderPage()}</div>
+      {/* Page Content */}
+      <div>{renderPage()}</div>
 
-        {/* Navigation Footer */}
-        <div className="flex items-center justify-between mt-6 pt-4">
+      {/* Navigation Footer */}
+      <div className="flex items-center justify-between mt-6 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleBack}
+          disabled={state.currentPage === 0}
+          className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
+        <div className="flex items-center gap-2">
           <Button
             type="button"
-            variant="outline"
-            onClick={handleBack}
-            disabled={state.currentPage === 0}
-            className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            variant="ghost"
+            onClick={handleClose}
+            className="h-9 px-4 text-white/60 hover:text-white/90 hover:bg-white/5 rounded-lg transition-all"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Cancel
           </Button>
 
-          <div className="flex items-center gap-2">
+          {/* Save Draft button - shown on all pages except initial build method page and completion page */}
+          {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
             <Button
               type="button"
-              variant="ghost"
-              onClick={handleClose}
-              className="h-9 px-4 text-white/60 hover:text-white/90 hover:bg-white/5 rounded-lg transition-all"
+              variant="outline"
+              onClick={handleSaveDraft}
+              className="h-9 px-4 bg-white/[0.04] border-[1.5px] border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
             >
-              Cancel
+              {state.draftId ? 'Update Draft' : 'Save Draft'}
             </Button>
+          )}
 
-            {/* Save Draft button - shown on all pages except initial build method page and completion page */}
-            {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSaveDraft}
-                className="h-9 px-4 bg-white/[0.04] border-[1.5px] border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-              >
-                {state.draftId ? 'Update Draft' : 'Save Draft'}
-              </Button>
-            )}
-
-            {/* Don't show Next button on initial build method page (page 0) or final completion page */}
-            {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
-              <Button
-                type="button"
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {state.currentPage === totalPages - 2 ? (
-                  <>
-                    Review & Finish
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+          {/* Don't show Next button on initial build method page (page 0) or final completion page */}
+          {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {state.currentPage === totalPages - 2 ? (
+                <>
+                  Review & Finish
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          )}
         </div>
-      </AdminFormModal>
-    </>
+      </div>
+    </AdminBottomSheet>
   );
 }
 

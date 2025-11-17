@@ -85,7 +85,7 @@ export function SimpleSelector({
     <div className={className} ref={portalContainerRef}>
       {label && (
         <Label className="text-xs font-semibold text-white/90 mb-1 block">
-          {label} {required && <span className="text-cyan-400">*</span>}
+          {label} {required && <span className="text-white/60">*</span>}
         </Label>
       )}
 
@@ -100,9 +100,9 @@ export function SimpleSelector({
               'flex p-2 rounded-[10px] border min-h-[40px] h-auto items-center justify-between',
               'bg-white/[0.04] border border-white/10 hover:bg-white/[0.06]',
               'transition-all duration-200 w-full text-left',
-              'focus-visible:outline-none focus-visible:border-cyan-400/60',
-              'focus-visible:bg-cyan-400/[0.03]',
-              'focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]',
+              'focus-visible:outline-none focus-visible:border-white/30',
+              'focus-visible:bg-white/[0.06]',
+              'focus-visible:shadow-[0_0_0_3px_rgba(255,255,255,0.1)]',
               disabled && 'opacity-40 cursor-not-allowed'
             )}
           >
@@ -138,7 +138,7 @@ export function SimpleSelector({
           container={portalContainerRef.current ?? undefined}
           className={cn(
             'w-[--radix-popover-trigger-width] p-0',
-            'bg-[#0a1628]',
+            'bg-white/15 backdrop-blur-xl',
             'border border-white/10 rounded-[10px] shadow-xl'
           )}
           align="start"
@@ -164,13 +164,13 @@ export function SimpleSelector({
                       <CommandItem
                         key={option.value}
                         onSelect={() => handleSelect(option.value)}
-                        className="cursor-pointer text-white/80 hover:bg-cyan-400/10 data-[selected=true]:bg-cyan-400/10 data-[selected=true]:text-white"
+                        className="cursor-pointer text-white hover:bg-white/10 data-[selected=true]:bg-white/10"
                       >
                         <div
                           className={cn(
                             'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
                             isSelected
-                              ? 'bg-cyan-400 border-cyan-400 text-white'
+                              ? 'bg-white/20 border-white/40 text-white'
                               : 'border-white/30'
                           )}
                         >

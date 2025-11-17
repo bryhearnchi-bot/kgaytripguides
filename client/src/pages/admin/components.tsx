@@ -1,11 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Ship, Building, MapPin, Users, Palette, Search, ChevronDown, Filter } from 'lucide-react';
+import { PillDropdown } from '@/components/ui/dropdowns';
+import { Ship, Building, MapPin, Users, Palette, Search, Filter } from 'lucide-react';
 
 // Lazy load component pages
 const ShipsManagement = lazy(() => import('@/pages/admin/ships'));
@@ -42,35 +37,17 @@ export default function ComponentsPage() {
         <h1 className="text-2xl font-bold text-white">Trip Components</h1>
 
         {/* Dropdown Menu - matching ScheduleTab pattern */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
-              <Filter className="w-3 h-3" />
-              <span>{currentComponentLabel}</span>
-              <ChevronDown className="w-3 h-3" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-[#002147] border-white/20 min-w-[280px]">
-            {componentOptions.map(option => {
-              const Icon = option.icon;
-              const isActive = selectedComponentId === option.id;
-              return (
-                <DropdownMenuItem
-                  key={option.id}
-                  onClick={() => handleSelect(option.id)}
-                  className={`cursor-pointer text-white hover:bg-white/10 ${
-                    isActive ? 'bg-white/20' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    <span className="font-medium">{option.label}</span>
-                  </div>
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <PillDropdown
+          options={componentOptions.map(option => ({
+            value: option.id,
+            label: option.label,
+            icon: option.icon,
+          }))}
+          value={selectedComponentId}
+          onChange={handleSelect}
+          placeholder="Select Component"
+          triggerClassName=""
+        />
       </div>
 
       {/* Divider line */}

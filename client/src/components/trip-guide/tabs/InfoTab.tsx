@@ -268,7 +268,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
     // Early return if no data
     if (!IMPORTANT_INFO || Object.keys(IMPORTANT_INFO).length === 0) {
       return (
-        <div className="max-w-6xl mx-auto space-y-4 pt-4">
+        <div className="max-w-3xl mx-auto space-y-4 pt-4">
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
             <Info className="w-16 h-16 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No information available</h3>
@@ -603,7 +603,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
   return (
     <>
       {/* Header with Mini Tab Bar and Search */}
-      <div className="max-w-6xl mx-auto pb-4">
+      <div className="max-w-3xl mx-auto pb-4">
         <div className="flex items-center justify-between gap-4">
           {/* Sub-tabs on the left - matching ScheduleTab style */}
           <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
@@ -655,7 +655,7 @@ export const InfoTab = memo(function InfoTab({ IMPORTANT_INFO, tripId }: InfoTab
       </div>
 
       {/* Content Area */}
-      <div className="max-w-6xl mx-auto pt-2">
+      <div className="max-w-3xl mx-auto pt-2">
         {isSearchMode
           ? renderSearchResults()
           : subTab === 'info'

@@ -4,7 +4,8 @@ import type { ScheduleEntry, ItineraryEntry } from '@/contexts/TripWizardContext
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
-import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
+import { StandardDropdown } from '@/components/ui/dropdowns';
+import type { DropdownOption } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import { ConfirmDeleteDaysDialog } from './ConfirmDeleteDaysDialog';
 import { api } from '@/lib/api-client';
@@ -259,12 +260,13 @@ export function BasicInfoPage() {
   }
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 max-w-3xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Left Column */}
         <div className="space-y-2.5">
           {/* Charter Company */}
-          <SingleDropDownNew
+          <StandardDropdown
+            variant="single-search"
             label="Charter Company"
             placeholder="Select a charter company"
             emptyMessage="No charter company found."
@@ -279,7 +281,8 @@ export function BasicInfoPage() {
 
           {/* Trip Type */}
           <div className="space-y-1">
-            <SingleDropDownNew
+            <StandardDropdown
+              variant="single-search"
               label="Trip Type"
               placeholder="Select a trip type"
               emptyMessage="No trip type found."
@@ -294,7 +297,15 @@ export function BasicInfoPage() {
               disabled={state.isEditMode}
             />
             {state.tripType && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-cyan-400/10 border border-cyan-400/20 rounded-lg">
+              <div
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+                style={{
+                  backgroundColor: 'rgba(0, 33, 71, 1)',
+                  backgroundImage:
+                    'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+              >
                 {state.tripType === 'cruise' ? (
                   <Ship className="w-3 h-3 text-cyan-400" />
                 ) : (

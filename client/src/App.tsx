@@ -55,6 +55,7 @@ const TripDetail = lazy(() => import('@/pages/admin/trip-detail'));
 const TripsManagement = lazy(() => import('@/pages/admin/trips-management'));
 const InvitationsManagement = lazy(() => import('@/pages/admin/invitations'));
 const ComponentsPage = lazy(() => import('@/pages/admin/components'));
+const AdminDropdownDemoPage = lazy(() => import('@/pages/admin/dropdown-demo'));
 
 // Loading fallback component
 function PageLoader() {
@@ -225,6 +226,16 @@ function Router() {
             <ProtectedRoute>
               <AdminLayout>
                 <ComponentsPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/dropdown-demo"
+          component={() => (
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminDropdownDemoPage />
               </AdminLayout>
             </ProtectedRoute>
           )}

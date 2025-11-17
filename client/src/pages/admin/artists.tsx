@@ -13,7 +13,7 @@ import { Users, Plus, PlusSquare, Edit2, Trash2, Search, Music, Mic, Filter } fr
 import { NoImageFilterButton } from '@/components/admin/NoImageFilterButton';
 import { useAdminQueryOptions } from '@/hooks/use-admin-prefetch';
 import { AdminTableSkeleton } from '@/components/admin/AdminSkeleton';
-import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -158,31 +158,29 @@ export default function ArtistsManagement() {
     },
   });
 
-  // Create talent category mutation
-  const createCategoryMutation = useMutation({
-    mutationFn: async (categoryName: string) => {
+  // Create talent category handler for StandardDropdown
+  const handleCreateCategory = async (name: string): Promise<{ value: string; label: string }> => {
+    try {
       const response = await api.post(
         '/api/talent-categories',
-        { category: categoryName },
+        { category: name.trim() },
         { requireAuth: true }
       );
       if (!response.ok) throw new Error('Failed to create talent category');
-      return response.json();
-    },
-    onSuccess: newCategory => {
+      const newCategory = await response.json();
       queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
-      // Update form data to use the new category
       setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
       toast.success('Success', {
         description: 'Talent category created successfully',
       });
-    },
-    onError: error => {
+      return { value: newCategory.id.toString(), label: newCategory.category };
+    } catch (error) {
       toast.error('Error', {
         description: 'Failed to create talent category',
       });
-    },
-  });
+      throw error;
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -644,14 +642,20 @@ export default function ArtistsManagement() {
 
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <SingleSelectWithCreate
-            options={talentCategories.map(cat => ({ id: cat.id, name: cat.category }))}
-            value={formData.talentCategoryId}
-            onValueChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
-            onCreateNew={createCategoryMutation.mutateAsync}
+          <StandardDropdown
+            variant="single-search-add"
             placeholder="Select talent category..."
             searchPlaceholder="Search categories..."
-            createLabel="Create new category"
+            emptyMessage="No categories found"
+            addLabel="Add New Category"
+            options={talentCategories.map(cat => ({
+              value: cat.id.toString(),
+              label: cat.category,
+            }))}
+            value={formData.talentCategoryId?.toString() || ''}
+            onChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
+            onCreateNew={handleCreateCategory}
+            required
           />
         </div>
 

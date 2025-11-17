@@ -199,7 +199,7 @@ export function ResortSchedulePage() {
   );
 
   return (
-    <div className="space-y-2.5" ref={entriesContainerRef}>
+    <div className="space-y-2.5 max-w-3xl mx-auto" ref={entriesContainerRef}>
       {/* Schedule Entries */}
       {sortedEntries.map(entry => {
         const index = state.scheduleEntries.findIndex(
@@ -283,7 +283,14 @@ export function ResortSchedulePage() {
 
       {/* Add Day Modal */}
       <Dialog open={showAddDayModal} onOpenChange={setShowAddDayModal}>
-        <DialogContent className="bg-[#0a1628] border border-white/10 text-white max-w-md">
+        <DialogContent
+          className="border border-white/10 text-white max-w-md"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-white">
               Add Additional Day

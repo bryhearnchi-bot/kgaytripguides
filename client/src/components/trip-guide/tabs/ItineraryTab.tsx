@@ -154,7 +154,7 @@ export const ItineraryTab = memo(function ItineraryTab({
   });
 
   return (
-    <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4">
+    <div className="max-w-3xl mx-auto space-y-2 sm:space-y-4">
       {filteredItinerary.length === 0 ? (
         <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
           <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />

@@ -4,8 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { SimpleSelector } from '@/components/admin/SimpleSelector';
-import type { SimpleSelectorOption } from '@/components/admin/SimpleSelector';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { Update, UpdateType, LinkSection } from '@/types/trip-info';
@@ -162,7 +161,8 @@ export function UpdateFormModal({
     >
       <div className="space-y-4">
         {/* Update Type */}
-        <SimpleSelector
+        <StandardDropdown
+          variant="single-basic"
           label="Update Type"
           placeholder="Select update type"
           emptyMessage="No update types available"
@@ -214,11 +214,10 @@ export function UpdateFormModal({
             },
           ]}
           value={formData.update_type}
-          onChange={(value: string) =>
+          onChange={(value: string | string[]) =>
             setFormData({ ...formData, update_type: value as UpdateType })
           }
           required
-          showSearch={false}
         />
 
         {/* Custom Title (only shown if update type is custom) */}
@@ -260,7 +259,8 @@ export function UpdateFormModal({
 
         {/* Link Section */}
         <div className="space-y-1">
-          <SimpleSelector
+          <StandardDropdown
+            variant="single-basic"
             label="Link To Section"
             placeholder="Select section to link to"
             emptyMessage="No sections available"
@@ -295,11 +295,10 @@ export function UpdateFormModal({
               },
             ]}
             value={formData.link_section}
-            onChange={(value: string) =>
+            onChange={(value: string | string[]) =>
               setFormData({ ...formData, link_section: value as LinkSection })
             }
             required
-            showSearch={false}
           />
           <p className="text-xs text-white/50">
             When clicked, this update will navigate to the selected section

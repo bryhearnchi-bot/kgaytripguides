@@ -78,7 +78,7 @@ export function SingleDropDownNew({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto min-w-[var(--radix-popover-trigger-width)] p-0 bg-[#0a1628] border border-white/10 shadow-xl pointer-events-auto"
+          className="w-auto min-w-[var(--radix-popover-trigger-width)] p-0 bg-white/15 backdrop-blur-xl border border-white/10 shadow-xl pointer-events-auto"
           align="start"
           container={typeof document !== 'undefined' ? document.body : undefined}
           onOpenAutoFocus={e => e.preventDefault()}
@@ -89,7 +89,7 @@ export function SingleDropDownNew({
               className="h-9 border-b border-white/10 bg-transparent text-white placeholder:text-white/40"
             />
             <CommandList className="max-h-[300px] overflow-y-auto pointer-events-auto">
-              <CommandEmpty className="py-6 text-center text-sm text-white/50">
+              <CommandEmpty className="py-6 text-center text-sm text-white/60">
                 {emptyMessage}
               </CommandEmpty>
               <CommandGroup className="p-1">
@@ -102,15 +102,15 @@ export function SingleDropDownNew({
                       setOpen(false);
                     }}
                     className={cn(
-                      'px-3 py-2.5 cursor-pointer rounded-md transition-colors pointer-events-auto',
-                      'text-white/90 hover:bg-cyan-400/10 hover:text-white',
-                      "data-[selected='true']:bg-cyan-400/10 data-[selected='true']:text-white"
+                      'px-2 py-1.5 cursor-pointer transition-colors pointer-events-auto',
+                      'text-white hover:bg-white/10',
+                      "data-[selected='true']:bg-white/10 data-[selected='true']:text-white"
                     )}
                   >
                     {option.label}
                     <Check
                       className={cn(
-                        'ml-auto h-4 w-4 text-cyan-400',
+                        'ml-auto h-4 w-4 text-white',
                         option.value === value ? 'opacity-100' : 'opacity-0'
                       )}
                     />

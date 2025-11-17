@@ -128,7 +128,7 @@ export const OverviewTab = memo(function OverviewTab({
       {/* Book Button - Below carousel, before Overview header */}
       {showBookButton && (
         <div
-          className="max-w-6xl mx-auto px-4 flex justify-center -mt-3 lg:-mt-2"
+          className="max-w-3xl mx-auto px-4 flex justify-center -mt-3 lg:-mt-2"
           style={{ marginBottom: '14px' }}
         >
           <button
@@ -160,7 +160,7 @@ export const OverviewTab = memo(function OverviewTab({
         </div>
       )}
 
-      <div className={`max-w-6xl mx-auto space-y-4 ${showBookButton ? '' : 'mt-4'}`}>
+      <div className={`max-w-3xl mx-auto space-y-4 ${showBookButton ? '' : 'mt-4'}`}>
         {/* Desktop: 3-column grid, Mobile: stack with custom order */}
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
           {/* Left Column Container - Desktop only (2 columns wide) */}

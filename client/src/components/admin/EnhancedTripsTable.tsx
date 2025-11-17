@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { differenceInDays, format } from 'date-fns';
 import {
   Table,
   TableBody,
@@ -9,7 +10,18 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronDown, ChevronRight, MoreVertical, ChevronUp, ChevronsUpDown } from 'lucide-react';
+import {
+  ChevronDown,
+  MoreVertical,
+  ChevronUp,
+  ChevronsUpDown,
+  Calendar,
+  Music,
+  Star,
+  Home,
+  Ship,
+  Clock,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTableState, TableColumn } from '@/hooks/use-table-state';
+import { CategoryChip } from '@/components/admin/CategoryChip';
+import { dateOnly } from '@/lib/utils';
 
 interface TableAction {
   label: string;
@@ -48,7 +62,6 @@ export function EnhancedTripsTable({
   className = '',
   mobileBreakpoint = 768,
 }: EnhancedTripsTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint
   );
@@ -200,16 +213,6 @@ export function EnhancedTripsTable({
     };
   }, [isResizing, updateColumnWidth]);
 
-  const toggleRowExpansion = (rowKey: any) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(rowKey)) {
-      newExpanded.delete(rowKey);
-    } else {
-      newExpanded.add(rowKey);
-    }
-    setExpandedRows(newExpanded);
-  };
-
   // Get columns for different screen sizes
   const highPriorityColumns = columns.filter(col => col.priority === 'high' || !col.priority);
   const mediumPriorityColumns = columns.filter(col => col.priority === 'medium');
@@ -316,11 +319,63 @@ export function EnhancedTripsTable({
       <div className={`space-y-3 ${className}`}>
         {sortedData.map(row => {
           const rowKey = row[keyField];
-          const isExpanded = expandedRows.has(rowKey);
 
           const imageColumn = columns.find(col => col.key === 'image');
           const nameColumn = columns.find(col => col.key === 'name');
           const statusColumn = columns.find(col => col.key === 'status');
+          const startDateColumn = columns.find(col => col.key === 'startDate');
+          const tripTypeColumn = columns.find(col => col.key === 'tripTypeId');
+
+          // Helper function to get days out/left badge info for CategoryChip
+          const getDaysBadgeInfo = (trip: any) => {
+            if (
+              trip.status === 'draft' ||
+              trip.tripStatusId === 5 ||
+              trip.status === 'preview' ||
+              trip.status === 'archived'
+            ) {
+              return null; // Don't show days badge for draft/preview/archived
+            }
+            const nowDate = new Date();
+            const today = new Date(
+              nowDate.getFullYear(),
+              nowDate.getMonth(),
+              nowDate.getDate(),
+              0,
+              0,
+              0,
+              0
+            );
+            const start = dateOnly(trip.startDate);
+            const end = dateOnly(trip.endDate);
+            if (trip.status === 'ongoing' || (today >= start && today <= end)) {
+              const daysRemaining = Math.max(0, differenceInDays(end, today));
+              const label =
+                daysRemaining === 0
+                  ? 'Docking soon'
+                  : `${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} left`;
+              // Green color for current/ongoing trips (same as StatusBadge "current")
+              return {
+                label,
+                icon: <Clock className="h-3 w-3" />,
+                className: 'border-[#34d399]/40 bg-[#34d399]/15 text-[#34d399]',
+              };
+            }
+            if (today < start) {
+              const daysUntil = Math.max(0, differenceInDays(start, today));
+              const label =
+                daysUntil === 0
+                  ? 'Departs today'
+                  : `${daysUntil} ${daysUntil === 1 ? 'day' : 'days'} out`;
+              // Cyan color for upcoming trips (same as StatusBadge "upcoming")
+              return {
+                label,
+                icon: <Clock className="h-3 w-3" />,
+                className: 'border-[#22d3ee]/40 bg-[#22d3ee]/15 text-[#22d3ee]',
+              };
+            }
+            return null; // Don't show for past trips
+          };
 
           return (
             <Card
@@ -329,42 +384,60 @@ export function EnhancedTripsTable({
             >
               <CardContent className="p-0">
                 <div className="p-4">
-                  <div className="flex items-center gap-3">
-                    {/* Image on the left */}
+                  <div className="flex gap-6">
+                    {/* Image on the left with trip type above it */}
                     {imageColumn && (
-                      <div className="flex-shrink-0">{renderCellValue(imageColumn, row)}</div>
+                      <div className="flex-shrink-0 flex flex-col items-center justify-center">
+                        {/* Trip type badge centered above image */}
+                        {tripTypeColumn && (
+                          <div className="mb-2 flex items-center gap-2">
+                            {row.tripTypeId === 2 ? (
+                              <>
+                                <Home className="h-4 w-4 text-cyan-400" />
+                                <span className="text-xs font-medium text-white">Resort</span>
+                              </>
+                            ) : row.tripTypeId === 1 ? (
+                              <>
+                                <Ship className="h-4 w-4 text-blue-400" />
+                                <span className="text-xs font-medium text-white">Cruise</span>
+                              </>
+                            ) : (
+                              <span className="text-xs text-white/50">Unknown</span>
+                            )}
+                          </div>
+                        )}
+                        {renderCellValue(imageColumn, row)}
+                      </div>
                     )}
 
-                    {/* Name and Status in the middle */}
-                    <div className="flex-1 min-w-0">
+                    {/* Name, Date, and Days on board */}
+                    <div className="flex-1 min-w-0 overflow-visible flex flex-col">
                       {nameColumn && (
-                        <div className="text-sm text-white font-medium">
+                        <div className="text-base text-white font-medium whitespace-nowrap overflow-visible">
                           {renderCellValue(nameColumn, row)}
                         </div>
                       )}
-                      {statusColumn && (
-                        <div className="mt-2 text-xs">{renderCellValue(statusColumn, row)}</div>
+                      {startDateColumn && row.startDate && row.endDate && (
+                        <div className="flex-1 flex items-center mt-3">
+                          <div className="space-y-1">
+                            <p className="text-xs text-white font-medium">
+                              {format(dateOnly(row.startDate), 'MMM dd')} –{' '}
+                              {format(dateOnly(row.endDate), 'MMM dd, yyyy')}
+                            </p>
+                            <p className="text-xs text-white/50">
+                              {Math.max(
+                                1,
+                                differenceInDays(dateOnly(row.endDate), dateOnly(row.startDate))
+                              )}{' '}
+                              days on board
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
 
                     {/* Buttons on the right */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {hiddenColumns.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => toggleRowExpansion(rowKey)}
-                          className="h-8 w-8 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
-                          title={isExpanded ? 'Collapse' : 'Expand'}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-
+                    <div className="flex flex-col items-end gap-4 flex-shrink-0">
                       {actions.length > 0 && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -402,41 +475,62 @@ export function EnhancedTripsTable({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
+                      {/* Days out/left badge */}
+                      {(() => {
+                        const daysBadgeInfo = getDaysBadgeInfo(row);
+                        if (daysBadgeInfo) {
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${daysBadgeInfo.className}`}
+                            >
+                              <span
+                                className={
+                                  daysBadgeInfo.className.includes('text-[#34d399]')
+                                    ? 'text-[#34d399]'
+                                    : 'text-[#22d3ee]'
+                                }
+                              >
+                                {daysBadgeInfo.icon}
+                              </span>
+                              <span>{daysBadgeInfo.label}</span>
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                 </div>
 
-                {isExpanded && hiddenColumns.length > 0 && (
-                  <div className="border-t border-white/10 bg-white/5 p-4 space-y-2">
-                    {hiddenColumns
-                      .filter(column => column.key !== 'status')
-                      .map(column => (
-                        <div
-                          key={column.key}
-                          className={
-                            column.key === 'highlights'
-                              ? ''
-                              : 'flex justify-between items-start gap-2'
-                          }
-                        >
-                          {column.key !== 'highlights' && (
-                            <span className="text-xs text-white/50 font-medium min-w-0 flex-shrink-0">
-                              {column.label}:
-                            </span>
-                          )}
-                          <div
-                            className={
-                              column.key === 'highlights'
-                                ? 'text-sm text-white'
-                                : 'text-sm text-white text-right flex-1 min-w-0'
-                            }
-                          >
-                            {renderCellValue(column, row)}
-                          </div>
+                {/* Bottom Statistics Section - styled like EventCard bottom action bar */}
+                {(() => {
+                  const highlightsColumn = columns.find(col => col.key === 'highlights');
+                  if (highlightsColumn && row.eventsCount !== undefined) {
+                    return (
+                      <div className="bg-white/5 border-t border-white/10 px-3 py-1.5">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          {/* Statistics badges */}
+                          <CategoryChip
+                            label={`${row.eventsCount ?? 0} events`}
+                            icon={<Calendar className="h-3 w-3" />}
+                            variant="neutral"
+                          />
+                          <CategoryChip
+                            label={`${row.partiesCount ?? 0} parties`}
+                            icon={<Music className="h-3 w-3" />}
+                            variant="neutral"
+                          />
+                          <CategoryChip
+                            label={`${row.talentCount ?? 0} artists`}
+                            icon={<Star className="h-3 w-3" />}
+                            variant="neutral"
+                          />
                         </div>
-                      ))}
-                  </div>
-                )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </CardContent>
             </Card>
           );
@@ -560,7 +654,15 @@ export function EnhancedTripsTable({
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
+                        <DropdownMenuContent
+                          align="end"
+                          className="border-white/10"
+                          style={{
+                            backgroundColor: 'rgba(0, 33, 71, 1)',
+                            backgroundImage:
+                              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                          }}
+                        >
                           {actions
                             .filter(action => !action.visible || action.visible(row))
                             .map((action, index) => (

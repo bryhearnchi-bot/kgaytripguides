@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ShipSelector } from '@/components/admin/ShipSelector';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { ShipPreview } from './ShipPreview';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
@@ -14,9 +14,30 @@ export function ShipDetailsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoadingShip, setIsLoadingShip] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [ships, setShips] = useState<any[]>([]);
+  const [loadingShips, setLoadingShips] = useState(true);
 
   const shipData = state.shipData || {};
   const isEditMode = state.isEditMode;
+
+  // Fetch ships on mount
+  useEffect(() => {
+    const fetchShips = async () => {
+      try {
+        setLoadingShips(true);
+        const response = await api.get('/api/ships');
+        if (response.ok) {
+          const data = await response.json();
+          setShips(data);
+        }
+      } catch (error) {
+        // Silently handle error
+      } finally {
+        setLoadingShips(false);
+      }
+    };
+    fetchShips();
+  }, []);
 
   // Initialize ship data if null
   useEffect(() => {
@@ -68,17 +89,14 @@ export function ShipDetailsPage() {
     }
   }, [selectedShipId, shipData.name, isLoadingShip, updateShipData]);
 
-  const handleShipSelection = (shipId: number | null, selectedShip?: any) => {
-    // If shipId is null, user wants to create a new ship
-    if (shipId === null) {
-      setShowCreateModal(true);
-      return;
-    }
+  const handleShipChange = (value: string | string[]) => {
+    const shipId = Number(value);
+    if (!shipId) return;
 
-    setSelectedShipId(shipId);
-    setShipId(shipId);
-
+    const selectedShip = ships.find(s => s.id === shipId);
     if (selectedShip) {
+      setSelectedShipId(shipId);
+      setShipId(shipId);
       updateShipData({
         name: selectedShip.name || '',
         cruiseLineId: selectedShip.cruiseLineId,
@@ -90,6 +108,15 @@ export function ShipDetailsPage() {
         deckPlansUrl: selectedShip.deckPlansUrl || '',
       });
     }
+  };
+
+  const handleCreateShip = async (name: string) => {
+    // Open the ShipFormModal for full ship creation
+    // The StandardDropdown fly-up will close, and ShipFormModal will open
+    setShowCreateModal(true);
+    // Return a placeholder - the actual creation and selection happens in ShipFormModal's onSuccess
+    // StandardDropdown won't try to add this since ShipFormModal handles everything
+    return Promise.resolve({ value: '', label: name });
   };
 
   // Determine whether to show preview
@@ -116,14 +143,23 @@ export function ShipDetailsPage() {
   ]);
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 max-w-3xl mx-auto">
       {/* Ship Selector - Always show */}
-      <ShipSelector
+      <StandardDropdown
+        variant="single-search-add"
         label="Select Ship"
-        selectedId={selectedShipId}
-        onSelectionChange={handleShipSelection}
-        onCreateNew={() => setShowCreateModal(true)}
         placeholder="Select an existing ship or add new"
+        searchPlaceholder="Search ships..."
+        emptyMessage="No ships found"
+        addLabel="Add New Ship"
+        options={ships.map(ship => ({
+          value: ship.id.toString(),
+          label: `${ship.name}${ship.cruiseLineName ? ` • ${ship.cruiseLineName}` : ''}`,
+        }))}
+        value={selectedShipId?.toString() || ''}
+        onChange={handleShipChange}
+        onCreateNew={handleCreateShip}
+        disabled={loadingShips}
         required
       />
 
@@ -149,7 +185,14 @@ export function ShipDetailsPage() {
         isOpen={showCreateModal}
         onOpenChange={setShowCreateModal}
         ship={null}
-        onSuccess={newShip => {
+        onSuccess={async newShip => {
+          // Refresh ships list
+          queryClient.invalidateQueries({ queryKey: ['ships'] });
+          const response = await api.get('/api/ships');
+          if (response.ok) {
+            const data = await response.json();
+            setShips(data);
+          }
           // Auto-select the newly created ship
           if (newShip && newShip.id) {
             setSelectedShipId(newShip.id);
@@ -165,7 +208,6 @@ export function ShipDetailsPage() {
               deckPlansUrl: newShip.deckPlansUrl || '',
             });
           }
-          queryClient.invalidateQueries({ queryKey: ['ships'] });
           setShowCreateModal(false);
         }}
       />

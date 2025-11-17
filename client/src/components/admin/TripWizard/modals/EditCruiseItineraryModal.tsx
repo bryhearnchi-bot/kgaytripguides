@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { TimePicker } from '@/components/ui/time-picker';
 import { LocationSelector } from '@/components/admin/LocationSelector';
-import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
 import { Anchor, Plus } from 'lucide-react';
@@ -285,7 +285,14 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
     <>
       <style>{modalFieldStyles}</style>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="admin-form-modal sm:max-w-5xl border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="admin-form-modal sm:max-w-5xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-white">Edit Cruise Itinerary</DialogTitle>
           </DialogHeader>
@@ -341,7 +348,8 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
                           />
 
                           {/* Location Type */}
-                          <SingleDropDownNew
+                          <StandardDropdown
+                            variant="single-search"
                             label="Location Type"
                             placeholder="Select type"
                             emptyMessage="No location types found."
@@ -471,7 +479,14 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
 
           {/* Add Day Modal */}
           <Dialog open={showAddDayModal} onOpenChange={setShowAddDayModal}>
-            <DialogContent className="admin-form-modal bg-[#0a1628] border border-white/10 text-white max-w-md">
+            <DialogContent
+              className="admin-form-modal border border-white/10 text-white max-w-md"
+              style={{
+                backgroundColor: 'rgba(0, 33, 71, 1)',
+                backgroundImage:
+                  'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              }}
+            >
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold text-white">
                   Add Additional Day

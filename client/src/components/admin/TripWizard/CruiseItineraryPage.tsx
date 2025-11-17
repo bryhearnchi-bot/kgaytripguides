@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { TimePicker } from '@/components/ui/time-picker';
 import { LocationSelector } from '@/components/admin/LocationSelector';
-import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -288,7 +288,7 @@ export function CruiseItineraryPage() {
 
   if (!state.itineraryEntries.length) {
     return (
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 max-w-3xl mx-auto">
         <div className="p-4 rounded-lg bg-cyan-400/5 border border-cyan-400/20 text-center">
           <p className="text-sm text-white/70">
             No itinerary entries found. Please ensure trip dates are set on the Basic Info page.
@@ -302,7 +302,7 @@ export function CruiseItineraryPage() {
   const sortedEntries = [...state.itineraryEntries].sort((a, b) => a.dayNumber - b.dayNumber);
 
   return (
-    <div className="space-y-2.5" ref={entriesContainerRef}>
+    <div className="space-y-2.5 max-w-3xl mx-auto" ref={entriesContainerRef}>
       {/* Itinerary Entries */}
       {sortedEntries.map(entry => {
         // CRITICAL FIX: Find the actual index in the state array, not the sorted array
@@ -355,7 +355,8 @@ export function CruiseItineraryPage() {
                 />
 
                 {/* Location Type */}
-                <SingleDropDownNew
+                <StandardDropdown
+                  variant="single-search"
                   label="Location Type"
                   placeholder="Select type"
                   emptyMessage="No location types found."
@@ -469,7 +470,14 @@ export function CruiseItineraryPage() {
 
       {/* Add Day Modal */}
       <Dialog open={showAddDayModal} onOpenChange={setShowAddDayModal}>
-        <DialogContent className="bg-[#0a1628] border border-white/10 text-white max-w-md">
+        <DialogContent
+          className="border border-white/10 text-white max-w-md"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-white">
               Add Additional Day

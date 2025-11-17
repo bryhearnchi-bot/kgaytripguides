@@ -64,7 +64,13 @@ export function ConfirmDeleteDaysDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0a1628] border border-white/10 text-white max-w-md">
+      <DialogContent
+        className="border border-white/10 text-white max-w-md"
+        style={{
+          backgroundColor: 'rgba(0, 33, 71, 1)',
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-yellow-500" />

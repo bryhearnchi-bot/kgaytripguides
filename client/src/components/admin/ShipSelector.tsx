@@ -325,7 +325,7 @@ export function ShipSelector({
           container={portalContainerRef.current ?? undefined}
           className={cn(
             'w-[--radix-popover-trigger-width] p-0',
-            'bg-[#0a1628]',
+            'bg-white/15 backdrop-blur-xl',
             'border border-white/10 rounded-[10px] shadow-xl'
           )}
           align="start"
@@ -345,7 +345,7 @@ export function ShipSelector({
                 <CommandItem
                   onSelect={handleCreateNew}
                   className={cn(
-                    'cursor-pointer text-cyan-400 hover:bg-cyan-400/10 data-[selected=true]:bg-cyan-400/10 data-[selected=true]:text-cyan-400'
+                    'cursor-pointer text-white hover:bg-white/10 data-[selected=true]:bg-white/10'
                   )}
                 >
                   <div className="mr-2 flex h-4 w-4 items-center justify-center">
@@ -364,13 +364,13 @@ export function ShipSelector({
                       <CommandItem
                         key={ship.id}
                         onSelect={() => selectShip(ship)}
-                        className="cursor-pointer text-white/80 hover:bg-cyan-400/10 data-[selected=true]:bg-cyan-400/10 data-[selected=true]:text-white"
+                        className="cursor-pointer text-white hover:bg-white/10 data-[selected=true]:bg-white/10"
                       >
                         <div
                           className={cn(
                             'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
                             isSelected
-                              ? 'bg-cyan-400 border-cyan-400 text-white'
+                              ? 'bg-white/20 border-white/40 text-white'
                               : 'border-white/30'
                           )}
                         >
@@ -418,7 +418,14 @@ export function ShipSelector({
 
       {/* Create Ship Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="admin-form-modal sm:max-w-lg border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="admin-form-modal sm:max-w-lg border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-white">Add New Ship</DialogTitle>
           </DialogHeader>

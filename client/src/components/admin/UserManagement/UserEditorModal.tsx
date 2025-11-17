@@ -14,13 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -471,19 +465,18 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     <Shield className="inline w-4 h-4 mr-1" />
                     Role *
                   </Label>
-                  <Select
+                  <StandardDropdown
+                    variant="single-basic"
+                    placeholder="Select role"
+                    options={[
+                      { value: 'viewer', label: 'Viewer' },
+                      { value: 'content_manager', label: 'Content Manager' },
+                      { value: 'admin', label: 'Admin' },
+                    ]}
                     value={watch('role')}
-                    onValueChange={(value: any) => setValue('role', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                      <SelectItem value="content_manager">Content Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value: string | string[]) => setValue('role', value as any)}
+                    required
+                  />
                 </div>
 
                 <div>
@@ -491,19 +484,20 @@ export function UserEditorModal({ isOpen, onClose, user, mode }: UserEditorModal
                     <Activity className="inline w-4 h-4 mr-1" />
                     Account Status *
                   </Label>
-                  <Select
+                  <StandardDropdown
+                    variant="single-basic"
+                    placeholder="Select status"
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'suspended', label: 'Suspended' },
+                      { value: 'pending_verification', label: 'Pending Verification' },
+                    ]}
                     value={watch('account_status')}
-                    onValueChange={(value: any) => setValue('account_status', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                      <SelectItem value="pending_verification">Pending Verification</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value: string | string[]) =>
+                      setValue('account_status', value as any)
+                    }
+                    required
+                  />
                 </div>
 
                 <div className="flex items-center space-x-2">

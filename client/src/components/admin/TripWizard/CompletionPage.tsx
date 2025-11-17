@@ -578,7 +578,14 @@ export function CompletionPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+        <DialogContent
+          className="sm:max-w-lg border-white/10 rounded-[20px] text-white"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogTitle className="sr-only">Trip Saved Successfully</DialogTitle>
           <DialogDescription className="sr-only">
             Your trip has been saved for preview

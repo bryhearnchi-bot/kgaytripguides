@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Calendar,
   Clock,
@@ -12,16 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { OceanInput } from '@/components/ui/ocean-input';
 import { OceanTextarea } from '@/components/ui/ocean-textarea';
-import {
-  SearchableDropdown,
-  type SearchableDropdownItem,
-} from '@/components/ui/SearchableDropdown';
+import { StandardDropdown } from '@/components/ui/dropdowns';
+import type { DropdownOption } from '@/components/ui/dropdowns';
 import { TimePicker } from '@/components/ui/time-picker';
-import { TripDayDropdown } from './TripDayDropdown';
-import { VenueDropdown } from './VenueDropdown';
-import { TalentSelector } from './TalentSelector';
-import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { api } from '@/lib/api-client';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -120,8 +115,12 @@ export function EventFormModal({
   const [partyThemes, setPartyThemes] = useState<
     { id: number; name: string; shortDescription?: string }[]
   >([]);
+  const [venues, setVenues] = useState<Array<{ id: number; name: string }>>([]);
+  const [talent, setTalent] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingEventTypes, setLoadingEventTypes] = useState(true);
   const [loadingPartyThemes, setLoadingPartyThemes] = useState(true);
+  const [loadingVenues, setLoadingVenues] = useState(true);
+  const [loadingTalent, setLoadingTalent] = useState(true);
   const [formData, setFormData] = useState<EventFormData>({
     tripId,
     date: '',
@@ -136,11 +135,13 @@ export function EventFormModal({
     description: '',
   });
 
-  // Load event types and party themes
+  // Load event types, party themes, venues, and talent
   useEffect(() => {
     fetchEventTypes();
     fetchPartyThemes();
-  }, []);
+    fetchVenues();
+    fetchTalent();
+  }, [tripType, shipId, resortId]);
 
   // Populate form when editing
   useEffect(() => {
@@ -206,6 +207,118 @@ export function EventFormModal({
     }
   };
 
+  const fetchVenues = async () => {
+    try {
+      setLoadingVenues(true);
+      const endpoint =
+        tripType === 'cruise'
+          ? `/api/admin/ships/${shipId}/venues`
+          : `/api/admin/resorts/${resortId}/venues`;
+      const response = await api.get(endpoint);
+      const data = await response.json();
+      setVenues(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to load venues',
+      });
+    } finally {
+      setLoadingVenues(false);
+    }
+  };
+
+  const fetchTalent = async () => {
+    try {
+      setLoadingTalent(true);
+      const response = await api.get('/api/admin/talent');
+      const data = await response.json();
+      setTalent(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to load talent',
+      });
+    } finally {
+      setLoadingTalent(false);
+    }
+  };
+
+  // Build day options from schedule/itinerary entries
+  const dayOptions = useMemo(() => {
+    const entries = tripType === 'resort' ? scheduleEntries : itineraryEntries;
+    return entries
+      .sort((a, b) => a.dayNumber - b.dayNumber)
+      .map(entry => {
+        let dayLabel = '';
+        if (entry.dayNumber < 0) {
+          dayLabel = 'Pre-Trip';
+        } else if (entry.dayNumber >= 100) {
+          dayLabel = 'Post-Trip';
+        } else {
+          dayLabel = `Day ${entry.dayNumber}`;
+        }
+        const datePart = entry.date.split('T')[0] ?? entry.date;
+        const parts = datePart.split('-');
+        const year = Number(parts[0] ?? 2025);
+        const month = Number(parts[1] ?? 1);
+        const day = Number(parts[2] ?? 1);
+        const date = new Date(year, month - 1, day);
+        const formattedDate = date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        return {
+          value: datePart,
+          label: `${dayLabel} - ${formattedDate}`,
+        };
+      });
+  }, [tripType, scheduleEntries, itineraryEntries]);
+
+  // Handle venue creation
+  const handleCreateVenue = async (name: string) => {
+    try {
+      const endpoint =
+        tripType === 'cruise'
+          ? `/api/admin/ships/${shipId}/venues`
+          : `/api/admin/resorts/${resortId}/venues`;
+      const response = await api.post(endpoint, {
+        name: name.trim(),
+        venueTypeId: 1, // Default type, user can edit later
+      });
+      if (response.ok) {
+        const newVenue = await response.json();
+        setVenues(prev => [...prev, newVenue]);
+        return { value: newVenue.id.toString(), label: newVenue.name };
+      }
+      throw new Error('Failed to create venue');
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to create venue',
+      });
+      throw error;
+    }
+  };
+
+  // Handle talent creation
+  const handleCreateTalent = async (name: string) => {
+    try {
+      const response = await api.post('/api/admin/talent', {
+        name: name.trim(),
+        talentCategoryId: 1, // Default category, user can edit later
+      });
+      if (response.ok) {
+        const newTalent = await response.json();
+        setTalent(prev => [...prev, newTalent]);
+        return { value: newTalent.id.toString(), label: newTalent.name };
+      }
+      throw new Error('Failed to create talent');
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to create talent',
+      });
+      throw error;
+    }
+  };
+
   const handleSave = async () => {
     try {
       // Validate
@@ -240,7 +353,13 @@ export function EventFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="admin-form-modal sm:max-w-2xl border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
+      <DialogContent
+        className="admin-form-modal sm:max-w-2xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2"
+        style={{
+          backgroundColor: 'rgba(0, 33, 71, 1)',
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Calendar className="w-5 h-5 text-cyan-400" />
@@ -250,14 +369,15 @@ export function EventFormModal({
 
         <div className="space-y-4 py-4">
           {/* Day Selector */}
-          <TripDayDropdown
-            tripType={tripType}
-            scheduleEntries={scheduleEntries}
-            itineraryEntries={itineraryEntries}
-            value={formData.date}
-            onChange={date => setFormData({ ...formData, date })}
-            required
+          <StandardDropdown
+            variant="single-search"
             label="Day"
+            placeholder="Select a day"
+            emptyMessage="No days available"
+            options={dayOptions}
+            value={formData.date}
+            onChange={date => setFormData({ ...formData, date: date as string })}
+            required
           />
 
           {/* Event Title */}
@@ -274,16 +394,20 @@ export function EventFormModal({
           </div>
 
           {/* Event Type */}
-          <SearchableDropdown
-            items={eventTypes as SearchableDropdownItem[]}
-            value={formData.eventTypeId || null}
-            onChange={eventTypeId => setFormData({ ...formData, eventTypeId: eventTypeId || 0 })}
-            loading={loadingEventTypes}
+          <StandardDropdown
+            variant="single-search"
             label="Event Type"
             placeholder="Select event type"
             searchPlaceholder="Search event types..."
             emptyMessage="No event types found"
+            options={eventTypes.map(type => ({
+              value: type.id.toString(),
+              label: type.name,
+            }))}
+            value={formData.eventTypeId?.toString() || ''}
+            onChange={value => setFormData({ ...formData, eventTypeId: Number(value as string) })}
             required
+            disabled={loadingEventTypes}
           />
 
           {/* Time */}
@@ -302,48 +426,77 @@ export function EventFormModal({
             </p>
           </div>
           {/* Venue Selector */}
-          <VenueDropdown
-            tripType={tripType}
-            shipId={shipId}
-            resortId={resortId}
-            value={tripType === 'cruise' ? formData.shipVenueId : formData.resortVenueId}
-            onChange={venueId => {
+          <StandardDropdown
+            variant="single-search-add"
+            label="Venue"
+            placeholder="Select a venue"
+            searchPlaceholder="Search venues..."
+            emptyMessage="No venues found"
+            addLabel="Add New Venue"
+            options={venues.map(venue => ({
+              value: venue.id.toString(),
+              label: venue.name,
+            }))}
+            value={
+              tripType === 'cruise'
+                ? formData.shipVenueId?.toString() || ''
+                : formData.resortVenueId?.toString() || ''
+            }
+            onChange={value => {
+              const venueId = value ? Number(value) : null;
               if (tripType === 'cruise') {
                 setFormData({ ...formData, shipVenueId: venueId, resortVenueId: null });
               } else {
                 setFormData({ ...formData, resortVenueId: venueId, shipVenueId: null });
               }
             }}
-            label="Venue"
+            onCreateNew={handleCreateVenue}
+            disabled={loadingVenues}
           />
 
           {/* Talent Selector */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-white/90">Talent (Optional)</label>
-            <TalentSelector
-              tripId={tripId}
-              selectedIds={formData.talentIds}
-              onSelectionChange={ids => setFormData({ ...formData, talentIds: ids })}
-              menuVariant="compact"
+            <StandardDropdown
+              variant="multi-search-add"
+              placeholder="Select talent..."
+              searchPlaceholder="Search talent..."
+              emptyMessage="No talent found"
+              addLabel="Add New Talent"
+              options={talent.map(t => ({
+                value: t.id.toString(),
+                label: t.name,
+              }))}
+              value={formData.talentIds.map(id => id.toString())}
+              onChange={value => {
+                const ids = (value as string[]).map(id => Number(id));
+                setFormData({ ...formData, talentIds: ids });
+              }}
+              onCreateNew={handleCreateTalent}
+              disabled={loadingTalent}
             />
             <p className="text-[10px] text-white/50">Select talent performing at this event</p>
           </div>
 
           {/* Party Theme (only for party events) */}
           {isPartyEvent && (
-            <SearchableDropdown
-              items={partyThemes as SearchableDropdownItem[]}
-              value={formData.partyThemeId}
-              onChange={themeId => setFormData({ ...formData, partyThemeId: themeId })}
-              loading={loadingPartyThemes}
+            <StandardDropdown
+              variant="single-search"
               label="Party Theme (Optional)"
               placeholder="Select a party theme"
               searchPlaceholder="Search party themes..."
               emptyMessage="No party themes found"
-              formatDisplay={item => ({
-                primary: item.name,
-                secondary: (item as { shortDescription?: string }).shortDescription,
-              })}
+              options={partyThemes.map(theme => ({
+                value: theme.id.toString(),
+                label: theme.shortDescription
+                  ? `${theme.name} - ${theme.shortDescription}`
+                  : theme.name,
+              }))}
+              value={formData.partyThemeId?.toString() || ''}
+              onChange={value =>
+                setFormData({ ...formData, partyThemeId: value ? Number(value as string) : null })
+              }
+              disabled={loadingPartyThemes}
             />
           )}
 

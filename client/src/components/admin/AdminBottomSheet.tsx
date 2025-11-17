@@ -7,8 +7,16 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useMobileResponsive } from '@/hooks/use-mobile-responsive';
 
 // Consistent field styling that matches Design 1
 const modalFieldStyles = `
@@ -122,6 +130,8 @@ interface AdminBottomSheetProps {
   contentClassName?: string;
   maxHeight?: string;
   className?: string;
+  customHeader?: ReactNode; // Custom header content (replaces default header)
+  fullScreen?: boolean; // Make modal take up full screen
 }
 
 export function AdminBottomSheet({
@@ -137,7 +147,26 @@ export function AdminBottomSheet({
   contentClassName,
   maxHeight = '70vh',
   className,
+  customHeader,
+  fullScreen = false,
 }: AdminBottomSheetProps) {
+  const { isMobile } = useMobileResponsive();
+
+  // Responsive max-height: larger on mobile, smaller on desktop
+  // For fullScreen on mobile, use almost full screen like FlyUpSheet (leaves 64px at top)
+  const responsiveMaxHeight = fullScreen
+    ? isMobile
+      ? 'calc(100vh - 64px)'
+      : '100vh'
+    : isMobile
+      ? maxHeight
+      : '75vh';
+  const responsiveMaxWidth = fullScreen
+    ? 'w-full h-full max-w-none'
+    : isMobile
+      ? undefined
+      : 'max-w-3xl';
+
   const renderPrimaryLabel = () => {
     if (!primaryAction) return null;
     if (primaryAction.loading) {
@@ -154,133 +183,249 @@ export function AdminBottomSheet({
     }
   };
 
+  const handleInteractOutside = (e: Event) => {
+    // Prevent closing when clicking on popover/dropdown content
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('[data-radix-popper-content-wrapper]') ||
+      target.closest('[data-radix-popover-content]') ||
+      target.closest('[data-radix-select-content]') ||
+      target.closest('[role="listbox"]') ||
+      target.closest('[role="combobox"]') ||
+      target.closest('[cmdk-list]') ||
+      target.closest('[cmdk-input]')
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  const handleEscapeKeyDown = (e: KeyboardEvent) => {
+    // Allow escape to close, but check if a popover is open first
+    const popovers = document.querySelectorAll('[data-radix-popover-content][data-state="open"]');
+    if (popovers.length > 0) {
+      // Don't close modal if popover is open, let popover handle escape
+      e.preventDefault();
+    }
+  };
+
+  const scrollableContent = (
+    <>
+      {onSubmit ? (
+        <form
+          id="admin-bottom-sheet-form"
+          onSubmit={onSubmit}
+          className="flex flex-col flex-1 min-h-0 overflow-hidden"
+        >
+          <div
+            data-scrollable="true"
+            className={cn('px-6 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+            }}
+          >
+            {children}
+          </div>
+        </form>
+      ) : (
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div
+            data-scrollable="true"
+            className={cn('px-6 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  // Mobile: Use bottom sheet
+  if (isMobile) {
+    return (
+      <>
+        <style>{modalFieldStyles}</style>
+        <Sheet open={isOpen} onOpenChange={onOpenChange} modal={true}>
+          <SheetContent
+            side="bottom"
+            className={cn(
+              'admin-bottom-sheet',
+              'border-white/10 text-white',
+              fullScreen ? 'rounded-t-3xl' : 'rounded-t-2xl',
+              fullScreen && isMobile ? 'h-[calc(100vh-64px)] max-h-[calc(100vh-64px)]' : '',
+              'flex flex-col p-0 overflow-hidden',
+              className
+            )}
+            style={{
+              height: fullScreen && isMobile ? 'calc(100vh - 64px)' : responsiveMaxHeight,
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+            }}
+            onInteractOutside={handleInteractOutside}
+            onEscapeKeyDown={handleEscapeKeyDown}
+            onPointerDownOutside={handleInteractOutside}
+          >
+            {/* Sticky Header */}
+            <SheetHeader
+              className="sticky top-0 z-10 border-b border-white/10 px-6 py-4 backdrop-blur-sm"
+              style={{
+                backgroundColor: 'rgba(0, 33, 71, 1)',
+                backgroundImage:
+                  'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              }}
+            >
+              {/* Always include SheetTitle and SheetDescription for accessibility */}
+              <SheetTitle className="sr-only">{title}</SheetTitle>
+              <SheetDescription className="sr-only">
+                {description || `${title} form`}
+              </SheetDescription>
+              {customHeader ? (
+                customHeader
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xl font-bold text-white leading-tight">
+                    {icon && <span className="flex-shrink-0">{icon}</span>}
+                    {title}
+                  </div>
+                  <div className="flex justify-end gap-2 flex-shrink-0">
+                    {primaryAction && (
+                      <Button
+                        type={primaryType}
+                        disabled={primaryAction.disabled || primaryAction.loading}
+                        onClick={primaryType === 'button' ? handleSave : undefined}
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors"
+                        aria-label={primaryAction.label}
+                        form={
+                          primaryType === 'submit' && onSubmit
+                            ? 'admin-bottom-sheet-form'
+                            : primaryAction.form
+                        }
+                      >
+                        {renderPrimaryLabel()}
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => onOpenChange(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
+                      aria-label="Cancel"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </SheetHeader>
+
+            {/* Scrollable Content */}
+            {scrollableContent}
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Desktop/Tablet: Use centered dialog
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Sheet open={isOpen} onOpenChange={onOpenChange} modal={true}>
-        <SheetContent
-          side="bottom"
+      <Dialog open={isOpen} onOpenChange={onOpenChange} modal={true}>
+        <DialogContent
           className={cn(
             'admin-bottom-sheet',
-            'bg-[#002147] border-white/10 text-white rounded-t-2xl',
+            'bg-[#002147] border-white/10 text-white',
             'flex flex-col p-0 overflow-hidden',
+            fullScreen ? 'w-full h-full max-w-none max-h-none rounded-none' : responsiveMaxWidth,
+            fullScreen ? '' : 'max-h-[75vh]',
             className
           )}
-          style={{ height: maxHeight }}
-          onInteractOutside={e => {
-            // Prevent closing when clicking on popover/dropdown content
-            const target = e.target as HTMLElement;
-            if (
-              target.closest('[data-radix-popper-content-wrapper]') ||
-              target.closest('[data-radix-popover-content]') ||
-              target.closest('[data-radix-select-content]') ||
-              target.closest('[role="listbox"]') ||
-              target.closest('[role="combobox"]') ||
-              target.closest('[cmdk-list]') ||
-              target.closest('[cmdk-input]')
-            ) {
-              e.preventDefault();
-            }
-          }}
-          onEscapeKeyDown={e => {
-            // Allow escape to close, but check if a popover is open first
-            const popovers = document.querySelectorAll(
-              '[data-radix-popover-content][data-state="open"]'
-            );
-            if (popovers.length > 0) {
-              // Don't close sheet if popover is open, let popover handle escape
-              e.preventDefault();
-            }
-          }}
-          onPointerDownOutside={e => {
-            // Prevent closing when clicking on popover/dropdown content
-            const target = e.target as HTMLElement;
-            if (
-              target.closest('[data-radix-popper-content-wrapper]') ||
-              target.closest('[data-radix-popover-content]') ||
-              target.closest('[data-radix-select-content]') ||
-              target.closest('[role="listbox"]') ||
-              target.closest('[role="combobox"]') ||
-              target.closest('[cmdk-list]') ||
-              target.closest('[cmdk-input]')
-            ) {
-              e.preventDefault();
-            }
-          }}
+          style={
+            fullScreen
+              ? {
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  transform: 'none',
+                  width: '100%',
+                  height: '100%',
+                }
+              : undefined
+          }
+          onInteractOutside={handleInteractOutside}
+          onEscapeKeyDown={handleEscapeKeyDown}
+          onPointerDownOutside={handleInteractOutside}
         >
-          {/* Sticky Header */}
-          <SheetHeader className="sticky top-0 z-10 bg-[#002147] border-b border-white/10 px-6 py-4 pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <SheetTitle className="flex items-center gap-2 text-xl font-bold text-white leading-tight">
+          {/* Header */}
+          <DialogHeader
+            className="px-6 py-4 border-b border-white/10 sticky top-0 z-10 backdrop-blur-sm"
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+            }}
+          >
+            {/* Always include DialogTitle and DialogDescription for accessibility */}
+            <DialogTitle className="sr-only">{title}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {description || `${title} form`}
+            </DialogDescription>
+            {customHeader ? (
+              customHeader
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xl font-bold text-white leading-tight">
                   {icon && <span className="flex-shrink-0">{icon}</span>}
                   {title}
-                </SheetTitle>
-                <SheetDescription className="sr-only">
-                  {description || `${title} form`}
-                </SheetDescription>
-                {description && <p className="text-[13px] text-white/55 mt-1">{description}</p>}
-              </div>
-
-              {/* Action Buttons - matching profile edit screen style */}
-              <div className="flex justify-end gap-2 ml-4 flex-shrink-0">
-                {primaryAction && (
+                </div>
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2 ml-4 flex-shrink-0">
+                  {primaryAction && (
+                    <Button
+                      type={primaryType}
+                      disabled={primaryAction.disabled || primaryAction.loading}
+                      onClick={primaryType === 'button' ? handleSave : undefined}
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors"
+                      aria-label={primaryAction.label}
+                      form={
+                        primaryType === 'submit' && onSubmit
+                          ? 'admin-bottom-sheet-form'
+                          : primaryAction.form
+                      }
+                    >
+                      {renderPrimaryLabel()}
+                    </Button>
+                  )}
                   <Button
-                    type={primaryType}
-                    disabled={primaryAction.disabled || primaryAction.loading}
-                    onClick={primaryType === 'button' ? handleSave : undefined}
+                    onClick={() => onOpenChange(false)}
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors"
-                    aria-label={primaryAction.label}
-                    form={
-                      primaryType === 'submit' && onSubmit
-                        ? 'admin-bottom-sheet-form'
-                        : primaryAction.form
-                    }
+                    className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
+                    aria-label="Cancel"
                   >
-                    {renderPrimaryLabel()}
+                    <X className="w-4 h-4" />
                   </Button>
-                )}
-                <Button
-                  onClick={() => onOpenChange(false)}
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
-                  aria-label="Cancel"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                </div>
               </div>
-            </div>
-          </SheetHeader>
+            )}
+          </DialogHeader>
 
           {/* Scrollable Content */}
-          {onSubmit ? (
-            <form
-              id="admin-bottom-sheet-form"
-              onSubmit={onSubmit}
-              className="flex flex-col flex-1 min-h-0 overflow-hidden"
-            >
-              <div
-                data-scrollable="true"
-                className={cn('px-6 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
-              >
-                {children}
-              </div>
-            </form>
-          ) : (
-            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <div
-                data-scrollable="true"
-                className={cn('px-6 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
-              >
-                {children}
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+          {scrollableContent}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

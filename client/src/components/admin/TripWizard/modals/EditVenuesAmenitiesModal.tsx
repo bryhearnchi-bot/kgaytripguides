@@ -3,7 +3,9 @@ import { useTripWizard } from '@/contexts/TripWizardContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { VenueSelector } from '@/components/admin/VenueSelector';
+import { StandardDropdown } from '@/components/ui/dropdowns';
+import { api } from '@/lib/api-client';
+import { toast } from 'sonner';
 import { AmenitySelector } from '@/components/admin/AmenitySelector';
 import { Tip } from '@/components/ui/tip';
 
@@ -54,6 +56,9 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
     amenityIds: state.amenityIds,
   });
 
+  const [venues, setVenues] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingVenues, setLoadingVenues] = useState(true);
+
   useEffect(() => {
     if (open) {
       // Reset form data when modal opens
@@ -61,8 +66,52 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
         venueIds: state.venueIds,
         amenityIds: state.amenityIds,
       });
+      fetchVenues();
     }
-  }, [open, state.venueIds, state.amenityIds]);
+  }, [open, state.venueIds, state.amenityIds, state.tripType, state.shipId, state.resortId]);
+
+  const fetchVenues = async () => {
+    try {
+      setLoadingVenues(true);
+      const isCruise = state.tripType === 'cruise';
+      const endpoint = isCruise
+        ? `/api/admin/ships/${state.shipId}/venues`
+        : `/api/admin/resorts/${state.resortId}/venues`;
+      const response = await api.get(endpoint);
+      const data = await response.json();
+      setVenues(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to load venues',
+      });
+    } finally {
+      setLoadingVenues(false);
+    }
+  };
+
+  const handleCreateVenue = async (name: string) => {
+    try {
+      const isCruise = state.tripType === 'cruise';
+      const endpoint = isCruise
+        ? `/api/admin/ships/${state.shipId}/venues`
+        : `/api/admin/resorts/${state.resortId}/venues`;
+      const response = await api.post(endpoint, {
+        name: name.trim(),
+        venueTypeId: 1, // Default type
+      });
+      if (response.ok) {
+        const newVenue = await response.json();
+        setVenues(prev => [...prev, newVenue]);
+        return { value: newVenue.id.toString(), label: newVenue.name };
+      }
+      throw new Error('Failed to create venue');
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to create venue',
+      });
+      throw error;
+    }
+  };
 
   const handleVenueChange = (selectedIds: number[]) => {
     setFormData(prev => ({ ...prev, venueIds: selectedIds }));
@@ -93,7 +142,14 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
     <>
       <style>{modalFieldStyles}</style>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="admin-form-modal sm:max-w-3xl border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-white">Edit Venues & Amenities</DialogTitle>
           </DialogHeader>
@@ -105,11 +161,23 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-white/90">{venueLabel}</Label>
                 <p className="text-[10px] text-white/50 mb-2">{venueDescription}</p>
-                <VenueSelector
-                  selectedIds={formData.venueIds}
-                  onSelectionChange={handleVenueChange}
-                  menuVariant="default"
-                  wizardMode={true}
+                <StandardDropdown
+                  variant="multi-search-add"
+                  placeholder="Select venues..."
+                  searchPlaceholder="Search venues..."
+                  emptyMessage="No venues found"
+                  addLabel="Add New Venue"
+                  options={venues.map(venue => ({
+                    value: venue.id.toString(),
+                    label: venue.name,
+                  }))}
+                  value={formData.venueIds.map(id => id.toString())}
+                  onChange={value => {
+                    const ids = (value as string[]).map(id => Number(id));
+                    handleVenueChange(ids);
+                  }}
+                  onCreateNew={handleCreateVenue}
+                  disabled={loadingVenues}
                 />
               </div>
 

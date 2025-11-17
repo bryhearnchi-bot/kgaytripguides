@@ -12,18 +12,11 @@ import {
   Users,
   Crown,
   Star,
-  Filter,
-  ChevronDown,
 } from 'lucide-react';
 import type { Talent } from '@/data/trip-data';
 import { TalentCard } from '../shared/TalentCard';
 import { TabHeader } from '../shared/TabHeader';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { PillDropdown } from '@/components/ui/dropdowns';
 
 interface TalentTabProps {
   TALENT: Talent[];
@@ -135,14 +128,14 @@ export const TalentTabNew = memo(function TalentTabNew({
   if (TALENT.length === 0) {
     return (
       <>
-        <div className="max-w-7xl mx-auto pb-4">
+        <div className="max-w-3xl mx-auto pb-4">
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-400" />
             <h3 className="text-lg font-semibold text-white">Talent</h3>
             <div className="flex-1 h-px bg-white/20 mx-3"></div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
             <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No talent information available</h3>
@@ -155,42 +148,25 @@ export const TalentTabNew = memo(function TalentTabNew({
 
   return (
     <>
-      <div className="max-w-7xl mx-auto pb-4">
+      <div className="max-w-3xl mx-auto pb-4">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-amber-400" />
           <h3 className="text-lg font-semibold text-white">Talent</h3>
           <div className="flex-1 h-px bg-white/20 mx-3"></div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
-                <Filter className="w-3 h-3" />
-                <span>{selectedFilter}</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#002147] border-white/20">
-              {talentTypes.map(type => {
-                const isActive = selectedFilter === type;
-                const Icon = getTalentIcon(type);
-
-                return (
-                  <DropdownMenuItem
-                    key={type}
-                    onClick={() => setSelectedFilter(type)}
-                    className={`cursor-pointer text-white hover:bg-white/10 ${
-                      isActive ? 'bg-white/20' : ''
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {type}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <PillDropdown
+            options={talentTypes.map(type => ({
+              value: type,
+              label: type,
+              icon: getTalentIcon(type),
+            }))}
+            value={selectedFilter}
+            onChange={setSelectedFilter}
+            placeholder="Filter"
+            triggerClassName=""
+          />
         </div>
       </div>
-      <div className="max-w-7xl mx-auto space-y-8 pb-8">
+      <div className="max-w-3xl mx-auto space-y-8 pb-8">
         {/* Talent Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

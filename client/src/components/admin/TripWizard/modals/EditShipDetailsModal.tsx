@@ -90,7 +90,14 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
     <>
       <style>{modalFieldStyles}</style>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="admin-form-modal sm:max-w-3xl border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-white">Edit Ship Information</DialogTitle>
           </DialogHeader>

@@ -281,7 +281,7 @@ export function ResortCompanySelector({
           container={portalContainerRef.current ?? undefined}
           className={cn(
             'w-[--radix-popover-trigger-width] p-0',
-            'bg-[#0a1628]',
+            'bg-white/15 backdrop-blur-xl',
             'border border-white/10 rounded-[10px] shadow-xl'
           )}
           align="start"
@@ -371,7 +371,14 @@ export function ResortCompanySelector({
 
       {/* Create Resort Company Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="admin-form-modal sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+        <DialogContent
+          className="admin-form-modal sm:max-w-md border-white/10 rounded-[20px] text-white"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-white">Add New Resort Company</DialogTitle>
           </DialogHeader>

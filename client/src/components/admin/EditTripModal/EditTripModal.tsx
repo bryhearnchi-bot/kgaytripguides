@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { BasicInfoPage } from '../TripWizard/BasicInfoPage';
 import { ResortDetailsPage } from '../TripWizard/ResortDetailsPage';
 import { ShipDetailsPage } from '../TripWizard/ShipDetailsPage';
@@ -13,9 +12,23 @@ import { FAQTabPage } from '../TripWizard/FAQTabPage';
 import { UpdatesTabPage } from '../TripWizard/UpdatesTabPage';
 import { TripWizardProvider, useTripWizard } from '@/contexts/TripWizardContext';
 import { LocationsProvider } from '@/contexts/LocationsContext';
-import { Loader2 } from 'lucide-react';
+import {
+  Loader2,
+  X,
+  FileText,
+  MapPin,
+  Calendar,
+  Users,
+  Info,
+  HelpCircle,
+  Bell,
+  Save,
+  TreePalm,
+} from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { PillDropdown } from '@/components/ui/dropdowns';
 
 interface EditTripModalProps {
   open: boolean;
@@ -24,13 +37,37 @@ interface EditTripModalProps {
   onSuccess?: () => void;
 }
 
+// Tab configuration matching Components page pattern
+const tabOptions = [
+  { id: 'basic-info', label: 'Trip Info', icon: FileText },
+  {
+    id: 'location',
+    label: 'Location',
+    icon: MapPin,
+    dynamicLabel: (tripTypeId: number) => (tripTypeId === 1 ? 'Ship' : 'Resort'),
+  },
+  {
+    id: 'schedule',
+    label: 'Schedule',
+    icon: Calendar,
+    dynamicLabel: (tripTypeId: number) => (tripTypeId === 1 ? 'Itinerary' : 'Schedule'),
+  },
+  { id: 'events', label: 'Events', icon: Calendar },
+  { id: 'talent', label: 'Talent', icon: Users },
+  { id: 'trip-info', label: 'Trip Info', icon: Info },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle },
+  { id: 'updates', label: 'Updates', icon: Bell },
+];
+
 // Inner component that uses the TripWizard context
 function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripModalProps) {
   const [activeTab, setActiveTab] = useState('basic-info');
   const hasInitialized = React.useRef(false);
+  const lastSavedState = React.useRef<any>(null); // Track last saved state to detect unsaved changes
 
   // Get context methods to populate data
   const {
+    state,
     updateTripData,
     setTripType,
     setBuildMethod,
@@ -194,6 +231,16 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         // Use restoreFromDraft to populate all state at once
         restoreFromDraft(editState);
 
+        // Initialize lastSavedState with the initial trip data
+        // This represents the "saved" state when modal opens
+        lastSavedState.current = {
+          tripData: { ...editState.tripData },
+          resortId: editState.resortId,
+          shipId: editState.shipId,
+          scheduleEntries: editState.scheduleEntries ? [...editState.scheduleEntries] : [],
+          itineraryEntries: editState.itineraryEntries ? [...editState.itineraryEntries] : [],
+        };
+
         // CRITICAL DEBUG: Verify state was set
       };
 
@@ -204,19 +251,55 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
     // Reset initialization flag when modal closes
     if (!open) {
       hasInitialized.current = false;
+      lastSavedState.current = null; // Reset saved state when modal closes
     }
   }, [trip, open, restoreFromDraft]);
 
   // Debug logging removed to prevent console spam
 
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = () => {
+    if (!lastSavedState.current) {
+      // If we've never saved, check if state has been modified from initial
+      return true; // Assume there might be changes if never saved
+    }
+
+    // Compare current state with last saved state
+    const current = {
+      tripData: state.tripData,
+      resortId: state.resortId,
+      shipId: state.shipId,
+      scheduleEntries: state.scheduleEntries,
+      itineraryEntries: state.itineraryEntries,
+    };
+
+    const saved = lastSavedState.current;
+
+    // Simple deep comparison (could be improved)
+    return JSON.stringify(current) !== JSON.stringify(saved);
+  };
+
   const handleClose = () => {
-    if (confirm('Close edit modal? Any unsaved changes will be lost.')) {
+    if (hasUnsavedChanges()) {
+      if (confirm('Close edit modal? Any unsaved changes will be lost.')) {
+        onOpenChange(false);
+      }
+    } else {
+      // No unsaved changes, close without warning
       onOpenChange(false);
     }
   };
 
-  // Get the current state from context for saving
-  const { state } = useTripWizard();
+  // State is already available from useTripWizard hook above
+
+  // Get current tab info
+  const currentTab = tabOptions.find(tab => tab.id === activeTab);
+  const currentTabLabel = currentTab
+    ? currentTab.dynamicLabel && tripData?.tripTypeId
+      ? currentTab.dynamicLabel(tripData.tripTypeId)
+      : currentTab.label
+    : 'Edit Trip';
+  const CurrentTabIcon = currentTab?.icon;
 
   const handleSaveTrip = async () => {
     try {
@@ -262,15 +345,22 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
         throw new Error(errorData.message || errorData.error || 'Failed to update trip');
       }
 
+      // Save the current state as the last saved state
+      lastSavedState.current = {
+        tripData: { ...state.tripData },
+        resortId: state.resortId,
+        shipId: state.shipId,
+        scheduleEntries: state.scheduleEntries ? [...state.scheduleEntries] : [],
+        itineraryEntries: state.itineraryEntries ? [...state.itineraryEntries] : [],
+      };
+
       // Show success message
       toast.success('Trip Updated', {
         description: 'Your changes have been saved.',
       });
 
-      // Close modal
-      onOpenChange(false);
-
-      // Refresh trip list after modal closes
+      // Don't close modal - let user continue editing other tabs
+      // Refresh trip list in background
       if (onSuccess) {
         setTimeout(() => onSuccess(), 250);
       }
@@ -281,30 +371,79 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
     }
   };
 
+  // Custom header with dropdown menu on right and save button
+  const customHeader = (
+    <div className="flex items-center justify-between w-full">
+      {/* Title with Icon */}
+      <div className="flex items-center gap-2">
+        <TreePalm className="h-5 w-5 text-white" />
+        <h2 className="text-xl font-bold text-white leading-tight">Edit Trip</h2>
+      </div>
+
+      {/* Right side: Dropdown Menu + Save Button + X Button */}
+      <div className="flex items-center gap-2">
+        {/* Dropdown Menu */}
+        <PillDropdown
+          options={tabOptions.map(option => {
+            const Icon = option.icon;
+            const displayLabel =
+              option.dynamicLabel && tripData?.tripTypeId
+                ? option.dynamicLabel(tripData.tripTypeId)
+                : option.label;
+            return {
+              value: option.id,
+              label: displayLabel,
+              icon: Icon,
+            };
+          })}
+          value={activeTab}
+          onChange={setActiveTab}
+          placeholder="Select tab"
+          triggerClassName=""
+        />
+
+        {/* Save Button */}
+        <Button
+          onClick={handleSaveTrip}
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors"
+          aria-label="Save Changes"
+        >
+          <Save className="w-4 h-4" />
+        </Button>
+
+        {/* X Button */}
+        <Button
+          onClick={handleClose}
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <AdminFormModal
+    <AdminBottomSheet
       isOpen={open}
       onOpenChange={open => {
         if (!open) handleClose();
       }}
       title="Edit Trip"
       description={tripData?.name || 'Loading...'}
-      maxWidthClassName="max-w-4xl"
-      contentClassName="pb-6"
-      primaryAction={{
-        label: 'Save Changes',
-        onClick: handleSaveTrip,
-        loading: false,
-        loadingLabel: 'Saving...',
-      }}
-      secondaryAction={{
-        label: 'Cancel',
-        onClick: handleClose,
-      }}
+      className="max-w-4xl"
+      contentClassName="pb-6 pt-0"
+      maxHeight="85vh"
+      customHeader={customHeader}
+      fullScreen={true}
     >
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-white/60" />
           <span className="ml-3 text-white/70">Loading trip details...</span>
         </div>
       )}
@@ -321,94 +460,39 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
       )}
 
       {!isLoading && !error && tripData && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          {/* Tab Navigation */}
-          <TabsList className="w-full justify-start bg-white/[0.02] border-b border-white/10 rounded-none p-0 h-auto">
-            <TabsTrigger
-              value="basic-info"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              Trip Info
-            </TabsTrigger>
-            <TabsTrigger
-              value="location"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              {tripData.tripTypeId === 1 ? 'Ship' : 'Resort'}
-            </TabsTrigger>
-            <TabsTrigger
-              value="schedule"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              {tripData.tripTypeId === 1 ? 'Itinerary' : 'Schedule'}
-            </TabsTrigger>
-            <TabsTrigger
-              value="events"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              Events
-            </TabsTrigger>
-            <TabsTrigger
-              value="talent"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              Talent
-            </TabsTrigger>
-            <TabsTrigger
-              value="trip-info"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              Trip Info
-            </TabsTrigger>
-            <TabsTrigger
-              value="faq"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              FAQ
-            </TabsTrigger>
-            <TabsTrigger
-              value="updates"
-              className="data-[state=active]:bg-cyan-400/10 data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 text-white/70 hover:text-white px-4 py-2.5 rounded-none"
-            >
-              Updates
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-3">
+          {/* Tab Header - matching Components page pattern */}
+          <div
+            className="flex items-center justify-between pb-6 sticky top-0 z-10 -mx-6 px-6 backdrop-blur-sm"
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              marginTop: '-1rem', // -4 (16px) to pull up and eliminate gap
+              paddingTop: '1.25rem', // Extend background upward to cover any remaining gap
+              marginBottom: '0',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              {CurrentTabIcon && <CurrentTabIcon className="h-5 w-5 text-white" />}
+              <h3 className="text-lg font-semibold text-white">{currentTabLabel}</h3>
+            </div>
+          </div>
 
           {/* Tab Content */}
-          <TabsContent value="basic-info" className="mt-0">
-            <BasicInfoPage />
-          </TabsContent>
-
-          <TabsContent value="location" className="mt-0">
-            {tripData.tripTypeId === 1 ? <ShipDetailsPage /> : <ResortDetailsPage />}
-          </TabsContent>
-
-          <TabsContent value="schedule" className="mt-0">
-            {tripData.tripTypeId === 1 ? <CruiseItineraryPage /> : <ResortSchedulePage />}
-          </TabsContent>
-
-          <TabsContent value="events" className="mt-0">
-            <EventsTabPage />
-          </TabsContent>
-
-          <TabsContent value="talent" className="mt-0">
-            <TalentTabPage />
-          </TabsContent>
-
-          <TabsContent value="trip-info" className="mt-0">
-            <TripInfoTabPage />
-          </TabsContent>
-
-          <TabsContent value="faq" className="mt-0">
-            <FAQTabPage />
-          </TabsContent>
-
-          <TabsContent value="updates" className="mt-0">
-            <UpdatesTabPage />
-          </TabsContent>
-        </Tabs>
+          {activeTab === 'basic-info' && <BasicInfoPage />}
+          {activeTab === 'location' &&
+            (tripData.tripTypeId === 1 ? <ShipDetailsPage /> : <ResortDetailsPage />)}
+          {activeTab === 'schedule' &&
+            (tripData.tripTypeId === 1 ? <CruiseItineraryPage /> : <ResortSchedulePage />)}
+          {activeTab === 'events' && <EventsTabPage />}
+          {activeTab === 'talent' && <TalentTabPage />}
+          {activeTab === 'trip-info' && <TripInfoTabPage />}
+          {activeTab === 'faq' && <FAQTabPage />}
+          {activeTab === 'updates' && <UpdatesTabPage />}
+        </div>
       )}
-    </AdminFormModal>
+    </AdminBottomSheet>
   );
 }
 

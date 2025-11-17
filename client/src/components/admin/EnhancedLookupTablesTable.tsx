@@ -220,7 +220,15 @@ export function EnhancedLookupTablesTable({
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-[#0f172a] border-white/10">
+                        <DropdownMenuContent
+                          align="end"
+                          className="border-white/10"
+                          style={{
+                            backgroundColor: 'rgba(0, 33, 71, 1)',
+                            backgroundImage:
+                              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                          }}
+                        >
                           {actions.map((action, index) => (
                             <DropdownMenuItem
                               key={index}

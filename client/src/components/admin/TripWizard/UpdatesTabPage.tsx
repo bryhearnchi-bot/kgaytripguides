@@ -173,7 +173,15 @@ function SortableUpdateItem({
                     <MoreVertical className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+                <DropdownMenuContent
+                  align="end"
+                  className="border-white/10"
+                  style={{
+                    backgroundColor: 'rgba(0, 33, 71, 1)',
+                    backgroundImage:
+                      'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                  }}
+                >
                   <DropdownMenuItem
                     onClick={onEdit}
                     className="text-white/70 hover:text-cyan-400 hover:bg-white/5 cursor-pointer"
@@ -341,7 +349,7 @@ export function UpdatesTabPage() {
   }
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center">
         <p className="text-xs text-white/70">

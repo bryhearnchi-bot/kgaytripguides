@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarIcon, ChevronDownIcon } from 'lucide-react';
+import { CalendarIcon, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -62,7 +62,7 @@ export function DatePicker({
             'bg-white/[0.04] border border-white/10 rounded-[10px]',
             'text-white text-sm transition-all',
             'hover:bg-white/[0.06] hover:border-white/10',
-            'focus-visible:outline-none focus-visible:border-cyan-400/60 focus-visible:bg-cyan-400/[0.03] focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]',
+            'focus-visible:outline-none focus-visible:border-white/60 focus-visible:bg-white/[0.08] focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.28)] focus-visible:ring-0 focus-visible:ring-offset-0',
             'disabled:opacity-40 disabled:cursor-not-allowed',
             className
           )}
@@ -73,14 +73,18 @@ export function DatePicker({
               {dateValue ? dateValue.toLocaleDateString() : placeholder}
             </span>
           </span>
-          <ChevronDownIcon className="h-4 w-4 text-white/40" />
+          <ChevronDown className="h-4 w-4 text-white/40" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] overflow-hidden p-0 bg-[#0a1628] border border-white/10 rounded-[10px] shadow-xl pointer-events-auto"
+        className="w-[var(--radix-popover-trigger-width)] overflow-hidden p-0 border border-white/10 rounded-[10px] shadow-xl pointer-events-auto"
         align="start"
         container={typeof document !== 'undefined' ? document.body : undefined}
         onOpenAutoFocus={e => e.preventDefault()}
+        style={{
+          backgroundColor: 'rgba(0, 33, 71, 1)',
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+        }}
       >
         <div className="w-full overflow-hidden">
           <Calendar

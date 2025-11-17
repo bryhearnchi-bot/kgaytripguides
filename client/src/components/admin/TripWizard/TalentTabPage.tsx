@@ -24,8 +24,7 @@ import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
-import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
-import { TalentDropdown } from './TalentDropdown';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import {
   Dialog,
   DialogContent,
@@ -91,6 +90,8 @@ export function TalentTabPage() {
   const [talentToRemove, setTalentToRemove] = useState<TalentWithEvents | null>(null);
   const [selectedTalentId, setSelectedTalentId] = useState<number | null>(null);
   const [openAccordionCategory, setOpenAccordionCategory] = useState<string | undefined>(undefined);
+  const [talent, setTalent] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingTalent, setLoadingTalent] = useState(true);
   const [formData, setFormData] = useState<TalentFormData>({
     name: '',
     talentCategoryId: 0,
@@ -161,26 +162,25 @@ export function TalentTabPage() {
     },
   });
 
-  // Create talent category mutation
-  const createCategoryMutation = useMutation({
-    mutationFn: async (categoryName: string) => {
-      const response = await api.post('/api/talent-categories', { category: categoryName });
+  // Create talent category handler for StandardDropdown
+  const handleCreateCategory = async (name: string): Promise<{ value: string; label: string }> => {
+    try {
+      const response = await api.post('/api/talent-categories', { category: name.trim() });
       if (!response.ok) throw new Error('Failed to create talent category');
-      return response.json();
-    },
-    onSuccess: newCategory => {
+      const newCategory = await response.json();
       queryClient.invalidateQueries({ queryKey: ['talent-categories'] });
       setFormData(prev => ({ ...prev, talentCategoryId: newCategory.id }));
       toast.success('Success', {
         description: 'Talent category created successfully',
       });
-    },
-    onError: error => {
+      return { value: newCategory.id.toString(), label: newCategory.category };
+    } catch (error) {
       toast.error('Error', {
         description: 'Failed to create talent category',
       });
-    },
-  });
+      throw error;
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -212,6 +212,46 @@ export function TalentTabPage() {
       fetchTripTalent();
     }
   }, [tripId]);
+
+  // Fetch all talent for dropdown
+  useEffect(() => {
+    fetchAllTalent();
+  }, []);
+
+  const fetchAllTalent = async () => {
+    try {
+      setLoadingTalent(true);
+      const response = await api.get('/api/admin/talent');
+      const data = await response.json();
+      setTalent(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to load talent',
+      });
+    } finally {
+      setLoadingTalent(false);
+    }
+  };
+
+  const handleCreateTalent = async (name: string) => {
+    try {
+      const response = await api.post('/api/admin/talent', {
+        name: name.trim(),
+        talentCategoryId: formData.talentCategoryId || 1,
+      });
+      if (response.ok) {
+        const newTalent = await response.json();
+        setTalent(prev => [...prev, newTalent]);
+        return { value: newTalent.id.toString(), label: newTalent.name };
+      }
+      throw new Error('Failed to create talent');
+    } catch (error) {
+      toast.error('Error', {
+        description: 'Failed to create talent',
+      });
+      throw error;
+    }
+  };
 
   const fetchTripTalent = async () => {
     try {
@@ -366,7 +406,7 @@ export function TalentTabPage() {
   const groupedTalent = groupTalentByCategory(talentWithEvents);
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 max-w-3xl mx-auto">
       {/* Add Talent Button */}
       <div className="flex justify-between items-center">
         <p className="text-xs text-white/70">Manage all talent performing at this trip</p>
@@ -490,7 +530,12 @@ export function TalentTabPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                               align="end"
-                              className="bg-[#1a1a1a] border-white/10"
+                              className="border-white/10"
+                              style={{
+                                backgroundColor: 'rgba(0, 33, 71, 1)',
+                                backgroundImage:
+                                  'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                              }}
                             >
                               <DropdownMenuItem
                                 onClick={() => handleEditTalent(talent)}
@@ -531,7 +576,14 @@ export function TalentTabPage() {
 
       {/* Add Talent Modal - Select from existing */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="admin-form-modal sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white overflow-visible">
+        <DialogContent
+          className="admin-form-modal sm:max-w-md border-white/10 rounded-[20px] text-white overflow-visible"
+          style={{
+            backgroundColor: 'rgba(0, 33, 71, 1)',
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <User className="w-5 h-5 text-cyan-400" />
@@ -544,16 +596,27 @@ export function TalentTabPage() {
               Select talent from the global pool or create a new artist
             </p>
 
-            <TalentDropdown
-              tripId={tripId}
-              value={selectedTalentId}
-              onChange={talentId => {
-                if (talentId) {
+            <StandardDropdown
+              variant="single-search-add"
+              label="Talent"
+              placeholder="Select talent..."
+              searchPlaceholder="Search talent..."
+              emptyMessage="No talent found"
+              addLabel="Add New Talent"
+              options={talent.map(t => ({
+                value: t.id.toString(),
+                label: t.name,
+              }))}
+              value={selectedTalentId?.toString() || ''}
+              onChange={value => {
+                if (value) {
+                  const talentId = Number(value);
                   setSelectedTalentId(talentId);
                   handleAddTalent(talentId);
                 }
               }}
-              label="Talent"
+              onCreateNew={handleCreateTalent}
+              disabled={loadingTalent}
             />
 
             <div className="pt-2 border-t border-white/10">
@@ -607,14 +670,20 @@ export function TalentTabPage() {
 
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <SingleSelectWithCreate
-            options={talentCategories.map(cat => ({ id: cat.id, name: cat.category }))}
-            value={formData.talentCategoryId}
-            onValueChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
-            onCreateNew={createCategoryMutation.mutateAsync}
+          <StandardDropdown
+            variant="single-search-add"
             placeholder="Select talent category..."
             searchPlaceholder="Search categories..."
-            createLabel="Create new category"
+            emptyMessage="No categories found"
+            addLabel="Add New Category"
+            options={talentCategories.map(cat => ({
+              value: cat.id.toString(),
+              label: cat.category,
+            }))}
+            value={formData.talentCategoryId?.toString() || ''}
+            onChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
+            onCreateNew={handleCreateCategory}
+            required
           />
         </div>
 
@@ -719,14 +788,20 @@ export function TalentTabPage() {
 
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
-            <SingleSelectWithCreate
-              options={talentCategories.map(cat => ({ id: cat.id, name: cat.category }))}
-              value={formData.talentCategoryId}
-              onValueChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
-              onCreateNew={createCategoryMutation.mutateAsync}
+            <StandardDropdown
+              variant="single-search-add"
               placeholder="Select talent category..."
               searchPlaceholder="Search categories..."
-              createLabel="Create new category"
+              emptyMessage="No categories found"
+              addLabel="Add New Category"
+              options={talentCategories.map(cat => ({
+                value: cat.id.toString(),
+                label: cat.category,
+              }))}
+              value={formData.talentCategoryId?.toString() || ''}
+              onChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
+              onCreateNew={handleCreateCategory}
+              required
             />
           </div>
 
@@ -796,7 +871,14 @@ export function TalentTabPage() {
       {/* Remove Talent Warning Modal */}
       {talentToRemove && (
         <Dialog open={!!talentToRemove} onOpenChange={() => setTalentToRemove(null)}>
-          <DialogContent className="admin-form-modal sm:max-w-md border-white/10 bg-gradient-to-b from-[#10192f] to-[#0f1629] rounded-[20px] text-white">
+          <DialogContent
+            className="admin-form-modal sm:max-w-md border-white/10 rounded-[20px] text-white"
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+            }}
+          >
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-orange-400" />

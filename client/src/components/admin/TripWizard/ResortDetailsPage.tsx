@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ResortSelector } from '@/components/admin/ResortSelector';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { ResortPreview } from './ResortPreview';
 import { ResortFormModal } from '@/components/admin/ResortFormModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
@@ -14,9 +14,30 @@ export function ResortDetailsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoadingResort, setIsLoadingResort] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [resorts, setResorts] = useState<any[]>([]);
+  const [loadingResorts, setLoadingResorts] = useState(true);
 
   const resortData = state.resortData || {};
   const isEditMode = state.isEditMode;
+
+  // Fetch resorts on mount
+  useEffect(() => {
+    const fetchResorts = async () => {
+      try {
+        setLoadingResorts(true);
+        const response = await api.get('/api/resorts');
+        if (response.ok) {
+          const data = await response.json();
+          setResorts(data);
+        }
+      } catch (error) {
+        // Silently handle error
+      } finally {
+        setLoadingResorts(false);
+      }
+    };
+    fetchResorts();
+  }, []);
 
   // Initialize resort data if null
   useEffect(() => {
@@ -85,17 +106,14 @@ export function ResortDetailsPage() {
     }
   }, [selectedResortId, resortData.name, isLoadingResort, updateResortData]);
 
-  const handleResortSelection = (resortId: number | null, selectedResort?: any) => {
-    // If resortId is null, user wants to create a new resort
-    if (resortId === null) {
-      setShowCreateModal(true);
-      return;
-    }
+  const handleResortChange = (value: string | string[]) => {
+    const resortId = Number(value);
+    if (!resortId) return;
 
-    setSelectedResortId(resortId);
-    setResortId(resortId);
-
+    const selectedResort = resorts.find(r => r.id === resortId);
     if (selectedResort) {
+      setSelectedResortId(resortId);
+      setResortId(resortId);
       updateResortData({
         name: selectedResort.name || '',
         location: selectedResort.location || '',
@@ -115,6 +133,15 @@ export function ResortDetailsPage() {
         checkOutTime: selectedResort.checkOutTime || '11:00',
       });
     }
+  };
+
+  const handleCreateResort = async (name: string) => {
+    // Open the ResortFormModal for full resort creation
+    // The StandardDropdown fly-up will close, and ResortFormModal will open
+    setShowCreateModal(true);
+    // Return a placeholder - the actual creation and selection happens in ResortFormModal's onSuccess
+    // StandardDropdown won't try to add this since ResortFormModal handles everything
+    return Promise.resolve({ value: '', label: name });
   };
 
   // Determine whether to show preview
@@ -148,14 +175,23 @@ export function ResortDetailsPage() {
   ]);
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 max-w-3xl mx-auto">
       {/* Resort Selector - Always show */}
-      <ResortSelector
+      <StandardDropdown
+        variant="single-search-add"
         label="Select Resort"
-        selectedId={selectedResortId}
-        onSelectionChange={handleResortSelection}
-        onCreateNew={() => setShowCreateModal(true)}
         placeholder="Select an existing resort or add new"
+        searchPlaceholder="Search resorts..."
+        emptyMessage="No resorts found"
+        addLabel="Add New Resort"
+        options={resorts.map(resort => ({
+          value: resort.id.toString(),
+          label: resort.name,
+        }))}
+        value={selectedResortId?.toString() || ''}
+        onChange={handleResortChange}
+        onCreateNew={handleCreateResort}
+        disabled={loadingResorts}
         required
       />
 
@@ -181,7 +217,14 @@ export function ResortDetailsPage() {
         isOpen={showCreateModal}
         onOpenChange={setShowCreateModal}
         resort={null}
-        onSuccess={newResort => {
+        onSuccess={async newResort => {
+          // Refresh resorts list
+          queryClient.invalidateQueries({ queryKey: ['resorts'] });
+          const response = await api.get('/api/resorts');
+          if (response.ok) {
+            const data = await response.json();
+            setResorts(data);
+          }
           // Auto-select the newly created resort
           if (newResort && newResort.id) {
             setSelectedResortId(newResort.id);
@@ -200,7 +243,6 @@ export function ResortDetailsPage() {
               checkOutTime: newResort.checkOutTime || '11:00',
             });
           }
-          queryClient.invalidateQueries({ queryKey: ['resorts'] });
           setShowCreateModal(false);
         }}
       />

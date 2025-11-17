@@ -3,7 +3,7 @@ import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { SingleDropDownNew } from '@/components/ui/single-drop-down-new';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { FAQ } from '@/types/trip-info';
@@ -128,7 +128,8 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
 
         {/* Section Type */}
         <div className="space-y-1">
-          <SingleDropDownNew
+          <StandardDropdown
+            variant="single-basic"
             label="Section Type"
             placeholder="Select section type"
             emptyMessage="No section types available"
@@ -152,7 +153,6 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
             value={formData.section_type}
             onChange={(value: any) => setFormData({ ...formData, section_type: value })}
             required
-            showSearch={false}
           />
           <p className="text-xs text-white/50 mt-1">
             {formData.section_type === 'trip-specific' && 'Only for this trip'}

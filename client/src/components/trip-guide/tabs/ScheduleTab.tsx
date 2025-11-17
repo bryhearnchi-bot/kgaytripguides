@@ -1,14 +1,5 @@
 import React, { memo, useCallback, useState, useMemo, useEffect, useRef } from 'react';
-import {
-  CalendarDays,
-  ChevronDown,
-  ChevronUp,
-  MapPin,
-  PartyPopper,
-  Filter,
-  Info,
-  Shirt,
-} from 'lucide-react';
+import { CalendarDays, ChevronUp, MapPin, PartyPopper, Info, Shirt } from 'lucide-react';
 import { EventCard } from '../shared/EventCard';
 import { PartyCard } from '../shared/PartyCard';
 import { isDateInPast } from '../utils/dateHelpers';
@@ -17,12 +8,7 @@ import { formatTime as globalFormatTime } from '@/lib/timeFormat';
 import type { Talent } from '@/data/trip-data';
 import { TabHeader } from '../shared/TabHeader';
 import { api } from '@/lib/api-client';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { PillDropdown } from '@/components/ui/dropdowns';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface ScheduleTabProps {
@@ -279,7 +265,7 @@ export const ScheduleTab = memo(function ScheduleTab({
           ref={headerRef}
           className={`pb-4 pt-2 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 z-50 px-4' : ''}`}
         >
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between gap-4">
               {/* Sub-tabs on the left */}
               <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
@@ -308,105 +294,42 @@ export const ScheduleTab = memo(function ScheduleTab({
               </div>
 
               {/* Date filter on the right */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 border border-white/30 hover:border-white/50">
-                    <Filter className="w-3 h-3" />
-                    <span>
-                      {subTab === 'schedule'
-                        ? selectedDate === 'All Dates'
-                          ? 'Select Date'
-                          : dateOptions.find(opt => opt.key === selectedDate)?.label || selectedDate
-                        : selectedPartyDate === 'All Dates'
-                          ? 'Select Date'
-                          : partyDateOptions.find(opt => opt.key === selectedPartyDate)?.label ||
-                            selectedPartyDate}
-                    </span>
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="bg-[#002147] border-white/20 min-w-[280px]"
-                >
-                  {subTab === 'schedule' ? (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => setSelectedDate('All Dates')}
-                        className={`cursor-pointer text-white hover:bg-white/10 ${
-                          selectedDate === 'All Dates' ? 'bg-white/20' : ''
-                        }`}
-                      >
-                        <CalendarDays className="w-4 h-4 mr-2" />
-                        All Dates
-                      </DropdownMenuItem>
-                      {dateOptions.map(option => {
-                        const isActive = selectedDate === option.key;
-                        return (
-                          <DropdownMenuItem
-                            key={option.key}
-                            onClick={() => setSelectedDate(option.key)}
-                            className={`cursor-pointer text-white hover:bg-white/10 ${
-                              isActive ? 'bg-white/20' : ''
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{option.label}</span>
-                              {option.port && (
-                                <>
-                                  <span className="text-white/40">•</span>
-                                  <span className="text-white/70">{option.port}</span>
-                                </>
-                              )}
-                            </div>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => setSelectedPartyDate('All Dates')}
-                        className={`cursor-pointer text-white hover:bg-white/10 ${
-                          selectedPartyDate === 'All Dates' ? 'bg-white/20' : ''
-                        }`}
-                      >
-                        <CalendarDays className="w-4 h-4 mr-2" />
-                        All Dates
-                      </DropdownMenuItem>
-                      {partyDateOptions.map(option => {
-                        const isActive = selectedPartyDate === option.key;
-                        return (
-                          <DropdownMenuItem
-                            key={option.key}
-                            onClick={() => setSelectedPartyDate(option.key)}
-                            className={`cursor-pointer text-white hover:bg-white/10 ${
-                              isActive ? 'bg-white/20' : ''
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{option.label}</span>
-                              {option.port && (
-                                <>
-                                  <span className="text-white/40">•</span>
-                                  <span className="text-white/70">{option.port}</span>
-                                </>
-                              )}
-                            </div>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {subTab === 'schedule' ? (
+                <PillDropdown
+                  options={[
+                    { value: 'All Dates', label: 'All Dates', icon: CalendarDays },
+                    ...dateOptions.map(option => ({
+                      value: option.key,
+                      label: option.port ? `${option.label} • ${option.port}` : option.label,
+                    })),
+                  ]}
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  placeholder="Select Date"
+                  triggerClassName=""
+                />
+              ) : (
+                <PillDropdown
+                  options={[
+                    { value: 'All Dates', label: 'All Dates', icon: CalendarDays },
+                    ...partyDateOptions.map(option => ({
+                      value: option.key,
+                      label: option.port ? `${option.label} • ${option.port}` : option.label,
+                    })),
+                  ]}
+                  value={selectedPartyDate}
+                  onChange={setSelectedPartyDate}
+                  placeholder="Select Date"
+                  triggerClassName=""
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {subTab === 'schedule' ? (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-8">
           {filteredSchedule.length === 0 ? (
             <div className="bg-white/10 rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
               <CalendarDays className="w-16 h-16 text-white/40 mx-auto mb-4" />
@@ -422,14 +345,14 @@ export const ScheduleTab = memo(function ScheduleTab({
                   <div key={day.key} className="space-y-4">
                     {/* Compact Date Header */}
                     <div className="flex items-center gap-2 pb-2 mb-1">
-                      <CalendarDays className="w-4 h-4 text-purple-400" />
+                      <CalendarDays className="w-4 h-4 text-white" />
                       <h3 className="text-sm font-semibold text-white">
                         {itineraryStop?.date || day.key}
                       </h3>
                       <div className="flex-1 h-px bg-white/20 mx-3"></div>
                       {itineraryStop && (
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-blue-300" />
+                          <MapPin className="w-4 h-4 text-white" />
                           <span className="text-sm text-white/70 font-medium">
                             {itineraryStop.port}
                           </span>
@@ -464,7 +387,7 @@ export const ScheduleTab = memo(function ScheduleTab({
           )}
         </div>
       ) : (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-8">
           {filteredPartyEvents.length === 0 && partyEventsByDate.length === 0 ? (
             isLoadingThemes ? (
               <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
@@ -595,12 +518,12 @@ export const ScheduleTab = memo(function ScheduleTab({
                 <div key={day.key} className="space-y-4">
                   {/* Compact Date Header */}
                   <div className="flex items-center gap-2 pb-2 mb-1">
-                    <CalendarDays className="w-4 h-4 text-purple-400" />
+                    <CalendarDays className="w-4 h-4 text-white" />
                     <h3 className="text-sm font-semibold text-white">{day.date}</h3>
                     <div className="flex-1 h-px bg-white/20 mx-3"></div>
                     {day.port && (
                       <div className="flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-blue-300" />
+                        <MapPin className="w-4 h-4 text-white" />
                         <span className="text-sm text-white/70 font-medium">{day.port}</span>
                       </div>
                     )}

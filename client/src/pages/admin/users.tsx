@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
-import SingleSelectWithCreate from '@/components/admin/SingleSelectWithCreate';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import {
   Users,
@@ -815,29 +815,29 @@ export default function UsersManagement() {
 
           <div>
             <Label htmlFor="role">Role *</Label>
-            <SingleSelectWithCreate
-              options={ROLE_OPTIONS.map(role => ({ id: role.value, name: role.label }))}
-              value={formData.role}
-              onValueChange={value => setFormData({ ...formData, role: String(value) })}
+            <StandardDropdown
+              variant="single-basic"
               placeholder="Select role..."
-              showSearch={false}
-              showCreateNew={false}
+              options={ROLE_OPTIONS.map(role => ({ value: role.value, label: role.label }))}
+              value={formData.role}
+              onChange={value => setFormData({ ...formData, role: value as string })}
+              required
             />
           </div>
 
           <div>
             <Label htmlFor="account_status">Account Status *</Label>
-            <SingleSelectWithCreate
+            <StandardDropdown
+              variant="single-basic"
+              placeholder="Select status..."
               options={[
-                { id: 'active', name: 'Active' },
-                { id: 'suspended', name: 'Suspended' },
-                { id: 'pending_verification', name: 'Pending Verification' },
+                { value: 'active', label: 'Active' },
+                { value: 'suspended', label: 'Suspended' },
+                { value: 'pending_verification', label: 'Pending Verification' },
               ]}
               value={formData.account_status}
-              onValueChange={value => setFormData({ ...formData, account_status: String(value) })}
-              placeholder="Select status..."
-              showSearch={false}
-              showCreateNew={false}
+              onChange={value => setFormData({ ...formData, account_status: value as string })}
+              required
             />
           </div>
 

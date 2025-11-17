@@ -14,13 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
@@ -290,21 +284,15 @@ const BulkEditModal: React.FC<{
             <div key={field.key} className="space-y-2">
               <Label htmlFor={field.key}>{field.label}</Label>
               {field.type === 'select' ? (
-                <Select
+                <StandardDropdown
+                  variant="single-basic"
+                  placeholder={`Select ${field.label.toLowerCase()}`}
+                  options={field.options?.map(option => ({ value: option, label: option })) || []}
                   value={changes[field.key] || ''}
-                  onValueChange={value => setChanges(prev => ({ ...prev, [field.key]: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {field.options?.map(option => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={value =>
+                    setChanges(prev => ({ ...prev, [field.key]: value as string }))
+                  }
+                />
               ) : (
                 <Input
                   id={field.key}
