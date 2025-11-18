@@ -13,7 +13,7 @@ const Command = React.forwardRef<
   <CommandPrimitive
     ref={ref}
     className={cn(
-      'flex h-full w-full flex-col overflow-hidden rounded-md bg-transparent text-white',
+      'flex h-full w-full flex-col overflow-hidden rounded-md bg-transparent text-white pointer-events-auto',
       className
     )}
     {...props}
@@ -36,17 +36,35 @@ const CommandDialog = ({ children, ...props }: DialogProps) => {
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
->(({ className, ...props }, ref) => (
-  <div className="flex items-center px-3 py-2 border-b border-white/10" cmdk-input-wrapper="">
-    <Search className="mr-2 h-4 w-4 shrink-0 text-white/40" />
+>(({ className, onMouseDown, onPointerDown, ...props }, ref) => (
+  <div
+    className="flex items-center px-3 py-1.5 border-b border-white/10 pointer-events-auto overflow-hidden w-full box-border"
+    cmdk-input-wrapper=""
+    onMouseDown={e => {
+      // Ensure clicks in the wrapper focus the input
+      e.stopPropagation();
+    }}
+  >
+    <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-white/40 pointer-events-none flex-none" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        'flex h-8 w-full bg-transparent text-sm text-white placeholder:text-white/50',
-        'outline-none border-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0',
-        'disabled:cursor-not-allowed disabled:opacity-40',
+        'flex-1 h-6 min-w-0 bg-transparent text-xs text-white placeholder:text-white/50',
+        'outline-none border-none focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-none',
+        'disabled:cursor-not-allowed disabled:opacity-40 pointer-events-auto cursor-text',
+        'caret-white',
         className
       )}
+      onMouseDown={e => {
+        // Stop propagation to prevent Radix from intercepting
+        e.stopPropagation();
+        onMouseDown?.(e);
+      }}
+      onPointerDown={e => {
+        // Stop propagation for pointer events as well
+        e.stopPropagation();
+        onPointerDown?.(e);
+      }}
       {...props}
     />
   </div>
@@ -58,7 +76,11 @@ const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
 >(({ className, ...props }, ref) => (
-  <CommandPrimitive.List ref={ref} className={cn('', className)} {...props} />
+  <CommandPrimitive.List
+    ref={ref}
+    className={cn('max-h-[300px] overflow-y-auto overflow-x-hidden', className)}
+    {...props}
+  />
 ));
 
 CommandList.displayName = CommandPrimitive.List.displayName;
@@ -79,7 +101,7 @@ const CommandGroup = React.forwardRef<
   <CommandPrimitive.Group
     ref={ref}
     className={cn(
-      'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground',
+      'p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground',
       className
     )}
     {...props}

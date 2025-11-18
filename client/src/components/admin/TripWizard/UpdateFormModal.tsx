@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import {
   Clock,
   Ship,
   Edit3,
+  Bell,
 } from 'lucide-react';
 
 interface UpdateFormModalProps {
@@ -143,10 +144,12 @@ export function UpdateFormModal({
   };
 
   return (
-    <AdminFormModal
+    <AdminBottomSheet
       isOpen={isOpen}
       onOpenChange={onClose}
       title={editingUpdate ? 'Edit Update' : 'Create Update'}
+      description={editingUpdate ? 'Edit trip update' : 'Create a new trip update'}
+      icon={<Bell className="h-5 w-5 text-white" />}
       onSubmit={handleSubmit}
       primaryAction={{
         label: editingUpdate ? 'Save Changes' : 'Create Update',
@@ -158,6 +161,7 @@ export function UpdateFormModal({
         label: 'Cancel',
         onClick: onClose,
       }}
+      fullScreen={true}
     >
       <div className="space-y-4">
         {/* Update Type */}
@@ -325,6 +329,6 @@ export function UpdateFormModal({
           </div>
         </div>
       </div>
-    </AdminFormModal>
+    </AdminBottomSheet>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,7 @@ import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { TripInfoSection } from '@/types/trip-info';
-import { Lock, Globe, FileText } from 'lucide-react';
+import { Lock, Globe, FileText, Info } from 'lucide-react';
 
 interface TripInfoFormModalProps {
   isOpen: boolean;
@@ -96,10 +96,12 @@ export function TripInfoFormModal({
   };
 
   return (
-    <AdminFormModal
+    <AdminBottomSheet
       isOpen={isOpen}
       onOpenChange={onClose}
       title={editingSection ? 'Edit Trip Info Section' : 'Create Trip Info Section'}
+      description={editingSection ? 'Edit trip info section' : 'Create a new trip info section'}
+      icon={<Info className="h-5 w-5 text-white" />}
       onSubmit={handleSubmit}
       primaryAction={{
         label: editingSection ? 'Save Changes' : 'Create Section',
@@ -111,6 +113,7 @@ export function TripInfoFormModal({
         label: 'Cancel',
         onClick: onClose,
       }}
+      fullScreen={true}
     >
       <div className="space-y-4">
         {/* Title */}
@@ -172,6 +175,6 @@ export function TripInfoFormModal({
           </p>
         </div>
       </div>
-    </AdminFormModal>
+    </AdminBottomSheet>
   );
 }

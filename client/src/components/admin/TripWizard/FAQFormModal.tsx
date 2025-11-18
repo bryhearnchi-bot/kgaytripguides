@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,7 @@ import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { FAQ } from '@/types/trip-info';
-import { Lock, Globe, FileText } from 'lucide-react';
+import { Lock, Globe, FileText, HelpCircle } from 'lucide-react';
 
 interface FAQFormModalProps {
   isOpen: boolean;
@@ -84,10 +84,12 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
   };
 
   return (
-    <AdminFormModal
+    <AdminBottomSheet
       isOpen={isOpen}
       onOpenChange={onClose}
       title={editingFaq ? 'Edit FAQ' : 'Create FAQ'}
+      description={editingFaq ? 'Edit FAQ details' : 'Create a new FAQ'}
+      icon={<HelpCircle className="h-5 w-5 text-white" />}
       onSubmit={handleSubmit}
       primaryAction={{
         label: editingFaq ? 'Save Changes' : 'Create FAQ',
@@ -99,6 +101,7 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
         label: 'Cancel',
         onClick: onClose,
       }}
+      fullScreen={true}
     >
       <div className="space-y-4">
         {/* Question */}
@@ -161,6 +164,6 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
           </p>
         </div>
       </div>
-    </AdminFormModal>
+    </AdminBottomSheet>
   );
 }

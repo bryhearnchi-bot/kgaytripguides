@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { StandardDropdown } from '@/components/ui/dropdowns';
@@ -8,6 +8,7 @@ import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { AmenitySelector } from '@/components/admin/AmenitySelector';
 import { Tip } from '@/components/ui/tip';
+import { MapPin } from 'lucide-react';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -141,85 +142,73 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Venues & Amenities</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-2.5 py-4">
-            {/* Single Column Layout */}
-            <div className="space-y-4">
-              {/* Venues Section */}
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-white/90">{venueLabel}</Label>
-                <p className="text-[10px] text-white/50 mb-2">{venueDescription}</p>
-                <StandardDropdown
-                  variant="multi-search-add"
-                  placeholder="Select venues..."
-                  searchPlaceholder="Search venues..."
-                  emptyMessage="No venues found"
-                  addLabel="Add New Venue"
-                  options={venues.map(venue => ({
-                    value: venue.id.toString(),
-                    label: venue.name,
-                  }))}
-                  value={formData.venueIds.map(id => id.toString())}
-                  onChange={value => {
-                    const ids = (value as string[]).map(id => Number(id));
-                    handleVenueChange(ids);
-                  }}
-                  onCreateNew={handleCreateVenue}
-                  disabled={loadingVenues}
-                />
-              </div>
-
-              {/* Amenities Section */}
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-white/90">{amenityLabel}</Label>
-                <p className="text-[10px] text-white/50 mb-2">{amenityDescription}</p>
-                <AmenitySelector
-                  selectedIds={formData.amenityIds}
-                  onSelectionChange={handleAmenityChange}
-                  menuVariant="default"
-                />
-              </div>
+      <AdminBottomSheet
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        title="Edit Venues & Amenities"
+        description="Edit venues and amenities"
+        icon={<MapPin className="h-5 w-5 text-white" />}
+        onSubmit={e => {
+          e.preventDefault();
+          handleSave();
+        }}
+        primaryAction={{
+          label: 'Save Changes',
+          type: 'submit',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => onOpenChange(false),
+        }}
+        maxWidthClassName="max-w-3xl"
+      >
+        <div className="space-y-2.5 py-4">
+          {/* Single Column Layout */}
+          <div className="space-y-4">
+            {/* Venues Section */}
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-white/90">{venueLabel}</Label>
+              <p className="text-[10px] text-white/50 mb-2">{venueDescription}</p>
+              <StandardDropdown
+                variant="multi-search-add"
+                placeholder="Select venues..."
+                searchPlaceholder="Search venues..."
+                emptyMessage="No venues found"
+                addLabel="Add New Venue"
+                options={venues.map(venue => ({
+                  value: venue.id.toString(),
+                  label: venue.name,
+                }))}
+                value={formData.venueIds.map(id => id.toString())}
+                onChange={value => {
+                  const ids = (value as string[]).map(id => Number(id));
+                  handleVenueChange(ids);
+                }}
+                onCreateNew={handleCreateVenue}
+                disabled={loadingVenues}
+              />
             </div>
 
-            {/* Info Notice */}
-            <Tip label="AI Tip">
-              {isCruise
-                ? "If you imported data from a URL or PDF, the AI Assistant can help identify ship venues and amenities. You can also search cruisemapper.com or the cruise line's website for detailed ship information."
-                : 'If you imported data from a URL or PDF, the AI Assistant can help identify venues and amenities mentioned in the source material. You can also create new venues and amenities by typing and clicking "Create".'}
-            </Tip>
+            {/* Amenities Section */}
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-white/90">{amenityLabel}</Label>
+              <p className="text-[10px] text-white/50 mb-2">{amenityDescription}</p>
+              <AmenitySelector
+                selectedIds={formData.amenityIds}
+                onSelectionChange={handleAmenityChange}
+                menuVariant="default"
+              />
+            </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          {/* Info Notice */}
+          <Tip label="AI Tip">
+            {isCruise
+              ? "If you imported data from a URL or PDF, the AI Assistant can help identify ship venues and amenities. You can also search cruisemapper.com or the cruise line's website for detailed ship information."
+              : 'If you imported data from a URL or PDF, the AI Assistant can help identify venues and amenities mentioned in the source material. You can also create new venues and amenities by typing and clicking "Create".'}
+          </Tip>
+        </div>
+      </AdminBottomSheet>
     </>
   );
 }

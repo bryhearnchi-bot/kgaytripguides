@@ -297,10 +297,16 @@ export const ScheduleTab = memo(function ScheduleTab({
               {subTab === 'schedule' ? (
                 <PillDropdown
                   options={[
-                    { value: 'All Dates', label: 'All Dates', icon: CalendarDays },
+                    {
+                      value: 'All Dates',
+                      label: 'All Dates',
+                      shortLabel: 'All Dates',
+                      icon: CalendarDays,
+                    },
                     ...dateOptions.map(option => ({
                       value: option.key,
                       label: option.port ? `${option.label} • ${option.port}` : option.label,
+                      shortLabel: option.label,
                     })),
                   ]}
                   value={selectedDate}
@@ -311,10 +317,16 @@ export const ScheduleTab = memo(function ScheduleTab({
               ) : (
                 <PillDropdown
                   options={[
-                    { value: 'All Dates', label: 'All Dates', icon: CalendarDays },
+                    {
+                      value: 'All Dates',
+                      label: 'All Dates',
+                      shortLabel: 'All Dates',
+                      icon: CalendarDays,
+                    },
                     ...partyDateOptions.map(option => ({
                       value: option.key,
                       label: option.port ? `${option.label} • ${option.port}` : option.label,
+                      shortLabel: option.label,
                     })),
                   ]}
                   value={selectedPartyDate}

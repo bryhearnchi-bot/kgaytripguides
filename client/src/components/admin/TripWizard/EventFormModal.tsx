@@ -8,7 +8,6 @@ import {
   Image as ImageIcon,
   FileText,
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { OceanInput } from '@/components/ui/ocean-input';
 import { OceanTextarea } from '@/components/ui/ocean-textarea';
@@ -19,6 +18,7 @@ import { api } from '@/lib/api-client';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 
 const eventSchema = z.object({
   tripId: z.number(),
@@ -351,24 +351,11 @@ export function EventFormModal({
   const isPartyEvent =
     eventTypes.find(t => t.id === formData.eventTypeId)?.name.toLowerCase() === 'party';
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="admin-form-modal sm:max-w-2xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2"
-        style={{
-          backgroundColor: 'rgba(0, 33, 71, 1)',
-          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-cyan-400" />
-            {editingEvent ? 'Edit Event' : 'Create New Event'}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          {/* Day Selector */}
+  const formContent = (
+    <>
+      <div className="space-y-4 py-4">
+        {/* Day Selector */}
+        <div>
           <StandardDropdown
             variant="single-search"
             label="Day"
@@ -379,21 +366,23 @@ export function EventFormModal({
             onChange={date => setFormData({ ...formData, date: date as string })}
             required
           />
+        </div>
 
-          {/* Event Title */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-white/90">
-              Event Title <span className="text-cyan-400">*</span>
-            </label>
-            <OceanInput
-              value={formData.title}
-              onChange={e => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., White Party, Drag Show, Welcome Reception"
-              className="h-10"
-            />
-          </div>
+        {/* Event Title */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-white/90">
+            Event Title <span className="text-cyan-400">*</span>
+          </label>
+          <OceanInput
+            value={formData.title}
+            onChange={e => setFormData({ ...formData, title: e.target.value })}
+            placeholder="e.g., White Party, Drag Show, Welcome Reception"
+            className="h-10"
+          />
+        </div>
 
-          {/* Event Type */}
+        {/* Event Type */}
+        <div>
           <StandardDropdown
             variant="single-search"
             label="Event Type"
@@ -409,140 +398,148 @@ export function EventFormModal({
             required
             disabled={loadingEventTypes}
           />
+        </div>
 
-          {/* Time */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-white/90">
-              Time (24-hour format) <span className="text-cyan-400">*</span>
-            </label>
-            <TimePicker
-              value={formData.time}
-              onChange={time => setFormData({ ...formData, time })}
-              placeholder="Select event time"
-              required
-            />
-            <p className="text-[10px] text-white/50">
-              Example: 14:00 for 2:00 PM, 23:30 for 11:30 PM
-            </p>
-          </div>
-          {/* Venue Selector */}
-          <StandardDropdown
-            variant="single-search-add"
-            label="Venue"
-            placeholder="Select a venue"
-            searchPlaceholder="Search venues..."
-            emptyMessage="No venues found"
-            addLabel="Add New Venue"
-            options={venues.map(venue => ({
-              value: venue.id.toString(),
-              label: venue.name,
-            }))}
-            value={
-              tripType === 'cruise'
-                ? formData.shipVenueId?.toString() || ''
-                : formData.resortVenueId?.toString() || ''
-            }
-            onChange={value => {
-              const venueId = value ? Number(value) : null;
-              if (tripType === 'cruise') {
-                setFormData({ ...formData, shipVenueId: venueId, resortVenueId: null });
-              } else {
-                setFormData({ ...formData, resortVenueId: venueId, shipVenueId: null });
-              }
-            }}
-            onCreateNew={handleCreateVenue}
-            disabled={loadingVenues}
+        {/* Time */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-white/90">
+            Time (24-hour format) <span className="text-cyan-400">*</span>
+          </label>
+          <TimePicker
+            value={formData.time}
+            onChange={time => setFormData({ ...formData, time })}
+            placeholder="Select event time"
+            required
           />
+          <p className="text-[10px] text-white/50">
+            Example: 14:00 for 2:00 PM, 23:30 for 11:30 PM
+          </p>
+        </div>
+        {/* Venue Selector */}
+        <StandardDropdown
+          variant="single-search-add"
+          label="Venue"
+          placeholder="Select a venue"
+          searchPlaceholder="Search venues..."
+          emptyMessage="No venues found"
+          addLabel="Add New Venue"
+          options={venues.map(venue => ({
+            value: venue.id.toString(),
+            label: venue.name,
+          }))}
+          value={
+            tripType === 'cruise'
+              ? formData.shipVenueId?.toString() || ''
+              : formData.resortVenueId?.toString() || ''
+          }
+          onChange={value => {
+            const venueId = value ? Number(value) : null;
+            if (tripType === 'cruise') {
+              setFormData({ ...formData, shipVenueId: venueId, resortVenueId: null });
+            } else {
+              setFormData({ ...formData, resortVenueId: venueId, shipVenueId: null });
+            }
+          }}
+          onCreateNew={handleCreateVenue}
+          disabled={loadingVenues}
+        />
 
-          {/* Talent Selector */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-white/90">Talent (Optional)</label>
-            <StandardDropdown
-              variant="multi-search-add"
-              placeholder="Select talent..."
-              searchPlaceholder="Search talent..."
-              emptyMessage="No talent found"
-              addLabel="Add New Talent"
-              options={talent.map(t => ({
-                value: t.id.toString(),
-                label: t.name,
-              }))}
-              value={formData.talentIds.map(id => id.toString())}
-              onChange={value => {
-                const ids = (value as string[]).map(id => Number(id));
-                setFormData({ ...formData, talentIds: ids });
-              }}
-              onCreateNew={handleCreateTalent}
-              disabled={loadingTalent}
-            />
-            <p className="text-[10px] text-white/50">Select talent performing at this event</p>
-          </div>
-
-          {/* Party Theme (only for party events) */}
-          {isPartyEvent && (
-            <StandardDropdown
-              variant="single-search"
-              label="Party Theme (Optional)"
-              placeholder="Select a party theme"
-              searchPlaceholder="Search party themes..."
-              emptyMessage="No party themes found"
-              options={partyThemes.map(theme => ({
-                value: theme.id.toString(),
-                label: theme.shortDescription
-                  ? `${theme.name} - ${theme.shortDescription}`
-                  : theme.name,
-              }))}
-              value={formData.partyThemeId?.toString() || ''}
-              onChange={value =>
-                setFormData({ ...formData, partyThemeId: value ? Number(value as string) : null })
-              }
-              disabled={loadingPartyThemes}
-            />
-          )}
-
-          {/* Image Upload */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-white/90">Event Image (Optional)</label>
-            <ImageUploadField
-              value={formData.imageUrl || ''}
-              onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
-              imageType="general"
-              label=""
-              placeholder="Event flyer or promotional image"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-white/90">Description (Optional)</label>
-            <OceanTextarea
-              value={formData.description || ''}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Event description, special instructions, dress code..."
-              rows={4}
-            />
-          </div>
+        {/* Talent Selector */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-white/90">Talent (Optional)</label>
+          <StandardDropdown
+            variant="multi-search-add"
+            placeholder="Select talent..."
+            searchPlaceholder="Search talent..."
+            emptyMessage="No talent found"
+            addLabel="Add New Talent"
+            options={talent.map(t => ({
+              value: t.id.toString(),
+              label: t.name,
+            }))}
+            value={formData.talentIds.map(id => id.toString())}
+            onChange={value => {
+              const ids = (value as string[]).map(id => Number(id));
+              setFormData({ ...formData, talentIds: ids });
+            }}
+            onCreateNew={handleCreateTalent}
+            disabled={loadingTalent}
+          />
+          <p className="text-[10px] text-white/50">Select talent performing at this event</p>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/90 hover:bg-white/10 hover:text-white transition-all"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
-          >
-            {saving ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event'}
-          </Button>
+        {/* Party Theme (only for party events) */}
+        {isPartyEvent && (
+          <StandardDropdown
+            variant="single-search"
+            label="Party Theme (Optional)"
+            placeholder="Select a party theme"
+            searchPlaceholder="Search party themes..."
+            emptyMessage="No party themes found"
+            options={partyThemes.map(theme => ({
+              value: theme.id.toString(),
+              label: theme.shortDescription
+                ? `${theme.name} - ${theme.shortDescription}`
+                : theme.name,
+            }))}
+            value={formData.partyThemeId?.toString() || ''}
+            onChange={value =>
+              setFormData({ ...formData, partyThemeId: value ? Number(value as string) : null })
+            }
+            disabled={loadingPartyThemes}
+          />
+        )}
+
+        {/* Image Upload */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-white/90">Event Image (Optional)</label>
+          <ImageUploadField
+            value={formData.imageUrl || ''}
+            onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
+            imageType="general"
+            label=""
+            placeholder="Event flyer or promotional image"
+          />
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Description */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-white/90">Description (Optional)</label>
+          <OceanTextarea
+            value={formData.description || ''}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Event description, special instructions, dress code..."
+            rows={4}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <AdminBottomSheet
+      isOpen={isOpen}
+      onOpenChange={onClose}
+      title={editingEvent ? 'Edit Event' : 'Create New Event'}
+      description="Edit or create an event for this trip"
+      icon={<Calendar className="h-5 w-5 text-cyan-400" />}
+      onSubmit={async e => {
+        e.preventDefault();
+        await handleSave();
+      }}
+      primaryAction={{
+        label: saving ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event',
+        type: 'submit',
+        loading: saving,
+        disabled: saving,
+      }}
+      secondaryAction={{
+        label: 'Cancel',
+        onClick: onClose,
+      }}
+      fullScreen={true}
+    >
+      {formContent}
+    </AdminBottomSheet>
   );
 }

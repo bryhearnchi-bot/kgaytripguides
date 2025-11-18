@@ -1,12 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -206,241 +200,215 @@ export function EditResortScheduleModal({ open, onOpenChange }: EditResortSchedu
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-5xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Resort Schedule</DialogTitle>
-          </DialogHeader>
+      <AdminBottomSheet
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        title="Edit Resort Schedule"
+        description="Edit resort schedule"
+        icon={<Calendar className="h-5 w-5 text-white" />}
+        onSubmit={e => {
+          e.preventDefault();
+          handleSave();
+        }}
+        primaryAction={{
+          label: 'Save Changes',
+          type: 'submit',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => onOpenChange(false),
+        }}
+        maxWidthClassName="max-w-5xl"
+      >
+        <div className="space-y-2.5 py-4" ref={entriesContainerRef}>
+          {formData.length === 0 ? (
+            <div className="p-4 rounded-lg bg-cyan-400/5 border border-cyan-400/20 text-center">
+              <p className="text-sm text-white/70">
+                No schedule entries found. Please ensure trip dates are set on the Basic Info page.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Schedule Entries */}
+              {sortedEntries.map(entry => {
+                const index = formData.findIndex(
+                  e => e.date === entry.date && e.dayNumber === entry.dayNumber
+                );
+                return (
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg border border-white/10 bg-white/[0.02] transition-all hover:border-white/20"
+                  >
+                    {/* Day Header */}
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <Calendar className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-semibold text-cyan-400">
+                        {entry.dayNumber < 1
+                          ? 'Pre-Trip'
+                          : entry.dayNumber >= 100
+                            ? 'Post-Trip'
+                            : `Day ${entry.dayNumber}`}
+                      </span>
+                      <span className="text-xs text-white/60">{formatDate(entry.date)}</span>
+                    </div>
 
-          <div className="space-y-2.5 py-4" ref={entriesContainerRef}>
-            {formData.length === 0 ? (
-              <div className="p-4 rounded-lg bg-cyan-400/5 border border-cyan-400/20 text-center">
-                <p className="text-sm text-white/70">
-                  No schedule entries found. Please ensure trip dates are set on the Basic Info
-                  page.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Schedule Entries */}
-                {sortedEntries.map(entry => {
-                  const index = formData.findIndex(
-                    e => e.date === entry.date && e.dayNumber === entry.dayNumber
-                  );
-                  return (
-                    <div
-                      key={index}
-                      className="p-3 rounded-lg border border-white/10 bg-white/[0.02] transition-all hover:border-white/20"
-                    >
-                      {/* Day Header */}
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <Calendar className="w-4 h-4 text-cyan-400" />
-                        <span className="text-xs font-semibold text-cyan-400">
-                          {entry.dayNumber < 1
-                            ? 'Pre-Trip'
-                            : entry.dayNumber >= 100
-                              ? 'Post-Trip'
-                              : `Day ${entry.dayNumber}`}
-                        </span>
-                        <span className="text-xs text-white/60">{formatDate(entry.date)}</span>
+                    {/* Fields Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      {/* Image Upload */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-white/90">
+                          Day Image (Optional)
+                        </Label>
+                        <ImageUploadField
+                          label=""
+                          value={entry.imageUrl || ''}
+                          onChange={url => handleImageUpload(index, url || '')}
+                          imageType="general"
+                        />
+                        <p className="text-[10px] text-white/50 mt-0.5">
+                          Fun image for this day's activities
+                        </p>
                       </div>
 
-                      {/* Fields Grid */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                        {/* Image Upload */}
-                        <div className="space-y-1">
-                          <Label className="text-xs font-semibold text-white/90">
-                            Day Image (Optional)
-                          </Label>
-                          <ImageUploadField
-                            label=""
-                            value={entry.imageUrl || ''}
-                            onChange={url => handleImageUpload(index, url || '')}
-                            imageType="general"
-                          />
-                          <p className="text-[10px] text-white/50 mt-0.5">
-                            Fun image for this day's activities
-                          </p>
-                        </div>
-
-                        {/* Description */}
-                        <div className="space-y-1">
-                          <Label className="text-xs font-semibold text-white/90">
-                            Description <span className="text-cyan-400">*</span>
-                          </Label>
-                          <Textarea
-                            placeholder={`Enter what happens on Day ${entry.dayNumber}...`}
-                            value={entry.description}
-                            onChange={e => handleDescriptionChange(index, e.target.value)}
-                            rows={4}
-                            className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                          />
-                          <p className="text-[10px] text-white/50 mt-0.5">
-                            High-level description of activities and events
-                          </p>
-                        </div>
+                      {/* Description */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-white/90">
+                          Description <span className="text-cyan-400">*</span>
+                        </Label>
+                        <Textarea
+                          placeholder={`Enter what happens on Day ${entry.dayNumber}...`}
+                          value={entry.description}
+                          onChange={e => handleDescriptionChange(index, e.target.value)}
+                          rows={4}
+                          className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                        />
+                        <p className="text-[10px] text-white/50 mt-0.5">
+                          High-level description of activities and events
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
-
-                {/* Add Day Button */}
-                <div className="flex justify-end mt-4">
-                  <Button
-                    type="button"
-                    onClick={() => setShowAddDayModal(true)}
-                    className="flex items-center gap-1.5 h-10 px-4 bg-cyan-400/10 border border-cyan-400/30 rounded-[10px] text-cyan-400 text-sm font-medium hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Day
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-            >
-              Save Changes
-            </Button>
-          </div>
-
-          {/* Add Day Modal */}
-          <Dialog open={showAddDayModal} onOpenChange={setShowAddDayModal}>
-            <DialogContent
-              className="admin-form-modal border border-white/10 text-white max-w-md"
-              style={{
-                backgroundColor: 'rgba(0, 33, 71, 1)',
-                backgroundImage:
-                  'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-              }}
-            >
-              <DialogHeader>
-                <DialogTitle className="text-lg font-semibold text-white">
-                  Add Additional Day
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4 py-4">
-                {/* Day Type Selection */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-white/90">When is this day?</Label>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setAddDayType('before')}
-                      className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
-                        addDayType === 'before'
-                          ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
-                          : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
-                      }`}
-                    >
-                      Before Trip
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAddDayType('after')}
-                      className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
-                        addDayType === 'after'
-                          ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
-                          : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
-                      }`}
-                    >
-                      After Trip
-                    </button>
                   </div>
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    {addDayType === 'before'
-                      ? 'Select a date before your trip starts'
-                      : addDayType === 'after'
-                        ? 'Select a date after your trip ends'
-                        : 'Choose whether this day is before or after the main trip dates'}
-                  </p>
-                </div>
+                );
+              })}
 
-                {/* Date Selection */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Date</Label>
-                  <DatePicker
-                    value={selectedDate}
-                    onChange={date => {
-                      if (date) {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        setSelectedDate(`${year}-${month}-${day}`);
-                      } else {
-                        setSelectedDate('');
-                      }
-                    }}
-                    placeholder="Select date"
-                    disabled={!addDayType}
-                    disabledDates={date => {
-                      // Check if this date already exists in schedule entries
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(2, '0');
-                      const day = String(date.getDate()).padStart(2, '0');
-                      const dateString = `${year}-${month}-${day}`;
-                      return formData.some(entry => entry.date === dateString);
-                    }}
-                    {...(addDayType === 'before'
-                      ? { toDate: getMinMaxDates().maxDate }
-                      : addDayType === 'after'
-                        ? { fromDate: getMinMaxDates().minDate }
-                        : {})}
-                  />
-                  {!addDayType && (
-                    <p className="text-[10px] text-white/50 mt-0.5">
-                      Please select when this day occurs first
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <DialogFooter className="gap-2">
+              {/* Add Day Button */}
+              <div className="flex justify-end mt-4">
                 <Button
                   type="button"
-                  onClick={() => {
-                    setShowAddDayModal(false);
-                    setSelectedDate('');
-                    setAddDayType(null);
-                  }}
-                  className="h-10 px-4 bg-white/[0.04] border border-white/10 rounded-[10px] text-white text-sm hover:bg-white/[0.06] transition-all"
+                  onClick={() => setShowAddDayModal(true)}
+                  className="flex items-center gap-1.5 h-10 px-4 bg-cyan-400/10 border border-cyan-400/30 rounded-[10px] text-cyan-400 text-sm font-medium hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleAddDay}
-                  disabled={!selectedDate || !addDayType}
-                  className="h-10 px-4 bg-cyan-400/20 border border-cyan-400/40 rounded-[10px] text-cyan-400 text-sm font-medium hover:bg-cyan-400/30 hover:border-cyan-400/60 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
+                  <Plus className="w-4 h-4" />
                   Add Day
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </DialogContent>
-      </Dialog>
+              </div>
+            </>
+          )}
+        </div>
+      </AdminBottomSheet>
+
+      {/* Add Day Modal */}
+      <AdminBottomSheet
+        isOpen={showAddDayModal}
+        onOpenChange={setShowAddDayModal}
+        title="Add Additional Day"
+        description="Add a day before or after the trip"
+        icon={<Plus className="h-5 w-5 text-white" />}
+        onSubmit={e => {
+          e.preventDefault();
+          handleAddDay();
+        }}
+        primaryAction={{
+          label: 'Add Day',
+          type: 'submit',
+          disabled: !selectedDate || !addDayType,
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => {
+            setShowAddDayModal(false);
+            setSelectedDate('');
+            setAddDayType(null);
+          },
+        }}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4 py-4">
+          {/* Day Type Selection */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-white/90">When is this day?</Label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setAddDayType('before')}
+                className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
+                  addDayType === 'before'
+                    ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
+                    : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
+                }`}
+              >
+                Before Trip
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddDayType('after')}
+                className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
+                  addDayType === 'after'
+                    ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
+                    : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
+                }`}
+              >
+                After Trip
+              </button>
+            </div>
+            <p className="text-[10px] text-white/50 mt-0.5">
+              {addDayType === 'before'
+                ? 'Select a date before your trip starts'
+                : addDayType === 'after'
+                  ? 'Select a date after your trip ends'
+                  : 'Choose whether this day is before or after the main trip dates'}
+            </p>
+          </div>
+
+          {/* Date Selection */}
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-white/90">Date</Label>
+            <DatePicker
+              value={selectedDate}
+              onChange={date => {
+                if (date) {
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  setSelectedDate(`${year}-${month}-${day}`);
+                } else {
+                  setSelectedDate('');
+                }
+              }}
+              placeholder="Select date"
+              disabled={!addDayType}
+              disabledDates={date => {
+                // Check if this date already exists in schedule entries
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+                return formData.some(entry => entry.date === dateString);
+              }}
+              {...(addDayType === 'before'
+                ? { toDate: getMinMaxDates().maxDate }
+                : addDayType === 'after'
+                  ? { fromDate: getMinMaxDates().minDate }
+                  : {})}
+            />
+            {!addDayType && (
+              <p className="text-[10px] text-white/50 mt-0.5">
+                Please select when this day occurs first
+              </p>
+            )}
+          </div>
+        </div>
+      </AdminBottomSheet>
     </>
   );
 }

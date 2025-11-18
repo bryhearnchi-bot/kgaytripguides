@@ -50,6 +50,7 @@ const scrollbarStyles = `
 export interface PillDropdownOption {
   value: string;
   label: string;
+  shortLabel?: string;
   icon?: React.ComponentType<{ className?: string }>;
 }
 
@@ -77,9 +78,52 @@ export function PillDropdown({
   emptyMessage = 'No options found.',
 }: PillDropdownProps) {
   const [open, setOpen] = React.useState(false);
+  const openTimeRef = React.useRef<number>(0);
 
   const selectedOption = options.find(opt => opt.value === value);
-  const currentLabel = selectedOption?.label || placeholder;
+  const currentLabel = selectedOption?.shortLabel || selectedOption?.label || placeholder;
+
+  // Handle open change with delay to prevent immediate close on mobile
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (newOpen) {
+      openTimeRef.current = Date.now();
+      setOpen(true);
+    } else {
+      // Prevent closing if it was just opened (within 150ms) - fixes mobile tap issue
+      const timeSinceOpen = Date.now() - openTimeRef.current;
+      if (timeSinceOpen > 150) {
+        setOpen(false);
+      }
+    }
+  }, []);
+
+  const scrollPositionRef = React.useRef(0);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const originalPosition = document.body.style.position;
+    const originalTop = document.body.style.top;
+    const originalWidth = document.body.style.width;
+    const scrollY = window.scrollY;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${window.innerWidth - document.documentElement.clientWidth}px`;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    scrollPositionRef.current = scrollY;
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      document.body.style.position = originalPosition;
+      document.body.style.top = originalTop;
+      document.body.style.width = originalWidth;
+      window.scrollTo(0, scrollPositionRef.current);
+    };
+  }, [open]);
 
   // Debug scrolling and test scroll functionality
   React.useEffect(() => {
@@ -126,7 +170,7 @@ export function PillDropdown({
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -134,6 +178,14 @@ export function PillDropdown({
             aria-expanded={open}
             className={cn(pillTriggerClasses, triggerClassName, className)}
             style={{ height: 'auto', minHeight: 0, paddingTop: '6px', paddingBottom: '6px' }}
+            onPointerDown={e => {
+              // Prevent the pointer event from bubbling - this helps on mobile
+              e.stopPropagation();
+            }}
+            onMouseDown={e => {
+              // Prevent mouse events from bubbling
+              e.stopPropagation();
+            }}
           >
             <span className="truncate text-xs leading-tight">{currentLabel}</span>
             <ChevronDown className="h-3.5 w-3.5 text-white/70 shrink-0" />
@@ -141,7 +193,7 @@ export function PillDropdown({
         </PopoverTrigger>
         <PopoverContent
           className="min-w-[200px] w-auto p-0 border border-white/10 rounded-[20px] shadow-xl text-white"
-          align="start"
+          align="end"
           sideOffset={4}
           style={{
             backgroundColor: 'rgba(0, 33, 71, 1)',
@@ -153,8 +205,7 @@ export function PillDropdown({
             <CommandList
               className="pill-dropdown-scroll"
               style={{
-                height: '240px',
-                maxHeight: '240px',
+                maxHeight: '60vh',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 WebkitOverflowScrolling: 'touch',
@@ -166,6 +217,9 @@ export function PillDropdown({
                 const target = e.currentTarget;
                 target.scrollTop += e.deltaY;
               }}
+              onTouchStart={e => e.stopPropagation()}
+              onTouchMove={e => e.stopPropagation()}
+              onTouchEnd={e => e.stopPropagation()}
             >
               <CommandEmpty className="py-4 text-xs text-white/60">{emptyMessage}</CommandEmpty>
               <CommandGroup className="overflow-visible">

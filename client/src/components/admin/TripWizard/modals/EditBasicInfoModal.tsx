@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,7 @@ import type { DropdownOption } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { api } from '@/lib/api-client';
-import { Ship, Calendar } from 'lucide-react';
+import { Ship, Calendar, FileText } from 'lucide-react';
 
 // Admin modal field styles - matches AdminFormModal
 const modalFieldStyles = `
@@ -165,225 +165,204 @@ export function EditBasicInfoModal({ open, onOpenChange }: EditBasicInfoModalPro
     onOpenChange(false);
   };
 
-  if (loading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="sm:max-w-3xl border-white/10 rounded-[20px] text-white"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Basic Information</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-2.5 py-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {/* Left Column */}
-              <div className="space-y-2.5">
-                {/* Charter Company */}
-                <StandardDropdown
-                  variant="single-search"
-                  label="Charter Company"
-                  placeholder="Select a charter company"
-                  emptyMessage="No charter company found."
-                  options={charterCompanies.map(company => ({
-                    value: company.id.toString(),
-                    label: company.name,
-                  }))}
-                  value={formData.charterCompanyId?.toString() || ''}
-                  onChange={value =>
-                    setFormData(prev => ({ ...prev, charterCompanyId: Number(value) }))
-                  }
-                  required
-                />
-
-                {/* Trip Type */}
-                <div className="space-y-1">
+      <AdminBottomSheet
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        title="Edit Basic Information"
+        description="Edit trip basic information"
+        icon={<FileText className="h-5 w-5 text-white" />}
+        onSubmit={e => {
+          e.preventDefault();
+          handleSave();
+        }}
+        primaryAction={{
+          label: 'Save Changes',
+          type: 'submit',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => onOpenChange(false),
+        }}
+        maxWidthClassName="max-w-3xl"
+      >
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2.5 py-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {/* Left Column */}
+                <div className="space-y-2.5">
+                  {/* Charter Company */}
                   <StandardDropdown
                     variant="single-search"
-                    label="Trip Type"
-                    placeholder="Select a trip type"
-                    emptyMessage="No trip type found."
-                    options={tripTypes.map(type => ({
-                      value: type.id.toString(),
-                      label: type.trip_type,
-                      icon: type.trip_type.toLowerCase() === 'cruise' ? Ship : Calendar,
+                    label="Charter Company"
+                    placeholder="Select a charter company"
+                    emptyMessage="No charter company found."
+                    options={charterCompanies.map(company => ({
+                      value: company.id.toString(),
+                      label: company.name,
                     }))}
-                    value={formData.tripTypeId?.toString() || ''}
-                    onChange={handleTripTypeChange}
+                    value={formData.charterCompanyId?.toString() || ''}
+                    onChange={value =>
+                      setFormData(prev => ({ ...prev, charterCompanyId: Number(value) }))
+                    }
                     required
                   />
-                  {state.tripType && (
-                    <div className="flex items-center gap-1.5 px-2 py-1 bg-cyan-400/10 border border-cyan-400/20 rounded-lg">
-                      {state.tripType === 'cruise' ? (
-                        <Ship className="w-3 h-3 text-cyan-400" />
-                      ) : (
-                        <Calendar className="w-3 h-3 text-cyan-400" />
-                      )}
-                      <span className="text-[10px] text-cyan-400 font-medium">
-                        {state.tripType === 'cruise' ? 'Cruise' : 'Resort'} trip selected
-                      </span>
-                    </div>
-                  )}
-                </div>
 
-                {/* Trip Name */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-white/90">Trip Name *</label>
-                  <Input
-                    placeholder="Enter trip name"
-                    value={formData.name}
-                    onChange={e => handleInputChange('name', e.target.value)}
-                    className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  {formData.slug && (
-                    <p className="text-[10px] text-white/50 mt-0.5">
-                      URL: /trip-guide/{formData.slug}
-                    </p>
-                  )}
-                </div>
-
-                {/* Dates */}
-                <div className="grid grid-cols-2 gap-2">
+                  {/* Trip Type */}
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-white/90">Start Date *</label>
-                    <DatePicker
-                      value={formData.startDate}
-                      onChange={date => {
-                        const newStartDate = date ? formatDateForStorage(date) : '';
-
-                        // Clear end date if it's now invalid
-                        if (formData.endDate && newStartDate) {
-                          const startDateObj = new Date(newStartDate);
-                          const endDateObj = new Date(formData.endDate);
-
-                          if (endDateObj <= startDateObj) {
-                            setFormData(prev => ({
-                              ...prev,
-                              startDate: newStartDate,
-                              endDate: '',
-                            }));
-                            return;
-                          }
-                        }
-
-                        setFormData(prev => ({ ...prev, startDate: newStartDate }));
-                      }}
-                      placeholder="Pick start date"
+                    <StandardDropdown
+                      variant="single-search"
+                      label="Trip Type"
+                      placeholder="Select a trip type"
+                      emptyMessage="No trip type found."
+                      options={tripTypes.map(type => ({
+                        value: type.id.toString(),
+                        label: type.trip_type,
+                        icon: type.trip_type.toLowerCase() === 'cruise' ? Ship : Calendar,
+                      }))}
+                      value={formData.tripTypeId?.toString() || ''}
+                      onChange={handleTripTypeChange}
+                      required
                     />
+                    {state.tripType && (
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-cyan-400/10 border border-cyan-400/20 rounded-lg">
+                        {state.tripType === 'cruise' ? (
+                          <Ship className="w-3 h-3 text-cyan-400" />
+                        ) : (
+                          <Calendar className="w-3 h-3 text-cyan-400" />
+                        )}
+                        <span className="text-[10px] text-cyan-400 font-medium">
+                          {state.tripType === 'cruise' ? 'Cruise' : 'Resort'} trip selected
+                        </span>
+                      </div>
+                    )}
                   </div>
 
+                  {/* Trip Name */}
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-white/90">End Date *</label>
-                    <DatePicker
-                      value={formData.endDate}
-                      onChange={date =>
-                        setFormData(prev => ({
-                          ...prev,
-                          endDate: date ? formatDateForStorage(date) : '',
-                        }))
-                      }
-                      placeholder="Pick end date"
-                      disabled={!formData.startDate}
-                      fromDate={getMinimumEndDate()}
+                    <label className="text-xs font-semibold text-white/90">Trip Name *</label>
+                    <Input
+                      placeholder="Enter trip name"
+                      value={formData.name}
+                      onChange={e => handleInputChange('name', e.target.value)}
+                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
                     />
-                    {formData.startDate && (
+                    {formData.slug && (
                       <p className="text-[10px] text-white/50 mt-0.5">
-                        Must be at least one day after start date
+                        URL: /trip-guide/{formData.slug}
                       </p>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Right Column */}
-              <div className="space-y-2.5">
-                {/* Hero Image */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-white/90">Trip Cover Image *</label>
-                  <ImageUploadField
-                    label="Trip Cover Image"
-                    value={formData.heroImageUrl}
-                    onChange={url => setFormData(prev => ({ ...prev, heroImageUrl: url || '' }))}
-                    imageType="general"
-                    placeholder="No cover image uploaded"
-                    className="admin-form-modal"
-                  />
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-white/90">Start Date *</label>
+                      <DatePicker
+                        value={formData.startDate}
+                        onChange={date => {
+                          const newStartDate = date ? formatDateForStorage(date) : '';
+
+                          // Clear end date if it's now invalid
+                          if (formData.endDate && newStartDate) {
+                            const startDateObj = new Date(newStartDate);
+                            const endDateObj = new Date(formData.endDate);
+
+                            if (endDateObj <= startDateObj) {
+                              setFormData(prev => ({
+                                ...prev,
+                                startDate: newStartDate,
+                                endDate: '',
+                              }));
+                              return;
+                            }
+                          }
+
+                          setFormData(prev => ({ ...prev, startDate: newStartDate }));
+                        }}
+                        placeholder="Pick start date"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-white/90">End Date *</label>
+                      <DatePicker
+                        value={formData.endDate}
+                        onChange={date =>
+                          setFormData(prev => ({
+                            ...prev,
+                            endDate: date ? formatDateForStorage(date) : '',
+                          }))
+                        }
+                        placeholder="Pick end date"
+                        disabled={!formData.startDate}
+                        fromDate={getMinimumEndDate()}
+                      />
+                      {formData.startDate && (
+                        <p className="text-[10px] text-white/50 mt-0.5">
+                          Must be at least one day after start date
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Description */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-white/90">Description *</label>
-                  <Textarea
-                    placeholder="Enter trip description..."
-                    value={formData.description}
-                    onChange={e => handleInputChange('description', e.target.value)}
-                    rows={3}
-                    className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                </div>
+                {/* Right Column */}
+                <div className="space-y-2.5">
+                  {/* Hero Image */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-white/90">
+                      Trip Cover Image *
+                    </label>
+                    <ImageUploadField
+                      label="Trip Cover Image"
+                      value={formData.heroImageUrl}
+                      onChange={url => setFormData(prev => ({ ...prev, heroImageUrl: url || '' }))}
+                      imageType="general"
+                      placeholder="No cover image uploaded"
+                      className="admin-form-modal"
+                    />
+                  </div>
 
-                {/* Highlights */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-white/90">Highlights</label>
-                  <Textarea
-                    placeholder="Enter trip highlights (one per line)..."
-                    value={formData.highlights}
-                    onChange={e => handleInputChange('highlights', e.target.value)}
-                    rows={2}
-                    className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Enter each highlight on a new line
-                  </p>
+                  {/* Description */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-white/90">Description *</label>
+                    <Textarea
+                      placeholder="Enter trip description..."
+                      value={formData.description}
+                      onChange={e => handleInputChange('description', e.target.value)}
+                      rows={3}
+                      className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                    />
+                  </div>
+
+                  {/* Highlights */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-white/90">Highlights</label>
+                    <Textarea
+                      placeholder="Enter trip highlights (one per line)..."
+                      value={formData.highlights}
+                      onChange={e => handleInputChange('highlights', e.target.value)}
+                      rows={2}
+                      className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                    />
+                    <p className="text-[10px] text-white/50 mt-0.5">
+                      Enter each highlight on a new line
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </>
+        )}
+      </AdminBottomSheet>
     </>
   );
 }

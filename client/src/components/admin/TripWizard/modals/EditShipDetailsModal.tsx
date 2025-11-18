@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { StandardDropdown } from '@/components/ui/dropdowns';
+import { Ship } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -48,6 +51,10 @@ interface EditShipDetailsModalProps {
 export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModalProps) {
   const { state, updateShipData } = useTripWizard();
 
+  // Cruise lines for dropdown
+  const [cruiseLines, setCruiseLines] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingCruiseLines, setLoadingCruiseLines] = useState(true);
+
   // Local state for form
   const [formData, setFormData] = useState({
     name: state.shipData?.name || '',
@@ -59,6 +66,49 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
     description: state.shipData?.description || '',
     deckPlansUrl: state.shipData?.deckPlansUrl || '',
   });
+
+  // Fetch cruise lines when modal opens
+  useEffect(() => {
+    const fetchCruiseLines = async () => {
+      try {
+        setLoadingCruiseLines(true);
+        const response = await api.get('/api/admin/lookup-tables/cruise-lines');
+        if (response.ok) {
+          const data = await response.json();
+          setCruiseLines(data.items || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch cruise lines:', error);
+      } finally {
+        setLoadingCruiseLines(false);
+      }
+    };
+
+    if (open) {
+      fetchCruiseLines();
+    }
+  }, [open]);
+
+  // Handle creating new cruise line
+  const handleCreateCruiseLine = async (name: string) => {
+    try {
+      const response = await api.post('/api/admin/lookup-tables/cruise-lines', {
+        name: name.trim(),
+      });
+      if (response.ok) {
+        const newCruiseLine = await response.json();
+        setCruiseLines(prev => [...prev, newCruiseLine.item || newCruiseLine]);
+        const cruiseLineId = newCruiseLine.item?.id || newCruiseLine.id;
+        const cruiseLineName = newCruiseLine.item?.name || newCruiseLine.name;
+        setFormData(prev => ({ ...prev, cruiseLineId, cruiseLineName }));
+        return { value: cruiseLineId.toString(), label: cruiseLineName };
+      }
+      throw new Error('Failed to create cruise line');
+    } catch (error) {
+      console.error('Failed to create cruise line:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -89,157 +139,161 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Ship Information</DialogTitle>
-          </DialogHeader>
+      <AdminBottomSheet
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        title="Edit Ship Information"
+        description="Edit ship details"
+        icon={<Ship className="h-5 w-5 text-white" />}
+        onSubmit={e => {
+          e.preventDefault();
+          handleSave();
+        }}
+        primaryAction={{
+          label: 'Save Changes',
+          type: 'submit',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => onOpenChange(false),
+        }}
+        maxWidthClassName="max-w-3xl"
+      >
+        <div className="space-y-2.5 py-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Left Column */}
+            <div className="space-y-2.5">
+              {/* Ship Name */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">
+                  Ship Name <span className="text-cyan-400">*</span>
+                </Label>
+                <Input
+                  placeholder="Enter ship name"
+                  value={formData.name}
+                  onChange={e => handleInputChange('name', e.target.value)}
+                  className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                />
+              </div>
 
-          <div className="space-y-2.5 py-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {/* Left Column */}
-              <div className="space-y-2.5">
-                {/* Ship Name */}
+              {/* Cruise Line */}
+              <div className="space-y-1">
+                <StandardDropdown
+                  variant="single-search-add"
+                  label="Cruise Line"
+                  placeholder="Select a cruise line"
+                  searchPlaceholder="Search cruise lines..."
+                  emptyMessage="No cruise lines found"
+                  addLabel="Add New Cruise Line"
+                  options={cruiseLines.map(cl => ({
+                    value: cl.id.toString(),
+                    label: cl.name,
+                  }))}
+                  value={formData.cruiseLineId?.toString() || ''}
+                  onChange={value => {
+                    const cruiseLineId = value ? Number(value) : null;
+                    const selectedCruiseLine = cruiseLines.find(cl => cl.id === cruiseLineId);
+                    setFormData(prev => ({
+                      ...prev,
+                      cruiseLineId,
+                      cruiseLineName: selectedCruiseLine?.name || '',
+                    }));
+                  }}
+                  onCreateNew={handleCreateCruiseLine}
+                  disabled={loadingCruiseLines}
+                  required={true}
+                />
+              </div>
+
+              {/* Capacity and Decks Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Capacity */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Ship Name <span className="text-cyan-400">*</span>
-                  </Label>
+                  <Label className="text-xs font-semibold text-white/90">Capacity</Label>
                   <Input
-                    placeholder="Enter ship name"
-                    value={formData.name}
-                    onChange={e => handleInputChange('name', e.target.value)}
+                    type="number"
+                    placeholder="0"
+                    value={formData.capacity || ''}
+                    onChange={e =>
+                      handleInputChange(
+                        'capacity',
+                        e.target.value ? parseInt(e.target.value) : undefined
+                      )
+                    }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
                   />
+                  <p className="text-[10px] text-white/50 mt-0.5">Maximum passengers</p>
                 </div>
 
-                {/* Cruise Line */}
+                {/* Number of Decks */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Cruise Line <span className="text-cyan-400">*</span>
-                  </Label>
+                  <Label className="text-xs font-semibold text-white/90">Decks</Label>
                   <Input
-                    placeholder="Enter cruise line"
-                    value={formData.cruiseLineName}
-                    onChange={e => handleInputChange('cruiseLineName', e.target.value)}
+                    type="number"
+                    placeholder="0"
+                    value={formData.decks || ''}
+                    onChange={e =>
+                      handleInputChange(
+                        'decks',
+                        e.target.value ? parseInt(e.target.value) : undefined
+                      )
+                    }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
                   />
-                </div>
-
-                {/* Capacity and Decks Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Capacity */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Capacity</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={formData.capacity || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'capacity',
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                    />
-                    <p className="text-[10px] text-white/50 mt-0.5">Maximum passengers</p>
-                  </div>
-
-                  {/* Number of Decks */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Decks</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={formData.decks || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'decks',
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                    />
-                    <p className="text-[10px] text-white/50 mt-0.5">Total number of decks</p>
-                  </div>
-                </div>
-
-                {/* Deck Plans URL */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Deck Plans URL</Label>
-                  <Input
-                    placeholder="https://example.com/deck-plans"
-                    value={formData.deckPlansUrl}
-                    onChange={e => handleInputChange('deckPlansUrl', e.target.value)}
-                    className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Link to ship deck plans or layout
-                  </p>
+                  <p className="text-[10px] text-white/50 mt-0.5">Total number of decks</p>
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div className="space-y-2.5">
-                {/* Ship Image */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Ship Image</Label>
-                  <ImageUploadField
-                    label="Ship Image"
-                    value={formData.imageUrl}
-                    onChange={url => handleInputChange('imageUrl', url)}
-                    imageType="ships"
-                    placeholder="No ship image uploaded"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">High-quality image of the ship</p>
-                </div>
+              {/* Deck Plans URL */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">Deck Plans URL</Label>
+                <Input
+                  placeholder="https://example.com/deck-plans"
+                  value={formData.deckPlansUrl}
+                  onChange={e => handleInputChange('deckPlansUrl', e.target.value)}
+                  className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                />
+                <p className="text-[10px] text-white/50 mt-0.5">
+                  Link to ship deck plans or layout
+                </p>
+              </div>
+            </div>
 
-                {/* Description */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Description <span className="text-cyan-400">*</span>
-                  </Label>
-                  <Textarea
-                    placeholder="Enter ship description..."
-                    value={formData.description}
-                    onChange={e => handleInputChange('description', e.target.value)}
-                    rows={7}
-                    className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Describe the ship's features, amenities, and atmosphere
-                  </p>
-                </div>
+            {/* Right Column */}
+            <div className="space-y-2.5">
+              {/* Ship Image */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">Ship Image</Label>
+                <ImageUploadField
+                  label="Ship Image"
+                  value={formData.imageUrl}
+                  onChange={url => handleInputChange('imageUrl', url)}
+                  imageType="ships"
+                  placeholder="No ship image uploaded"
+                />
+                <p className="text-[10px] text-white/50 mt-0.5">High-quality image of the ship</p>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">
+                  Description <span className="text-cyan-400">*</span>
+                </Label>
+                <Textarea
+                  placeholder="Enter ship description..."
+                  value={formData.description}
+                  onChange={e => handleInputChange('description', e.target.value)}
+                  rows={7}
+                  className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                />
+                <p className="text-[10px] text-white/50 mt-0.5">
+                  Describe the ship's features, amenities, and atmosphere
+                </p>
               </div>
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </AdminBottomSheet>
     </>
   );
 }

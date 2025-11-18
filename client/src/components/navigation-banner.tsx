@@ -1,5 +1,15 @@
 import { Link, useLocation } from 'wouter';
-import { TreePalm, History, Star, Bell, User, RefreshCw, Share2 } from 'lucide-react';
+import {
+  TreePalm,
+  History,
+  Star,
+  Bell,
+  User,
+  RefreshCw,
+  Share2,
+  Shield,
+  ArrowLeft,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
@@ -12,6 +22,7 @@ import { FlyUpSheet } from '@/components/FlyUpSheet';
 import { AboutKGayModal } from '@/components/AboutKGayModal';
 import Alerts from '@/pages/alerts';
 import Settings from '@/pages/settings';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function NavigationBanner() {
   const [currentLocation, setLocation] = useLocation();
@@ -22,6 +33,8 @@ export default function NavigationBanner() {
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const { shareContent } = useShare();
   const { unreadCount, refresh: refreshAlerts } = useUnreadAlerts();
+  const isMobile = useIsMobile();
+  const isAdmin = currentLocation.startsWith('/admin');
 
   // Determine active tab based on current location
   const getActiveTab = () => {
@@ -104,22 +117,43 @@ export default function NavigationBanner() {
       <div className="text-white fixed z-[60] w-full top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-[#002147]/90 backdrop-blur-lg">
         <div className="px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setAboutModalOpen(true)}
-              className="flex-shrink-0 focus:outline-none"
-              aria-label="About KGay Travel"
-            >
-              <img
-                src="/logos/kgay-logo.jpg"
-                alt="KGay Travel"
-                className="h-6 sm:h-8 w-auto hover:opacity-90 transition cursor-pointer"
-              />
-            </button>
-            <Link href="/" className="flex items-center">
-              <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
-                KGay Travel Guides
-              </span>
-            </Link>
+            {isAdmin && isMobile ? (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setLocation('/')}
+                  className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center"
+                  aria-label="Exit Admin"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <div className="flex items-center gap-2">
+                  <img src="/logos/kgay-logo.jpg" alt="KGay Travel" className="h-6 w-auto" />
+                  <Shield className="h-5 w-5 text-white/90" />
+                  <span className="text-sm font-semibold tracking-wider text-white">
+                    Admin Panel
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setAboutModalOpen(true)}
+                  className="flex-shrink-0 focus:outline-none"
+                  aria-label="About KGay Travel"
+                >
+                  <img
+                    src="/logos/kgay-logo.jpg"
+                    alt="KGay Travel"
+                    className="h-6 sm:h-8 w-auto hover:opacity-90 transition cursor-pointer"
+                  />
+                </button>
+                <Link href="/" className="flex items-center">
+                  <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">
+                    KGay Travel Guides
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2">

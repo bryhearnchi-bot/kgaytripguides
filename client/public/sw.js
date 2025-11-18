@@ -70,6 +70,19 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
 
+  // Skip service worker handling for admin routes - these are client-side routes
+  // Admin routes should always go directly to the network to avoid caching issues
+  if (url.pathname.startsWith('/admin/')) {
+    // Explicitly pass through to network for admin routes
+    event.respondWith(
+      fetch(request).catch(error => {
+        console.error('[ServiceWorker] Admin route fetch failed:', error);
+        return new Response('Network error', { status: 503 });
+      })
+    );
+    return;
+  }
+
   // Handle navigation requests
   // CRITICAL iOS PWA Fix: Use network-first with proper headers to maintain PWA context
   // This prevents iOS from showing browser chrome during in-app navigation

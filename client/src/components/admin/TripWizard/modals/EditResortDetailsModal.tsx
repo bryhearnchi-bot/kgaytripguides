@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { LocationSelector } from '@/components/admin/LocationSelector';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { TimePicker } from '@/components/ui/time-picker';
+import { Building2 } from 'lucide-react';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -97,177 +98,163 @@ export function EditResortDetailsModal({ open, onOpenChange }: EditResortDetails
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Resort Information</DialogTitle>
-          </DialogHeader>
+      <AdminBottomSheet
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        title="Edit Resort Information"
+        description="Edit resort details"
+        icon={<Building2 className="h-5 w-5 text-white" />}
+        onSubmit={e => {
+          e.preventDefault();
+          handleSave();
+        }}
+        primaryAction={{
+          label: 'Save Changes',
+          type: 'submit',
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => onOpenChange(false),
+        }}
+        maxWidthClassName="max-w-3xl"
+      >
+        <div className="space-y-2.5 py-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Left Column */}
+            <div className="space-y-2.5">
+              {/* Resort Name */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">
+                  Resort Name <span className="text-cyan-400">*</span>
+                </Label>
+                <Input
+                  placeholder="Enter resort name"
+                  value={formData.name}
+                  onChange={e => handleInputChange('name', e.target.value)}
+                  className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                />
+              </div>
 
-          <div className="space-y-2.5 py-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {/* Left Column */}
-              <div className="space-y-2.5">
-                {/* Resort Name */}
+              {/* Location */}
+              <LocationSelector
+                label="Location"
+                selectedId={formData.locationId ?? null}
+                onSelectionChange={handleLocationChange}
+                placeholder="Select resort location..."
+                required
+                wizardMode={true}
+              />
+
+              {/* Capacity and Rooms Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Capacity */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Resort Name <span className="text-cyan-400">*</span>
-                  </Label>
+                  <Label className="text-xs font-semibold text-white/90">Capacity</Label>
                   <Input
-                    placeholder="Enter resort name"
-                    value={formData.name}
-                    onChange={e => handleInputChange('name', e.target.value)}
+                    type="number"
+                    placeholder="0"
+                    value={formData.capacity || ''}
+                    onChange={e =>
+                      handleInputChange(
+                        'capacity',
+                        e.target.value ? parseInt(e.target.value) : undefined
+                      )
+                    }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
                   />
                 </div>
 
-                {/* Location */}
-                <LocationSelector
-                  label="Location"
-                  selectedId={formData.locationId ?? null}
-                  onSelectionChange={handleLocationChange}
-                  placeholder="Select resort location..."
-                  required
-                  wizardMode={true}
-                />
-
-                {/* Capacity and Rooms Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Capacity */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Capacity</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={formData.capacity || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'capacity',
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                    />
-                  </div>
-
-                  {/* Number of Rooms */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Rooms</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={formData.numberOfRooms || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'numberOfRooms',
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                      className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                    />
-                  </div>
-                </div>
-
-                {/* Check-in and Check-out Times Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Check-in Time */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Check-in Time</Label>
-                    <TimePicker
-                      value={formData.checkInTime}
-                      onChange={value => handleInputChange('checkInTime', value)}
-                      placeholder="15:00"
-                    />
-                  </div>
-
-                  {/* Check-out Time */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-white/90">Check-out Time</Label>
-                    <TimePicker
-                      value={formData.checkOutTime}
-                      onChange={value => handleInputChange('checkOutTime', value)}
-                      placeholder="11:00"
-                    />
-                  </div>
+                {/* Number of Rooms */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-white/90">Rooms</Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={formData.numberOfRooms || ''}
+                    onChange={e =>
+                      handleInputChange(
+                        'numberOfRooms',
+                        e.target.value ? parseInt(e.target.value) : undefined
+                      )
+                    }
+                    className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                  />
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div className="space-y-2.5">
-                {/* Resort Image */}
+              {/* Check-in and Check-out Times Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Check-in Time */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Resort Image</Label>
-                  <ImageUploadField
-                    label="Resort Image"
-                    value={formData.imageUrl}
-                    onChange={url => handleInputChange('imageUrl', url)}
-                    imageType="resorts"
-                    placeholder="No resort image uploaded"
+                  <Label className="text-xs font-semibold text-white/90">Check-in Time</Label>
+                  <TimePicker
+                    value={formData.checkInTime}
+                    onChange={value => handleInputChange('checkInTime', value)}
+                    placeholder="15:00"
                   />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    High-quality image of the resort
-                  </p>
                 </div>
 
-                {/* Description */}
+                {/* Check-out Time */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Description <span className="text-cyan-400">*</span>
-                  </Label>
-                  <Textarea
-                    placeholder="Enter resort description..."
-                    value={formData.description}
-                    onChange={e => handleInputChange('description', e.target.value)}
-                    rows={3}
-                    className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                  <Label className="text-xs font-semibold text-white/90">Check-out Time</Label>
+                  <TimePicker
+                    value={formData.checkOutTime}
+                    onChange={value => handleInputChange('checkOutTime', value)}
+                    placeholder="11:00"
                   />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Describe the resort's features, amenities, and atmosphere
-                  </p>
-                </div>
-
-                {/* Property Map URL */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Property Map URL</Label>
-                  <Input
-                    placeholder="https://example.com/property-map.pdf"
-                    value={formData.propertyMapUrl}
-                    onChange={e => handleInputChange('propertyMapUrl', e.target.value)}
-                    className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Link to resort property map or floor plan
-                  </p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-            >
-              Save Changes
-            </Button>
+            {/* Right Column */}
+            <div className="space-y-2.5">
+              {/* Resort Image */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">Resort Image</Label>
+                <ImageUploadField
+                  label="Resort Image"
+                  value={formData.imageUrl}
+                  onChange={url => handleInputChange('imageUrl', url)}
+                  imageType="resorts"
+                  placeholder="No resort image uploaded"
+                />
+                <p className="text-[10px] text-white/50 mt-0.5">High-quality image of the resort</p>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">
+                  Description <span className="text-cyan-400">*</span>
+                </Label>
+                <Textarea
+                  placeholder="Enter resort description..."
+                  value={formData.description}
+                  onChange={e => handleInputChange('description', e.target.value)}
+                  rows={3}
+                  className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                />
+                <p className="text-[10px] text-white/50 mt-0.5">
+                  Describe the resort's features, amenities, and atmosphere
+                </p>
+              </div>
+
+              {/* Property Map URL */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-white/90">Property Map URL</Label>
+                <Input
+                  placeholder="https://example.com/property-map.pdf"
+                  value={formData.propertyMapUrl}
+                  onChange={e => handleInputChange('propertyMapUrl', e.target.value)}
+                  className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
+                />
+                <p className="text-[10px] text-white/50 mt-0.5">
+                  Link to resort property map or floor plan
+                </p>
+              </div>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </AdminBottomSheet>
     </>
   );
 }

@@ -34,9 +34,6 @@ import { cn } from '@/lib/utils';
 
 // Custom scrollbar styles for dropdown menus - matches fly-out menu gray scrollbar
 const scrollbarStyles = `
-  .standard-dropdown-command {
-    overflow: visible !important;
-  }
   [cmdk-list].standard-dropdown-scroll {
     scrollbar-width: thin !important;
     scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05) !important;
@@ -100,7 +97,7 @@ const triggerBaseClasses =
   'flex p-2 rounded-[10px] border min-h-[40px] h-auto items-center justify-between bg-white/[0.04] border-white/10 hover:bg-white/[0.06] transition-all duration-200 w-full text-left text-sm text-white focus-visible:outline-none focus-visible:border-white/60 focus-visible:bg-white/[0.08] focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.28)] focus-visible:ring-0 focus-visible:ring-offset-0';
 
 const popoverContentBaseClasses =
-  'w-[--radix-popover-trigger-width] p-0 border border-white/10 rounded-[10px] shadow-xl text-white';
+  'w-[--radix-popover-trigger-width] p-0 border border-white/10 rounded-[10px] shadow-xl text-white box-border';
 
 export function StandardDropdown({
   variant,
@@ -123,6 +120,31 @@ export function StandardDropdown({
   const [newName, setNewName] = React.useState('');
   const [creating, setCreating] = React.useState(false);
   const isMobile = useMobileResponsive();
+  const openTimeRef = React.useRef<number>(0);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const [triggerWidth, setTriggerWidth] = React.useState<number | undefined>(undefined);
+
+  // Update trigger width when open changes
+  React.useEffect(() => {
+    if (open && triggerRef.current) {
+      setTriggerWidth(triggerRef.current.offsetWidth);
+    }
+  }, [open]);
+
+  // Handle open change with delay to prevent immediate close on mobile
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (newOpen) {
+      openTimeRef.current = Date.now();
+      setOpen(true);
+    } else {
+      // Prevent closing if it was just opened (within 150ms) - fixes mobile tap issue
+      const timeSinceOpen = Date.now() - openTimeRef.current;
+      if (timeSinceOpen > 150) {
+        setOpen(false);
+      }
+    }
+  }, []);
 
   const isMulti = variant.includes('multi');
   const hasSearch = variant.includes('search');
@@ -144,7 +166,7 @@ export function StandardDropdown({
     if (isMulti) {
       const selected = options.filter(opt => selectedValues.includes(opt.value));
       if (selected.length === 0) return placeholder;
-      if (selected.length === 1) return selected[0].label;
+      if (selected.length === 1 && selected[0]) return selected[0].label;
       return `${selected.length} selected`;
     }
     const selected = options.find(opt => opt.value === selectedValue);
@@ -332,15 +354,16 @@ export function StandardDropdown({
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <div className={cn('w-full space-y-1', className)}>
+      <div className={cn('w-full space-y-1 relative', className)} ref={containerRef}>
         {label && (
           <Label className="text-xs font-semibold text-white/90">
             {label} {required && <span className="text-white/60">*</span>}
           </Label>
         )}
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={handleOpenChange} modal={false}>
           <PopoverTrigger asChild>
             <Button
+              ref={triggerRef}
               variant="outline"
               role="combobox"
               aria-expanded={open}
@@ -349,6 +372,14 @@ export function StandardDropdown({
                 triggerBaseClasses,
                 !currentLabel || currentLabel === placeholder ? 'text-white/50' : ''
               )}
+              onPointerDown={e => {
+                // Prevent the pointer event from bubbling - this helps on mobile
+                e.stopPropagation();
+              }}
+              onMouseDown={e => {
+                // Prevent mouse events from bubbling
+                e.stopPropagation();
+              }}
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {isMulti && selectedValues.length > 0 && (
@@ -383,16 +414,47 @@ export function StandardDropdown({
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className={cn(popoverContentBaseClasses, 'overflow-hidden')}
+            className={cn(popoverContentBaseClasses, 'overflow-hidden z-[9999]')}
             align="start"
             sideOffset={4}
+            collisionPadding={0}
+            avoidCollisions={false}
+            container={containerRef.current || undefined}
+            onOpenAutoFocus={e => {
+              // Prevent Radix from taking control of focus
+              // Let cmdk handle focus management instead
+              e.preventDefault();
+              // On mobile, don't auto-focus search to avoid keyboard popup
+              // On desktop, focus the search input for immediate typing
+              if (hasSearch && !isMobile) {
+                setTimeout(() => {
+                  const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
+                  if (input) {
+                    input.focus();
+                  }
+                }, 10);
+              }
+            }}
+            onCloseAutoFocus={e => {
+              // Prevent Radix from moving focus on close to avoid conflicts
+              e.preventDefault();
+            }}
+            onPointerDownOutside={() => {
+              // Allow clicking outside to close
+            }}
+            onInteractOutside={() => {
+              // Allow interactions outside
+            }}
             style={{
               backgroundColor: 'rgba(0, 33, 71, 1)',
               backgroundImage:
                 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              // Explicitly set width to match trigger when using local container
+              // This overrides the CSS variable which doesn't work with local portals
+              width: triggerWidth ? `${triggerWidth}px` : undefined,
             }}
           >
-            <Command className="bg-transparent standard-dropdown-command flex flex-col h-full">
+            <Command className="bg-transparent flex flex-col h-full w-full" shouldFilter={false}>
               {hasSearch && (
                 <CommandInput
                   placeholder={searchPlaceholder}
@@ -402,26 +464,7 @@ export function StandardDropdown({
                 />
               )}
               <CommandList
-                className={cn(
-                  hasSearch ? 'max-h-64' : 'max-h-60',
-                  'standard-dropdown-scroll flex-1 overflow-x-hidden min-h-0'
-                )}
-                style={{
-                  maxHeight: hasSearch ? '256px' : '240px',
-                  height: hasSearch ? '256px' : '240px',
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05)',
-                  touchAction: 'pan-y',
-                  pointerEvents: 'auto',
-                }}
-                onWheel={e => {
-                  e.stopPropagation();
-                  const target = e.currentTarget;
-                  target.scrollTop += e.deltaY;
-                }}
+                className={cn(hasSearch ? 'max-h-64' : 'max-h-60', 'standard-dropdown-scroll')}
               >
                 <CommandEmpty className="py-4 text-xs text-white/60">{emptyMessage}</CommandEmpty>
                 <CommandGroup>

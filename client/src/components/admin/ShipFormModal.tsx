@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { AdminBottomSheet } from './AdminBottomSheet';
 import { AmenitySelector } from './AmenitySelector';
-import { CruiseLineSelector } from './CruiseLineSelector';
+import { StandardDropdown } from '@/components/ui/dropdowns';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadField } from './ImageUploadField';
@@ -74,7 +74,54 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
     description: '',
   });
 
+  // Cruise lines for dropdown
+  const [cruiseLines, setCruiseLines] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingCruiseLines, setLoadingCruiseLines] = useState(true);
+
   const isEditing = !!ship;
+
+  // Fetch cruise lines when modal opens
+  useEffect(() => {
+    const fetchCruiseLines = async () => {
+      try {
+        setLoadingCruiseLines(true);
+        const response = await api.get('/api/admin/lookup-tables/cruise-lines');
+        if (response.ok) {
+          const data = await response.json();
+          setCruiseLines(data.items || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch cruise lines:', error);
+      } finally {
+        setLoadingCruiseLines(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCruiseLines();
+    }
+  }, [isOpen]);
+
+  // Handle creating new cruise line
+  const handleCreateCruiseLine = async (name: string) => {
+    try {
+      const response = await api.post('/api/admin/lookup-tables/cruise-lines', {
+        name: name.trim(),
+      });
+      if (response.ok) {
+        const newCruiseLine = await response.json();
+        setCruiseLines(prev => [...prev, newCruiseLine.item || newCruiseLine]);
+        return {
+          value: (newCruiseLine.item?.id || newCruiseLine.id).toString(),
+          label: newCruiseLine.item?.name || newCruiseLine.name,
+        };
+      }
+      throw new Error('Failed to create cruise line');
+    } catch (error) {
+      console.error('Failed to create cruise line:', error);
+      throw error;
+    }
+  };
 
   // Load ship data when editing
   useEffect(() => {
@@ -261,12 +308,23 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
             </div>
 
             <div className="space-y-0.5">
-              <CruiseLineSelector
-                selectedId={formData.cruiseLineId}
-                onSelectionChange={id => setFormData(prev => ({ ...prev, cruiseLineId: id }))}
-                disabled={loading}
+              <StandardDropdown
+                variant="single-search-add"
                 label="Cruise Line"
-                placeholder="Select a cruise line or add new"
+                placeholder="Select a cruise line"
+                searchPlaceholder="Search cruise lines..."
+                emptyMessage="No cruise lines found"
+                addLabel="Add New Cruise Line"
+                options={cruiseLines.map(cl => ({
+                  value: cl.id.toString(),
+                  label: cl.name,
+                }))}
+                value={formData.cruiseLineId?.toString() || ''}
+                onChange={value =>
+                  setFormData(prev => ({ ...prev, cruiseLineId: value ? Number(value) : null }))
+                }
+                onCreateNew={handleCreateCruiseLine}
+                disabled={loading || loadingCruiseLines}
                 required={true}
               />
             </div>

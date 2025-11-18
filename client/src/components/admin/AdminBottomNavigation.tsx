@@ -42,6 +42,8 @@ export function AdminBottomNavigation() {
       <nav
         className="bg-white/30 backdrop-blur-lg border-t border-white/30"
         style={{
+          transform: 'translate3d(0, 0, 0)',
+          willChange: 'transform',
           paddingBottom: 'var(--nav-bottom-padding, 0px)',
         }}
       >

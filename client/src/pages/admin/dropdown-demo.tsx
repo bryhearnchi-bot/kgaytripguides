@@ -22,6 +22,14 @@ const talentOptionsInitial: DropdownOption[] = [
   { value: 'nina-flowers', label: 'Nina Flowers' },
   { value: 'lady-bunny', label: 'Lady Bunny' },
   { value: 'local-talent', label: 'Local Talent' },
+  { value: 'chi-chi-devayne', label: 'Chi Chi DeVayne' },
+  { value: 'shangela', label: 'Shangela' },
+  { value: 'trixie-mattel', label: 'Trixie Mattel' },
+  { value: 'katya', label: 'Katya' },
+  { value: 'bianca-del-rio', label: 'Bianca Del Rio' },
+  { value: 'bob-the-drag-queen', label: 'Bob the Drag Queen' },
+  { value: 'ru-paul', label: 'RuPaul' },
+  { value: 'alaska', label: 'Alaska' },
 ];
 
 function OxfordBluePageSection({ title, children }: { title: string; children: React.ReactNode }) {

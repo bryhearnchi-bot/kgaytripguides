@@ -39,6 +39,7 @@ const PastTrips = lazy(() => import('@/pages/past-trips'));
 const MyStuff = lazy(() => import('@/pages/my-stuff'));
 const Alerts = lazy(() => import('@/pages/alerts'));
 const Settings = lazy(() => import('@/pages/settings'));
+const PublicDropdownTest = lazy(() => import('@/pages/public-dropdown-test'));
 
 // Admin pages - lazy loaded
 const ShipsManagement = lazy(() => import('@/pages/admin/ships'));
@@ -78,6 +79,7 @@ function Router() {
       <Switch>
         <Route path="/" component={LandingPage} />
         <Route path="/image-test" component={ImageTest} />
+        <Route path="/dropdown-test" component={PublicDropdownTest} />
         <Route path="/landing-mockups" component={LandingMockupsPage} />
         <Route path="/past-trips" component={PastTrips} />
         <Route path="/my-stuff" component={MyStuff} />

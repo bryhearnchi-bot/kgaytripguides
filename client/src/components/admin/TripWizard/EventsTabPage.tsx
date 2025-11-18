@@ -382,23 +382,21 @@ export function EventsTabPage() {
       </div>
 
       {/* Event Form Modal */}
-      {(showEventModal || editingEvent) && (
-        <EventFormModal
-          isOpen={showEventModal}
-          onClose={() => {
-            setShowEventModal(false);
-            setEditingEvent(undefined);
-          }}
-          onSave={handleSaveEvent}
-          tripId={state.tripData.id || 0}
-          tripType={tripType as 'resort' | 'cruise'}
-          shipId={state.shipId}
-          resortId={state.resortId}
-          scheduleEntries={scheduleEntries}
-          itineraryEntries={itineraryEntries}
-          editingEvent={editingEvent}
-        />
-      )}
+      <EventFormModal
+        isOpen={showEventModal || !!editingEvent}
+        onClose={() => {
+          setShowEventModal(false);
+          setEditingEvent(undefined);
+        }}
+        onSave={handleSaveEvent}
+        tripId={state.tripData.id || 0}
+        tripType={tripType as 'resort' | 'cruise'}
+        shipId={state.shipId}
+        resortId={state.resortId}
+        scheduleEntries={scheduleEntries}
+        itineraryEntries={itineraryEntries}
+        editingEvent={editingEvent}
+      />
     </div>
   );
 }
