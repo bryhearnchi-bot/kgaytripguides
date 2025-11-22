@@ -7,13 +7,7 @@ import { LocationSelector } from '@/components/admin/LocationSelector';
 import { StandardDropdown } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { useTripWizard } from '@/contexts/TripWizardContext';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
 import { Anchor, Plus } from 'lucide-react';
@@ -469,120 +463,96 @@ export function CruiseItineraryPage() {
       </div>
 
       {/* Add Day Modal */}
-      <Dialog open={showAddDayModal} onOpenChange={setShowAddDayModal}>
-        <DialogContent
-          className="border border-white/10 text-white max-w-md"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-white">
-              Add Additional Day
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Day Type Selection */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-white/90">When is this day?</Label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAddDayType('before')}
-                  className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
-                    addDayType === 'before'
-                      ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
-                      : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
-                  }`}
-                >
-                  Before Trip
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddDayType('after')}
-                  className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
-                    addDayType === 'after'
-                      ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
-                      : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
-                  }`}
-                >
-                  After Trip
-                </button>
-              </div>
-              <p className="text-[10px] text-white/50 mt-0.5">
-                {addDayType === 'before'
-                  ? 'Select a date before your cruise starts'
-                  : addDayType === 'after'
-                    ? 'Select a date after your cruise ends'
-                    : 'Choose whether this day is before or after the main cruise dates'}
-              </p>
+      {/* Add Day Modal */}
+      <AdminBottomSheet
+        isOpen={showAddDayModal}
+        onOpenChange={setShowAddDayModal}
+        title="Add Additional Day"
+        description="Add a day before or after your cruise"
+        icon={<Anchor className="w-5 h-5 text-cyan-400" />}
+        primaryAction={{
+          label: 'Add Day',
+          onClick: handleAddDay,
+          disabled: !selectedDate || !addDayType,
+        }}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          {/* Day Type Selection */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-white/90">When is this day?</Label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setAddDayType('before')}
+                className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
+                  addDayType === 'before'
+                    ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
+                    : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
+                }`}
+              >
+                Before Trip
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddDayType('after')}
+                className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
+                  addDayType === 'after'
+                    ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
+                    : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
+                }`}
+              >
+                After Trip
+              </button>
             </div>
+            <p className="text-[10px] text-white/50 mt-0.5">
+              {addDayType === 'before'
+                ? 'Select a date before your cruise starts'
+                : addDayType === 'after'
+                  ? 'Select a date after your cruise ends'
+                  : 'Choose whether this day is before or after the main cruise dates'}
+            </p>
+          </div>
 
-            {/* Date Selection */}
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-white/90">Date</Label>
-              <DatePicker
-                value={selectedDate}
-                onChange={date => {
-                  if (date) {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    setSelectedDate(`${year}-${month}-${day}`);
-                  } else {
-                    setSelectedDate('');
-                  }
-                }}
-                placeholder="Select date"
-                disabled={!addDayType}
-                disabledDates={date => {
-                  // Check if this date already exists in itinerary entries
+          {/* Date Selection */}
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-white/90">Date</Label>
+            <DatePicker
+              value={selectedDate}
+              onChange={date => {
+                if (date) {
                   const year = date.getFullYear();
                   const month = String(date.getMonth() + 1).padStart(2, '0');
                   const day = String(date.getDate()).padStart(2, '0');
-                  const dateString = `${year}-${month}-${day}`;
-                  return state.itineraryEntries.some(entry => entry.date === dateString);
-                }}
-                {...(addDayType === 'before'
-                  ? { toDate: getMinMaxDates().maxDate }
-                  : addDayType === 'after'
-                    ? { fromDate: getMinMaxDates().minDate }
-                    : {})}
-              />
-              {!addDayType && (
-                <p className="text-[10px] text-white/50 mt-0.5">
-                  Please select when this day occurs first
-                </p>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              onClick={() => {
-                setShowAddDayModal(false);
-                setSelectedDate('');
-                setAddDayType(null);
+                  setSelectedDate(`${year}-${month}-${day}`);
+                } else {
+                  setSelectedDate('');
+                }
               }}
-              className="h-10 px-4 bg-white/[0.04] border border-white/10 rounded-[10px] text-white text-sm hover:bg-white/[0.06] transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleAddDay}
-              disabled={!selectedDate || !addDayType}
-              className="h-10 px-4 bg-cyan-400/20 border border-cyan-400/40 rounded-[10px] text-cyan-400 text-sm font-medium hover:bg-cyan-400/30 hover:border-cyan-400/60 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              Add Day
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              placeholder="Select date"
+              disabled={!addDayType}
+              disabledDates={date => {
+                // Check if this date already exists in itinerary entries
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+                return state.itineraryEntries.some(entry => entry.date === dateString);
+              }}
+              {...(addDayType === 'before'
+                ? { toDate: getMinMaxDates().maxDate }
+                : addDayType === 'after'
+                  ? { fromDate: getMinMaxDates().minDate }
+                  : {})}
+            />
+            {!addDayType && (
+              <p className="text-[10px] text-white/50 mt-0.5">
+                Please select when this day occurs first
+              </p>
+            )}
+          </div>
+        </div>
+      </AdminBottomSheet>
     </div>
   );
 }

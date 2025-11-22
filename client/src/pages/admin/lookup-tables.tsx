@@ -252,7 +252,12 @@ export default function AdminLookupTables() {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-[#002147] border-white/20 min-w-[280px]"
+                className="border-white/20 min-w-[280px]"
+                style={{
+                  backgroundColor: 'rgba(0, 33, 71, 1)',
+                  backgroundImage:
+                    'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                }}
               >
                 {Object.entries(TABLES).map(([key, config]) => {
                   const tableKey = key as TableKey;

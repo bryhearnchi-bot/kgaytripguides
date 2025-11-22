@@ -23,6 +23,7 @@ import { useTripWizard } from '@/contexts/TripWizardContext';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { AdminFormModal } from '@/components/admin/AdminFormModal';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { StandardDropdown } from '@/components/ui/dropdowns';
 import {
@@ -397,7 +398,7 @@ export function TalentTabPage() {
 
     // Sort each category's talent alphabetically by name
     Object.keys(grouped).forEach(category => {
-      grouped[category].sort((a, b) => a.name.localeCompare(b.name));
+      grouped[category]?.sort((a, b) => a.name.localeCompare(b.name));
     });
 
     return grouped;
@@ -575,63 +576,55 @@ export function TalentTabPage() {
       </div>
 
       {/* Add Talent Modal - Select from existing */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-md border-white/10 rounded-[20px] text-white overflow-visible"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-cyan-400" />
-              Add Talent to Trip
-            </DialogTitle>
-          </DialogHeader>
+      {/* Add Talent Modal - Select from existing */}
+      <AdminBottomSheet
+        isOpen={showAddModal}
+        onOpenChange={setShowAddModal}
+        title="Add Talent to Trip"
+        description="Select talent from the global pool or create a new artist"
+        icon={<User className="w-5 h-5 text-cyan-400" />}
+        primaryAction={{
+          label: 'Done',
+          onClick: () => setShowAddModal(false),
+        }}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <StandardDropdown
+            variant="single-search-add"
+            label="Talent"
+            placeholder="Select talent..."
+            searchPlaceholder="Search talent..."
+            emptyMessage="No talent found"
+            addLabel="Add New Talent"
+            options={talent.map(t => ({
+              value: t.id.toString(),
+              label: t.name,
+            }))}
+            value={selectedTalentId?.toString() || ''}
+            onChange={value => {
+              if (value) {
+                const talentId = Number(value);
+                setSelectedTalentId(talentId);
+                handleAddTalent(talentId);
+              }
+            }}
+            onCreateNew={handleCreateTalent}
+            disabled={loadingTalent}
+          />
 
-          <div className="py-4 space-y-4 overflow-visible">
-            <p className="text-xs text-white/70">
-              Select talent from the global pool or create a new artist
-            </p>
-
-            <StandardDropdown
-              variant="single-search-add"
-              label="Talent"
-              placeholder="Select talent..."
-              searchPlaceholder="Search talent..."
-              emptyMessage="No talent found"
-              addLabel="Add New Talent"
-              options={talent.map(t => ({
-                value: t.id.toString(),
-                label: t.name,
-              }))}
-              value={selectedTalentId?.toString() || ''}
-              onChange={value => {
-                if (value) {
-                  const talentId = Number(value);
-                  setSelectedTalentId(talentId);
-                  handleAddTalent(talentId);
-                }
-              }}
-              onCreateNew={handleCreateTalent}
-              disabled={loadingTalent}
-            />
-
-            <div className="pt-2 border-t border-white/10">
-              <Button
-                type="button"
-                onClick={() => setShowCreateModal(true)}
-                className="w-full h-10 bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Artist
-              </Button>
-            </div>
+          <div className="pt-2 border-t border-white/10">
+            <Button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="w-full h-10 bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Artist
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </AdminBottomSheet>
 
       {/* Create New Artist Modal */}
       <AdminFormModal

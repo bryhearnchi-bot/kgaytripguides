@@ -97,7 +97,7 @@ const triggerBaseClasses =
   'flex p-2 rounded-[10px] border min-h-[40px] h-auto items-center justify-between bg-white/[0.04] border-white/10 hover:bg-white/[0.06] transition-all duration-200 w-full text-left text-sm text-white focus-visible:outline-none focus-visible:border-white/60 focus-visible:bg-white/[0.08] focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.28)] focus-visible:ring-0 focus-visible:ring-offset-0';
 
 const popoverContentBaseClasses =
-  'w-[--radix-popover-trigger-width] p-0 border border-white/10 rounded-[10px] shadow-xl text-white box-border';
+  'w-full p-0 border border-white/10 rounded-[10px] shadow-xl text-white box-border';
 
 export function StandardDropdown({
   variant,
@@ -414,10 +414,9 @@ export function StandardDropdown({
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className={cn(popoverContentBaseClasses, 'overflow-hidden z-[9999]')}
+            className={cn(popoverContentBaseClasses, 'overflow-hidden')}
             align="start"
             sideOffset={4}
-            collisionPadding={0}
             avoidCollisions={false}
             container={containerRef.current || undefined}
             onOpenAutoFocus={e => {
@@ -446,12 +445,10 @@ export function StandardDropdown({
               // Allow interactions outside
             }}
             style={{
+              width: triggerWidth ? `${triggerWidth}px` : undefined,
               backgroundColor: 'rgba(0, 33, 71, 1)',
               backgroundImage:
                 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-              // Explicitly set width to match trigger when using local container
-              // This overrides the CSS variable which doesn't work with local portals
-              width: triggerWidth ? `${triggerWidth}px` : undefined,
             }}
           >
             <Command className="bg-transparent flex flex-col h-full w-full" shouldFilter={false}>

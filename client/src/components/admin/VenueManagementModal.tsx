@@ -1,17 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { OceanInput } from '@/components/ui/ocean-input';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { MapPin, Plus, Trash2, AlertTriangle, Edit2, X, Check } from 'lucide-react'; // Keep Edit2, X, Check for potential future use or if they are used elsewhere
+import { api } from '@/lib/api-client';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Edit2, Trash2, X, Check, Plus } from 'lucide-react';
-import { api } from '@/lib/api-client';
-import { toast } from 'sonner';
+} from '@/components/ui/select'; // Keep Select for the delete confirmation dialog or if it's used elsewhere
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'; // Keep Dialog for the delete confirmation
+
+// Assuming StandardDropdown is a custom component, adding its import
+import { StandardDropdown } from '@/components/ui/dropdowns';
 
 interface Venue {
   id: number;
@@ -52,10 +69,14 @@ export function VenueManagementModal({
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', venueTypeId: '', description: '' });
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newVenueForm, setNewVenueForm] = useState({ name: '', venueTypeId: '', description: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State for adding new venue
+  const [newVenueName, setNewVenueName] = useState('');
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
+
+  // State for delete confirmation
+  const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null);
 
   // Fetch venues and venue types
   useEffect(() => {
@@ -67,6 +88,7 @@ export function VenueManagementModal({
           name: v.name,
           venueTypeId: v.venueTypeId,
           description: v.description,
+          venueTypeName: venueTypes.find(type => type.id === v.venueTypeId)?.name || 'Unknown Type',
         }));
         setVenues(pendingVenuesWithIds);
       } else {
@@ -75,16 +97,22 @@ export function VenueManagementModal({
       }
       fetchVenueTypes();
     }
-  }, [isOpen, propertyId, pendingMode, initialPendingVenues]);
+  }, [isOpen, propertyId, pendingMode, initialPendingVenues, venueTypes]); // Added venueTypes to dependency array
 
   const fetchVenues = async () => {
     setLoading(true);
     try {
-      const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues`;
+      const endpoint = `/ api / admin / ${propertyType} s / ${propertyId}/venues`;
       const response = await api.get(endpoint);
       if (response.ok) {
-        const data = await response.json();
-        setVenues(data);
+        const data: Venue[] = await response.json();
+        // Enrich venues with venueTypeName for display
+        const enrichedVenues = data.map(venue => ({
+          ...venue,
+          venueTypeName:
+            venueTypes.find(type => type.id === venue.venueTypeId)?.name || 'Unknown Type',
+        }));
+        setVenues(enrichedVenues);
       }
     } catch (error) {
       toast.error('Error', {
@@ -102,424 +130,286 @@ export function VenueManagementModal({
         const data = await response.json();
         setVenueTypes(data);
       }
-    } catch (error) {}
-  };
-
-  const handleEdit = (venue: Venue) => {
-    setEditingId(venue.id);
-    setEditForm({
-      name: venue.name,
-      venueTypeId: venue.venueTypeId.toString(),
-      description: venue.description || '',
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditForm({ name: '', venueTypeId: '', description: '' });
-  };
-
-  const handleSaveEdit = async (venueId: number) => {
-    if (!editForm.name.trim() || !editForm.venueTypeId) {
-      toast.error('Validation Error', {
-        description: 'Please fill in name and type',
-      });
-      return;
-    }
-
-    if (pendingMode) {
-      // Update pending venue in local state
-      const updatedVenues = venues.map(v =>
-        v.id === venueId
-          ? {
-              ...v,
-              name: editForm.name.trim(),
-              venueTypeId: parseInt(editForm.venueTypeId),
-              description: editForm.description.trim() || undefined,
-            }
-          : v
-      );
-      setVenues(updatedVenues);
-
-      // Notify parent component
-      if (onPendingVenuesChange) {
-        onPendingVenuesChange(
-          updatedVenues.map(v => ({
-            name: v.name,
-            venueTypeId: v.venueTypeId,
-            description: v.description,
-          }))
-        );
-      }
-
-      setEditingId(null);
-      toast.success('Success', {
-        description: 'Venue updated',
-      });
-      return;
-    }
-
-    try {
-      const response = await api.put(
-        `/api/admin/${propertyType}s/${propertyId}/venues/${venueId}`,
-        {
-          name: editForm.name.trim(),
-          venueTypeId: parseInt(editForm.venueTypeId),
-          description: editForm.description.trim() || null,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to update venue');
-      }
-
-      toast.success('Success', {
-        description: 'Venue updated successfully',
-      });
-
-      setEditingId(null);
-      fetchVenues();
-      if (onSuccess) onSuccess();
     } catch (error) {
       toast.error('Error', {
-        description: 'Failed to update venue',
+        description: 'Failed to load venue types',
       });
     }
   };
 
-  const handleAddNew = () => {
-    setIsAddingNew(true);
-    setNewVenueForm({ name: '', venueTypeId: '', description: '' });
-  };
-
-  const handleCancelAdd = () => {
-    setIsAddingNew(false);
-    setNewVenueForm({ name: '', venueTypeId: '', description: '' });
-  };
-
-  const handleSaveNew = async () => {
-    if (!newVenueForm.name.trim() || !newVenueForm.venueTypeId) {
+  const handleAddVenue = async () => {
+    if (!newVenueName.trim() || !selectedTypeId) {
       toast.error('Validation Error', {
-        description: 'Please fill in name and type',
+        description: 'Please fill in venue name and select a type',
       });
       return;
     }
 
-    if (pendingMode) {
-      // Add to pending venues in local state
-      const newPendingVenue = {
-        id: -(venues.length + 1), // Negative ID for pending venue
-        name: newVenueForm.name.trim(),
-        venueTypeId: parseInt(newVenueForm.venueTypeId),
-        description: newVenueForm.description.trim() || undefined,
+    setIsSubmitting(true);
+    try {
+      const newVenueData = {
+        name: newVenueName.trim(),
+        venueTypeId: selectedTypeId,
       };
 
-      const updatedVenues = [...venues, newPendingVenue];
-      setVenues(updatedVenues);
+      if (pendingMode) {
+        const newPendingVenue: Venue = {
+          id: -(venues.length + 1), // Negative ID for pending venue
+          ...newVenueData,
+          venueTypeName:
+            venueTypes.find(type => type.id === selectedTypeId)?.name || 'Unknown Type',
+        };
+        const updatedVenues = [...venues, newPendingVenue];
+        setVenues(updatedVenues);
+        if (onPendingVenuesChange) {
+          onPendingVenuesChange(
+            updatedVenues.map(v => ({
+              name: v.name,
+              venueTypeId: v.venueTypeId,
+              description: v.description,
+            }))
+          );
+        }
+        toast.success('Success', {
+          description: 'Venue added (will be saved when you create the ship/resort)',
+        });
+      } else {
+        const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues`;
+        const createResponse = await api.post(endpoint, newVenueData);
 
-      // Notify parent component
-      if (onPendingVenuesChange) {
-        onPendingVenuesChange(
-          updatedVenues.map(v => ({
-            name: v.name,
-            venueTypeId: v.venueTypeId,
-            description: v.description,
-          }))
-        );
+        if (!createResponse.ok) {
+          const errorData = await createResponse.json();
+          throw new Error(errorData?.error?.message || 'Failed to create venue');
+        }
+
+        toast.success('Success', {
+          description: 'Venue created successfully',
+        });
+        fetchVenues();
+        if (onSuccess) onSuccess();
       }
 
-      setIsAddingNew(false);
-      setNewVenueForm({ name: '', venueTypeId: '', description: '' });
-      toast.success('Success', {
-        description: 'Venue added (will be saved when you create the ship/resort)',
-      });
-      return;
-    }
-
-    try {
-      // Create the new venue directly on the ship/resort
-      const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues`;
-      const createResponse = await api.post(endpoint, {
-        name: newVenueForm.name.trim(),
-        venueTypeId: parseInt(newVenueForm.venueTypeId),
-        description: newVenueForm.description.trim() || null,
-      });
-
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json();
-        throw new Error(errorData?.error?.message || 'Failed to create venue');
-      }
-
-      toast.success('Success', {
-        description: 'Venue created successfully',
-      });
-
-      setIsAddingNew(false);
-      setNewVenueForm({ name: '', venueTypeId: '', description: '' });
-      fetchVenues();
-      if (onSuccess) onSuccess();
-    } catch (error) {
+      setNewVenueName('');
+      setSelectedTypeId(null);
+    } catch (error: any) {
       toast.error('Error', {
-        description: 'Failed to create venue',
+        description: error.message || 'Failed to add venue',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (venueId: number, venueName: string) => {
-    if (!confirm(`Are you sure you want to delete "${venueName}"?`)) {
-      return;
-    }
+  const handleDeleteClick = (venue: Venue) => {
+    setVenueToDelete(venue);
+  };
 
-    if (pendingMode) {
-      // Remove from pending venues in local state
-      const updatedVenues = venues.filter(v => v.id !== venueId);
-      setVenues(updatedVenues);
+  const handleConfirmDelete = async () => {
+    if (!venueToDelete) return;
 
-      // Notify parent component
-      if (onPendingVenuesChange) {
-        onPendingVenuesChange(
-          updatedVenues.map(v => ({
-            name: v.name,
-            venueTypeId: v.venueTypeId,
-            description: v.description,
-          }))
-        );
-      }
-
-      toast.success('Success', {
-        description: 'Venue removed',
-      });
-      return;
-    }
-
+    setIsSubmitting(true);
     try {
-      // Delete the venue directly
-      const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues/${venueId}`;
-      const response = await api.delete(endpoint);
+      if (pendingMode) {
+        const updatedVenues = venues.filter(v => v.id !== venueToDelete.id);
+        setVenues(updatedVenues);
+        if (onPendingVenuesChange) {
+          onPendingVenuesChange(
+            updatedVenues.map(v => ({
+              name: v.name,
+              venueTypeId: v.venueTypeId,
+              description: v.description,
+            }))
+          );
+        }
+        toast.success('Success', {
+          description: 'Venue removed',
+        });
+      } else {
+        const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues/${venueToDelete.id}`;
+        const response = await api.delete(endpoint);
 
-      if (!response.ok) {
-        throw new Error('Failed to delete venue');
+        if (!response.ok) {
+          throw new Error('Failed to delete venue');
+        }
+
+        toast.success('Success', {
+          description: 'Venue deleted successfully',
+        });
+        fetchVenues();
+        if (onSuccess) onSuccess();
       }
-
-      toast.success('Success', {
-        description: 'Venue deleted successfully',
-      });
-
-      fetchVenues();
-      if (onSuccess) onSuccess();
-    } catch (error) {
+      setVenueToDelete(null);
+    } catch (error: any) {
       toast.error('Error', {
-        description: 'Failed to delete venue',
+        description: error.message || 'Failed to delete venue',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Group venues by type for the Accordion
+  const groupedVenues = venues.reduce(
+    (acc, venue) => {
+      const typeName = venue.venueTypeName || 'Uncategorized';
+      if (!acc[typeName]) {
+        acc[typeName] = [];
+      }
+      acc[typeName].push(venue);
+      return acc;
+    },
+    {} as Record<string, Venue[]>
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="admin-form-modal sm:max-w-3xl border-white/10 rounded-[20px] text-white"
-        style={{
-          backgroundColor: 'rgba(0, 33, 71, 1)',
-          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-        }}
-      >
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-white">Manage Venues</DialogTitle>
+    <AdminBottomSheet
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="Manage Venues"
+      description={`Add or remove venues for this ${propertyType}`}
+      icon={<MapPin className="h-5 w-5 text-cyan-400" />}
+      primaryAction={{
+        label: 'Done',
+        onClick: () => onOpenChange(false),
+      }}
+      maxWidthClassName="max-w-3xl"
+    >
+      <div className="space-y-6">
+        {/* Add New Venue Section */}
+        <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10 space-y-4">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Plus className="w-4 h-4 text-cyan-400" />
+            Add New Venue
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="venueName">Venue Name</Label>
+              <Input
+                id="venueName"
+                value={newVenueName}
+                onChange={e => setNewVenueName(e.target.value)}
+                placeholder="e.g., Main Dining Room"
+                className="bg-white/5 border-white/10 text-white"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddVenue();
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="venueType">Venue Type</Label>
+              <StandardDropdown
+                variant="single-search"
+                placeholder="Select type..."
+                searchPlaceholder="Search types..."
+                emptyMessage="No types found"
+                options={venueTypes.map(type => ({
+                  value: type.id.toString(),
+                  label: type.name,
+                }))}
+                value={selectedTypeId?.toString() || ''}
+                onChange={value => setSelectedTypeId(Number(value))}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
             <Button
-              type="button"
-              size="sm"
-              onClick={handleAddNew}
-              disabled={isAddingNew}
-              className="h-8 px-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
+              onClick={handleAddVenue}
+              disabled={!newVenueName.trim() || !selectedTypeId || isSubmitting}
+              className="bg-cyan-500 hover:bg-cyan-600 text-white"
             >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Venue
+              {isSubmitting ? 'Adding...' : 'Add Venue'}
             </Button>
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="py-4">
+        {/* Venues List */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-white/90 px-1">Current Venues</h3>
+
           {loading ? (
             <div className="text-center py-8 text-white/60">Loading venues...</div>
-          ) : (
-            <div className="space-y-2">
-              <div className="grid grid-cols-[1fr_1fr_2fr_80px] gap-3 pb-2 border-b border-white/10">
-                <div className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                  Venue Name
-                </div>
-                <div className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                  Venue Type
-                </div>
-                <div className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                  Description
-                </div>
-                <div className="text-xs font-semibold text-white/70 uppercase tracking-wider text-right">
-                  Actions
-                </div>
-              </div>
-
-              {/* Add New Venue Row */}
-              {isAddingNew && (
-                <div className="grid grid-cols-[1fr_1fr_2fr_80px] gap-3 items-start py-2 border-b border-white/5 bg-cyan-400/5">
-                  <OceanInput
-                    value={newVenueForm.name}
-                    onChange={e => setNewVenueForm({ ...newVenueForm, name: e.target.value })}
-                    placeholder="New venue name"
-                    className="h-9"
-                    autoFocus
-                  />
-                  <Select
-                    value={newVenueForm.venueTypeId}
-                    onValueChange={value =>
-                      setNewVenueForm({ ...newVenueForm, venueTypeId: value })
-                    }
-                  >
-                    <SelectTrigger className="h-9 bg-white/[0.04] border-white/10 text-white">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white/5 border-white/10 text-white">
-                      {venueTypes.map(type => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <textarea
-                    value={newVenueForm.description}
-                    onChange={e =>
-                      setNewVenueForm({ ...newVenueForm, description: e.target.value })
-                    }
-                    placeholder="Description (optional)"
-                    className="min-h-[36px] max-h-[72px] px-3 py-2 bg-white/[0.04] border border-white/10 rounded-lg text-white text-sm placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-y"
-                    rows={1}
-                  />
-                  <div className="flex items-start justify-end gap-1 pt-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleSaveNew}
-                      className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-400/10"
-                    >
-                      <Check className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancelAdd}
-                      className="h-7 w-7 p-0 text-white/60 hover:text-white/90 hover:bg-white/10"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {venues.map(venue => (
-                <div
-                  key={venue.id}
-                  className="grid grid-cols-[1fr_1fr_2fr_80px] gap-3 items-start py-2 border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                >
-                  {editingId === venue.id ? (
-                    <>
-                      {/* Edit Mode */}
-                      <OceanInput
-                        value={editForm.name}
-                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                        placeholder="Venue name"
-                        className="h-9"
-                      />
-                      <Select
-                        value={editForm.venueTypeId}
-                        onValueChange={value => setEditForm({ ...editForm, venueTypeId: value })}
-                      >
-                        <SelectTrigger className="h-9 bg-white/[0.04] border-white/10 text-white">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white/5 border-white/10 text-white">
-                          {venueTypes.map(type => (
-                            <SelectItem key={type.id} value={type.id.toString()}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <textarea
-                        value={editForm.description}
-                        onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                        placeholder="Description (optional)"
-                        className="min-h-[36px] max-h-[72px] px-3 py-2 bg-white/[0.04] border border-white/10 rounded-lg text-white text-sm placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-y"
-                        rows={1}
-                      />
-                      <div className="flex items-start justify-end gap-1 pt-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleSaveEdit(venue.id)}
-                          className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-400/10"
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleCancelEdit}
-                          className="h-7 w-7 p-0 text-white/60 hover:text-white/90 hover:bg-white/10"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* View Mode */}
-                      <div className="text-sm text-white pt-1">{venue.name}</div>
-                      <div className="text-sm text-white/80 pt-1">{venue.venueTypeName}</div>
-                      <div className="text-sm text-white/70 pt-1">{venue.description || '-'}</div>
-                      <div className="flex items-start justify-end gap-1 pt-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(venue)}
-                          className="h-7 w-7 p-0 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(venue.id, venue.name)}
-                          className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-
-              {/* Empty state */}
-              {venues.length === 0 && !isAddingNew && (
-                <div className="text-center py-8 text-white/60 text-sm">
-                  No venues added yet. Click "Add Venue" to get started.
-                </div>
-              )}
+          ) : Object.keys(groupedVenues).length === 0 ? (
+            <div className="text-center py-8 text-white/50 bg-white/[0.02] rounded-lg border border-white/5">
+              No venues added yet. Add one above to get started.
             </div>
+          ) : (
+            <Accordion type="single" collapsible className="space-y-2">
+              {Object.entries(groupedVenues).map(([type, typeVenues]) => (
+                <AccordionItem
+                  key={type}
+                  value={type}
+                  className="border border-white/10 rounded-lg bg-white/[0.02] overflow-hidden px-0"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:bg-white/[0.04] hover:no-underline">
+                    <div className="flex items-center gap-2 text-sm font-medium text-white">
+                      <span>{type}</span>
+                      <span className="text-xs text-white/50 bg-white/10 px-2 py-0.5 rounded-full">
+                        {typeVenues.length}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-0 pb-0">
+                    <div className="divide-y divide-white/5">
+                      {typeVenues.map(venue => (
+                        <div
+                          key={venue.id}
+                          className="flex items-center justify-between p-3 pl-4 hover:bg-white/[0.02] transition-colors group"
+                        >
+                          <span className="text-sm text-white/80">{venue.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(venue)}
+                            className="h-8 w-8 p-0 text-white/30 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           )}
         </div>
 
-        <div className="flex justify-end pt-2">
-          <Button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-          >
-            Done
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!venueToDelete} onOpenChange={open => !open && setVenueToDelete(null)}>
+          <DialogContent className="sm:max-w-[425px] bg-[#002147] border-white/10 text-white">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-400">
+                <AlertTriangle className="h-5 w-5" />
+                Delete Venue
+              </DialogTitle>
+              <DialogDescription className="text-white/70">
+                Are you sure you want to delete "{venueToDelete?.name}"? This action cannot be
+                undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button
+                variant="ghost"
+                onClick={() => setVenueToDelete(null)}
+                className="text-white/70 hover:text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={isSubmitting}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AdminBottomSheet>
   );
 }

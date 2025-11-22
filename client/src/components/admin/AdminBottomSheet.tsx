@@ -132,6 +132,7 @@ interface AdminBottomSheetProps {
   className?: string;
   customHeader?: ReactNode; // Custom header content (replaces default header)
   fullScreen?: boolean; // Make modal take up full screen
+  maxWidthClassName?: string; // Custom max width class for desktop
 }
 
 export function AdminBottomSheet({
@@ -149,6 +150,7 @@ export function AdminBottomSheet({
   className,
   customHeader,
   fullScreen = false,
+  maxWidthClassName = 'max-w-3xl',
 }: AdminBottomSheetProps) {
   const { isMobile } = useMobileResponsive();
 
@@ -165,7 +167,7 @@ export function AdminBottomSheet({
     ? 'w-full h-full max-w-none'
     : isMobile
       ? undefined
-      : 'max-w-3xl';
+      : maxWidthClassName;
 
   const renderPrimaryLabel = () => {
     if (!primaryAction) return null;

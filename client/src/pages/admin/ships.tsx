@@ -215,7 +215,12 @@ export default function ShipsManagement() {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-white/15 backdrop-blur-xl border-white/10"
+                className="border-white/10"
+                style={{
+                  backgroundColor: 'rgba(0, 33, 71, 1)',
+                  backgroundImage:
+                    'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                }}
               >
                 {cruiseLineFilters.map(filter => {
                   const isActive = cruiseLineFilter === filter.value;
