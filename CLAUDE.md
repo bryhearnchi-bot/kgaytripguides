@@ -88,7 +88,36 @@ Events render in TWO places - update both when changing event display:
 - Extract shared API calls to existing query hooks
 - If a pattern appears 2+ times, refactor
 - **Existing hooks to reuse**: `useWindowSize`, `useTripUpdates`, `useImageUpload`, `useTripData`, `useShare`
-- **Date utilities**: Use `getTodayString()` and `parseLocalDate()` from `@/lib/timeFormat` (avoids timezone bugs)
+- **Date utilities**: Use `getTodayString()`, `parseLocalDate()`, and `formatDateKey()` from `@/lib/timeFormat`
+
+### Shared UI Components
+
+Use these existing shared components instead of duplicating code:
+
+```tsx
+// Social media icons - use instead of inline SVGs
+import {
+  getSocialIcon,
+  InstagramIcon,
+  XIcon,
+  TikTokIcon,
+  LinktreeIcon,
+} from '@/components/ui/SocialIcons';
+
+// Card action buttons - use in card footers
+import { CardActionButton } from '@/components/ui/CardActionButton';
+<CardActionButton
+  icon={<Info className="w-3.5 h-3.5" />}
+  label="Event Info"
+  onClick={() => setShowSheet(true)}
+  variant="default" // or "elevated" for bg-white/10
+  className="flex-1"
+/>;
+
+// Admin modal styles - use in selector/form modals
+import { ADMIN_MODAL_FIELD_STYLES } from '@/lib/adminStyles';
+<style>{ADMIN_MODAL_FIELD_STYLES}</style>;
+```
 
 ### Single Responsibility
 
