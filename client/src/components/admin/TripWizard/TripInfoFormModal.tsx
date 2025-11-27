@@ -3,11 +3,10 @@ import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { TripInfoSection } from '@/types/trip-info';
-import { Lock, Globe, FileText, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 interface TripInfoFormModalProps {
   isOpen: boolean;
@@ -28,7 +27,6 @@ export function TripInfoFormModal({
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    section_type: 'trip-specific' as 'trip-specific' | 'general' | 'always',
   });
 
   useEffect(() => {
@@ -36,13 +34,11 @@ export function TripInfoFormModal({
       setFormData({
         title: editingSection.title,
         content: editingSection.content || '',
-        section_type: editingSection.section_type,
       });
     } else {
       setFormData({
         title: '',
         content: '',
-        section_type: 'trip-specific',
       });
     }
   }, [editingSection]);
@@ -52,11 +48,16 @@ export function TripInfoFormModal({
     setLoading(true);
 
     try {
+      // Always use trip_specific type (note: database uses underscores)
+      const payload = {
+        ...formData,
+        section_type: 'trip_specific',
+      };
+
       if (editingSection) {
         // Update existing section
-        const response = await api.put(`/api/trip-info-sections/${editingSection.id}`, formData);
+        const response = await api.put(`/api/trip-info-sections/${editingSection.id}`, payload);
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
           throw new Error('Failed to update section');
         }
 
@@ -65,9 +66,8 @@ export function TripInfoFormModal({
         });
       } else {
         // Create new section
-        const createResponse = await api.post('/api/trip-info-sections', formData);
+        const createResponse = await api.post('/api/trip-info-sections', payload);
         if (!createResponse.ok) {
-          const errorData = await createResponse.json().catch(() => ({}));
           throw new Error('Failed to create section');
         }
         const newSection = await createResponse.json();
@@ -138,41 +138,6 @@ export function TripInfoFormModal({
             placeholder="Enter section content..."
             rows={6}
           />
-        </div>
-
-        {/* Section Type */}
-        <div className="space-y-1">
-          <StandardDropdown
-            variant="single-basic"
-            label="Section Type"
-            placeholder="Select section type"
-            emptyMessage="No section types available"
-            options={[
-              {
-                value: 'trip-specific',
-                label: 'Trip-Specific',
-                icon: FileText,
-              },
-              {
-                value: 'general',
-                label: 'General (Reusable)',
-                icon: Globe,
-              },
-              {
-                value: 'always',
-                label: 'Always (Auto-assigned)',
-                icon: Lock,
-              },
-            ]}
-            value={formData.section_type}
-            onChange={(value: any) => setFormData({ ...formData, section_type: value })}
-            required
-          />
-          <p className="text-xs text-white/50 mt-1">
-            {formData.section_type === 'trip-specific' && 'Only for this trip'}
-            {formData.section_type === 'general' && 'Can be added to multiple trips'}
-            {formData.section_type === 'always' && 'Automatically included in every trip'}
-          </p>
         </div>
       </div>
     </AdminBottomSheet>

@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Bell,
-  Plus,
-  GripVertical,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Home,
-  ExternalLink,
-} from 'lucide-react';
+import { Bell, GripVertical, MoreVertical, Pencil, Trash2, Home, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,6 +14,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useTripWizard } from '@/contexts/TripWizardContext';
+import { useUpdatesNavigation } from '@/contexts/UpdatesNavigationContext';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Update, UpdateType } from '@/types/trip-info';
@@ -131,33 +123,36 @@ function SortableUpdateItem({
             </div>
 
             {/* Accordion Trigger - Title and Badges */}
-            <AccordionTrigger className="flex-1 hover:no-underline py-3 pr-12">
-              <div className="flex items-center gap-2 flex-1 flex-wrap">
-                {/* Update Type Badge */}
-                <div
-                  className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${badgeInfo.className}`}
-                >
-                  {badgeInfo.label}
+            <AccordionTrigger className="flex-1 hover:no-underline py-3 pr-12 [&>svg]:self-start [&>svg]:mt-0.5">
+              <div className="flex flex-col items-start gap-1.5 flex-1">
+                {/* Title - First Line */}
+                <span className="text-sm font-semibold text-white text-left">{displayTitle}</span>
+
+                {/* Badges - Second Line */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Update Type Badge */}
+                  <div
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeInfo.className}`}
+                  >
+                    {badgeInfo.label}
+                  </div>
+
+                  {/* Homepage Indicator */}
+                  {update.show_on_homepage && (
+                    <div className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/20 text-green-400 border border-green-400/30 flex items-center gap-1">
+                      <Home className="w-3 h-3" />
+                      Homepage
+                    </div>
+                  )}
+
+                  {/* Link Section Indicator */}
+                  {update.link_section !== 'none' && (
+                    <div className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-400 border border-indigo-400/30 flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" />
+                      {update.link_section}
+                    </div>
+                  )}
                 </div>
-
-                {/* Homepage Indicator */}
-                {update.show_on_homepage && (
-                  <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-green-500/20 text-green-400 border border-green-400/30 flex items-center gap-1">
-                    <Home className="w-3 h-3" />
-                    On Homepage
-                  </div>
-                )}
-
-                {/* Link Section Indicator */}
-                {update.link_section !== 'none' && (
-                  <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-400 border border-indigo-400/30 flex items-center gap-1">
-                    <ExternalLink className="w-3 h-3" />
-                    Links to {update.link_section}
-                  </div>
-                )}
-
-                {/* Title */}
-                <span className="text-sm font-semibold text-white">{displayTitle}</span>
               </div>
             </AccordionTrigger>
 
@@ -218,9 +213,9 @@ function SortableUpdateItem({
 
 export function UpdatesTabPage() {
   const { state } = useTripWizard();
+  const { showAddUpdateModal, setShowAddUpdateModal } = useUpdatesNavigation();
   const [updates, setUpdates] = useState<Update[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFormModal, setShowFormModal] = useState(false);
   const [editingUpdate, setEditingUpdate] = useState<Update | undefined>(undefined);
 
   const tripId = state.tripData.id;
@@ -304,12 +299,12 @@ export function UpdatesTabPage() {
 
   const handleCreate = () => {
     setEditingUpdate(undefined);
-    setShowFormModal(true);
+    setShowAddUpdateModal(true);
   };
 
   const handleEdit = (update: Update) => {
     setEditingUpdate(update);
-    setShowFormModal(true);
+    setShowAddUpdateModal(true);
   };
 
   const handleDelete = async (update: Update) => {
@@ -336,7 +331,7 @@ export function UpdatesTabPage() {
 
   const handleSave = async () => {
     await fetchUpdates();
-    setShowFormModal(false);
+    setShowAddUpdateModal(false);
     setEditingUpdate(undefined);
   };
 
@@ -349,21 +344,7 @@ export function UpdatesTabPage() {
   }
 
   return (
-    <div className="space-y-2.5 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <p className="text-xs text-white/70">
-          Manage trip updates and announcements for this cruise
-        </p>
-        <Button
-          onClick={handleCreate}
-          className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Add Update
-        </Button>
-      </div>
-
+    <div className="space-y-2.5 max-w-3xl mx-auto pt-3">
       {/* Updates List */}
       {updates.length === 0 ? (
         <div className="p-8 rounded-[10px] bg-white/[0.02] border-2 border-white/10 text-center">
@@ -399,11 +380,11 @@ export function UpdatesTabPage() {
       </div>
 
       {/* Form Modal */}
-      {showFormModal && (
+      {showAddUpdateModal && (
         <UpdateFormModal
-          isOpen={showFormModal}
+          isOpen={showAddUpdateModal}
           onClose={() => {
-            setShowFormModal(false);
+            setShowAddUpdateModal(false);
             setEditingUpdate(undefined);
           }}
           onSave={handleSave}

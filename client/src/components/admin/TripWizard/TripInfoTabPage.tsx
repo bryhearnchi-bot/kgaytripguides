@@ -1,16 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Info,
-  Plus,
-  GripVertical,
-  Lock,
-  Globe,
-  FileText,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  ChevronDown,
-} from 'lucide-react';
+import { Info, GripVertical, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -25,6 +14,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useTripWizard } from '@/contexts/TripWizardContext';
+import { useTripInfoNavigation } from '@/contexts/TripInfoNavigationContext';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { TripInfoSection } from '@/types/trip-info';
@@ -67,9 +57,6 @@ function SortableTripInfoItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const isAlways = section.section_type === 'always';
-  const isGeneral = section.section_type === 'general';
-
   return (
     <div
       ref={setNodeRef}
@@ -88,28 +75,9 @@ function SortableTripInfoItem({
               <GripVertical className="w-4 h-4 text-white/30 hover:text-white/60" />
             </div>
 
-            {/* Accordion Trigger - Title and Badge */}
+            {/* Accordion Trigger - Title */}
             <AccordionTrigger className="flex-1 hover:no-underline py-3 pr-12">
               <div className="flex items-center gap-2 flex-1">
-                {/* Section Type Badge */}
-                {isAlways && (
-                  <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/20 text-red-400 border border-red-400/30 flex items-center gap-1">
-                    <Lock className="w-3 h-3" />
-                    Always
-                  </div>
-                )}
-                {isGeneral && (
-                  <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/20 text-blue-400 border border-blue-400/30 flex items-center gap-1">
-                    <Globe className="w-3 h-3" />
-                    General
-                  </div>
-                )}
-                {!isAlways && !isGeneral && (
-                  <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-400 border border-cyan-400/30 flex items-center gap-1">
-                    <FileText className="w-3 h-3" />
-                    Trip-Specific
-                  </div>
-                )}
                 {/* Title */}
                 <span className="text-sm font-semibold text-white">{section.title}</span>
               </div>
@@ -143,15 +111,13 @@ function SortableTripInfoItem({
                     <Pencil className="w-4 h-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
-                  {!isAlways && (
-                    <DropdownMenuItem
-                      onClick={onDelete}
-                      className="text-white/70 hover:text-red-400 hover:bg-white/5 cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {isGeneral ? 'Remove' : 'Delete'}
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem
+                    onClick={onDelete}
+                    className="text-white/70 hover:text-red-400 hover:bg-white/5 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -172,9 +138,9 @@ function SortableTripInfoItem({
 
 export function TripInfoTabPage() {
   const { state } = useTripWizard();
+  const { showAddSectionModal, setShowAddSectionModal } = useTripInfoNavigation();
   const [sections, setSections] = useState<TripInfoSection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFormModal, setShowFormModal] = useState(false);
   const [editingSection, setEditingSection] = useState<TripInfoSection | undefined>(undefined);
 
   const tripId = state.tripData.id;
@@ -261,49 +227,40 @@ export function TripInfoTabPage() {
 
   const handleCreate = () => {
     setEditingSection(undefined);
-    setShowFormModal(true);
+    setShowAddSectionModal(true);
   };
 
   const handleEdit = (section: TripInfoSection) => {
     setEditingSection(section);
-    setShowFormModal(true);
+    setShowAddSectionModal(true);
   };
 
   const handleDelete = async (section: TripInfoSection) => {
-    if (section.section_type === 'always') {
-      toast.error('Cannot Delete', {
-        description: '"Always" sections cannot be removed from trips',
-      });
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to remove "${section.title}" from this trip?`)) {
+    if (!confirm(`Are you sure you want to delete "${section.title}"?`)) {
       return;
     }
 
     try {
-      // Delete assignment (not the section itself for general sections)
-      if (section.assignment) {
-        const response = await api.delete(`/api/trip-section-assignments/${section.assignment.id}`);
-        if (!response.ok) throw new Error('Failed to delete assignment');
-      }
+      // Delete the section (cascade will remove assignment)
+      const response = await api.delete(`/api/trip-info-sections/${section.id}`);
+      if (!response.ok) throw new Error('Failed to delete section');
 
       // Refresh list
       await fetchSections();
 
       toast.success('Success', {
-        description: 'Section removed from trip',
+        description: 'Section deleted',
       });
     } catch (error) {
       toast.error('Error', {
-        description: 'Failed to remove section',
+        description: 'Failed to delete section',
       });
     }
   };
 
   const handleSave = async () => {
     await fetchSections();
-    setShowFormModal(false);
+    setShowAddSectionModal(false);
     setEditingSection(undefined);
   };
 
@@ -316,21 +273,7 @@ export function TripInfoTabPage() {
   }
 
   return (
-    <div className="space-y-2.5 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <p className="text-xs text-white/70">
-          Manage trip information sections like packing lists, important dates, and policies
-        </p>
-        <Button
-          onClick={handleCreate}
-          className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Add Section
-        </Button>
-      </div>
-
+    <div className="space-y-2.5 max-w-3xl mx-auto pt-3">
       {/* Sections List */}
       {sections.length === 0 ? (
         <div className="p-8 rounded-[10px] bg-white/[0.02] border-2 border-white/10 text-center">
@@ -355,21 +298,12 @@ export function TripInfoTabPage() {
         </DndContext>
       )}
 
-      {/* Info Notice */}
-      <div className="mt-4 p-3 rounded-lg bg-cyan-400/5 border border-cyan-400/20">
-        <p className="text-[11px] text-white/70 leading-relaxed">
-          <span className="font-semibold text-cyan-400">Note:</span> Sections marked as "Always" are
-          automatically included in every trip and cannot be removed. "General" sections can be
-          added to multiple trips. "Trip-Specific" sections are unique to this trip.
-        </p>
-      </div>
-
       {/* Form Modal */}
-      {showFormModal && (
+      {showAddSectionModal && (
         <TripInfoFormModal
-          isOpen={showFormModal}
+          isOpen={showAddSectionModal}
           onClose={() => {
-            setShowFormModal(false);
+            setShowAddSectionModal(false);
             setEditingSection(undefined);
           }}
           onSave={handleSave}

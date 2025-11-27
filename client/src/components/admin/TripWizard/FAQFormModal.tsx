@@ -3,11 +3,10 @@ import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { StandardDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { FAQ } from '@/types/trip-info';
-import { Lock, Globe, FileText, HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 interface FAQFormModalProps {
   isOpen: boolean;
@@ -22,7 +21,6 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
   const [formData, setFormData] = useState({
     question: '',
     answer: '',
-    section_type: 'trip-specific' as 'trip-specific' | 'general' | 'always',
   });
 
   useEffect(() => {
@@ -30,13 +28,11 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
       setFormData({
         question: editingFaq.question,
         answer: editingFaq.answer,
-        section_type: editingFaq.section_type,
       });
     } else {
       setFormData({
         question: '',
         answer: '',
-        section_type: 'trip-specific',
       });
     }
   }, [editingFaq]);
@@ -46,9 +42,15 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
     setLoading(true);
 
     try {
+      // Always use trip-specific type
+      const payload = {
+        ...formData,
+        section_type: 'trip-specific',
+      };
+
       if (editingFaq) {
         // Update existing FAQ
-        const response = await api.put(`/api/faqs/${editingFaq.id}`, formData);
+        const response = await api.put(`/api/faqs/${editingFaq.id}`, payload);
         if (!response.ok) throw new Error('Failed to update FAQ');
 
         toast.success('Success', {
@@ -56,7 +58,7 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
         });
       } else {
         // Create new FAQ
-        const createResponse = await api.post('/api/faqs', formData);
+        const createResponse = await api.post('/api/faqs', payload);
         if (!createResponse.ok) throw new Error('Failed to create FAQ');
         const newFaq = await createResponse.json();
 
@@ -127,41 +129,6 @@ export function FAQFormModal({ isOpen, onClose, onSave, tripId, editingFaq }: FA
             rows={6}
             required
           />
-        </div>
-
-        {/* Section Type */}
-        <div className="space-y-1">
-          <StandardDropdown
-            variant="single-basic"
-            label="Section Type"
-            placeholder="Select section type"
-            emptyMessage="No section types available"
-            options={[
-              {
-                value: 'trip-specific',
-                label: 'Trip-Specific',
-                icon: FileText,
-              },
-              {
-                value: 'general',
-                label: 'General (Reusable)',
-                icon: Globe,
-              },
-              {
-                value: 'always',
-                label: 'Always (Auto-assigned)',
-                icon: Lock,
-              },
-            ]}
-            value={formData.section_type}
-            onChange={(value: any) => setFormData({ ...formData, section_type: value })}
-            required
-          />
-          <p className="text-xs text-white/50 mt-1">
-            {formData.section_type === 'trip-specific' && 'Only for this trip'}
-            {formData.section_type === 'general' && 'Can be added to multiple trips'}
-            {formData.section_type === 'always' && 'Automatically included in every trip'}
-          </p>
         </div>
       </div>
     </AdminBottomSheet>
