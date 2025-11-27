@@ -79,19 +79,13 @@ export function EditResortScheduleModal({ open, onOpenChange }: EditResortSchedu
   };
 
   const handleImageUpload = (index: number, url: string) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], imageUrl: url };
-      return updated;
-    });
+    setFormData(prev =>
+      prev.map((entry, i) => (i === index ? { ...entry, imageUrl: url } : entry))
+    );
   };
 
   const handleDescriptionChange = (index: number, description: string) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], description };
-      return updated;
-    });
+    setFormData(prev => prev.map((entry, i) => (i === index ? { ...entry, description } : entry)));
   };
 
   // Helper to parse date string in local timezone (not UTC)

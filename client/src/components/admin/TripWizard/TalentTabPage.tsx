@@ -191,7 +191,7 @@ export function TalentTabPage() {
   };
 
   // Build talent with event assignments
-  const talentWithEvents: TalentWithEvents[] = tripTalent.map(talent => {
+  const talentWithEvents: TalentWithEvents[] = tripTalent.map((talent: any) => {
     const assignedEvents = events
       .filter(event => event.talentIds && event.talentIds.includes(talent.id))
       .map(event => ({

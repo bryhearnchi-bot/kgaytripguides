@@ -221,13 +221,6 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
           isEditMode: true, // Set edit mode flag
         };
 
-        // CRITICAL DEBUG: Log the data we're about to restore
-        console.log('🔍 EditTripModal: Trip data received:', {
-          bookingUrl: trip.bookingUrl,
-          mapUrl: trip.mapUrl,
-          editState: editState.tripData,
-        });
-
         // Use restoreFromDraft to populate all state at once
         restoreFromDraft(editState);
 

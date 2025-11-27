@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface TripMetadata {
   title: string;
@@ -63,7 +64,7 @@ export function useTripMetadata(slug: string | undefined, tripName?: string) {
         // Client-side injection was causing conflicts with iOS Add to Home Screen
       })
       .catch(error => {
-        console.error('Failed to load trip metadata:', error);
+        logger.error('Failed to load trip metadata', error);
       });
 
     // Note: Cleanup is minimal now since manifest is server-side

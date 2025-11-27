@@ -24,6 +24,7 @@ import { auditLogger } from '../logging/middleware';
 import { logger } from '../logging/logger';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiError } from '../utils/ApiError';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 
 // Initialize Supabase Admin Client lazily (after environment variables are loaded)
 let _supabaseAdmin: ReturnType<typeof createClient> | null = null;
@@ -257,7 +258,7 @@ export function registerAdminUsersRoutes(app: Express) {
 
       // Apply filters
       if (query.search) {
-        const searchTerm = query.search.trim();
+        const searchTerm = sanitizeSearchTerm(query.search.trim());
         supabaseQuery = supabaseQuery.or(
           `username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
         );
@@ -681,6 +682,22 @@ export function registerAdminUsersRoutes(app: Express) {
       // Prevent self-deactivation
       if (req.user?.id === userId && !is_active) {
         throw ApiError.forbidden('Cannot deactivate your own account');
+      }
+
+      // Check role hierarchy before deactivation
+      if (!is_active) {
+        const targetRole = existingUser.role;
+        const currentUserRole = req.user?.role;
+
+        // Only super_admin can deactivate other super_admins
+        if (targetRole === 'super_admin' && currentUserRole !== 'super_admin') {
+          throw ApiError.forbidden('Only super admins can deactivate other super admins');
+        }
+
+        // Only super_admin can deactivate admins
+        if (targetRole === 'admin' && currentUserRole !== 'super_admin') {
+          throw ApiError.forbidden('Only super admins can deactivate admin users');
+        }
       }
 
       // Update user status using Supabase Admin

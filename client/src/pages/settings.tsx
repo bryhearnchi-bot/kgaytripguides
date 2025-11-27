@@ -319,7 +319,10 @@ export default function Settings({
             <div className="bg-white/5 border border-white/10 rounded-lg p-4 focus:outline-none focus:ring-0 focus:border-white/10">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12 focus:outline-none focus:ring-0">
-                  <AvatarImage src={profile?.avatarUrl || user.avatar_url} alt={displayName} />
+                  <AvatarImage
+                    src={profile?.avatarUrl || (user as any).avatar_url}
+                    alt={displayName}
+                  />
                   <AvatarFallback className="bg-gradient-to-br from-ocean-500 to-blue-500 text-white text-sm font-semibold">
                     {initials}
                   </AvatarFallback>

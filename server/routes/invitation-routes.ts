@@ -19,10 +19,16 @@
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
-import { requireAuth, requireContentEditor, requireSuperAdmin, type AuthenticatedRequest } from '../auth';
+import {
+  requireAuth,
+  requireContentEditor,
+  requireSuperAdmin,
+  type AuthenticatedRequest,
+} from '../auth';
 import { getSupabaseAdmin } from '../supabase-admin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiError } from '../utils/ApiError';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 
 // Type definitions for invitation data
 interface Invitation {
@@ -67,7 +73,7 @@ type InvitationTable = Invitation;
 const createInvitationSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['admin', 'content_manager', 'viewer'], {
-    errorMap: () => ({ message: 'Role must be one of: admin, content_manager, viewer' })
+    errorMap: () => ({ message: 'Role must be one of: admin, content_manager, viewer' }),
   }),
   cruiseId: z.string().optional(),
   expirationHours: z.number().min(1).max(168).optional().default(72),
@@ -117,7 +123,7 @@ const invitationValidateRateLimit = createRateLimit({
   maxRequests: INVITATION_RATE_LIMITS.VALIDATION_ATTEMPTS_PER_HOUR,
   message: 'Too many validation attempts. Please try again later.',
   standardHeaders: true,
-  keyGenerator: (req) => `validate_${req.ip}_${req.params.token?.slice(0, 8)}`,
+  keyGenerator: req => `validate_${req.ip}_${req.params.token?.slice(0, 8)}`,
 });
 
 const invitationAcceptRateLimit = createRateLimit({
@@ -148,7 +154,7 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
         return null; // Not found
       }
       logger.error('Error fetching invitation', error, {
-        invitationId: id
+        invitationId: id,
       });
       return null;
     }
@@ -156,7 +162,7 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
     return data as InvitationTable;
   } catch (error: unknown) {
     logger.error('Error fetching invitation', error, {
-      invitationId: id
+      invitationId: id,
     });
     return null;
   }
@@ -165,7 +171,9 @@ async function getInvitationById(id: string): Promise<InvitationTable | null> {
 /**
  * Create invitation in database
  */
-async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'createdAt'>): Promise<InvitationTable> {
+async function createInvitationInDb(
+  invitation: Omit<InvitationTable, 'id' | 'createdAt'>
+): Promise<InvitationTable> {
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
@@ -189,7 +197,7 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
     if (error) {
       logger.error('Error creating invitation', error, {
         email: invitation.email,
-        role: invitation.role
+        role: invitation.role,
       });
       throw new Error('Failed to create invitation in database');
     }
@@ -210,10 +218,7 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
       createdAt: new Date(data.created_at),
     } as InvitationTable;
   } catch (error: unknown) {
-    logger.error('Error creating invitation', error, {
-      
-      
-    });
+    logger.error('Error creating invitation', error, {});
     throw new Error('Failed to create invitation in database');
   }
 }
@@ -221,7 +226,10 @@ async function createInvitationInDb(invitation: Omit<InvitationTable, 'id' | 'cr
 /**
  * Update invitation in database
  */
-async function updateInvitationInDb(id: string, updates: Partial<InvitationTable>): Promise<InvitationTable | null> {
+async function updateInvitationInDb(
+  id: string,
+  updates: Partial<InvitationTable>
+): Promise<InvitationTable | null> {
   try {
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -246,7 +254,7 @@ async function updateInvitationInDb(id: string, updates: Partial<InvitationTable
         return null; // Not found
       }
       logger.error('Error updating invitation', error, {
-        invitationId: id
+        invitationId: id,
       });
       return null;
     }
@@ -268,7 +276,7 @@ async function updateInvitationInDb(id: string, updates: Partial<InvitationTable
     } as InvitationTable;
   } catch (error: unknown) {
     logger.error('Error updating invitation', error, {
-      invitationId: id
+      invitationId: id,
     });
     return null;
   }
@@ -292,17 +300,14 @@ async function checkExistingInvitation(email: string): Promise<boolean> {
 
     if (error) {
       logger.error('Error checking existing invitation', error, {
-        email
+        email,
       });
       return false;
     }
 
     return data && data.length > 0;
   } catch (error: unknown) {
-    logger.error('Error checking existing invitation', error, {
-      
-      
-    });
+    logger.error('Error checking existing invitation', error, {});
     return false;
   }
 }
@@ -322,17 +327,14 @@ async function checkUserExists(email: string): Promise<boolean> {
 
     if (error) {
       logger.error('Error checking user existence', error, {
-        email
+        email,
       });
       return false;
     }
 
     return data && data.length > 0;
   } catch (error: unknown) {
-    logger.error('Error checking user existence', error, {
-      
-      
-    });
+    logger.error('Error checking user existence', error, {});
     return false;
   }
 }
@@ -340,7 +342,12 @@ async function checkUserExists(email: string): Promise<boolean> {
 /**
  * Send invitation email using Resend service
  */
-async function sendInvitationEmail(email: string, token: string, inviterName: string, role: string): Promise<boolean> {
+async function sendInvitationEmail(
+  email: string,
+  token: string,
+  inviterName: string,
+  role: string
+): Promise<boolean> {
   try {
     const { sendInvitationEmail: sendEmail } = await import('../services/email-service');
     const result = await sendEmail(email, token, inviterName, role);
@@ -349,15 +356,12 @@ async function sendInvitationEmail(email: string, token: string, inviterName: st
       return true;
     } else {
       logger.error('Failed to send invitation email', result.error, {
-        email
+        email,
       });
       return false;
     }
   } catch (error: unknown) {
-    logger.error('Error sending invitation email', error, {
-      
-      
-    });
+    logger.error('Error sending invitation email', error, {});
     return false;
   }
 }
@@ -409,10 +413,7 @@ async function findInvitationByToken(token: string): Promise<InvitationTable | n
 
     return null;
   } catch (error: unknown) {
-    logger.error('Error finding invitation by token', error, {
-      
-      
-    });
+    logger.error('Error finding invitation by token', error, {});
     return null;
   }
 }
@@ -449,7 +450,7 @@ async function createUserFromInvitation(
 
     if (error) {
       logger.error('Error creating user profile', error, {
-        email
+        email,
       });
       throw new Error('Failed to create user account');
     }
@@ -461,10 +462,7 @@ async function createUserFromInvitation(
       role: data.role,
     };
   } catch (error: unknown) {
-    logger.error('Error creating user account', error, {
-      
-      
-    });
+    logger.error('Error creating user account', error, {});
     throw new Error('Failed to create user account');
   }
 }
@@ -486,87 +484,95 @@ router.post(
   requireContentEditor,
   validateBody(createInvitationSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { email, role, cruiseId, expirationHours, metadata, sendEmail } = req.body;
-      const inviter = req.user!;
+    const { email, role, cruiseId, expirationHours, metadata, sendEmail } = req.body;
+    const inviter = req.user!;
 
-      // Security Check: Validate email format and domain
-      const emailDomain = email.split('@')[1]?.toLowerCase();
-      const suspiciousDomains = ['tempmail.org', '10minutemail.com', 'guerrillamail.com'];
-      if (suspiciousDomains.includes(emailDomain)) {
-        return res.status(400).json({
-          error: 'Invalid email domain',
-          message: 'Temporary email addresses are not allowed'
-        });
-      }
+    // Security Check: Validate email format and domain
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    const suspiciousDomains = ['tempmail.org', '10minutemail.com', 'guerrillamail.com'];
+    if (suspiciousDomains.includes(emailDomain)) {
+      return res.status(400).json({
+        error: 'Invalid email domain',
+        message: 'Temporary email addresses are not allowed',
+      });
+    }
 
-      // Check if user already exists
-      const userExists = await checkUserExists(email);
-      if (userExists) {
-        return res.status(409).json({
-          error: 'User already exists',
-          message: 'An account with this email address already exists'
-        });
-      }
+    // Check if user already exists
+    const userExists = await checkUserExists(email);
+    if (userExists) {
+      return res.status(409).json({
+        error: 'User already exists',
+        message: 'An account with this email address already exists',
+      });
+    }
 
-      // Check for existing pending invitation
-      const hasExistingInvitation = await checkExistingInvitation(email);
-      if (hasExistingInvitation) {
-        return res.status(409).json({
-          error: 'Invitation already exists',
-          message: 'A pending invitation for this email address already exists'
-        });
-      }
+    // Check for existing pending invitation
+    const hasExistingInvitation = await checkExistingInvitation(email);
+    if (hasExistingInvitation) {
+      return res.status(409).json({
+        error: 'Invitation already exists',
+        message: 'A pending invitation for this email address already exists',
+      });
+    }
 
-      // Role Permission Check: Ensure inviter can assign the requested role
-      const roleHierarchy = {
-        'admin': ['admin', 'content_editor', 'media_manager', 'viewer'],
-        'content_editor': ['content_editor', 'media_manager', 'viewer'],
-        'media_manager': ['media_manager', 'viewer'],
-        'viewer': ['viewer']
-      };
+    // Role Permission Check: Ensure inviter can assign the requested role
+    const roleHierarchy = {
+      admin: ['admin', 'content_editor', 'media_manager', 'viewer'],
+      content_editor: ['content_editor', 'media_manager', 'viewer'],
+      media_manager: ['media_manager', 'viewer'],
+      viewer: ['viewer'],
+    };
 
-      const allowedRoles = roleHierarchy[inviter.role as keyof typeof roleHierarchy] || [];
-      if (!allowedRoles.includes(role)) {
-        return res.status(403).json({
-          error: 'Insufficient permissions',
-          message: `You cannot invite users with role: ${role}`
-        });
-      }
+    const allowedRoles = roleHierarchy[inviter.role as keyof typeof roleHierarchy] || [];
+    if (!allowedRoles.includes(role)) {
+      return res.status(403).json({
+        error: 'Insufficient permissions',
+        message: `You cannot invite users with role: ${role}`,
+      });
+    }
 
-      // Generate secure invitation token
-      const invitationData = createInvitationRecord({
+    // Generate secure invitation token
+    const invitationData = createInvitationRecord(
+      {
         email: email.toLowerCase(),
         role,
         invitedBy: inviter.id,
         cruiseId,
         metadata,
-      }, expirationHours);
+      },
+      expirationHours
+    );
 
-      // Store invitation in database (without the raw token)
-      const { token, ...dbInvitation } = invitationData;
-      const storedInvitation = await createInvitationInDb(dbInvitation);
+    // Store invitation in database (without the raw token)
+    const { token, ...dbInvitation } = invitationData;
+    const storedInvitation = await createInvitationInDb(dbInvitation);
 
-      // Send invitation email if requested
-      let emailSent = false;
-      if (sendEmail) {
-        emailSent = await sendInvitationEmail(email, token, String(inviter.name || inviter.username || 'Admin'), role);
-      }
+    // Send invitation email if requested
+    let emailSent = false;
+    if (sendEmail) {
+      emailSent = await sendInvitationEmail(
+        email,
+        token,
+        String(inviter.name || inviter.username || 'Admin'),
+        role
+      );
+    }
 
-      // Audit log the invitation creation
+    // Audit log the invitation creation
 
-      return res.status(201).json({
-        success: true,
-        invitation: {
-          id: storedInvitation.id,
-          email: storedInvitation.email,
-          role: storedInvitation.role,
-          expiresAt: storedInvitation.expiresAt,
-          createdAt: storedInvitation.createdAt,
-          emailSent,
-        },
-        // Return token only for testing/development
-        ...(process.env.NODE_ENV === 'development' && { token }),
-      });
+    return res.status(201).json({
+      success: true,
+      invitation: {
+        id: storedInvitation.id,
+        email: storedInvitation.email,
+        role: storedInvitation.role,
+        expiresAt: storedInvitation.expiresAt,
+        createdAt: storedInvitation.createdAt,
+        emailSent,
+      },
+      // Return token only for testing/development
+      ...(process.env.NODE_ENV === 'development' && { token }),
+    });
   })
 );
 
@@ -580,120 +586,118 @@ router.get(
   requireContentEditor,
   validateQuery(listInvitationsSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { page, limit, status, role, search } = req.query as unknown as {
-        page: number;
-        limit: number;
-        status?: 'active' | 'expired' | 'used' | 'all';
-        role?: string;
-        search?: string;
-      };
-      const offset = (page - 1) * limit;
-      const supabaseAdmin = getSupabaseAdmin();
+    const { page, limit, status, role, search } = req.query as unknown as {
+      page: number;
+      limit: number;
+      status?: 'active' | 'expired' | 'used' | 'all';
+      role?: string;
+      search?: string;
+    };
+    const offset = (page - 1) * limit;
+    const supabaseAdmin = getSupabaseAdmin();
 
-      // Build query conditions
-      const now = new Date().toISOString();
+    // Build query conditions
+    const now = new Date().toISOString();
 
-      // Build base query
-      let query = supabaseAdmin.from('invitations').select('*', { count: 'exact' });
+    // Build base query
+    let query = supabaseAdmin.from('invitations').select('*', { count: 'exact' });
 
-      // Apply status filter
-      switch (status) {
-        case 'active':
-          query = query.eq('used', false).gt('expires_at', now);
-          break;
-        case 'expired':
-          query = query.eq('used', false).lt('expires_at', now);
-          break;
-        case 'used':
-          query = query.eq('used', true);
-          break;
-        // 'all' - no additional filtering
-      }
+    // Apply status filter
+    switch (status) {
+      case 'active':
+        query = query.eq('used', false).gt('expires_at', now);
+        break;
+      case 'expired':
+        query = query.eq('used', false).lt('expires_at', now);
+        break;
+      case 'used':
+        query = query.eq('used', true);
+        break;
+      // 'all' - no additional filtering
+    }
 
-      // Apply role filter
-      if (role) {
-        query = query.eq('role', role);
-      }
+    // Apply role filter
+    if (role) {
+      query = query.eq('role', role);
+    }
 
-      // Apply search filter
-      if (search) {
-        query = query.ilike('email', `%${search}%`);
-      }
+    // Apply search filter
+    const sanitizedSearch = search ? sanitizeSearchTerm(search) : '';
+    if (sanitizedSearch) {
+      query = query.ilike('email', `%${sanitizedSearch}%`);
+    }
 
-      // Get total count
-      const countQuery = supabaseAdmin.from('invitations').select('*', { count: 'exact', head: true });
+    // Get total count
+    const countQuery = supabaseAdmin
+      .from('invitations')
+      .select('*', { count: 'exact', head: true });
 
-      // Apply same filters to count query
-      switch (status) {
-        case 'active':
-          countQuery.eq('used', false).gt('expires_at', now);
-          break;
-        case 'expired':
-          countQuery.eq('used', false).lt('expires_at', now);
-          break;
-        case 'used':
-          countQuery.eq('used', true);
-          break;
-      }
-      if (role) countQuery.eq('role', role);
-      if (search) countQuery.ilike('email', `%${search}%`);
+    // Apply same filters to count query
+    switch (status) {
+      case 'active':
+        countQuery.eq('used', false).gt('expires_at', now);
+        break;
+      case 'expired':
+        countQuery.eq('used', false).lt('expires_at', now);
+        break;
+      case 'used':
+        countQuery.eq('used', true);
+        break;
+    }
+    if (role) countQuery.eq('role', role);
+    if (sanitizedSearch) countQuery.ilike('email', `%${sanitizedSearch}%`);
 
-      const { count: total, error: countError } = await countQuery;
+    const { count: total, error: countError } = await countQuery;
 
-      if (countError) {
-        logger.error('Error counting invitations', countError, {
-          
-          
-        });
-        throw new Error('Failed to count invitations');
-      }
+    if (countError) {
+      logger.error('Error counting invitations', countError, {});
+      throw new Error('Failed to count invitations');
+    }
 
-      const totalCount = total ?? 0;
+    const totalCount = total ?? 0;
 
-      // Get paginated results
-      const { data: invitationResults, error } = await query
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+    // Get paginated results
+    const { data: invitationResults, error } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
-      if (error) {
-        logger.error('Error fetching invitations', error, {
-          
-          
-          page: req.query.page,
-          limit: req.query.limit
-        });
-        throw new Error('Failed to fetch invitations');
-      }
-
-      const nowDate = new Date();
-      const paginatedInvitations = invitationResults.map(inv => ({
-        id: inv.id,
-        email: inv.email,
-        role: inv.role,
-        expiresAt: inv.expires_at,
-        createdAt: inv.created_at,
-        used: inv.used,
-        usedAt: inv.used_at,
-        expired: new Date(inv.expires_at) <= nowDate,
-      }));
-
-      return res.json({
-        success: true,
-        invitations: paginatedInvitations,
-        pagination: {
-          page,
-          limit,
-          total: totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasNext: page * limit < totalCount,
-          hasPrev: page > 1,
-        },
-        filters: {
-          status,
-          role,
-          search,
-        },
+    if (error) {
+      logger.error('Error fetching invitations', error, {
+        page: req.query.page,
+        limit: req.query.limit,
       });
+      throw new Error('Failed to fetch invitations');
+    }
+
+    const nowDate = new Date();
+    const paginatedInvitations = invitationResults.map(inv => ({
+      id: inv.id,
+      email: inv.email,
+      role: inv.role,
+      expiresAt: inv.expires_at,
+      createdAt: inv.created_at,
+      used: inv.used,
+      usedAt: inv.used_at,
+      expired: new Date(inv.expires_at) <= nowDate,
+    }));
+
+    return res.json({
+      success: true,
+      invitations: paginatedInvitations,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNext: page * limit < totalCount,
+        hasPrev: page > 1,
+      },
+      filters: {
+        status,
+        role,
+        search,
+      },
+    });
   })
 );
 
@@ -707,59 +711,54 @@ router.delete(
   requireContentEditor,
   validateParams(invitationIdSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { id } = req.params as { id: string };
-      const admin = req.user!;
+    const { id } = req.params as { id: string };
+    const admin = req.user!;
 
-      // Find the invitation
-      const invitation = await getInvitationById(id);
-      if (!invitation) {
-        return res.status(404).json({
-          error: 'Invitation not found',
-          message: 'The specified invitation does not exist'
-        });
-      }
-
-      // Check if invitation is already used
-      if (invitation.used) {
-        return res.status(400).json({
-          error: 'Cannot cancel used invitation',
-          message: 'This invitation has already been accepted and cannot be cancelled'
-        });
-      }
-
-      // Permission check: Only admins or the original inviter can cancel
-      if (admin.role !== 'admin' && invitation.invitedBy !== admin.id) {
-        return res.status(403).json({
-          error: 'Insufficient permissions',
-          message: 'You can only cancel invitations that you created'
-        });
-      }
-
-      // Delete invitation from database
-      const supabaseAdmin = getSupabaseAdmin();
-      const { error: deleteError } = await supabaseAdmin
-        .from('invitations')
-        .delete()
-        .eq('id', id);
-
-      if (deleteError) {
-        logger.error('Error deleting invitation', deleteError, {
-          
-          
-          invitationId: req.params.id
-        });
-        return res.status(500).json({
-          error: 'Failed to delete invitation',
-          message: 'Invitation could not be deleted from database'
-        });
-      }
-
-      // Audit log the cancellation
-
-      return res.json({
-        success: true,
-        message: 'Invitation cancelled successfully'
+    // Find the invitation
+    const invitation = await getInvitationById(id);
+    if (!invitation) {
+      return res.status(404).json({
+        error: 'Invitation not found',
+        message: 'The specified invitation does not exist',
       });
+    }
+
+    // Check if invitation is already used
+    if (invitation.used) {
+      return res.status(400).json({
+        error: 'Cannot cancel used invitation',
+        message: 'This invitation has already been accepted and cannot be cancelled',
+      });
+    }
+
+    // Permission check: Only admins or the original inviter can cancel
+    if (admin.role !== 'admin' && invitation.invitedBy !== admin.id) {
+      return res.status(403).json({
+        error: 'Insufficient permissions',
+        message: 'You can only cancel invitations that you created',
+      });
+    }
+
+    // Delete invitation from database
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error: deleteError } = await supabaseAdmin.from('invitations').delete().eq('id', id);
+
+    if (deleteError) {
+      logger.error('Error deleting invitation', deleteError, {
+        invitationId: req.params.id,
+      });
+      return res.status(500).json({
+        error: 'Failed to delete invitation',
+        message: 'Invitation could not be deleted from database',
+      });
+    }
+
+    // Audit log the cancellation
+
+    return res.json({
+      success: true,
+      message: 'Invitation cancelled successfully',
+    });
   })
 );
 
@@ -775,73 +774,73 @@ router.post(
   validateParams(invitationIdSchema),
   validateBody(resendInvitationSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { id } = req.params as { id: string };
-      const { expirationHours } = req.body as { expirationHours: number };
-      const admin = req.user!;
+    const { id } = req.params as { id: string };
+    const { expirationHours } = req.body as { expirationHours: number };
+    const admin = req.user!;
 
-      // Find the invitation
-      const invitation = await getInvitationById(id);
-      if (!invitation) {
-        return res.status(404).json({
-          error: 'Invitation not found',
-          message: 'The specified invitation does not exist'
-        });
-      }
-
-      // Check if invitation is already used
-      if (invitation.used) {
-        return res.status(400).json({
-          error: 'Cannot resend used invitation',
-          message: 'This invitation has already been accepted'
-        });
-      }
-
-      // Permission check: Only admins or the original inviter can resend
-      if (admin.role !== 'admin' && invitation.invitedBy !== admin.id) {
-        return res.status(403).json({
-          error: 'Insufficient permissions',
-          message: 'You can only resend invitations that you created'
-        });
-      }
-
-      // Generate new token and update invitation
-      const { token, hash, salt, expiresAt } = generateInvitationToken(expirationHours);
-
-      const updatedInvitation = await updateInvitationInDb(id, {
-        tokenHash: hash,
-        salt,
-        expiresAt: new Date(expiresAt),
+    // Find the invitation
+    const invitation = await getInvitationById(id);
+    if (!invitation) {
+      return res.status(404).json({
+        error: 'Invitation not found',
+        message: 'The specified invitation does not exist',
       });
+    }
 
-      if (!updatedInvitation) {
-        return res.status(500).json({
-          error: 'Failed to update invitation',
-          message: 'Could not update invitation with new token'
-        });
-      }
-
-      // Send new invitation email
-      const emailSent = await sendInvitationEmail(
-        invitation.email,
-        token,
-        String(admin.name || admin.username || 'Admin'),
-        invitation.role
-      );
-
-      // Audit log the resend
-
-      return res.json({
-        success: true,
-        invitation: {
-          id: updatedInvitation.id,
-          email: updatedInvitation.email,
-          role: updatedInvitation.role,
-          expiresAt: updatedInvitation.expiresAt,
-          emailSent,
-        },
-        // Return token only for testing/development
-        ...(process.env.NODE_ENV === 'development' && { token }),
+    // Check if invitation is already used
+    if (invitation.used) {
+      return res.status(400).json({
+        error: 'Cannot resend used invitation',
+        message: 'This invitation has already been accepted',
       });
+    }
+
+    // Permission check: Only admins or the original inviter can resend
+    if (admin.role !== 'admin' && invitation.invitedBy !== admin.id) {
+      return res.status(403).json({
+        error: 'Insufficient permissions',
+        message: 'You can only resend invitations that you created',
+      });
+    }
+
+    // Generate new token and update invitation
+    const { token, hash, salt, expiresAt } = generateInvitationToken(expirationHours);
+
+    const updatedInvitation = await updateInvitationInDb(id, {
+      tokenHash: hash,
+      salt,
+      expiresAt: new Date(expiresAt),
+    });
+
+    if (!updatedInvitation) {
+      return res.status(500).json({
+        error: 'Failed to update invitation',
+        message: 'Could not update invitation with new token',
+      });
+    }
+
+    // Send new invitation email
+    const emailSent = await sendInvitationEmail(
+      invitation.email,
+      token,
+      String(admin.name || admin.username || 'Admin'),
+      invitation.role
+    );
+
+    // Audit log the resend
+
+    return res.json({
+      success: true,
+      invitation: {
+        id: updatedInvitation.id,
+        email: updatedInvitation.email,
+        role: updatedInvitation.role,
+        expiresAt: updatedInvitation.expiresAt,
+        emailSent,
+      },
+      // Return token only for testing/development
+      ...(process.env.NODE_ENV === 'development' && { token }),
+    });
   })
 );
 
@@ -854,43 +853,43 @@ router.get(
   invitationValidateRateLimit,
   validateParams(validateInvitationTokenSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { token } = req.params as { token: string };
+    const { token } = req.params as { token: string };
 
-      // Find and validate invitation
-      const matchingInvitation = await findInvitationByToken(token);
+    // Find and validate invitation
+    const matchingInvitation = await findInvitationByToken(token);
 
-      if (!matchingInvitation) {
-        return res.status(404).json({
-          error: 'Invalid invitation',
-          message: 'The invitation token is invalid or has been used'
-        });
-      }
-
-      // Check if token is expired
-      if (isTokenExpired(matchingInvitation.expiresAt)) {
-        return res.status(410).json({
-          error: 'Invitation expired',
-          message: 'This invitation has expired'
-        });
-      }
-
-      // Check if user already exists
-      const userExists = await checkUserExists(matchingInvitation.email);
-      if (userExists) {
-        return res.status(409).json({
-          error: 'User already exists',
-          message: 'An account with this email address already exists'
-        });
-      }
-
-      return res.json({
-        success: true,
-        invitation: {
-          email: matchingInvitation.email,
-          role: matchingInvitation.role,
-          expiresAt: matchingInvitation.expiresAt,
-        }
+    if (!matchingInvitation) {
+      return res.status(404).json({
+        error: 'Invalid invitation',
+        message: 'The invitation token is invalid or has been used',
       });
+    }
+
+    // Check if token is expired
+    if (isTokenExpired(matchingInvitation.expiresAt)) {
+      return res.status(410).json({
+        error: 'Invitation expired',
+        message: 'This invitation has expired',
+      });
+    }
+
+    // Check if user already exists
+    const userExists = await checkUserExists(matchingInvitation.email);
+    if (userExists) {
+      return res.status(409).json({
+        error: 'User already exists',
+        message: 'An account with this email address already exists',
+      });
+    }
+
+    return res.json({
+      success: true,
+      invitation: {
+        email: matchingInvitation.email,
+        role: matchingInvitation.role,
+        expiresAt: matchingInvitation.expiresAt,
+      },
+    });
   })
 );
 
@@ -903,62 +902,62 @@ router.post(
   invitationAcceptRateLimit,
   validateBody(acceptInvitationSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const { token, name, password } = req.body;
+    const { token, name, password } = req.body;
 
-      // Find and validate invitation
-      const matchingInvitation = await findInvitationByToken(token);
+    // Find and validate invitation
+    const matchingInvitation = await findInvitationByToken(token);
 
-      if (!matchingInvitation) {
-        return res.status(404).json({
-          error: 'Invalid invitation',
-          message: 'The invitation token is invalid or has been used'
-        });
-      }
-
-      // Check if token is expired
-      if (isTokenExpired(matchingInvitation.expiresAt)) {
-        return res.status(410).json({
-          error: 'Invitation expired',
-          message: 'This invitation has expired'
-        });
-      }
-
-      // Check if user already exists
-      const userExists = await checkUserExists(matchingInvitation.email);
-      if (userExists) {
-        return res.status(409).json({
-          error: 'User already exists',
-          message: 'An account with this email address already exists'
-        });
-      }
-
-      // Create user account
-      const newUser = await createUserFromInvitation(
-        matchingInvitation.email,
-        name,
-        matchingInvitation.role,
-        password
-      );
-
-      // Mark invitation as used
-      await updateInvitationInDb(matchingInvitation.id, {
-        used: true,
-        usedAt: new Date(),
-        usedBy: newUser.id,
+    if (!matchingInvitation) {
+      return res.status(404).json({
+        error: 'Invalid invitation',
+        message: 'The invitation token is invalid or has been used',
       });
+    }
 
-      // Audit log the acceptance
-
-      return res.status(201).json({
-        success: true,
-        message: 'Account created successfully',
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-          role: newUser.role,
-        }
+    // Check if token is expired
+    if (isTokenExpired(matchingInvitation.expiresAt)) {
+      return res.status(410).json({
+        error: 'Invitation expired',
+        message: 'This invitation has expired',
       });
+    }
+
+    // Check if user already exists
+    const userExists = await checkUserExists(matchingInvitation.email);
+    if (userExists) {
+      return res.status(409).json({
+        error: 'User already exists',
+        message: 'An account with this email address already exists',
+      });
+    }
+
+    // Create user account
+    const newUser = await createUserFromInvitation(
+      matchingInvitation.email,
+      name,
+      matchingInvitation.role,
+      password
+    );
+
+    // Mark invitation as used
+    await updateInvitationInDb(matchingInvitation.id, {
+      used: true,
+      usedAt: new Date(),
+      usedBy: newUser.id,
+    });
+
+    // Audit log the acceptance
+
+    return res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+      },
+    });
   })
 );
 

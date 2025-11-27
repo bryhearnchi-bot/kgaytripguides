@@ -48,7 +48,7 @@ export async function executeDbOperation<T>(
       throw ApiError.badRequest('Required field missing');
     }
 
-    throw ApiError.databaseError(errorMessage, error);
+    throw ApiError.databaseError(errorMessage, error instanceof Error ? error : undefined);
   }
 }
 

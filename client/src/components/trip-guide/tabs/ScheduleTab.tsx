@@ -8,6 +8,7 @@ import { formatTime as globalFormatTime } from '@/lib/timeFormat';
 import type { Talent } from '@/data/trip-data';
 import { TabHeader } from '../shared/TabHeader';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { PillDropdown } from '@/components/ui/dropdowns';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
@@ -142,6 +143,7 @@ export const ScheduleTab = memo(function ScheduleTab({
     if (tripStatus === 'current') {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
+      if (!today) return filteredScheduledDaily;
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
 
@@ -156,7 +158,7 @@ export const ScheduleTab = memo(function ScheduleTab({
           return { ...day, items: [] };
         }
 
-        const filteredItems = day.items.filter(event => {
+        const filteredItems = day.items.filter((event: any) => {
           const [eventHour, eventMinute] = event.time.split(':').map(Number);
           const eventTotalMinutes = eventHour * 60 + eventMinute;
           const currentTotalMinutes = currentHour * 60 + currentMinute;
@@ -170,7 +172,7 @@ export const ScheduleTab = memo(function ScheduleTab({
     return filteredScheduledDaily
       .map(day => {
         const partyEvents = day.items.filter(
-          event => event.type === 'party' || event.type === 'after'
+          (event: any) => event.type === 'party' || event.type === 'after'
         );
 
         const itineraryStop = ITINERARY.find(stop => stop.key === day.key);
@@ -197,7 +199,7 @@ export const ScheduleTab = memo(function ScheduleTab({
           setPartyThemes(data || []);
         })
         .catch(error => {
-          console.error('[ScheduleTab] Failed to fetch party themes:', error);
+          logger.error('[ScheduleTab] Failed to fetch party themes', error);
           setPartyThemes([]);
         })
         .finally(() => {
@@ -543,7 +545,7 @@ export const ScheduleTab = memo(function ScheduleTab({
 
                   {/* Party Cards Grid - 2 columns max */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {day.events.map((event, eventIndex) => (
+                    {day.events.map((event: any, eventIndex: number) => (
                       <PartyCard
                         key={`${day.key}-${eventIndex}`}
                         event={event}

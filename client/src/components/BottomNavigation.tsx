@@ -72,11 +72,13 @@ export default function BottomNavigation() {
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    const touch = e.targetTouches[0];
+    if (touch) setTouchStart(touch.clientX);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    const touch = e.targetTouches[0];
+    if (touch) setTouchEnd(touch.clientX);
   };
 
   const onTouchEnd = () => {
@@ -90,10 +92,12 @@ export default function BottomNavigation() {
 
     if (isLeftSwipe && currentIndex < tabs.length - 1) {
       // Swipe left - go to next tab
-      handleNavigation(tabs[currentIndex + 1].path);
+      const nextTab = tabs[currentIndex + 1];
+      if (nextTab) handleNavigation(nextTab.path);
     } else if (isRightSwipe && currentIndex > 0) {
       // Swipe right - go to previous tab
-      handleNavigation(tabs[currentIndex - 1].path);
+      const prevTab = tabs[currentIndex - 1];
+      if (prevTab) handleNavigation(prevTab.path);
     }
   };
 
@@ -109,12 +113,14 @@ export default function BottomNavigation() {
     }
 
     setSheetTouchEnd(null);
-    setSheetTouchStart(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    if (touch) setSheetTouchStart(touch.clientY);
   };
 
   const onSheetTouchMove = (e: React.TouchEvent) => {
     if (sheetTouchStart === null) return;
-    setSheetTouchEnd(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    if (touch) setSheetTouchEnd(touch.clientY);
   };
 
   const onSheetTouchEnd = () => {

@@ -9,6 +9,7 @@ import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { StandardDropdown } from '@/components/ui/dropdowns';
 import { Ship } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -77,8 +78,10 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
           const data = await response.json();
           setCruiseLines(data.items || []);
         }
-      } catch (error) {
-        console.error('Failed to fetch cruise lines:', error);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          logger.error('Failed to fetch cruise lines', { message: error.message });
+        }
       } finally {
         setLoadingCruiseLines(false);
       }
@@ -104,8 +107,10 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
         return { value: cruiseLineId.toString(), label: cruiseLineName };
       }
       throw new Error('Failed to create cruise line');
-    } catch (error) {
-      console.error('Failed to create cruise line:', error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        logger.error('Failed to create cruise line', { message: error.message });
+      }
       throw error;
     }
   };
@@ -191,7 +196,7 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
                   }))}
                   value={formData.cruiseLineId?.toString() || ''}
                   onChange={value => {
-                    const cruiseLineId = value ? Number(value) : null;
+                    const cruiseLineId = value ? Number(value) : undefined;
                     const selectedCruiseLine = cruiseLines.find(cl => cl.id === cruiseLineId);
                     setFormData(prev => ({
                       ...prev,
@@ -217,7 +222,7 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
                     onChange={e =>
                       handleInputChange(
                         'capacity',
-                        e.target.value ? parseInt(e.target.value) : undefined
+                        e.target.value ? parseInt(e.target.value) : null
                       )
                     }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
@@ -233,10 +238,7 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
                     placeholder="0"
                     value={formData.decks || ''}
                     onChange={e =>
-                      handleInputChange(
-                        'decks',
-                        e.target.value ? parseInt(e.target.value) : undefined
-                      )
+                      handleInputChange('decks', e.target.value ? parseInt(e.target.value) : null)
                     }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
                   />

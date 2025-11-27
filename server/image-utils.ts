@@ -177,20 +177,20 @@ export async function uploadToSupabase(
   });
 
   // Upload to Supabase Storage
-  const { data, error } = await supabase.storage.from(bucket).upload(fullPath, file.buffer, {
+  const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file.buffer, {
     contentType: file.mimetype,
     upsert: false,
   });
 
-  if (error) {
-    throw new Error(`Failed to upload image: ${error.message}`);
+  if (uploadError) {
+    throw new Error(`Failed to upload image: ${uploadError.message}`);
   }
 
   // Get public URL
-  // getPublicUrl returns an object with a publicUrl property directly
-  const { publicUrl } = supabase.storage.from(bucket).getPublicUrl(fullPath);
+  // getPublicUrl returns an object with a data.publicUrl property
+  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fullPath);
 
-  return publicUrl;
+  return urlData.publicUrl;
 }
 
 // Download image from URL and upload to Supabase Storage
@@ -213,8 +213,21 @@ export async function downloadImageFromUrl(
       );
     }
 
+    // Validate Content-Length before downloading (prevent DoS)
+    const maxFileSize = 10 * 1024 * 1024; // 10MB limit
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > maxFileSize) {
+      throw new Error(`File too large. Maximum size is ${maxFileSize / 1024 / 1024}MB`);
+    }
+
     // Get image buffer and content type
     const buffer = Buffer.from(await response.arrayBuffer());
+
+    // Also validate actual buffer size (in case Content-Length was missing or lied)
+    if (buffer.length > maxFileSize) {
+      throw new Error(`File too large. Maximum size is ${maxFileSize / 1024 / 1024}MB`);
+    }
+
     const contentType = response.headers.get('content-type') || 'image/jpeg';
 
     // Validate that the content is actually an image

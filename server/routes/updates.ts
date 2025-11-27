@@ -102,7 +102,7 @@ export function registerUpdateRoutes(app: Express) {
       }
 
       // Get trip details for these updates
-      const tripIds = [...new Set(updates.map(u => u.trip_id))];
+      const tripIds = Array.from(new Set(updates.map(u => u.trip_id)));
       const { data: trips, error: tripsError } = await supabaseAdmin
         .from('trips')
         .select('id, slug, name, start_date')

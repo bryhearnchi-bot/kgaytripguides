@@ -167,6 +167,7 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
         window.scrollTo(0, scrollY);
       };
     }
+    return undefined;
   }, [showArtistInfoSlideUp, showArtistScheduleSlideUp]);
 
   // Get all performances for this talent
@@ -333,15 +334,15 @@ export const TalentCard = memo<TalentCardProps>(function TalentCard({
           )}
 
           {/* Social Links */}
-          {(talent.website || (talent.social && Object.keys(talent.social).length > 0)) && (
+          {(talent.social?.website || (talent.social && Object.keys(talent.social).length > 0)) && (
             <div className="space-y-2">
               <h4 className="text-sm font-semibold text-white/60 uppercase tracking-wide">
                 Connect
               </h4>
               <div className="flex items-center gap-3">
-                {talent.website && !talent.social?.website && (
+                {talent.social?.website && (
                   <a
-                    href={talent.website}
+                    href={talent.social.website}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-white/70 hover:text-white transition-colors"

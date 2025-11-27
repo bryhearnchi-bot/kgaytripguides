@@ -30,6 +30,7 @@ export const ItineraryTab = memo(function ItineraryTab({
 
     // For current trips, filter to show only today and future days
     const today = new Date().toISOString().split('T')[0];
+    if (!today) return ITINERARY;
     return ITINERARY.filter(stop => {
       const stopDate = stop.key || stop.date?.split('T')[0];
       return stopDate >= today;

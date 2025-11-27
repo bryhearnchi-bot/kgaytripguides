@@ -212,6 +212,7 @@ export const EventCard = memo<EventCardProps>(function EventCard({
         window.scrollTo(0, scrollY);
       };
     }
+    return undefined;
   }, [showEventInfoSlideUp, showArtistScheduleSlideUp, showArtistInfoSlideUp]);
 
   // Memoize computed values with fallback chain: event image → talent image → party theme image
@@ -247,7 +248,7 @@ export const EventCard = memo<EventCardProps>(function EventCard({
 
   // Get the primary category for display (use first artist's category)
   const primaryCategory = useMemo(() => {
-    if (fullTalentData.length > 0 && fullTalentData[0].category) {
+    if (fullTalentData.length > 0 && fullTalentData[0]?.category) {
       return fullTalentData[0].category;
     }
     return '';
@@ -611,19 +612,19 @@ export const EventCard = memo<EventCardProps>(function EventCard({
         icon={User}
         subtitle={
           selectedArtistIndex !== null
-            ? fullTalentData[selectedArtistIndex]?.cat && (
+            ? fullTalentData[selectedArtistIndex]?.category && (
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getCategoryBadgeColor(fullTalentData[selectedArtistIndex].cat)}`}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getCategoryBadgeColor(fullTalentData[selectedArtistIndex].category)}`}
                 >
-                  {fullTalentData[selectedArtistIndex].cat}
+                  {fullTalentData[selectedArtistIndex].category}
                 </span>
               )
             : fullTalentData.length === 1 &&
-              fullTalentData[0]?.cat && (
+              fullTalentData[0]?.category && (
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getCategoryBadgeColor(fullTalentData[0].cat)}`}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getCategoryBadgeColor(fullTalentData[0].category)}`}
                 >
-                  {fullTalentData[0].cat}
+                  {fullTalentData[0].category}
                 </span>
               )
         }
@@ -682,6 +683,7 @@ export const EventCard = memo<EventCardProps>(function EventCard({
                       selectedArtistIndex !== null
                         ? fullTalentData[selectedArtistIndex]
                         : fullTalentData[0];
+                    if (!artist) return null;
                     return (
                       <>
                         {/* Artist Photo - Large Square */}

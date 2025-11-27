@@ -448,7 +448,8 @@ export default function JobListingComponent({
         <div className="relative flex w-full flex-col items-center gap-4">
           {jobs.map((role, index) => {
             // Check if we need to show a date header (first item or date changed from previous)
-            const showDateHeader = index === 0 || jobs[index - 1].title !== role.title;
+            const prevJob = jobs[index - 1];
+            const showDateHeader = index === 0 || (prevJob && prevJob.title !== role.title);
 
             // Determine the day label based on dayNumber
             let dayLabel = '';

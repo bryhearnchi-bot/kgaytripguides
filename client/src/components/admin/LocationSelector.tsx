@@ -103,7 +103,8 @@ interface Location {
 
 interface LocationSelectorProps {
   selectedId?: number | null;
-  onSelectionChange: (locationId: number | null) => void;
+  selectedName?: string | null;
+  onSelectionChange: (locationId: number | null, locationName?: string | null) => void;
   disabled?: boolean;
   className?: string;
   wizardMode?: boolean;
@@ -198,7 +199,7 @@ export function LocationSelector({
       setLocations(prev => [...prev, newLocation]);
 
       // Auto-select the newly created location
-      onSelectionChange(newLocation.id);
+      onSelectionChange(newLocation.id, newLocation.name);
 
       // Reset form and close modal
       setCreateForm({
@@ -239,14 +240,15 @@ export function LocationSelector({
 
   const selectLocation = (locationId: number) => {
     if (disabled) return;
-    onSelectionChange(locationId);
+    const location = locations.find(loc => loc.id === locationId);
+    onSelectionChange(locationId, location?.name ?? null);
     setIsPopoverOpen(false);
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (disabled) return;
-    onSelectionChange(null);
+    onSelectionChange(null, null);
   };
 
   useEffect(() => {

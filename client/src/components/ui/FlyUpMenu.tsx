@@ -71,6 +71,7 @@ export function FlyUpMenu({
         document.body.style.height = '';
       };
     }
+    return undefined;
   }, [open]);
 
   // Handle ESC key to close

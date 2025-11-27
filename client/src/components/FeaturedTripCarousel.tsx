@@ -35,6 +35,7 @@ interface Trip {
   highlights: string[] | null;
   charterCompanyName?: string;
   charterCompanyLogo?: string;
+  bookingUrl?: string | null;
 }
 
 // Helper function to get trip status badge
@@ -180,7 +181,9 @@ function TripCard({ trip }: { trip: Trip }) {
                   <Button
                     onClick={e => {
                       e.stopPropagation();
-                      window.open(trip.bookingUrl, '_blank', 'noopener,noreferrer');
+                      if (trip.bookingUrl) {
+                        window.open(trip.bookingUrl, '_blank', 'noopener,noreferrer');
+                      }
                     }}
                     className="bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
                     style={{
@@ -443,7 +446,9 @@ export function FeaturedTripCarousel({ trips }: FeaturedTripCarouselProps) {
                         <Button
                           onClick={e => {
                             e.stopPropagation();
-                            window.open(currentTrip.bookingUrl, '_blank', 'noopener,noreferrer');
+                            if (currentTrip.bookingUrl) {
+                              window.open(currentTrip.bookingUrl, '_blank', 'noopener,noreferrer');
+                            }
                           }}
                           className="bg-orange-500/30 backdrop-blur-lg hover:bg-orange-500/40 text-white font-medium rounded-lg transition-all text-sm shadow-lg hover:shadow-xl border border-orange-500/40"
                           style={{

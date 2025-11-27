@@ -121,23 +121,19 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
     locationId: number | null,
     locationName?: string | null
   ) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = {
-        ...updated[index],
-        locationId: locationId ?? undefined,
-        locationName: locationName || '',
-      };
-      return updated;
-    });
+    setFormData(prev =>
+      prev.map((entry, i) =>
+        i === index
+          ? { ...entry, locationId: locationId ?? undefined, locationName: locationName || '' }
+          : entry
+      )
+    );
   };
 
   const handleImageUpload = (index: number, url: string) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], imageUrl: url };
-      return updated;
-    });
+    setFormData(prev =>
+      prev.map((entry, i) => (i === index ? { ...entry, imageUrl: url } : entry))
+    );
   };
 
   const handleTimeChange = (
@@ -145,27 +141,19 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
     field: 'arrivalTime' | 'departureTime' | 'allAboardTime',
     value: string
   ) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
+    setFormData(prev =>
+      prev.map((entry, i) => (i === index ? { ...entry, [field]: value } : entry))
+    );
   };
 
   const handleDescriptionChange = (index: number, description: string) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], description };
-      return updated;
-    });
+    setFormData(prev => prev.map((entry, i) => (i === index ? { ...entry, description } : entry)));
   };
 
   const handleLocationTypeChange = (index: number, locationTypeId: number) => {
-    setFormData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], locationTypeId };
-      return updated;
-    });
+    setFormData(prev =>
+      prev.map((entry, i) => (i === index ? { ...entry, locationTypeId } : entry))
+    );
   };
 
   // Helper to parse date string in local timezone (not UTC)

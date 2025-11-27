@@ -234,7 +234,7 @@ export default function NavigationDrawer({
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
                         <AvatarImage
-                          src={profile?.avatarUrl || user.avatar_url}
+                          src={profile?.avatarUrl || (user as any).avatar_url}
                           alt={displayName}
                         />
                         <AvatarFallback className="bg-gradient-to-br from-ocean-500 to-blue-500 text-white text-sm font-semibold">

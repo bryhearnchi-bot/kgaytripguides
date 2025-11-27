@@ -57,7 +57,7 @@ export function ShipDetailsPage() {
   // Sync with state.shipId when it changes
   useEffect(() => {
     if (state.shipId !== selectedShipId) {
-      setSelectedShipId(state.shipId);
+      setSelectedShipId(state.shipId ?? null);
     }
   }, [state.shipId, selectedShipId]);
 
@@ -216,7 +216,7 @@ export function ShipDetailsPage() {
       <ShipFormModal
         isOpen={showEditModal}
         onOpenChange={setShowEditModal}
-        ship={memoizedShip}
+        ship={memoizedShip as any}
         onSuccess={updatedShip => {
           // Update local state with the new ship data
           if (updatedShip) {

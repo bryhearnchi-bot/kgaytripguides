@@ -16,7 +16,7 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import Logo from '../../../../../../assets/svg/logo';
+import Logo from '../../logo';
 
 export type NavigationSection = {
   title: string;

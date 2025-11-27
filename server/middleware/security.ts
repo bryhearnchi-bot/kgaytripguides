@@ -4,23 +4,33 @@ import { Request, Response, NextFunction } from 'express';
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
 
-  // Allow requests from Capacitor apps, localhost, and development servers
+  // Allow requests from Capacitor apps, localhost, production, and development servers
   const allowedOrigins = [
     'capacitor://localhost',
     'http://localhost:5173',
     'http://localhost:3001',
     'http://192.168.4.105:5173',
     'http://192.168.4.105:3001',
-  ];
+    process.env.PRODUCTION_URL,
+  ].filter(Boolean) as string[];
 
-  // In development, allow all origins for easier testing
-  if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin || '')) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  // Check if origin is in allowed list
+  const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+
+  // In development, also allow any localhost origin
+  const isDevLocalhost =
+    process.env.NODE_ENV === 'development' &&
+    origin &&
+    (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
+
+  if (isAllowedOrigin || isDevLocalhost) {
+    res.setHeader('Access-Control-Allow-Origin', origin as string);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   }
+  // Note: If origin not allowed, no CORS headers are set (browser will block)
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -33,18 +43,17 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
 
 // Security middleware for setting various security headers
 export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
-  // Content Security Policy
-  const cspDirectives = {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // Content Security Policy - stricter in production
+  const cspDirectives: Record<string, string[]> = {
     'default-src': ["'self'", 'https:'],
-    'script-src': [
-      "'self'",
-      "'unsafe-inline'", // Required for Vite in development
-      "'unsafe-eval'", // Required for development
-      'https:',
-    ],
+    'script-src': isDevelopment
+      ? ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:'] // Relaxed for Vite HMR
+      : ["'self'", 'https:'], // Strict in production
     'style-src': [
       "'self'",
-      "'unsafe-inline'", // Required for CSS-in-JS libraries
+      "'unsafe-inline'", // Required for CSS-in-JS libraries (Tailwind, etc.)
       'https:',
     ],
     'font-src': ["'self'", 'https:'],

@@ -65,7 +65,7 @@ export function ResortDetailsPage() {
   // Sync with state.resortId when it changes
   useEffect(() => {
     if (state.resortId !== selectedResortId) {
-      setSelectedResortId(state.resortId);
+      setSelectedResortId(state.resortId ?? null);
     }
   }, [state.resortId, selectedResortId]);
 
@@ -150,10 +150,22 @@ export function ResortDetailsPage() {
   // Memoize resort object to prevent unnecessary re-renders
   // This ensures the resort prop only changes when the actual data changes
   const memoizedResort = useMemo(() => {
-    if (!selectedResortId) return null;
+    if (!selectedResortId || !resortData.name) return null;
     return {
       id: selectedResortId,
-      ...resortData,
+      name: resortData.name,
+      location: resortData.location || resortData.locationName || '',
+      city: resortData.city,
+      state_province: resortData.state_province,
+      country: resortData.country,
+      country_code: resortData.country_code,
+      capacity: resortData.capacity,
+      roomCount: resortData.numberOfRooms,
+      imageUrl: resortData.imageUrl,
+      description: resortData.description,
+      propertyMapUrl: resortData.propertyMapUrl,
+      checkInTime: resortData.checkInTime,
+      checkOutTime: resortData.checkOutTime,
     };
   }, [
     selectedResortId,
@@ -267,7 +279,6 @@ export function ResortDetailsPage() {
               locationName: updatedResort.location?.name || updatedResort.locationName || '',
               capacity: updatedResort.capacity,
               numberOfRooms: updatedResort.numberOfRooms || updatedResort.roomCount,
-              roomCount: updatedResort.numberOfRooms || updatedResort.roomCount,
               imageUrl: updatedResort.imageUrl || '',
               description: updatedResort.description || '',
               propertyMapUrl: updatedResort.propertyMapUrl || '',

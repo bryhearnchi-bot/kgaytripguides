@@ -83,7 +83,7 @@ export function ResortPreview({ resortData, resortId, onEdit }: ResortPreviewPro
   const formatTime = (time: string) => {
     if (!time) return '';
     const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
+    const hour = parseInt(hours || '0');
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
     return `${displayHour}:${minutes} ${ampm}`;

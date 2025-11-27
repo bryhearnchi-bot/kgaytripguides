@@ -52,7 +52,7 @@ function SingleSelectBasicDemo() {
       variant="single-basic"
       options={statusOptions}
       value={value}
-      onChange={setValue}
+      onChange={val => setValue(typeof val === 'string' ? val : val[0] || '')}
       placeholder="Select status"
       className="max-w-xs"
     />
@@ -69,7 +69,7 @@ function SingleSelectBasicPillDemo() {
     <PillDropdown
       options={statusOptions}
       value={value}
-      onChange={setValue}
+      onChange={val => setValue(typeof val === 'string' ? val : val[0] || '')}
       placeholder="Select status"
       className="w-56"
     />
@@ -87,7 +87,7 @@ function SingleSelectSearchDemo() {
       variant="single-search"
       options={charterCompanyOptions}
       value={value}
-      onChange={setValue}
+      onChange={val => setValue(typeof val === 'string' ? val : val[0] || '')}
       placeholder="Select a company"
       searchPlaceholder="Search companies..."
       className="max-w-sm"
@@ -114,7 +114,7 @@ function SingleSelectSearchAddDemo() {
       variant="single-search-add"
       options={options}
       value={value}
-      onChange={setValue}
+      onChange={val => setValue(typeof val === 'string' ? val : val[0] || '')}
       onCreateNew={handleCreateNew}
       placeholder="Select a company"
       addLabel="Add New Cruise Line"
@@ -138,7 +138,7 @@ function MultiSelectSearchDemo() {
       variant="multi-search"
       options={talentOptionsInitial}
       value={selectedValues}
-      onChange={setSelectedValues}
+      onChange={val => setSelectedValues(Array.isArray(val) ? val : [val])}
       placeholder="Select talent..."
       searchPlaceholder="Search talent..."
       className="max-w-xl"
@@ -168,7 +168,7 @@ function MultiSelectSearchAddDemo() {
       variant="multi-search-add"
       options={options}
       value={selectedValues}
-      onChange={setSelectedValues}
+      onChange={val => setSelectedValues(Array.isArray(val) ? val : [val])}
       onCreateNew={handleCreateNew}
       placeholder="Select talent..."
       addLabel="Add New Talent"

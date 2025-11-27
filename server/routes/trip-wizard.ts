@@ -297,7 +297,7 @@ export function registerTripWizardRoutes(app: Express) {
           errors: validation.error.errors,
           body: JSON.stringify(req.body, null, 2),
         });
-        throw new ApiError(400, 'Validation failed', { details: validation.error.errors });
+        throw new ApiError(400, 'Validation failed', { details: validation.error.errors as any });
       }
 
       const tripData = validation.data;
@@ -486,7 +486,7 @@ export function registerTripWizardRoutes(app: Express) {
       const validation = tripDraftSchema.safeParse(req.body);
 
       if (!validation.success) {
-        throw new ApiError(400, 'Validation failed', { details: validation.error.errors });
+        throw new ApiError(400, 'Validation failed', { details: validation.error.errors as any });
       }
 
       const draftData = validation.data;
@@ -632,10 +632,11 @@ export function registerTripWizardRoutes(app: Express) {
       if (draftError) {
         logger.error('Failed to save draft', draftError);
         throw new ApiError(500, 'Failed to save draft', {
-          supabaseError: draftError.message,
-          code: draftError.code,
-          details: draftError.details,
-          hint: draftError.hint,
+          details: {
+            supabaseError: draftError.message,
+            code: draftError.code,
+            hint: draftError.hint,
+          },
         });
       }
 
@@ -707,7 +708,11 @@ export function registerTripWizardRoutes(app: Express) {
     '/api/admin/trips/draft/:id',
     requireAuth,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const draftId = parseInt(req.params.id);
+      const draftIdParam = req.params.id;
+      if (!draftIdParam) {
+        throw new ApiError(400, 'Draft ID is required');
+      }
+      const draftId = parseInt(draftIdParam);
       const userId = req.user!.id;
 
       if (isNaN(draftId)) {
@@ -759,7 +764,11 @@ export function registerTripWizardRoutes(app: Express) {
     '/api/admin/trips/draft/:id',
     requireAuth,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const draftId = parseInt(req.params.id);
+      const draftIdParam = req.params.id;
+      if (!draftIdParam) {
+        throw new ApiError(400, 'Draft ID is required');
+      }
+      const draftId = parseInt(draftIdParam);
       const userId = req.user!.id;
 
       if (isNaN(draftId)) {
@@ -805,7 +814,11 @@ export function registerTripWizardRoutes(app: Express) {
     '/api/admin/trips/:id/slug',
     requireAuth,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const tripId = parseInt(req.params.id);
+      const tripIdParam = req.params.id;
+      if (!tripIdParam) {
+        throw new ApiError(400, 'Trip ID is required');
+      }
+      const tripId = parseInt(tripIdParam);
       const { slug } = req.body;
       const userId = req.user!.id;
 

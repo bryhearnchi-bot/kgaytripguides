@@ -70,7 +70,7 @@ const PopoverContent = React.forwardRef<
     }
 
     return () => observer.disconnect();
-  }, [props['data-state']]);
+  }, [(props as any)['data-state']]);
 
   return (
     <PopoverPrimitive.Portal container={container}>

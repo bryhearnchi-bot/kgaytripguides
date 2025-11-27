@@ -148,7 +148,11 @@ export function EditBasicInfoModal({ open, onOpenChange }: EditBasicInfoModalPro
     }
   };
 
-  const handleTripTypeChange = (tripTypeId: string) => {
+  const handleTripTypeChange = (value: string | string[]) => {
+    // For single-search variant, value is always a string
+    const tripTypeId = Array.isArray(value) ? value[0] : value;
+    if (!tripTypeId) return;
+
     setFormData(prev => ({ ...prev, tripTypeId: Number(tripTypeId) }));
 
     // Find the trip type and set it in context

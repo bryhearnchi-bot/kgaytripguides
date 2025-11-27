@@ -191,11 +191,13 @@ export default function TripPage() {
     }
 
     setSheetTouchEnd(null);
-    setSheetTouchStart(e.targetTouches[0].clientY);
+    if (e.targetTouches[0]) {
+      setSheetTouchStart(e.targetTouches[0].clientY);
+    }
   };
 
   const onSheetTouchMove = (e: React.TouchEvent) => {
-    if (sheetTouchStart === null) return;
+    if (sheetTouchStart === null || !e.targetTouches[0]) return;
     setSheetTouchEnd(e.targetTouches[0].clientY);
   };
 

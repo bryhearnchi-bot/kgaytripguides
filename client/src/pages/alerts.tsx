@@ -15,6 +15,7 @@ import { useLocation } from 'wouter';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { useOfflineStorage } from '@/contexts/OfflineStorageContext';
 import { cn } from '@/lib/utils';
 import type { Update } from '@/types/trip-info';
@@ -105,7 +106,7 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
         setUpdates(data);
       }
     } catch (error) {
-      console.error('Error fetching updates:', error);
+      logger.error('Error fetching updates', error instanceof Error ? error : undefined);
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +122,7 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
           .maybeSingle();
 
         if (error) {
-          console.error('Error fetching user notification read status:', error);
+          logger.error('Error fetching user notification read status', error);
         } else if (data) {
           setLastReadTimestamp(data.last_read_at);
         }
@@ -154,7 +155,7 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
         )
         .then(({ error }) => {
           if (error) {
-            console.error('Error updating user notification read status:', error);
+            logger.error('Error updating user notification read status', error);
           }
         });
     } else {
@@ -205,7 +206,7 @@ export default function Alerts({ tripSlug, tripId }: AlertsProps = {}) {
     });
   } else {
     // If filtered by trip, show all updates without grouping
-    if (sortedUpdates.length > 0) {
+    if (sortedUpdates.length > 0 && sortedUpdates[0]) {
       groupedUpdates.push({
         tripId: sortedUpdates[0].trip_id,
         tripName: '', // Don't show trip name when filtered

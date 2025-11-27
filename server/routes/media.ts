@@ -14,6 +14,7 @@ import { validateBody, bulkTalentAssignSchema } from '../middleware/validation';
 import { uploadRateLimit, bulkRateLimit } from '../middleware/rate-limiting';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiError } from '../utils/ApiError';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 
 export function registerMediaRoutes(app: Express) {
   // ============ IMAGE UPLOAD ENDPOINTS ============
@@ -39,8 +40,6 @@ export function registerMediaRoutes(app: Express) {
 
         return res.json({
           url: publicUrl,
-          filename: file.originalname,
-          originalName: file.originalname,
           size: file.size,
           type: imageType,
         });
@@ -150,9 +149,10 @@ export function registerMediaRoutes(app: Express) {
     })
   );
 
-  // Get talent statistics
+  // Get talent statistics (admin only)
   app.get(
     '/api/talent/stats',
+    requireContentEditor,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const supabaseAdmin = getSupabaseAdmin();
 
@@ -233,7 +233,8 @@ export function registerMediaRoutes(app: Express) {
 
       // Apply search filter
       if (search) {
-        query = query.or(`name.ilike.%${search}%,bio.ilike.%${search}%`);
+        const sanitized = sanitizeSearchTerm(search as string);
+        query = query.or(`name.ilike.%${sanitized}%,bio.ilike.%${sanitized}%`);
       }
 
       // Apply category filter by ID

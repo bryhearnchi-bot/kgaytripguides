@@ -12,6 +12,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { ApiError } from '../utils/ApiError';
 import { getSupabaseAdmin, handleSupabaseError, isSupabaseAdminAvailable } from '../supabase-admin';
 import { logger } from '../logging/logger';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 
 export function registerLocationRoutes(app: Express) {
   // ============ LOCATION ENDPOINTS ============
@@ -56,8 +57,9 @@ export function registerLocationRoutes(app: Express) {
 
       // Apply filters
       if (search) {
+        const sanitized = sanitizeSearchTerm(search as string);
         query = query.or(
-          `name.ilike.%${search}%,country.ilike.%${search}%,description.ilike.%${search}%`
+          `name.ilike.%${sanitized}%,country.ilike.%${sanitized}%,description.ilike.%${sanitized}%`
         );
       }
       if (country) {
@@ -439,7 +441,8 @@ export function registerLocationRoutes(app: Express) {
 
       // Apply filters
       if (search) {
-        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+        const sanitized = sanitizeSearchTerm(search as string);
+        query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
       }
       if (minCapacity) {
         query = query.gte('capacity', parseInt(minCapacity as string));
@@ -759,7 +762,8 @@ export function registerLocationRoutes(app: Express) {
 
       // Apply filters
       if (search) {
-        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+        const sanitized = sanitizeSearchTerm(search as string);
+        query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
       }
 
       // Apply pagination
@@ -1056,7 +1060,8 @@ export function registerLocationRoutes(app: Express) {
 
       // Apply filters
       if (search) {
-        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+        const sanitized = sanitizeSearchTerm(search as string);
+        query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
       }
       if (venueTypeId) {
         query = query.eq('venue_type_id', Number(venueTypeId));
@@ -1352,8 +1357,9 @@ export function registerLocationRoutes(app: Express) {
 
       // Apply filters
       if (search) {
+        const sanitized = sanitizeSearchTerm(search as string);
         query = query.or(
-          `name.ilike.%${search}%,location.ilike.%${search}%,description.ilike.%${search}%`
+          `name.ilike.%${sanitized}%,location.ilike.%${sanitized}%,description.ilike.%${sanitized}%`
         );
       }
       if (location) {

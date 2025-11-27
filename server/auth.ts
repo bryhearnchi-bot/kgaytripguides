@@ -15,7 +15,19 @@ function getJWTSecret(): string {
 }
 
 function getJWTRefreshSecret(): string {
-  return process.env.JWT_REFRESH_SECRET || getJWTSecret();
+  const refreshSecret = process.env.JWT_REFRESH_SECRET;
+  if (!refreshSecret) {
+    // In production, require a separate refresh secret for security
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL: JWT_REFRESH_SECRET environment variable is required in production');
+    }
+    // In development, warn but allow fallback to SESSION_SECRET with a suffix
+    logger.warn(
+      'JWT_REFRESH_SECRET not set - using derived secret. Set JWT_REFRESH_SECRET in production.'
+    );
+    return `${getJWTSecret()}_refresh`;
+  }
+  return refreshSecret;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -144,8 +156,20 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
           return next();
         }
       }
-    } catch (supabaseError) {
-      // Supabase auth failed, try custom JWT
+    } catch (supabaseError: unknown) {
+      // Log Supabase auth failure for debugging, but continue to custom JWT fallback
+      // This is expected when using custom JWT tokens, so we don't throw here
+      if (supabaseError instanceof Error) {
+        // Only log if it's not a simple "invalid token" error (expected for custom JWTs)
+        if (
+          !supabaseError.message.includes('invalid') &&
+          !supabaseError.message.includes('expired')
+        ) {
+          logger.warn('Supabase auth check failed, falling back to custom JWT', {
+            error: supabaseError.message,
+          });
+        }
+      }
     }
 
     // Fall back to custom JWT authentication

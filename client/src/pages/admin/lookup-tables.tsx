@@ -339,7 +339,7 @@ export default function AdminLookupTables() {
                       width: 80,
                       minWidth: 80,
                       maxWidth: 80,
-                      render: (_value, item) => (
+                      render: (_value: any, item: any) => (
                         <div className="flex items-center justify-center">
                           <div className="flex h-12 w-12 items-center justify-center rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-white/10">
                             {item.logo_url ? (

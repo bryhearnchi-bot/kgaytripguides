@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Check, ChevronDown, Plus, Save, X } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -213,7 +214,7 @@ export function StandardDropdown({
       setShowAddDialog(false);
       setNewName('');
     } catch (error) {
-      console.error('Failed to create new item:', error);
+      logger.error('Failed to create new item', error instanceof Error ? error : undefined);
     } finally {
       setCreating(false);
     }

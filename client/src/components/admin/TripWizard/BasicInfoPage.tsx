@@ -32,8 +32,6 @@ export function BasicInfoPage() {
     syncEventsWithDates,
   } = useTripWizard();
 
-  // Debug: Log bookingUrl value
-  console.log('🔍 BasicInfoPage: bookingUrl value:', state.tripData.bookingUrl);
   const [charterCompanies, setCharterCompanies] = useState<CharterCompany[]>([]);
   const [tripTypes, setTripTypes] = useState<TripType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,7 +238,11 @@ export function BasicInfoPage() {
     }
   };
 
-  const handleTripTypeChange = (tripTypeId: string) => {
+  const handleTripTypeChange = (value: string | string[]) => {
+    // For single-search variant, value is always a string
+    const tripTypeId = Array.isArray(value) ? value[0] : value;
+    if (!tripTypeId) return;
+
     updateTripData({ tripTypeId: Number(tripTypeId) });
 
     // Find the trip type and set it in context

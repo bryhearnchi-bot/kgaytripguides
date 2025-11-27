@@ -13,6 +13,13 @@ interface OverviewTabProps {
   DAILY: any[];
   TALENT: any[];
   PARTY_THEMES: any[];
+  updates?: Array<{
+    id: number;
+    timestamp: string;
+    title: string;
+    description: string | null;
+    type: 'new' | 'update' | 'info';
+  }>;
   onNavigateToTab?: (tab: string) => void;
   isCruise?: boolean;
   isResort?: boolean;
@@ -114,7 +121,7 @@ export const OverviewTab = memo(function OverviewTab({
       {/* Hero Section - Only visible on Overview tab */}
       <HeroSection
         tripName={tripData?.trip?.name}
-        tripDescription={null} // Description moved to Overview tab
+        tripDescription={undefined} // Description moved to Overview tab
         tripType={isCruise ? 'cruise' : isResort ? 'resort' : null}
         charterCompanyLogo={tripData?.trip?.charterCompanyLogo}
         charterCompanyName={tripData?.trip?.charterCompanyName}
@@ -323,7 +330,7 @@ export const OverviewTab = memo(function OverviewTab({
                         <p className="text-xs font-semibold text-white/80">Dining Venues</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
-                        {shipInfo.restaurants.map((restaurant, idx) => (
+                        {shipInfo.restaurants.map((restaurant: any, idx: number) => (
                           <p key={idx} className="text-xs text-white/70">
                             • {restaurant.name}
                             {restaurant.venueType && (
@@ -343,7 +350,7 @@ export const OverviewTab = memo(function OverviewTab({
                         <p className="text-xs font-semibold text-white/80">Amenities</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
-                        {shipInfo.amenities.map((amenity, idx) => (
+                        {shipInfo.amenities.map((amenity: any, idx: number) => (
                           <p key={idx} className="text-xs text-white/70">
                             • {amenity}
                           </p>
@@ -554,7 +561,7 @@ export const OverviewTab = memo(function OverviewTab({
                           <p className="text-xs font-semibold text-white/80">Dining Venues</p>
                         </div>
                         <div className="grid grid-cols-1 gap-y-1">
-                          {shipInfo.restaurants.map((restaurant, idx) => (
+                          {shipInfo.restaurants.map((restaurant: any, idx: number) => (
                             <p key={idx} className="text-xs text-white/70">
                               • {restaurant.name}
                               {restaurant.venueType && (
@@ -572,7 +579,7 @@ export const OverviewTab = memo(function OverviewTab({
                           <p className="text-xs font-semibold text-white/80">Amenities</p>
                         </div>
                         <div className="grid grid-cols-1 gap-y-1">
-                          {shipInfo.amenities.map((amenity, idx) => (
+                          {shipInfo.amenities.map((amenity: any, idx: number) => (
                             <p key={idx} className="text-xs text-white/70">
                               • {amenity}
                             </p>

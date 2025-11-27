@@ -23,10 +23,11 @@ function transformEventData(event: any): any {
   // Format date to YYYY-MM-DD string (timezone-agnostic - no timezone conversions)
   const formatDate = (dateValue: any): string => {
     if (!dateValue) return '';
+    if (typeof dateValue !== 'string' && !(dateValue instanceof Date)) return '';
 
     // If already a string in YYYY-MM-DD format, return as-is
     if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
-      return dateValue.split('T')[0];
+      return dateValue.split('T')[0] ?? '';
     }
 
     // Otherwise parse and extract date components in UTC to avoid timezone shifts
@@ -249,6 +250,10 @@ export function registerEventRoutes(app: Express) {
           // Auto-add missing talent to trip_talent
           if (missingTalentIds.length > 0) {
             logger.info('Auto-adding talent to trip_talent', { missingTalentIds, tripId });
+            if (!tripId) {
+              logger.error('tripId is required for auto-adding talent');
+              return;
+            }
             const tripTalentInserts = missingTalentIds.map(talentId => ({
               trip_id: parseInt(tripId),
               talent_id: talentId,
@@ -573,11 +578,17 @@ export function registerEventRoutes(app: Express) {
               for (const talentId of removedTalentIds) {
                 // Check if this talent is in any other event on this trip
                 // Use a raw query to check if talent_ids array contains the talent
+                if (!tripId) {
+                  logger.error('tripId is required for checking talent in other events');
+                  return;
+                }
+                const validTripId = tripId.toString();
+                const validEventId = parseInt(id ?? '0');
                 const { data: otherEvents, error: checkError } = await supabaseAdmin.rpc(
                   'check_talent_in_other_events',
                   {
-                    p_trip_id: tripId,
-                    p_event_id: parseInt(id),
+                    p_trip_id: validTripId,
+                    p_event_id: validEventId,
                     p_talent_id: talentId,
                   }
                 );

@@ -37,8 +37,14 @@ export function ResortSchedulePage() {
       !state.isEditMode
     ) {
       // Parse dates in local timezone to avoid UTC conversion issues
-      const [startYear, startMonth, startDay] = state.tripData.startDate.split('-').map(Number);
-      const [endYear, endMonth, endDay] = state.tripData.endDate.split('-').map(Number);
+      const startParts = state.tripData.startDate.split('-').map(Number);
+      const endParts = state.tripData.endDate.split('-').map(Number);
+      const startYear = startParts[0] ?? 2025;
+      const startMonth = startParts[1] ?? 1;
+      const startDay = startParts[2] ?? 1;
+      const endYear = endParts[0] ?? 2025;
+      const endMonth = endParts[1] ?? 1;
+      const endDay = endParts[2] ?? 1;
 
       const startDate = new Date(startYear, startMonth - 1, startDay);
       const endDate = new Date(endYear, endMonth - 1, endDay);
@@ -75,7 +81,10 @@ export function ResortSchedulePage() {
 
   const formatDate = (dateString: string) => {
     // Parse in local timezone to avoid UTC conversion
-    const [year, month, day] = dateString.split('-').map(Number);
+    const parts = dateString.split('-').map(Number);
+    const year = parts[0] ?? 2025;
+    const month = parts[1] ?? 1;
+    const day = parts[2] ?? 1;
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -94,7 +103,10 @@ export function ResortSchedulePage() {
 
   // Helper to parse date string in local timezone (not UTC)
   const parseDateString = (dateStr: string): Date => {
-    const [year, month, day] = dateStr.split('-').map(Number);
+    const parts = dateStr.split('-').map(Number);
+    const year = parts[0] ?? 2025;
+    const month = parts[1] ?? 1;
+    const day = parts[2] ?? 1;
     return new Date(year, month - 1, day);
   };
 
@@ -231,7 +243,7 @@ export function ResortSchedulePage() {
                 <ImageUploadField
                   label=""
                   value={entry.imageUrl}
-                  onChange={url => handleImageUpload(index, url)}
+                  onChange={url => handleImageUpload(index, url || '')}
                   imageType="general"
                 />
                 <p className="text-[10px] text-white/50 mt-0.5">

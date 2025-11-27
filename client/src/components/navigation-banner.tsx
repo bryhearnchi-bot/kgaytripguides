@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { Badge } from '@/components/ui/badge';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useUpdate } from '@/context/UpdateContext';
@@ -98,7 +99,7 @@ export default function NavigationBanner() {
           description: 'App link copied to clipboard',
         });
       } catch (clipboardError) {
-        console.error('Failed to share or copy:', error, clipboardError);
+        logger.error('Failed to share or copy', { error, clipboardError });
       }
     }
   };

@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '../supabase-admin';
 import { logger } from '../logging/logger';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 
 export interface Location {
   id: number;
@@ -83,10 +84,11 @@ export class LocationStorage {
    */
   async search(query: string): Promise<Location[]> {
     try {
+      const sanitized = sanitizeSearchTerm(query);
       const { data, error } = await this.supabaseAdmin
         .from('locations')
         .select('*')
-        .or(`name.ilike.%${query}%,country.ilike.%${query}%`)
+        .or(`name.ilike.%${sanitized}%,country.ilike.%${sanitized}%`)
         .order('name');
 
       if (error) throw error;

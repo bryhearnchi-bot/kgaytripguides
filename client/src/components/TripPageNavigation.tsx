@@ -98,8 +98,9 @@ export function TripPageNavigation({
     tripId && (!isOfflineEnabled(tripId) || isCacheOutdated(tripId)) && !isAlertDismissed(tripId);
 
   // Check if user can edit trips (on a trip page with admin rights)
-  const canEditTrip =
-    profile?.role && ['super_admin', 'content_manager', 'admin'].includes(profile.role);
+  const canEditTrip = Boolean(
+    profile?.role && ['super_admin', 'content_manager', 'admin'].includes(profile.role)
+  );
 
   const handleBack = () => {
     haptics.light();

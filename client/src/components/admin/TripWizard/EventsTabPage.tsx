@@ -197,7 +197,7 @@ export function EventsTabPage() {
 
     // Sort each day's events by time
     Object.keys(grouped).forEach(date => {
-      grouped[date].sort((a, b) => a.time.localeCompare(b.time));
+      grouped[date]?.sort((a, b) => a.time.localeCompare(b.time));
     });
 
     return grouped;

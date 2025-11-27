@@ -196,7 +196,6 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
               <AmenitySelector
                 selectedIds={formData.amenityIds}
                 onSelectionChange={handleAmenityChange}
-                menuVariant="default"
               />
             </div>
           </div>

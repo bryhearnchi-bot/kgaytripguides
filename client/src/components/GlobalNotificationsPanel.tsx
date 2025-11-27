@@ -13,6 +13,7 @@ import { useLocation } from 'wouter';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface UpdateWithTrip extends Update {
   trip_name?: string;
@@ -51,7 +52,7 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
           .maybeSingle();
 
         if (error) {
-          console.error('Error fetching user notification read status:', error);
+          logger.error('Error fetching user notification read status', error);
         } else if (data) {
           setLastReadTimestamp(data.last_read_at);
         }
@@ -88,7 +89,7 @@ export const GlobalNotificationsPanel = memo(function GlobalNotificationsPanel({
           )
           .then(({ error }) => {
             if (error) {
-              console.error('Error updating user notification read status:', error);
+              logger.error('Error updating user notification read status', error);
             }
           });
       } else {

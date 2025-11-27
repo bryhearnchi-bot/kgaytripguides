@@ -203,12 +203,14 @@ function HeroSection() {
             <div className="absolute -left-8 top-10 hidden h-24 w-24 rounded-full bg-[#1c1c1c] md:block"></div>
             <div className="absolute bottom-8 -right-10 hidden h-28 w-28 rounded-full bg-[#1c1c1c] md:block"></div>
             <div className="relative overflow-hidden rounded-[40px] border border-white/10 bg-black/40">
-              <img
-                src={modernHeroGallery[0].src}
-                alt={modernHeroGallery[0].alt}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+              {modernHeroGallery[0] && (
+                <img
+                  src={modernHeroGallery[0].src}
+                  alt={modernHeroGallery[0].alt}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              )}
               <Button className="absolute bottom-6 left-6 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg hover:bg-white/90">
                 Contact Us <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

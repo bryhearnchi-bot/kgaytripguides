@@ -1,7 +1,7 @@
 import { useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type { Trip } from '@/types/trip';
+import type { Trip } from '@shared/api-types';
 import { Loader2, History, MapPin, Ship, Home, CalendarDays } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { dateOnly } from '@/lib/utils';

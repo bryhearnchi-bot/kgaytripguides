@@ -81,7 +81,7 @@ export function EditResortDetailsModal({ open, onOpenChange }: EditResortDetails
     }
   }, [open, state.resortData]);
 
-  const handleLocationChange = (locationId: number | null) => {
+  const handleLocationChange = (locationId: number | null, _locationName?: string | null) => {
     setFormData(prev => ({ ...prev, locationId: locationId ?? undefined }));
   };
 
@@ -157,7 +157,7 @@ export function EditResortDetailsModal({ open, onOpenChange }: EditResortDetails
                     onChange={e =>
                       handleInputChange(
                         'capacity',
-                        e.target.value ? parseInt(e.target.value) : undefined
+                        e.target.value ? parseInt(e.target.value) : null
                       )
                     }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
@@ -174,7 +174,7 @@ export function EditResortDetailsModal({ open, onOpenChange }: EditResortDetails
                     onChange={e =>
                       handleInputChange(
                         'numberOfRooms',
-                        e.target.value ? parseInt(e.target.value) : undefined
+                        e.target.value ? parseInt(e.target.value) : null
                       )
                     }
                     className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm transition-all focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"

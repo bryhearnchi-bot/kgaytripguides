@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import type { Update } from '@/types/trip-info';
 
 interface UpdateWithTrip extends Update {
@@ -29,7 +30,7 @@ export function useUnreadAlerts(tripSlug?: string) {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching user notification read status:', error);
+        logger.error('Error fetching user notification read status', error);
         return null;
       }
       return data?.last_read_at || null;
@@ -56,7 +57,7 @@ export function useUnreadAlerts(tripSlug?: string) {
           endpoint = `/api/trips/${tripData.trip.id}/updates`;
         } else {
           // If we can't get trip data, fall back to all updates
-          console.warn('Could not fetch trip data for slug:', tripSlug);
+          logger.warn('Could not fetch trip data for slug', { tripSlug });
         }
       }
 
@@ -74,7 +75,7 @@ export function useUnreadAlerts(tripSlug?: string) {
         setUnreadCount(unread);
       }
     } catch (error) {
-      console.error('Error fetching unread alerts:', error);
+      logger.error('Error fetching unread alerts', error instanceof Error ? error : undefined);
     }
   }, [tripSlug, fetchLastRead]);
 

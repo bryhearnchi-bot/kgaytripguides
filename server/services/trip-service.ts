@@ -26,6 +26,7 @@ import {
 } from '../utils/errorUtils';
 import { tripStorage, itineraryStorage, eventStorage, tripInfoStorage } from '../storage';
 import { getSupabaseAdmin } from '../supabase-admin';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 import type { Trip, Itinerary, Event } from '../../shared/supabase-types';
 
 /**
@@ -689,7 +690,8 @@ export class TripService {
 
       // Apply filters
       if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,slug.ilike.%${filters.search}%`);
+        const sanitized = sanitizeSearchTerm(filters.search);
+        query = query.or(`name.ilike.%${sanitized}%,slug.ilike.%${sanitized}%`);
       }
 
       if (filters.status) {

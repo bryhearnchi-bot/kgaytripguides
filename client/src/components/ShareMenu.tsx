@@ -35,6 +35,7 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isOpen]);
 
   // Close on escape key
@@ -49,6 +50,7 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
+    return undefined;
   }, [isOpen]);
 
   const handleCopyLink = async () => {
@@ -81,8 +83,7 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
         try {
           document.execCommand('copy');
           setCopied(true);
-          toast({
-            title: 'Link copied!',
+          toast.success('Link copied!', {
             description: 'Trip link copied to clipboard',
           });
           setTimeout(() => {
@@ -90,20 +91,16 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
             setIsOpen(false);
           }, 1500);
         } catch {
-          toast({
-            title: 'Failed to copy',
+          toast.error('Failed to copy', {
             description: 'Please try again or copy the URL manually',
-            variant: 'destructive',
           });
         } finally {
           document.body.removeChild(textArea);
         }
       }
     } catch {
-      toast({
-        title: 'Failed to copy',
+      toast.error('Failed to copy', {
         description: 'Please try again or copy the URL manually',
-        variant: 'destructive',
       });
     }
   };

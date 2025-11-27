@@ -4,6 +4,7 @@
 import { getSupabaseAdmin } from './supabase-admin';
 import { logger } from './logging/logger';
 import { transformObjectToSnakeCase } from './utils/field-transformers';
+import { sanitizeSearchTerm } from './utils/sanitize';
 import type {
   Profile,
   Trip,
@@ -263,6 +264,7 @@ export class ItineraryStorage implements IItineraryStorage {
     if (error) throw error;
 
     // Transform to camelCase for consistency with other endpoints
+    // Note: Return type uses database Row type but we transform to camelCase
     return (data || []).map((item: any) => ({
       id: item.id,
       tripId: item.trip_id,
@@ -281,7 +283,7 @@ export class ItineraryStorage implements IItineraryStorage {
       segment: item.segment,
       createdAt: item.created_at,
       updatedAt: item.updated_at,
-    }));
+    })) as unknown as Itinerary[];
   }
 
   async createItineraryStop(data: any): Promise<Itinerary> {
@@ -514,10 +516,11 @@ export class TalentStorage implements ITalentStorage {
 
   async searchTalent(query: string): Promise<Talent[]> {
     const supabaseAdmin = getSupabaseAdmin();
+    const sanitized = sanitizeSearchTerm(query);
     const { data, error } = await supabaseAdmin
       .from('talent')
       .select('*')
-      .or(`name.ilike.%${query}%,bio.ilike.%${query}%,skills.ilike.%${query}%`)
+      .or(`name.ilike.%${sanitized}%,bio.ilike.%${sanitized}%,skills.ilike.%${sanitized}%`)
       .order('name', { ascending: true });
 
     if (error) throw error;

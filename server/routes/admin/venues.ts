@@ -139,6 +139,9 @@ export function registerVenueRoutes(app: Express) {
       const { name, venueTypeId, description } = validation.data;
       const supabaseAdmin = await getSupabaseAdmin();
 
+      if (!shipId) {
+        throw ApiError.badRequest('shipId is required');
+      }
       const { data: venue, error } = await supabaseAdmin
         .from('ship_venues')
         .insert({
@@ -278,6 +281,9 @@ export function registerVenueRoutes(app: Express) {
       const { name, venueTypeId, description } = validation.data;
       const supabaseAdmin = await getSupabaseAdmin();
 
+      if (!resortId) {
+        throw ApiError.badRequest('resortId is required');
+      }
       const { data: venue, error } = await supabaseAdmin
         .from('resort_venues')
         .insert({

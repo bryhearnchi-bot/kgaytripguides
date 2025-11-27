@@ -83,8 +83,8 @@ function Router() {
         <Route path="/landing-mockups" component={LandingMockupsPage} />
         <Route path="/past-trips" component={PastTrips} />
         <Route path="/my-stuff" component={MyStuff} />
-        <Route path="/alerts" component={Alerts} />
-        <Route path="/settings" component={Settings} />
+        <Route path="/alerts" component={() => <Alerts />} />
+        <Route path="/settings" component={() => <Settings />} />
         <Route path="/trip/:slug" component={TripPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/auth/callback" component={AuthCallback} />

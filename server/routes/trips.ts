@@ -20,11 +20,13 @@ import {
   bulkEventsSchema,
   exportTripSchema,
   importTripSchema,
+  duplicateTripSchema,
 } from '../middleware/validation';
 import { adminRateLimit, bulkRateLimit } from '../middleware/rate-limiting';
 import { ApiError } from '../utils/ApiError';
 import { asyncHandler } from '../middleware/errorHandler';
 import { logger } from '../logging/logger';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 import {
   validateId,
   ensureResourceExists,
@@ -40,12 +42,10 @@ export function registerTripRoutes(app: Express) {
     '/api/trips/:id/duplicate',
     requireContentEditor,
     validateParams(idParamSchema as any),
+    validateBody(duplicateTripSchema),
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tripId = validateId(req.params.id, 'Trip');
       const { newName, newSlug } = req.body;
-
-      // Validate required fields
-      validateRequiredFields(req.body, ['newName', 'newSlug']);
 
       // Get the original trip
       const originalTrip = await executeDbOperation(
@@ -222,7 +222,8 @@ export function registerTripRoutes(app: Express) {
 
       // Apply filters
       if (search) {
-        query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
+        const sanitized = sanitizeSearchTerm(search as string);
+        query = query.or(`name.ilike.%${sanitized}%,slug.ilike.%${sanitized}%`);
       }
 
       if (status) {

@@ -253,7 +253,7 @@ export default function TripGuide({
 
     // For active trips, show the current day expanded
     // For upcoming/past trips, collapse all days
-    if (tripStatus === 'active') {
+    if (tripStatus === 'current') {
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -284,7 +284,7 @@ export default function TripGuide({
   // Event handlers with useCallback
   const toggleDayCollapse = useCallback(
     (dateKey: string) => {
-      setCollapsedDays(currentCollapsedDays => {
+      setCollapsedDays((currentCollapsedDays: string[]) => {
         if (currentCollapsedDays.includes(dateKey)) {
           // Expand this day - remove from collapsed list
           return currentCollapsedDays.filter((d: string) => d !== dateKey);
@@ -298,7 +298,7 @@ export default function TripGuide({
   );
 
   const handleCollapseAll = useCallback(() => {
-    setCollapsedDays(currentCollapsedDays => {
+    setCollapsedDays((currentCollapsedDays: string[]) => {
       const allCollapsed = SCHEDULED_DAILY.length === currentCollapsedDays.length;
       if (allCollapsed) {
         // Expand all - empty array means all expanded

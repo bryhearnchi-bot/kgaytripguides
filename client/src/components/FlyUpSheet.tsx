@@ -109,12 +109,14 @@ export function FlyUpSheet({
     }
 
     setSheetTouchEnd(null);
-    setSheetTouchStart(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    if (touch) setSheetTouchStart(touch.clientY);
   };
 
   const onSheetTouchMove = (e: React.TouchEvent) => {
     if (sheetTouchStart === null) return;
-    setSheetTouchEnd(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    if (touch) setSheetTouchEnd(touch.clientY);
   };
 
   const onSheetTouchEnd = () => {

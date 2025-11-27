@@ -132,6 +132,14 @@ export interface TripData {
     updatedBy?: string | null;
     updatedAt?: string;
   }>;
+  partyThemes?: Array<{
+    name: string;
+    longDescription?: string | null;
+    shortDescription?: string | null;
+    costumeIdeas?: string | null;
+    amazonShoppingListUrl?: string | null;
+    imageUrl?: string | null;
+  }>;
 }
 
 // Transform database data to match the existing component format
@@ -154,7 +162,7 @@ export function transformTripData(data: TripData) {
 
   // Transform itinerary (defensive check)
   const itinerary = (data.itinerary || []).map(stop => ({
-    key: stop.date.split('T')[0],
+    key: stop.date.split('T')[0] ?? stop.date,
     date: formatDate(dateOnly(stop.date)),
     rawDate: stop.date, // Keep raw date for component date operations
     day: stop.day, // Day number for itinerary display

@@ -20,6 +20,7 @@ import { searchRateLimit, adminRateLimit } from '../middleware/rate-limiting';
 import { csrfTokenEndpoint } from '../middleware/csrf';
 import { apiVersionsEndpoint } from '../middleware/versioning';
 import { logger } from '../logging/logger';
+import { sanitizeSearchTerm } from '../utils/sanitize';
 
 // Import bcrypt for password hashing
 // @ts-expect-error - bcryptjs types may not be installed, TODO: verify @types/bcryptjs
@@ -156,7 +157,7 @@ export function registerPublicRoutes(app: Express) {
         limit = '10',
       } = req.query;
 
-      const searchTerm = q as string;
+      const searchTerm = sanitizeSearchTerm(q as string);
       const searchTypes = Array.isArray(types) ? types : [types];
       const limitNum = parseInt(limit as string);
       const supabaseAdmin = getSupabaseAdmin();

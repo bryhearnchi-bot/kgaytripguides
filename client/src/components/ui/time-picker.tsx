@@ -45,8 +45,8 @@ export function TimePicker({
     } else {
       // Has colon - validate format
       const parts = cleaned.split(':');
-      const hours = parts[0].slice(0, 2);
-      const minutes = parts[1]?.slice(0, 2) || '';
+      const hours = parts[0]?.slice(0, 2) || '00';
+      const minutes = parts[1]?.slice(0, 2) || '00';
       onChange(`${hours}:${minutes}`);
     }
   };
@@ -68,7 +68,7 @@ export function TimePicker({
     // Handle partial time with colon but incomplete minutes (e.g., "11:")
     if (value.includes(':')) {
       const [hoursStr, minutesStr] = value.split(':');
-      const hours = parseInt(hoursStr, 10);
+      const hours = parseInt(hoursStr || '0', 10);
       const minutes = minutesStr ? parseInt(minutesStr, 10) : 0;
 
       if (isNaN(hours)) {

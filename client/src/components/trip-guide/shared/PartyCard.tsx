@@ -42,6 +42,7 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
         window.scrollTo(0, scrollY);
       };
     }
+    return undefined;
   }, [showInfoSheet, showCostumeSheet]);
 
   // Memoize image URL computation
@@ -139,15 +140,13 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
             />
           </div>
 
-          {partyTheme?.shortDescription && (
-            <p className="text-white/90 text-sm leading-relaxed">{partyTheme.shortDescription}</p>
+          {partyTheme?.shortDesc && (
+            <p className="text-white/90 text-sm leading-relaxed">{partyTheme.shortDesc}</p>
           )}
-          {(partyTheme?.desc || partyTheme?.longDescription) && (
-            <p className="text-white/80 text-sm leading-relaxed">
-              {partyTheme.desc || partyTheme.longDescription}
-            </p>
+          {partyTheme?.desc && (
+            <p className="text-white/80 text-sm leading-relaxed">{partyTheme.desc}</p>
           )}
-          {!partyTheme?.shortDescription && !partyTheme?.desc && !partyTheme?.longDescription && (
+          {!partyTheme?.shortDesc && !partyTheme?.desc && (
             <p className="text-white/60 text-sm italic">No party information available yet.</p>
           )}
         </div>

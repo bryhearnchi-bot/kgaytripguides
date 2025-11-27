@@ -144,7 +144,7 @@ export function registerTalentRoutes(app: Express) {
 
         const talent = {
           ...transformTalentData(talentData),
-          talentCategoryName: talentData.talent_categories?.category || null,
+          talentCategoryName: (talentData.talent_categories as any)?.category || null,
         };
 
         return res.json(talent);
@@ -346,7 +346,7 @@ export function registerTalentRoutes(app: Express) {
         const { data: eventsData, error: eventsError } = await supabaseAdmin
           .from('events')
           .select('id')
-          .contains('talent_ids', [parseInt(id)]);
+          .contains('talent_ids', [parseInt(id ?? '0')]);
 
         if (eventsError) {
           logger.error('Error checking event talent', { error: eventsError, talentId: id });

@@ -138,6 +138,8 @@ Events render in TWO places - update both when changing event display:
 - Use `unknown` in catch blocks
 - Define interfaces for all data structures
 - Export types from `/client/src/types/`
+- **Fix TypeScript errors immediately** when you encounter them
+- **Prefer `logger` over `console.log`** - if `console.log` is needed for debugging, remove it immediately after the problem is resolved
 
 ### Performance
 

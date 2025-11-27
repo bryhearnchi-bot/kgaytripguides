@@ -188,6 +188,9 @@ export function registerTripTalentRoutes(app: Express) {
           throw ApiError.conflict('All specified talent are already assigned to this trip');
         }
 
+        if (!tripId) {
+          throw ApiError.badRequest('tripId is required');
+        }
         // Insert new talent assignments
         const insertData = newIds.map(talentId => ({
           trip_id: parseInt(tripId),
@@ -247,7 +250,7 @@ export function registerTripTalentRoutes(app: Express) {
       const supabase = await getSupabaseAdmin();
 
       try {
-        const numericTalentId = parseInt(talentId);
+        const numericTalentId = parseInt(talentId ?? '0');
 
         // Fetch all events for this trip, then filter in JavaScript
         const { data: allEvents, error: eventsError } = await supabase

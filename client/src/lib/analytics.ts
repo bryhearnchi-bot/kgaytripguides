@@ -6,7 +6,7 @@
 declare global {
   interface Window {
     dataLayer: any[];
-    gtag: (...args: any[]) => void;
+    gtag?: (...args: any[]) => void;
   }
 }
 
@@ -22,7 +22,7 @@ export const isGAAvailable = (): boolean => {
  * Called automatically on route changes in useGATracking hook
  */
 export const trackPageView = (path: string, title?: string): void => {
-  if (!isGAAvailable()) return;
+  if (!isGAAvailable() || !window.gtag) return;
 
   window.gtag('config', 'G-H2QWVEYX0F', {
     page_path: path,
@@ -36,7 +36,7 @@ export const trackPageView = (path: string, title?: string): void => {
  * @param eventData - Additional properties to track
  */
 export const trackEvent = (eventName: string, eventData?: Record<string, any>): void => {
-  if (!isGAAvailable()) return;
+  if (!isGAAvailable() || !window.gtag) return;
 
   window.gtag('event', eventName, {
     ...eventData,
@@ -54,7 +54,7 @@ export const setUserProperty = (
   propertyName: string,
   propertyValue: string | number | boolean
 ): void => {
-  if (!isGAAvailable()) return;
+  if (!isGAAvailable() || !window.gtag) return;
 
   window.gtag('set', {
     [propertyName]: propertyValue,
@@ -67,7 +67,7 @@ export const setUserProperty = (
  * @param fatal - Whether the error was fatal
  */
 export const trackException = (description: string, fatal: boolean = false): void => {
-  if (!isGAAvailable()) return;
+  if (!isGAAvailable() || !window.gtag) return;
 
   window.gtag('event', 'exception', {
     description,

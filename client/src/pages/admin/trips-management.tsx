@@ -958,7 +958,7 @@ export default function TripsManagement() {
                   }
                 },
                 visible: (trip: Trip) =>
-                  trip.status === 'past' && trip.status !== 'archived' && canArchiveTrips,
+                  trip.status === 'past' && (trip as any).archived !== true && canArchiveTrips,
               },
               // Delete button (for all trips)
               {
@@ -1267,7 +1267,7 @@ export default function TripsManagement() {
         draftTrip={draftToResume}
         onSuccess={() => {
           // Invalidate query to refresh the trips table
-          queryClient.invalidateQueries(['admin-trips']);
+          queryClient.invalidateQueries({ queryKey: ['admin-trips'] });
           setDraftToResume(null);
         }}
       />

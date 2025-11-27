@@ -59,8 +59,9 @@ const HeroSection = ({
     if (!startDate || !endDate) return null;
 
     // Parse dates (YYYY-MM-DD format) - extract just the date part if there's a timestamp
-    const startDateStr = startDate.split('T')[0];
-    const endDateStr = endDate.split('T')[0];
+    const startDateStr = startDate?.split('T')[0];
+    const endDateStr = endDate?.split('T')[0];
+    if (!startDateStr || !endDateStr) return null;
 
     const startParts = startDateStr.split('-');
     const startYear = Number(startParts[0] ?? 2025);
@@ -260,7 +261,9 @@ const HeroSection = ({
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      const temp = shuffled[i];
+      shuffled[i] = shuffled[j]!;
+      shuffled[j] = temp!;
     }
     return shuffled;
   };
@@ -383,6 +386,7 @@ const HeroSection = ({
               {/* Dynamic images from database with varying sizes */}
               {images.map((img, index) => {
                 const sizeVariant = sizeVariants[index % sizeVariants.length];
+                if (!sizeVariant) return null;
                 return (
                   <img
                     key={img}
@@ -400,6 +404,7 @@ const HeroSection = ({
               {/* Duplicate set for seamless loop */}
               {images.map((img, index) => {
                 const sizeVariant = sizeVariants[index % sizeVariants.length];
+                if (!sizeVariant) return null;
                 return (
                   <img
                     key={`${img}-duplicate`}

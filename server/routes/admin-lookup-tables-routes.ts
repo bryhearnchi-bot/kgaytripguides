@@ -283,7 +283,7 @@ export function registerAdminLookupTablesRoutes(app: Express) {
 
       const { data: newItem, error: createError } = await supabaseAdmin
         .from(tableConfig.table)
-        .insert(insertData)
+        .insert(insertData as any)
         .select()
         .single();
 
@@ -312,6 +312,9 @@ export function registerAdminLookupTablesRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const tableKey = req.params.table as keyof typeof TABLES;
       const itemId = req.params.id;
+      if (!itemId) {
+        throw ApiError.badRequest('Item ID is required');
+      }
       const tableConfig = TABLES[tableKey];
 
       if (!tableConfig) {
@@ -350,10 +353,13 @@ export function registerAdminLookupTablesRoutes(app: Express) {
 
       // Check for name conflicts (case-insensitive, excluding current item)
       const nameValue = itemData[tableConfig.nameField as keyof typeof itemData] as string;
+      if (!nameValue) {
+        throw ApiError.badRequest('Name field is required');
+      }
       const { data: conflictingItem } = await supabaseAdmin
         .from(tableConfig.table)
         .select('*')
-        .ilike(tableConfig.nameField, nameValue)
+        .ilike(tableConfig.nameField as string, nameValue)
         .neq('id', itemId)
         .single();
 
@@ -369,7 +375,8 @@ export function registerAdminLookupTablesRoutes(app: Express) {
         updated_at: new Date().toISOString(),
       };
 
-      const { data: updatedItem, error: updateError } = await supabaseAdmin
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updatedItem, error: updateError } = await (supabaseAdmin as any)
         .from(tableConfig.table)
         .update(updateData)
         .eq('id', itemId)

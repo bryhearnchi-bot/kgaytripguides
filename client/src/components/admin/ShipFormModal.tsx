@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { AdminBottomSheet } from './AdminBottomSheet';
 import { AmenitySelector } from './AmenitySelector';
 import { StandardDropdown } from '@/components/ui/dropdowns';
@@ -90,8 +91,10 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
           const data = await response.json();
           setCruiseLines(data.items || []);
         }
-      } catch (error) {
-        console.error('Failed to fetch cruise lines:', error);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          logger.error('Failed to fetch cruise lines', { message: error.message });
+        }
       } finally {
         setLoadingCruiseLines(false);
       }
@@ -117,8 +120,10 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
         };
       }
       throw new Error('Failed to create cruise line');
-    } catch (error) {
-      console.error('Failed to create cruise line:', error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        logger.error('Failed to create cruise line', { message: error.message });
+      }
       throw error;
     }
   };
