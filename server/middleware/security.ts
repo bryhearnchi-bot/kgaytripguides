@@ -50,7 +50,13 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
     'default-src': ["'self'", 'https:'],
     'script-src': isDevelopment
       ? ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:'] // Relaxed for Vite HMR
-      : ["'self'", 'https:'], // Strict in production
+      : [
+          "'self'",
+          'https:',
+          // Hashes for inline scripts (Google Analytics, Vite preload)
+          "'sha256-YZ6rVm/nak2cycw3UU0nyurcUZUXZndWQHpnDSIPFbI='",
+          "'sha256-OSoY6YPfspDfogHVu/CrgMQbLup8DRbjiZzWjIGFHhw='",
+        ],
     'style-src': [
       "'self'",
       "'unsafe-inline'", // Required for CSS-in-JS libraries (Tailwind, etc.)
