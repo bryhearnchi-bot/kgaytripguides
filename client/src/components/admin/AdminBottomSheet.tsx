@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Loader2, Save, X } from 'lucide-react';
 import {
   Sheet,
@@ -105,6 +105,38 @@ const modalFieldStyles = `
   .admin-bottom-sheet [data-scrollable="true"]::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3) !important;
   }
+
+  /* Force ImageUploadField to respect container width */
+  .admin-bottom-sheet [data-image-upload="true"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .admin-bottom-sheet [data-image-upload="true"] > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .admin-bottom-sheet [data-image-upload="true"] > div > div:last-child {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .admin-bottom-sheet [data-image-upload="true"] h4,
+  .admin-bottom-sheet [data-image-upload="true"] p {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
 `;
 
 interface ActionConfig {
@@ -153,6 +185,26 @@ export function AdminBottomSheet({
   maxWidthClassName = 'max-w-3xl',
 }: AdminBottomSheetProps) {
   const { isMobile } = useMobileResponsive();
+  const sheetContentRef = useRef<HTMLDivElement>(null);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
+
+  // Wrap onOpenChange to prevent unexpected closes
+  const handleOpenChange = (open: boolean) => {
+    // Only allow closing if explicitly requested (not from outside interactions that should be prevented)
+    if (!open) {
+      // Check if a dropdown/popover is open - if so, don't close
+      const hasOpenDropdowns =
+        document.querySelector('[data-radix-popover-content][data-state="open"]') ||
+        document.querySelector('[data-radix-dropdown-menu-content][data-state="open"]') ||
+        document.querySelector('[data-radix-select-content][data-state="open"]');
+
+      if (hasOpenDropdowns) {
+        // Don't close if dropdowns are open - let handleInteractOutside handle it
+        return;
+      }
+    }
+    onOpenChange(open);
+  };
 
   // Responsive max-height: larger on mobile, smaller on desktop
   // For fullScreen on mobile, use almost full screen like FlyUpSheet (leaves 64px at top)
@@ -186,26 +238,56 @@ export function AdminBottomSheet({
   };
 
   const handleInteractOutside = (e: Event) => {
-    // Prevent closing when clicking on popover/dropdown content
+    // Prevent closing Sheet when clicking on popover/dropdown content
+    // These elements are rendered in portals outside the sheet DOM tree,
+    // so Radix UI treats them as "outside" clicks even though they're part of the UI
     const target = e.target as HTMLElement;
+
+    // Check if the click target is inside any portal component FIRST
+    // This catches clicks on dropdown content, menu items, triggers, etc.
+    // We need to check this before checking if dropdowns are open because
+    // the click might happen before the dropdown state is updated
     if (
+      target.closest('[data-radix-dropdown-menu-content]') ||
       target.closest('[data-radix-popper-content-wrapper]') ||
       target.closest('[data-radix-popover-content]') ||
       target.closest('[data-radix-select-content]') ||
       target.closest('[role="listbox"]') ||
       target.closest('[role="combobox"]') ||
+      target.closest('[role="menu"]') ||
+      target.closest('[data-radix-dropdown-menu-item]') ||
       target.closest('[cmdk-list]') ||
       target.closest('[cmdk-input]')
     ) {
       e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
+    // Also check if any dropdown/popover/select is currently open
+    // This is a backup check in case the target check above doesn't catch it
+    const hasOpenDropdown = document.querySelector(
+      '[data-radix-dropdown-menu-content][data-state="open"]'
+    );
+    const hasOpenPopover = document.querySelector(
+      '[data-radix-popover-content][data-state="open"]'
+    );
+    const hasOpenSelect = document.querySelector('[data-radix-select-content][data-state="open"]');
+
+    if (hasOpenDropdown || hasOpenPopover || hasOpenSelect) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
   const handleEscapeKeyDown = (e: KeyboardEvent) => {
-    // Allow escape to close, but check if a popover is open first
+    // Allow escape to close, but check if a popover or dropdown is open first
     const popovers = document.querySelectorAll('[data-radix-popover-content][data-state="open"]');
-    if (popovers.length > 0) {
-      // Don't close modal if popover is open, let popover handle escape
+    const dropdowns = document.querySelectorAll(
+      '[data-radix-dropdown-menu-content][data-state="open"]'
+    );
+    if (popovers.length > 0 || dropdowns.length > 0) {
+      // Don't close modal if popover/dropdown is open, let them handle escape
       e.preventDefault();
     }
   };
@@ -220,7 +302,10 @@ export function AdminBottomSheet({
         >
           <div
             data-scrollable="true"
-            className={cn('px-6 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
+            className={cn(
+              'px-6 py-6 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full max-w-full',
+              contentClassName
+            )}
             style={{
               backgroundColor: 'rgba(0, 33, 71, 1)',
               backgroundImage:
@@ -234,7 +319,10 @@ export function AdminBottomSheet({
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div
             data-scrollable="true"
-            className={cn('px-6 py-6 flex-1 min-h-0 overflow-y-auto', contentClassName)}
+            className={cn(
+              'px-6 py-6 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full max-w-full',
+              contentClassName
+            )}
             style={{
               backgroundColor: 'rgba(0, 33, 71, 1)',
               backgroundImage:
@@ -253,15 +341,16 @@ export function AdminBottomSheet({
     return (
       <>
         <style>{modalFieldStyles}</style>
-        <Sheet open={isOpen} onOpenChange={onOpenChange} modal={true}>
+        <Sheet open={isOpen} onOpenChange={handleOpenChange} modal={true}>
           <SheetContent
+            ref={sheetContentRef}
             side="bottom"
             className={cn(
               'admin-bottom-sheet',
               'border-white/10 text-white',
               fullScreen ? 'rounded-t-3xl' : 'rounded-t-2xl',
               fullScreen && isMobile ? 'h-[calc(100vh-64px)] max-h-[calc(100vh-64px)]' : '',
-              'flex flex-col p-0 overflow-hidden',
+              'flex flex-col p-0 overflow-hidden w-full max-w-full',
               className
             )}
             style={{
@@ -269,6 +358,7 @@ export function AdminBottomSheet({
               backgroundColor: 'rgba(0, 33, 71, 1)',
               backgroundImage:
                 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              maxWidth: '100%',
             }}
             onInteractOutside={handleInteractOutside}
             onEscapeKeyDown={handleEscapeKeyDown}
@@ -341,14 +431,16 @@ export function AdminBottomSheet({
   return (
     <>
       <style>{modalFieldStyles}</style>
-      <Dialog open={isOpen} onOpenChange={onOpenChange} modal={true}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange} modal={true}>
         <DialogContent
+          ref={dialogContentRef}
           className={cn(
             'admin-bottom-sheet',
             'bg-[#002147] border-white/10 text-white',
             'flex flex-col p-0 overflow-hidden',
             fullScreen ? 'w-full h-full max-w-none max-h-none rounded-none' : responsiveMaxWidth,
             fullScreen ? '' : 'max-h-[75vh]',
+            'max-w-full',
             className
           )}
           style={
@@ -360,9 +452,13 @@ export function AdminBottomSheet({
                   bottom: 0,
                   transform: 'none',
                   width: '100%',
-                  height: '100%',
+                  height: '100vh',
+                  maxHeight: '100vh',
+                  maxWidth: '100%',
                 }
-              : undefined
+              : {
+                  maxWidth: '100%',
+                }
           }
           onInteractOutside={handleInteractOutside}
           onEscapeKeyDown={handleEscapeKeyDown}

@@ -13,6 +13,21 @@ import { UpdatesTabPage } from '../TripWizard/UpdatesTabPage';
 import { TripWizardProvider, useTripWizard } from '@/contexts/TripWizardContext';
 import { LocationsProvider } from '@/contexts/LocationsContext';
 import {
+  ItineraryNavigationProvider,
+  useItineraryNavigation,
+} from '@/contexts/ItineraryNavigationContext';
+import { EventsNavigationProvider, useEventsNavigation } from '@/contexts/EventsNavigationContext';
+import { TalentNavigationProvider, useTalentNavigation } from '@/contexts/TalentNavigationContext';
+import {
+  TripInfoNavigationProvider,
+  useTripInfoNavigation,
+} from '@/contexts/TripInfoNavigationContext';
+import { FAQNavigationProvider, useFAQNavigation } from '@/contexts/FAQNavigationContext';
+import {
+  UpdatesNavigationProvider,
+  useUpdatesNavigation,
+} from '@/contexts/UpdatesNavigationContext';
+import {
   Loader2,
   X,
   FileText,
@@ -24,6 +39,9 @@ import {
   Bell,
   Save,
   TreePalm,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
@@ -54,7 +72,7 @@ const tabOptions = [
   },
   { id: 'events', label: 'Events', icon: Calendar },
   { id: 'talent', label: 'Talent', icon: Users },
-  { id: 'trip-info', label: 'Trip Info', icon: Info },
+  { id: 'trip-info', label: 'Information', icon: Info },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
   { id: 'updates', label: 'Updates', icon: Bell },
 ];
@@ -470,6 +488,18 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
               {CurrentTabIcon && <CurrentTabIcon className="h-5 w-5 text-white" />}
               <h3 className="text-lg font-semibold text-white">{currentTabLabel}</h3>
             </div>
+            {/* Day navigation controls for cruise itinerary */}
+            {activeTab === 'schedule' && tripData.tripTypeId === 1 && <ItineraryHeaderActions />}
+            {/* Day navigation controls for events */}
+            {activeTab === 'events' && <EventsHeaderActions />}
+            {/* Category filter and add button for talent */}
+            {activeTab === 'talent' && <TalentHeaderActions />}
+            {/* Add button for trip info */}
+            {activeTab === 'trip-info' && <TripInfoHeaderActions />}
+            {/* Add button for FAQ */}
+            {activeTab === 'faq' && <FAQHeaderActions />}
+            {/* Add button for Updates */}
+            {activeTab === 'updates' && <UpdatesHeaderActions />}
           </div>
 
           {/* Tab Content */}
@@ -489,6 +519,232 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
   );
 }
 
+// Itinerary Header Actions Component - renders day selector and add button
+function ItineraryHeaderActions() {
+  const {
+    selectedDayIndex,
+    setSelectedDayIndex,
+    setShowAddDayModal,
+    dayOptions,
+    totalDays,
+    goToPreviousDay,
+    goToNextDay,
+    canGoPrevious,
+    canGoNext,
+  } = useItineraryNavigation();
+
+  if (totalDays === 0) {
+    return (
+      <Button
+        type="button"
+        onClick={() => setShowAddDayModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Add Day</span>
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Day Navigation Controls */}
+      <button
+        type="button"
+        onClick={goToPreviousDay}
+        disabled={!canGoPrevious}
+        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        <ChevronLeft className="w-4 h-4 text-white/70" />
+      </button>
+
+      <PillDropdown
+        options={dayOptions}
+        value={selectedDayIndex.toString()}
+        onChange={value => setSelectedDayIndex(parseInt(value, 10))}
+        placeholder="Select Day"
+        className="min-w-[120px]"
+      />
+
+      <button
+        type="button"
+        onClick={goToNextDay}
+        disabled={!canGoNext}
+        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        <ChevronRight className="w-4 h-4 text-white/70" />
+      </button>
+
+      {/* Add Day Button */}
+      <Button
+        type="button"
+        onClick={() => setShowAddDayModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all ml-2"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+// Events Header Actions Component - renders day selector and add event button
+function EventsHeaderActions() {
+  const {
+    selectedDayIndex,
+    setSelectedDayIndex,
+    setShowAddEventModal,
+    dayOptions,
+    totalDays,
+    goToPreviousDay,
+    goToNextDay,
+    canGoPrevious,
+    canGoNext,
+  } = useEventsNavigation();
+
+  if (totalDays === 0) {
+    return (
+      <Button
+        type="button"
+        onClick={() => setShowAddEventModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Add Event</span>
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Day Navigation Controls */}
+      <button
+        type="button"
+        onClick={goToPreviousDay}
+        disabled={!canGoPrevious}
+        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        <ChevronLeft className="w-4 h-4 text-white/70" />
+      </button>
+
+      <PillDropdown
+        options={dayOptions}
+        value={selectedDayIndex.toString()}
+        onChange={value => setSelectedDayIndex(parseInt(value, 10))}
+        placeholder="Select Day"
+        className="min-w-[120px]"
+      />
+
+      <button
+        type="button"
+        onClick={goToNextDay}
+        disabled={!canGoNext}
+        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        <ChevronRight className="w-4 h-4 text-white/70" />
+      </button>
+
+      {/* Add Event Button */}
+      <Button
+        type="button"
+        onClick={() => setShowAddEventModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all ml-2"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+// Talent Header Actions Component - renders category filter and add talent button
+function TalentHeaderActions() {
+  const {
+    selectedCategoryFilter,
+    setSelectedCategoryFilter,
+    setShowAddTalentModal,
+    categoryFilterOptions,
+    totalTalent,
+  } = useTalentNavigation();
+
+  if (totalTalent === 0) {
+    return (
+      <Button
+        type="button"
+        onClick={() => setShowAddTalentModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Add Talent</span>
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Category Filter Dropdown */}
+      <PillDropdown
+        options={categoryFilterOptions}
+        value={selectedCategoryFilter}
+        onChange={setSelectedCategoryFilter}
+        placeholder="All Talent"
+      />
+
+      {/* Add Talent Button */}
+      <Button
+        type="button"
+        onClick={() => setShowAddTalentModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+// Trip Info Header Actions Component - renders add section button
+function TripInfoHeaderActions() {
+  const { setShowAddSectionModal } = useTripInfoNavigation();
+
+  return (
+    <Button
+      type="button"
+      onClick={() => setShowAddSectionModal(true)}
+      className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+    </Button>
+  );
+}
+
+// FAQ Header Actions Component - renders add FAQ button
+function FAQHeaderActions() {
+  const { setShowAddFAQModal } = useFAQNavigation();
+
+  return (
+    <Button
+      type="button"
+      onClick={() => setShowAddFAQModal(true)}
+      className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+    </Button>
+  );
+}
+
+// Updates Header Actions Component - renders add update button
+function UpdatesHeaderActions() {
+  const { setShowAddUpdateModal } = useUpdatesNavigation();
+
+  return (
+    <Button
+      type="button"
+      onClick={() => setShowAddUpdateModal(true)}
+      className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+    </Button>
+  );
+}
+
 // Main component that wraps with TripWizardProvider and LocationsProvider
 export function EditTripModal(props: EditTripModalProps) {
   if (!props.open || !props.trip) {
@@ -498,7 +754,19 @@ export function EditTripModal(props: EditTripModalProps) {
   return (
     <LocationsProvider>
       <TripWizardProvider>
-        <EditTripModalContent {...props} />
+        <ItineraryNavigationProvider>
+          <EventsNavigationProvider>
+            <TalentNavigationProvider>
+              <TripInfoNavigationProvider>
+                <FAQNavigationProvider>
+                  <UpdatesNavigationProvider>
+                    <EditTripModalContent {...props} />
+                  </UpdatesNavigationProvider>
+                </FAQNavigationProvider>
+              </TripInfoNavigationProvider>
+            </TalentNavigationProvider>
+          </EventsNavigationProvider>
+        </ItineraryNavigationProvider>
       </TripWizardProvider>
     </LocationsProvider>
   );

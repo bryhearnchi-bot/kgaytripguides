@@ -8,6 +8,8 @@ import {
   Users,
   MoreVertical,
   Pencil,
+  Music,
+  Mic,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,9 +22,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useTripWizard } from '@/contexts/TripWizardContext';
+import { useTalentNavigation } from '@/contexts/TalentNavigationContext';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
-import { AdminFormModal } from '@/components/admin/AdminFormModal';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { StandardDropdown } from '@/components/ui/dropdowns';
@@ -33,12 +35,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface TalentWithEvents {
@@ -82,21 +78,26 @@ interface TalentFormData {
 
 export function TalentTabPage() {
   const { state, setTripTalent, removeTalentFromTrip } = useTripWizard();
+  const {
+    showAddTalentModal,
+    setShowAddTalentModal,
+    filteredTalent: contextFilteredTalent,
+    setSelectedCategoryFilter,
+  } = useTalentNavigation();
   const queryClient = useQueryClient();
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTalent, setEditingTalent] = useState<TalentWithEvents | null>(null);
   const [removingTalentId, setRemovingTalentId] = useState<number | null>(null);
   const [talentToRemove, setTalentToRemove] = useState<TalentWithEvents | null>(null);
   const [selectedTalentId, setSelectedTalentId] = useState<number | null>(null);
-  const [openAccordionCategory, setOpenAccordionCategory] = useState<string | undefined>(undefined);
   const [talent, setTalent] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingTalent, setLoadingTalent] = useState(true);
   const [formData, setFormData] = useState<TalentFormData>({
     name: '',
     talentCategoryId: 0,
   });
+  // Track which dropdown is open (by talent id) to use controlled state
 
   const tripId = state.tripData.id || 0;
   const tripType = state.tripType || (state.tripData.tripTypeId === 1 ? 'cruise' : 'resort');
@@ -126,7 +127,7 @@ export function TalentTabPage() {
       // Add to trip
       await handleAddTalent(newArtist.id);
       setShowCreateModal(false);
-      setShowAddModal(false);
+      setShowAddTalentModal(false);
       resetForm();
       toast.success('Success', {
         description: 'Artist created and added to trip',
@@ -319,10 +320,10 @@ export function TalentTabPage() {
       // Fetch updated talent list to refresh UI
       await fetchTripTalent();
 
-      // Auto-open accordion for the newly added talent's category
+      // Auto-filter to the added talent's category
       const addedTalent = tripTalent.find(t => t.id === talentId);
       if (addedTalent?.talentCategoryName) {
-        setOpenAccordionCategory(addedTalent.talentCategoryName);
+        setSelectedCategoryFilter(addedTalent.talentCategoryName);
       }
 
       toast.success('Success', {
@@ -330,7 +331,7 @@ export function TalentTabPage() {
       });
 
       setSelectedTalentId(null);
-      setShowAddModal(false);
+      setShowAddTalentModal(false);
     } catch (error) {
       toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to add talent to trip',
@@ -385,185 +386,151 @@ export function TalentTabPage() {
     });
   };
 
-  // Group talent by category
-  const groupTalentByCategory = (talent: TalentWithEvents[]) => {
-    const grouped: { [category: string]: TalentWithEvents[] } = {};
-    talent.forEach(t => {
-      const category = t.talentCategoryName || 'Uncategorized';
-      if (!grouped[category]) {
-        grouped[category] = [];
-      }
-      grouped[category].push(t);
-    });
-
-    // Sort each category's talent alphabetically by name
-    Object.keys(grouped).forEach(category => {
-      grouped[category]?.sort((a, b) => a.name.localeCompare(b.name));
-    });
-
-    return grouped;
+  // Get icon for talent category
+  const getCategoryIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'dj':
+      case 'djs':
+        return <Music size={12} />;
+      case 'drag':
+      case 'comedy':
+      case 'comedian':
+        return <Mic size={12} />;
+      default:
+        return <Users size={12} />;
+    }
   };
 
-  const groupedTalent = groupTalentByCategory(talentWithEvents);
+  // Get filtered talent IDs from context and filter talentWithEvents accordingly
+  const filteredTalentIds = new Set(contextFilteredTalent.map(t => t.id));
+  const filteredTalent = talentWithEvents
+    .filter(t => filteredTalentIds.has(t.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="space-y-2.5 max-w-3xl mx-auto">
-      {/* Add Talent Button */}
-      <div className="flex justify-between items-center">
-        <p className="text-xs text-white/70">Manage all talent performing at this trip</p>
-        <Button
-          onClick={() => setShowAddModal(true)}
-          className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Add Talent
-        </Button>
-      </div>
-
-      {/* Talent List */}
+    <div className="space-y-3 max-w-3xl mx-auto pt-3">
+      {/* Talent Cards */}
       {talentWithEvents.length === 0 ? (
         <div className="p-8 rounded-[10px] bg-white/[0.02] border-2 border-white/10 text-center">
           <User className="w-12 h-12 mx-auto mb-3 text-white/30" />
           <p className="text-sm text-white/70 mb-1">No talent added yet</p>
-          <p className="text-xs text-white/50">Click "Add Talent" to add performers to this trip</p>
+          <p className="text-xs text-white/50">Click the + button to add performers to this trip</p>
+        </div>
+      ) : filteredTalent.length === 0 ? (
+        <div className="p-8 rounded-[10px] bg-white/[0.02] border-2 border-white/10 text-center">
+          <User className="w-12 h-12 mx-auto mb-3 text-white/30" />
+          <p className="text-sm text-white/70">No talent in this category</p>
         </div>
       ) : (
-        <Accordion
-          type="single"
-          collapsible
-          value={openAccordionCategory}
-          onValueChange={setOpenAccordionCategory}
-          className="space-y-2.5"
-        >
-          {Object.entries(groupedTalent).map(([category, categoryTalent]) => (
-            <AccordionItem
-              key={category}
-              value={category}
-              className="border-2 border-white/10 rounded-[10px] bg-white/[0.02] overflow-hidden"
+        <div className="space-y-3">
+          {filteredTalent.map(talent => (
+            <div
+              key={talent.id}
+              className="p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-cyan-400/40 transition-all"
             >
-              <AccordionTrigger className="px-4 py-3 hover:bg-white/[0.04] hover:no-underline">
-                <div className="flex items-center gap-3 text-left">
-                  <Users className="w-4 h-4 text-cyan-400" />
-                  <div>
-                    <div className="text-sm font-semibold text-white">{category}</div>
-                    <div className="text-[10px] text-white/50">
-                      {categoryTalent.length} artist{categoryTalent.length !== 1 ? 's' : ''}
-                    </div>
+              <div className="flex items-start gap-3 pr-10 relative">
+                {/* Thumbnail */}
+                <div className="flex-shrink-0">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
+                    {talent.profileImageUrl ? (
+                      <img
+                        src={talent.profileImageUrl}
+                        alt={talent.name}
+                        className="h-full w-full rounded-xl object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <User className="h-7 w-7 text-white/70" />
+                    )}
                   </div>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-0">
-                <div className="space-y-2.5">
-                  {categoryTalent.map(talent => (
-                    <div
-                      key={talent.id}
-                      className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:bg-white/[0.04] hover:border-cyan-400/40 transition-all"
-                    >
-                      <div className="flex items-start gap-3 pr-10 relative">
-                        {/* Thumbnail */}
-                        <div className="flex-shrink-0">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#22d3ee]/30 to-[#2563eb]/40 border border-white/10">
-                            {talent.profileImageUrl ? (
-                              <img
-                                src={talent.profileImageUrl}
-                                alt={talent.name}
-                                className="h-full w-full rounded-xl object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <User className="h-7 w-7 text-white/70" />
-                            )}
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  {/* Name and Category Badge Row */}
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h3 className="text-sm font-semibold text-white">{talent.name}</h3>
+                    {/* Talent Category Badge */}
+                    {talent.talentCategoryName && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-[10px] font-medium text-cyan-400">
+                        {getCategoryIcon(talent.talentCategoryName)}
+                        <span>{talent.talentCategoryName}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Assignment Status */}
+                  {talent.isUnassigned ? (
+                    <div className="mt-2">
+                      <span className="px-2 py-1 text-[10px] bg-orange-500/20 text-orange-400 border border-orange-400/30 rounded font-medium">
+                        Not assigned to events yet
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-[10px] font-semibold text-white/70 uppercase tracking-wide">
+                        Performing At:
+                      </p>
+                      <div className="space-y-0.5">
+                        {talent.assignedEvents.map(event => (
+                          <div
+                            key={event.id}
+                            className="flex items-center gap-2 text-[11px] text-white/60"
+                          >
+                            <Calendar className="w-3 h-3" />
+                            <span>
+                              {event.title} - {formatDate(event.date)}
+                            </span>
                           </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          {/* Talent Name */}
-                          <h3 className="text-sm font-semibold text-white mb-1">{talent.name}</h3>
-
-                          {/* Known For */}
-                          {talent.knownFor && (
-                            <p className="text-xs text-white/50 mb-2 line-clamp-1">
-                              {talent.knownFor}
-                            </p>
-                          )}
-
-                          {/* Assignment Status */}
-                          {talent.isUnassigned ? (
-                            <div className="mt-2">
-                              <span className="px-2 py-1 text-[10px] bg-orange-500/20 text-orange-400 border border-orange-400/30 rounded font-medium">
-                                Not assigned to events yet
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="mt-2 space-y-1">
-                              <p className="text-[10px] font-semibold text-white/70 uppercase tracking-wide">
-                                Performing At:
-                              </p>
-                              <div className="space-y-0.5">
-                                {talent.assignedEvents.map(event => (
-                                  <div
-                                    key={event.id}
-                                    className="flex items-center gap-2 text-[11px] text-white/60"
-                                  >
-                                    <Calendar className="w-3 h-3" />
-                                    <span>
-                                      {event.title} - {formatDate(event.date)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Three-dot Menu - Positioned absolutely to the right */}
-                        <div className="absolute right-3 top-3">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 rounded-full text-white/70 hover:text-white hover:bg-white/10"
-                              >
-                                <MoreVertical className="w-3.5 h-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="border-white/10"
-                              style={{
-                                backgroundColor: 'rgba(0, 33, 71, 1)',
-                                backgroundImage:
-                                  'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-                              }}
-                            >
-                              <DropdownMenuItem
-                                onClick={() => handleEditTalent(talent)}
-                                className="text-white/70 hover:text-cyan-400 hover:bg-white/5 cursor-pointer"
-                              >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleRemoveTalent(talent)}
-                                disabled={removingTalentId === talent.id}
-                                className="text-white/70 hover:text-red-400 hover:bg-white/5 cursor-pointer"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
+
+                {/* Three-dot Menu - Positioned absolutely to the right */}
+                <div className="absolute right-3 top-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="border-white/10"
+                      style={{
+                        backgroundColor: 'rgba(0, 33, 71, 1)',
+                        backgroundImage:
+                          'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                      }}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => handleEditTalent(talent)}
+                        className="text-white/70 hover:text-cyan-400 hover:bg-white/5 cursor-pointer"
+                      >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleRemoveTalent(talent)}
+                        disabled={removingTalentId === talent.id}
+                        className="text-white/70 hover:text-red-400 hover:bg-white/5 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
           ))}
-        </Accordion>
+        </div>
       )}
 
       {/* Info Notice */}
@@ -576,16 +543,15 @@ export function TalentTabPage() {
       </div>
 
       {/* Add Talent Modal - Select from existing */}
-      {/* Add Talent Modal - Select from existing */}
       <AdminBottomSheet
-        isOpen={showAddModal}
-        onOpenChange={setShowAddModal}
+        isOpen={showAddTalentModal}
+        onOpenChange={setShowAddTalentModal}
         title="Add Talent to Trip"
         description="Select talent from the global pool or create a new artist"
         icon={<User className="w-5 h-5 text-cyan-400" />}
         primaryAction={{
           label: 'Done',
-          onClick: () => setShowAddModal(false),
+          onClick: () => setShowAddTalentModal(false),
         }}
         maxWidthClassName="max-w-md"
       >
@@ -627,7 +593,7 @@ export function TalentTabPage() {
       </AdminBottomSheet>
 
       {/* Create New Artist Modal */}
-      <AdminFormModal
+      <AdminBottomSheet
         isOpen={showCreateModal}
         onOpenChange={setShowCreateModal}
         title="Add New Artist"
@@ -639,15 +605,8 @@ export function TalentTabPage() {
           loading: createArtistMutation.isPending,
           loadingLabel: 'Creating...',
         }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () => {
-            setShowCreateModal(false);
-            resetForm();
-          },
-        }}
         maxWidthClassName="max-w-3xl"
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
       >
         {/* Basic Information */}
         <div className="space-y-2">
@@ -740,11 +699,11 @@ export function TalentTabPage() {
             disabled={createArtistMutation.isPending}
           />
         </div>
-      </AdminFormModal>
+      </AdminBottomSheet>
 
       {/* Edit Artist Modal */}
       {showEditModal && (
-        <AdminFormModal
+        <AdminBottomSheet
           isOpen={showEditModal}
           onOpenChange={setShowEditModal}
           title="Edit Artist"
@@ -756,16 +715,8 @@ export function TalentTabPage() {
             loading: updateArtistMutation.isPending,
             loadingLabel: 'Updating...',
           }}
-          secondaryAction={{
-            label: 'Cancel',
-            onClick: () => {
-              setShowEditModal(false);
-              setEditingTalent(null);
-              resetForm();
-            },
-          }}
-          maxWidthClassName="max-w-3xl"
-          contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5 max-h-[calc(85vh-180px)] overflow-y-scroll"
+          fullScreen={true}
+          contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
         >
           {/* Basic Information */}
           <div className="space-y-2">
@@ -858,7 +809,7 @@ export function TalentTabPage() {
               disabled={updateArtistMutation.isPending}
             />
           </div>
-        </AdminFormModal>
+        </AdminBottomSheet>
       )}
 
       {/* Remove Talent Warning Modal */}

@@ -96,6 +96,7 @@ interface EventFormModalProps {
   scheduleEntries: ScheduleEntry[];
   itineraryEntries: ItineraryEntry[];
   editingEvent?: Event;
+  defaultDate?: string;
 }
 
 export function EventFormModal({
@@ -109,6 +110,7 @@ export function EventFormModal({
   scheduleEntries,
   itineraryEntries,
   editingEvent,
+  defaultDate,
 }: EventFormModalProps) {
   const [saving, setSaving] = useState(false);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
@@ -160,10 +162,10 @@ export function EventFormModal({
         description: editingEvent.description || '',
       });
     } else {
-      // Reset form for new event
+      // Reset form for new event, use defaultDate if provided
       setFormData({
         tripId,
-        date: '',
+        date: defaultDate || '',
         time: '',
         title: '',
         eventTypeId: 0,
@@ -175,7 +177,7 @@ export function EventFormModal({
         description: '',
       });
     }
-  }, [editingEvent, tripId, isOpen]);
+  }, [editingEvent, tripId, isOpen, defaultDate]);
 
   const fetchEventTypes = async () => {
     try {

@@ -114,20 +114,37 @@ export function ImageUploadField({
   };
 
   return (
-    <div className={`space-y-0 ${className}`}>
+    <div
+      className={`space-y-0 ${className}`}
+      style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
+    >
       {/* Image Upload Section */}
       <div
         data-image-upload="true"
-        className="bg-white/3 border border-white/10 rounded-xl p-3"
+        className="bg-white/3 border border-white/10 rounded-xl p-3 overflow-hidden"
+        style={{
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+        }}
         onClick={e => e.stopPropagation()}
         onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
         }}
       >
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3"
+          style={{
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box',
+          }}
+        >
           {/* Image Preview */}
-          <div className="relative w-16 h-16 flex-shrink-0">
+          <div className="relative w-16 h-16 flex-shrink-0" style={{ flexShrink: 0 }}>
             <div className="w-full h-full rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-2 border-dashed border-blue-400/30 flex items-center justify-center">
               {hasImage && !imageError ? (
                 <img
@@ -156,20 +173,55 @@ export function ImageUploadField({
           </div>
 
           {/* Image Info and Actions */}
-          <div className="flex-1 min-w-0">
-            <div className="space-y-1.5">
+          <div
+            className="overflow-hidden"
+            style={{
+              flex: '1 1 0%',
+              minWidth: 0,
+              maxWidth: '100%',
+              width: 0,
+              boxSizing: 'border-box',
+            }}
+          >
+            <div className="space-y-1.5" style={{ width: '100%', maxWidth: '100%' }}>
               {/* Image Name */}
-              <div>
-                <h4 className="text-xs font-medium text-white/90 truncate leading-tight">
+              <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', minWidth: 0 }}>
+                <h4
+                  className="text-xs font-medium text-white/90 leading-tight"
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    width: '100%',
+                    maxWidth: '100%',
+                    display: 'block',
+                  }}
+                  title={hasImage && !imageError ? getImageName(value) : placeholder}
+                >
                   {hasImage && !imageError ? getImageName(value) : placeholder}
                 </h4>
                 {hasImage && !imageError && (
-                  <p className="text-[10px] text-white/50 mt-0.5">Stored in Supabase</p>
+                  <p
+                    className="text-[10px] text-white/50 mt-0.5"
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      width: '100%',
+                      maxWidth: '100%',
+                    }}
+                  >
+                    Stored in Supabase
+                  </p>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-1.5 mt-1.5" onClick={e => e.stopPropagation()}>
+              <div
+                className="flex gap-1.5 mt-1.5 flex-wrap"
+                onClick={e => e.stopPropagation()}
+                style={{ width: '100%', maxWidth: '100%' }}
+              >
                 {hasImage ? (
                   <>
                     <button

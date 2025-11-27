@@ -1,44 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Plus, Edit3, Trash2, Calendar, MapPin, Clock, Save, Search, Anchor } from 'lucide-react';
-import { format, parse } from 'date-fns';
+import { StandardDropdown } from '@/components/ui/dropdowns';
+import { PillDropdown } from '@/components/ui/dropdowns/PillDropdown';
+import { TimePicker } from '@/components/ui/time-picker';
+import { DatePicker } from '@/components/ui/date-picker';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { useLocations } from '@/contexts/LocationsContext';
+import { Plus, ChevronLeft, ChevronRight, MapPin, Anchor, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
-import { ImageUpload } from './ImageUpload';
-import LocationManagement from './LocationManagement';
-import type { Location } from '../../types/api';
-
-// Extended Location type that matches the API
-interface LocationWithType extends Location {
-  // Use the actual API fields - no location_type field exists in the schema
-}
+import { api } from '@/lib/api-client';
 
 interface ItineraryDay {
   id?: number;
   date: string;
   day: number;
   portName: string;
+  locationId?: number;
   country?: string;
   arrivalTime?: string;
   departureTime?: string;
@@ -56,8 +37,14 @@ interface ItineraryTabProps {
 
 export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
-  const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [showAddDayModal, setShowAddDayModal] = useState(false);
+  const [addDayType, setAddDayType] = useState<'before' | 'after' | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const queryClient = useQueryClient();
+
+  // Use shared locations context
+  const { locations, loading: locationsLoading } = useLocations();
 
   // Fetch existing itinerary data
   const { data: existingItinerary, isLoading: itineraryLoading } = useQuery({
@@ -81,7 +68,8 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
           id: day.id,
           date: day.date ? (day.date.includes('T') ? day.date.split('T')[0] : day.date) : '',
           day: day.day,
-          portName: day.locationName || day.portName || '', // Use locationName first, fallback to portName
+          portName: day.locationName || day.portName || '',
+          locationId: day.locationId,
           country: day.country || '',
           arrivalTime: day.arrivalTime || '',
           departureTime: day.departureTime || '',
@@ -96,32 +84,14 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
     }
   }, [existingItinerary]);
 
-  // Create itinerary day mutation
-  const createItineraryMutation = useMutation({
-    mutationFn: async (dayData: ItineraryDay) => {
-      if (!trip?.id) throw new Error('No trip ID');
-      const response = await fetch(`/api/trips/${trip.id}/itinerary`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...dayData,
-          date: dayData.date || null,
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to create itinerary day');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
-      toast.success('Success', { description: 'Itinerary day added successfully' });
-    },
-    onError: (error: any) => {
-      toast.error('Error', {
-        description: 'Failed to add itinerary day. Please try again.',
-      });
-    },
-  });
+  // Build location options for StandardDropdown
+  const locationOptions = useMemo(() => {
+    return locations.map(loc => ({
+      value: loc.id.toString(),
+      label: loc.name,
+      description: [loc.city, loc.country].filter(Boolean).join(', '),
+    }));
+  }, [locations]);
 
   // Update itinerary day mutation
   const updateItineraryMutation = useMutation({
@@ -143,78 +113,196 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
       queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
       toast.success('Success', { description: 'Itinerary day updated successfully' });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Error', {
         description: 'Failed to update itinerary day. Please try again.',
       });
     },
   });
 
-  // Delete itinerary day mutation
-  const deleteItineraryMutation = useMutation({
-    mutationFn: async (dayId: number) => {
-      const response = await fetch(`/api/itinerary/${dayId}`, {
-        method: 'DELETE',
+  // Create itinerary day mutation
+  const createItineraryMutation = useMutation({
+    mutationFn: async (dayData: Partial<ItineraryDay>) => {
+      if (!trip?.id) throw new Error('No trip ID');
+      const response = await fetch(`/api/trips/${trip.id}/itinerary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body: JSON.stringify({
+          ...dayData,
+          date: dayData.date || null,
+        }),
       });
-      if (!response.ok) throw new Error('Failed to delete itinerary day');
+      if (!response.ok) throw new Error('Failed to create itinerary day');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
-      toast.success('Success', { description: 'Itinerary day deleted successfully' });
+      toast.success('Success', { description: 'Itinerary day added successfully' });
+      setShowAddDayModal(false);
+      setSelectedDate('');
+      setAddDayType(null);
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Error', {
-        description: 'Failed to delete itinerary day. Please try again.',
+        description: 'Failed to add itinerary day. Please try again.',
       });
     },
   });
 
-  const addItineraryDay = () => {
-    const newDay: ItineraryDay = {
-      date: '',
-      day: itineraryDays.length + 1,
+  // Sort entries by day number for display
+  const sortedDays = useMemo(() => {
+    return [...itineraryDays].sort((a, b) => a.orderIndex - b.orderIndex);
+  }, [itineraryDays]);
+
+  // Build day options for PillDropdown navigation
+  const dayOptions = useMemo(() => {
+    return sortedDays.map((day, idx) => {
+      const dayLabel =
+        day.segment === 'pre'
+          ? 'Pre-Trip'
+          : day.segment === 'post'
+            ? 'Post-Trip'
+            : `Day ${day.day}`;
+      const locationLabel = day.portName ? ` - ${day.portName}` : '';
+      return {
+        value: idx.toString(),
+        label: `${dayLabel}${locationLabel}`,
+        shortLabel: dayLabel,
+      };
+    });
+  }, [sortedDays]);
+
+  // Get current day being viewed
+  const currentDay = sortedDays[selectedDayIndex];
+
+  // Navigation handlers
+  const goToPreviousDay = () => {
+    if (selectedDayIndex > 0) {
+      setSelectedDayIndex(selectedDayIndex - 1);
+    }
+  };
+
+  const goToNextDay = () => {
+    if (selectedDayIndex < sortedDays.length - 1) {
+      setSelectedDayIndex(selectedDayIndex + 1);
+    }
+  };
+
+  // Handle location change from dropdown
+  const handleLocationChange = (locationIdStr: string) => {
+    if (!currentDay) return;
+
+    const locationId = locationIdStr ? parseInt(locationIdStr, 10) : undefined;
+    const location = locations.find(loc => loc.id === locationId);
+
+    const updatedDay = {
+      ...currentDay,
+      locationId,
+      portName: location?.name || '',
+      country: location?.country || '',
+    };
+
+    // Update local state
+    setItineraryDays(prev => prev.map(day => (day.id === currentDay.id ? updatedDay : day)));
+
+    // Save to server if it has an ID
+    if (currentDay.id) {
+      updateItineraryMutation.mutate(updatedDay);
+    }
+  };
+
+  // Handle creating a new location from the dropdown
+  const handleCreateLocation = async (newLocationName: string) => {
+    const response = await api.post('/api/locations', {
+      name: newLocationName,
+      country: '',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create location');
+    }
+    const newLocation = await response.json();
+
+    // Update the current day with the new location
+    if (currentDay) {
+      const updatedDay = {
+        ...currentDay,
+        locationId: newLocation.id,
+        portName: newLocation.name,
+      };
+
+      setItineraryDays(prev => prev.map(day => (day.id === currentDay.id ? updatedDay : day)));
+
+      if (currentDay.id) {
+        updateItineraryMutation.mutate(updatedDay);
+      }
+    }
+
+    return { value: newLocation.id.toString(), label: newLocation.name };
+  };
+
+  // Handle field updates
+  const updateDayField = (field: keyof ItineraryDay, value: any) => {
+    if (!currentDay) return;
+
+    const updatedDay = { ...currentDay, [field]: value };
+
+    // Update local state
+    setItineraryDays(prev => prev.map(day => (day.id === currentDay.id ? updatedDay : day)));
+
+    // Debounced save to server (for text fields)
+    if (
+      currentDay.id &&
+      ['arrivalTime', 'departureTime', 'allAboardTime', 'description', 'portImageUrl'].includes(
+        field
+      )
+    ) {
+      updateItineraryMutation.mutate(updatedDay);
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'No date set';
+    const parts = dateString.split('-');
+    const year = Number(parts[0] || 2025);
+    const month = Number(parts[1] || 1);
+    const day = Number(parts[2] || 1);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Handle adding a new day
+  const handleAddDay = () => {
+    if (!selectedDate || !addDayType) return;
+
+    // Check for duplicate date
+    const dateExists = itineraryDays.some(day => day.date === selectedDate);
+    if (dateExists) {
+      toast.error('Error', { description: 'This date has already been added to the itinerary.' });
+      return;
+    }
+
+    const newDay: Partial<ItineraryDay> = {
+      date: selectedDate,
+      day: sortedDays.length + 1,
       portName: '',
-      portImageUrl: '',
-      segment: 'main',
-      orderIndex: itineraryDays.length,
+      segment: addDayType === 'before' ? 'pre' : addDayType === 'after' ? 'post' : 'main',
+      orderIndex: addDayType === 'before' ? -1 : sortedDays.length,
     };
-    setEditingDay(newDay);
-  };
 
-  const saveItineraryDay = (day: ItineraryDay) => {
-    if (day.id) {
-      // Update existing day via API
-      updateItineraryMutation.mutate(day);
-    } else {
-      // Add new day via API
-      createItineraryMutation.mutate(day);
-    }
-    setEditingDay(null);
-  };
-
-  const deleteItineraryDay = (id: number) => {
-    if (confirm('Are you sure you want to delete this itinerary day?')) {
-      deleteItineraryMutation.mutate(id);
-    }
-  };
-
-  const getSegmentBadge = (segment: string) => {
-    const variants = {
-      pre: 'bg-blue-100 text-blue-800',
-      main: 'bg-green-100 text-green-800',
-      post: 'bg-purple-100 text-purple-800',
-    };
-    return (
-      <Badge className={variants[segment as keyof typeof variants]}>{segment.toUpperCase()}</Badge>
-    );
+    createItineraryMutation.mutate(newDay);
   };
 
   if (itineraryLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <MapPin className="w-8 h-8 animate-pulse text-blue-600" />
-        <span className="ml-2">Loading itinerary...</span>
+        <MapPin className="w-8 h-8 animate-pulse text-cyan-400" />
+        <span className="ml-2 text-white/70">Loading itinerary...</span>
       </div>
     );
   }
@@ -222,322 +310,383 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   if (!trip?.id) {
     return (
       <div className="text-center py-8">
-        <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Trip Required</h3>
-        <p className="text-gray-500">
+        <MapPin className="w-12 h-12 mx-auto mb-4 text-white/30" />
+        <h3 className="text-lg font-medium text-white mb-2">Trip Required</h3>
+        <p className="text-white/60">
           Please create the trip details first before adding itinerary stops.
         </p>
       </div>
     );
   }
 
+  if (itineraryDays.length === 0) {
+    return (
+      <div className="space-y-4 max-w-3xl mx-auto">
+        <div className="text-center py-8 rounded-xl border border-white/10 bg-white/[0.02]">
+          <Calendar className="w-12 h-12 mx-auto mb-4 text-white/30" />
+          <h3 className="text-lg font-medium text-white mb-2">No itinerary stops</h3>
+          <p className="text-white/60 mb-4">
+            Start building your trip itinerary by adding port stops.
+          </p>
+          <Button
+            onClick={() => setShowAddDayModal(true)}
+            className="bg-cyan-500 hover:bg-cyan-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add First Stop
+          </Button>
+        </div>
+
+        {/* Add Day Modal */}
+        <AddDayModal
+          isOpen={showAddDayModal}
+          onOpenChange={setShowAddDayModal}
+          addDayType={addDayType}
+          setAddDayType={setAddDayType}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          onAddDay={handleAddDay}
+          trip={trip}
+          existingDates={itineraryDays.map(d => d.date)}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Itinerary Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <MapPin className="w-5 h-5" />
-              <span>Trip Itinerary</span>
-            </CardTitle>
-            <Button onClick={addItineraryDay} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Stop
-            </Button>
+    <div className="space-y-4 max-w-3xl mx-auto">
+      {/* Day Navigation Bar */}
+      <div className="flex items-center justify-between gap-3 pb-4 mb-4 border-b border-white/10">
+        {/* Left side: Day navigation controls */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={goToPreviousDay}
+            disabled={selectedDayIndex === 0}
+            className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronLeft className="w-4 h-4 text-white/70" />
+          </button>
+
+          <PillDropdown
+            options={dayOptions}
+            value={selectedDayIndex.toString()}
+            onChange={value => setSelectedDayIndex(parseInt(value, 10))}
+            placeholder="Select Day"
+            className="min-w-[140px]"
+          />
+
+          <button
+            type="button"
+            onClick={goToNextDay}
+            disabled={selectedDayIndex === sortedDays.length - 1}
+            className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronRight className="w-4 h-4 text-white/70" />
+          </button>
+
+          {/* Day counter badge */}
+          <span className="text-xs text-white/40 hidden sm:inline">
+            {selectedDayIndex + 1} of {sortedDays.length}
+          </span>
+        </div>
+
+        {/* Right side: Add Day Button */}
+        <Button
+          type="button"
+          onClick={() => setShowAddDayModal(true)}
+          className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Add Day</span>
+        </Button>
+      </div>
+
+      {/* Current Day Card */}
+      {currentDay && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
+          {/* Day Header Banner */}
+          <div className="px-5 py-4 bg-gradient-to-r from-cyan-500/10 to-transparent border-b border-white/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-400/20 flex items-center justify-center">
+                  <Anchor className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    {currentDay.segment === 'pre'
+                      ? 'Pre-Trip Day'
+                      : currentDay.segment === 'post'
+                        ? 'Post-Trip Day'
+                        : `Day ${currentDay.day}`}
+                  </h3>
+                  <p className="text-xs text-white/60">{formatDate(currentDay.date)}</p>
+                </div>
+              </div>
+              {currentDay.portName && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5">
+                  <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-xs font-medium text-white">{currentDay.portName}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {itineraryDays.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No itinerary stops</h3>
-              <p className="text-gray-500 mb-4">
-                Start building your trip itinerary by adding port stops and activities.
-              </p>
-              <Button onClick={addItineraryDay}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add First Stop
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {itineraryDays
-                .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map(day => (
-                  <Card key={day.id || day.orderIndex} className="border-l-4 border-l-blue-500">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <Badge variant="outline">Day {day.day}</Badge>
-                            {getSegmentBadge(day.segment)}
-                            <span className="font-medium">{day.portName}</span>
-                            {day.country && (
-                              <span className="text-sm text-gray-500">({day.country})</span>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                            {day.date && (
-                              <div className="flex items-center space-x-1">
-                                <Calendar className="w-3 h-3" />
-                                <span>{format(new Date(day.date), 'MMM dd, yyyy')}</span>
-                              </div>
-                            )}
-                            {day.arrivalTime && (
-                              <div className="flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Arrival: {day.arrivalTime}</span>
-                              </div>
-                            )}
-                            {day.departureTime && (
-                              <div className="flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Departure: {day.departureTime}</span>
-                              </div>
-                            )}
-                          </div>
-                          {day.description && (
-                            <p className="text-sm text-gray-700 mt-2">{day.description}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => setEditingDay(day)}>
-                            <Edit3 className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => day.id && deleteItineraryDay(day.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Edit Day Dialog */}
-      <Dialog open={!!editingDay} onOpenChange={open => !open && setEditingDay(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
-            <DialogTitle>{editingDay?.id ? 'Edit' : 'Add'} Itinerary Stop</DialogTitle>
-            <DialogDescription>
-              Configure the details for this port stop or activity.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4">
-            {editingDay && (
-              <ItineraryDayForm
-                day={editingDay}
-                onSave={saveItineraryDay}
-                onCancel={() => setEditingDay(null)}
+          {/* Day Content */}
+          <div className="p-5 space-y-5">
+            {/* Location Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Port/Location - Using StandardDropdown with search-add */}
+              <StandardDropdown
+                variant="single-search-add"
+                label="Port/Location"
+                placeholder="Search or add location..."
+                emptyMessage="No locations found. Type to add new."
+                options={locationOptions}
+                value={currentDay.locationId?.toString() || ''}
+                onChange={value => handleLocationChange(value as string)}
+                onCreateNew={handleCreateLocation}
+                disabled={locationsLoading}
               />
-            )}
+
+              {/* Country (read-only, populated from location) */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                  Country
+                </Label>
+                <div className="h-11 px-3 flex items-center bg-white/[0.02] border border-white/10 rounded-xl text-white/60 text-sm">
+                  {currentDay.country || 'Auto-filled from location'}
+                </div>
+              </div>
+            </div>
+
+            {/* Times Section */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                Schedule
+              </Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-white/90">Arrival</Label>
+                  <TimePicker
+                    value={currentDay.arrivalTime || ''}
+                    onChange={value => updateDayField('arrivalTime', value)}
+                    placeholder="--:--"
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-white/90">Departure</Label>
+                  <TimePicker
+                    value={currentDay.departureTime || ''}
+                    onChange={value => updateDayField('departureTime', value)}
+                    placeholder="--:--"
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-white/90">All Aboard</Label>
+                  <TimePicker
+                    value={currentDay.allAboardTime || ''}
+                    onChange={value => updateDayField('allAboardTime', value)}
+                    placeholder="--:--"
+                    className="h-11"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Image and Description Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Port Image */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                  Port Image
+                </Label>
+                <ImageUploadField
+                  label=""
+                  value={currentDay.portImageUrl || ''}
+                  onChange={url => updateDayField('portImageUrl', url || '')}
+                  imageType="locations"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                  Description
+                </Label>
+                <Textarea
+                  placeholder="Port highlights, activities, or notes..."
+                  value={currentDay.description || ''}
+                  onChange={e => updateDayField('description', e.target.value)}
+                  rows={4}
+                  className="px-3 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm leading-relaxed transition-all resize-none focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:ring-2 focus:ring-cyan-400/10"
+                />
+              </div>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
+      {/* Add Day Modal */}
+      <AddDayModal
+        isOpen={showAddDayModal}
+        onOpenChange={setShowAddDayModal}
+        addDayType={addDayType}
+        setAddDayType={setAddDayType}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        onAddDay={handleAddDay}
+        trip={trip}
+        existingDates={itineraryDays.map(d => d.date)}
+      />
     </div>
   );
 }
 
-// Separate component for the day editing form
-interface ItineraryDayFormProps {
-  day: ItineraryDay;
-  onSave: (day: ItineraryDay) => void;
-  onCancel: () => void;
+// Add Day Modal Component
+interface AddDayModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  addDayType: 'before' | 'after' | null;
+  setAddDayType: (type: 'before' | 'after' | null) => void;
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
+  onAddDay: () => void;
+  trip: any;
+  existingDates: string[];
 }
 
-function ItineraryDayForm({ day, onSave, onCancel }: ItineraryDayFormProps) {
-  const [formData, setFormData] = useState<ItineraryDay>(day);
-  const [showLocationSelector, setShowLocationSelector] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
+function AddDayModal({
+  isOpen,
+  onOpenChange,
+  addDayType,
+  setAddDayType,
+  selectedDate,
+  setSelectedDate,
+  onAddDay,
+  trip,
+  existingDates,
+}: AddDayModalProps) {
+  // Helper to parse date string in local timezone
+  const parseDateString = (dateStr: string): Date => {
+    const parts = dateStr.split('-');
+    const year = Number(parts[0] || 2025);
+    const month = Number(parts[1] || 1);
+    const day = Number(parts[2] || 1);
+    return new Date(year, month - 1, day);
   };
 
-  const updateField = (field: keyof ItineraryDay, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const getMinMaxDates = () => {
+    if (!trip?.startDate || !trip?.endDate || !addDayType) {
+      return { minDate: undefined, maxDate: undefined };
+    }
 
-  const handleLocationSelection = (location: LocationWithType) => {
-    setFormData(prev => ({
-      ...prev,
-      portName: location.name,
-      country: location.country,
-      portImageUrl: location.imageUrl || '',
-    }));
-    setShowLocationSelector(false);
+    const startDate = parseDateString(trip.startDate);
+    const endDate = parseDateString(trip.endDate);
+
+    if (addDayType === 'before') {
+      const maxDate = new Date(startDate);
+      maxDate.setDate(maxDate.getDate() - 1);
+      return { minDate: undefined, maxDate };
+    } else {
+      const minDate = new Date(endDate);
+      minDate.setDate(minDate.getDate() + 1);
+      return { minDate, maxDate: undefined };
+    }
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={e => updateField('date', e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="day">Day Number</Label>
-            <Input
-              id="day"
-              type="number"
-              value={formData.day}
-              onChange={e => updateField('day', parseInt(e.target.value) || 0)}
-              min="0"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="portName">Location Name *</Label>
-            <div className="flex gap-2">
-              <Input
-                id="portName"
-                value={formData.portName}
-                onChange={e => updateField('portName', e.target.value)}
-                placeholder="e.g., Santorini, Greece"
-                required
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowLocationSelector(true)}
-                className="flex-shrink-0"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                Browse Locations
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500">
-              Enter manually or browse from the location database
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Input
-              id="country"
-              value={formData.country || ''}
-              onChange={e => updateField('country', e.target.value)}
-              placeholder="e.g., Greece"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="arrivalTime">Arrival Time</Label>
-            <Input
-              id="arrivalTime"
-              value={formData.arrivalTime || ''}
-              onChange={e => updateField('arrivalTime', e.target.value)}
-              placeholder="e.g., 8:00 AM"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="departureTime">Departure Time</Label>
-            <Input
-              id="departureTime"
-              value={formData.departureTime || ''}
-              onChange={e => updateField('departureTime', e.target.value)}
-              placeholder="e.g., 6:00 PM"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="allAboardTime">All Aboard Time</Label>
-            <Input
-              id="allAboardTime"
-              value={formData.allAboardTime || ''}
-              onChange={e => updateField('allAboardTime', e.target.value)}
-              placeholder="e.g., 5:30 PM"
-            />
-          </div>
-        </div>
-
+    <AdminBottomSheet
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="Add Additional Day"
+      description="Add a day before or after your cruise"
+      icon={<Anchor className="w-5 h-5 text-cyan-400" />}
+      primaryAction={{
+        label: 'Add Day',
+        onClick: onAddDay,
+        disabled: !selectedDate || !addDayType,
+      }}
+      maxWidthClassName="max-w-md"
+    >
+      <div className="space-y-4">
+        {/* Day Type Selection */}
         <div className="space-y-2">
-          <Label htmlFor="segment">Segment</Label>
-          <Select value={formData.segment} onValueChange={value => updateField('segment', value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pre">Pre-Trip</SelectItem>
-              <SelectItem value="main">Main Trip</SelectItem>
-              <SelectItem value="post">Post-Trip</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-xs font-semibold text-white/90">When is this day?</Label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setAddDayType('before')}
+              className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
+                addDayType === 'before'
+                  ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
+                  : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
+              }`}
+            >
+              Before Trip
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddDayType('after')}
+              className={`flex-1 h-10 px-3 rounded-[10px] text-sm font-medium transition-all ${
+                addDayType === 'after'
+                  ? 'bg-cyan-400/20 border-[1.5px] border-cyan-400/60 text-cyan-400'
+                  : 'bg-white/[0.04] border-[1.5px] border-white/8 text-white/70 hover:bg-white/[0.06] hover:border-white/10'
+              }`}
+            >
+              After Trip
+            </button>
+          </div>
+          <p className="text-[10px] text-white/50 mt-0.5">
+            {addDayType === 'before'
+              ? 'Select a date before your cruise starts'
+              : addDayType === 'after'
+                ? 'Select a date after your cruise ends'
+                : 'Choose whether this day is before or after the main cruise dates'}
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={formData.description || ''}
-            onChange={e => updateField('description', e.target.value)}
-            placeholder="Brief description of activities or highlights for this stop..."
-            rows={3}
+        {/* Date Selection */}
+        <div className="space-y-1">
+          <Label className="text-xs font-semibold text-white/90">Date</Label>
+          <DatePicker
+            value={selectedDate}
+            onChange={date => {
+              if (date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                setSelectedDate(`${year}-${month}-${day}`);
+              } else {
+                setSelectedDate('');
+              }
+            }}
+            placeholder="Select date"
+            disabled={!addDayType}
+            disabledDates={date => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              const dateString = `${year}-${month}-${day}`;
+              return existingDates.includes(dateString);
+            }}
+            {...(addDayType === 'before'
+              ? { toDate: getMinMaxDates().maxDate }
+              : addDayType === 'after'
+                ? { fromDate: getMinMaxDates().minDate }
+                : {})}
           />
+          {!addDayType && (
+            <p className="text-[10px] text-white/50 mt-0.5">
+              Please select when this day occurs first
+            </p>
+          )}
         </div>
-
-        <ImageUpload
-          imageType="itinerary"
-          currentImageUrl={formData.portImageUrl}
-          onImageChange={imageUrl => {
-            setFormData(prev => ({ ...prev, portImageUrl: imageUrl || '' }));
-          }}
-          label="Location Image"
-        />
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit">
-            <Save className="w-4 h-4 mr-2" />
-            Save Stop
-          </Button>
-        </DialogFooter>
-      </form>
-
-      {/* Location Selector Dialog */}
-      <Dialog open={showLocationSelector} onOpenChange={setShowLocationSelector}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Anchor className="w-5 h-5" />
-              Select Location from Database
-            </DialogTitle>
-            <DialogDescription>
-              Choose a location from our database to automatically fill location details.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            <LocationManagement
-              showSelectMode={true}
-              onSelectLocation={(location: any) => handleLocationSelection(location)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+      </div>
+    </AdminBottomSheet>
   );
 }

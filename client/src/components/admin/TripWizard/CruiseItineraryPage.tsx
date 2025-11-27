@@ -1,16 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { TimePicker } from '@/components/ui/time-picker';
-import { LocationSelector } from '@/components/admin/LocationSelector';
 import { StandardDropdown } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Button } from '@/components/ui/button';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { useTripWizard } from '@/contexts/TripWizardContext';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
-import { Anchor, Plus } from 'lucide-react';
+import { useLocations } from '@/contexts/LocationsContext';
+import { useItineraryNavigation } from '@/contexts/ItineraryNavigationContext';
+import { Anchor } from 'lucide-react';
 import { api } from '@/lib/api-client';
 
 interface LocationType {
@@ -20,12 +20,18 @@ interface LocationType {
 
 export function CruiseItineraryPage() {
   const { state, setItineraryEntries, updateItineraryEntry, addItineraryEntry } = useTripWizard();
-  const [showAddDayModal, setShowAddDayModal] = useState(false);
   const [addDayType, setAddDayType] = useState<'before' | 'after' | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [locationTypes, setLocationTypes] = useState<LocationType[]>([]);
   const [loadingLocationTypes, setLoadingLocationTypes] = useState(true);
   const entriesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Use shared navigation context (state is in EditTripModal's header)
+  const { selectedDayIndex, showAddDayModal, setShowAddDayModal, sortedEntries } =
+    useItineraryNavigation();
+
+  // Use shared locations context
+  const { locations, loading: locationsLoading } = useLocations();
 
   // Fetch location types on mount
   useEffect(() => {
@@ -109,63 +115,60 @@ export function CruiseItineraryPage() {
     setItineraryEntries,
   ]);
 
+  // Format date for display in subheader
   const formatDate = (dateString: string) => {
-    // Parse in local timezone to avoid UTC conversion
     const parts = dateString.split('-');
     const year = Number(parts[0] || 2025);
     const month = Number(parts[1] || 1);
     const day = Number(parts[2] || 1);
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
+      weekday: 'long',
+      month: 'long',
       day: 'numeric',
     });
   };
 
-  const handleLocationChange = async (
-    index: number,
-    locationId: number | null,
-    locationName?: string | null
-  ) => {
-    // If locationId is null but we have a custom name, use the custom name
-    if (locationId === null && locationName) {
-      updateItineraryEntry(index, { locationId: undefined, locationName: locationName });
-      return;
-    }
+  // Build location options for StandardDropdown
+  const locationOptions = useMemo(() => {
+    return locations.map(loc => ({
+      value: loc.id.toString(),
+      label: loc.name,
+      description: [loc.city, loc.country].filter(Boolean).join(', '),
+    }));
+  }, [locations]);
 
-    // If both are null, clear the field
-    if (locationId === null && !locationName) {
+  const handleLocationChange = (index: number, locationIdStr: string) => {
+    if (!locationIdStr) {
       updateItineraryEntry(index, { locationId: undefined, locationName: '' });
       return;
     }
 
-    // If we have a locationId, fetch the location name from API
-    if (locationId !== null) {
-      try {
-        const response = await api.get(`/api/locations/${locationId}`);
-        if (response.ok) {
-          const location = await response.json();
-          // Update both locationId and locationName
-          updateItineraryEntry(index, {
-            locationId: locationId,
-            locationName: location.name || '',
-          });
-        } else {
-          // Fallback: use provided name or just update locationId
-          updateItineraryEntry(index, {
-            locationId: locationId,
-            locationName: locationName || '',
-          });
-        }
-      } catch (error) {
-        // Fallback: use provided name or just update locationId
-        updateItineraryEntry(index, {
-          locationId: locationId,
-          locationName: locationName || '',
-        });
-      }
+    const locationId = parseInt(locationIdStr, 10);
+    const location = locations.find(loc => loc.id === locationId);
+
+    updateItineraryEntry(index, {
+      locationId: locationId,
+      locationName: location?.name || '',
+    });
+  };
+
+  // Handle creating a new location from the dropdown
+  // Note: We need a closure to capture the current index
+  const createLocationHandler = (index: number) => async (newLocationName: string) => {
+    const response = await api.post('/api/locations', {
+      name: newLocationName,
+      country: '',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create location');
     }
+    const newLocation = await response.json();
+    updateItineraryEntry(index, {
+      locationId: newLocation.id,
+      locationName: newLocation.name,
+    });
+    return { value: newLocation.id.toString(), label: newLocation.name };
   };
 
   const handleImageUpload = (index: number, url: string) => {
@@ -292,177 +295,129 @@ export function CruiseItineraryPage() {
     );
   }
 
-  // Sort entries by day number for display (NOT date, to handle pre/post-trip days correctly)
-  const sortedEntries = [...state.itineraryEntries].sort((a, b) => a.dayNumber - b.dayNumber);
+  // Get current entry being viewed (sortedEntries comes from context)
+  const currentEntry = sortedEntries[selectedDayIndex];
+  const currentIndex = currentEntry
+    ? state.itineraryEntries.findIndex(
+        e => e.date === currentEntry.date && e.dayNumber === currentEntry.dayNumber
+      )
+    : -1;
 
   return (
-    <div className="space-y-2.5 max-w-3xl mx-auto" ref={entriesContainerRef}>
-      {/* Itinerary Entries */}
-      {sortedEntries.map(entry => {
-        // CRITICAL FIX: Find the actual index in the state array, not the sorted array
-        // This ensures we update the correct entry when user makes changes
-        const index = state.itineraryEntries.findIndex(
-          e => e.date === entry.date && e.dayNumber === entry.dayNumber
-        );
+    <div className="space-y-2.5 max-w-3xl mx-auto pt-2" ref={entriesContainerRef}>
+      {/* Current Day Content */}
+      {currentEntry && currentIndex >= 0 && (
+        <>
+          {/* Date and Port Subheader */}
+          <p className="text-sm text-white/70 pb-1">
+            {formatDate(currentEntry.date)}
+            {currentEntry.locationName && (
+              <span className="text-cyan-400"> — {currentEntry.locationName}</span>
+            )}
+          </p>
 
-        return (
-          <div
-            key={`${entry.date}-${entry.dayNumber}`}
-            className="p-3 rounded-lg border border-white/10 bg-white/[0.02] transition-all hover:border-white/20"
-          >
-            {/* Day Header */}
-            <div className="flex items-center gap-2 mb-2.5">
-              <Anchor className="w-4 h-4 text-cyan-400" />
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-cyan-400">
-                  {entry.dayNumber < 1
-                    ? 'Pre-Trip'
-                    : entry.dayNumber >= 100
-                      ? 'Post-Trip'
-                      : `Day ${entry.dayNumber}`}
-                </span>
-                {entry.locationName && (
-                  <>
-                    <span className="text-xs text-white/40">•</span>
-                    <span className="text-xs font-semibold text-white">{entry.locationName}</span>
-                  </>
-                )}
-                <span className="text-xs text-white/60">{formatDate(entry.date)}</span>
-              </div>
-            </div>
+          {/* Location and Type Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Port/Location - Using StandardDropdown with search-add */}
+            <StandardDropdown
+              variant="single-search-add"
+              label="Port/Location"
+              placeholder="Search or add location..."
+              emptyMessage="No locations found. Type to add new."
+              options={locationOptions}
+              value={currentEntry.locationId?.toString() || ''}
+              onChange={value => handleLocationChange(currentIndex, value as string)}
+              onCreateNew={createLocationHandler(currentIndex)}
+              disabled={locationsLoading}
+            />
 
-            {/* Fields */}
-            <div className="space-y-2.5">
-              {/* Location and Type Grid */}
-              <div className="grid grid-cols-2 gap-2">
-                {/* Location */}
-                <LocationSelector
-                  label="Port/Location"
-                  selectedId={entry.locationId ?? null}
-                  selectedName={entry.locationName ?? null}
-                  onSelectionChange={(locationId, locationName) =>
-                    handleLocationChange(index, locationId, locationName)
-                  }
-                  placeholder="Select port or location..."
-                  required={false}
-                  wizardMode={true}
-                />
+            {/* Location Type */}
+            <StandardDropdown
+              variant="single-search"
+              label="Location Type"
+              placeholder="Select type..."
+              emptyMessage="No location types found."
+              options={locationTypes.map(type => ({
+                value: type.id.toString(),
+                label: type.type,
+              }))}
+              value={currentEntry.locationTypeId?.toString() || ''}
+              onChange={value =>
+                updateItineraryEntry(currentIndex, { locationTypeId: Number(value) })
+              }
+            />
+          </div>
 
-                {/* Location Type */}
-                <StandardDropdown
-                  variant="single-search"
-                  label="Location Type"
-                  placeholder="Select type"
-                  emptyMessage="No location types found."
-                  options={locationTypes.map(type => ({
-                    value: type.id.toString(),
-                    label: type.type,
-                  }))}
-                  value={entry.locationTypeId?.toString() || ''}
-                  onChange={value => updateItineraryEntry(index, { locationTypeId: Number(value) })}
-                  required
+          {/* Times Section */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+              Schedule
+            </Label>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-white/90">Arrival</Label>
+                <TimePicker
+                  value={currentEntry.arrivalTime || ''}
+                  onChange={value => handleTimeChange(currentIndex, 'arrivalTime', value)}
+                  placeholder="--:--"
+                  className="h-11"
                 />
               </div>
 
-              {/* Times Grid */}
-              <div className="grid grid-cols-3 gap-2">
-                {/* Arrival Time */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Arrival</Label>
-                  <TimePicker
-                    value={entry.arrivalTime || ''}
-                    onChange={value => handleTimeChange(index, 'arrivalTime', value)}
-                    placeholder="HH:MM"
-                    className="h-10"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">24-hour format</p>
-                </div>
-
-                {/* Departure Time */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">Departure</Label>
-                  <TimePicker
-                    value={entry.departureTime || ''}
-                    onChange={value => handleTimeChange(index, 'departureTime', value)}
-                    placeholder="HH:MM"
-                    className="h-10"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">24-hour format</p>
-                </div>
-
-                {/* All Aboard Time */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">All Aboard</Label>
-                  <TimePicker
-                    value={entry.allAboardTime || ''}
-                    onChange={value => handleTimeChange(index, 'allAboardTime', value)}
-                    placeholder="HH:MM"
-                    className="h-10"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">24-hour format</p>
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-white/90">Departure</Label>
+                <TimePicker
+                  value={currentEntry.departureTime || ''}
+                  onChange={value => handleTimeChange(currentIndex, 'departureTime', value)}
+                  placeholder="--:--"
+                  className="h-11"
+                />
               </div>
 
-              {/* Image and Description Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {/* Port Image */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Port Image (Optional)
-                  </Label>
-                  <ImageUploadField
-                    label=""
-                    value={entry.imageUrl || ''}
-                    onChange={url => handleImageUpload(index, url || '')}
-                    imageType="locations"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">Image of the port or location</p>
-                </div>
-
-                {/* Description */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-white/90">
-                    Description (Optional)
-                  </Label>
-                  <Textarea
-                    placeholder="Enter port highlights or activities..."
-                    value={entry.description || ''}
-                    onChange={e => handleDescriptionChange(index, e.target.value)}
-                    rows={3}
-                    className="px-3 py-2 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm leading-snug transition-all resize-vertical focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:shadow-[0_0_0_3px_rgba(34,211,238,0.08)]"
-                  />
-                  <p className="text-[10px] text-white/50 mt-0.5">
-                    Activities or highlights for this port
-                  </p>
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-white/90">All Aboard</Label>
+                <TimePicker
+                  value={currentEntry.allAboardTime || ''}
+                  onChange={value => handleTimeChange(currentIndex, 'allAboardTime', value)}
+                  placeholder="--:--"
+                  className="h-11"
+                />
               </div>
             </div>
           </div>
-        );
-      })}
 
-      {/* Add Day Button */}
-      <div className="flex justify-end mt-4">
-        <Button
-          type="button"
-          onClick={() => setShowAddDayModal(true)}
-          className="flex items-center gap-1.5 h-10 px-4 bg-cyan-400/10 border border-cyan-400/30 rounded-[10px] text-cyan-400 text-sm font-medium hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Add Day
-        </Button>
-      </div>
+          {/* Image and Description Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Port Image */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                Port Image
+              </Label>
+              <ImageUploadField
+                label=""
+                value={currentEntry.imageUrl || ''}
+                onChange={url => handleImageUpload(currentIndex, url || '')}
+                imageType="locations"
+              />
+            </div>
 
-      {/* Info Notice */}
-      <div className="mt-2.5 p-3 rounded-lg bg-cyan-400/5 border border-cyan-400/20">
-        <p className="text-[11px] text-white/70 leading-relaxed">
-          <span className="font-semibold text-cyan-400">AI Tip:</span> Add port locations, times,
-          images, and descriptions for each day of the cruise. These will appear in the itinerary
-          tab on the trip guide page.
-        </p>
-      </div>
+            {/* Description */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                Description
+              </Label>
+              <Textarea
+                placeholder="Port highlights, activities, or notes..."
+                value={currentEntry.description || ''}
+                onChange={e => handleDescriptionChange(currentIndex, e.target.value)}
+                rows={4}
+                className="px-3 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm leading-relaxed transition-all resize-none focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:ring-2 focus:ring-cyan-400/10"
+              />
+            </div>
+          </div>
+        </>
+      )}
 
-      {/* Add Day Modal */}
       {/* Add Day Modal */}
       <AdminBottomSheet
         isOpen={showAddDayModal}
