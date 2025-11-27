@@ -107,6 +107,13 @@ Events render in TWO places - update both when changing event display:
 - Early returns over nested conditionals
 - Delete dead/commented code - git has history
 
+### Plan Documents
+
+- When working from a plan document (e.g., `docs/Refactor-Code.md`), **always update the checklist** after completing tasks
+- Mark completed items with `[x]` and add completion date
+- Update metrics/counts if they've changed
+- Commit the updated plan with your changes
+
 ### State Management
 
 - Local state first (`useState`)
