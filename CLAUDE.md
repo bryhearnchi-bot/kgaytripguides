@@ -162,8 +162,31 @@ Events render in TWO places - update both when changing event display:
 - Lazy load all routes: `lazy(() => import(...))`
 - React Query staleTime: 5 minutes (never Infinity)
 - Images: `loading="lazy"`
+- **Image optimization**: Use `getOptimizedImageUrl()` from `@/lib/image-utils` for Supabase Storage images
 - Memoize expensive computations (`useMemo`, `useCallback`)
 - Avoid inline object/array creation in JSX props
+
+### Image Optimization
+
+All Supabase Storage images should use the optimization utilities:
+
+```typescript
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
+
+// Use presets for consistent sizing
+const cardUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.card); // 400x300
+const thumbUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.thumbnail); // 80x80
+const heroUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.hero); // 1200x800
+const profileUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.profile); // 200x200
+```
+
+**Presets available:**
+
+- `thumbnail` (80x80, q70) - Admin tables, small icons
+- `card` (400x300, q80) - Event cards, party cards
+- `profile` (200x200, q80) - Talent profiles
+- `hero` (1200x800, q85) - Hero sections
+- `full` (1920x1280, q90) - Full-screen galleries
 
 ### Error Handling
 

@@ -6,10 +6,11 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
 
 // Cache schema version - increment this when the offline caching logic changes
 // This triggers a re-download notification for users with older cached data
-const OFFLINE_CACHE_VERSION = 4; // v4: Cache app shell for true offline access
+const OFFLINE_CACHE_VERSION = 5; // v5: Download optimized images for smaller cache size
 
 interface OfflineTripStatus {
   enabled: boolean;
@@ -373,20 +374,31 @@ export function OfflineStorageProvider({ children }: OfflineStorageProviderProps
     // Remove duplicate image URLs
     const uniqueImageUrls = Array.from(new Set(imageUrls.filter(url => url && url.length > 0)));
 
-    // Download all images
+    // Download optimized images for smaller cache size
+    // Use 'card' preset for most images (400x300) which is good for offline viewing
     const totalItems = totalRequests + uniqueImageUrls.length;
     for (const imageUrl of uniqueImageUrls) {
       try {
-        const response = await fetch(imageUrl);
+        // Generate optimized URL using the card preset for balanced size/quality
+        const optimizedUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.card);
+
+        // Download the optimized version
+        const response = await fetch(optimizedUrl);
         if (response.ok) {
           const blob = await response.blob();
           totalSize += blob.size;
 
-          // Cache the image
+          // Cache BOTH the optimized URL and the original URL
+          // This ensures the cached response is found regardless of which URL the app requests
           const clonedResponse = new Response(blob, {
             headers: response.headers,
           });
-          await cache.put(imageUrl, clonedResponse);
+
+          // Cache under the optimized URL (what the app will now request)
+          await cache.put(optimizedUrl, clonedResponse.clone());
+
+          // Also cache under the original URL for backwards compatibility
+          await cache.put(imageUrl, new Response(blob, { headers: response.headers }));
         }
         completedRequests++;
         setDownloadProgress(Math.round((completedRequests / totalItems) * 100));

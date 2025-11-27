@@ -1,5 +1,6 @@
 import React from 'react';
 import { TableColumn } from '@/hooks/use-table-state';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
 
 // STANDARDIZED COLUMN SPECIFICATIONS
 // These are the EXACT specifications that must be used across ALL admin tables
@@ -122,14 +123,21 @@ export function createImageColumn<T>(
     priority: 'high',
     ...FIXED_COLUMN_SPECS.image,
     render: (_value: any, item: T) => {
+      const rawUrl = getImageUrl && getImageUrl(item);
+      // Use thumbnail preset for admin table images (80x80)
+      const optimizedUrl = rawUrl
+        ? getOptimizedImageUrl(rawUrl, IMAGE_PRESETS.thumbnail)
+        : undefined;
+
       const imageElement = (
         <div className={IMAGE_SPECS.container.className}>
           <div className={IMAGE_SPECS.wrapper.className}>
-            {getImageUrl && getImageUrl(item) ? (
+            {optimizedUrl ? (
               <img
-                src={getImageUrl(item)}
+                src={optimizedUrl}
                 alt={getName ? getName(item) : ''}
                 className={IMAGE_SPECS.image.className}
+                loading="lazy"
               />
             ) : PlaceholderIcon ? (
               <PlaceholderIcon className={ICON_SPECS.imagePlaceholder.className} />

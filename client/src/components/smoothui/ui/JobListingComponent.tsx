@@ -19,6 +19,8 @@ import {
   Map,
 } from 'lucide-react';
 import { ReactiveBottomSheet } from '@/components/ui/ReactiveBottomSheet';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
+import { CardActionButton } from '@/components/ui/CardActionButton';
 
 export interface LocationAttraction {
   id: number;
@@ -583,20 +585,18 @@ export default function JobListingComponent({
                   {/* Bottom Action Bar */}
                   <div className="bg-white/5 border-t border-white/10 px-3 py-1.5">
                     <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
+                      <CardActionButton
+                        icon={<Map className="w-3.5 h-3.5" />}
+                        label="Info"
+                        onClick={() => {
                           setSelectedJob(role);
                           setShowInfoSheet(true);
                         }}
-                        className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
-                      >
-                        <Map className="w-3.5 h-3.5" />
-                        Info
-                      </button>
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
+                      />
+                      <CardActionButton
+                        icon={<CalendarDays className="w-3.5 h-3.5" />}
+                        label="Events"
+                        onClick={() => {
                           setSelectedJob(role);
                           // Find events for this day - extract date from job_time (format: YYYY-MM-DD-locId-index)
                           const dateKey = role.job_time.split('-').slice(0, 3).join('-');
@@ -604,11 +604,7 @@ export default function JobListingComponent({
                           setDayEvents(events?.items || []);
                           setShowEventsSheet(true);
                         }}
-                        className="flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
-                      >
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        Events
-                      </button>
+                      />
                     </div>
                   </div>
                 </motion.div>
@@ -730,7 +726,7 @@ export default function JobListingComponent({
             {/* Event Image */}
             {selectedEventForDetail.imageUrl && (
               <img
-                src={selectedEventForDetail.imageUrl}
+                src={getOptimizedImageUrl(selectedEventForDetail.imageUrl, IMAGE_PRESETS.card)}
                 alt={selectedEventForDetail.title}
                 className="w-full aspect-video object-cover rounded-lg"
                 loading="lazy"

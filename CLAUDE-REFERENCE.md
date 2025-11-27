@@ -161,6 +161,76 @@ Active tabs in `/client/src/components/trip-guide/tabs/`:
 
 ---
 
+## Image Optimization
+
+All Supabase Storage images are optimized on-the-fly using URL transformations.
+
+**Key files:**
+
+- `/client/src/lib/image-utils.ts` - Core utility functions
+- `/client/src/components/ui/OptimizedImage.tsx` - React component
+
+**Usage:**
+
+```typescript
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
+
+// Use presets (recommended)
+const cardUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.card);
+
+// Custom dimensions
+const customUrl = getOptimizedImageUrl(imageUrl, {
+  width: 300,
+  height: 200,
+  quality: 85,
+  resize: 'cover',
+});
+
+// Generate srcset for retina
+import { getSrcSet } from '@/lib/image-utils';
+const srcSet = getSrcSet(imageUrl, IMAGE_PRESETS.card); // "url 1x, url 2x"
+```
+
+**Available presets:**
+
+| Preset      | Dimensions | Quality | Use Case                        |
+| ----------- | ---------- | ------- | ------------------------------- |
+| `thumbnail` | 80x80      | 70      | Admin tables, small icons       |
+| `card`      | 400x300    | 80      | Event cards, party cards        |
+| `profile`   | 200x200    | 80      | Small talent profile thumbnails |
+| `modal`     | 600x600    | 85      | Modal/slide-up sheet images     |
+| `hero`      | 1200x800   | 85      | Hero sections                   |
+| `full`      | 1920x1280  | 90      | Full-screen galleries           |
+
+**OptimizedImage component:**
+
+```tsx
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
+
+// With preset
+<OptimizedImage src={imageUrl} preset="card" alt="Event" />
+
+// With fallback
+<OptimizedImage
+  src={imageUrl}
+  preset="thumbnail"
+  fallbackSrc="/placeholder.jpg"
+  alt="Profile"
+/>
+
+// With placeholder while loading
+<OptimizedImage
+  src={imageUrl}
+  preset="hero"
+  showPlaceholder
+  alt="Hero"
+/>
+```
+
+**Note:** Only works with Supabase Storage URLs. Non-Supabase URLs pass through unchanged.
+
+---
+
 ## Type Files
 
 | File                 | Contents                                                      |
@@ -290,6 +360,7 @@ logger.error('Database error', { error: err.message });
 - [ ] No `innerHTML` with user content
 - [ ] React Query staleTime finite
 - [ ] Images have `loading="lazy"`
+- [ ] Supabase images use `getOptimizedImageUrl()` with appropriate preset
 - [ ] Routes are lazy loaded
 - [ ] No gradients on backgrounds
 

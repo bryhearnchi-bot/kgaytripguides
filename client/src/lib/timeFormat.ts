@@ -140,3 +140,32 @@ export function parseLocalDate(dateStr: string): Date {
   const day = Number(parts[2] || 1);
   return new Date(year, month - 1, day, 0, 0, 0, 0);
 }
+
+/**
+ * Format a dateKey (YYYY-MM-DD) to readable format (Thu, Nov 15)
+ * Avoids timezone conversion issues
+ */
+export function formatDateKey(dateKey: string): string {
+  // Parse YYYY-MM-DD without timezone conversion
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!year || !month || !day) return dateKey;
+
+  const date = new Date(year, month - 1, day);
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+}

@@ -11,6 +11,7 @@ import { api } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
 import { PillDropdown } from '@/components/ui/dropdowns';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { CardActionButton } from '@/components/ui/CardActionButton';
 
 interface ScheduleTabProps {
   SCHEDULED_DAILY: any[];
@@ -434,26 +435,26 @@ export const ScheduleTab = memo(function ScheduleTab({
                             {/* Buttons - No background, sitting on page */}
                             <div className="px-3 py-1.5">
                               <div className="flex gap-2">
-                                <button
+                                <CardActionButton
+                                  icon={<Info className="w-3.5 h-3.5" />}
+                                  label="Party Info"
                                   onClick={() => {
                                     setSelectedParty(theme);
                                     setShowInfoSheet(true);
                                   }}
-                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
-                                >
-                                  <Info className="w-3.5 h-3.5" />
-                                  Party Info
-                                </button>
-                                <button
+                                  variant="elevated"
+                                  className="flex-1"
+                                />
+                                <CardActionButton
+                                  icon={<Shirt className="w-3.5 h-3.5" />}
+                                  label="Costume Ideas"
                                   onClick={() => {
                                     setSelectedParty(theme);
                                     setShowCostumeSheet(true);
                                   }}
-                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
-                                >
-                                  <Shirt className="w-3.5 h-3.5" />
-                                  Costume Ideas
-                                </button>
+                                  variant="elevated"
+                                  className="flex-1"
+                                />
                               </div>
                             </div>
                           </div>
@@ -485,26 +486,26 @@ export const ScheduleTab = memo(function ScheduleTab({
                             {/* Buttons - No background, sitting on page */}
                             <div className="px-3 py-1.5">
                               <div className="flex gap-2">
-                                <button
+                                <CardActionButton
+                                  icon={<Info className="w-3.5 h-3.5" />}
+                                  label="Party Info"
                                   onClick={() => {
                                     setSelectedParty(theme);
                                     setShowInfoSheet(true);
                                   }}
-                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
-                                >
-                                  <Info className="w-3.5 h-3.5" />
-                                  Party Info
-                                </button>
-                                <button
+                                  variant="elevated"
+                                  className="flex-1"
+                                />
+                                <CardActionButton
+                                  icon={<Shirt className="w-3.5 h-3.5" />}
+                                  label="Costume Ideas"
                                   onClick={() => {
                                     setSelectedParty(theme);
                                     setShowCostumeSheet(true);
                                   }}
-                                  className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all"
-                                >
-                                  <Shirt className="w-3.5 h-3.5" />
-                                  Costume Ideas
-                                </button>
+                                  variant="elevated"
+                                  className="flex-1"
+                                />
                               </div>
                             </div>
                           </div>

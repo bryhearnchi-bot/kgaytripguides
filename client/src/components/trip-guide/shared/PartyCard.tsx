@@ -4,6 +4,8 @@ import type { DailyEvent, PartyTheme } from '@/data/trip-data';
 import { formatTime } from '@/lib/timeFormat';
 import { ReactiveBottomSheet } from '@/components/ui/ReactiveBottomSheet';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
+import { CardActionButton } from '@/components/ui/CardActionButton';
 
 interface PartyCardProps {
   event: DailyEvent;
@@ -45,12 +47,26 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
     return undefined;
   }, [showInfoSheet, showCostumeSheet]);
 
+  // Default party image URL
+  const defaultPartyImage =
+    'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/parties/sea_dyhgwy.jpg';
+
   // Memoize image URL computation
-  const imageUrl = useMemo(
-    () =>
-      partyTheme?.imageUrl ||
-      'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/parties/sea_dyhgwy.jpg',
+  const rawImageUrl = useMemo(
+    () => partyTheme?.imageUrl || defaultPartyImage,
     [partyTheme?.imageUrl]
+  );
+
+  // Optimized card image URL (for the card display)
+  const cardImageUrl = useMemo(
+    () => getOptimizedImageUrl(rawImageUrl, IMAGE_PRESETS.card),
+    [rawImageUrl]
+  );
+
+  // Optimized modal image URL (for larger display in bottom sheets)
+  const modalImageUrl = useMemo(
+    () => getOptimizedImageUrl(rawImageUrl, IMAGE_PRESETS.modal),
+    [rawImageUrl]
   );
 
   // Memoize formatted time
@@ -62,14 +78,13 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
         {/* Party Image */}
         <div className="relative">
           <img
-            src={imageUrl}
+            src={cardImageUrl}
             alt={event.title}
             className="w-full h-48 object-cover"
             loading="lazy"
             decoding="async"
             onError={e => {
-              e.currentTarget.src =
-                'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/app-images/parties/sea_dyhgwy.jpg';
+              e.currentTarget.src = getOptimizedImageUrl(defaultPartyImage, IMAGE_PRESETS.card);
             }}
           />
 
@@ -104,20 +119,18 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
         {/* Bottom Action Bar */}
         <div className="bg-white/5 border-t border-white/10 px-3 py-1.5">
           <div className="flex gap-2">
-            <button
+            <CardActionButton
+              icon={<Info className="w-3.5 h-3.5" />}
+              label="Party Info"
               onClick={() => setShowInfoSheet(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
-            >
-              <Info className="w-3.5 h-3.5" />
-              Party Info
-            </button>
-            <button
+              className="flex-1"
+            />
+            <CardActionButton
+              icon={<Shirt className="w-3.5 h-3.5" />}
+              label="Costume Ideas"
               onClick={() => setShowCostumeSheet(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
-            >
-              <Shirt className="w-3.5 h-3.5" />
-              Costume Ideas
-            </button>
+              className="flex-1"
+            />
           </div>
         </div>
       </div>
@@ -133,7 +146,7 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
           {/* Party Hero Image */}
           <div className="w-full">
             <img
-              src={imageUrl}
+              src={modalImageUrl}
               alt={event.title}
               className="w-full aspect-video object-cover rounded-xl border-2 border-blue-400/30 shadow-lg"
               loading="lazy"
@@ -163,7 +176,7 @@ export const PartyCard = memo<PartyCardProps>(function PartyCard({
           {/* Party Hero Image */}
           <div className="w-full">
             <img
-              src={imageUrl}
+              src={modalImageUrl}
               alt={event.title}
               className="w-full aspect-video object-cover rounded-xl border-2 border-pink-400/30 shadow-lg"
               loading="lazy"

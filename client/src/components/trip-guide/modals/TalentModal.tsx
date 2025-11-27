@@ -20,6 +20,7 @@ import type { Talent, DailySchedule, ItineraryStop } from '@/data/trip-data';
 import { findTalentInTitle } from '../utils/talentHelpers';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
 
 // Helper function to format dateKey (YYYY-MM-DD) to readable format (Thu, Nov 15)
 function formatDateKey(dateKey: string): string {
@@ -150,7 +151,7 @@ export const TalentModal = memo(function TalentModal({
             {selectedTalent.img && (
               <div className="w-full md:w-64 md:flex-shrink-0">
                 <img
-                  src={selectedTalent.img}
+                  src={getOptimizedImageUrl(selectedTalent.img, IMAGE_PRESETS.modal)}
                   alt={selectedTalent.name}
                   className="w-full aspect-square object-cover rounded-xl border-2 border-purple-400/30 shadow-lg"
                   loading="lazy"

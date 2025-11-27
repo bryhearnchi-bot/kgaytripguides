@@ -3,6 +3,7 @@ import { Map } from 'lucide-react';
 import JobListingComponent, { type Job } from '@/components/smoothui/ui/JobListingComponent';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { formatTime } from '@/lib/timeFormat';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
 
 interface ItineraryTabProps {
   ITINERARY: any[];
@@ -123,21 +124,24 @@ export const ItineraryTab = memo(function ItineraryTab({
         stop.allAboard && stop.allAboard !== '—' ? formatTime(stop.allAboard, timeFormat) : '';
     }
 
+    // Default fallback image
+    const defaultImage =
+      'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
+    const imageUrl = stop.imageUrl || defaultImage;
+    const optimizedImageUrl = getOptimizedImageUrl(imageUrl, IMAGE_PRESETS.card);
+    const optimizedFallbackUrl = getOptimizedImageUrl(defaultImage, IMAGE_PRESETS.card);
+
     return {
       company: portName,
       title: stop.date,
       logo: (
         <img
-          src={
-            stop.imageUrl ||
-            'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg'
-          }
+          src={optimizedImageUrl}
           alt={stop.port}
           className="w-full h-full object-cover rounded-l-xl"
           loading="lazy"
           onError={e => {
-            e.currentTarget.src =
-              'https://bxiiodeyqvqqcgzzqzvt.supabase.co/storage/v1/object/public/trip-images/virgin-resilient-lady.jpg';
+            e.currentTarget.src = optimizedFallbackUrl;
           }}
         />
       ),

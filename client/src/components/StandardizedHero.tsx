@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
 
 interface StandardizedHeroProps {
   variant: 'landing' | 'trip';
@@ -7,6 +8,11 @@ interface StandardizedHeroProps {
 }
 
 export function StandardizedHero({ variant, tripImageUrl, children }: StandardizedHeroProps) {
+  // Optimize hero images for faster loading
+  const optimizedHeroUrl = tripImageUrl
+    ? getOptimizedImageUrl(tripImageUrl, IMAGE_PRESETS.hero)
+    : undefined;
+
   return (
     <header className="relative overflow-hidden text-white fixed top-0 left-0 right-0 z-40 pt-[15px] pb-[24px]">
       <div className="absolute inset-0 z-0">
@@ -14,30 +20,22 @@ export function StandardizedHero({ variant, tripImageUrl, children }: Standardiz
         {variant === 'landing' ? (
           // Wave pattern background for landing page
           <div className="cruise-gradient wave-pattern bg-ocean-600 w-full h-full"></div>
+        ) : // Trip image background for trip guide
+        optimizedHeroUrl ? (
+          <img src={optimizedHeroUrl} alt="Trip Hero" className="w-full h-full object-cover" />
         ) : (
-          // Trip image background for trip guide
-          tripImageUrl ? (
-            <img
-              src={tripImageUrl}
-              alt="Trip Hero"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src="/images/ships/resilient-lady-hero.jpg"
-              alt="Default Trip Ship"
-              className="w-full h-full object-cover"
-            />
-          )
+          <img
+            src="/images/ships/resilient-lady-hero.jpg"
+            alt="Default Trip Ship"
+            className="w-full h-full object-cover"
+          />
         )}
       </div>
 
       {/* Content with frosted glass background */}
       <div className="relative z-20">
         <div className="max-w-7xl mx-auto px-4 py-1">
-          <div className="w-full">
-            {children}
-          </div>
+          <div className="w-full">{children}</div>
         </div>
       </div>
     </header>

@@ -4,6 +4,8 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { cn, dateOnly } from '@/lib/utils';
 import { differenceInCalendarDays } from 'date-fns';
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
+import { getOptimizedImageUrl, IMAGE_PRESETS } from '@/lib/image-utils';
+import { CardActionButton } from '@/components/ui/CardActionButton';
 
 interface OverviewTabProps {
   tripData: any;
@@ -247,9 +249,10 @@ export const OverviewTab = memo(function OverviewTab({
                 {tripData?.trip?.heroImageUrl && (
                   <div className="flex-shrink-0 w-full md:w-48 flex justify-center md:justify-start">
                     <img
-                      src={tripData.trip.heroImageUrl}
+                      src={getOptimizedImageUrl(tripData.trip.heroImageUrl, IMAGE_PRESETS.card)}
                       alt={tripData.trip.name}
                       className="w-full md:w-48 h-48 md:h-32 object-cover"
+                      loading="lazy"
                     />
                   </div>
                 )}
@@ -281,7 +284,7 @@ export const OverviewTab = memo(function OverviewTab({
                   {shipInfo?.imageUrl && (
                     <div className="flex-shrink-0 w-full md:w-56 flex justify-center md:justify-end md:order-2">
                       <img
-                        src={shipInfo.imageUrl}
+                        src={getOptimizedImageUrl(shipInfo.imageUrl, IMAGE_PRESETS.card)}
                         alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
                         className="w-full md:w-56 h-48 md:h-36 object-cover"
                         loading="lazy"
@@ -363,13 +366,12 @@ export const OverviewTab = memo(function OverviewTab({
 
               {/* Bottom Action Bar - Mobile only */}
               <div className="lg:hidden bg-white/5 border-t border-white/10 px-3 py-1.5">
-                <button
+                <CardActionButton
+                  icon={<Ship className="w-3.5 h-3.5" />}
+                  label={isShipExpanded ? 'Less Ship Information' : 'Additional Ship Information'}
                   onClick={toggleShipInfo}
-                  className="w-full flex items-center justify-center gap-1.5 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/20 transition-all"
-                >
-                  <Ship className="w-3.5 h-3.5" />
-                  {isShipExpanded ? 'Less Ship Information' : 'Additional Ship Information'}
-                </button>
+                  className="w-full"
+                />
               </div>
             </div>
           </div>
@@ -386,7 +388,7 @@ export const OverviewTab = memo(function OverviewTab({
               </div>
               {tripData?.trip?.mapUrl ? (
                 <img
-                  src={tripData.trip.mapUrl}
+                  src={getOptimizedImageUrl(tripData.trip.mapUrl, IMAGE_PRESETS.card)}
                   alt={`${tripData.trip.name} Route Map`}
                   className="w-full h-auto object-contain"
                   loading="lazy"
@@ -499,7 +501,7 @@ export const OverviewTab = memo(function OverviewTab({
             </div>
             {tripData?.trip?.mapUrl ? (
               <img
-                src={tripData.trip.mapUrl}
+                src={getOptimizedImageUrl(tripData.trip.mapUrl, IMAGE_PRESETS.card)}
                 alt={`${tripData.trip.name} Route Map`}
                 className="w-full h-auto object-contain"
                 loading="lazy"
@@ -528,7 +530,7 @@ export const OverviewTab = memo(function OverviewTab({
                   {shipInfo?.imageUrl && (
                     <div className="flex-shrink-0 w-full flex justify-center">
                       <img
-                        src={shipInfo.imageUrl}
+                        src={getOptimizedImageUrl(shipInfo.imageUrl, IMAGE_PRESETS.card)}
                         alt={ship?.name || tripData?.trip?.shipName || 'Ship'}
                         className="w-full h-48 object-cover"
                         loading="lazy"
