@@ -191,9 +191,10 @@ export function VenueManagementModal({
 
       setNewVenueName('');
       setSelectedTypeId(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to add venue';
       toast.error('Error', {
-        description: error.message || 'Failed to add venue',
+        description: message,
       });
     } finally {
       setIsSubmitting(false);
@@ -239,9 +240,10 @@ export function VenueManagementModal({
         if (onSuccess) onSuccess();
       }
       setVenueToDelete(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to delete venue';
       toast.error('Error', {
-        description: error.message || 'Failed to delete venue',
+        description: message,
       });
     } finally {
       setIsSubmitting(false);

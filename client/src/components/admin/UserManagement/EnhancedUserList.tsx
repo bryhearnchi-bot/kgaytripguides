@@ -226,9 +226,10 @@ export function EnhancedUserList() {
       toast.success('Operation completed', {
         description: `Successfully ${operation}d ${selectedUsers.length} user(s).`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to complete operation';
       toast.error('Operation failed', {
-        description: error.message || 'Failed to complete operation',
+        description: message,
       });
     }
   };
@@ -259,9 +260,10 @@ export function EnhancedUserList() {
       toast.success('Export successful', {
         description: 'User data has been exported.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to export users';
       toast.error('Export failed', {
-        description: error.message || 'Failed to export users',
+        description: message,
       });
     }
   };

@@ -125,48 +125,6 @@ export function PillDropdown({
     };
   }, [open]);
 
-  // Debug scrolling and test scroll functionality
-  React.useEffect(() => {
-    if (open) {
-      // Wait for DOM to render
-      setTimeout(() => {
-        const list = document.querySelector('[cmdk-list]') as HTMLElement;
-        if (list) {
-          console.log('🔍 PillDropdown Scroll Debug:', {
-            scrollHeight: list.scrollHeight,
-            clientHeight: list.clientHeight,
-            offsetHeight: list.offsetHeight,
-            maxHeight: list.style.maxHeight,
-            computedMaxHeight: window.getComputedStyle(list).maxHeight,
-            overflowY: window.getComputedStyle(list).overflowY,
-            overflow: window.getComputedStyle(list).overflow,
-            canScroll: list.scrollHeight > list.clientHeight,
-            className: list.className,
-            parentOverflow: window.getComputedStyle(list.parentElement!).overflow,
-            parentClassName: list.parentElement?.className,
-            optionsCount: options.length,
-            hasScrollbar: list.scrollHeight > list.clientHeight,
-            pointerEvents: window.getComputedStyle(list).pointerEvents,
-            touchAction: window.getComputedStyle(list).touchAction,
-          });
-
-          // Test if we can programmatically scroll
-          const originalScrollTop = list.scrollTop;
-          list.scrollTop = 10;
-          setTimeout(() => {
-            const newScrollTop = list.scrollTop;
-            console.log('🔍 Scroll Test:', {
-              originalScrollTop,
-              newScrollTop,
-              canScrollProgrammatically: newScrollTop !== originalScrollTop,
-            });
-            list.scrollTop = originalScrollTop;
-          }, 50);
-        }
-      }, 100);
-    }
-  }, [open, options.length]);
-
   return (
     <>
       <style>{scrollbarStyles}</style>

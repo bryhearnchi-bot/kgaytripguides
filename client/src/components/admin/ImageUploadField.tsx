@@ -83,9 +83,10 @@ export function ImageUploadField({
         toast.success('Profile photo updated', {
           description: 'Your profile photo has been saved.',
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to save profile image';
         toast.error('Save failed', {
-          description: error.message || 'Failed to save profile image',
+          description: message,
         });
       }
     }

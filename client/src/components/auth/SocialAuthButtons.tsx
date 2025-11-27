@@ -17,11 +17,13 @@ export function SocialAuthButtons({ mode, onSuccess }: SocialAuthButtonsProps) {
     try {
       await signInWithProvider(provider);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Unable to ${mode === 'sign_in' ? 'sign in' : 'sign up'} with ${provider}`;
       toast.error('Authentication Failed', {
-        description:
-          error.message ||
-          `Unable to ${mode === 'sign_in' ? 'sign in' : 'sign up'} with ${provider}`,
+        description: message,
       });
     } finally {
       setLoading(null);

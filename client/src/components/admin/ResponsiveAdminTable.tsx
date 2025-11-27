@@ -17,11 +17,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RowData = Record<string, any>;
+
 interface TableColumn {
   key: string;
   label: string;
   className?: string;
-  render?: (value: any, row: any) => React.ReactNode;
+  render?: (value: unknown, row: RowData) => React.ReactNode;
   mobileHidden?: boolean;
   priority?: 'high' | 'medium' | 'low'; // For mobile column prioritization
 }
@@ -29,13 +32,13 @@ interface TableColumn {
 interface TableAction {
   label: string;
   icon: React.ReactNode;
-  onClick: (row: any) => void;
+  onClick: (row: RowData) => void;
   variant?: 'default' | 'destructive';
-  disabled?: (row: any) => boolean;
+  disabled?: (row: RowData) => boolean;
 }
 
 interface ResponsiveAdminTableProps {
-  data: any[];
+  data: RowData[];
   columns: TableColumn[];
   actions?: TableAction[];
   keyField?: string;
@@ -55,7 +58,7 @@ export function ResponsiveAdminTable({
   className = '',
   mobileBreakpoint = 768,
 }: ResponsiveAdminTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' && window.innerWidth < mobileBreakpoint
   );
@@ -69,7 +72,7 @@ export function ResponsiveAdminTable({
     return () => window.removeEventListener('resize', handleResize);
   }, [mobileBreakpoint]);
 
-  const toggleRowExpansion = (rowKey: any) => {
+  const toggleRowExpansion = (rowKey: string | number) => {
     const newExpanded = new Set(expandedRows);
     if (newExpanded.has(rowKey)) {
       newExpanded.delete(rowKey);
@@ -91,9 +94,9 @@ export function ResponsiveAdminTable({
     ...highPriorityColumns.slice(2),
   ];
 
-  const renderCellValue = (column: TableColumn, row: any) => {
+  const renderCellValue = (column: TableColumn, row: RowData) => {
     const value = row[column.key];
-    return column.render ? column.render(value, row) : value;
+    return column.render ? column.render(value, row) : String(value ?? '');
   };
 
   if (isLoading) {
@@ -132,7 +135,7 @@ export function ResponsiveAdminTable({
     return (
       <div className={`space-y-3 ${className}`}>
         {data.map(row => {
-          const rowKey = row[keyField];
+          const rowKey = row[keyField] as string | number;
           const isExpanded = expandedRows.has(rowKey);
 
           return (
@@ -260,7 +263,10 @@ export function ResponsiveAdminTable({
         </TableHeader>
         <TableBody>
           {data.map(row => (
-            <TableRow key={row[keyField]} className="border-white/10 hover:bg-white/5">
+            <TableRow
+              key={row[keyField] as string | number}
+              className="border-white/10 hover:bg-white/5"
+            >
               {columns.map(column => (
                 <TableCell key={column.key} className={`py-4 ${column.className || ''}`}>
                   {renderCellValue(column, row)}

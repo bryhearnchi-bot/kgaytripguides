@@ -107,9 +107,10 @@ export function EnhancedSignUpForm({ onSuccess, onSwitchToSignIn }: EnhancedSign
       });
 
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An error occurred during sign up';
       toast.error('Sign up failed', {
-        description: error.message || 'An error occurred during sign up',
+        description: message,
       });
     } finally {
       setLoading(false);

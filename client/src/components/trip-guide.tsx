@@ -28,6 +28,7 @@ import { useTripData, transformTripData } from '@/hooks/useTripData';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 import type { Update } from '@/types/trip-info';
@@ -125,7 +126,7 @@ export default function TripGuide({
           setUpdates(data);
         }
       } catch (error) {
-        console.error('Failed to fetch updates:', error);
+        logger.error('Failed to fetch updates', error instanceof Error ? error : undefined);
       } finally {
         setUpdatesLoading(false);
       }

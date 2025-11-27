@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { api } from '@/lib/api-client';
+import type { TripEvent, TripTalent } from '@/types/wizard';
 
 export type BuildMethod = 'url' | 'pdf' | 'manual' | null;
 export type TripType = 'resort' | 'cruise' | null;
@@ -85,8 +86,8 @@ interface TripWizardState {
   venueIds: number[];
   scheduleEntries: ScheduleEntry[];
   itineraryEntries: ItineraryEntry[];
-  events?: any[]; // Trip events
-  tripTalent?: any[]; // Trip talent
+  events?: TripEvent[];
+  tripTalent?: TripTalent[];
   tempFiles: string[];
   isEditMode?: boolean;
 }
@@ -115,10 +116,10 @@ interface TripWizardContextType {
   setItineraryEntries: (entries: ItineraryEntry[]) => void;
   updateItineraryEntry: (index: number, data: Partial<ItineraryEntry>) => void;
   addItineraryEntry: (entry: ItineraryEntry) => void;
-  addEvent: (event: any) => Promise<void>;
-  updateEvent: (eventId: number, event: any) => Promise<void>;
+  addEvent: (event: Omit<TripEvent, 'id'>) => Promise<void>;
+  updateEvent: (eventId: number, event: Partial<TripEvent>) => Promise<void>;
   deleteEvent: (eventId: number) => Promise<void>;
-  setTripTalent: (talent: any[]) => void;
+  setTripTalent: (talent: TripTalent[]) => void;
   removeTalentFromTrip: (talentId: number) => Promise<void>;
   addTempFile: (path: string) => void;
   clearWizard: () => void;
@@ -277,7 +278,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
   };
 
   // Event management methods
-  const addEvent = async (event: any) => {
+  const addEvent = async (event: Omit<TripEvent, 'id'>) => {
     const tripId = state.tripData.id;
     if (!tripId) throw new Error('No trip ID available');
 
@@ -295,7 +296,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const updateEvent = async (eventId: number, event: any) => {
+  const updateEvent = async (eventId: number, event: Partial<TripEvent>) => {
     const tripId = state.tripData.id;
     if (!tripId) throw new Error('No trip ID available');
 
@@ -325,7 +326,7 @@ export function TripWizardProvider({ children }: { children: ReactNode }) {
   };
 
   // Talent management methods
-  const setTripTalent = (talent: any[]) => {
+  const setTripTalent = (talent: TripTalent[]) => {
     setState(prev => ({
       ...prev,
       tripTalent: talent,

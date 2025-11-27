@@ -287,10 +287,10 @@ export default function LocationManagement({
                 key: 'country',
                 label: 'Region',
                 priority: 'medium',
-                render: (value: string) => (
+                render: value => (
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70">
-                    {getRegionIcon(value)}
-                    <span>{value}</span>
+                    {getRegionIcon(String(value))}
+                    <span>{String(value)}</span>
                   </span>
                 ),
               },
@@ -305,12 +305,12 @@ export default function LocationManagement({
               {
                 label: 'Edit Location',
                 icon: <Edit2 className="h-4 w-4" />,
-                onClick: handleEdit,
+                onClick: row => handleEdit(row as Location),
               },
               {
                 label: 'Delete Location',
                 icon: <Trash2 className="h-4 w-4" />,
-                onClick: location => handleDelete(location.id!),
+                onClick: row => handleDelete(row.id as number),
                 variant: 'destructive',
               },
             ]}

@@ -11,10 +11,6 @@ export function useShare() {
         : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
     const url = `${siteUrl}/trip/${trip.slug}`;
 
-    console.log('Share - Site URL:', siteUrl);
-    console.log('Share - Trip slug:', trip.slug);
-    console.log('Share - Full URL:', url);
-
     if (isNative) {
       try {
         await Share.share({
@@ -23,8 +19,8 @@ export function useShare() {
           url: url,
           dialogTitle: 'Share Trip',
         });
-      } catch (error) {
-        console.error('Share failed:', error);
+      } catch {
+        // Share cancelled or failed - silent fail is expected
       }
     } else {
       // Web Share API fallback
@@ -35,17 +31,16 @@ export function useShare() {
             text: `Join us for an amazing LGBTQ+ travel experience`,
             url: url,
           });
-        } catch (error) {
-          // User cancelled or share failed
-          console.error('Web share failed:', error);
+        } catch {
+          // User cancelled or share failed - silent fail is expected
         }
       } else {
         // Copy to clipboard fallback
         try {
           await navigator.clipboard.writeText(url);
           alert('Link copied to clipboard!');
-        } catch (error) {
-          console.error('Clipboard copy failed:', error);
+        } catch {
+          // Clipboard access denied - silent fail
         }
       }
     }

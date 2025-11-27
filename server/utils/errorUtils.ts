@@ -25,21 +25,26 @@ export async function tryOperation<T>(
 /**
  * Execute database operation with proper error handling
  */
+interface DatabaseError extends Error {
+  code?: string;
+}
+
 export async function executeDbOperation<T>(
   operation: () => Promise<T>,
   errorMessage = 'Database operation failed'
 ): Promise<T> {
   try {
     return await operation();
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
     // Handle specific database errors
-    if (error.code === '23505') {
+    if (dbError.code === '23505') {
       throw ApiError.conflict('Resource already exists');
     }
-    if (error.code === '23503') {
+    if (dbError.code === '23503') {
       throw ApiError.badRequest('Invalid reference - related resource does not exist');
     }
-    if (error.code === '23502') {
+    if (dbError.code === '23502') {
       throw ApiError.badRequest('Required field missing');
     }
 

@@ -40,9 +40,11 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
       toast.success('Password reset email sent', {
         description: 'Please check your email for instructions to reset your password.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to send password reset email';
       toast.error('Password reset failed', {
-        description: error.message || 'Unable to send password reset email',
+        description: message,
       });
     } finally {
       setLoading(false);

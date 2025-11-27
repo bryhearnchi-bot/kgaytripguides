@@ -33,7 +33,6 @@ export function BackToTopButton({ threshold = 300, className = '' }: BackToTopBu
     e.preventDefault();
     e.stopPropagation();
 
-    console.log('Back to top clicked!');
     setIsScrolling(true);
 
     // Try multiple scroll methods for compatibility

@@ -407,14 +407,17 @@ Inline interfaces → client/src/types/wizard.ts
 
 ### Week 1: TypeScript & Console.log
 
-- [ ] Create `client/src/types/wizard.ts`
-- [ ] Create `client/src/types/admin.ts`
-- [ ] Fix TripWizardContext.tsx `any` types
-- [ ] Fix ResponsiveAdminTable.tsx `any` types
-- [ ] Replace 20 highest-impact `any` usages
-- [ ] Remove all console.log from trip-guide.tsx
-- [ ] Remove all console.log from admin components
-- [ ] Run `npm run check` - target 0 errors
+- [x] Create `client/src/types/wizard.ts` ✅ (Nov 26, 2025)
+- [x] Create `client/src/types/admin.ts` ✅ (Nov 26, 2025)
+- [x] Fix TripWizardContext.tsx `any` types ✅ (Nov 26, 2025)
+- [x] Fix ResponsiveAdminTable.tsx `any` types ✅ (Nov 26, 2025)
+- [x] Create `client/src/lib/logger.ts` for client-side logging ✅ (Nov 26, 2025)
+- [x] Replace `catch (error: any)` with `catch (error: unknown)` in client files ✅ (Nov 26, 2025)
+- [x] Remove console.log from trip-guide.tsx ✅ (Nov 26, 2025)
+- [x] Remove console.log from PillDropdown.tsx, BackToTopButton.tsx, ShareMenu.tsx ✅ (Nov 26, 2025)
+- [ ] Replace 20 highest-impact `any` usages (in progress - ~398 remaining)
+- [ ] Remove remaining console.log from admin components (~10 remaining)
+- [ ] Run `npm run check` - target 0 errors (190 pre-existing errors)
 
 ### Week 2: Component Refactoring
 

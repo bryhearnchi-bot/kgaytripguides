@@ -58,10 +58,6 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
       : import.meta.env.VITE_SITE_URL || 'https://kgaytravelguides.com';
     const url = `${siteUrl}/trip/${tripSlug}`;
 
-    console.log('Site URL:', siteUrl);
-    console.log('Trip Slug:', tripSlug);
-    console.log('Final URL:', url);
-
     try {
       // Try modern clipboard API
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -93,8 +89,7 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
             setCopied(false);
             setIsOpen(false);
           }, 1500);
-        } catch (err) {
-          console.error('Fallback copy failed:', err);
+        } catch {
           toast({
             title: 'Failed to copy',
             description: 'Please try again or copy the URL manually',
@@ -104,8 +99,7 @@ export function ShareMenu({ tripSlug, tripName, children }: ShareMenuProps) {
           document.body.removeChild(textArea);
         }
       }
-    } catch (error) {
-      console.error('Failed to copy link:', error);
+    } catch {
       toast({
         title: 'Failed to copy',
         description: 'Please try again or copy the URL manually',
