@@ -71,7 +71,7 @@ const createUserSchema = z
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     role: z.enum(['viewer', 'content_manager', 'super_admin']),
-    password: z.string().min(8),
+    password: z.string().min(12, 'Password must be at least 12 characters'),
     is_active: z.boolean().optional(),
     account_status: z.enum(['active', 'suspended', 'pending_verification']).optional(),
     // Profile fields

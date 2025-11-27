@@ -10,6 +10,7 @@ import { StandardDropdown } from '@/components/ui/dropdowns';
 import { Ship } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -51,10 +52,22 @@ interface EditShipDetailsModalProps {
 
 export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModalProps) {
   const { state, updateShipData } = useTripWizard();
+  const queryClient = useQueryClient();
 
-  // Cruise lines for dropdown
-  const [cruiseLines, setCruiseLines] = useState<Array<{ id: number; name: string }>>([]);
-  const [loadingCruiseLines, setLoadingCruiseLines] = useState(true);
+  // Fetch cruise lines using React Query
+  const { data: cruiseLines = [], isLoading: loadingCruiseLines } = useQuery<
+    Array<{ id: number; name: string }>
+  >({
+    queryKey: ['cruise-lines'],
+    queryFn: async () => {
+      const response = await api.get('/api/admin/lookup-tables/cruise-lines');
+      if (!response.ok) throw new Error('Failed to fetch cruise lines');
+      const data = await response.json();
+      return data.items || [];
+    },
+    enabled: open,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Local state for form
   const [formData, setFormData] = useState({
@@ -68,30 +81,6 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
     deckPlansUrl: state.shipData?.deckPlansUrl || '',
   });
 
-  // Fetch cruise lines when modal opens
-  useEffect(() => {
-    const fetchCruiseLines = async () => {
-      try {
-        setLoadingCruiseLines(true);
-        const response = await api.get('/api/admin/lookup-tables/cruise-lines');
-        if (response.ok) {
-          const data = await response.json();
-          setCruiseLines(data.items || []);
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          logger.error('Failed to fetch cruise lines', { message: error.message });
-        }
-      } finally {
-        setLoadingCruiseLines(false);
-      }
-    };
-
-    if (open) {
-      fetchCruiseLines();
-    }
-  }, [open]);
-
   // Handle creating new cruise line
   const handleCreateCruiseLine = async (name: string) => {
     try {
@@ -100,7 +89,8 @@ export function EditShipDetailsModal({ open, onOpenChange }: EditShipDetailsModa
       });
       if (response.ok) {
         const newCruiseLine = await response.json();
-        setCruiseLines(prev => [...prev, newCruiseLine.item || newCruiseLine]);
+        // Invalidate the query to refetch with the new cruise line
+        queryClient.invalidateQueries({ queryKey: ['cruise-lines'] });
         const cruiseLineId = newCruiseLine.item?.id || newCruiseLine.id;
         const cruiseLineName = newCruiseLine.item?.name || newCruiseLine.name;
         setFormData(prev => ({ ...prev, cruiseLineId, cruiseLineName }));

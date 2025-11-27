@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { getScheduleDate } from '../utils/dateHelpers';
+import { getTodayString } from '@/lib/timeFormat';
 
 interface DailySchedule {
   key: string;
@@ -66,12 +67,7 @@ export function useScheduledDaily({ DAILY, tripStatus = 'upcoming' }: UseSchedul
 
     // For current cruise, filter out past events
     const now = new Date();
-    // Use local date instead of converting to UTC with toISOString()
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const today = `${year}-${month}-${day}`;
-
+    const today = getTodayString();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 

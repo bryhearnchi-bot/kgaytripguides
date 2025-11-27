@@ -16,7 +16,7 @@ import {
   dashboardStatsSchema,
   systemHealthSchema,
 } from '../middleware/validation';
-import { searchRateLimit, adminRateLimit } from '../middleware/rate-limiting';
+import { searchRateLimit, adminRateLimit, authRateLimit } from '../middleware/rate-limiting';
 import { csrfTokenEndpoint } from '../middleware/csrf';
 import { apiVersionsEndpoint } from '../middleware/versioning';
 import { logger } from '../logging/logger';
@@ -32,8 +32,8 @@ export function registerPublicRoutes(app: Express) {
   // API versions endpoint
   app.get('/api/versions', apiVersionsEndpoint);
 
-  // CSRF token endpoint
-  app.get('/api/csrf-token', csrfTokenEndpoint());
+  // CSRF token endpoint - rate limited to prevent token exhaustion attacks
+  app.get('/api/csrf-token', authRateLimit, csrfTokenEndpoint());
 
   // ============ DASHBOARD & SYSTEM ENDPOINTS ============
 
@@ -105,14 +105,21 @@ export function registerPublicRoutes(app: Express) {
     validateQuery(systemHealthSchema),
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { detailed = false } = req.query;
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      // Basic health info (always returned)
       const health: any = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
       };
 
+      // Only include uptime in non-production (prevents server restart detection)
+      if (!isProduction) {
+        health.uptime = process.uptime();
+      }
+
       if (detailed === 'true') {
-        // Database health check
+        // Database health check (always allowed - no sensitive info)
         try {
           const supabaseAdmin = getSupabaseAdmin();
           const { data, error } = await supabaseAdmin.from('trips').select('id').limit(1);
@@ -120,23 +127,29 @@ export function registerPublicRoutes(app: Express) {
           if (error) throw error;
           health.database = { status: 'connected' };
         } catch (error: unknown) {
-          health.database = { status: 'disconnected', error: (error as Error).message };
+          // Don't expose error details in production
+          health.database = {
+            status: 'disconnected',
+            ...(isProduction ? {} : { error: (error as Error).message }),
+          };
           health.status = 'degraded';
         }
 
-        // Memory usage
-        const memUsage = process.memoryUsage();
-        health.memory = {
-          rss: `${Math.round(memUsage.rss / 1024 / 1024)} MB`,
-          heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)} MB`,
-          heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)} MB`,
-        };
+        // Memory usage - only in development (prevents resource fingerprinting)
+        if (!isProduction) {
+          const memUsage = process.memoryUsage();
+          health.memory = {
+            rss: `${Math.round(memUsage.rss / 1024 / 1024)} MB`,
+            heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)} MB`,
+            heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)} MB`,
+          };
 
-        // Node version
-        health.node = {
-          version: process.version,
-          platform: process.platform,
-        };
+          // Node version - only in development (prevents version fingerprinting)
+          health.node = {
+            version: process.version,
+            platform: process.platform,
+          };
+        }
       }
 
       return res.json(health);
@@ -151,6 +164,10 @@ export function registerPublicRoutes(app: Express) {
     searchRateLimit,
     validateQuery(globalSearchSchema),
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      // Timing protection: ensure minimum response time to prevent timing attacks
+      const startTime = Date.now();
+      const MIN_RESPONSE_TIME_MS = 100;
+
       const {
         q = '',
         types = ['trips', 'events', 'talent', 'locations'],
@@ -238,6 +255,12 @@ export function registerPublicRoutes(app: Express) {
         } else {
           results.locations = locationResults || [];
         }
+      }
+
+      // Ensure minimum response time to prevent timing attacks
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_RESPONSE_TIME_MS) {
+        await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME_MS - elapsed));
       }
 
       return res.json(results);

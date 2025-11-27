@@ -57,8 +57,8 @@
 │   │   └── auth/               # Auth pages
 │   ├── lib/                    # api-client, supabase, queryClient
 │   ├── contexts/               # React contexts
-│   ├── hooks/                  # Custom hooks
-│   └── types/                  # TypeScript types
+│   ├── hooks/                  # Custom hooks (useWindowSize, useTripUpdates, useImageUpload, etc.)
+│   └── types/                  # TypeScript types (api.ts, admin.ts, wizard.ts, trip-data.ts, trip-info.ts)
 ├── server/
 │   ├── routes/                 # API endpoints
 │   ├── storage/                # Supabase queries
@@ -148,6 +148,85 @@ Active tabs in `/client/src/components/trip-guide/tabs/`:
 
 ---
 
+## Key Custom Hooks
+
+| Hook              | Location                   | Purpose                                      |
+| ----------------- | -------------------------- | -------------------------------------------- |
+| `useWindowSize`   | `hooks/useWindowSize.ts`   | Debounced window resize (also `useIsMobile`) |
+| `useTripUpdates`  | `hooks/useTripUpdates.ts`  | React Query hook for trip updates            |
+| `useTripData`     | `hooks/useTripData.ts`     | Complete trip data fetching                  |
+| `useImageUpload`  | `hooks/useImageUpload.ts`  | Supabase Storage image uploads               |
+| `useShare`        | `hooks/useShare.ts`        | Native share / clipboard fallback            |
+| `useSupabaseAuth` | `hooks/useSupabaseAuth.ts` | Auth state management                        |
+
+---
+
+## Type Files
+
+| File                 | Contents                                                      |
+| -------------------- | ------------------------------------------------------------- |
+| `types/api.ts`       | API response types, pagination, Location, Talent (DB)         |
+| `types/admin.ts`     | TableColumn, TableAction, admin component types               |
+| `types/wizard.ts`    | BasicInfoData, ShipData, ResortData for TripWizard            |
+| `types/trip-data.ts` | Trip guide types: DailyEvent, PartyTheme, ItineraryStop, etc. |
+| `types/trip-info.ts` | TripInfoSection, FAQ, Update types                            |
+
+---
+
+## Date/Time Utilities
+
+**Always use these to avoid timezone bugs:**
+
+```typescript
+import { getTodayString, parseLocalDate } from '@/lib/timeFormat';
+
+// Get today's date as YYYY-MM-DD (local timezone)
+const today = getTodayString(); // "2025-11-26"
+
+// Parse a date string without timezone conversion
+const date = parseLocalDate('2025-11-26'); // Date object at local midnight
+
+// Format helpers also available:
+import { formatTime12Hour, formatDateRange, formatEventTime } from '@/lib/timeFormat';
+```
+
+**Never use:**
+
+- `new Date('2025-10-12')` - causes UTC conversion
+- `date.toISOString().split('T')[0]` - converts to UTC
+
+---
+
+## Logger Usage
+
+**Client-side:**
+
+```typescript
+import { logger } from '@/lib/logger';
+
+logger.debug('Debug info', { data });
+logger.info('User action', { action: 'click' });
+logger.warn('Warning', { issue });
+logger.error('Error occurred', error);
+```
+
+**Server-side:**
+
+```typescript
+import { logger } from './logging/logger';
+
+logger.info('Request processed', { path: req.path });
+logger.error('Database error', { error: err.message });
+```
+
+**Exception:** `console.log` is acceptable only in:
+
+- Service Worker (`sw.ts`)
+- Capacitor native bridge code
+- PWA install prompts
+
+---
+
 ## UI Patterns
 
 ### Card Pattern
@@ -213,3 +292,45 @@ Active tabs in `/client/src/components/trip-guide/tabs/`:
 - [ ] Images have `loading="lazy"`
 - [ ] Routes are lazy loaded
 - [ ] No gradients on backgrounds
+
+---
+
+## Security Compliance Checklist
+
+**When adding new endpoints:**
+
+- [ ] Rate limiting applied (use appropriate limiter from `middleware/rate-limiting.ts`)
+- [ ] Input validation with Zod schema (`validateBody`, `validateQuery`)
+- [ ] Search terms sanitized with `sanitizeSearchTerm()`
+- [ ] Authentication required where appropriate (`requireAuth`, `requireContentEditor`, etc.)
+- [ ] Error messages don't expose internal details
+- [ ] Password fields use 12+ character minimum
+
+**When creating RLS policies:**
+
+- [ ] Use `(select auth.uid())` NOT `auth.uid()` (prevents per-row re-evaluation)
+- [ ] Use `(select auth.jwt())` NOT `auth.jwt()`
+- [ ] Verify table has RLS enabled: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
+- [ ] Test policies work for intended roles
+- [ ] Run security advisor after: `mcp__supabase__get_advisors`
+
+**When handling files/images:**
+
+- [ ] Validate MIME type (whitelist approach)
+- [ ] Validate file extension
+- [ ] Check Content-Length before download
+- [ ] Use UUID for filenames (no user input)
+- [ ] Upload to Supabase Storage only
+
+**Periodic security checks:**
+
+```bash
+# Run Supabase security advisor
+mcp__supabase__get_advisors(project_id, type="security")
+
+# Run npm audit
+npm audit
+
+# TypeScript check
+npm run check
+```

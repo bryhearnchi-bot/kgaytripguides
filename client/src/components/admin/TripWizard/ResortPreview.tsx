@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
 interface ResortPreviewProps {
@@ -31,45 +31,34 @@ interface Amenity {
 }
 
 export function ResortPreview({ resortData, resortId, onEdit }: ResortPreviewProps) {
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [amenities, setAmenities] = useState<Amenity[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Use resortId prop if provided, otherwise try resortData.id
+  const id = resortId ?? resortData?.id;
 
-  // Fetch venues and amenities when resort ID is available
-  useEffect(() => {
-    const fetchResortRelations = async () => {
-      // Use resortId prop if provided, otherwise try resortData.id
-      const id = resortId ?? resortData?.id;
-      if (!id) {
-        setVenues([]);
-        setAmenities([]);
-        return;
-      }
+  // Fetch venues using React Query
+  const { data: venues = [] } = useQuery<Venue[]>({
+    queryKey: ['resort-venues', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const response = await api.get(`/api/admin/resorts/${id}/venues`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-      setLoading(true);
-      try {
-        const [venuesResponse, amenitiesResponse] = await Promise.all([
-          api.get(`/api/admin/resorts/${id}/venues`),
-          api.get(`/api/resorts/${id}/amenities`),
-        ]);
-
-        if (venuesResponse.ok) {
-          const venuesData = await venuesResponse.json();
-          setVenues(venuesData);
-        }
-
-        if (amenitiesResponse.ok) {
-          const amenitiesData = await amenitiesResponse.json();
-          setAmenities(amenitiesData);
-        }
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResortRelations();
-  }, [resortId, resortData?.id]);
+  // Fetch amenities using React Query
+  const { data: amenities = [] } = useQuery<Amenity[]>({
+    queryKey: ['resort-amenities', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const response = await api.get(`/api/resorts/${id}/amenities`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   if (!resortData || !resortData.name) {
     return (

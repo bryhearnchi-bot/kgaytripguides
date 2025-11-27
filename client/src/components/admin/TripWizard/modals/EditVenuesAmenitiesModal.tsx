@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { AmenitySelector } from '@/components/admin/AmenitySelector';
 import { Tip } from '@/components/ui/tip';
 import { MapPin } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -50,6 +51,7 @@ interface EditVenuesAmenitiesModalProps {
 
 export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmenitiesModalProps) {
   const { state, setVenueIds, setAmenityIds } = useTripWizard();
+  const queryClient = useQueryClient();
 
   // Local state for form
   const [formData, setFormData] = useState({
@@ -57,8 +59,28 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
     amenityIds: state.amenityIds,
   });
 
-  const [venues, setVenues] = useState<Array<{ id: number; name: string }>>([]);
-  const [loadingVenues, setLoadingVenues] = useState(true);
+  // Determine the endpoint based on trip type
+  const isCruise = state.tripType === 'cruise';
+  const venueEndpoint = isCruise
+    ? `/api/admin/ships/${state.shipId}/venues`
+    : `/api/admin/resorts/${state.resortId}/venues`;
+  const propertyId = isCruise ? state.shipId : state.resortId;
+
+  // Fetch venues using React Query
+  const { data: venues = [], isLoading: loadingVenues } = useQuery<
+    Array<{ id: number; name: string }>
+  >({
+    queryKey: ['venues', isCruise ? 'ship' : 'resort', propertyId],
+    queryFn: async () => {
+      if (!propertyId) return [];
+      const response = await api.get(venueEndpoint);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: open && !!propertyId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   useEffect(() => {
     if (open) {
@@ -67,42 +89,21 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
         venueIds: state.venueIds,
         amenityIds: state.amenityIds,
       });
-      fetchVenues();
     }
-  }, [open, state.venueIds, state.amenityIds, state.tripType, state.shipId, state.resortId]);
-
-  const fetchVenues = async () => {
-    try {
-      setLoadingVenues(true);
-      const isCruise = state.tripType === 'cruise';
-      const endpoint = isCruise
-        ? `/api/admin/ships/${state.shipId}/venues`
-        : `/api/admin/resorts/${state.resortId}/venues`;
-      const response = await api.get(endpoint);
-      const data = await response.json();
-      setVenues(Array.isArray(data) ? data : []);
-    } catch (error) {
-      toast.error('Error', {
-        description: 'Failed to load venues',
-      });
-    } finally {
-      setLoadingVenues(false);
-    }
-  };
+  }, [open, state.venueIds, state.amenityIds]);
 
   const handleCreateVenue = async (name: string) => {
     try {
-      const isCruise = state.tripType === 'cruise';
-      const endpoint = isCruise
-        ? `/api/admin/ships/${state.shipId}/venues`
-        : `/api/admin/resorts/${state.resortId}/venues`;
-      const response = await api.post(endpoint, {
+      const response = await api.post(venueEndpoint, {
         name: name.trim(),
         venueTypeId: 1, // Default type
       });
       if (response.ok) {
         const newVenue = await response.json();
-        setVenues(prev => [...prev, newVenue]);
+        // Invalidate the query to refetch with the new venue
+        queryClient.invalidateQueries({
+          queryKey: ['venues', isCruise ? 'ship' : 'resort', propertyId],
+        });
         return { value: newVenue.id.toString(), label: newVenue.name };
       }
       throw new Error('Failed to create venue');
@@ -129,7 +130,6 @@ export function EditVenuesAmenitiesModal({ open, onOpenChange }: EditVenuesAmeni
     onOpenChange(false);
   };
 
-  const isCruise = state.tripType === 'cruise';
   const venueLabel = isCruise ? 'Ship Venues' : 'Resort Venues';
   const amenityLabel = isCruise ? 'Ship Amenities' : 'Resort Amenities';
   const venueDescription = isCruise

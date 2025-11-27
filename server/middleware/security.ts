@@ -93,6 +93,9 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   // Referrer-Policy - Control referrer information
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
+  // X-Permitted-Cross-Domain-Policies - Prevent Adobe Flash/Reader from loading content
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+
   // Permissions-Policy - Control browser features
   res.setHeader(
     'Permissions-Policy',
@@ -135,10 +138,10 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Skip rate limiting in development mode to avoid issues with hot reloading
-    if (process.env.NODE_ENV === 'development') {
-      return next();
-    }
+    // Use much higher limits in development to avoid hot reload issues,
+    // but still provide rate limiting protection
+    const isDev = process.env.NODE_ENV === 'development';
+    const effectiveMaxRequests = isDev ? maxRequests * 10 : maxRequests;
 
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
@@ -154,7 +157,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
 
     record.count++;
 
-    if (record.count > maxRequests) {
+    if (record.count > effectiveMaxRequests) {
       res.status(429).json({
         error: 'Too Many Requests',
         message: 'Rate limit exceeded. Please try again later.',

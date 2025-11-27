@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { IMPORTANT_INFO } from '@/data/trip-data';
+import type { ImportantInfo } from '@/types/trip-data';
 import { InfoSectionsBentoGrid } from '../info-sections/InfoSectionsBentoGrid';
 import { TabHeader } from '../shared/TabHeader';
 import { useQuery } from '@tanstack/react-query';
@@ -56,7 +56,7 @@ interface InfoSection {
 }
 
 interface InfoTabProps {
-  IMPORTANT_INFO: typeof IMPORTANT_INFO;
+  IMPORTANT_INFO: ImportantInfo;
   tripId?: number;
 }
 

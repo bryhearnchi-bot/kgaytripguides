@@ -3,8 +3,20 @@ import { StandardDropdown } from '@/components/ui/dropdowns';
 import { ShipPreview } from './ShipPreview';
 import { ShipFormModal } from '@/components/admin/ShipFormModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+
+interface Ship {
+  id: number;
+  name: string;
+  cruiseLineId?: number;
+  cruiseLineName?: string;
+  capacity?: number;
+  decks?: number;
+  imageUrl?: string;
+  description?: string;
+  deckPlansUrl?: string;
+}
 
 export function ShipDetailsPage() {
   const { state, setShipId, updateShipData } = useTripWizard();
@@ -14,30 +26,20 @@ export function ShipDetailsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoadingShip, setIsLoadingShip] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [ships, setShips] = useState<any[]>([]);
-  const [loadingShips, setLoadingShips] = useState(true);
 
   const shipData = state.shipData || {};
   const isEditMode = state.isEditMode;
 
-  // Fetch ships on mount
-  useEffect(() => {
-    const fetchShips = async () => {
-      try {
-        setLoadingShips(true);
-        const response = await api.get('/api/ships');
-        if (response.ok) {
-          const data = await response.json();
-          setShips(data);
-        }
-      } catch (error) {
-        // Silently handle error
-      } finally {
-        setLoadingShips(false);
-      }
-    };
-    fetchShips();
-  }, []);
+  // Fetch ships using React Query
+  const { data: ships = [], isLoading: loadingShips } = useQuery<Ship[]>({
+    queryKey: ['ships'],
+    queryFn: async () => {
+      const response = await api.get('/api/ships');
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Initialize ship data if null
   useEffect(() => {
@@ -186,13 +188,8 @@ export function ShipDetailsPage() {
         onOpenChange={setShowCreateModal}
         ship={null}
         onSuccess={async newShip => {
-          // Refresh ships list
+          // Refresh ships list - React Query will automatically refetch
           queryClient.invalidateQueries({ queryKey: ['ships'] });
-          const response = await api.get('/api/ships');
-          if (response.ok) {
-            const data = await response.json();
-            setShips(data);
-          }
           // Auto-select the newly created ship
           if (newShip && newShip.id) {
             setSelectedShipId(newShip.id);

@@ -44,9 +44,13 @@ export function registerMediaRoutes(app: Express) {
           type: imageType,
         });
       } catch (uploadError: unknown) {
-        const errorMessage =
-          uploadError instanceof Error ? uploadError.message : 'Failed to upload image to storage';
-        return next(ApiError.internal(errorMessage));
+        // Log the detailed error for debugging but don't expose to client
+        logger.error('Image upload failed', {
+          error: uploadError instanceof Error ? uploadError.message : String(uploadError),
+          imageType: req.params.type,
+        });
+        // Return generic error message to client (avoid exposing internal details)
+        return next(ApiError.internal('Failed to upload image to storage'));
       }
     });
   });

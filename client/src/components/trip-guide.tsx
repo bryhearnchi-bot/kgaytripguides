@@ -1,31 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { format } from 'date-fns';
-import { dateOnly } from '@/lib/utils';
-import HeroSection from '@/components/shadcn-studio/blocks/hero-section-01/hero-section-01';
-import { StandardizedTabContainer } from '@/components/StandardizedTabContainer';
 import { StandardizedContentLayout } from '@/components/StandardizedContentLayout';
-import {
-  Map,
-  CalendarDays,
-  PartyPopper,
-  Star,
-  Info,
-  Eye,
-  CheckCircle,
-  HelpCircle,
-  LayoutDashboard,
-  Share2,
-  User as UserIcon,
-  Edit,
-  AlertCircle,
-} from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import type { Talent } from '@/data/trip-data';
 import { useTripData, transformTripData } from '@/hooks/useTripData';
-import { useTimeFormat } from '@/contexts/TimeFormatContext';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
@@ -34,7 +11,6 @@ import { EditTripModal } from '@/components/admin/EditTripModal/EditTripModal';
 import type { Update } from '@/types/trip-info';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useShare } from '@/hooks/useShare';
-import { cn } from '@/lib/utils';
 import { useUpdate } from '@/context/UpdateContext';
 
 // Import refactored components
@@ -48,7 +24,13 @@ import { TalentTabNew as TalentTab } from './trip-guide/tabs/TalentTabNew';
 import { InfoTab } from './trip-guide/tabs/InfoTab';
 import { TalentModal, EventsModal, PartyModal, PartyThemeModal } from './trip-guide/modals';
 import { BackToTopButton } from '@/components/ui/BackToTopButton';
-import Settings from '@/pages/settings';
+
+// Import split components
+import { TripGuideHeader } from './trip-guide/TripGuideHeader';
+import { TripGuidePreviewBanner } from './trip-guide/TripGuidePreviewBanner';
+import { TripGuideTabBar } from './trip-guide/TripGuideTabBar';
+import { formatTripDates } from './trip-guide/utils/formatTripDates';
+import { getTodayString } from '@/lib/timeFormat';
 
 interface TripGuideProps {
   slug?: string;
@@ -63,7 +45,6 @@ export default function TripGuide({
   activeTab: externalActiveTab,
   onTabChange: externalOnTabChange,
 }: TripGuideProps) {
-  const { timeFormat } = useTimeFormat();
   const { profile, user } = useSupabaseAuth();
   const haptics = useHaptics();
   const { updateAvailable } = useUpdate();
@@ -222,13 +203,7 @@ export default function TripGuide({
   const tripStatus = useMemo(() => {
     if (!tripData?.trip?.startDate || !tripData?.trip?.endDate) return 'upcoming';
 
-    const now = new Date();
-    // Use local date instead of converting to UTC with toISOString()
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const today = `${year}-${month}-${day}`;
-
+    const today = getTodayString();
     const startDate = tripData.trip.startDate.split('T')[0];
     const endDate = tripData.trip.endDate.split('T')[0];
 
@@ -254,11 +229,7 @@ export default function TripGuide({
     // For active trips, show the current day expanded
     // For upcoming/past trips, collapse all days
     if (tripStatus === 'current') {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const today = `${year}-${month}-${day}`;
+      const today = getTodayString();
 
       // Find the current or next upcoming day
       const targetDayIndex = SCHEDULED_DAILY.findIndex(day => day.key >= today);
@@ -414,47 +385,9 @@ export default function TripGuide({
     return <ErrorState />;
   }
 
-  // Format trip dates
-  const formatTripDates = () => {
-    if (!tripData?.trip?.startDate || !tripData?.trip?.endDate) return null;
-
-    const startDateStr = tripData.trip.startDate.split('T')[0];
-    const endDateStr = tripData.trip.endDate.split('T')[0];
-
-    const startParts = startDateStr.split('-');
-    const startYear = Number(startParts[0] ?? 2025);
-    const startMonth = Number(startParts[1] ?? 1);
-    const startDay = Number(startParts[2] ?? 1);
-    const endParts = endDateStr.split('-');
-    const endYear = Number(endParts[0] ?? 2025);
-    const endMonth = Number(endParts[1] ?? 1);
-    const endDay = Number(endParts[2] ?? 1);
-
-    const start = new Date(startYear, startMonth - 1, startDay);
-    const end = new Date(endYear, endMonth - 1, endDay);
-
-    const formatOptions: Intl.DateTimeFormatOptions = {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    };
-
-    // If same month and year, show "Month Day - Day, Year"
-    if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
-      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${endDay}, ${start.getFullYear()}`;
-    }
-
-    // Otherwise show full dates
-    const startFormatted = start.toLocaleDateString('en-US', formatOptions);
-    const endFormatted = end.toLocaleDateString('en-US', formatOptions);
-    return `${startFormatted} - ${endFormatted}`;
-  };
-
-  const tripDates = formatTripDates();
+  // Compute trip dates and name
+  const tripDates = formatTripDates(tripData?.trip?.startDate, tripData?.trip?.endDate);
   const tripName = tripData?.trip?.name || 'Your Next Adventure';
-  const words = tripName.split(' ');
-  const firstWord = words[0];
-  const remainingWords = words.slice(1).join(' ');
 
   return (
     <div className="min-h-screen w-full relative">
@@ -475,89 +408,11 @@ export default function TripGuide({
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
       >
         {/* Trip Header */}
-        <div className="pt-4 pb-0">
-          <div className="mx-auto max-w-3xl px-4 text-center">
-            {/* Trip Name */}
-            <h1 className="text-2xl leading-tight font-bold text-white flex items-end justify-center gap-3 flex-wrap sm:text-3xl lg:text-4xl">
-              <span>
-                <span className="relative">
-                  {firstWord}
-                  <svg
-                    width="223"
-                    height="12"
-                    viewBox="0 0 223 12"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="absolute inset-x-0 bottom-0 w-full translate-y-1/2"
-                  >
-                    <defs>
-                      <linearGradient
-                        id="rainbow-gradient-sticky"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="0%"
-                      >
-                        <stop offset="0%" stopColor="#ef4444" />
-                        <stop offset="16.67%" stopColor="#f97316" />
-                        <stop offset="33.33%" stopColor="#eab308" />
-                        <stop offset="50%" stopColor="#22c55e" />
-                        <stop offset="66.67%" stopColor="#3b82f6" />
-                        <stop offset="83.33%" stopColor="#8b5cf6" />
-                        <stop offset="100%" stopColor="#ec4899" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M1.11716 10.428C39.7835 4.97282 75.9074 2.70494 114.894 1.98894C143.706 1.45983 175.684 0.313587 204.212 3.31596C209.925 3.60546 215.144 4.59884 221.535 5.74551"
-                      stroke="url(#rainbow-gradient-sticky)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>{' '}
-                {remainingWords}
-              </span>
-            </h1>
-
-            {/* Trip Dates */}
-            {tripDates && (
-              <p className="text-white/60 text-xs font-medium mt-2 sm:text-sm">{tripDates}</p>
-            )}
-
-            {/* Pre-embarkation Disclaimer */}
-            <div className="flex items-center justify-center gap-1.5 text-amber-300/70 text-[10px] mt-2">
-              <AlertCircle className="w-3 h-3 flex-shrink-0" />
-              <p>Pre-embarkation info only. Check your cruise line app for latest updates.</p>
-            </div>
-          </div>
-        </div>
+        <TripGuideHeader tripName={tripName} tripDates={tripDates} />
 
         {/* Preview Mode Banner */}
         {tripData?.trip?.tripStatusId === 5 && !tripData?.trip?.isActive && (
-          <div className="bg-amber-500/10 border-y border-amber-400/30 backdrop-blur-sm">
-            <div className="container mx-auto px-4 py-4 max-w-6xl">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                <div className="flex items-center gap-3">
-                  <Eye className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">Preview Mode</h3>
-                    <p className="text-xs text-white/70">Not live yet</p>
-                  </div>
-                </div>
-                <Button
-                  onClick={handleApproveTripClick}
-                  disabled={isApproving}
-                  className="h-10 px-4 sm:px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 w-full sm:w-auto"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">
-                    {isApproving ? 'Approving...' : 'Approve & Publish'}
-                  </span>
-                  <span className="sm:hidden">{isApproving ? 'Approving...' : 'Approve'}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
+          <TripGuidePreviewBanner isApproving={isApproving} onApprove={handleApproveTripClick} />
         )}
 
         <StandardizedContentLayout>
@@ -566,111 +421,12 @@ export default function TripGuide({
 
           {/* Tab Bar - Only show when NOT using bottom navigation */}
           {!showBottomNav && (
-            <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
-              <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('overview');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'overview'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label="Overview"
-                >
-                  <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Overview</span>
-                  {activeTab === 'overview' && <span className="sm:hidden">Overview</span>}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('itinerary');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'itinerary'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label="Itinerary"
-                >
-                  <Map className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Itinerary</span>
-                  {activeTab === 'itinerary' && <span className="sm:hidden">Itinerary</span>}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('events');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'events'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label="Events"
-                >
-                  <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Events</span>
-                  {activeTab === 'events' && <span className="sm:hidden">Events</span>}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('talent');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'talent'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label="Talent"
-                >
-                  <Star className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Talent</span>
-                  {activeTab === 'talent' && <span className="sm:hidden">Talent</span>}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('info');
-                  }}
-                  className={`px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] ${
-                    activeTab === 'info'
-                      ? 'bg-white text-ocean-900'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  aria-label="Information"
-                >
-                  <Info className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Information</span>
-                  {activeTab === 'info' && <span className="sm:hidden">Information</span>}
-                </button>
-                <button
-                  onClick={() => {
-                    haptics.light();
-                    setActiveTab('settings');
-                  }}
-                  className="px-3 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] text-white/70 hover:text-white relative"
-                  aria-label="Settings"
-                >
-                  <div className="relative">
-                    <UserIcon
-                      className={cn(
-                        'w-4 h-4 flex-shrink-0',
-                        user ? 'fill-blue-600 stroke-blue-600' : ''
-                      )}
-                    />
-                    {updateAvailable && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    )}
-                  </div>
-                  <span className="hidden sm:inline">Settings</span>
-                </button>
-              </div>
-            </div>
+            <TripGuideTabBar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              isLoggedIn={!!user}
+              updateAvailable={updateAvailable}
+            />
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pb-12">

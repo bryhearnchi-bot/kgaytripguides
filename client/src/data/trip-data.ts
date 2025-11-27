@@ -1,58 +1,23 @@
-export interface ItineraryStop {
-  key: string;
-  date: string;
-  port: string;
-  arrive: string;
-  depart: string;
-}
+// Re-export types from centralized types directory
+export type {
+  ItineraryStop,
+  SocialLinks,
+  Talent,
+  DailyEvent,
+  DailySchedule,
+  PartyTheme,
+  CityAttraction,
+  CruiseInfo,
+  ImportantInfo,
+} from '@/types/trip-data';
 
-export interface SocialLinks {
-  instagram?: string;
-  twitter?: string;
-  tiktok?: string;
-  website?: string;
-  youtube?: string;
-  linkedin?: string;
-  linktree?: string;
-}
-
-export interface Talent {
-  name: string;
-  cat: string;
-  role: string;
-  knownFor: string;
-  bio: string;
-  img: string;
-  social?: SocialLinks;
-}
-
-export interface DailyEvent {
-  type: string;
-  time: string;
-  title: string;
-  venue: string;
-}
-
-export interface DailySchedule {
-  key: string;
-  items: DailyEvent[];
-}
-
-export interface PartyTheme {
-  key: string;
-  desc: string;
-  shortDesc: string;
-  costumeIdeas?: string;
-  imageUrl?: string;
-  amazonShoppingListUrl?: string;
-}
-
-export interface CityAttraction {
-  city: string;
-  topAttractions: string[];
-  otherThingsToDo: string[];
-  gayBars: string[];
-}
+import type {
+  ItineraryStop,
+  Talent,
+  DailySchedule,
+  PartyTheme,
+  CityAttraction,
+} from '@/types/trip-data';
 
 export const ITINERARY: ItineraryStop[] = [
   {

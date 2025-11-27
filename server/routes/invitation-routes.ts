@@ -92,7 +92,7 @@ const validateInvitationTokenSchema = z.object({
 const acceptInvitationSchema = z.object({
   token: z.string().min(32, 'Invalid token format'),
   name: z.string().min(1, 'Full name is required').max(255),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(12, 'Password must be at least 12 characters'),
 });
 
 const resendInvitationSchema = z.object({

@@ -116,9 +116,13 @@ export async function uploadToSupabase(
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  // Generate unique filename with proper extension
+  // Generate unique filename with proper extension and retry logic for collision handling
   const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-  const filename = `${imageType}-${randomUUID()}${ext}`;
+  let filename = `${imageType}-${randomUUID()}${ext}`;
+
+  // Retry logic for UUID collision (extremely rare but handled defensively)
+  const maxRetries = 3;
+  let retryCount = 0;
 
   // Determine bucket and folder path - using single bucket with folders as per user setup
   const bucket = 'app-images'; // Single bucket for all images
@@ -166,7 +170,7 @@ export async function uploadToSupabase(
   }
 
   // Construct full path
-  const fullPath = folderPath ? `${folderPath}/${filename}` : filename;
+  let fullPath = folderPath ? `${folderPath}/${filename}` : filename;
 
   logger.debug('Uploading to Supabase Storage', {
     bucket,
@@ -176,15 +180,46 @@ export async function uploadToSupabase(
     mimeType: file.mimetype,
   });
 
-  // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file.buffer, {
-    contentType: file.mimetype,
-    upsert: false,
-  });
+  // Upload to Supabase Storage with retry logic for UUID collision
+  let uploadError: Error | null = null;
+  let actualPath = fullPath;
+
+  while (retryCount < maxRetries) {
+    const { error } = await supabase.storage.from(bucket).upload(actualPath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+
+    if (!error) {
+      uploadError = null;
+      break;
+    }
+
+    // Check if error is a duplicate/conflict error (file already exists)
+    if (error.message?.includes('already exists') || error.message?.includes('Duplicate')) {
+      retryCount++;
+      if (retryCount < maxRetries) {
+        // Generate a new UUID and retry
+        filename = `${imageType}-${randomUUID()}${ext}`;
+        actualPath = folderPath ? `${folderPath}/${filename}` : filename;
+        logger.warn('UUID collision detected, retrying with new UUID', {
+          retryCount,
+          newFilename: filename,
+        });
+        continue;
+      }
+    }
+
+    uploadError = new Error(`Failed to upload image: ${error.message}`);
+    break;
+  }
 
   if (uploadError) {
-    throw new Error(`Failed to upload image: ${uploadError.message}`);
+    throw uploadError;
   }
+
+  // Update fullPath if it changed due to retry
+  fullPath = actualPath;
 
   // Get public URL
   // getPublicUrl returns an object with a data.publicUrl property
@@ -230,16 +265,30 @@ export async function downloadImageFromUrl(
 
     const contentType = response.headers.get('content-type') || 'image/jpeg';
 
-    // Validate that the content is actually an image
-    if (!contentType.startsWith('image/')) {
-      throw new Error(`The URL does not point to a valid image. Content type: ${contentType}`);
+    // Strict validation of allowed image MIME types
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/avif',
+    ];
+
+    // Extract base MIME type (ignoring charset or other parameters)
+    const baseMimeType = (contentType.split(';')[0] ?? '').trim().toLowerCase();
+
+    if (!allowedMimeTypes.includes(baseMimeType)) {
+      throw new Error(
+        `Invalid content type. Only JPEG, PNG, WebP, GIF, and AVIF images are allowed. Got: ${baseMimeType}`
+      );
     }
 
     // Create a mock Express.Multer.File object
     const file: Express.Multer.File = {
       buffer,
       originalname: name || 'downloaded-image.jpg',
-      mimetype: contentType,
+      mimetype: baseMimeType, // Use sanitized MIME type
       size: buffer.length,
       fieldname: 'image',
       encoding: '7bit',
@@ -309,7 +358,12 @@ export async function deleteImage(imageUrl: string): Promise<void> {
           const { error } = await supabase.storage.from(bucket).remove([filePath]);
 
           if (error) {
-            // Deletion failed but don't throw
+            // Log deletion failure for monitoring but don't throw (non-critical)
+            logger.warn('Failed to delete image from Supabase Storage', {
+              bucket,
+              filePath,
+              error: error.message,
+            });
           }
         }
         return;
@@ -347,7 +401,11 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     const filePath = path.join(process.cwd(), directory, filename);
     await fs.unlink(filePath);
   } catch (error: unknown) {
-    // Don't throw - file might already be deleted
+    // Log deletion failure for monitoring but don't throw (file might already be deleted)
+    logger.warn('Failed to delete image', {
+      imageUrl,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

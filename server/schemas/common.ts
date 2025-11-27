@@ -15,10 +15,11 @@ import { z } from 'zod';
  * Ensures ID is a positive integer
  */
 export const idParamSchema = z.object({
-  id: z.string()
+  id: z
+    .string()
     .regex(/^\d+$/, 'ID must be a valid number')
     .transform(Number)
-    .refine(n => n > 0, 'ID must be a positive number')
+    .refine(n => n > 0, 'ID must be a positive number'),
 });
 
 /**
@@ -26,10 +27,11 @@ export const idParamSchema = z.object({
  * Ensures slug is URL-safe and properly formatted
  */
 export const slugParamSchema = z.object({
-  slug: z.string()
+  slug: z
+    .string()
     .min(1, 'Slug is required')
     .max(255, 'Slug must be less than 255 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
 });
 
 /**
@@ -37,8 +39,7 @@ export const slugParamSchema = z.object({
  * For Supabase auth user IDs
  */
 export const uuidParamSchema = z.object({
-  id: z.string()
-    .uuid('Invalid UUID format')
+  id: z.string().uuid('Invalid UUID format'),
 });
 
 // ============ PAGINATION SCHEMAS ============
@@ -48,22 +49,25 @@ export const uuidParamSchema = z.object({
  * Provides consistent pagination across all list endpoints
  */
 export const paginationSchema = z.object({
-  page: z.string()
+  page: z
+    .string()
     .optional()
     .default('1')
     .transform(Number)
     .refine(n => n > 0, 'Page must be a positive number'),
 
-  limit: z.string()
+  limit: z
+    .string()
     .optional()
     .default('20')
     .transform(Number)
     .refine(n => n > 0 && n <= 100, 'Limit must be between 1 and 100'),
 
-  offset: z.string()
+  offset: z
+    .string()
     .optional()
-    .transform(val => val ? Number(val) : undefined)
-    .refine(val => val === undefined || val >= 0, 'Offset must be non-negative')
+    .transform(val => (val ? Number(val) : undefined))
+    .refine(val => val === undefined || val >= 0, 'Offset must be non-negative'),
 });
 
 /**
@@ -72,12 +76,13 @@ export const paginationSchema = z.object({
  */
 export const cursorPaginationSchema = z.object({
   cursor: z.string().optional(),
-  limit: z.string()
+  limit: z
+    .string()
     .optional()
     .default('20')
     .transform(Number)
     .refine(n => n > 0 && n <= 100, 'Limit must be between 1 and 100'),
-  direction: z.enum(['forward', 'backward']).optional().default('forward')
+  direction: z.enum(['forward', 'backward']).optional().default('forward'),
 });
 
 // ============ SEARCH AND FILTER SCHEMAS ============
@@ -87,28 +92,28 @@ export const cursorPaginationSchema = z.object({
  * For simple text-based searches
  */
 export const searchSchema = z.object({
-  search: z.string()
+  search: z
+    .string()
     .optional()
     .transform(val => val?.trim())
     .refine(val => !val || val.length >= 2, 'Search term must be at least 2 characters'),
 
-  searchFields: z.array(z.string()).optional()
+  searchFields: z.array(z.string()).optional(),
 });
 
 /**
  * Advanced search schema with operators
  */
 export const advancedSearchSchema = z.object({
-  query: z.string()
-    .min(1, 'Search query is required')
-    .max(500, 'Search query is too long'),
+  query: z.string().min(1, 'Search query is required').max(500, 'Search query is too long'),
 
   operator: z.enum(['AND', 'OR', 'NOT']).optional().default('AND'),
 
-  exact: z.string()
+  exact: z
+    .string()
     .optional()
     .transform(val => val === 'true')
-    .default('false')
+    .default('false'),
 });
 
 /**
@@ -116,54 +121,61 @@ export const advancedSearchSchema = z.object({
  * Provides consistent sorting options
  */
 export const sortingSchema = z.object({
-  sortBy: z.string()
+  sortBy: z
+    .string()
     .optional()
     .refine(val => !val || /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val), 'Invalid sort field'),
 
-  sortOrder: z.enum(['asc', 'desc', 'ASC', 'DESC'])
+  sortOrder: z
+    .enum(['asc', 'desc', 'ASC', 'DESC'])
     .optional()
     .transform(val => val?.toLowerCase() as 'asc' | 'desc')
-    .default('asc')
+    .default('asc'),
 });
 
 /**
  * Date range filter schema
  */
-export const dateRangeSchema = z.object({
-  startDate: z.string()
-    .optional()
-    .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid start date format'),
+export const dateRangeSchema = z
+  .object({
+    startDate: z
+      .string()
+      .optional()
+      .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid start date format'),
 
-  endDate: z.string()
-    .optional()
-    .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid end date format')
-}).refine(
-  data => {
-    if (data.startDate && data.endDate) {
-      return new Date(data.startDate) <= new Date(data.endDate);
-    }
-    return true;
-  },
-  { message: 'Start date must be before or equal to end date' }
-);
+    endDate: z
+      .string()
+      .optional()
+      .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid end date format'),
+  })
+  .refine(
+    data => {
+      if (data.startDate && data.endDate) {
+        return new Date(data.startDate) <= new Date(data.endDate);
+      }
+      return true;
+    },
+    { message: 'Start date must be before or equal to end date' }
+  );
 
 /**
  * Status filter schema
  * Common status values across different entities
  */
 export const statusFilterSchema = z.object({
-  status: z.enum(['active', 'inactive', 'pending', 'archived', 'deleted'])
-    .optional(),
+  status: z.enum(['active', 'inactive', 'pending', 'archived', 'deleted']).optional(),
 
-  includeArchived: z.string()
+  includeArchived: z
+    .string()
     .optional()
     .transform(val => val === 'true')
     .default('false'),
 
-  includeDeleted: z.string()
+  includeDeleted: z
+    .string()
     .optional()
     .transform(val => val === 'true')
-    .default('false')
+    .default('false'),
 });
 
 // ============ DATA VALIDATION SCHEMAS ============
@@ -171,7 +183,8 @@ export const statusFilterSchema = z.object({
 /**
  * Email validation schema
  */
-export const emailSchema = z.string()
+export const emailSchema = z
+  .string()
   .email('Invalid email format')
   .max(255, 'Email must be less than 255 characters')
   .toLowerCase()
@@ -180,19 +193,23 @@ export const emailSchema = z.string()
 /**
  * Password validation schema
  * Enforces strong password requirements
+ * Note: Uses generic error message to avoid revealing password policy to attackers
  */
-export const passwordSchema = z.string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(128, 'Password must be less than 128 characters')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number')
-  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+const GENERIC_PASSWORD_ERROR = 'Password does not meet security requirements';
+export const passwordSchema = z
+  .string()
+  .min(12, GENERIC_PASSWORD_ERROR)
+  .max(128, GENERIC_PASSWORD_ERROR)
+  .regex(/[A-Z]/, GENERIC_PASSWORD_ERROR)
+  .regex(/[a-z]/, GENERIC_PASSWORD_ERROR)
+  .regex(/[0-9]/, GENERIC_PASSWORD_ERROR)
+  .regex(/[^A-Za-z0-9]/, GENERIC_PASSWORD_ERROR);
 
 /**
  * URL validation schema
  */
-export const urlSchema = z.string()
+export const urlSchema = z
+  .string()
   .url('Invalid URL format')
   .max(2048, 'URL must be less than 2048 characters')
   .refine(
@@ -203,32 +220,37 @@ export const urlSchema = z.string()
 /**
  * Phone number validation schema
  */
-export const phoneSchema = z.string()
+export const phoneSchema = z
+  .string()
   .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format (E.164 format expected)');
 
 /**
  * Coordinate validation schema
  */
 export const coordinatesSchema = z.object({
-  lat: z.number()
+  lat: z
+    .number()
     .min(-90, 'Latitude must be between -90 and 90')
     .max(90, 'Latitude must be between -90 and 90'),
 
-  lng: z.number()
+  lng: z
+    .number()
     .min(-180, 'Longitude must be between -180 and 180')
-    .max(180, 'Longitude must be between -180 and 180')
+    .max(180, 'Longitude must be between -180 and 180'),
 });
 
 /**
  * Time validation schema (HH:MM format)
  */
-export const timeSchema = z.string()
+export const timeSchema = z
+  .string()
   .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Time must be in HH:MM format');
 
 /**
  * Money/price validation schema
  */
-export const priceSchema = z.number()
+export const priceSchema = z
+  .number()
   .positive('Price must be positive')
   .multipleOf(0.01, 'Price must have at most 2 decimal places')
   .max(999999.99, 'Price must be less than 1,000,000');
@@ -236,7 +258,8 @@ export const priceSchema = z.number()
 /**
  * Percentage validation schema
  */
-export const percentageSchema = z.number()
+export const percentageSchema = z
+  .number()
   .min(0, 'Percentage must be between 0 and 100')
   .max(100, 'Percentage must be between 0 and 100');
 
@@ -246,28 +269,32 @@ export const percentageSchema = z.number()
  * Image upload configuration schema
  */
 export const imageUploadConfigSchema = z.object({
-  type: z.enum(['cruise', 'talent', 'port', 'party', 'ship', 'general'])
+  type: z
+    .enum(['cruise', 'talent', 'port', 'party', 'ship', 'general'])
     .optional()
     .default('general'),
 
-  maxSize: z.number()
+  maxSize: z
+    .number()
     .optional()
     .default(5 * 1024 * 1024), // 5MB default
 
-  allowedTypes: z.array(z.string())
+  allowedTypes: z
+    .array(z.string())
     .optional()
-    .default(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+    .default(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
 });
 
 /**
  * Bulk operation schema
  */
 export const bulkOperationSchema = z.object({
-  ids: z.array(z.number().positive())
+  ids: z
+    .array(z.number().positive())
     .min(1, 'At least one ID is required')
     .max(100, 'Maximum 100 items can be processed at once'),
 
-  operation: z.enum(['delete', 'archive', 'activate', 'deactivate'])
+  operation: z.enum(['delete', 'archive', 'activate', 'deactivate']),
 });
 
 // ============ RESPONSE FORMAT SCHEMAS ============
@@ -280,7 +307,7 @@ export const responseFormatSchema = z.object({
 
   fields: z.array(z.string()).optional(),
 
-  includeMetadata: z.boolean().optional().default(false)
+  includeMetadata: z.boolean().optional().default(false),
 });
 
 // ============ HELPER FUNCTIONS ============
@@ -293,7 +320,7 @@ export function createEnumSchema<T extends [string, ...string[]]>(
   errorMessage?: string
 ): z.ZodEnum<T> {
   return z.enum(values, {
-    errorMap: () => ({ message: errorMessage || `Must be one of: ${values.join(', ')}` })
+    errorMap: () => ({ message: errorMessage || `Must be one of: ${values.join(', ')}` }),
   });
 }
 
@@ -307,21 +334,26 @@ export function nullable<T extends z.ZodTypeAny>(schema: T) {
 /**
  * Creates a schema for JSON fields
  */
-export const jsonSchema = z.string()
-  .transform((val) => {
-    try {
-      return JSON.parse(val);
-    } catch {
-      throw new Error('Invalid JSON format');
-    }
-  });
+export const jsonSchema = z.string().transform(val => {
+  try {
+    return JSON.parse(val);
+  } catch {
+    throw new Error('Invalid JSON format');
+  }
+});
 
 /**
  * Creates a schema for comma-separated values
  */
 export function csvSchema(itemSchema: z.ZodTypeAny) {
-  return z.string()
-    .transform((val) => val.split(',').map(v => v.trim()).filter(Boolean))
+  return z
+    .string()
+    .transform(val =>
+      val
+        .split(',')
+        .map(v => v.trim())
+        .filter(Boolean)
+    )
     .pipe(z.array(itemSchema));
 }
 
@@ -336,12 +368,14 @@ export const listRequestSchema = paginationSchema
   .merge(sortingSchema)
   .merge(statusFilterSchema)
   .extend({
-    startDate: z.string()
+    startDate: z
+      .string()
       .optional()
       .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid start date format'),
-    endDate: z.string()
+    endDate: z
+      .string()
       .optional()
-      .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid end date format')
+      .refine(val => !val || !isNaN(Date.parse(val)), 'Invalid end date format'),
   });
 
 /**
@@ -349,14 +383,15 @@ export const listRequestSchema = paginationSchema
  * Enhanced version with additional admin-specific filters
  */
 export const adminListRequestSchema = listRequestSchema.extend({
-  showInternal: z.string()
+  showInternal: z
+    .string()
     .optional()
     .transform(val => val === 'true')
     .default('false'),
 
   createdBy: z.string().uuid().optional(),
 
-  lastModifiedBy: z.string().uuid().optional()
+  lastModifiedBy: z.string().uuid().optional(),
 });
 
 export default {
@@ -401,5 +436,5 @@ export default {
   createEnumSchema,
   nullable,
   jsonSchema,
-  csvSchema
+  csvSchema,
 };

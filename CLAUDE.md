@@ -87,6 +87,8 @@ Events render in TWO places - update both when changing event display:
 - Extract shared utilities to `/client/src/lib/`
 - Extract shared API calls to existing query hooks
 - If a pattern appears 2+ times, refactor
+- **Existing hooks to reuse**: `useWindowSize`, `useTripUpdates`, `useImageUpload`, `useTripData`, `useShare`
+- **Date utilities**: Use `getTodayString()` and `parseLocalDate()` from `@/lib/timeFormat` (avoids timezone bugs)
 
 ### Single Responsibility
 
@@ -131,15 +133,29 @@ Events render in TWO places - update both when changing event display:
 - Use `logger` service, not `console.log`
 - Never use `innerHTML` with user content
 - Fail fast on missing env vars (no fallback defaults)
+- **Password minimum**: 12 characters (enforced in Zod schemas)
+- **Sanitize search inputs**: Use `sanitizeSearchTerm()` from `server/utils/sanitize.ts`
+- **Rate limiting**: All endpoints should have appropriate rate limits
+- **Generic error messages**: Don't reveal internal details to clients
+
+### Database Security (RLS)
+
+- **All tables must have RLS enabled** - no exceptions
+- Use `(select auth.uid())` NOT `auth.uid()` in RLS policies (performance)
+- Use `(select auth.jwt())` NOT `auth.jwt()` in RLS policies
+- Admin write policies should check role from `profiles` table
+- **Extensions go in `extensions` schema**, not `public` (e.g., `CREATE EXTENSION pg_trgm SCHEMA extensions`)
+- Run `mcp__supabase__get_advisors` periodically to check for issues
 
 ### TypeScript
 
 - No `any` types without justification
 - Use `unknown` in catch blocks
 - Define interfaces for all data structures
-- Export types from `/client/src/types/`
+- Export types from `/client/src/types/` (organized by domain: `api.ts`, `admin.ts`, `wizard.ts`, `trip-data.ts`, `trip-info.ts`)
 - **Fix TypeScript errors immediately** when you encounter them
 - **Prefer `logger` over `console.log`** - if `console.log` is needed for debugging, remove it immediately after the problem is resolved
+- Import client logger from `@/lib/logger`, server logger from `server/logging/logger`
 
 ### Performance
 

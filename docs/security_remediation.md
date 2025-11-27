@@ -256,38 +256,184 @@ The existing CSRF protection for cookie-based auth remains in place for any non-
 
 ## Phase 3: Medium Severity Issues (15 items)
 
-| #        | Task                                     | File                   | Effort |
-| -------- | ---------------------------------------- | ---------------------- | ------ |
-| [ ] 3.1  | Move sensitive data from sessionStorage  | useSupabaseAuth.ts:121 | 1h     |
-| [ ] 3.2  | Add real-time account deactivation check | auth.ts:122-124        | 2h     |
-| [ ] 3.3  | Add CSRF to password reset form          | PasswordResetForm.tsx  | 1h     |
-| [ ] 3.4  | Make CSRF cookies httpOnly               | csrf.ts:66             | 30m    |
-| [ ] 3.5  | Reduce health endpoint info disclosure   | public.ts:101-143      | 1h     |
-| [ ] 3.6  | Tighten RLS policies                     | migrations/            | 4h     |
-| [ ] 3.7  | Standardize ID validation                | trips.ts, media.ts     | 2h     |
-| [ ] 3.8  | Persist CSRF tokens in Redis             | csrf.ts:13-35          | 2h     |
-| [ ] 3.9  | Add missing security headers             | security.ts            | 1h     |
-| [ ] 3.10 | Verify Supabase bucket permissions       | Supabase Dashboard     | 1h     |
-| [ ] 3.11 | Add UUID collision retry logic           | image-utils.ts:119-121 | 30m    |
-| [ ] 3.12 | Validate Content-Type on downloads       | image-utils.ts:220-223 | 1h     |
-| [ ] 3.13 | Sanitize error messages                  | media.ts:47-51         | 1h     |
-| [ ] 3.14 | Log delete failures                      | image-utils.ts:298-303 | 30m    |
-| [ ] 3.15 | Implement token refresh                  | auth.ts                | 4h     |
+### ~~3.1 Move sensitive data from sessionStorage~~ - FALSE POSITIVE
+
+**Status:** NOT A VULNERABILITY
+**Analysis:** The only data stored in sessionStorage is `redirectAfterLogin` which is just a URL path (e.g., `/admin/dashboard`). This is not sensitive data - it's just a redirect destination after authentication.
+
+---
+
+### ~~3.2 Add real-time account deactivation check~~ - DEFERRED
+
+**Status:** Deferred - current implementation adequate
+**Analysis:** The current implementation already checks `is_active === false` on every authenticated request at `auth.ts:134-136`. Real-time WebSocket-based session invalidation would require significant infrastructure changes for marginal security benefit. The current per-request check is industry standard.
+
+---
+
+### ~~3.3 Add CSRF to password reset form~~ - FALSE POSITIVE
+
+**Status:** NOT A VULNERABILITY
+**Analysis:** The password reset form only initiates a reset link email via Supabase Auth - it doesn't change any data. CSRF protection for password reset initiation is not standard practice because:
+
+1. It only triggers an email to the user's address
+2. The actual password change happens via a secure link in the email
+3. Rate limiting prevents abuse
+
+---
+
+### ~~3.4 Make CSRF cookies httpOnly~~ - FALSE POSITIVE
+
+**Status:** NOT A VULNERABILITY
+**Analysis:** The CSRF implementation uses the double-submit cookie pattern which BY DESIGN requires JavaScript access to the cookie. The cookie value must be readable by JavaScript to include it in the request header. Making it httpOnly would break CSRF protection entirely.
+
+---
+
+### [x] 3.5 Reduce health endpoint info disclosure - COMPLETE
+
+**File:** `server/routes/public.ts:101-157`
+**Completed:** 2025-11-26
+
+**Fix Applied:**
+
+- Production no longer exposes Node version, platform, or memory details
+- Uptime only shown in development (prevents server restart fingerprinting)
+- Database errors sanitized in production
+- Memory and system info only available in development
+
+---
+
+### [x] 3.6 Tighten RLS policies - COMPLETE
+
+**File:** `supabase/migrations/20251126_enable_rls_on_remaining_tables.sql`
+**Completed:** 2025-11-26
+
+**Fix Applied:**
+
+- Enabled RLS on 6 tables that were missing it: `faqs`, `resort_schedules`, `resort_venues`, `ship_venues`, `trip_faq_assignments`, `trip_party_themes`
+- Created public read policies for all tables (content is public)
+- Created admin-only write policies (requires admin, super_admin, or content_manager role)
+- Fixed 3 function search_path security vulnerabilities flagged by Supabase security advisor
+- All 35 public tables now have RLS enabled
+
+---
+
+### ~~3.7 Standardize ID validation~~ - LOW PRIORITY
+
+**Status:** Reviewed - already safe
+**Analysis:** While ID validation patterns vary between `validateId()` utility and inline `parseInt()` checks, all endpoints properly validate IDs before use. The `validateId()` utility in `errorUtils.ts` provides standardized error messages but the inline checks are functionally equivalent for security purposes.
+
+---
+
+### [ ] 3.8 Persist CSRF tokens in Redis - DEFERRED
+
+**Status:** Deferred - requires Redis infrastructure
+**Effort:** 2 hours
+
+**Rationale:** Same as rate limiting (2.7) - requires Redis infrastructure. Current in-memory store works for single-server deployment.
+
+---
+
+### [x] 3.9 Add missing security headers - COMPLETE
+
+**File:** `server/middleware/security.ts:96-97`
+**Completed:** 2025-11-26
+
+**Fix Applied:** Added `X-Permitted-Cross-Domain-Policies: none` header to prevent Adobe Flash/Reader from loading content cross-domain.
+
+---
+
+### [x] 3.10 Verify Supabase bucket permissions - COMPLETE
+
+**File:** Supabase Storage Configuration
+**Completed:** 2025-11-26
+
+**Verification Results:**
+
+- **Buckets:** `app-images` and `images` (both public for read access)
+- **File size limit:** 5MB (appropriate protection against large uploads)
+- **Allowed MIME types:** image/jpeg, image/png, image/gif, image/webp, image/avif
+- **RLS enabled:** Yes, on all storage tables (buckets, objects, etc.)
+- **Upload method:** Server-side only via service role key (secure)
+- **Public access:** Read-only via Supabase's public URL mechanism (no write access)
+
+Configuration is secure and follows best practices.
+
+---
+
+### [x] 3.11 Add UUID collision retry logic - COMPLETE
+
+**File:** `server/image-utils.ts:119-125, 183-222`
+**Completed:** 2025-11-26
+
+**Fix Applied:**
+
+- Added retry loop (max 3 attempts) for UUID collision handling
+- Generates new UUID on "already exists" error
+- Logs warnings for collision detection
+- While UUID collisions are extremely rare, defensive programming is good practice
+
+---
+
+### [x] 3.12 Validate Content-Type on downloads - COMPLETE
+
+**File:** `server/image-utils.ts:268-285`
+**Completed:** 2025-11-26
+
+**Fix Applied:**
+
+- Added strict whitelist of allowed MIME types
+- Extracts base MIME type (ignores charset parameters)
+- Rejects downloads with invalid content types
+- Uses sanitized MIME type for file object
+
+---
+
+### [x] 3.13 Sanitize error messages - COMPLETE
+
+**File:** `server/routes/media.ts:46-54`
+**Completed:** 2025-11-26
+
+**Fix Applied:**
+
+- Detailed errors logged server-side for debugging
+- Generic error message returned to client
+- Prevents internal implementation details exposure
+
+---
+
+### [x] 3.14 Log delete failures - COMPLETE
+
+**File:** `server/image-utils.ts:360-408`
+**Completed:** 2025-11-26
+
+**Fix Applied:**
+
+- Added `logger.warn()` calls for Supabase Storage deletion failures
+- Added `logger.warn()` for general deletion errors
+- Includes relevant context (bucket, path, error message)
+- Non-critical failures logged but don't throw (file may already be deleted)
+
+---
+
+### ~~3.15 Implement token refresh~~ - DEFERRED
+
+**Status:** Deferred - Supabase Auth handles this
+**Analysis:** Token refresh is handled automatically by the Supabase client SDK. The `@supabase/supabase-js` library manages token refresh internally. Custom JWT tokens are secondary and short-lived (15 minutes). Full implementation would require significant frontend changes for marginal benefit.
 
 ---
 
 ## Phase 4: Low Severity Issues (8 items)
 
-| #       | Task                                       | File                     | Effort |
-| ------- | ------------------------------------------ | ------------------------ | ------ |
-| [ ] 4.1 | Increase password min to 12 chars          | admin-users-routes.ts:73 | 30m    |
-| [ ] 4.2 | Enable dev rate limiting                   | security.ts:129-132      | 30m    |
-| [ ] 4.3 | Secure CSRF token endpoint                 | public.ts:35             | 30m    |
-| [ ] 4.4 | Sanitize password validation errors        | admin-users-routes.ts    | 30m    |
-| [ ] 4.5 | Add timing protection to search            | public.ts:40-98          | 1h     |
-| [ ] 4.6 | Add X-Permitted-Cross-Domain-Policies      | security.ts              | 15m    |
-| [ ] 4.7 | Document chart.tsx dangerouslySetInnerHTML | chart.tsx:81-99          | 15m    |
-| [ ] 4.8 | Keep SVG blocking (no change)              | image-utils.ts           | N/A    |
+| #       | Task                                       | File                     | Effort | Status          |
+| ------- | ------------------------------------------ | ------------------------ | ------ | --------------- |
+| [x] 4.1 | Increase password min to 12 chars          | admin-users-routes.ts:74 | 30m    | Complete        |
+| [x] 4.2 | Enable dev rate limiting                   | security.ts:139-144      | 30m    | Complete        |
+| [x] 4.3 | Secure CSRF token endpoint                 | public.ts:36             | 30m    | Complete        |
+| [x] 4.4 | Sanitize password validation errors        | schemas/common.ts:185    | 30m    | Complete        |
+| [x] 4.5 | Add timing protection to search            | public.ts:167-264        | 1h     | Complete        |
+| [x] 4.6 | Add X-Permitted-Cross-Domain-Policies      | security.ts:96-97        | 15m    | Complete (3.9)  |
+| [x] 4.7 | Document chart.tsx dangerouslySetInnerHTML | chart.tsx:70-82          | 15m    | Complete        |
+| [x] 4.8 | Keep SVG blocking (no change)              | image-utils.ts           | N/A    | Already Blocked |
 
 ---
 
@@ -353,13 +499,23 @@ The following security measures are already well-implemented:
 
 ## Progress Tracking
 
-| Phase       | Status          | Issues | Completed | False Positives/Deferred | Remaining |
-| ----------- | --------------- | ------ | --------- | ------------------------ | --------- |
-| 1. Critical | **Complete**    | 7      | 5         | 2                        | 0         |
-| 2. High     | **Complete**    | 12     | 7         | 5 (2 FP, 3 deferred)     | 0         |
-| 3. Medium   | Not Started     | 15     | 0         | 0                        | 15        |
-| 4. Low      | Not Started     | 8      | 0         | 0                        | 8         |
-| **Total**   | **In Progress** | **42** | **12**    | **7**                    | **23**    |
+| Phase       | Status       | Issues | Completed | False Positives/Deferred | Remaining |
+| ----------- | ------------ | ------ | --------- | ------------------------ | --------- |
+| 1. Critical | **Complete** | 7      | 5         | 2                        | 0         |
+| 2. High     | **Complete** | 12     | 7         | 5 (2 FP, 3 deferred)     | 0         |
+| 3. Medium   | **Complete** | 15     | 8         | 7 (4 FP, 3 deferred)     | 0         |
+| 4. Low      | **Complete** | 8      | 8         | 0                        | 0         |
+| **Total**   | **Complete** | **42** | **28**    | **14**                   | **0**     |
+
+### Phase 4 Summary:
+
+- **Completed:** 4.1 (Password 12 chars), 4.2 (Dev rate limiting), 4.3 (CSRF endpoint rate limit), 4.4 (Generic password errors), 4.5 (Timing protection), 4.6 (X-Permitted-Cross-Domain-Policies), 4.7 (Chart.tsx documentation), 4.8 (SVG blocking)
+
+### Phase 3 Summary:
+
+- **Completed:** 3.5 (Health endpoint), 3.6 (RLS policies), 3.9 (Security headers), 3.10 (Bucket permissions), 3.11 (UUID retry), 3.12 (Content-Type), 3.13 (Error sanitization), 3.14 (Delete logging)
+- **False Positives:** 3.1 (sessionStorage), 3.3 (CSRF reset), 3.4 (httpOnly), 3.7 (ID validation)
+- **Deferred:** 3.2 (Real-time deactivation), 3.8 (Redis CSRF), 3.15 (Token refresh)
 
 ---
 

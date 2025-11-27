@@ -12,6 +12,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
 import { Anchor, Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 
 const modalFieldStyles = `
   .admin-form-modal input,
@@ -64,30 +65,20 @@ export function EditCruiseItineraryModal({ open, onOpenChange }: EditCruiseItine
   const [showAddDayModal, setShowAddDayModal] = useState(false);
   const [addDayType, setAddDayType] = useState<'before' | 'after' | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
-  const [locationTypes, setLocationTypes] = useState<LocationType[]>([]);
-  const [loadingLocationTypes, setLoadingLocationTypes] = useState(true);
   const entriesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch location types on mount
-  useEffect(() => {
-    const fetchLocationTypes = async () => {
-      try {
-        setLoadingLocationTypes(true);
-        const response = await api.get('/api/admin/lookup-tables/location-types');
-        if (response.ok) {
-          const data = await response.json();
-          setLocationTypes(data.items || []);
-        }
-      } catch (error) {
-      } finally {
-        setLoadingLocationTypes(false);
-      }
-    };
-
-    if (open) {
-      fetchLocationTypes();
-    }
-  }, [open]);
+  // Fetch location types using React Query
+  const { data: locationTypes = [], isLoading: loadingLocationTypes } = useQuery<LocationType[]>({
+    queryKey: ['location-types'],
+    queryFn: async () => {
+      const response = await api.get('/api/admin/lookup-tables/location-types');
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.items || [];
+    },
+    enabled: open,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   useEffect(() => {
     if (open) {

@@ -119,3 +119,24 @@ export function formatDateToString(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Get today's date as YYYY-MM-DD string in local timezone
+ * Use this instead of toISOString() to avoid timezone conversion bugs
+ */
+export function getTodayString(): string {
+  return formatDateToString(new Date());
+}
+
+/**
+ * Create a local Date object from YYYY-MM-DD string
+ * Avoids timezone conversion issues with new Date('YYYY-MM-DD')
+ */
+export function parseLocalDate(dateStr: string): Date {
+  const datePart = dateStr.split('T')[0] ?? dateStr;
+  const parts = datePart.split('-');
+  const year = Number(parts[0] || 2025);
+  const month = Number(parts[1] || 1);
+  const day = Number(parts[2] || 1);
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+}
