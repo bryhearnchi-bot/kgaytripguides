@@ -9,8 +9,23 @@ import { TimePicker } from '@/components/ui/time-picker';
 import { DatePicker } from '@/components/ui/date-picker';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { LocationFormModal } from '@/components/admin/LocationFormModal';
+import { LocationAttractionsPreview } from '@/components/admin/LocationAttractionsPreview';
+import { LocationLGBTVenuesPreview } from '@/components/admin/LocationLGBTVenuesPreview';
+import { LocationAttractionsModal } from '@/components/admin/LocationAttractionsModal';
+import { LocationLGBTVenuesModal } from '@/components/admin/LocationLGBTVenuesModal';
 import { useLocations } from '@/contexts/LocationsContext';
-import { Plus, ChevronLeft, ChevronRight, MapPin, Anchor, Calendar } from 'lucide-react';
+import {
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Anchor,
+  Calendar,
+  Edit2,
+  Landmark,
+  Building2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 
@@ -41,10 +56,18 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
   const [showAddDayModal, setShowAddDayModal] = useState(false);
   const [addDayType, setAddDayType] = useState<'before' | 'after' | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
+
+  // Location editing state
+  const [showLocationFormModal, setShowLocationFormModal] = useState(false);
+  const [showAttractionsModal, setShowAttractionsModal] = useState(false);
+  const [showLGBTVenuesModal, setShowLGBTVenuesModal] = useState(false);
+  const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
+  const [editingLocationName, setEditingLocationName] = useState<string>('');
+
   const queryClient = useQueryClient();
 
   // Use shared locations context
-  const { locations, loading: locationsLoading } = useLocations();
+  const { locations, loading: locationsLoading, refetch: refetchLocations } = useLocations();
 
   // Fetch existing itinerary data
   const { data: existingItinerary, isLoading: itineraryLoading } = useQuery({
@@ -276,6 +299,44 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
     });
   };
 
+  // Handle opening location edit modal
+  const handleEditLocation = () => {
+    if (!currentDay?.locationId) return;
+    const location = locations.find(loc => loc.id === currentDay.locationId);
+    if (location) {
+      setEditingLocationId(location.id);
+      setEditingLocationName(location.name);
+      setShowLocationFormModal(true);
+    }
+  };
+
+  // Handle opening attractions modal
+  const handleEditAttractions = () => {
+    if (!currentDay?.locationId) return;
+    const location = locations.find(loc => loc.id === currentDay.locationId);
+    if (location) {
+      setEditingLocationId(location.id);
+      setEditingLocationName(location.name);
+      setShowAttractionsModal(true);
+    }
+  };
+
+  // Handle opening LGBT venues modal
+  const handleEditLGBTVenues = () => {
+    if (!currentDay?.locationId) return;
+    const location = locations.find(loc => loc.id === currentDay.locationId);
+    if (location) {
+      setEditingLocationId(location.id);
+      setEditingLocationName(location.name);
+      setShowLGBTVenuesModal(true);
+    }
+  };
+
+  // Get editing location data
+  const editingLocation = editingLocationId
+    ? locations.find(loc => loc.id === editingLocationId) || null
+    : null;
+
   // Handle adding a new day
   const handleAddDay = () => {
     if (!selectedDate || !addDayType) return;
@@ -424,9 +485,21 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
                 </div>
               </div>
               {currentDay.portName && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5">
-                  <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="text-xs font-medium text-white">{currentDay.portName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5">
+                    <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="text-xs font-medium text-white">{currentDay.portName}</span>
+                  </div>
+                  {currentDay.locationId && (
+                    <button
+                      type="button"
+                      onClick={handleEditLocation}
+                      className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all"
+                      title="Edit Location"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -527,6 +600,58 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
                 />
               </div>
             </div>
+
+            {/* Location Details: Attractions & LGBT Venues */}
+            {currentDay.locationId && (
+              <div className="pt-4 border-t border-white/10 mt-5">
+                <h4 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4">
+                  Location Details
+                </h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Attractions Preview */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-cyan-400" />
+                        <Label className="text-sm font-medium text-white">Top Attractions</Label>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleEditAttractions}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                      >
+                        <Edit2 className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                    <LocationAttractionsPreview locationId={currentDay.locationId} />
+                  </div>
+
+                  {/* LGBT Venues Preview */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-cyan-400" />
+                        <Label className="text-sm font-medium text-white">LGBTQ+ Venues</Label>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleEditLGBTVenues}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                      >
+                        <Edit2 className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                    <LocationLGBTVenuesPreview locationId={currentDay.locationId} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -543,6 +668,67 @@ export default function ItineraryTab({ trip, isEditing }: ItineraryTabProps) {
         trip={trip}
         existingDates={itineraryDays.map(d => d.date)}
       />
+
+      {/* Location Form Modal */}
+      {editingLocation && (
+        <LocationFormModal
+          isOpen={showLocationFormModal}
+          onOpenChange={open => {
+            setShowLocationFormModal(open);
+            if (!open) {
+              setEditingLocationId(null);
+              setEditingLocationName('');
+            }
+          }}
+          editingLocation={editingLocation}
+          onSuccess={() => {
+            refetchLocations();
+            queryClient.invalidateQueries({ queryKey: ['itinerary', trip?.id] });
+          }}
+        />
+      )}
+
+      {/* Attractions Modal */}
+      {editingLocationId && (
+        <LocationAttractionsModal
+          isOpen={showAttractionsModal}
+          onOpenChange={open => {
+            setShowAttractionsModal(open);
+            if (!open) {
+              setEditingLocationId(null);
+              setEditingLocationName('');
+            }
+          }}
+          locationId={editingLocationId}
+          locationName={editingLocationName}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ['location-attractions', editingLocationId],
+            });
+          }}
+        />
+      )}
+
+      {/* LGBT Venues Modal */}
+      {editingLocationId && (
+        <LocationLGBTVenuesModal
+          isOpen={showLGBTVenuesModal}
+          onOpenChange={open => {
+            setShowLGBTVenuesModal(open);
+            if (!open) {
+              setEditingLocationId(null);
+              setEditingLocationName('');
+            }
+          }}
+          locationId={editingLocationId}
+          locationName={editingLocationName}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ['location-lgbt-venues', editingLocationId],
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

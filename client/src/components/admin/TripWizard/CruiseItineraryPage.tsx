@@ -1,19 +1,25 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { TimePicker } from '@/components/ui/time-picker';
 import { StandardDropdown } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { LocationFormModal } from '@/components/admin/LocationFormModal';
+import { LocationAttractionsPreview } from '@/components/admin/LocationAttractionsPreview';
+import { LocationLGBTVenuesPreview } from '@/components/admin/LocationLGBTVenuesPreview';
+import { LocationAttractionsModal } from '@/components/admin/LocationAttractionsModal';
+import { LocationLGBTVenuesModal } from '@/components/admin/LocationLGBTVenuesModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
 import { useLocations } from '@/contexts/LocationsContext';
 import { useItineraryNavigation } from '@/contexts/ItineraryNavigationContext';
-import { Anchor } from 'lucide-react';
+import { Anchor, Edit2, Landmark, Building2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface LocationType {
   id: number;
@@ -27,7 +33,11 @@ export function CruiseItineraryPage() {
   const [locationTypes, setLocationTypes] = useState<LocationType[]>([]);
   const [loadingLocationTypes, setLoadingLocationTypes] = useState(true);
   const [showCreateLocationModal, setShowCreateLocationModal] = useState(false);
+  const [showEditLocationModal, setShowEditLocationModal] = useState(false);
+  const [showAttractionsModal, setShowAttractionsModal] = useState(false);
+  const [showLGBTVenuesModal, setShowLGBTVenuesModal] = useState(false);
   const entriesContainerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // Use shared navigation context (state is in EditTripModal's header)
   const { selectedDayIndex, showAddDayModal, setShowAddDayModal, sortedEntries } =
@@ -181,6 +191,28 @@ export function CruiseItineraryPage() {
     }
   };
 
+  // Get the selected location data for the current entry
+  const getSelectedLocation = () => {
+    const currentEntry = sortedEntries[selectedDayIndex];
+    if (!currentEntry?.locationId) return null;
+    return locations.find(loc => loc.id === currentEntry.locationId) || null;
+  };
+
+  const selectedLocation = getSelectedLocation();
+
+  // Handler for editing the location
+  const handleEditLocation = () => {
+    if (selectedLocation) {
+      setShowEditLocationModal(true);
+    }
+  };
+
+  // Handler for when location is updated
+  const handleLocationUpdated = async () => {
+    await refetchLocations();
+    queryClient.invalidateQueries({ queryKey: ['locations'] });
+  };
+
   const handleImageUpload = (index: number, url: string) => {
     updateItineraryEntry(index, { imageUrl: url });
   };
@@ -319,12 +351,26 @@ export function CruiseItineraryPage() {
       {currentEntry && currentIndex >= 0 && (
         <>
           {/* Date and Port Subheader */}
-          <p className="text-sm text-white/70 pb-1">
-            {formatDate(currentEntry.date)}
-            {currentEntry.locationName && (
-              <span className="text-cyan-400"> — {currentEntry.locationName}</span>
+          <div className="flex items-center gap-2 pb-1">
+            <p className="text-sm text-white/70">
+              {formatDate(currentEntry.date)}
+              {currentEntry.locationName && (
+                <span className="text-cyan-400"> — {currentEntry.locationName}</span>
+              )}
+            </p>
+            {selectedLocation && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleEditLocation}
+                className="h-6 px-2 text-xs text-white/50 hover:text-cyan-400 hover:bg-white/5"
+              >
+                <Edit2 className="w-3 h-3 mr-1" />
+                Edit Location
+              </Button>
             )}
-          </p>
+          </div>
 
           {/* Location and Type Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -423,8 +469,73 @@ export function CruiseItineraryPage() {
                 rows={4}
                 className="px-3 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm leading-relaxed transition-all resize-none focus:outline-none focus:border-cyan-400/60 focus:bg-cyan-400/[0.03] focus:ring-2 focus:ring-cyan-400/10"
               />
+              <p className="text-xs text-white/40">
+                * Displays on the itinerary card. Leave empty to show none.
+              </p>
             </div>
           </div>
+
+          {/* Location Details Section - Attractions & LGBT Venues */}
+          {selectedLocation && (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                  Location Details
+                </Label>
+                <span className="text-xs text-white/40">({selectedLocation.name})</span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Attractions Preview */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Landmark className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm font-medium text-white/90">Top Attractions</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAttractionsModal(true)}
+                      className="h-6 px-2 text-xs text-white/50 hover:text-cyan-400 hover:bg-white/5"
+                    >
+                      <Edit2 className="w-3 h-3 mr-1" />
+                      Manage
+                    </Button>
+                  </div>
+                  <LocationAttractionsPreview
+                    locationId={selectedLocation.id}
+                    onManage={() => setShowAttractionsModal(true)}
+                  />
+                </div>
+
+                {/* LGBT Venues Preview */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-pink-400" />
+                      <span className="text-sm font-medium text-white/90">LGBTQ+ Venues</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowLGBTVenuesModal(true)}
+                      className="h-6 px-2 text-xs text-white/50 hover:text-cyan-400 hover:bg-white/5"
+                    >
+                      <Edit2 className="w-3 h-3 mr-1" />
+                      Manage
+                    </Button>
+                  </div>
+                  <LocationLGBTVenuesPreview
+                    locationId={selectedLocation.id}
+                    onManage={() => setShowLGBTVenuesModal(true)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -525,6 +636,36 @@ export function CruiseItineraryPage() {
         onOpenChange={setShowCreateLocationModal}
         onSuccess={handleLocationCreated}
       />
+
+      {/* Edit Location Modal */}
+      {selectedLocation && (
+        <LocationFormModal
+          isOpen={showEditLocationModal}
+          onOpenChange={setShowEditLocationModal}
+          editingLocation={selectedLocation}
+          onSuccess={handleLocationUpdated}
+        />
+      )}
+
+      {/* Attractions Modal */}
+      {selectedLocation && (
+        <LocationAttractionsModal
+          isOpen={showAttractionsModal}
+          onOpenChange={setShowAttractionsModal}
+          locationId={selectedLocation.id}
+          locationName={selectedLocation.name}
+        />
+      )}
+
+      {/* LGBT Venues Modal */}
+      {selectedLocation && (
+        <LocationLGBTVenuesModal
+          isOpen={showLGBTVenuesModal}
+          onOpenChange={setShowLGBTVenuesModal}
+          locationId={selectedLocation.id}
+          locationName={selectedLocation.name}
+        />
+      )}
     </div>
   );
 }
