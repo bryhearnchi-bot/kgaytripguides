@@ -406,6 +406,8 @@ export default function AdminLookupTables() {
           loading: editingItem ? updateItemMutation.isPending : createItemMutation.isPending,
           loadingLabel: editingItem ? 'Saving...' : 'Creating...',
         }}
+        sidePanel={true}
+        sidePanelWidth="450px"
       >
         <div className="space-y-4">
           <div>

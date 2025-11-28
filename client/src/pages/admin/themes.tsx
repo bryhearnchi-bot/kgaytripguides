@@ -473,46 +473,35 @@ export default function ThemesManagement() {
           loading: editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending,
           loadingLabel: editingTheme ? 'Saving...' : 'Creating...',
         }}
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        contentClassName="space-y-4"
         maxHeight="85vh"
+        sidePanel={true}
+        sidePanelWidth="500px"
       >
-        {/* Theme Name - spans full width */}
-        <div className="lg:col-span-2 space-y-2">
-          <Label htmlFor="name">Theme Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={e => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g., White Party, Glow Night"
-            required
-          />
+        {/* Theme Name & Short Description Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="name">Theme Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., White Party"
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="shortDescription">Short Description</Label>
+            <Input
+              id="shortDescription"
+              value={formData.shortDescription || ''}
+              onChange={e => setFormData({ ...formData, shortDescription: e.target.value })}
+              placeholder="Brief theme summary"
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="shortDescription">Short Description</Label>
-          <Input
-            id="shortDescription"
-            value={formData.shortDescription || ''}
-            onChange={e => setFormData({ ...formData, shortDescription: e.target.value })}
-            placeholder="Brief theme summary"
-          />
-        </div>
-
-        {/* Theme Image - use remaining space */}
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Theme Image</Label>
-          <ImageUploadField
-            label="Theme Image"
-            value={formData.imageUrl || ''}
-            onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
-            imageType="general"
-            placeholder="No theme image uploaded"
-            disabled={editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending}
-          />
-        </div>
-
-        {/* Long Description - spans full width */}
-        <div className="lg:col-span-2 space-y-2">
+        <div className="space-y-1">
           <Label htmlFor="longDescription">Long Description</Label>
           <Textarea
             id="longDescription"
@@ -523,7 +512,7 @@ export default function ThemesManagement() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <Label htmlFor="costumeIdeas">Costume Ideas</Label>
           <Textarea
             id="costumeIdeas"
@@ -534,7 +523,7 @@ export default function ThemesManagement() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <Label htmlFor="amazonShoppingListUrl">Shopping List URL</Label>
           <Input
             id="amazonShoppingListUrl"
@@ -542,6 +531,18 @@ export default function ThemesManagement() {
             value={formData.amazonShoppingListUrl || ''}
             onChange={e => setFormData({ ...formData, amazonShoppingListUrl: e.target.value })}
             placeholder="https://www.amazon.com/shop/..."
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="imageUrl">Theme Image</Label>
+          <ImageUploadField
+            label="Theme Image"
+            value={formData.imageUrl || ''}
+            onChange={url => setFormData({ ...formData, imageUrl: url || '' })}
+            imageType="general"
+            placeholder="No theme image uploaded"
+            disabled={editingTheme ? updateThemeMutation.isPending : createThemeMutation.isPending}
           />
         </div>
       </AdminBottomSheet>

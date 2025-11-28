@@ -484,6 +484,8 @@ export default function LocationsManagement() {
         }
         contentClassName="grid gap-4 w-full max-w-full"
         maxHeight="85vh"
+        sidePanel={true}
+        sidePanelWidth="550px"
       >
         <div className="space-y-2 w-full max-w-full">
           <Label htmlFor="name" className="text-white/80">

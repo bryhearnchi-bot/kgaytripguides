@@ -128,14 +128,14 @@ export const TalentTabNew = memo(function TalentTabNew({
   if (TALENT.length === 0) {
     return (
       <>
-        <div className="max-w-3xl mx-auto pb-4">
+        <div className="max-w-3xl xl:max-w-5xl mx-auto pb-4">
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-400" />
             <h3 className="text-lg font-semibold text-white">Talent</h3>
             <div className="flex-1 h-px bg-white/20 mx-3"></div>
           </div>
         </div>
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-3xl xl:max-w-5xl mx-auto space-y-6">
           <div className="bg-white/10 backdrop-blur-lg rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
             <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No talent information available</h3>
@@ -148,7 +148,7 @@ export const TalentTabNew = memo(function TalentTabNew({
 
   return (
     <>
-      <div className="max-w-3xl mx-auto pb-4">
+      <div className="max-w-3xl xl:max-w-5xl mx-auto pb-4">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-amber-400" />
           <h3 className="text-lg font-semibold text-white">Talent</h3>
@@ -166,7 +166,7 @@ export const TalentTabNew = memo(function TalentTabNew({
           />
         </div>
       </div>
-      <div className="max-w-3xl mx-auto space-y-8 pb-8">
+      <div className="max-w-3xl xl:max-w-5xl mx-auto space-y-8 pb-8">
         {/* Talent Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -181,7 +181,7 @@ export const TalentTabNew = memo(function TalentTabNew({
               <p className="text-white/60">No talent found for this category</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredTalent.map((talent, index) => {
                 const isHeadliner = talent.cat === 'Headliners';
                 const showYellowBorder =

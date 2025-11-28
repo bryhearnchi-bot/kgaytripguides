@@ -41,7 +41,7 @@
     margin: 0 !important;
     padding: 0 !important;
     height: 100%;
-    overflow-x: hidden;
+    /* overflow-x: hidden removed - was blocking horizontal scroll for carousels on desktop/iPad */
     /* Solid Oxford Blue background - matches app theme */
     background-color: #002147;
     color-scheme: dark;
@@ -531,7 +531,7 @@ img {
   /* Ensure body allows sticky on iOS */
   body {
     position: relative;
-    overflow-x: clip; /* Use clip instead of hidden for iOS Safari */
+    /* overflow-x: clip removed - was blocking carousel horizontal scroll on iOS */
   }
 
   /* Parent container fixes for Safari mobile */
@@ -566,4 +566,15 @@ img {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, and Opera */
+}
+
+/* Scoped overflow-x hidden for page containers - prevents page horizontal scroll without blocking carousel scroll */
+.page-overflow-hidden {
+  overflow-x: hidden;
+}
+
+/* Carousel-safe containers - these can scroll horizontally */
+.carousel-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

@@ -268,7 +268,7 @@ export const ScheduleTab = memo(function ScheduleTab({
           ref={headerRef}
           className={`pb-4 pt-2 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 z-50 px-4' : ''}`}
         >
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl xl:max-w-5xl mx-auto">
             <div className="flex items-center justify-between gap-4">
               {/* Sub-tabs on the left */}
               <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-1 inline-flex gap-1">
@@ -344,7 +344,7 @@ export const ScheduleTab = memo(function ScheduleTab({
       </div>
 
       {subTab === 'schedule' ? (
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl xl:max-w-5xl mx-auto space-y-8">
           {filteredSchedule.length === 0 ? (
             <div className="bg-white/10 rounded-md p-6 shadow-sm text-center py-8 border border-white/20">
               <CalendarDays className="w-16 h-16 text-white/40 mx-auto mb-4" />
@@ -402,7 +402,7 @@ export const ScheduleTab = memo(function ScheduleTab({
           )}
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl xl:max-w-5xl mx-auto space-y-8">
           {filteredPartyEvents.length === 0 && partyEventsByDate.length === 0 ? (
             isLoadingThemes ? (
               <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl text-center py-8 border border-white/20">
@@ -416,7 +416,7 @@ export const ScheduleTab = memo(function ScheduleTab({
                     <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
                       <h3 className="text-sm font-bold text-white">T-Dances</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                       {organizedPartyThemes
                         .filter(theme => theme.partyType === 'T-Dance')
                         .map(theme => (
@@ -467,7 +467,7 @@ export const ScheduleTab = memo(function ScheduleTab({
                     <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pink-500/20 backdrop-blur-sm rounded-full border border-pink-400/30">
                       <h3 className="text-sm font-bold text-white">Night Parties</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                       {organizedPartyThemes
                         .filter(theme => theme.partyType === 'Night Party')
                         .map(theme => (
@@ -544,8 +544,8 @@ export const ScheduleTab = memo(function ScheduleTab({
                     )}
                   </div>
 
-                  {/* Party Cards Grid - 2 columns max */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Party Cards Grid - 2 columns tablet, 3 columns desktop */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {day.events.map((event: any, eventIndex: number) => (
                       <PartyCard
                         key={`${day.key}-${eventIndex}`}

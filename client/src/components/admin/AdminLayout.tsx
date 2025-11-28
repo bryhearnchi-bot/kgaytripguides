@@ -256,8 +256,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       )}
 
       <div className="flex flex-1 flex-col transition-all duration-300">
+        {/* Bottom padding: pb-20 for mobile/tablet (bottom nav visible), lg:pb-8 for desktop (sidebar, no bottom nav) */}
         <main className="flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-8 lg:py-8 pb-20 lg:pb-8">
-          <div className="space-y-6 lg:space-y-8">{children}</div>
+          {/* Max-width container for large screens to prevent tables from being too wide */}
+          <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">{children}</div>
         </main>
       </div>
 

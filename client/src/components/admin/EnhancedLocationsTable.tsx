@@ -456,7 +456,12 @@ export function EnhancedLocationsTable({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="bg-[#0a1628]/95 backdrop-blur border-white/10"
+                            className="border-white/10"
+                            style={{
+                              backgroundColor: 'rgba(0, 33, 71, 1)',
+                              backgroundImage:
+                                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+                            }}
                             onCloseAutoFocus={e => e.preventDefault()}
                           >
                             {actions.map((action, index) => (

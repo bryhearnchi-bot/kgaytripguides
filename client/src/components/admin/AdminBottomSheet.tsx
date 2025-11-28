@@ -165,6 +165,8 @@ interface AdminBottomSheetProps {
   customHeader?: ReactNode; // Custom header content (replaces default header)
   fullScreen?: boolean; // Make modal take up full screen
   maxWidthClassName?: string; // Custom max width class for desktop
+  sidePanel?: boolean; // Use right-side slide-in panel on desktop/tablet instead of centered dialog
+  sidePanelWidth?: string; // Width for side panel (default: 500px)
 }
 
 export function AdminBottomSheet({
@@ -182,7 +184,9 @@ export function AdminBottomSheet({
   className,
   customHeader,
   fullScreen = false,
-  maxWidthClassName = 'max-w-3xl',
+  maxWidthClassName = 'max-w-3xl lg:max-w-4xl xl:max-w-3xl', // 768px default, 896px on lg, 768px on xl
+  sidePanel = false, // Default to centered dialog for backward compatibility
+  sidePanelWidth = '500px',
 }: AdminBottomSheetProps) {
   const { isMobile } = useMobileResponsive();
   const sheetContentRef = useRef<HTMLDivElement>(null);
@@ -427,7 +431,94 @@ export function AdminBottomSheet({
     );
   }
 
-  // Desktop/Tablet: Use centered dialog
+  // Desktop/Tablet with sidePanel: Use right-side slide-in sheet
+  if (sidePanel) {
+    return (
+      <>
+        <style>{modalFieldStyles}</style>
+        <Sheet open={isOpen} onOpenChange={handleOpenChange} modal={true}>
+          <SheetContent
+            side="right"
+            className={cn(
+              'admin-bottom-sheet',
+              'border-white/10 text-white',
+              'flex flex-col p-0 overflow-hidden',
+              'w-full sm:w-[500px] lg:w-[600px]',
+              className
+            )}
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              maxWidth: sidePanelWidth,
+            }}
+            onInteractOutside={handleInteractOutside}
+            onEscapeKeyDown={handleEscapeKeyDown}
+            onPointerDownOutside={handleInteractOutside}
+          >
+            {/* Header */}
+            <SheetHeader
+              className="sticky top-0 z-10 border-b border-white/10 px-6 py-4"
+              style={{
+                backgroundColor: 'rgba(0, 33, 71, 1)',
+                backgroundImage:
+                  'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+              }}
+            >
+              <SheetTitle className="sr-only">{title}</SheetTitle>
+              <SheetDescription className="sr-only">
+                {description || `${title} form`}
+              </SheetDescription>
+              {customHeader ? (
+                customHeader
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xl font-bold text-white leading-tight">
+                    {icon && <span className="flex-shrink-0">{icon}</span>}
+                    {title}
+                  </div>
+                  <div className="flex justify-end gap-2 ml-4 flex-shrink-0">
+                    {primaryAction && (
+                      <Button
+                        type={primaryType}
+                        disabled={primaryAction.disabled || primaryAction.loading}
+                        onClick={primaryType === 'button' ? handleSave : undefined}
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors"
+                        aria-label={primaryAction.label}
+                        form={
+                          primaryType === 'submit' && onSubmit
+                            ? 'admin-bottom-sheet-form'
+                            : primaryAction.form
+                        }
+                      >
+                        {renderPrimaryLabel()}
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => onOpenChange(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
+                      aria-label="Cancel"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </SheetHeader>
+
+            {/* Scrollable Content */}
+            {scrollableContent}
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Desktop/Tablet: Use centered dialog (fullScreen mode)
   return (
     <>
       <style>{modalFieldStyles}</style>

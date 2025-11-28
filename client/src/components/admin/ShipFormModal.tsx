@@ -295,6 +295,8 @@ export function ShipFormModal({ isOpen, onOpenChange, ship, onSuccess }: ShipFor
       }}
       contentClassName="py-4"
       maxHeight="85vh"
+      sidePanel={true}
+      sidePanelWidth="600px"
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Basic Information */}

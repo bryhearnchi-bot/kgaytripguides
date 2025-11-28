@@ -417,7 +417,7 @@ export default function TripGuide({
 
         <StandardizedContentLayout>
           {/* Add spacing when using bottom nav instead of middle tab bar */}
-          {showBottomNav && <div className="pt-8 sm:pt-16 lg:pt-16" />}
+          {showBottomNav && <div className="pt-4 sm:pt-6 lg:pt-6" />}
 
           {/* Tab Bar - Only show when NOT using bottom navigation */}
           {!showBottomNav && (

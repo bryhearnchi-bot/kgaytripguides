@@ -268,7 +268,8 @@ const HeroSection = ({
     return shuffled;
   };
 
-  // Initialize shuffled images once on mount
+  // Initialize shuffled images when data is available
+  // Note: dynamicImages.length is included to re-run when itinerary loads
   useEffect(() => {
     if (isDragstarCruise) {
       setShuffledImages(dragstarImages.map(img => img.url));
@@ -276,6 +277,11 @@ const HeroSection = ({
     }
 
     const allImages = [...dynamicImages];
+
+    // Don't set empty array - wait for images to load
+    if (allImages.length === 0 && !heroImageUrl) {
+      return;
+    }
 
     // If hero image exists, add it first, then shuffle the rest
     if (heroImageUrl && heroImageUrl.trim() !== '') {
@@ -286,16 +292,23 @@ const HeroSection = ({
       // No hero image, just shuffle all
       setShuffledImages(shuffleArray(allImages));
     }
-  }, [heroImageUrl, isDragstarCruise]); // Only re-shuffle if heroImageUrl or trip changes
+  }, [heroImageUrl, isDragstarCruise, dynamicImages.length]); // Re-run when images load
 
   const images = shuffledImages;
 
+  // Calculate scroll width after images are rendered
+  // Depends on shuffledImages to re-run when images array changes
   useEffect(() => {
-    if (scrollRef.current) {
-      const width = scrollRef.current.scrollWidth / 2;
-      setScrollWidth(width);
+    if (scrollRef.current && shuffledImages.length > 0) {
+      // Use requestAnimationFrame to ensure DOM is painted before measuring
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          const width = scrollRef.current.scrollWidth / 2;
+          setScrollWidth(width);
+        }
+      });
     }
-  }, []);
+  }, [shuffledImages]);
 
   // Rotate images on mobile
   useEffect(() => {
@@ -309,7 +322,7 @@ const HeroSection = ({
 
   return (
     <section
-      className={`flex flex-1 flex-col gap-5 overflow-x-hidden pt-0 pb-0 sm:pt-8 sm:pb-0 lg:pt-8 lg:pb-4`}
+      className={`flex flex-1 flex-col gap-5 overflow-x-hidden pt-0 pb-0 sm:pt-4 sm:pb-0 lg:pt-4 lg:pb-0`}
     >
       {/* Hero Content - Mobile */}
       <div className="sm:hidden mx-auto flex w-full max-w-3xl flex-col items-center gap-3 px-4 text-center pb-6">

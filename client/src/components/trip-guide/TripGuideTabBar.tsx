@@ -74,7 +74,7 @@ export const TripGuideTabBar = React.memo(function TripGuideTabBar({
   ];
 
   return (
-    <div className="flex justify-center items-center mb-8 pt-8 sm:pt-16 lg:pt-16">
+    <div className="flex justify-center items-center mb-4 pt-4 sm:pt-6 lg:pt-6">
       <div className="bg-white/10 backdrop-blur-lg rounded-full p-1 inline-flex gap-1 border border-white/20">
         {tabs.map(({ tab, icon, label }) => (
           <TabButton

@@ -726,6 +726,8 @@ export default function UsersManagement() {
         }}
         contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
         maxHeight="85vh"
+        sidePanel={true}
+        sidePanelWidth="550px"
       >
         {/* Basic Information */}
         <div className="space-y-4">

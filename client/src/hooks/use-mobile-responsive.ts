@@ -16,7 +16,7 @@ interface MobileResponsiveResult {
 
 export function useMobileResponsive({
   mobileBreakpoint = 768,
-  tabletBreakpoint = 1024
+  tabletBreakpoint = 1280, // Changed from 1024 to 1280 (Tailwind xl:) - iPad landscape (1024px) should be tablet, not desktop
 }: MobileResponsiveOptions = {}): MobileResponsiveResult {
   const [screenWidth, setScreenWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1024
@@ -24,14 +24,14 @@ export function useMobileResponsive({
 
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(
     typeof window !== 'undefined'
-      ? window.innerHeight > window.innerWidth ? 'portrait' : 'landscape'
+      ? window.innerHeight > window.innerWidth
+        ? 'portrait'
+        : 'landscape'
       : 'landscape'
   );
 
   const [touchDevice, setTouchDevice] = useState(
-    typeof window !== 'undefined'
-      ? 'ontouchstart' in window || navigator.maxTouchPoints > 0
-      : false
+    typeof window !== 'undefined' ? 'ontouchstart' in window || navigator.maxTouchPoints > 0 : false
   );
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export function useMobileResponsive({
     isDesktop,
     screenWidth,
     orientation,
-    touchDevice
+    touchDevice,
   };
 }
 
@@ -89,16 +89,12 @@ export function getMobileSpacing(isMobile: boolean) {
     section: isMobile ? 'space-y-4' : 'space-y-6 lg:space-y-8',
     card: isMobile ? 'p-4' : 'p-4 sm:p-6',
     form: isMobile ? 'gap-4' : 'gap-4 lg:gap-6',
-    grid: isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+    grid: isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
   };
 }
 
 // Utility function for mobile-first responsive classes
-export function responsiveClasses(
-  mobile: string,
-  tablet?: string,
-  desktop?: string
-): string {
+export function responsiveClasses(mobile: string, tablet?: string, desktop?: string): string {
   const classes = [mobile];
 
   if (tablet) {

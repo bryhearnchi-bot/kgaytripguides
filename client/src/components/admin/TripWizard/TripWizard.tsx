@@ -8,7 +8,7 @@ import { ShipDetailsPage } from './ShipDetailsPage';
 import { ResortSchedulePage } from './ResortSchedulePage';
 import { CruiseItineraryPage } from './CruiseItineraryPage';
 import { CompletionPage } from './CompletionPage';
-import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight, X, Save } from 'lucide-react';
 import { ItineraryNavigationProvider } from '@/contexts/ItineraryNavigationContext';
 import { LocationsProvider } from '@/contexts/LocationsContext';
 import { Button } from '@/components/ui/button';
@@ -371,6 +371,94 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
 
   const totalPages = 5; // Build method, basic info, resort/ship details, schedule/itinerary, completion
   const progress = ((state.currentPage + 1) / totalPages) * 100;
+  const isFirstPage = state.currentPage === 0;
+  const isLastPage = state.currentPage === totalPages - 1;
+  const showNavButtons = !isFirstPage && !isLastPage;
+
+  // Custom header with navigation buttons
+  const customHeader = (
+    <div className="flex items-center justify-between w-full">
+      {/* Left side: Icon + Title + Step indicator */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-cyan-400" />
+          <h2 className="text-xl font-bold text-white leading-tight">{getPageTitle()}</h2>
+        </div>
+        {/* Step indicator pill */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+          <span className="text-xs font-medium text-white/60">
+            Step {state.currentPage + 1}/{totalPages}
+          </span>
+          <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Right side: Navigation buttons */}
+      <div className="flex items-center gap-2">
+        {/* Back button - icon only */}
+        {!isFirstPage && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white/70 hover:text-white transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        )}
+
+        {/* Save Draft button - icon only, shown on middle pages */}
+        {showNavButtons && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleSaveDraft}
+            className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-amber-400 hover:text-amber-300 transition-colors"
+            aria-label={state.draftId ? 'Update Draft' : 'Save Draft'}
+            title={state.draftId ? 'Update Draft' : 'Save Draft'}
+          >
+            <Save className="w-4 h-4" />
+          </Button>
+        )}
+
+        {/* Next/Finish button - icon only, shown on middle pages */}
+        {showNavButtons && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleNext}
+            disabled={!canProceed()}
+            className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label={state.currentPage === totalPages - 2 ? 'Review & Finish' : 'Next'}
+            title={state.currentPage === totalPages - 2 ? 'Review & Finish' : 'Next'}
+          >
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        )}
+
+        {/* Close button */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={handleClose}
+          className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <AdminBottomSheet
@@ -378,13 +466,14 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
       onOpenChange={handleClose}
       title={getPageTitle()}
       description={getPageDescription()}
-      icon={<Sparkles className="h-5 w-5 text-cyan-400" />}
-      contentClassName="pb-6 overflow-visible"
+      contentClassName="pb-6 pt-0"
       className="max-w-4xl"
       maxHeight="85vh"
+      fullScreen={true}
+      customHeader={customHeader}
     >
-      {/* Progress Bar */}
-      <div className="mb-7">
+      {/* Mobile step indicator - shown only on small screens */}
+      <div className="sm:hidden mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs font-medium text-white/60">
             Step {state.currentPage + 1} of {totalPages}
@@ -402,66 +491,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
       </div>
 
       {/* Page Content */}
-      <div>{renderPage()}</div>
-
-      {/* Navigation Footer */}
-      <div className="flex items-center justify-between mt-6 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleBack}
-          disabled={state.currentPage === 0}
-          className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleClose}
-            className="h-9 px-4 text-white/60 hover:text-white/90 hover:bg-white/5 rounded-lg transition-all"
-          >
-            Cancel
-          </Button>
-
-          {/* Save Draft button - shown on all pages except initial build method page and completion page */}
-          {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSaveDraft}
-              className="h-9 px-4 bg-white/[0.04] border-[1.5px] border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              {state.draftId ? 'Update Draft' : 'Save Draft'}
-            </Button>
-          )}
-
-          {/* Don't show Next button on initial build method page (page 0) or final completion page */}
-          {state.currentPage > 0 && state.currentPage < totalPages - 1 && (
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {state.currentPage === totalPages - 2 ? (
-                <>
-                  Review & Finish
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-      </div>
+      <div className="max-w-3xl mx-auto">{renderPage()}</div>
     </AdminBottomSheet>
   );
 }

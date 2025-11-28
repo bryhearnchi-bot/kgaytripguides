@@ -630,53 +630,44 @@ export default function ArtistsManagement() {
           loading: editingArtist ? updateArtistMutation.isPending : createArtistMutation.isPending,
           loadingLabel: editingArtist ? 'Saving...' : 'Creating...',
         }}
-        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        contentClassName="space-y-4"
         maxHeight="85vh"
+        sidePanel={true}
+        sidePanelWidth="500px"
       >
-        {/* Basic Information */}
-        <div className="space-y-2">
-          <Label htmlFor="name">Artist Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={e => setFormData({ ...formData, name: e.target.value })}
-            required
-            placeholder="Enter artist name"
-          />
+        {/* Basic Info Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="name">Artist Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="Enter artist name"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="category">Category *</Label>
+            <StandardDropdown
+              variant="single-search-add"
+              placeholder="Select category..."
+              searchPlaceholder="Search categories..."
+              emptyMessage="No categories found"
+              addLabel="Add New Category"
+              options={talentCategories.map(cat => ({
+                value: cat.id.toString(),
+                label: cat.category,
+              }))}
+              value={formData.talentCategoryId?.toString() || ''}
+              onChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
+              onCreateNew={handleCreateCategory}
+              required
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="category">Category *</Label>
-          <StandardDropdown
-            variant="single-search-add"
-            placeholder="Select talent category..."
-            searchPlaceholder="Search categories..."
-            emptyMessage="No categories found"
-            addLabel="Add New Category"
-            options={talentCategories.map(cat => ({
-              value: cat.id.toString(),
-              label: cat.category,
-            }))}
-            value={formData.talentCategoryId?.toString() || ''}
-            onChange={value => setFormData({ ...formData, talentCategoryId: Number(value) })}
-            onCreateNew={handleCreateCategory}
-            required
-          />
-        </div>
-
-        {/* Biography - spans full width */}
-        <div className="lg:col-span-2 space-y-2">
-          <Label htmlFor="bio">Biography</Label>
-          <Textarea
-            id="bio"
-            value={formData.bio || ''}
-            onChange={e => setFormData({ ...formData, bio: e.target.value })}
-            rows={4}
-            placeholder="Artist biography and background..."
-          />
-        </div>
-
-        <div className="space-y-2">
+        <div className="space-y-1">
           <Label htmlFor="knownFor">Known For</Label>
           <Input
             id="knownFor"
@@ -686,34 +677,45 @@ export default function ArtistsManagement() {
           />
         </div>
 
-        {/* Social Links - use remaining space */}
-        <div className="space-y-2">
-          <Label htmlFor="instagram">Instagram URL</Label>
-          <Input
-            id="instagram"
-            value={formData.socialLinks?.instagram || ''}
-            onChange={e =>
-              setFormData({
-                ...formData,
-                socialLinks: { ...formData.socialLinks, instagram: e.target.value },
-              })
-            }
-            placeholder="https://instagram.com/..."
+        <div className="space-y-1">
+          <Label htmlFor="bio">Biography</Label>
+          <Textarea
+            id="bio"
+            value={formData.bio || ''}
+            onChange={e => setFormData({ ...formData, bio: e.target.value })}
+            rows={3}
+            placeholder="Artist biography and background..."
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="website">Website</Label>
-          <Input
-            id="website"
-            value={formData.website || ''}
-            onChange={e => setFormData({ ...formData, website: e.target.value })}
-            placeholder="https://..."
-          />
+        {/* Social Links Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="instagram">Instagram URL</Label>
+            <Input
+              id="instagram"
+              value={formData.socialLinks?.instagram || ''}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  socialLinks: { ...formData.socialLinks, instagram: e.target.value },
+                })
+              }
+              placeholder="https://instagram.com/..."
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={formData.website || ''}
+              onChange={e => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
         </div>
 
-        {/* Profile Image - spans full width */}
-        <div className="lg:col-span-2 space-y-2">
+        <div className="space-y-1">
           <Label htmlFor="profileImage">Profile Image</Label>
           <ImageUploadField
             label="Profile Image"

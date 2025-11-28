@@ -38,7 +38,7 @@ export function AdminBottomNavigation() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[10001] xl:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-[10001] lg:hidden">
       <nav
         className="bg-white/30 backdrop-blur-lg border-t border-white/30"
         style={{
