@@ -20,7 +20,7 @@ import { useShare } from '@/hooks/useShare';
 import { toast } from 'sonner';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
 import { FlyUpSheet } from '@/components/FlyUpSheet';
-import { AboutKGayModal } from '@/components/AboutKGayModal';
+import { AboutKGaySheet } from '@/components/AboutKGaySheet';
 import Alerts from '@/pages/alerts';
 import Settings from '@/pages/settings';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -318,8 +318,8 @@ export default function NavigationBanner() {
         <Settings onNavigate={handleNavigateFromSheet} />
       </FlyUpSheet>
 
-      {/* About KGay Modal */}
-      <AboutKGayModal open={aboutModalOpen} onOpenChange={setAboutModalOpen} />
+      {/* About KGay Sheet - Left side panel on desktop, bottom sheet on mobile */}
+      <AboutKGaySheet open={aboutModalOpen} onOpenChange={setAboutModalOpen} />
     </>
   );
 }

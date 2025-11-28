@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
-import { AboutKGayModal } from '@/components/AboutKGayModal';
+import { AboutKGaySheet } from '@/components/AboutKGaySheet';
 import { FlyUpSheet } from '@/components/FlyUpSheet';
 import { cn } from '@/lib/utils';
 import { useUpdate } from '@/context/UpdateContext';
@@ -614,8 +614,8 @@ export default function Settings({
           </button>
         </div>
 
-        {/* About KGAY Travel Modal */}
-        <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
+        {/* About KGAY Travel Sheet */}
+        <AboutKGaySheet open={showAboutModal} onOpenChange={setShowAboutModal} />
 
         {/* iOS Instructions Fly-Up Sheet */}
         <FlyUpSheet

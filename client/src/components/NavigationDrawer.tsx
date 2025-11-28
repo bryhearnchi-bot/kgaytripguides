@@ -33,7 +33,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabaseAuthContext } from '@/contexts/SupabaseAuthContext';
 import { useTimeFormat } from '@/contexts/TimeFormatContext';
-import { AboutKGayModal } from '@/components/AboutKGayModal';
+import { AboutKGaySheet } from '@/components/AboutKGaySheet';
 import { cn } from '@/lib/utils';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useUpdate } from '@/context/UpdateContext';
@@ -389,8 +389,8 @@ export default function NavigationDrawer({
         </SheetPortal>
       </Sheet>
 
-      {/* About KGAY Travel Modal */}
-      <AboutKGayModal open={showAboutModal} onOpenChange={setShowAboutModal} />
+      {/* About KGAY Travel Sheet */}
+      <AboutKGaySheet open={showAboutModal} onOpenChange={setShowAboutModal} />
 
       {/* iOS Instructions Dialog */}
       <Dialog open={showIOSInstructions} onOpenChange={setShowIOSInstructions}>

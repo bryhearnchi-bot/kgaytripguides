@@ -154,7 +154,7 @@ export function FlyUpSheet({
         <SheetPortal>
           <SheetContent
             side="bottom"
-            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden"
+            className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] border-white/10 text-white p-0 rounded-t-3xl overflow-hidden [&>button]:hidden"
             style={sheetBackground}
             onTouchStart={onSheetTouchStart}
             onTouchMove={onSheetTouchMove}
@@ -196,7 +196,7 @@ export function FlyUpSheet({
       <SheetPortal>
         <SheetContent
           side="right"
-          className="w-[400px] max-w-[90vw] border-white/10 text-white p-0 overflow-hidden"
+          className="w-[400px] max-w-[90vw] border-white/10 text-white p-0 overflow-hidden [&>button]:hidden"
           style={sheetBackground}
         >
           <VisuallyHidden>
