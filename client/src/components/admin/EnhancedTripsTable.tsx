@@ -384,7 +384,7 @@ export function EnhancedTripsTable({
             >
               <CardContent className="p-0">
                 <div className="p-4">
-                  <div className="flex gap-6">
+                  <div className="flex gap-3 sm:gap-6">
                     {/* Image on the left with trip type above it */}
                     {imageColumn && (
                       <div className="flex-shrink-0 flex flex-col items-center justify-center">
@@ -411,9 +411,9 @@ export function EnhancedTripsTable({
                     )}
 
                     {/* Name, Date, and Days on board */}
-                    <div className="flex-1 min-w-0 overflow-visible flex flex-col">
+                    <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
                       {nameColumn && (
-                        <div className="text-base text-white font-medium whitespace-nowrap overflow-visible">
+                        <div className="text-sm sm:text-base text-white font-medium break-words">
                           {renderCellValue(nameColumn, row)}
                         </div>
                       )}
