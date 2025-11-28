@@ -504,10 +504,7 @@ export function CruiseItineraryPage() {
                       Manage
                     </Button>
                   </div>
-                  <LocationAttractionsPreview
-                    locationId={selectedLocation.id}
-                    onManage={() => setShowAttractionsModal(true)}
-                  />
+                  <LocationAttractionsPreview locationId={selectedLocation.id} />
                 </div>
 
                 {/* LGBT Venues Preview */}
@@ -528,10 +525,7 @@ export function CruiseItineraryPage() {
                       Manage
                     </Button>
                   </div>
-                  <LocationLGBTVenuesPreview
-                    locationId={selectedLocation.id}
-                    onManage={() => setShowLGBTVenuesModal(true)}
-                  />
+                  <LocationLGBTVenuesPreview locationId={selectedLocation.id} />
                 </div>
               </div>
             </div>
