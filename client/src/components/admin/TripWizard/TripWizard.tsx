@@ -9,6 +9,8 @@ import { ResortSchedulePage } from './ResortSchedulePage';
 import { CruiseItineraryPage } from './CruiseItineraryPage';
 import { CompletionPage } from './CompletionPage';
 import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ItineraryNavigationProvider } from '@/contexts/ItineraryNavigationContext';
+import { LocationsProvider } from '@/contexts/LocationsContext';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
@@ -292,7 +294,13 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         if (state.tripType === 'resort') {
           return <ResortSchedulePage />;
         } else if (state.tripType === 'cruise') {
-          return <CruiseItineraryPage />;
+          return (
+            <LocationsProvider>
+              <ItineraryNavigationProvider>
+                <CruiseItineraryPage />
+              </ItineraryNavigationProvider>
+            </LocationsProvider>
+          );
         } else {
           return (
             <div className="text-white/60 text-center py-8">

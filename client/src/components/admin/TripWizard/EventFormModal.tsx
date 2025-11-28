@@ -19,6 +19,11 @@ import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
+import { VenueManagementModal } from '@/components/admin/VenueManagementModal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const eventSchema = z.object({
   tripId: z.number(),
@@ -123,6 +128,22 @@ export function EventFormModal({
   const [loadingPartyThemes, setLoadingPartyThemes] = useState(true);
   const [loadingVenues, setLoadingVenues] = useState(true);
   const [loadingTalent, setLoadingTalent] = useState(true);
+  const [showVenueModal, setShowVenueModal] = useState(false);
+  const [showCreateTalentModal, setShowCreateTalentModal] = useState(false);
+  const [talentFormData, setTalentFormData] = useState({
+    name: '',
+    talentCategoryId: 0,
+    bio: '',
+    knownFor: '',
+    profileImageUrl: '',
+    socialLinks: {
+      instagram: '',
+      twitter: '',
+      facebook: '',
+    },
+    website: '',
+  });
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<EventFormData>({
     tripId,
     date: '',
@@ -135,6 +156,44 @@ export function EventFormModal({
     partyThemeId: null,
     imageUrl: '',
     description: '',
+  });
+
+  // Fetch talent categories
+  const { data: talentCategories = [] } = useQuery({
+    queryKey: ['talent-categories'],
+    queryFn: async () => {
+      const response = await api.get('/api/talent-categories');
+      if (!response.ok) throw new Error('Failed to fetch talent categories');
+      return response.json();
+    },
+  });
+
+  // Create talent mutation
+  const createTalentMutation = useMutation({
+    mutationFn: async (data: typeof talentFormData) => {
+      const response = await api.post('/api/talent', data, { requireAuth: true });
+      if (!response.ok) throw new Error('Failed to create talent');
+      return response.json();
+    },
+    onSuccess: async newTalent => {
+      queryClient.invalidateQueries({ queryKey: ['talent'] });
+      await fetchTalent();
+      // Auto-select the new talent
+      setFormData(prev => ({
+        ...prev,
+        talentIds: [...prev.talentIds, newTalent.id],
+      }));
+      setShowCreateTalentModal(false);
+      resetTalentForm();
+      toast.success('Success', {
+        description: 'Talent created successfully',
+      });
+    },
+    onError: () => {
+      toast.error('Error', {
+        description: 'Failed to create talent',
+      });
+    },
   });
 
   // Load event types, party themes, venues, and talent
@@ -275,50 +334,73 @@ export function EventFormModal({
       });
   }, [tripType, scheduleEntries, itineraryEntries]);
 
-  // Handle venue creation
-  const handleCreateVenue = async (name: string) => {
-    try {
-      const endpoint =
-        tripType === 'cruise'
-          ? `/api/admin/ships/${shipId}/venues`
-          : `/api/admin/resorts/${resortId}/venues`;
-      const response = await api.post(endpoint, {
-        name: name.trim(),
-        venueTypeId: 1, // Default type, user can edit later
-      });
-      if (response.ok) {
-        const newVenue = await response.json();
-        setVenues(prev => [...prev, newVenue]);
-        return { value: newVenue.id.toString(), label: newVenue.name };
-      }
-      throw new Error('Failed to create venue');
-    } catch (error) {
+  // Handle opening the venue management modal
+  const handleOpenVenueModal = () => {
+    // Check if we have a ship/resort ID
+    if (!shipId && tripType === 'cruise') {
       toast.error('Error', {
-        description: 'Failed to create venue',
+        description: 'Please select a ship first',
       });
-      throw error;
+      return;
     }
+
+    if (!resortId && tripType === 'resort') {
+      toast.error('Error', {
+        description: 'Please select a resort first',
+      });
+      return;
+    }
+
+    setShowVenueModal(true);
   };
 
-  // Handle talent creation
-  const handleCreateTalent = async (name: string) => {
-    try {
-      const response = await api.post('/api/admin/talent', {
-        name: name.trim(),
-        talentCategoryId: 1, // Default category, user can edit later
-      });
-      if (response.ok) {
-        const newTalent = await response.json();
-        setTalent(prev => [...prev, newTalent]);
-        return { value: newTalent.id.toString(), label: newTalent.name };
-      }
-      throw new Error('Failed to create talent');
-    } catch (error) {
+  // Handle venue creation success - refresh venues list
+  const handleVenueCreated = () => {
+    // Refresh venues list after a brief delay to let the modal finish its update
+    setTimeout(() => {
+      fetchVenues();
+    }, 200);
+  };
+
+  // Handle opening the talent creation modal
+  const handleOpenCreateTalentModal = () => {
+    resetTalentForm();
+    setShowCreateTalentModal(true);
+  };
+
+  // Reset talent form
+  const resetTalentForm = () => {
+    setTalentFormData({
+      name: '',
+      talentCategoryId: 0,
+      bio: '',
+      knownFor: '',
+      profileImageUrl: '',
+      socialLinks: {
+        instagram: '',
+        twitter: '',
+        facebook: '',
+      },
+      website: '',
+    });
+  };
+
+  // Handle talent form submission
+  const handleTalentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!talentFormData.name.trim()) {
       toast.error('Error', {
-        description: 'Failed to create talent',
+        description: 'Talent name is required',
       });
-      throw error;
+      return;
     }
+    if (!talentFormData.talentCategoryId || talentFormData.talentCategoryId === 0) {
+      toast.error('Error', {
+        description: 'Please select a talent category',
+      });
+      return;
+    }
+    createTalentMutation.mutate(talentFormData);
   };
 
   const handleSave = async () => {
@@ -442,7 +524,7 @@ export function EventFormModal({
               setFormData({ ...formData, resortVenueId: venueId, shipVenueId: null });
             }
           }}
-          onCreateNew={handleCreateVenue}
+          onOpenCreateModal={handleOpenVenueModal}
           disabled={loadingVenues}
         />
 
@@ -464,7 +546,7 @@ export function EventFormModal({
               const ids = (value as string[]).map(id => Number(id));
               setFormData({ ...formData, talentIds: ids });
             }}
-            onCreateNew={handleCreateTalent}
+            onOpenCreateModal={handleOpenCreateTalentModal}
             disabled={loadingTalent}
           />
           <p className="text-[10px] text-white/50">Select talent performing at this event</p>
@@ -519,29 +601,157 @@ export function EventFormModal({
   );
 
   return (
-    <AdminBottomSheet
-      isOpen={isOpen}
-      onOpenChange={onClose}
-      title={editingEvent ? 'Edit Event' : 'Create New Event'}
-      description="Edit or create an event for this trip"
-      icon={<Calendar className="h-5 w-5 text-cyan-400" />}
-      onSubmit={async e => {
-        e.preventDefault();
-        await handleSave();
-      }}
-      primaryAction={{
-        label: saving ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event',
-        type: 'submit',
-        loading: saving,
-        disabled: saving,
-      }}
-      secondaryAction={{
-        label: 'Cancel',
-        onClick: onClose,
-      }}
-      fullScreen={true}
-    >
-      {formContent}
-    </AdminBottomSheet>
+    <>
+      <AdminBottomSheet
+        isOpen={isOpen}
+        onOpenChange={onClose}
+        title={editingEvent ? 'Edit Event' : 'Create New Event'}
+        description="Edit or create an event for this trip"
+        icon={<Calendar className="h-5 w-5 text-cyan-400" />}
+        onSubmit={async e => {
+          e.preventDefault();
+          await handleSave();
+        }}
+        primaryAction={{
+          label: saving ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event',
+          type: 'submit',
+          loading: saving,
+          disabled: saving,
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: onClose,
+        }}
+        fullScreen={true}
+      >
+        {formContent}
+      </AdminBottomSheet>
+
+      {/* Venue Management Modal - same as used in ShipFormModal */}
+      {((tripType === 'cruise' && shipId) || (tripType === 'resort' && resortId)) && (
+        <VenueManagementModal
+          isOpen={showVenueModal}
+          onOpenChange={setShowVenueModal}
+          propertyId={tripType === 'cruise' ? shipId! : resortId!}
+          propertyType={tripType === 'cruise' ? 'ship' : 'resort'}
+          onSuccess={handleVenueCreated}
+        />
+      )}
+
+      {/* Create Talent Modal */}
+      <AdminBottomSheet
+        isOpen={showCreateTalentModal}
+        onOpenChange={setShowCreateTalentModal}
+        title="Add New Artist"
+        icon={<Users className="h-5 w-5" />}
+        description="Create a new artist and add to this event"
+        onSubmit={handleTalentSubmit}
+        primaryAction={{
+          label: 'Create Artist',
+          loading: createTalentMutation.isPending,
+          loadingLabel: 'Creating...',
+        }}
+        fullScreen={true}
+        maxWidthClassName="max-w-3xl"
+        contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
+      >
+        {/* Basic Information */}
+        <div className="space-y-2">
+          <Label htmlFor="talent-name">Artist Name *</Label>
+          <Input
+            id="talent-name"
+            value={talentFormData.name}
+            onChange={e => setTalentFormData({ ...talentFormData, name: e.target.value })}
+            required
+            placeholder="Enter artist name"
+            className="bg-white/5 border-white/10 text-white"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="talent-category">Category *</Label>
+          <StandardDropdown
+            variant="single-search"
+            placeholder="Select talent category..."
+            searchPlaceholder="Search categories..."
+            emptyMessage="No categories found"
+            options={talentCategories.map((cat: { id: number; category: string }) => ({
+              value: cat.id.toString(),
+              label: cat.category,
+            }))}
+            value={talentFormData.talentCategoryId?.toString() || ''}
+            onChange={value =>
+              setTalentFormData({ ...talentFormData, talentCategoryId: Number(value) })
+            }
+            required
+          />
+        </div>
+
+        {/* Biography - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
+          <Label htmlFor="talent-bio">Biography</Label>
+          <Textarea
+            id="talent-bio"
+            value={talentFormData.bio || ''}
+            onChange={e => setTalentFormData({ ...talentFormData, bio: e.target.value })}
+            rows={4}
+            placeholder="Artist biography and background..."
+            className="bg-white/5 border-white/10 text-white"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="talent-knownFor">Known For</Label>
+          <Input
+            id="talent-knownFor"
+            value={talentFormData.knownFor || ''}
+            onChange={e => setTalentFormData({ ...talentFormData, knownFor: e.target.value })}
+            placeholder="e.g., RuPaul's Drag Race, Comedy Central"
+            className="bg-white/5 border-white/10 text-white"
+          />
+        </div>
+
+        {/* Social Links */}
+        <div className="space-y-2">
+          <Label htmlFor="talent-instagram">Instagram URL</Label>
+          <Input
+            id="talent-instagram"
+            value={talentFormData.socialLinks?.instagram || ''}
+            onChange={e =>
+              setTalentFormData({
+                ...talentFormData,
+                socialLinks: { ...talentFormData.socialLinks, instagram: e.target.value },
+              })
+            }
+            placeholder="https://instagram.com/..."
+            className="bg-white/5 border-white/10 text-white"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="talent-website">Website</Label>
+          <Input
+            id="talent-website"
+            value={talentFormData.website || ''}
+            onChange={e => setTalentFormData({ ...talentFormData, website: e.target.value })}
+            placeholder="https://..."
+            className="bg-white/5 border-white/10 text-white"
+          />
+        </div>
+
+        {/* Profile Image - spans full width */}
+        <div className="lg:col-span-2 space-y-2">
+          <Label htmlFor="talent-profileImage">Profile Image</Label>
+          <ImageUploadField
+            label="Profile Image"
+            value={talentFormData.profileImageUrl || ''}
+            onChange={url => setTalentFormData({ ...talentFormData, profileImageUrl: url || '' })}
+            imageType="talent"
+            placeholder="No profile image uploaded"
+            disabled={createTalentMutation.isPending}
+          />
+        </div>
+      </AdminBottomSheet>
+    </>
   );
 }

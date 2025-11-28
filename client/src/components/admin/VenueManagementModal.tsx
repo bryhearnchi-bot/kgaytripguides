@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,6 +70,7 @@ export function VenueManagementModal({
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const venuesLoadedRef = React.useRef(false);
 
   // State for adding new venue
   const [newVenueName, setNewVenueName] = useState('');
@@ -78,11 +79,34 @@ export function VenueManagementModal({
   // State for delete confirmation
   const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null);
 
-  // Fetch venues and venue types
+  // Reset ref when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      venuesLoadedRef.current = false;
+      setVenues([]);
+    }
+  }, [isOpen]);
+
+  // Fetch venue types on mount and when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (pendingMode) {
-        // In pending mode, load from initialPendingVenues
+      fetchVenueTypes();
+    }
+  }, [isOpen]);
+
+  // Fetch venues when modal opens or propertyId changes
+  useEffect(() => {
+    if (isOpen && !pendingMode && propertyId && venueTypes.length > 0 && !venuesLoadedRef.current) {
+      venuesLoadedRef.current = true;
+      fetchVenues();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, propertyId, pendingMode, venueTypes.length]);
+
+  // Handle pending venues once venueTypes are loaded
+  useEffect(() => {
+    if (isOpen && pendingMode) {
+      if (venueTypes.length > 0 && initialPendingVenues.length > 0) {
         const pendingVenuesWithIds = initialPendingVenues.map((v, idx) => ({
           id: -(idx + 1), // Negative IDs for pending venues
           name: v.name,
@@ -91,28 +115,32 @@ export function VenueManagementModal({
           venueTypeName: venueTypes.find(type => type.id === v.venueTypeId)?.name || 'Unknown Type',
         }));
         setVenues(pendingVenuesWithIds);
-      } else {
-        // Normal mode, fetch from API
-        fetchVenues();
+      } else if (initialPendingVenues.length === 0) {
+        setVenues([]);
       }
-      fetchVenueTypes();
     }
-  }, [isOpen, propertyId, pendingMode, initialPendingVenues, venueTypes]); // Added venueTypes to dependency array
+    // Use length instead of array to avoid re-renders when array reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, pendingMode, initialPendingVenues.length, venueTypes.length]);
 
   const fetchVenues = async () => {
+    if (!propertyId) return;
     setLoading(true);
     try {
-      const endpoint = `/ api / admin / ${propertyType} s / ${propertyId}/venues`;
+      const endpoint = `/api/admin/${propertyType}s/${propertyId}/venues`;
       const response = await api.get(endpoint);
       if (response.ok) {
         const data: Venue[] = await response.json();
         // Enrich venues with venueTypeName for display
-        const enrichedVenues = data.map(venue => ({
-          ...venue,
-          venueTypeName:
-            venueTypes.find(type => type.id === venue.venueTypeId)?.name || 'Unknown Type',
-        }));
-        setVenues(enrichedVenues);
+        // Use a ref or get the current venueTypes to avoid stale closure
+        setVenues(prevVenues => {
+          // Get current venueTypes from state by using a function that reads current state
+          return data.map(venue => ({
+            ...venue,
+            venueTypeName:
+              venueTypes.find(type => type.id === venue.venueTypeId)?.name || 'Unknown Type',
+          }));
+        });
       }
     } catch (error) {
       toast.error('Error', {
@@ -182,11 +210,17 @@ export function VenueManagementModal({
           throw new Error(errorData?.error?.message || 'Failed to create venue');
         }
 
+        // Refresh venues list first
+        await fetchVenues();
         toast.success('Success', {
           description: 'Venue created successfully',
         });
-        fetchVenues();
-        if (onSuccess) onSuccess();
+        // Call onSuccess after a brief delay to let the modal update
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 100);
+        }
       }
 
       setNewVenueName('');
@@ -233,11 +267,17 @@ export function VenueManagementModal({
           throw new Error('Failed to delete venue');
         }
 
+        // Refresh venues list first
+        await fetchVenues();
         toast.success('Success', {
           description: 'Venue deleted successfully',
         });
-        fetchVenues();
-        if (onSuccess) onSuccess();
+        // Call onSuccess after a brief delay to let the modal update
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 100);
+        }
       }
       setVenueToDelete(null);
     } catch (error: unknown) {

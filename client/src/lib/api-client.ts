@@ -13,6 +13,14 @@ interface FetchOptions extends RequestInit {
 }
 
 /**
+ * Get CSRF token from cookie
+ */
+function getCsrfToken(): string | null {
+  const match = document.cookie.match(/(?:^|;\s*)_csrf=([^;]*)/);
+  return match ? match[1] : null;
+}
+
+/**
  * Makes an authenticated API request with proper headers
  * @param url The API endpoint URL
  * @param options Fetch options
@@ -41,10 +49,30 @@ export async function apiClient(url: string, options: FetchOptions = {}): Promis
   }
 
   // Add Authorization header if we have a session
-  // Automatically require auth for admin endpoints, or if explicitly requested
+  // Automatically require auth for admin endpoints and protected API routes
   const isAdminEndpoint = url.includes('/api/admin/');
-  if ((requireAuth || isAdminEndpoint) && session?.access_token) {
+  const isProtectedEndpoint =
+    url.includes('/api/trips') ||
+    url.includes('/api/ships') ||
+    url.includes('/api/resorts') ||
+    url.includes('/api/locations') ||
+    url.includes('/api/events') ||
+    url.includes('/api/talent') ||
+    url.includes('/api/party-themes') ||
+    url.includes('/api/faqs') ||
+    url.includes('/api/trip-info') ||
+    url.includes('/api/updates');
+  if ((requireAuth || isAdminEndpoint || isProtectedEndpoint) && session?.access_token) {
     requestHeaders['Authorization'] = `Bearer ${session.access_token}`;
+  }
+
+  // Add CSRF token for unsafe methods (POST, PUT, PATCH, DELETE)
+  const method = (restOptions.method || 'GET').toUpperCase();
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      requestHeaders['x-csrf-token'] = csrfToken;
+    }
   }
 
   // When offline, keep /api/... requests on the current origin so the service worker

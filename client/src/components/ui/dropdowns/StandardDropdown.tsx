@@ -83,6 +83,7 @@ interface StandardDropdownProps {
   value: string | string[];
   onChange: (value: string | string[]) => void;
   onCreateNew?: (name: string) => Promise<{ value: string; label: string }>;
+  onOpenCreateModal?: () => void; // If provided, opens a full modal instead of simple dialog
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -106,6 +107,7 @@ export function StandardDropdown({
   value,
   onChange,
   onCreateNew,
+  onOpenCreateModal,
   label,
   placeholder = 'Select an option',
   required = false,
@@ -191,6 +193,13 @@ export function StandardDropdown({
 
   // Handle Add New
   const openAddDialog = () => {
+    // If onOpenCreateModal is provided, use it instead of the simple dialog
+    if (onOpenCreateModal) {
+      setOpen(false); // Close the dropdown first
+      onOpenCreateModal();
+      return;
+    }
+    // Otherwise, show the simple dialog
     setShowAddDialog(true);
   };
 
@@ -492,7 +501,7 @@ export function StandardDropdown({
                   })}
 
                   {/* Add New as last item (or only item when no matches) */}
-                  {hasAdd && onCreateNew && (
+                  {hasAdd && (onCreateNew || onOpenCreateModal) && (
                     <CommandItem
                       disabled={false}
                       onSelect={openAddDialog}

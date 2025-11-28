@@ -112,13 +112,8 @@ export function ShipDetailsPage() {
     }
   };
 
-  const handleCreateShip = async (name: string) => {
-    // Open the ShipFormModal for full ship creation
-    // The StandardDropdown fly-up will close, and ShipFormModal will open
+  const handleOpenCreateShipModal = () => {
     setShowCreateModal(true);
-    // Return a placeholder - the actual creation and selection happens in ShipFormModal's onSuccess
-    // StandardDropdown won't try to add this since ShipFormModal handles everything
-    return Promise.resolve({ value: '', label: name });
   };
 
   // Determine whether to show preview
@@ -160,7 +155,7 @@ export function ShipDetailsPage() {
         }))}
         value={selectedShipId?.toString() || ''}
         onChange={handleShipChange}
-        onCreateNew={handleCreateShip}
+        onOpenCreateModal={handleOpenCreateShipModal}
         disabled={loadingShips}
         required
       />

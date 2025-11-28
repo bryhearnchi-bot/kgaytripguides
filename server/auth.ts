@@ -209,8 +209,15 @@ export function requireRole(allowedRoles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
+        logger.warn('requireRole: No user found on request');
         throw ApiError.unauthorized('Authentication required');
       }
+
+      logger.debug('requireRole check', {
+        userRole: req.user.role,
+        allowedRoles,
+        hasAccess: allowedRoles.includes(req.user.role || ''),
+      });
 
       if (!allowedRoles.includes(req.user.role || '')) {
         throw new ApiError(403, 'Insufficient permissions', {

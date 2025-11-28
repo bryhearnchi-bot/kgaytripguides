@@ -235,24 +235,20 @@ export function TalentTabPage() {
     }
   };
 
-  const handleCreateTalent = async (name: string) => {
-    try {
-      const response = await api.post('/api/admin/talent', {
-        name: name.trim(),
-        talentCategoryId: formData.talentCategoryId || 1,
-      });
-      if (response.ok) {
-        const newTalent = await response.json();
-        setTalent(prev => [...prev, newTalent]);
-        return { value: newTalent.id.toString(), label: newTalent.name };
-      }
-      throw new Error('Failed to create talent');
-    } catch (error) {
-      toast.error('Error', {
-        description: 'Failed to create talent',
-      });
-      throw error;
-    }
+  const handleOpenCreateTalentModal = () => {
+    setFormData({
+      name: '',
+      talentCategoryId: undefined,
+      bio: '',
+      profileImageUrl: '',
+      knownFor: '',
+      instagram: '',
+      twitter: '',
+      facebook: '',
+      website: '',
+    });
+    setEditingTalent(undefined);
+    setShowCreateModal(true);
   };
 
   const fetchTripTalent = async () => {
@@ -575,7 +571,7 @@ export function TalentTabPage() {
                 handleAddTalent(talentId);
               }
             }}
-            onCreateNew={handleCreateTalent}
+            onOpenCreateModal={handleOpenCreateTalentModal}
             disabled={loadingTalent}
           />
 
@@ -605,6 +601,7 @@ export function TalentTabPage() {
           loading: createArtistMutation.isPending,
           loadingLabel: 'Creating...',
         }}
+        fullScreen={true}
         maxWidthClassName="max-w-3xl"
         contentClassName="grid grid-cols-1 lg:grid-cols-2 gap-5"
       >

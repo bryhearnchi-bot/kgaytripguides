@@ -6,12 +6,14 @@ import { TimePicker } from '@/components/ui/time-picker';
 import { StandardDropdown } from '@/components/ui/dropdowns';
 import { DatePicker } from '@/components/ui/date-picker';
 import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
+import { LocationFormModal } from '@/components/admin/LocationFormModal';
 import { useTripWizard } from '@/contexts/TripWizardContext';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
 import { useLocations } from '@/contexts/LocationsContext';
 import { useItineraryNavigation } from '@/contexts/ItineraryNavigationContext';
 import { Anchor } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { toast } from 'sonner';
 
 interface LocationType {
   id: number;
@@ -24,6 +26,7 @@ export function CruiseItineraryPage() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [locationTypes, setLocationTypes] = useState<LocationType[]>([]);
   const [loadingLocationTypes, setLoadingLocationTypes] = useState(true);
+  const [showCreateLocationModal, setShowCreateLocationModal] = useState(false);
   const entriesContainerRef = useRef<HTMLDivElement>(null);
 
   // Use shared navigation context (state is in EditTripModal's header)
@@ -31,7 +34,7 @@ export function CruiseItineraryPage() {
     useItineraryNavigation();
 
   // Use shared locations context
-  const { locations, loading: locationsLoading } = useLocations();
+  const { locations, loading: locationsLoading, refetch: refetchLocations } = useLocations();
 
   // Fetch location types on mount
   useEffect(() => {
@@ -153,22 +156,29 @@ export function CruiseItineraryPage() {
     });
   };
 
-  // Handle creating a new location from the dropdown
-  // Note: We need a closure to capture the current index
-  const createLocationHandler = (index: number) => async (newLocationName: string) => {
-    const response = await api.post('/api/locations', {
-      name: newLocationName,
-      country: '',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to create location');
+  // Handle opening the location creation modal
+  const handleOpenCreateLocationModal = () => {
+    setShowCreateLocationModal(true);
+  };
+
+  // Handle location creation success
+  const handleLocationCreated = async (newLocation: any) => {
+    await refetchLocations();
+
+    // Auto-select the new location in the current entry
+    const currentEntry = sortedEntries[selectedDayIndex];
+    const currentIndex = currentEntry
+      ? state.itineraryEntries.findIndex(
+          e => e.date === currentEntry.date && e.dayNumber === currentEntry.dayNumber
+        )
+      : -1;
+
+    if (currentIndex >= 0) {
+      updateItineraryEntry(currentIndex, {
+        locationId: newLocation.id,
+        locationName: newLocation.name,
+      });
     }
-    const newLocation = await response.json();
-    updateItineraryEntry(index, {
-      locationId: newLocation.id,
-      locationName: newLocation.name,
-    });
-    return { value: newLocation.id.toString(), label: newLocation.name };
   };
 
   const handleImageUpload = (index: number, url: string) => {
@@ -327,7 +337,7 @@ export function CruiseItineraryPage() {
               options={locationOptions}
               value={currentEntry.locationId?.toString() || ''}
               onChange={value => handleLocationChange(currentIndex, value as string)}
-              onCreateNew={createLocationHandler(currentIndex)}
+              onOpenCreateModal={handleOpenCreateLocationModal}
               disabled={locationsLoading}
             />
 
@@ -508,6 +518,13 @@ export function CruiseItineraryPage() {
           </div>
         </div>
       </AdminBottomSheet>
+
+      {/* Create Location Modal - using the reusable LocationFormModal */}
+      <LocationFormModal
+        isOpen={showCreateLocationModal}
+        onOpenChange={setShowCreateLocationModal}
+        onSuccess={handleLocationCreated}
+      />
     </div>
   );
 }
