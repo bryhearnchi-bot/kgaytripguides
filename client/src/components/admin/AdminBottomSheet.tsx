@@ -165,7 +165,7 @@ interface AdminBottomSheetProps {
   customHeader?: ReactNode; // Custom header content (replaces default header)
   fullScreen?: boolean; // Make modal take up full screen
   maxWidthClassName?: string; // Custom max width class for desktop
-  sidePanel?: boolean; // Use right-side slide-in panel on desktop/tablet instead of centered dialog
+  sidePanel?: boolean; // Override default: true = side panel, false = centered dialog. If undefined, auto-detects: side panel on desktop/tablet (unless fullScreen), bottom sheet on mobile
   sidePanelWidth?: string; // Width for side panel (default: 500px)
 }
 
@@ -185,12 +185,16 @@ export function AdminBottomSheet({
   customHeader,
   fullScreen = false,
   maxWidthClassName = 'max-w-3xl lg:max-w-4xl xl:max-w-3xl', // 768px default, 896px on lg, 768px on xl
-  sidePanel = false, // Default to centered dialog for backward compatibility
+  sidePanel, // If undefined, auto-detect: side panel on desktop/tablet (unless fullScreen), bottom sheet on mobile
   sidePanelWidth = '500px',
 }: AdminBottomSheetProps) {
   const { isMobile } = useMobileResponsive();
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
+
+  // Auto-determine sidePanel: use side panel on desktop/tablet unless fullScreen is true
+  // On mobile, always use bottom sheet regardless of sidePanel setting
+  const shouldUseSidePanel = sidePanel !== undefined ? sidePanel : !isMobile && !fullScreen;
 
   // Wrap onOpenChange to prevent unexpected closes
   const handleOpenChange = (open: boolean) => {
@@ -340,7 +344,7 @@ export function AdminBottomSheet({
     </>
   );
 
-  // Mobile: Use bottom sheet
+  // Mobile: Always use bottom sheet
   if (isMobile) {
     return (
       <>
@@ -432,7 +436,7 @@ export function AdminBottomSheet({
   }
 
   // Desktop/Tablet with sidePanel: Use right-side slide-in sheet
-  if (sidePanel) {
+  if (shouldUseSidePanel) {
     return (
       <>
         <style>{modalFieldStyles}</style>
@@ -518,7 +522,7 @@ export function AdminBottomSheet({
     );
   }
 
-  // Desktop/Tablet: Use centered dialog (fullScreen mode)
+  // Desktop/Tablet: Use centered dialog (for fullScreen mode or when sidePanel is explicitly false)
   return (
     <>
       <style>{modalFieldStyles}</style>

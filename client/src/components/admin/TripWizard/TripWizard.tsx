@@ -8,10 +8,23 @@ import { ShipDetailsPage } from './ShipDetailsPage';
 import { ResortSchedulePage } from './ResortSchedulePage';
 import { CruiseItineraryPage } from './CruiseItineraryPage';
 import { CompletionPage } from './CompletionPage';
-import { Sparkles, ArrowLeft, ArrowRight, X, Save } from 'lucide-react';
-import { ItineraryNavigationProvider } from '@/contexts/ItineraryNavigationContext';
+import {
+  Sparkles,
+  ArrowLeft,
+  ArrowRight,
+  X,
+  Save,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+} from 'lucide-react';
+import {
+  ItineraryNavigationProvider,
+  useItineraryNavigation,
+} from '@/contexts/ItineraryNavigationContext';
 import { LocationsProvider } from '@/contexts/LocationsContext';
 import { Button } from '@/components/ui/button';
+import { PillDropdown } from '@/components/ui/dropdowns';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -296,9 +309,7 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
         } else if (state.tripType === 'cruise') {
           return (
             <LocationsProvider>
-              <ItineraryNavigationProvider>
-                <CruiseItineraryPage />
-              </ItineraryNavigationProvider>
+              <CruiseItineraryPage />
             </LocationsProvider>
           );
         } else {
@@ -491,20 +502,90 @@ function TripWizardContent({ isOpen, onOpenChange, onSuccess, draftTrip }: TripW
       </div>
 
       {/* Page Content */}
-      <div className="max-w-3xl mx-auto">{renderPage()}</div>
+      <div className="max-w-3xl mx-auto pt-0 md:pt-6">{renderPage()}</div>
     </AdminBottomSheet>
+  );
+}
+
+// Itinerary Header Actions Component - renders day selector and add button
+function ItineraryHeaderActions() {
+  const {
+    selectedDayIndex,
+    setSelectedDayIndex,
+    setShowAddDayModal,
+    dayOptions,
+    totalDays,
+    goToPreviousDay,
+    goToNextDay,
+    canGoPrevious,
+    canGoNext,
+  } = useItineraryNavigation();
+
+  if (totalDays === 0) {
+    return (
+      <Button
+        type="button"
+        onClick={() => setShowAddDayModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Add Day</span>
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Day Navigation Controls */}
+      <button
+        type="button"
+        onClick={goToPreviousDay}
+        disabled={!canGoPrevious}
+        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        <ChevronLeft className="w-4 h-4 text-white/70" />
+      </button>
+
+      <PillDropdown
+        options={dayOptions}
+        value={selectedDayIndex.toString()}
+        onChange={value => setSelectedDayIndex(parseInt(value, 10))}
+        placeholder="Select Day"
+        className="min-w-[120px]"
+      />
+
+      <button
+        type="button"
+        onClick={goToNextDay}
+        disabled={!canGoNext}
+        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        <ChevronRight className="w-4 h-4 text-white/70" />
+      </button>
+
+      {/* Add Day Button */}
+      <Button
+        type="button"
+        onClick={() => setShowAddDayModal(true)}
+        className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all ml-2"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </Button>
+    </div>
   );
 }
 
 export function TripWizard({ isOpen, onOpenChange, onSuccess, draftTrip }: TripWizardProps) {
   return (
     <TripWizardProvider>
-      <TripWizardContent
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        onSuccess={onSuccess}
-        draftTrip={draftTrip}
-      />
+      <ItineraryNavigationProvider>
+        <TripWizardContent
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+          onSuccess={onSuccess}
+          draftTrip={draftTrip}
+        />
+      </ItineraryNavigationProvider>
     </TripWizardProvider>
   );
 }

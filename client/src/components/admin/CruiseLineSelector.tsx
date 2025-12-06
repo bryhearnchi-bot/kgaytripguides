@@ -3,6 +3,7 @@ import { api } from '@/lib/api-client';
 import { AlertCircle, Check, ChevronDown, Plus, XIcon, Ship } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
@@ -326,51 +327,35 @@ export function CruiseLineSelector({
       </Popover>
 
       {/* Create Cruise Line Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent
-          className="admin-form-modal sm:max-w-md border-white/10 rounded-[20px] text-white"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white">Add New Cruise Line</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-white/90">Cruise Line Name *</label>
-              <Input
-                placeholder="Enter cruise line name"
-                value={createForm.name}
-                onChange={e => setCreateForm({ name: e.target.value })}
-                disabled={creating}
-                className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={cancelCreateCruiseLine}
-              disabled={creating}
-              className="h-9 px-4 bg-white/4 border-[1.5px] border-white/10 text-white/75 hover:bg-white/8 hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={submitCreateCruiseLine}
-              disabled={creating || !createForm.name.trim()}
-              className="h-9 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
-            >
-              {creating ? 'Creating...' : 'Add Cruise Line'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AdminBottomSheet
+        isOpen={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        title="Add New Cruise Line"
+        description="Create a new cruise line"
+        sidePanelWidth="400px"
+        primaryAction={{
+          label: 'Add Cruise Line',
+          onClick: submitCreateCruiseLine,
+          disabled: creating || !createForm.name.trim(),
+          loading: creating,
+        }}
+      >
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-white/90">Cruise Line Name *</label>
+          <Input
+            placeholder="Enter cruise line name"
+            value={createForm.name}
+            onChange={e => setCreateForm({ name: e.target.value })}
+            disabled={creating}
+            className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/8 rounded-[10px] text-white text-sm"
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !creating && createForm.name.trim()) {
+                submitCreateCruiseLine();
+              }
+            }}
+          />
+        </div>
+      </AdminBottomSheet>
     </div>
   );
 }

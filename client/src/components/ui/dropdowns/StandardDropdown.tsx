@@ -1,8 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronDown, Plus, Save, X } from 'lucide-react';
+import { Check, ChevronDown, Plus, X } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -20,13 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
 import { useMobileResponsive } from '@/hooks/use-mobile-responsive';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -224,140 +219,51 @@ export function StandardDropdown({
       setNewName('');
     } catch (error) {
       logger.error('Failed to create new item', error instanceof Error ? error : undefined);
+      // Show user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create item';
+      toast.error('Error', {
+        description: errorMessage,
+      });
+      // Don't close the dialog on error so user can try again
     } finally {
       setCreating(false);
     }
   };
 
-  // Render Add New fly-up
+  // Render Add New dialog - always use AdminBottomSheet which handles mobile/desktop detection
   const renderAddDialog = () => {
     if (!hasAdd || !onCreateNew) return null;
 
-    const mobileContent = (
-      <>
-        {/* Header with title and X button */}
-        <div className="flex items-center justify-between w-full px-4 pt-4 pb-3 border-b border-white/10">
-          <SheetHeader className="text-left">
-            <SheetTitle className="text-lg font-bold text-white leading-tight">
-              {addLabel}
-            </SheetTitle>
-            <SheetDescription className="sr-only">
-              Create a new entry you can reuse.
-            </SheetDescription>
-          </SheetHeader>
-          <button
-            type="button"
-            onClick={() => setShowAddDialog(false)}
-            aria-label="Close"
-            className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors flex items-center justify-center"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        {/* Content area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
-          <label className="text-xs font-medium text-white/90">Name</label>
-          <Input
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/10 rounded-[10px] text-white text-sm placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0"
-            placeholder={`Enter ${addLabel.toLowerCase().replace('add new ', '')} name`}
-            autoFocus
-          />
-          {/* Save button underneath the field */}
-          <div className="flex justify-end gap-2 pt-3">
-            <button
-              type="button"
-              onClick={handleConfirmAdd}
-              disabled={creating || !newName.trim()}
-              aria-label="Save & Add"
-              className="h-9 px-4 rounded-lg border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors flex items-center justify-center text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Save &amp; Add
-            </button>
-          </div>
-        </div>
-      </>
-    );
-
-    const desktopContent = (
-      <>
-        {/* Custom header matching Edit Trip modal */}
-        <div className="flex items-center justify-between w-full px-5 pt-5 pb-3 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white leading-tight">{addLabel}</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleConfirmAdd}
-              disabled={creating || !newName.trim()}
-              aria-label="Save Changes"
-              className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-green-400 hover:text-green-300 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAddDialog(false)}
-              aria-label="Close"
-              className="h-9 w-9 rounded-full border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors flex items-center justify-center"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        {/* Content area */}
-        <div className="px-5 py-4 space-y-2">
-          <label className="text-xs font-medium text-white/90">Name</label>
-          <Input
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/10 rounded-[10px] text-white text-sm placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0"
-            placeholder={`Enter ${addLabel.toLowerCase().replace('add new ', '')} name`}
-            autoFocus
-          />
-        </div>
-      </>
-    );
-
-    if (isMobile) {
-      return (
-        <Sheet open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <SheetContent
-            side="bottom"
-            className="border-white/10 text-white rounded-t-2xl p-0 flex flex-col [&>button]:hidden"
-            style={{
-              backgroundColor: 'rgba(0, 33, 71, 1)',
-              backgroundImage:
-                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-              height: '37.5vh',
-              maxHeight: '37.5vh',
-            }}
-          >
-            {mobileContent}
-          </SheetContent>
-        </Sheet>
-      );
-    }
-
     return (
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent
-          className="sm:max-w-sm w-[92vw] border-white/10 rounded-[16px] text-white p-0"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
-          }}
-        >
-          <DialogHeader className="sr-only">
-            <DialogTitle>{addLabel}</DialogTitle>
-            <DialogDescription>Create a new entry you can reuse.</DialogDescription>
-          </DialogHeader>
-          {desktopContent}
-        </DialogContent>
-      </Dialog>
+      <AdminBottomSheet
+        isOpen={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        title={addLabel}
+        description="Create a new entry you can reuse"
+        sidePanelWidth="400px"
+        primaryAction={{
+          label: 'Save & Add',
+          onClick: handleConfirmAdd,
+          disabled: creating || !newName.trim(),
+          loading: creating,
+        }}
+      >
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-white/90">Name</label>
+          <Input
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            className="h-10 px-3 bg-white/[0.04] border-[1.5px] border-white/10 rounded-[10px] text-white text-sm placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0"
+            placeholder={`Enter ${addLabel.toLowerCase().replace('add new ', '')} name`}
+            autoFocus
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !creating && newName.trim()) {
+                handleConfirmAdd();
+              }
+            }}
+          />
+        </div>
+      </AdminBottomSheet>
     );
   };
 

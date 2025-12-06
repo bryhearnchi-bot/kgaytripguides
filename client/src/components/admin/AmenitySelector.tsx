@@ -60,9 +60,13 @@ export function AmenitySelector({
   // Create amenity handler for StandardDropdown
   const handleCreateAmenity = async (name: string): Promise<{ value: string; label: string }> => {
     try {
-      const response = await api.post('/api/amenities', {
-        name: name.trim(),
-      });
+      const response = await api.post(
+        '/api/amenities',
+        {
+          name: name.trim(),
+        },
+        { requireAuth: true }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to create amenity: ${response.status}`);

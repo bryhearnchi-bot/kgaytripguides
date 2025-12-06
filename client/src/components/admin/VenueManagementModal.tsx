@@ -315,6 +315,7 @@ export function VenueManagementModal({
         onClick: () => onOpenChange(false),
       }}
       maxWidthClassName="max-w-3xl"
+      sidePanelWidth="500px"
     >
       <div className="space-y-6">
         {/* Add New Venue Section */}

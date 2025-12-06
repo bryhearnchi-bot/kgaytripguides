@@ -19,6 +19,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AdminBottomSheet } from '@/components/admin/AdminBottomSheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Accordion,
   AccordionContent,
@@ -35,6 +37,7 @@ import { EditCruiseItineraryModal } from './modals/EditCruiseItineraryModal';
 export function CompletionPage() {
   const { state } = useTripWizard();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [showBasicInfoModal, setShowBasicInfoModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showVenuesModal, setShowVenuesModal] = useState(false);
@@ -44,11 +47,25 @@ export function CompletionPage() {
   const [savedTripSlug, setSavedTripSlug] = useState<string>('');
 
   const handleApprove = async () => {
+    console.log('handleApprove called', { saving, state });
+
+    if (saving) {
+      console.log('Already saving, ignoring click');
+      return;
+    }
+
     try {
+      console.log('Setting saving to true');
       setSaving(true);
 
       // Validate required fields with detailed error messages
+      console.log('Validating required fields...', {
+        name: state.tripData.name,
+        charterCompanyId: state.tripData.charterCompanyId,
+        tripTypeId: state.tripData.tripTypeId,
+      });
       if (!state.tripData.name || !state.tripData.charterCompanyId || !state.tripData.tripTypeId) {
+        console.log('Validation failed: Missing required fields');
         toast.error('Missing Required Information', {
           description:
             'Please complete all required fields: Trip Name, Charter Company, and Trip Type.',
@@ -57,7 +74,12 @@ export function CompletionPage() {
         return;
       }
 
+      console.log('Checking dates...', {
+        startDate: state.tripData.startDate,
+        endDate: state.tripData.endDate,
+      });
       if (!state.tripData.startDate || !state.tripData.endDate) {
+        console.log('Validation failed: Missing dates');
         toast.error('Missing Trip Dates', {
           description: 'Please provide both start and end dates for the trip.',
         });
@@ -65,18 +87,34 @@ export function CompletionPage() {
         return;
       }
 
-      if (state.tripType === 'resort' && !state.resortData?.name) {
+      console.log('Checking trip type...', {
+        tripType: state.tripType,
+        resortData: state.resortData,
+        shipData: state.shipData,
+        shipId: state.shipId,
+      });
+      if (state.tripType === 'resort' && !state.resortData?.name && !state.resortId) {
+        console.log('Validation failed: Missing resort info');
+        const errorMsg =
+          'Please complete the resort details before saving. Go back to the "Resort Details" page to add or select a resort.';
         toast.error('Missing Resort Information', {
-          description: 'Please complete the resort details before saving.',
+          description: errorMsg,
+          duration: 5000,
         });
+        console.error('Validation Error:', errorMsg);
         setSaving(false);
         return;
       }
 
-      if (state.tripType === 'cruise' && !state.shipData?.name) {
+      if (state.tripType === 'cruise' && !state.shipData?.name && !state.shipId) {
+        console.log('Validation failed: Missing ship info');
+        const errorMsg =
+          'Please complete the ship details before saving. Go back to the "Ship Details" page to add or select a ship.';
         toast.error('Missing Ship Information', {
-          description: 'Please complete the ship details before saving.',
+          description: errorMsg,
+          duration: 5000,
         });
+        console.error('Validation Error:', errorMsg);
         setSaving(false);
         return;
       }
@@ -160,12 +198,17 @@ export function CompletionPage() {
       };
 
       // Log the payload for debugging
+      console.log('Payload built, making API call...', tripPayload);
 
       // Use api client which handles authentication
-      const response = await api.post('/api/admin/trips', tripPayload);
+      console.log('Calling API...');
+      const response = await api.post('/api/admin/trips', tripPayload, { requireAuth: true });
+      console.log('API response received', { ok: response.ok, status: response.status });
 
       if (!response.ok) {
+        console.log('API call failed, parsing error...');
         const error = await response.json().catch(() => ({ message: 'Failed to save trip' }));
+        console.log('Error details:', error);
 
         // If validation error, show detailed message
         if (error.details && Array.isArray(error.details)) {
@@ -178,7 +221,9 @@ export function CompletionPage() {
         throw new Error(error.message || error.error || 'Failed to save trip');
       }
 
+      console.log('API call successful, parsing response...');
       const result = await response.json();
+      console.log('Response parsed:', result);
 
       // Success! Store the trip slug and show success modal
       setSavedTripSlug(result.slug || state.tripData.slug);
@@ -536,15 +581,18 @@ export function CompletionPage() {
       )}
 
       {/* Approve Button */}
-      <div className="flex justify-end pt-4">
-        <Button
+      <div className="flex justify-end pt-4" style={{ position: 'relative', zIndex: 10 }}>
+        <button
           type="button"
-          onClick={handleApprove}
+          onClick={() => {
+            console.log('Review & Preview button clicked', { saving });
+            handleApprove();
+          }}
           disabled={saving}
-          className="h-11 px-6 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-11 px-6 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         >
           {saving ? 'Saving...' : 'Review & Preview'}
-        </Button>
+        </button>
       </div>
 
       {/* Edit Modals */}
@@ -569,27 +617,18 @@ export function CompletionPage() {
       )}
 
       {/* Success Modal */}
-      <Dialog
-        open={showSuccessModal}
-        onOpenChange={open => {
-          setShowSuccessModal(open);
-          if (!open) {
-            window.location.href = '/admin/trips';
-          }
-        }}
-      >
-        <DialogContent
-          className="sm:max-w-lg border-white/10 rounded-[20px] text-white"
-          style={{
-            backgroundColor: 'rgba(0, 33, 71, 1)',
-            backgroundImage:
-              'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+      {isMobile ? (
+        <AdminBottomSheet
+          isOpen={showSuccessModal}
+          onOpenChange={open => {
+            setShowSuccessModal(open);
+            if (!open) {
+              window.location.href = '/admin/trips';
+            }
           }}
+          title="Trip Saved Successfully"
+          description="Your trip has been saved for preview"
         >
-          <DialogTitle className="sr-only">Trip Saved Successfully</DialogTitle>
-          <DialogDescription className="sr-only">
-            Your trip has been saved for preview
-          </DialogDescription>
           <div className="flex flex-col items-center text-center py-6 px-4">
             {/* Success Icon */}
             <div className="w-20 h-20 rounded-full bg-cyan-400/10 border-2 border-cyan-400/30 flex items-center justify-center mb-6">
@@ -650,8 +689,93 @@ export function CompletionPage() {
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </AdminBottomSheet>
+      ) : (
+        <Dialog
+          open={showSuccessModal}
+          onOpenChange={open => {
+            setShowSuccessModal(open);
+            if (!open) {
+              window.location.href = '/admin/trips';
+            }
+          }}
+        >
+          <DialogContent
+            className="sm:max-w-lg border-white/10 rounded-[20px] text-white max-h-[90vh] overflow-y-auto"
+            style={{
+              backgroundColor: 'rgba(0, 33, 71, 1)',
+              backgroundImage:
+                'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+            }}
+          >
+            <DialogTitle className="sr-only">Trip Saved Successfully</DialogTitle>
+            <DialogDescription className="sr-only">
+              Your trip has been saved for preview
+            </DialogDescription>
+            <div className="flex flex-col items-center text-center py-6 px-4">
+              {/* Success Icon */}
+              <div className="w-20 h-20 rounded-full bg-cyan-400/10 border-2 border-cyan-400/30 flex items-center justify-center mb-6">
+                <PartyPopper className="w-10 h-10 text-cyan-400" />
+              </div>
+
+              {/* Success Message */}
+              <h3 className="text-2xl font-bold text-white mb-2">Saved for Preview!</h3>
+              <p className="text-base text-white/70 mb-2">
+                Your trip{' '}
+                <span className="text-cyan-400 font-semibold">"{state.tripData.name}"</span> has
+                been saved successfully!
+              </p>
+              <p className="text-sm text-white/50 mb-8">
+                Preview your trip and approve it when you're ready to make it live.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3 w-full">
+                {/* Primary Action - Preview Trip */}
+                <a
+                  href={`/trip/${savedTripSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 h-11 px-6 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all"
+                >
+                  Preview Trip
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+
+                {/* Secondary Actions */}
+                <div className="flex gap-2 w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      // TODO: Open new wizard for another trip
+                      window.location.reload();
+                    }}
+                    className="flex-1 h-10 px-4 bg-white/[0.04] border-[1.5px] border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Create Another
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      // TODO: Navigate to admin trips page
+                      window.location.href = '/admin/trips';
+                    }}
+                    className="flex-1 h-10 px-4 bg-white/[0.04] border-[1.5px] border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white/90 hover:border-white/20 rounded-lg transition-all"
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-1.5" />
+                    Back to Trips
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -503,16 +503,18 @@ function EditTripModalContent({ open, onOpenChange, trip, onSuccess }: EditTripM
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'basic-info' && <BasicInfoPage />}
-          {activeTab === 'location' &&
-            (tripData.tripTypeId === 1 ? <ShipDetailsPage /> : <ResortDetailsPage />)}
-          {activeTab === 'schedule' &&
-            (tripData.tripTypeId === 1 ? <CruiseItineraryPage /> : <ResortSchedulePage />)}
-          {activeTab === 'events' && <EventsTabPage />}
-          {activeTab === 'talent' && <TalentTabPage />}
-          {activeTab === 'trip-info' && <TripInfoTabPage />}
-          {activeTab === 'faq' && <FAQTabPage />}
-          {activeTab === 'updates' && <UpdatesTabPage />}
+          <div className="pt-0 md:pt-3">
+            {activeTab === 'basic-info' && <BasicInfoPage />}
+            {activeTab === 'location' &&
+              (tripData.tripTypeId === 1 ? <ShipDetailsPage /> : <ResortDetailsPage />)}
+            {activeTab === 'schedule' &&
+              (tripData.tripTypeId === 1 ? <CruiseItineraryPage /> : <ResortSchedulePage />)}
+            {activeTab === 'events' && <EventsTabPage />}
+            {activeTab === 'talent' && <TalentTabPage />}
+            {activeTab === 'trip-info' && <TripInfoTabPage />}
+            {activeTab === 'faq' && <FAQTabPage />}
+            {activeTab === 'updates' && <UpdatesTabPage />}
+          </div>
         </div>
       )}
     </AdminBottomSheet>

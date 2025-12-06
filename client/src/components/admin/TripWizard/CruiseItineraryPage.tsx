@@ -16,10 +16,11 @@ import { useTripWizard } from '@/contexts/TripWizardContext';
 import type { ItineraryEntry } from '@/contexts/TripWizardContext';
 import { useLocations } from '@/contexts/LocationsContext';
 import { useItineraryNavigation } from '@/contexts/ItineraryNavigationContext';
-import { Anchor, Edit2, Landmark, Building2 } from 'lucide-react';
+import { Anchor, Edit2, Landmark, Building2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { PillDropdown } from '@/components/ui/dropdowns';
 
 interface LocationType {
   id: number;
@@ -40,8 +41,19 @@ export function CruiseItineraryPage() {
   const queryClient = useQueryClient();
 
   // Use shared navigation context (state is in EditTripModal's header)
-  const { selectedDayIndex, showAddDayModal, setShowAddDayModal, sortedEntries } =
-    useItineraryNavigation();
+  const {
+    selectedDayIndex,
+    setSelectedDayIndex,
+    showAddDayModal,
+    setShowAddDayModal,
+    sortedEntries,
+    dayOptions,
+    totalDays,
+    goToPreviousDay,
+    goToNextDay,
+    canGoPrevious,
+    canGoNext,
+  } = useItineraryNavigation();
 
   // Use shared locations context
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useLocations();
@@ -328,10 +340,18 @@ export function CruiseItineraryPage() {
   if (!state.itineraryEntries.length) {
     return (
       <div className="space-y-2.5 max-w-3xl mx-auto">
-        <div className="p-4 rounded-lg bg-cyan-400/5 border border-cyan-400/20 text-center">
+        <div className="p-4 rounded-lg bg-cyan-400/5 border border-cyan-400/20 text-center space-y-3">
           <p className="text-sm text-white/70">
             No itinerary entries found. Please ensure trip dates are set on the Basic Info page.
           </p>
+          <Button
+            type="button"
+            onClick={() => setShowAddDayModal(true)}
+            className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 text-xs font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all mx-auto"
+          >
+            <Plus className="w-3 h-3" />
+            <span>Add Day</span>
+          </Button>
         </div>
       </div>
     );
@@ -347,12 +367,63 @@ export function CruiseItineraryPage() {
 
   return (
     <div className="space-y-2.5 max-w-3xl mx-auto pt-2" ref={entriesContainerRef}>
+      {/* Day Navigation Controls */}
+      {totalDays > 0 && (
+        <div className="flex items-center justify-between pb-4 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            {/* Day Navigation Controls */}
+            <button
+              type="button"
+              onClick={goToPreviousDay}
+              disabled={!canGoPrevious}
+              className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-4 h-4 text-white/70" />
+            </button>
+
+            <PillDropdown
+              options={dayOptions}
+              value={selectedDayIndex.toString()}
+              onChange={value => setSelectedDayIndex(parseInt(value, 10))}
+              placeholder="Select Day"
+              className="min-w-[120px]"
+            />
+
+            <button
+              type="button"
+              onClick={goToNextDay}
+              disabled={!canGoNext}
+              className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-4 h-4 text-white/70" />
+            </button>
+
+            {/* Add Day Button */}
+            <button
+              type="button"
+              onClick={() => setShowAddDayModal(true)}
+              className="flex items-center justify-center h-7 w-7 min-w-[28px] p-0 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-cyan-400 hover:bg-cyan-400/20 hover:border-cyan-400/50 transition-all ml-2"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Current Day Content */}
       {currentEntry && currentIndex >= 0 && (
         <>
           {/* Date and Port Subheader */}
           <div className="flex items-center gap-2 pb-1">
             <p className="text-sm text-white/70">
+              <span className="font-semibold text-cyan-400">
+                {currentEntry.dayNumber < 1
+                  ? 'Pre-Trip'
+                  : currentEntry.dayNumber >= 100
+                    ? 'Post-Trip'
+                    : `Day ${currentEntry.dayNumber}`}
+              </span>
+              {' — '}
               {formatDate(currentEntry.date)}
               {currentEntry.locationName && (
                 <span className="text-cyan-400"> — {currentEntry.locationName}</span>
